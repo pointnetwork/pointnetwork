@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Example Blog</title>
+    <link type="text/css" rel="stylesheet" href="index.css" />
+</head>
+<body>
+    <header>
+        <h1><a href="/">Example Blog</a></h1>
+        <em>Gives you a little glimpse into what it will feel like</em>
+        <a href="/admin" class="admin-btn">admin</a>
+    </header>
+
+    <main>
+        {% block contents %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        (c) 2019 Point Network
+    </footer>
+</body>
+</html>

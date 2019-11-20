@@ -1,0 +1,92 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    min-height: calc(100% - 60px);
+    background-color: rgba(0, 0, 255, 0.04);
+    position: relative;
+}
+body {
+    padding-bottom: 60px;
+}
+main {
+    /*margin-bottom: 5em;*/
+}
+header, footer, main {
+    padding: 20px;
+}
+header {
+    background: linear-gradient(to right, #8360c3, #2ebf91); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    color: white;
+    position: relative;
+}
+header h1 a {
+    color: white;
+    text-decoration: none;
+}
+header h1 a:hover {
+    text-decoration: underline;
+}
+header .admin-btn {
+    width: 100px;
+    height: 2em;
+    text-align: center;
+    display: inline-block;
+    background: rgba(0,0,0, 0.1);
+    color: white;
+    position: absolute;
+    bottom: 0;
+    right: 5px;
+    padding-top: 0.5em;
+}
+header .admin-btn:hover {
+    background: rgba(0,0,0, 0.3);
+}
+footer {
+    position: absolute;
+    bottom: 0;
+    height: 1em;
+    width: 100%;
+    color: white;
+    background: linear-gradient(to top, #00416a, #e4e5e6); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+header img {
+    width: 200px;
+    margin-right: 50px;
+    display: inline-block;
+}
+
+.comments .comment-body {
+    margin-top: 1em;
+}
+.comments .comment {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #ccc;
+    border: 1px dashed #333;
+}
+.comments-form {
+    width: 50%;
+    margin-top: 2em;
+    text-align: center;
+}
+.comments-form textarea {
+    width: 100%;
+}
+.comments-form input[type=submit] {
+    display: block;
+    width: 100px;
+    height: 2em;
+}
+
+.new-article-form table {
+    width: 50%;
+}
+.new-article-form textarea {
+    width: 100%;
+}
+.new-article-form input {
+    width: 100%;
+}
+.new-article-form input[type=submit] {
+    width: 200px;
+}

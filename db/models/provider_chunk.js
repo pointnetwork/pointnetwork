@@ -1,0 +1,138 @@
+const Model = require('../model');
+const fs = require('fs');
+const path = require('path');
+const Redkey = require('./redkey');
+
+// todo: two files? maybe reuse some code at least
+
+class ProviderChunk extends Model {
+    constructor(...args) {
+        super(...args);
+    }
+
+    static _buildIndices() {
+        this._addIndex('status');
+        this._addIndex('real_id');
+    }
+
+    /**
+     * Fields:
+     * - id which is chunk content's hash
+     * ----
+     * - known_providers
+     */
+
+    static getChunkStoragePath(id) {
+        const cache_dir = path.join(this.ctx.datadir, this.ctx.config.service_provider.storage.cache_path);
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        return cache_dir + '/' + 'provider_chunk_' + id;
+    }
+    static getSegmentStoragePath(segment_hash, chunk_id) {
+        const cache_dir = path.join(this.ctx.datadir, this.ctx.config.service_provider.storage.cache_path);
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        return cache_dir + '/' + 'provider_chunk_segment_' + segment_hash;
+    }
+
+    getData() {
+        // todo: read from fs if you have it already or retrieve using storage layer client
+        let chunk_path = ProviderChunk.getChunkStoragePath(this.id);
+        if (fs.existsSync(chunk_path)) {
+            return fs.readFileSync(chunk_path, { encoding: null });
+        } else {
+            // todo: would be correct to reassemble them when retrieving so that they're accessible by chunk_path
+            let data = Buffer.alloc(0);
+
+            if (!this.segment_hashes) throw new Error('?: segment hashes not found'); // todo
+
+            for(let segment_hash of this.segment_hashes) {
+                const segment_path = ProviderChunk.getSegmentStoragePath(segment_hash, this.id);
+                let buffer = fs.readFileSync(segment_path, { encoding: null }); // todo: what if doesn't exist?
+                data = Buffer.concat([data, buffer]);
+                const segment_real_hash = this.ctx.utils.hashFnHex(buffer);
+                if (segment_hash !== segment_real_hash) throw new Error('EINVALIDHASH: Segment read from disk doesn\'t match its ID'); // todo: intercept?
+            }
+            data = data.slice(0, this.length); // todo: theor.security issue: can there be several chunk with the same length/diff hash or same hash/diff length?
+            return data;
+        }
+    }
+
+    async getDecryptedData() {
+        return await Redkey.decryptDataStatic(this.getData(), this.real_length, this.pub_key);
+    }
+
+    // todo:
+    // async setEncryptedData(data, length, pubKey) {
+    //     const decrypted = await Redkey.decryptDataStatic(data, length, pubKey); // todo: what if errors out
+    //
+    //     console.log(decrypted);
+    //
+    //     const encrypted_hash = this.ctx.utils.hashFnHex(data);
+    //     const decrypted_hash = this.ctx.utils.hashFnHex(decrypted);
+    //
+    //     // todo: something's wrong here. the same chunk with two different keys will be conflicting with itself
+    //     if (decrypted_hash !== this.id) {
+    //         throw new Error('Decrypted hash doesn\'t match the provided data');
+    //     }
+    //
+    //     const chunk_file_path = ProviderChunk.getChunkStoragePath(this.id);
+    //
+    //     // todo: check length
+    //
+    //     // todo: what if already exists? should we overwrite again or just use it? without integrity check?
+    //     fs.writeFileSync(chunk_file_path, data, { encoding: null });
+    // }
+
+    validateSegmentHashes() {
+        const merkleTree = this.ctx.utils.merkle.merkle(this.segment_hashes.map(x=>Buffer.from(x, 'hex')), this.ctx.utils.hashFn);
+        if (merkleTree[merkleTree.length-1].toString('hex') !== this.id) {
+            throw Error('EINVALIDHASH: Provider Chunk ID and merkle root don\'t match: '+this.id+' vs '+merkleTree[merkleTree.length-1].toString('hex'));
+        }
+    }
+
+    setSegmentData(data, segment_index) {
+        const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes;
+
+        // todo: verify only using proof
+
+        let segment_hash;
+        try {
+            segment_hash = this.segment_hashes[segment_index].toString('hex'); // todo: validate that data is Buffer
+        } catch(e) {
+            console.warn(e);
+            console.log(this.toJSON());
+            throw e; // todo: process
+        }
+        const data_hash = this.ctx.utils.hashFnHex(data);
+        if (data_hash !== segment_hash) {
+            throw Error('EINVALIDHASH: segment hash and data hash don\'t match: '+segment_hash+' vs '+data_hash);
+        }
+
+        const segment_path = ProviderChunk.getSegmentStoragePath(segment_hash, this.id);
+
+        // todo: what if already exists? should we overwrite again or just use it? without integrity check?
+        fs.writeFileSync(segment_path, data, { encoding: null });
+    }
+
+    setData(rawData) {
+        // todo: future: dont zero out the rest of the chunk if it's the last one, save space
+        // todo: check data length? well, hash should be taking care of it already
+
+        const data_hash = this.ctx.utils.hashFnHex(rawData);
+
+        if (this.id !== data_hash) {
+            throw Error('EINVALIDHASH: Provider Chunk ID and data hash don\'t match: '+this.id+' vs '+data_hash);
+        }
+
+        const chunk_file_path = ProviderChunk.getChunkStoragePath(this.id);
+
+        // todo: what if already exists? should we overwrite again or just use it? without integrity check?
+        fs.writeFileSync(chunk_file_path, rawData, { encoding: null });
+    }
+
+}
+
+ProviderChunk.STATUS_CREATED = 's0';
+ProviderChunk.STATUS_DOWNLOADING = 's1';
+ProviderChunk.STATUS_STORED = 's2';
+
+module.exports = ProviderChunk;
