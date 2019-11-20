@@ -1,8 +1,6 @@
 Point Network
 =============
 
-![Screenshot](/resources/demo/screenshot.jpg)
-
 How to run the demo
 -------------------
 
