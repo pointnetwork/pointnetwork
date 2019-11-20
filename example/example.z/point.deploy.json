@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "target": "example.z",
+    "upload": {
+        "redundancy": 10,
+        "timeperiod": 10000
+    },
+    "keyvalue": {
+        "articles0": {
+            "id": "first-article",
+            "title": "First Article",
+            "__contents": "Omnia licet, quae umquam ingenia fulserunt, in hoc unum consentiant, numquam satis hanc humanarum mentium caliginem mirabuntur. Praedia sua occupari a nullo patiuntur et, si exigua contentio est de modo finium, ad lapides et arma discurrunt; in vitam suam incedere alios sinunt, immo vero ipsi etiam possessores eius futuros inducunt. Nemo invenitur, qui pecuniam suam dividere velit; vitam unusquisque quam multis distribuit ! Adstricti sunt in continendo patrimonio, simul ad iacturam temporis ventum est, profusissimi in eo, cuius unius honesta avaritia est. Libet itaque ex seniorum turba comprendere aliquem:\n\nPervenisse te ad ultimum aetatis humanae videmus, centesimus tibi vel supra premitur annus ; agedum, ad computationem aetatem tuam revoca. Duc, quantum ex isto tempore creditor, quantum amica, quantum rex, quantum cliens abstuleris quantum lis uxoria, quantum servorum coercitio, quantum officiosa per urbem discursatio. Adice morbos, quos manu fecimus, adice et quod sine usu iacuit; videbis te pauciores annos habere quam numeras."
+        }
+    }
+}

@@ -1,0 +1,170 @@
+#!/usr/bin/env node
+
+const program = require('commander');
+const { homedir } = require('os');
+const path = require('path');
+const fs = require('fs');
+const _ = require('lodash');
+const pino = require('pino');
+const multistream = require('pino-multi-stream').multistream;
+const npid = require('npid');
+const mkdirp = require('mkdirp');
+
+program.version(`
+    0.0 alpha
+`); // todo
+
+program.description(`
+    Licensed under MIT license
+`); // todo: MIT? // todo: more description, --help is ugly
+// todo: add alpha version disclaimer like in raiden
+
+// NOTE: After changing parameters here, update the documentation
+program.option('--config <file>', 'path to the configuration file');
+program.option('--datadir <path>', 'path to the data directory', path.join(homedir(), '.point/'));
+program.option('-v, --verbose', 'force the logger to show debug level messages', false);
+program.option('attach', 'attach to the running point process');
+program.option('demo', 'dump demo configs to ~/.point');
+program.command('deploy <path>').description('deploy a website').action(path => program.deploy = path);
+// program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
+// program.option('--daemon', 'sends the daemon to the background'); // todo
+// program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
+program.parse(process.argv);
+
+// todo: mix other param arguments into config, like here:
+// let argv;
+// let config = rc('kadence', options(program.datadir), argv);
+
+if (! program.config) {
+    program.config = path.join(program.datadir, 'config.json');
+}
+
+ctx = {};
+
+ctx.datadir = ctx.datapath = program.datadir;
+ctx.configPath = program.config;
+ctx.basepath = __dirname;
+
+// ------------------- Init Config ----------------- //
+
+if (! fs.existsSync(ctx.datadir)) mkdirp.sync(ctx.datadir);
+if (! fs.existsSync(ctx.configPath)) throw Error('Cannot find configuration file '+ctx.configPath);
+
+const config = JSON.parse(fs.readFileSync(ctx.configPath, 'utf-8'));
+const defaultConfig = require('./resources/defaultConfig.json');
+ctx.config = _.merge(defaultConfig, config);
+if (program.verbose) ctx.config.log.level = 'debug';
+
+// ------------------- Init Logger ----------------- //
+
+const logFilePath = path.join(ctx.datadir, 'point.log');
+
+const level = pino.levels.values[ ctx.config.log.level ];
+const options = {
+    enabled: ctx.config.log.enabled,
+    useLevelLabels: true,
+    level
+};
+
+let streams = [];
+const outStream = pino({ prettyPrint: { colorize: true } });
+streams.push({
+    level: options.level,
+    stream: outStream[pino.symbols.streamSym]
+});
+streams.push({
+    level: options.level,
+    stream: fs.createWriteStream(path.resolve(logFilePath))
+});
+
+ctx.log = pino(options, multistream(streams));
+
+// ----------------- Console Mode -------------------- //
+
+if (program.attach) {
+    const Console = require('./console');
+    const console = new Console();
+    console.start();
+    return;
+}
+
+// --------------- Dump Demo Configs ----------------- //
+
+if (program.demo) {
+    require('./resources/demo');
+    return;
+}
+
+// -------------------- Deployer --------------------- //
+
+if (program.deploy) {
+    if (program.deploy.length === 0) return this.ctx.die('error: missing path');
+    const Deploy = require('./core/deploy');
+    const deploy = new Deploy(ctx);
+    deploy.deploy(program.deploy);
+    return;
+}
+
+// ---------------------- PID ------------------------ //
+
+const pidFilePath = path.join(ctx.datadir, 'point.pid');
+try {
+    npid.create(pidFilePath).removeOnExit();
+} catch (err) {
+    ctx.log.fatal('Failed to create PID file, is point already running? File path: '+pidFilePath);
+    process.exit(1);
+}
+
+// ------------------ Gracefully exit ---------------- //
+
+this.exiting = false;
+async function _exit(sig) {
+    if (this.exiting) return;
+    this.exiting = true;
+
+    let errors = [];
+
+    ctx.log.info('Received signal '+sig+', shutting down...');
+
+    try {
+        await ctx.db.shutdown();
+    } catch(e) {
+        errors.push('Error while shutting down database' + e);
+    }
+
+    if (errors.length) {
+        for (let e of errors) ctx.log.error(e);
+    } else {
+        ctx.log.info('Successfully shut down.');
+    }
+
+    process.exit(1);
+
+    // todo: shut down everything else
+}
+
+const sigs = ['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'];
+sigs.forEach(function (sig) {
+    process.on(sig, function () {
+        _exit(sig);
+    });
+});
+
+process.on('uncaughtException', (err) => {
+    npid.remove(pidFilePath);
+    ctx.log.error(err.message);
+    ctx.log.debug(err.stack);
+    process.exit(1);
+});
+process.on('unhandledRejection', (err) => {
+    npid.remove(pidFilePath);
+    ctx.log.error(err.message);
+    ctx.log.debug(err.stack);
+    process.exit(1);
+});
+
+// ------------------- Start Point ------------------- //
+
+const Point = require('./core');
+point = new Point(ctx);
+point.start();

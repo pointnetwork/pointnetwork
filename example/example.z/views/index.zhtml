@@ -1,0 +1,24 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+    <h1>Welcome!</h1>
+
+    <p><em>The list of articles below is not in any html file, but is dynamically compiled from the live blockchain data.</em></p>
+
+    {% set articles = keyvalue_list(host, 'articles') %}
+
+    {% for article_json in articles %}
+        {% set article = article_json | unjson %}
+
+        {% if loop.first %}<ul>{% endif %}
+
+        <li>
+            <a href="/article?id={{ article.id }}">{{ article.title }}</a>
+        </li>
+
+        {% if loop.last %}</ul>{% endif %}
+    {% else %}
+        <div>No articles yet. Why not create one?</div>
+    {% endfor %}
+
+{% endblock %}

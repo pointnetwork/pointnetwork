@@ -1,0 +1,35 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+    <h1>New Article</h1>
+
+    <form method="post" action="/_keyvalue_append/articles" class="new-article-form">
+        <table>
+            <tr>
+                <th>ID:</th>
+                <td>
+                    <input type="text" name="id" required />
+                </td>
+            </tr>
+            <tr>
+                <th>Title:</th>
+                <td>
+                    <input type="text" name="title" required />
+                </td>
+            </tr>
+            <tr>
+                <th>Contents:</th>
+                <td>
+                    <textarea name="__contents" required rows="20" cols="40"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: center;"><input type="submit" value="Add" /></td>
+            </tr>
+
+            <input type="hidden" name="__redirect" value="/" />
+        </table>
+    </form>
+
+{% endblock %}

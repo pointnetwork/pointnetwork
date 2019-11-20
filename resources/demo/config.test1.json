@@ -1,0 +1,15 @@
+{
+  "service_provider": {
+    "enabled": true
+  },
+  "network": {
+    "communication_external_host": "localhost",
+    "communication_port": "12345"
+  },
+  "client": {
+    "wallet": {
+      "account": "0x989695771d51de19e9ccb943d32e58f872267fcc",
+      "privateKey": "37a3f44cf78f02bbec411ae51fb85fef45bdea85e5d8eff53ea397a5e0f94016"
+    }
+  }
+}
