@@ -9,20 +9,20 @@ class KeyValue {
 
     }
 
-    update(domain, key, value) {
+    update(identity, key, value) {
         console.log('KeyValue locally updated:', key, '=', value);
-        this.data[ domain + '/' + key ] = value;
+        this.data[ identity + '/' + key ] = value;
     }
 
-    async get(domain, key, recursive = true, alwaysUpdate = false) {
-        console.log('getting keyvalue', domain+'/'+key);
-        if (domain+'/'+key in this.data && ! alwaysUpdate) {
-            return this.data[ domain+'/'+key ];
+    async get(identity, key, recursive = true, alwaysUpdate = false) {
+        console.log('getting keyvalue', identity+'/'+key);
+        if (identity+'/'+key in this.data && ! alwaysUpdate) {
+            return this.data[ identity+'/'+key ];
         } else if (recursive) {
-            let result = await this.ask(domain, key);
+            let result = await this.ask(identity, key);
             console.log('ask for key '+key+' returned ',result);
             if (result) {
-                this.data[domain+'/'+key] = result;
+                this.data[identity+'/'+key] = result;
                 return result;
             } else {
                 return null;
@@ -32,19 +32,19 @@ class KeyValue {
         }
     }
 
-    async ask(domain, key) {
-        console.log('asking keyvalue', domain+'/'+key);
-        const result = await this.ctx.network.web3bridge.getKeyValue(domain, key);
+    async ask(identity, key) {
+        console.log('asking keyvalue', identity+'/'+key);
+        const result = await this.ctx.web3bridge.getKeyValue(identity, key);
         console.log('result:', result);
         return result;
     }
 
-    async list(domain, key) {
+    async list(identity, key) {
         let list = [];
         let i = 0;
         while(true) {
             let fullKey = key + i++;
-            let value = await this.get(domain, fullKey);
+            let value = await this.get(identity, fullKey);
             if (value) {
                 list.push(value);
             } else {
@@ -53,10 +53,10 @@ class KeyValue {
         }
     }
 
-    async propagate(domain, key, value) {
-        console.log('propagating keyvalue', domain+'/'+key, '=', value);
-        await this.update(domain, key, value);
-        return await this.ctx.network.web3bridge.putKeyValue(domain, key, value);
+    async propagate(identity, key, value) {
+        console.log('propagating keyvalue', identity+'/'+key, '=', value);
+        await this.update(identity, key, value);
+        return await this.ctx.web3bridge.putKeyValue(identity, key, value);
     }
 }
 

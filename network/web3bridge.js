@@ -2,6 +2,8 @@ const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
 
+const ZDNS_ROUTES_KEY = 'zdns/routes';
+
 class Web3Bridge {
     constructor(ctx) {
         this.ctx = ctx;
@@ -9,8 +11,8 @@ class Web3Bridge {
         this.network_id = this.ctx.config.network.web3_network_id;
         this.chain_id = this.ctx.config.network.web3_chain_id;
 
-        this.web3 = new Web3(this.connectionString);
-        this.ctx.network.web3 = this.web3; // todo: maybe you should hide it behind this abstraction, no?
+        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(this.connectionString); // todo: maybe you should hide it behind this abstraction, no?
+        this.ctx.web3bridge = this;
 
         this.address = this.ctx.config.client.wallet.account;
         const account = this.web3.eth.accounts.privateKeyToAccount('0x' + this.ctx.config.client.wallet.privateKey);
@@ -21,15 +23,14 @@ class Web3Bridge {
     async start() {
     }
 
-    async loadContract(name, at) {
-        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/'+name+'.json');
+    async loadIdentityContract() {
+        const at = this.ctx.config.network.identity_contract_address;
+        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/Identity.json');
         const abiFile = JSON.parse(fs.readFileSync(abiFileName));
         const abi = abiFile.abi;
-        const bytecode = abiFile.bytecode;
+        // const bytecode = abiFile.bytecode;
 
-        const contract = new this.web3.eth.Contract(abi, at);
-
-        return contract;
+        return new this.web3.eth.Contract(abi, at);
     }
 
     async web3send(method, gasLimit) {
@@ -41,30 +42,28 @@ class Web3Bridge {
     }
 
     async getZRecord(domain) {
-        domain = domain.replace('.z', '');
-        const ZDNSContract = await this.loadContract('ZDNS', this.ctx.config.network.zdns_contract_address);
-        let result = await ZDNSContract.methods.getZRecord(domain).call();
-        result = result.replace('0x', '').toLowerCase();
+        domain = domain.replace('.z', ''); // todo: rtrim instead
+        let result = await this.getKeyValue(domain, ZDNS_ROUTES_KEY);
+        if (result.substr(0, 2) === '0x') result = result.substr(2);
         return result;
     }
     async putZRecord(domain, routesFile) {
-        domain = domain.replace('.z', '');
-        const contract = await this.loadContract('ZDNS', this.ctx.config.network.zdns_contract_address);
-        const method = contract.methods.putZRecord(domain, routesFile);
-        console.log(await this.web3send(method, 1000000));
+        domain = domain.replace('.z', ''); // todo: rtrim instead
+        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile)
     }
 
-    async getKeyValue(domain, key) {
-        domain = domain.replace('.z', '');
-        const contract = await this.loadContract('KeyValue', this.ctx.config.network.keyvalue_contract_address);
-        let result = await contract.methods.get(domain + '/' + key).call();
+    async getKeyValue(identity, key) {
+        identity = identity.replace('.z', ''); // todo: rtrim instead
+        const contract = await this.loadIdentityContract();
+        let result = await contract.methods.ikvGet(identity, key).call();
         console.log(result);
         return result;
     }
-    async putKeyValue(domain, key, value) {
-        domain = domain.replace('.z', '');
-        const contract = await this.loadContract('KeyValue', this.ctx.config.network.keyvalue_contract_address);
-        const method = contract.methods.put(domain + '/' + key, value);
+    async putKeyValue(identity, key, value) {
+        // todo: only send transaction if it's different. if it's already the same value, no need
+        identity = identity.replace('.z', ''); // todo: rtrim instead
+        const contract = await this.loadIdentityContract();
+        const method = contract.methods.ikvPut(identity, key, value);
         console.log(await this.web3send(method, 2000000));
     }
 }

@@ -14,7 +14,6 @@ class DeployController {
             await this.deployer.deploy(deploy_path);
             return {'status': 'success'};
         } catch(e) {
-            console.log('API returning error: ', e);
             return {'status': 'error', 'error': e.toString()};
         }
 

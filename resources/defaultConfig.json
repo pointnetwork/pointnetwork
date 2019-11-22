@@ -31,6 +31,7 @@
       "port": 8666
     },
     "wallet": {
+      "__do not remove this section__":  null,
       "account": "",
       "privateKey": ""
     },
@@ -60,8 +61,7 @@
       "cooldown_reset_time": "60M"
     },
 
-    "zdns_contract_address": "0x3CE9B7DdE7368096e22F5f8B7C010739eCFB9663",
-    "keyvalue_contract_address": "0x8436a56b30f6543DD0245b9E333A63752415184f"
+    "identity_contract_address": "0x950F293dDBACcFf8fB63452C9274Ccb1c61BdF19"
   },
   "simulation_delay": 50,
   "hardcode_default_provider": "http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc"
