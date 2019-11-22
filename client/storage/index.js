@@ -40,7 +40,7 @@ class Storage {
         expires = (new Date).getTime() + this.ctx.config.client.storage.default_expires_period_seconds,
         autorenew = this.ctx.config.client.storage.default_autorenew
     ) {
-        // todo: don't overwrite, do create_or_new through the creation of temporary file instance
+        // Create at first to be able to chunkify and get the file id (hash), later we'll try to load it if it already exists
         let file = File.new();
         file.localPath = path; // todo: should we rename it to lastLocalPath or something? or store somewhere // todo: validate it exists
         await file.chunkify(); // to receive an id (hash)
@@ -141,15 +141,6 @@ class Storage {
         // todo:  .get(data_id)
         // todo:  .put(data, ) returns data_id
 
-        //////////////////////////////
-        // todo: remove:
-        // let files = await File.all();
-        // console.debug('FILES', this.ctx.db.batchSerialize(files).map(x => x));
-        // let chunks = await Chunk.all();
-        // console.debug('CHUNKS', this.ctx.db.batchSerialize(chunks).map(x => x));
-
-        // -- CHUNKS NOW --
-
         let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
         uploadingChunks.forEach((chunk) => {
             setImmediate(async() => { // not waiting, just queueing for execution
@@ -159,7 +150,7 @@ class Storage {
         });
 
         let downloadingChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADING);
-        downloadingChunks.forEach(async(chunk) => { // not waiting, just queueing for execution
+        downloadingChunks.forEach((chunk) => { // not waiting, just queueing for execution
             setImmediate(async() => {
                 await this.chunkDownloadingTick(chunk);
                 await chunk.reconsiderDownloadingStatus(true);
@@ -187,7 +178,7 @@ class Storage {
     }
 
     async chunkDownloadingTick(chunk) {
-        // todo todo todo: make it in the same way as chunkUploadingTick
+        // todo todo todo: make it in the same way as chunkUploadingTick - ??
 
         if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) return;
 
@@ -232,13 +223,7 @@ class Storage {
         const inProgressOrLiveCount = all.length - failed.length;
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
-        // console.debug({ // todo: delete
-        //     all:this.ctx.db.batchSerialize(all),
-        //     candidates:this.ctx.db.batchSerialize(candidates),
-        //     failed:this.ctx.db.batchSerialize(failed),
-        //     allCount: all.length, failedCount: failed.length, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired, redundancy: chunk.redundancy
-        // });
-        // console.debug(chunk.id, all.length, candidates.length, failed.length, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired);
+
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
             let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
@@ -249,24 +234,22 @@ class Storage {
             link.chunk_id = chunk.id;
             link.status = StorageLink.STATUS_CREATED;
             await link.save();
-            // await chunk.refresh();
 
-            this.send('STORE_CHUNK_REQUEST', [chunk.id], link.provider_id, async(err, result) => { // todo: also send conditions
+            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
                 await link.refresh();
                 if (err) {
                     link.error = err.toString();
-                    link.status = StorageLink.STATUS_FAILED;
+                    link.status = StorageLink.STATUS_FAILED; // todo: but why? declined?
                     await link.save();
                 } else {
                     link.status = StorageLink.STATUS_AGREED;
                     await link.save();
                 }
             });
-            // }
         }
 
-        // todo: limit the number of them in the queue
-        // todo: reuse the process?
+        // todo: limit encryptors amount, queue them (10 instead of 100 parallel)
+        // todo: reuse the process instead of killing?
         // Encrypt the "agreed"
         const agreed = await chunk.storage_links[ StorageLink.STATUS_AGREED ];
         for(let link of agreed) {
@@ -274,12 +257,12 @@ class Storage {
             link.status = StorageLink.STATUS_ENCRYPTING;
             await link.save();
 
-            if (!this.ctx.chunk_encryptors) {
-                this.ctx.chunk_encryptors = {};
+            if (!this.chunk_encryptors) {
+                this.chunk_encryptors = {};
             }
 
             let chunk_encryptor = fork(path.join(this.ctx.basepath, 'threads/encrypt.js'));
-            this.ctx.chunk_encryptors[ chunk.id + link.id ] = chunk_encryptor;
+            this.chunk_encryptors[ chunk.id + link.id ] = chunk_encryptor;
 
             chunk_encryptor.on('message', async(message) => {
                 if (message.command === 'encrypt' && message.success === true) {
@@ -306,18 +289,19 @@ class Storage {
                     await link.save();
                     await link.refresh();
 
-                    let chunk_encryptor = this.ctx.chunk_encryptors[ chunk.id + link.id ];
+                    let chunk_encryptor = this.chunk_encryptors[ chunk.id + link.id ];
                     chunk_encryptor.kill('SIGINT');
-                    delete this.ctx.chunk_encryptors[ chunk.id + link.id ];
+                    delete this.chunk_encryptors[ chunk.id + link.id ];
                 } else {
                     console.warn('Something is wrong, encryptor for chunk '+chunk.id+' returned ', message);
                     this.ctx.die();
                 }
             });
-            // todo:
+            // todo: do we need this?
             chunk_encryptor.addListener("output", function (data) {
                 console.log('Chunk Encryptor output: '+data);
             });
+            // todo: two error listeners?
             chunk_encryptor.addListener("error", async (data) => { // todo
                 await link.refresh();
                 link.status = StorageLink.STATUS_FAILED;
@@ -494,16 +478,11 @@ class Storage {
             });
         }
 
-        // todo: remove:
-        // const signed = await chunk.storage_links.signed;
-        // console.log('SIGNED', this.ctx.db.batchSerialize(signed));
-        const alll = await chunk.storage_links[ StorageLink.STATUS_ALL ];
         for(let link of all) {
             const requests_length = (this.current_requests[link.provider_id]) ? this.current_requests[link.provider_id].length : 0;
             const queued_length = (this.queued_requests[link.provider_id]) ? this.queued_requests[link.provider_id].length : 0;
             console.debug(chunk.id, link.id, Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number), link.segments_received, link.status, (link.status==='failed')?link.error:'', {requests_length, queued_length});
         }
-        // console.log('ALLL', this.ctx.db.batchSerialize(alll));
 
         // todo: what about expiring and renewing?
 

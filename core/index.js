@@ -2,7 +2,6 @@ const _ = require('lodash');
 const path = require('path');
 const fs = require('fs');
 
-const ServiceProvider = require('../service_provider');
 const ApiServer = require('../api');
 const Network = require('../network');
 const Client = require('../client');
@@ -30,7 +29,6 @@ class Core {
         await this.initWallet();
         await this.initApiServer();
         await this.initNetwork();
-        await this.initServiceProvider();
         await this.initClient();
 
         await this.postInit();
@@ -38,6 +36,16 @@ class Core {
 
     async postInit() {
         setTimeout(async() => {
+            // register example.z
+            // const at = this.ctx.config.network.identity_contract_address;
+            // const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/Identity.json');
+            // const abiFile = JSON.parse(fs.readFileSync(abiFileName));
+            // const abi = abiFile.abi;
+            // const contract = new this.ctx.web3.eth.Contract(abi, at);
+            // const method = contract.methods.register('example', this.ctx.web3bridge.address);
+            // console.log(await this.ctx.web3bridge.web3send(method));
+            // return this.ctx.die();
+
             // let fl = fs.readFileSync('/Users/s/.point/test2/deployer_cache/e5252f3d40baf38bd208632ff495f7ce9da8ff36');
             // let fl = fs.readFileSync('./example/example.z/views/star-icon.png');
             //
@@ -56,8 +64,8 @@ class Core {
             // console.log(this.ctx.utils.hashFnHex(fl));
             // this.ctx.die();
 
-            // console.log(await this.ctx.network.web3bridge.putZRecord('example', '0x05990c8f559f3f16b84595bb46aa6e7ab3b7a19d'));
-            // console.log(await this.ctx.network.web3bridge.getZRecord('example'));
+            // console.log(await this.ctx.web3bridge.putZRecord('example', '0x05990c8f559f3f16b84595bb46aa6e7ab3b7a19d'));
+            // console.log(await this.ctx.web3bridge.getZRecord('example'));
             // this.ctx.die();
         }, 0);
     }
@@ -66,16 +74,6 @@ class Core {
         const api_server = new ApiServer(this.ctx);
         this.ctx.api_server = api_server;
         await api_server.start();
-    }
-
-    async initServiceProvider() {
-        // todo:
-        // if (this.ctx.config.service_provider.enabled === true) {
-        //     this.ctx.service_provider = new ServiceProvider(ctx);
-        //     await this.ctx.service_provider.start();
-        // } else {
-        //     this.ctx.log.info("Service provider functionality disabled, skipping.");
-        // }
     }
 
     async initNetwork() {

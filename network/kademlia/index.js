@@ -196,7 +196,7 @@ class Kademlia {
             _async.detectSeries(peers, (url, done) => {
                 const contact = kadence.utils.parseContactURL(url);
                 node.join(contact, (err) => {
-                    done(null, (err ? false : true) && node.router.size > 1);
+                    done(null, !err && node.router.size > 1);
                 });
             }, (err, result) => {
                 if (!result) {

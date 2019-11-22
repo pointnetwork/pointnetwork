@@ -125,7 +125,7 @@ class Deployer {
     async updateZDNS(host, id) {
         let target = host.replace('.z', '');
         console.log('Updating ZDNS', {target, id});
-        await this.ctx.network.web3bridge.putZRecord(target, '0x'+id);
+        await this.ctx.web3bridge.putZRecord(target, '0x'+id);
     }
 
     async updateKeyValue(target, values) {
@@ -146,7 +146,7 @@ class Deployer {
                 }
             }
             console.log(value);
-            await this.ctx.network.web3bridge.putKeyValue(target, key, JSON.stringify(value));
+            await this.ctx.web3bridge.putKeyValue(target, key, JSON.stringify(value));
         }
     }
 }

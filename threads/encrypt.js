@@ -18,7 +18,7 @@ function encryptFile(filePath, toFile, privKey, suffix) {
     // todo: check that file exists and it's a file?
 
     let fd = fs.openSync(fromFile, 'r');
-    let ff = fs.openSync(toFile, 'w+');
+    let fe = fs.openSync(toFile, 'w+');
     let c = 0;
     let encrypted = Buffer.alloc(readSize); // initial buffer for CBC mode
     while (true) {
@@ -34,7 +34,7 @@ function encryptFile(filePath, toFile, privKey, suffix) {
             throw e;
         }
 
-        fs.writeSync(ff, encrypted, 0, encrypted.length);
+        fs.writeSync(fe, encrypted, 0, encrypted.length);
 
         if (bytesRead !== readSize) {
             break;
@@ -43,7 +43,7 @@ function encryptFile(filePath, toFile, privKey, suffix) {
         c++;
     }
     fs.closeSync(fd);
-    fs.closeSync(ff);
+    fs.closeSync(fe);
 }
 
 process.on('message', async (message) => {

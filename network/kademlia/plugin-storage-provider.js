@@ -1,6 +1,8 @@
 const ProviderChunk = require('../../db/models/provider_chunk');
 const ethUtil = require('ethereumjs-util');
 const utils = require('@kadenceproject/kadence/lib/utils');
+const path = require('path');
+const { fork } = require('child_process');
 
 class StorageProviderPlugin {
     /**
@@ -13,6 +15,9 @@ class StorageProviderPlugin {
         this.privateKey = privateKey;
         this.chainId = this.ctx.config.network.web3_chain_id;
 
+        // todo: limit decryptors amount, queue them (10 instead of 100 parallel)
+        this.chunk_decryptors = {};
+
         node.use('STORE_CHUNK_REQUEST', this.STORE_CHUNK_REQUEST.bind(this));
         node.use('STORE_CHUNK_SEGMENTS', this.STORE_CHUNK_SEGMENTS.bind(this));
         node.use('STORE_CHUNK_DATA', this.STORE_CHUNK_DATA.bind(this));
@@ -21,9 +26,12 @@ class StorageProviderPlugin {
         node.use('GET_DECRYPTED_CHUNK', this.GET_DECRYPTED_CHUNK.bind(this));
     }
 
-    async STORE_CHUNK_REQUEST(request, response, next) {
+    async STORE_CHUNK_REQUEST(request, response, next) { // todo: shouldn't we use next properly instead of directly stopping here and sending response?
         const chunk_id = request.params[0]; // todo: validate
+        const length = request.params[1]; // todo: validate
+        const expires = request.params[2]; // todo: validate
         //await ProviderChunk.findOrCreate(chunk_id); // todo: enc or dec?
+        // todo: validate/negotiate. also, write these things down, if length is invalid, you just stop there
         response.send([chunk_id]); // success
     }
 
@@ -34,9 +42,6 @@ class StorageProviderPlugin {
 
         let signature;
         try {
-            // todo: delete the next block, it's just for debugging
-            chunk.getData();
-
             signature = this.ctx.utils.pointSign([ 'STORAGE', 'PLEDGE', chunk_id, 'time' ], this.privateKey, this.chainId);
         } catch(e) {
             return next(new Error('Error while trying to sign the pledge'));
@@ -112,17 +117,92 @@ class StorageProviderPlugin {
             return next(new Error('ECHUNKNOTFOUND: Chunk with this id is not found'));
         }
 
-        // const data = chunk.getData();
-        const decrypted = await chunk.getData();
-        response.send([chunk_id, decrypted]);
+        // Note: encrypted chunk data
+        const data = await chunk.getData();
+        response.send([chunk_id, data]);
     }
     async GET_DECRYPTED_CHUNK(request, response, next) {
         const chunk_id = request.params[0]; // todo: validate
         const chunk = await ProviderChunk.findBy('real_id', chunk_id);
         if (!chunk) return next(new Error('ECHUNKNOTFOUND: Decrypted chunk with this id is not found'));
 
+        // todo: cache
+        if (! chunk.hasDecryptedData()) {
+            chunk.getData(); // We're calling this so that if the chunk file doesn't exist, it gets reassembled from the chunks
+            await this.decryptChunkAsync(chunk);
+        }
+
+        // todo: validate response hash
+
         let decrypted = await chunk.getDecryptedData();
         response.send([chunk_id, decrypted]);
+    }
+
+    async decryptChunkAsync(chunk) {
+        return await new Promise((resolve, reject) => {
+            let decryptorID = chunk.id + Math.random(); // todo: can there be a situation where, while the chunk is being decrypted, another request comes in for the same chunk and it gets decrypted in parallel again? catch this
+
+            let chunk_decryptor = fork(path.join(this.ctx.basepath, 'threads/decrypt.js'));
+
+            this.chunk_decryptors[ decryptorID ] = chunk_decryptor;
+
+            chunk_decryptor.on('message', async(message) => {
+                if (message.command === 'decrypt' && message.success === true) {
+                    chunk_decryptor.kill('SIGINT');
+                    delete this.chunk_decryptors[ decryptorID ];
+
+                    resolve();
+                } else {
+                    // todo: don't die here
+                    console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', message);
+                    this.ctx.die();
+                }
+            });
+            // todo: do we need this?
+            chunk_decryptor.addListener("output", function (data) {
+                console.log('Chunk Decryptor output: '+data);
+            });
+            // todo: two error listeners?
+            chunk_decryptor.addListener("error", async (data) => { // todo
+                // await link.refresh();
+                // link.status = StorageLink.STATUS_FAILED;
+                // link.error = data;
+                // link.errored = true;
+                // console.error('Chunk decryption FAILED:' + link.error);
+                // await link.save();
+                // todo: don't die here, reject promise
+                console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', data);
+                this.ctx.die();
+            });
+            chunk_decryptor.on("error", async (data) => { // todo
+                // todo: don't die here, reject promise
+                console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', data);
+                this.ctx.die();
+                // await link.refresh();
+                // link.status = StorageLink.STATUS_FAILED;
+                // link.error = data;
+                // link.errored = true;
+                // console.error('Chunk encryption FAILED:' + link.error);
+                // await link.save();
+            });
+            chunk_decryptor.on("exit", async (code) => {
+                if (code === 0 || code === null) {
+                    // do nothing
+                }
+                else {
+                    // todo: don't die here, reject promise
+                    console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned code', code);
+                    this.ctx.die();
+                    // // todo: figure out which one is failed
+                    // link.status = StorageLink.STATUS_FAILED;
+                    // console.error('Chunk encryption FAILED, exit code', code);
+                    // //link.error = data;
+                    // await link.save();
+                }
+            });
+
+            chunk_decryptor.send({ command: 'decrypt', fileIn: ProviderChunk.getChunkStoragePath(chunk.id), fileOut:  ProviderChunk.getDecryptedChunkStoragePath(chunk.id), pubKey: chunk.pub_key, chunkId: chunk.id });
+        });
     }
 }
 

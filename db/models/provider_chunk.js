@@ -32,6 +32,12 @@ class ProviderChunk extends Model {
         this.ctx.utils.makeSurePathExists(cache_dir);
         return cache_dir + '/' + 'provider_chunk_segment_' + segment_hash;
     }
+    static getDecryptedChunkStoragePath(id) {
+        // todo: can there be a situation where when decrypted, the contents is the same as another decrypted chunk? maybe find a way to store them in one space?
+        const cache_dir = path.join(this.ctx.datadir, this.ctx.config.service_provider.storage.cache_path);
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        return cache_dir + '/' + 'provider_chunk_decrypted_' + id;
+    }
 
     getData() {
         // todo: read from fs if you have it already or retrieve using storage layer client
@@ -52,12 +58,27 @@ class ProviderChunk extends Model {
                 if (segment_hash !== segment_real_hash) throw new Error('EINVALIDHASH: Segment read from disk doesn\'t match its ID'); // todo: intercept?
             }
             data = data.slice(0, this.length); // todo: theor.security issue: can there be several chunk with the same length/diff hash or same hash/diff length?
+
+            fs.writeFileSync(chunk_path, data, { encoding: null });
+            // todo: delete segments? cause we don't need them anymore
+
             return data;
         }
     }
 
     async getDecryptedData() {
-        return await Redkey.decryptDataStatic(this.getData(), this.real_length, this.pub_key);
+        const fileName = ProviderChunk.getDecryptedChunkStoragePath(this.id);
+        if (fs.existsSync(fileName)) {
+            return fs.readFileSync(fileName, { encoding: null }).slice(0, this.real_length);
+        } else {
+            throw new Error('Decrypted file for this chunk doesnt exist');
+        }
+    }
+
+    hasDecryptedData() {
+        // todo: what if file exists but has just been created and partially filled with decrypted data? (still being decrypted)
+        let decryptedFileName = ProviderChunk.getDecryptedChunkStoragePath(this.id);
+        return fs.existsSync(decryptedFileName);
     }
 
     // todo:

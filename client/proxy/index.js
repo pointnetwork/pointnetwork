@@ -62,6 +62,7 @@ class ZProxy {
                 let ext = hash.split('.').slice(-1);
                 if (ext !== hashWithoutExt) {
                     contentType = this.getContentTypeFromExt(ext);
+                    if (contentType.includes('html')) contentType = 'text/html'; // just in case
                 }
                 rendered = await this.ctx.client.storage.readFile(hashWithoutExt); // todo: what if doesn't exist?
             } else if (_.startsWith(parsedUrl.pathname, '/_keyvalue_append/')) {
@@ -72,7 +73,7 @@ class ZProxy {
                 }
             } else {
                 let zroute_id = await this.getZRouteIdFromDomain(host);
-                if (zroute_id === null) return this.abort404(response);
+                if (zroute_id === null) return this.abort404(response, 'route file not found');
 
                 let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
                 if (!routes) return this.abort404(response); // todo: should be a different error
@@ -148,7 +149,7 @@ class ZProxy {
                         delete postData[k];
                     } else if (_.startsWith(k, '__')) {
                         // storage
-                        const cache_dir = path.join(this.ctx.datadir, 'proxy_cache');
+                        const cache_dir = path.join(this.ctx.datadir, 'proxy_cache'); // todo: put into defaultConfig
                         this.ctx.utils.makeSurePathExists(cache_dir);
                         const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(v));
                         fs.writeFileSync(tmpPostDataFilePath, v);
@@ -177,7 +178,7 @@ class ZProxy {
     }
 
     async getZRouteIdFromDomain(host) {
-        const result = await this.ctx.network.web3bridge.getZRecord(host);
+        const result = await this.ctx.web3bridge.getZRecord(host);
         console.log('getZRouteIdFromDomain result for '+host, result);
         return result;
 
