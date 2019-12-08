@@ -46,6 +46,15 @@ class Core {
             // console.log(await this.ctx.web3bridge.web3send(method));
             // return this.ctx.die();
 
+            // if (this.ctx.config.client.wallet.account.toLowerCase() === '0x438773aCB694ed5492433d6E78E6D8C389136067'.toLowerCase()) { // test2
+            //     const catFile = path.join(this.ctx.basepath, '_local/test_files/abitest.txt');
+            //     let uploaded;
+            //     console.log(uploaded = await this.ctx.client.storage.putFile(catFile));
+            //     console.log('uploaded, downloading...');
+            //     console.log(await this.ctx.client.storage.getFile(uploaded.id));
+            //     console.log('downloaded');
+            // }
+
             // let fl = fs.readFileSync('/Users/s/.point/test2/deployer_cache/e5252f3d40baf38bd208632ff495f7ce9da8ff36');
             // let fl = fs.readFileSync('./example/example.z/views/star-icon.png');
             //

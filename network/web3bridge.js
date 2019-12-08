@@ -36,9 +36,32 @@ class Web3Bridge {
     async web3send(method, gasLimit) {
         const account = this.web3.eth.defaultAccount;
         const gasPrice = await this.web3.eth.getGasPrice();
-        console.log(account);
         if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
         return await method.send({ from: account, gasPrice, gas: gasLimit });
+    }
+
+    async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage
+        const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
+        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
+        const abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+        const contract = new this.web3.eth.Contract(abi.abi, at);
+        let result = await contract.methods[ method ]( ...params ).call();
+        return result;
+    }
+
+    async sendContract(target, contractName, methodName, params) { // todo: multiple arguments, but check existing usage
+        const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
+        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
+        const abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+        const contract = new this.web3.eth.Contract(abi.abi, at);
+        const method = contract.methods[ methodName ](...params);
+        console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
+    }
+
+    async identityByOwner(owner) {
+        const identityContract = await this.loadIdentityContract();
+        const method = identityContract.methods.getIdentityByOwner(owner);
+        return await method.call();
     }
 
     async getZRecord(domain) {
@@ -56,7 +79,6 @@ class Web3Bridge {
         identity = identity.replace('.z', ''); // todo: rtrim instead
         const contract = await this.loadIdentityContract();
         let result = await contract.methods.ikvGet(identity, key).call();
-        console.log(result);
         return result;
     }
     async putKeyValue(identity, key, value) {
@@ -64,7 +86,7 @@ class Web3Bridge {
         identity = identity.replace('.z', ''); // todo: rtrim instead
         const contract = await this.loadIdentityContract();
         const method = contract.methods.ikvPut(identity, key, value);
-        console.log(await this.web3send(method, 2000000));
+        console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
     }
 }
 

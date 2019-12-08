@@ -46,6 +46,7 @@ class Utils {
         return true;
     }
 
+    // todo: refactor out signature related functions, into a separate clase
     static pointSign(message, privateKey, chainId) {
         const fullMessage = this.pointConstructFullMessageToSign(message);
 
@@ -56,7 +57,6 @@ class Utils {
         );
         return signature;
     }
-
     static pointConstructFullMessageToSign(message) {
         let sanitizedMessage;
 
@@ -74,7 +74,6 @@ class Utils {
 
         return 'POINT|' + sanitizedMessage; // todo: versioning, chainId+ etc
     }
-
     static verifyPointSignature(signedMessage, vrs, publicKey, chainId) {
         let fullMessage = this.pointConstructFullMessageToSign(signedMessage);
 
@@ -88,7 +87,6 @@ class Utils {
         }
         return true;
     }
-
     static serializeSignature(vrs) {
         return JSON.stringify({v: vrs.v.toString(), r: vrs.r.toString('base64'), s: vrs.s.toString('base64')});
     }

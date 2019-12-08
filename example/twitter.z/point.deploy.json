@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "target": "twitter.z",
+  "contracts": [
+    "Twitter"
+  ]
+}

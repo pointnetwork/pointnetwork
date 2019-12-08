@@ -46,10 +46,10 @@ class ProviderChunk extends Model {
             return fs.readFileSync(chunk_path, { encoding: null });
         } else {
             // todo: would be correct to reassemble them when retrieving so that they're accessible by chunk_path
-            let data = Buffer.alloc(0);
 
             if (!this.segment_hashes) throw new Error('?: segment hashes not found'); // todo
 
+            let data = Buffer.alloc(0);
             for(let segment_hash of this.segment_hashes) {
                 const segment_path = ProviderChunk.getSegmentStoragePath(segment_hash, this.id);
                 let buffer = fs.readFileSync(segment_path, { encoding: null }); // todo: what if doesn't exist?
@@ -57,10 +57,12 @@ class ProviderChunk extends Model {
                 const segment_real_hash = this.ctx.utils.hashFnHex(buffer);
                 if (segment_hash !== segment_real_hash) throw new Error('EINVALIDHASH: Segment read from disk doesn\'t match its ID'); // todo: intercept?
             }
+            // Note: Buffer.slice is (start,end) not (start,length)
             data = data.slice(0, this.length); // todo: theor.security issue: can there be several chunk with the same length/diff hash or same hash/diff length?
 
             fs.writeFileSync(chunk_path, data, { encoding: null });
             // todo: delete segments? cause we don't need them anymore
+            // todo: check the hash of the chunk you reassembled, just in case?
 
             return data;
         }

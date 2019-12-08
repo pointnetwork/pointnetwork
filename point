@@ -158,8 +158,7 @@ process.on('uncaughtException', (err) => {
 });
 process.on('unhandledRejection', (err) => {
     npid.remove(pidFilePath);
-    ctx.log.error(err.message);
-    ctx.log.debug(err.stack);
+    ctx.log.error('Unhandled Rejection:', err);
     process.exit(1);
 });
 

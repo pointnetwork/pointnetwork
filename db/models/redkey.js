@@ -39,7 +39,7 @@ class Redkey extends Model {
                     // passphrase: 'top secret'
                 }
             }, async(err, publicKey, privateKey) => {
-                if (err) reject(err);
+                if (err) reject('Error: '+err);
 
                 const key = await Redkey.new();
                 key.pub = publicKey;

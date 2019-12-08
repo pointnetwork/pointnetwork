@@ -1,0 +1,16 @@
+<html>
+<head>
+    <title>Twitter</title>
+    <link type="text/css" rel="stylesheet" href="index.css"/>
+</head>
+<body>
+<header>
+    <h1>Decentralized Twitter</h1>
+</header>
+
+<main>
+    {% block contents %}
+    {% endblock %}
+</main>
+</body>
+</html>

@@ -8,6 +8,7 @@ It's very raw prototype code, so you have to do lots of things manually right no
 
 1. Start your private Ethereum-compatible web3 provider/blockchain on port `7545` ([Ganache](https://www.trufflesuite.com/ganache) is recommended).
 1. Edit the demo configs in `resources/demo/config.test?.json` to insert the addresses with their private keys that hold some testnet money into `client.wallet` branch.
+1. Do the same for the addresses in `truffle/contracts/Identity.sol:constructor()` if you want to have the test identities claimed at the start.
 1. Put the demo configs in their places in your home directory:
     ```
     point demo

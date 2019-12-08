@@ -117,6 +117,7 @@ class Storage {
 
     async readFile(id, encoding = null) {
         if (!id) throw new Error('undefined or null id passed to storage.readFile');
+        id = id.replace('0x', '').toLowerCase();
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
         this.ctx.utils.makeSurePathExists(cache_dir);
         const tmpFileName = path.join(cache_dir, 'file_' + id);
@@ -145,7 +146,6 @@ class Storage {
         uploadingChunks.forEach((chunk) => {
             setImmediate(async() => { // not waiting, just queueing for execution
                 await this.chunkUploadingTick(chunk);
-                await chunk.reconsiderUploadingStatus(true);
             });
         });
 
@@ -153,7 +153,6 @@ class Storage {
         downloadingChunks.forEach((chunk) => { // not waiting, just queueing for execution
             setImmediate(async() => {
                 await this.chunkDownloadingTick(chunk);
-                await chunk.reconsiderDownloadingStatus(true);
             });
         });
     }
@@ -224,6 +223,8 @@ class Storage {
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
+        let linkStatusChanged = false;
+
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
             let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
@@ -235,16 +236,20 @@ class Storage {
             link.status = StorageLink.STATUS_CREATED;
             await link.save();
 
-            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
-                await link.refresh();
-                if (err) {
-                    link.error = err.toString();
-                    link.status = StorageLink.STATUS_FAILED; // todo: but why? declined?
-                    await link.save();
-                } else {
-                    link.status = StorageLink.STATUS_AGREED;
-                    await link.save();
-                }
+            linkStatusChanged = await new Promise((resolve, reject) => {
+                this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
+                    await link.refresh();
+                    if (!err) {
+                        link.status = StorageLink.STATUS_AGREED;
+                        await link.save();
+                        resolve(true);
+                    } else {
+                        link.error = err.toString();
+                        link.status = StorageLink.STATUS_FAILED; // todo: but why? declined?
+                        await link.save();
+                        reject(err);
+                    }
+                });
             });
         }
 
@@ -261,77 +266,90 @@ class Storage {
                 this.chunk_encryptors = {};
             }
 
-            let chunk_encryptor = fork(path.join(this.ctx.basepath, 'threads/encrypt.js'));
-            this.chunk_encryptors[ chunk.id + link.id ] = chunk_encryptor;
+            linkStatusChanged = await new Promise(async(resolve, reject) => {
+                let chunk_encryptor = fork(path.join(this.ctx.basepath, 'threads/encrypt.js'));
+                this.chunk_encryptors[chunk.id + link.id] = chunk_encryptor;
 
-            chunk_encryptor.on('message', async(message) => {
-                if (message.command === 'encrypt' && message.success === true) {
-                    let link = await this.ctx.db.storage_link.find(message.linkId);
-                    // Let's calculate merkle tree
+                chunk_encryptor.on('message', async (message) => {
+                    if (message.command === 'encrypt' && message.success === true) {
+                        let link = await this.ctx.db.storage_link.find(message.linkId);
+                        // Let's calculate merkle tree
 
-                    const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes;
-                    const data = link.getEncryptedData();
-                    const data_length = data.length;
-                    let segment_hashes = [];
-                    for(let i = 0; i < Math.ceil(data_length / SEGMENT_SIZE_BYTES); i++) { // todo: separate into encryption section
-                        segment_hashes.push(this.ctx.utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, SEGMENT_SIZE_BYTES)));
+                        const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes; // todo: check that it's not 0/null or some weird value
+                        const data = link.getEncryptedData();
+                        const data_length = data.length;
+                        let segment_hashes = [];
+                        for (let i = 0; i < Math.ceil(data_length / SEGMENT_SIZE_BYTES); i++) { // todo: separate into encryption section
+                            // Note: Buffer.slice is (start, end) not (start, length)
+                            segment_hashes.push(this.ctx.utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, i * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES)));
+                        }
+
+                        const merkleTree = this.ctx.utils.merkle.merkle(segment_hashes, this.ctx.utils.hashFn);
+
+                        await link.refresh();
+                        link.status = StorageLink.STATUS_ENCRYPTED;
+                        link.encrypted_hash = message.hash;
+                        link.encrypted_length = data_length;
+                        link.segment_hashes = segment_hashes.map(x => x.toString('hex'));
+                        link.merkle_tree = merkleTree.map(x => x.toString('hex'));
+                        link.merkle_root = link.merkle_tree[link.merkle_tree.length - 1].toString('hex');
+                        await link.save();
+                        await link.refresh();
+
+                        let chunk_encryptor = this.chunk_encryptors[chunk.id + link.id];
+                        chunk_encryptor.kill('SIGINT');
+                        delete this.chunk_encryptors[chunk.id + link.id];
+
+                        resolve(true);
+                    } else {
+                        console.warn('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ', message);
+                        this.ctx.die();
+                        reject('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ' + message);
                     }
-
-                    const merkleTree = this.ctx.utils.merkle.merkle(segment_hashes, this.ctx.utils.hashFn);
-
+                });
+                // todo: do we need this?
+                chunk_encryptor.addListener("output", function (data) {
+                    console.log('Chunk Encryptor output: ' + data);
+                });
+                // todo: two error listeners?
+                chunk_encryptor.addListener("error", async (data) => { // todo
                     await link.refresh();
-                    link.status = StorageLink.STATUS_ENCRYPTED;
-                    link.encrypted_hash = message.hash;
-                    link.encrypted_length = data_length;
-                    link.segment_hashes = segment_hashes.map(x => x.toString('hex'));
-                    link.merkle_tree = merkleTree.map(x => x.toString('hex'));
-                    link.merkle_root = link.merkle_tree[ link.merkle_tree.length - 1 ].toString('hex');
-                    await link.save();
-                    await link.refresh();
-
-                    let chunk_encryptor = this.chunk_encryptors[ chunk.id + link.id ];
-                    chunk_encryptor.kill('SIGINT');
-                    delete this.chunk_encryptors[ chunk.id + link.id ];
-                } else {
-                    console.warn('Something is wrong, encryptor for chunk '+chunk.id+' returned ', message);
-                    this.ctx.die();
-                }
-            });
-            // todo: do we need this?
-            chunk_encryptor.addListener("output", function (data) {
-                console.log('Chunk Encryptor output: '+data);
-            });
-            // todo: two error listeners?
-            chunk_encryptor.addListener("error", async (data) => { // todo
-                await link.refresh();
-                link.status = StorageLink.STATUS_FAILED;
-                link.error = data;
-                link.errored = true;
-                console.error('Chunk encryption FAILED:' + link.error);
-                await link.save();
-            });
-            chunk_encryptor.on("error", async (data) => { // todo
-                await link.refresh();
-                link.status = StorageLink.STATUS_FAILED;
-                link.error = data;
-                link.errored = true;
-                console.error('Chunk encryption FAILED:' + link.error);
-                await link.save();
-            });
-            chunk_encryptor.on("exit", async (code) => {
-                if (code === 0 || code === null) {
-                    // do nothing
-                }
-                else {
-                    // todo: figure out which one is failed
                     link.status = StorageLink.STATUS_FAILED;
-                    console.error('Chunk encryption FAILED, exit code', code);
-                    //link.error = data;
+                    link.error = data;
+                    link.errored = true;
                     await link.save();
-                }
-            });
+                    reject('Chunk encryption FAILED:' + link.error);
+                });
+                chunk_encryptor.on("error", async (data) => { // todo
+                    await link.refresh();
+                    link.status = StorageLink.STATUS_FAILED;
+                    link.error = data;
+                    link.errored = true;
+                    await link.save();
+                    reject('Chunk encryption FAILED:' + link.error);
+                });
+                chunk_encryptor.on("exit", async (code) => {
+                    if (code === 0 || code === null) {
+                        // do nothing
+                    } else {
+                        // todo: figure out which one is failed
+                        link.status = StorageLink.STATUS_FAILED;
+                        //link.error = data;
+                        await link.save();
+                        reject('Chunk encryption FAILED, exit code' + code);
+                    }
+                });
 
-            chunk_encryptor.send({ command: 'encrypt', filePath: Chunk.getChunkStoragePath(chunk.id), privKey: (await link.getRedkey()).priv, chunkId: chunk.id, linkId: link.id });
+                const privKey = (await link.getRedkey()).priv;
+
+                chunk_encryptor.send({
+                    command: 'encrypt',
+                    filePath: Chunk.getChunkStoragePath(chunk.id),
+                    privKey: privKey,
+                    chunkId: chunk.id,
+                    linkId: link.id
+                });
+            });
         }
 
         // Send segmentation data for "encrypted"
@@ -355,21 +373,26 @@ class Storage {
                 key.pub,
                 chunk.length,
             ];
-            this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async(err, result) => {
-                await link.refresh();
-                if (err) {
-                    if (_.startsWith(err, 'ECHUNKALREADYSTORED')) {
-                        link.status = StorageLink.STATUS_DATA_RECEIVED;
+            linkStatusChanged = await new Promise(async(resolve, reject) => {
+                this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
+                    await link.refresh();
+                    if (!err) {
+                        link.status = StorageLink.STATUS_SENDING_DATA;
                         await link.save();
+                        resolve(true);
                     } else {
-                        link.status = StorageLink.STATUS_FAILED;
-                        link.error = err.toString();
-                        await link.save();
+                        if (_.startsWith(err, 'ECHUNKALREADYSTORED')) {
+                            link.status = StorageLink.STATUS_DATA_RECEIVED;
+                            await link.save();
+                            reject(err);
+                        } else {
+                            link.status = StorageLink.STATUS_FAILED;
+                            link.error = err.toString();
+                            await link.save();
+                            reject(err);
+                        }
                     }
-                } else {
-                    link.status = StorageLink.STATUS_SENDING_DATA;
-                    await link.save();
-                }
+                });
             });
         }
 
@@ -411,26 +434,32 @@ class Storage {
             const data = [
                 link.merkle_root,
                 idx,
-                encryptedData.slice(idx * SEGMENT_SIZE_BYTES, SEGMENT_SIZE_BYTES),
+                // Note: Buffer.slice is (start, end) not (start, length)
+                encryptedData.slice(idx * SEGMENT_SIZE_BYTES, idx * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES),
             ];
-            this.send('STORE_CHUNK_DATA', data, link.provider_id, async(err, result) => {
-                await link.refresh();
-                if (err) {
-                    link.status = StorageLink.STATUS_FAILED;
-                    link.error = err.toString();
-                    await link.save();
-                } else {
-                    // todo: use the clues server gives you about which segments it already received (helps in case of duplication?)
-                    if (!link.segments_received) link.segments_received = [];
-                    link.segments_received.push(idx);
-                    link.segments_received = _.uniq(link.segments_received);
-                    if (Object.keys(link.segments_received).length >= totalSegments) {
-                        link.segments_received = null; // todo: delete completely, by using undefined?
-                        link.segments_sent = null; // todo: delete completely, by using undefined?
-                        link.status = StorageLink.STATUS_DATA_RECEIVED;
+
+            linkStatusChanged = await new Promise((resolve, reject) => {
+                this.send('STORE_CHUNK_DATA', data, link.provider_id, async (err, result) => {
+                    await link.refresh();
+                    if (!err) {
+                        // todo: use the clues server gives you about which segments it already received (helps in case of duplication?)
+                        if (!link.segments_received) link.segments_received = [];
+                        link.segments_received.push(idx);
+                        link.segments_received = _.uniq(link.segments_received);
+                        if (Object.keys(link.segments_received).length >= totalSegments) {
+                            link.segments_received = null; // todo: delete completely, by using undefined?
+                            link.segments_sent = null; // todo: delete completely, by using undefined?
+                            link.status = StorageLink.STATUS_DATA_RECEIVED;
+                        }
+                        await link.save();
+                        resolve(true);
+                    } else {
+                        link.status = StorageLink.STATUS_FAILED;
+                        link.error = err.toString();
+                        await link.save();
+                        reject(err);
                     }
-                    await link.save();
-                }
+                });
             });
         }
 
@@ -442,39 +471,43 @@ class Storage {
             link.status = StorageLink.STATUS_ASKING_FOR_SIGNATURE;
             await link.save();
 
-            this.send('STORE_CHUNK_SIGNATURE_REQUEST', [link.merkle_root], link.provider_id, async(err, result) => {
-                await link.refresh();
-                try {
-                    if (err) throw new Error('Provider responded with: '+err); // todo
+            linkStatusChanged = await new Promise((resolve, reject) => {
+                this.send('STORE_CHUNK_SIGNATURE_REQUEST', [link.merkle_root], link.provider_id, async (err, result) => {
+                    await link.refresh();
+                    try {
+                        if (err) reject('Provider responded with: ' + err); // todo
 
-                    // Verify the signature
-                    const chunk_id = result[0]; // todo: validate
-                    const signature = result[1];
+                        // Verify the signature
+                        const chunk_id = result[0]; // todo: validate
+                        const signature = result[1];
 
-                    // todo: now count the debt
-                    // todo: and finally pay it before your next request
+                        // todo: now count the debt
+                        // todo: and finally pay it before your next request
 
-                    let conditions = {
-                        chunk_id: link.merkle_root
-                    }; // todo // also todo combined pledge?
+                        let conditions = {
+                            chunk_id: link.merkle_root
+                        }; // todo // also todo combined pledge?
 
-                    link.pledge = {
-                        conditions,
-                        signature
-                    };
-                    link.validatePledge();
-                    link.status = StorageLink.STATUS_SIGNED;
-                    await link.save();
+                        link.pledge = {
+                            conditions,
+                            signature
+                        };
+                        link.validatePledge();
+                        link.status = StorageLink.STATUS_SIGNED;
+                        await link.save();
 
-                    const chunk = await link.getChunk();
-                    await chunk.reconsiderUploadingStatus(true);
+                        // const chunk = await link.getChunk();
+                        // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
 
-                } catch(e) {
-                    console.debug('FAILED CHUNK', {err, result}, chunk.id, e);
-                    link.status = StorageLink.STATUS_FAILED;
-                    link.error = e.toString();
-                    await link.save();
-                }
+                        resolve(true);
+                    } catch (e) {
+                        console.debug('FAILED CHUNK', {err, result}, chunk.id, e);
+                        link.status = StorageLink.STATUS_FAILED;
+                        link.error = e.toString();
+                        await link.save();
+                        reject(e);
+                    }
+                });
             });
         }
 
@@ -487,6 +520,14 @@ class Storage {
         // todo: what about expiring and renewing?
 
         this.uploadingChunksProcessing[chunk.id] = false;
+
+        await chunk.reconsiderUploadingStatus(true);
+
+        if (linkStatusChanged) {
+            setImmediate(async() => { // not waiting, just queueing for execution
+                this.chunkUploadingTick(chunk);
+            });
+        }
     }
 
     send(cmd, data, contact, callback) {
