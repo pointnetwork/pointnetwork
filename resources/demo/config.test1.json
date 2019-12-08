@@ -8,7 +8,7 @@
   },
   "client": {
     "wallet": {
-      "account": "0x989695771d51de19e9ccb943d32e58f872267fcc",
+      "account": "0x989695771D51dE19e9ccb943d32E58F872267fcC",
       "privateKey": "37a3f44cf78f02bbec411ae51fb85fef45bdea85e5d8eff53ea397a5e0f94016"
     }
   }

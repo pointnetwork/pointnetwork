@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 contract Identity {
     mapping(string => address) identityToOwner;
-    mapping(address => bool) ownersExist;
+    mapping(address => string) ownerToIdentity;
     mapping(string => mapping(string => string)) ikv;
     // At the same time this mapping is used to see if the identity is registered at all
     mapping(string => string) lowercaseToCanonicalIdentities;
@@ -12,6 +12,19 @@ contract Identity {
     event IdentityRegistered(string handle, address identityOwner);
     event IKVSet(string identity, string key, string value);
 
+    constructor() public {
+        // Some initial domains for the demos, you can add your own, or better yet, register through normal means
+        identityToOwner['storage_provider'] = 0x989695771D51dE19e9ccb943d32E58F872267fcC;
+        ownerToIdentity[0x989695771D51dE19e9ccb943d32E58F872267fcC] = 'storage_provider';
+
+        identityToOwner['example'] = 0x438773aCB694ed5492433d6E78E6D8C389136067;
+        identityToOwner['twitter'] = 0x438773aCB694ed5492433d6E78E6D8C389136067;
+        ownerToIdentity[0x438773aCB694ed5492433d6E78E6D8C389136067] = 'example';
+
+        identityToOwner['test3'] = 0xE8a534F0816538bc0923F707dA975E25C0623307;
+        ownerToIdentity[0xE8a534F0816538bc0923F707dA975E25C0623307] = 'test3';
+    }
+
     function register(string memory handle, address identityOwner) public {
         if (!_isValidHandle(handle)) revert('Only alphanumeric characters and an underscore allowed');
 
@@ -20,16 +33,20 @@ contract Identity {
         if (!_isEmptyString(lowercaseToCanonicalIdentities[lowercase])) revert('This identity has already been registered');
 
         // Check if this owner already has an identity attached
-        if (ownersExist[identityOwner]) revert('This owner already has an identity attached');
+        if (!_isEmptyString(ownerToIdentity[identityOwner])) revert('This owner already has an identity attached');
 
         // Attach this identity to the owner address
         identityToOwner[handle] = identityOwner;
-        ownersExist[identityOwner] = true;
+        ownerToIdentity[identityOwner] = handle;
 
         // Add canonical version
         lowercaseToCanonicalIdentities[lowercase] = handle;
 
         emit IdentityRegistered(handle, identityOwner);
+    }
+
+    function getIdentityByOwner(address owner) public view returns (string memory identity) {
+        return ownerToIdentity[owner];
     }
 
     modifier onlyIdentityOwner(string memory identity) {

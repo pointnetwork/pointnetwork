@@ -75,6 +75,31 @@ class Renderer {
             Twig.exports.extendFunction("storage_get", async(key) => {
                 return await this.ctx.client.storage.readFile(key, 'utf-8');
             });
+            Twig.exports.extendFunction("identity_by_owner", async(owner) => {
+                return await this.ctx.web3bridge.identityByOwner(owner);
+            });
+            Twig.exports.extendFunction("contract_get", async(target, contractName, method, params) => {
+                return await this.ctx.web3bridge.callContract(target, contractName, method, params);
+            });
+            Twig.exports.extendFunction("contract_list", async(target, contractName, method) => {
+                let i = 0;
+                let results = [];
+                while(true) {
+                    try {
+                        results.push(await this.ctx.web3bridge.callContract(target, contractName, method, [i]));
+                    } catch(e) {
+                        // todo: only if the error is related to the array bound? how can we standardize this?
+                        break;
+                    }
+
+                    i++;
+
+                    if (i > 50000) {
+                        throw new Error('Something went wrong, more than 50000 iterations'); // todo
+                    }
+                }
+                return results;
+            });
 
             Twig.exports.extendFilter('unjson', function(value) {
                 return JSON.parse(value);

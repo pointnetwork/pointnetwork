@@ -91,6 +91,14 @@ class Deployer {
 
         let target = deployConfig.target;
 
+        // Deploy contracts
+        let contractNames = deployConfig.contracts;
+        if (!contractNames) contractNames = [];
+        for(let contractName of contractNames) {
+            let fileName = path.join(deployPath, 'contracts', contractName+'.sol');
+            await this.deployContract(target, contractName, fileName);
+        }
+
         let routesFilePath = path.join(deployPath, 'routes.json');
         let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         let routes = JSON.parse(routesFile);
@@ -121,6 +129,87 @@ class Deployer {
 
         console.log('Deploy finished');
     }
+
+    async deployContract(target, contractName, fileName) {
+        const path = require('path');
+        const solc = require('solc');
+        const fs = require('fs-extra');
+
+        const cache_dir = path.join(this.ctx.datadir, 'deployer_cache');
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        const buildPath = path.resolve(cache_dir, 'build');
+        fs.removeSync(buildPath);
+
+        const compileConfig = {
+            language: 'Solidity',
+            sources: {
+                [contractName+'.sol']: {
+                    content: fs.readFileSync(fileName, 'utf8')
+                },
+            },
+            settings: {
+                outputSelection: { // return everything
+                    '*': {
+                        '*': ['*']
+                    }
+                }
+            }
+        };
+
+        let getImports = function(dependency) {
+            switch (dependency) {
+                case contractName+'.sol':
+                    return {contents: fs.readFileSync(fileName, 'utf8')};
+                default:
+                    return {error: 'File not found'}
+            }
+        };
+
+        let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), getImports));
+
+        if (!compiledSources) {
+            throw new Error(">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\nNO OUTPUT");
+        } else if (compiledSources.errors) {
+            let found = false;
+            let msg = '';
+            for(let e of compiledSources.errors) {
+                if (e.severity === 'warning') {
+                    console.warn(e);
+                    continue;
+                }
+                found = true;
+                msg += error.formattedMessage + "\n"
+            }
+            msg = ">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\n" + msg;
+            if (found) throw new Error(msg);
+        }
+
+        let artifacts;
+        for (let contractFileName in compiledSources.contracts) {
+            const _contractName = contractFileName.replace('.sol', '');
+            artifacts = compiledSources.contracts[contractFileName][_contractName];
+        }
+
+        const truffleContract = require('truffle-contract');
+        const contract = truffleContract(artifacts);
+        contract.setProvider(this.ctx.web3.currentProvider);
+
+        let gasPrice = await this.ctx.web3.eth.getGasPrice();
+        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: 700000 }); // todo: magic number
+        let address = deployedContractInstance.address;
+
+        console.log('Deployed Contract Instance of '+contractName, address);
+
+        const artifactsJSON = JSON.stringify(artifacts);
+        const tmpFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(artifactsJSON));
+        fs.writeFileSync(tmpFilePath, artifactsJSON);
+        let artifacts_storage_id = (await this.ctx.client.storage.putFile(tmpFilePath)).id;
+
+        await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/address/'+contractName, address);
+        await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/abi/'+contractName, artifacts_storage_id);
+
+        console.log('Contract '+contractName+' deployed');
+    };
 
     async updateZDNS(host, id) {
         let target = host.replace('.z', '');

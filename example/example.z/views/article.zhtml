@@ -48,7 +48,7 @@
             {% endfor %}
 
             <form method="post" action="/_keyvalue_append/article_{{ id }}_comments" class="comments-form">
-                <textarea name="__contents" required rows=5 cols=40></textarea>
+                <textarea name="storage[contents]" required rows=5 cols=40></textarea>
                 <input type="submit" value="Add" />
             </form>
         </div>

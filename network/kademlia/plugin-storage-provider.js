@@ -114,7 +114,7 @@ class StorageProviderPlugin {
         const chunk_id = request.params[0]; // todo: validate
         const chunk = await ProviderChunk.find(chunk_id);
         if (! chunk) {
-            return next(new Error('ECHUNKNOTFOUND: Chunk with this id is not found'));
+            return next(new Error('ECHUNKNOTFOUND: Chunk with id '+chunk_id+' is not found'));
         }
 
         // Note: encrypted chunk data
@@ -124,7 +124,7 @@ class StorageProviderPlugin {
     async GET_DECRYPTED_CHUNK(request, response, next) {
         const chunk_id = request.params[0]; // todo: validate
         const chunk = await ProviderChunk.findBy('real_id', chunk_id);
-        if (!chunk) return next(new Error('ECHUNKNOTFOUND: Decrypted chunk with this id is not found'));
+        if (!chunk) return next(new Error('ECHUNKNOTFOUND: Decrypted chunk with id '+chunk_id+' is not found'));
 
         // todo: cache
         if (! chunk.hasDecryptedData()) {

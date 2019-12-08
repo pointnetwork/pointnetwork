@@ -1,0 +1,30 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+    {% set tweets = contract_list(host, 'Twitter', 'getTweet') %}
+
+    {% for tweet in tweets %}
+        <div class="tweet">
+            <p><em>@{{ identity_by_owner(tweet.from) }}</em></p>
+            <p><em>{{ tweet.from }}</em></p>
+
+            {% set contents = storage_get(tweet.contents) %}
+
+            <p>
+                {{ contents|length <= 280 ? contents : 'N/A' }}
+            </p>
+            <p><em>{{ tweet.timestamp | date('Y-m-d H:i:s') }}</em></p>
+            <form method="post" action="/_contract_send/Twitter.like(tweet_id)">
+                <input type="hidden" name="tweet_id" value="{{ loop.index0 }}" />
+                <input type="submit" value="{{ tweet.likes }} likes" />
+            </form>
+        </div>
+    {% else %}
+        <b>No tweets here. Let's post something!</b>
+    {% endfor %}
+
+    <form method="post" action="/_contract_send/Twitter.tweet(contents)">
+        <textarea name="storage[contents]" required maxlength="280"></textarea>
+        <input type="submit"/>
+    </form>
+{% endblock %}

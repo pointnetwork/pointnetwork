@@ -21,7 +21,7 @@
             <tr>
                 <th>Contents:</th>
                 <td>
-                    <textarea name="__contents" required rows="20" cols="40"></textarea>
+                    <textarea name="storage[contents]" required rows="20" cols="40"></textarea>
                 </td>
             </tr>
             <tr>

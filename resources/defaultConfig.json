@@ -40,6 +40,7 @@
   "storage": {
     "chunk_size_bytes": 262144,
     "___segment_size_bytes": 2048,
+    "____segment_size_bytes": 8192,
     "segment_size_bytes": 16384,
     "redkey_encryption_bits": 1024,
     "redkey_stupid_padding": 1
@@ -61,8 +62,8 @@
       "cooldown_reset_time": "60M"
     },
 
-    "identity_contract_address": "0x950F293dDBACcFf8fB63452C9274Ccb1c61BdF19"
+    "identity_contract_address": "0x3CE9B7DdE7368096e22F5f8B7C010739eCFB9663"
   },
-  "simulation_delay": 50,
+  "simulation_delay": 10000,
   "hardcode_default_provider": "http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc"
 }
