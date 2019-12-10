@@ -5,6 +5,7 @@ const _ = require('lodash');
 class Deployer {
     constructor(ctx) {
         this.ctx = ctx;
+        this.config = this.ctx.config.deployer;
         this.cache_uploaded = {};
     }
 
@@ -12,13 +13,17 @@ class Deployer {
         // todo
     }
 
+    getCacheDir() {
+        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        return cache_dir;
+    }
+
     // todo: beware of infinite recursion!
     async processTemplate(fileName, deployPath) {
         if (fileName in this.cache_uploaded) return this.cache_uploaded[ fileName ];
 
         console.log('uploading '+fileName+'...');
-
-        const cache_dir = path.join(this.ctx.datadir, 'deployer_cache');
 
         let tmpTemplate, template;
 
@@ -28,7 +33,7 @@ class Deployer {
 
             console.log('skipping template parser for', fileName, 'hash', this.ctx.utils.hashFnHex(template));
 
-            tmpTemplate = path.join(cache_dir, this.ctx.utils.hashFnHex(template));
+            tmpTemplate = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(template));
             fs.writeFileSync(tmpTemplate, template, { encoding: null });
 
         } else {
@@ -45,7 +50,7 @@ class Deployer {
                 const subTemplate = path.join(deployPath, 'views', result[1]);
                 if (!fs.existsSync(subTemplate)) throw new Error('Template '+result[1]+' ('+subTemplate+') not found!'); // todo: +stack etc.
 
-                const hash = await this.processTemplate(subTemplate, deployPath); // todo: parallelize // todo: what if already uploaded? use cache
+                const hash = await this.processTemplate(subTemplate, deployPath); // todo: parallelize
                 template = template.replace(result[1], hash); // todo: replace using outer stuff as well
             }
 
@@ -63,12 +68,12 @@ class Deployer {
 
                     let ext = /(?:\.([^.]+))?$/.exec(result[1])[1];
 
-                    const hash = await this.processTemplate(fl, deployPath); // todo: parallelize // todo: what if already uploaded? use cache // todo: don't use processTemplate for css files! just upload them, and that's it
+                    const hash = await this.processTemplate(fl, deployPath); // todo: parallelize
                     template = template.replace(result[1], '/_storage/'+hash+'.'+ext); // todo: replace using outer stuff as well
                 }
             }
 
-            tmpTemplate = path.join(cache_dir, this.ctx.utils.hashFnHex(template));
+            tmpTemplate = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(template));
             fs.writeFileSync(tmpTemplate, template, 'utf-8');
         }
 
@@ -80,8 +85,6 @@ class Deployer {
     }
 
     async deploy(deployPath) {
-        const cache_dir = path.join(this.ctx.datadir, 'deployer_cache');
-
         // todo: error handling, as usual
         let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
@@ -118,8 +121,7 @@ class Deployer {
         }
 
         console.log('uploading route file...');
-        this.ctx.utils.makeSurePathExists(cache_dir);
-        const tmpRoutesFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(JSON.stringify(routes)));
+        const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
         fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
         let routeFileUploaded = await this.ctx.client.storage.putFile(tmpRoutesFilePath); // todo: and more options
 
@@ -134,11 +136,6 @@ class Deployer {
         const path = require('path');
         const solc = require('solc');
         const fs = require('fs-extra');
-
-        const cache_dir = path.join(this.ctx.datadir, 'deployer_cache');
-        this.ctx.utils.makeSurePathExists(cache_dir);
-        const buildPath = path.resolve(cache_dir, 'build');
-        fs.removeSync(buildPath);
 
         const compileConfig = {
             language: 'Solidity',
@@ -201,7 +198,7 @@ class Deployer {
         console.log('Deployed Contract Instance of '+contractName, address);
 
         const artifactsJSON = JSON.stringify(artifacts);
-        const tmpFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(artifactsJSON));
+        const tmpFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(artifactsJSON));
         fs.writeFileSync(tmpFilePath, artifactsJSON);
         let artifacts_storage_id = (await this.ctx.client.storage.putFile(tmpFilePath)).id;
 
@@ -224,9 +221,7 @@ class Deployer {
                 let v = value[k];
                 if (_.startsWith(k, '__')) {
                     console.log('uploading keyvalue from config', key, k);
-                    const cache_dir = path.join(this.ctx.datadir, 'deployer_cache');
-                    this.ctx.utils.makeSurePathExists(cache_dir);
-                    const tmpFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(v));
+                    const tmpFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(v));
                     fs.writeFileSync(tmpFilePath, v);
                     let uploaded = await this.ctx.client.storage.putFile(tmpFilePath); // todo: and more options
 
