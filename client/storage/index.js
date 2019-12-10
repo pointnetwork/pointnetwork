@@ -117,6 +117,11 @@ class Storage {
                 }
             }, 100); // todo: change interval?
         };
+
+        setTimeout(() => {
+            this.tick('downloading');
+        }, 0);
+
         return new Promise(waitUntilRetrieval);
     }
 
