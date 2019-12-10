@@ -9,7 +9,7 @@ const defaultConfig = require('../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits;
 const STUPID_PADDING = defaultConfig.storage.redkey_stupid_padding;
 
-function encryptFile(filePath, toFile, privKey, suffix) {
+function encryptFile(filePath, toFile, privKey) {
     const fromFile = path.resolve(filePath);
 
     const writeSize = BITS/8;
@@ -56,10 +56,12 @@ process.on('message', async (message) => {
         const suffix = '.'+linkId+'.enc';
         const encryptedPath = filePath + suffix;
 
-        encryptFile(filePath, encryptedPath, privKey, suffix);
+        encryptFile(filePath, encryptedPath, privKey);
 
         // send response to master process
         // todo: reading the file AGAIN??? can't you hash it while encrypting?
         process.send({ 'command': 'encrypt', 'success': true, 'chunkId': chunkId, 'linkId': linkId, 'hash': utils.hashFnHex(fs.readFileSync(encryptedPath)) });
     }
 });
+
+module.exports = {encryptFile};

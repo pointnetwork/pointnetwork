@@ -18,6 +18,9 @@
       "cache_path": "data/provider_storage_cache"
     }
   },
+  "deployer": {
+    "cache_path": "data/deployer_cache"
+  },
   "client": {
     "storage": {
       "cache_path": "data/client_storage_cache",
