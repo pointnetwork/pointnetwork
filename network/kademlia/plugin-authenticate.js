@@ -1,6 +1,6 @@
 const assert = require('assert');
 const secp256k1 = require('secp256k1');
-const utils = require('@kadenceproject/kadence/lib/utils');
+const utils = require('@deadcanaries/kadence/lib/utils');
 const bsonrpc = require('./bson-rpc');
 const BSON = require('./good-bson');
 const { Transform } = require('stream');
@@ -107,6 +107,7 @@ class AuthenticatePlugin {
             return obj.payload;
         });
         let vrs = ethUtil.ecsign(
+            // todo: why not use keccak256 instead for full compatibility?
             utils._sha256(buffer),
             this.privateKey,
             this.chainId

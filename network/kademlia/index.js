@@ -1,17 +1,16 @@
-const kadence = require('@kadenceproject/kadence');
-const kadenceConstants = require('@kadenceproject/kadence/lib/constants');
+const kadence = require('@deadcanaries/kadence');
+const kadenceConstants = require('@deadcanaries/kadence/lib/constants');
 const path = require('path');
 const fs = require('fs');
 const _async = require('async');
-const keccak256 = require('js-sha3').keccak256;
 const ethUtil = require('ethereumjs-util');
 const AuthenticatePlugin = require('./plugin-authenticate');
 const StorageProviderPlugin = require('./plugin-storage-provider');
 const StorageClientPlugin = require('./plugin-storage-client');
-const kadenceUtils = require('@kadenceproject/kadence/lib/utils');
+const kadenceUtils = require('@deadcanaries/kadence/lib/utils');
 const pino = require('pino');
 const SerializerBSON = require('./serializer-bson');
-const Messenger = require('@kadenceproject/kadence/lib/messenger');
+const Messenger = require('@deadcanaries/kadence/lib/messenger');
 
 class Kademlia {
     constructor(ctx) {
@@ -72,7 +71,7 @@ class Kademlia {
         //     objectMode: true
         // }));
 
-        // todo: enable all plugins
+        // todo: enable all plugins?
         // node.hashcash = node.plugin(kadence.hashcash({
         //     methods: ['PUBLISH', 'SUBSCRIBE'],
         //     difficulty: 8
@@ -85,12 +84,13 @@ class Kademlia {
 
         // node.eclipse = node.plugin(kadence.eclipse());
 
-        let solutionsPath = path.join(this.ctx.datadir, this.config.solutions_dir_path);
-        if (! fs.existsSync(solutionsPath)) fs.mkdirSync(solutionsPath);
-        node.permission = node.plugin(kadence.permission({
-            privateKey: node.authenticate.privateKey,
-            walletPath: solutionsPath
-        }));
+        // todo: permission plugin is gone from the new repo - check if we need it at all
+        // let solutionsPath = path.join(this.ctx.datadir, this.config.solutions_dir_path);
+        // if (! fs.existsSync(solutionsPath)) fs.mkdirSync(solutionsPath);
+        // node.permission = node.plugin(kadence.permission({
+        //     privateKey: node.authenticate.privateKey,
+        //     walletPath: solutionsPath
+        // }));
 
         node.rolodex = node.plugin(kadence.rolodex(path.join(this.ctx.datadir, this.config.peer_cache_file_path)));
 
@@ -234,7 +234,7 @@ class Kademlia {
     patchKadence() {
         kadenceUtils.toPublicKeyHash = function(publicKey) {
             if (! Buffer.isBuffer(publicKey)) throw new Error('patched kadenceUtils.toPublicKeyHash: public key must be a Buffer');
-            const keccakHashHex = keccak256(publicKey);
+            const keccakHashHex = ethUtil.keccak256(publicKey);
             const keccakHash = Buffer.from(keccakHashHex, 'hex');
             const address = keccakHash.slice(-20);
             return address;

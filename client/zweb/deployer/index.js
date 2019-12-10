@@ -190,7 +190,7 @@ class Deployer {
             artifacts = compiledSources.contracts[contractFileName][_contractName];
         }
 
-        const truffleContract = require('truffle-contract');
+        const truffleContract = require('@truffle/contract');
         const contract = truffleContract(artifacts);
         contract.setProvider(this.ctx.web3.currentProvider);
 
