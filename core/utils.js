@@ -1,8 +1,7 @@
 const crypto = require('crypto');
 const mkdirp = require('mkdirp');
-const keccak256 = require('js-sha3').keccak256;
 const ethUtil = require('ethereumjs-util');
-const kadUtils = require('@kadenceproject/kadence').utils;
+const kadUtils = require('@deadcanaries/kadence').utils;
 
 class Utils {
     static makeSurePathExists(path) {
@@ -13,6 +12,7 @@ class Utils {
         }
     }
 
+    // todo: ok, this has to do with point signatures, but why not use the same keccak256 to be fully compatible with everything else?
     static sha256(data) {
         return crypto.createHash('sha256').update(data).digest();
     }
@@ -20,8 +20,9 @@ class Utils {
         return crypto.createHash('sha256').update(data).digest('hex');
     }
 
+    // todo: make sure you're actually using the same function solidity does: https://ethereum.stackexchange.com/a/48846
     static hashFn(value) {
-        return Buffer.from(keccak256(value), 'hex').slice(-20);
+        return Buffer.from(ethUtil.keccak256(value), 'hex').slice(-20);
     }
     static hashFnHex(value) {
         return this.hashFn(value).toString('hex');

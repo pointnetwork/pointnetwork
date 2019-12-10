@@ -1,6 +1,6 @@
 const ProviderChunk = require('../../db/models/provider_chunk');
 const ethUtil = require('ethereumjs-util');
-const utils = require('@kadenceproject/kadence/lib/utils');
+const utils = require('@deadcanaries/kadence/lib/utils');
 const path = require('path');
 const { fork } = require('child_process');
 
