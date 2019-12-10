@@ -8,7 +8,7 @@ const defaultConfig = require('../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits;
 const STUPID_PADDING = defaultConfig.storage.redkey_stupid_padding;
 
-async function decryptFile(fileIn, fileOut, chunkId, pubKey) {
+function decryptFile(fileIn, fileOut, pubKey) {
     const readSize = BITS/8;
     const writeSize = readSize-STUPID_PADDING;
 
@@ -34,8 +34,6 @@ async function decryptFile(fileIn, fileOut, chunkId, pubKey) {
         previousReadBuffer = readBuffer;
 
         c++;
-
-        await utils.nullAsyncFn(); // todo: replace with just await null?
     }
 
     fs.closeSync(fe);
@@ -47,7 +45,7 @@ process.on('message', async (message) => {
         const {fileIn, fileOut, chunkId, pubKey} = message;
 
         try {
-            await decryptFile(fileIn, fileOut, chunkId, pubKey);
+            decryptFile(fileIn, fileOut, pubKey);
         } catch(e) {
             console.log('Error', e);
             throw e;
@@ -58,3 +56,5 @@ process.on('message', async (message) => {
         process.send({ 'command': 'decrypt', 'success': true, 'chunkId': chunkId, 'hashIn': utils.hashFnHex(fs.readFileSync(fileIn)), 'hashOut': utils.hashFnHex(fs.readFileSync(fileOut)) });
     }
 });
+
+module.exports = {decryptFile};

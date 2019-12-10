@@ -4,7 +4,6 @@ const crypto = require('crypto');
 
 const defaultConfig = require('../../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits;
-const STUPID_PADDING = defaultConfig.storage.redkey_stupid_padding;
 
 class Redkey extends Model {
     constructor(...args) {
@@ -58,37 +57,38 @@ class Redkey extends Model {
         return await this.allBy('provider', provider);
     };
 
-    static async decryptDataStatic(data, length, pubKey) {
-        const readSize = BITS/8;
-        const writeSize = readSize-STUPID_PADDING;
-
-        let buffers = [];
-        let c = 0;
-        let previousReadBuffer = Buffer.alloc(readSize); // initial buffer for CBC mode
-        while (true) {
-            let readBuffer = data.slice(c * readSize, Math.min(c * readSize + readSize, data.length));
-
-            let decrypted = crypto.publicDecrypt({key: pubKey, padding: crypto.constants.RSA_NO_PADDING}, readBuffer);
-
-            // Turning ECB mode into CBC mode
-            decrypted = this.ctx.utils.xorBuffersInPlace(decrypted, previousReadBuffer);
-
-            // decrypted now has decrypted data starting at byte 1, and byte 0 should be zero // todo: validate that the first byte is 0?
-
-            buffers.push(decrypted.slice(STUPID_PADDING));
-
-            let bytesRead = readBuffer.length;
-            if (bytesRead !== readSize) break;
-
-            previousReadBuffer = readBuffer;
-
-            c++;
-
-            await this.ctx.utils.nullAsyncFn(); // todo: replace with just await null?
-        }
-
-        return Buffer.concat(buffers).slice(0, length);
-    }
+    // todo: remove if not needed
+    // static async decryptDataStatic(data, length, pubKey) {
+    //     const readSize = BITS/8;
+    //     const writeSize = readSize-STUPID_PADDING;
+    //
+    //     let buffers = [];
+    //     let c = 0;
+    //     let previousReadBuffer = Buffer.alloc(readSize); // initial buffer for CBC mode
+    //     while (true) {
+    //         let readBuffer = data.slice(c * readSize, Math.min(c * readSize + readSize, data.length));
+    //
+    //         let decrypted = crypto.publicDecrypt({key: pubKey, padding: crypto.constants.RSA_NO_PADDING}, readBuffer);
+    //
+    //         // Turning ECB mode into CBC mode
+    //         decrypted = this.ctx.utils.xorBuffersInPlace(decrypted, previousReadBuffer);
+    //
+    //         // decrypted now has decrypted data starting at byte 1, and byte 0 should be zero // todo: validate that the first byte is 0?
+    //
+    //         buffers.push(decrypted.slice(STUPID_PADDING));
+    //
+    //         let bytesRead = readBuffer.length;
+    //         if (bytesRead !== readSize) break;
+    //
+    //         previousReadBuffer = readBuffer;
+    //
+    //         c++;
+    //
+    //         await this.ctx.utils.nullAsyncFn(); // todo: replace with just await null?
+    //     }
+    //
+    //     return Buffer.concat(buffers).slice(0, length);
+    // }
 }
 
 module.exports = Redkey;
