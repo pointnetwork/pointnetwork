@@ -31,6 +31,9 @@ function encryptFile(filePath, toFile, privKey, suffix) {
         try {
             encrypted = crypto.privateEncrypt({key: privKey, padding: crypto.constants.RSA_NO_PADDING}, buffer);
         } catch(e) {
+            console.log(buffer.length, buffer.toString('hex'), buffer.toString());
+            console.log({privKey});
+            console.log({c});
             throw e;
         }
 

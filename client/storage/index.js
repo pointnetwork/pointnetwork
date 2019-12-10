@@ -82,6 +82,11 @@ class Storage {
                 }
             }, 100); // todo: change interval?
         };
+
+        setTimeout(() => {
+            this.tick('uploading');
+        }, 0);
+
         return new Promise(waitUntilUpload);
     }
 
@@ -134,7 +139,7 @@ class Storage {
         }
     }
 
-    async tick() {
+    async tick(mode = 'all') {
         // todo
 
         // todo:  you should queue the commands you are given
@@ -142,19 +147,23 @@ class Storage {
         // todo:  .get(data_id)
         // todo:  .put(data, ) returns data_id
 
-        let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
-        uploadingChunks.forEach((chunk) => {
-            setImmediate(async() => { // not waiting, just queueing for execution
-                await this.chunkUploadingTick(chunk);
+        if (mode === 'all' || mode === 'uploading') {
+            let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
+            uploadingChunks.forEach((chunk) => {
+                setImmediate(async() => { // not waiting, just queueing for execution
+                    await this.chunkUploadingTick(chunk);
+                });
             });
-        });
+        }
 
-        let downloadingChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADING);
-        downloadingChunks.forEach((chunk) => { // not waiting, just queueing for execution
-            setImmediate(async() => {
-                await this.chunkDownloadingTick(chunk);
+        if (mode === 'all' || mode === 'downloading') {
+            let downloadingChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADING);
+            downloadingChunks.forEach((chunk) => { // not waiting, just queueing for execution
+                setImmediate(async() => {
+                    await this.chunkDownloadingTick(chunk);
+                });
             });
-        });
+        }
     }
 
     async chooseProviderCandidate() {

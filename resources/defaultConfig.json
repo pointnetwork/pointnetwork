@@ -43,7 +43,7 @@
     "____segment_size_bytes": 8192,
     "segment_size_bytes": 16384,
     "redkey_encryption_bits": 1024,
-    "redkey_stupid_padding": 1
+    "redkey_stupid_padding": 2
   },
   "network": {
     "web3": "http://localhost:7545/",
