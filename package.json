@@ -22,7 +22,7 @@
     "merkle-lib": "^2.0.10",
     "mime-types": "^2.1.25",
     "moment": "^2.24.0",
-    "npm": "^6.13.0",
+    "npm": "^6.13.4",
     "pino": "^5.11.1",
     "pino-multi-stream": "^4.0.2",
     "pino-pretty": "^2.5.0",
