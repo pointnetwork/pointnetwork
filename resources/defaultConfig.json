@@ -15,7 +15,9 @@
   "service_provider": {
     "enabled": false,
     "storage": {
-      "cache_path": "data/provider_storage_cache"
+      "cache_path": "data/provider_storage_cache",
+      "revalidate_decrypted_chunk": true,
+      "max_space": "5G"
     }
   },
   "deployer": {
@@ -31,7 +33,8 @@
       "retransmit_segments_timeout_seconds": 30
     },
     "zproxy": {
-      "port": 8666
+      "port": 8666,
+      "sanitize_html": false
     },
     "wallet": {
       "__do not remove this section__":  null,
@@ -46,7 +49,8 @@
     "____segment_size_bytes": 8192,
     "segment_size_bytes": 16384,
     "redkey_encryption_bits": 1024,
-    "redkey_stupid_padding": 2
+    "redkey_stupid_padding": 2,
+    "____redkey_public_exponent": 65537
   },
   "network": {
     "web3": "http://localhost:7545/",

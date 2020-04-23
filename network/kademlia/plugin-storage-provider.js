@@ -10,6 +10,7 @@ class StorageProviderPlugin {
      */
     constructor(node, ctx, publicKey, privateKey, options = {}) {
         this.ctx = ctx;
+        this.config = this.ctx.config.service_provider.storage
         this.node = node;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
@@ -39,6 +40,26 @@ class StorageProviderPlugin {
         const chunk_id = request.params[0]; // todo: validate
         const chunk = await ProviderChunk.find(chunk_id);
         if (!chunk) return next(new Error('ECHUNKNOTFOUND: Chunk not found, cannot sign'));
+
+        // Assemble, decrypt and verify
+        let real_id = chunk.real_id;
+        if (! chunk.hasDecryptedData()) {
+            chunk.getData(); // We're calling this so that if the chunk file doesn't exist, it gets reassembled from the chunks
+            await this.decryptChunkAsync(chunk);
+        }
+
+        let decrypted = await chunk.getDecryptedData();
+        // if (this.ctx.utils.hashFnHex(decrypted) !== real_id) {
+        //     console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
+        //     console.log('INVALID ---------------------');
+        //     return next(new Error('EINVALIDCHUNKREALID: chunk.real_id does not match the decrypted data'));
+        // } else {
+        //     console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
+        //     console.log('YEP DECRYPTED FINE ---------------------');
+        // }
+
+        chunk.real_id_verified = true;
+        await chunk.save();
 
         let signature;
         try {
@@ -122,20 +143,25 @@ class StorageProviderPlugin {
         response.send([chunk_id, data]);
     }
     async GET_DECRYPTED_CHUNK(request, response, next) {
-        const chunk_id = request.params[0]; // todo: validate
-        const chunk = await ProviderChunk.findBy('real_id', chunk_id);
-        if (!chunk) return next(new Error('ECHUNKNOTFOUND: Decrypted chunk with id '+chunk_id+' is not found'));
+        const chunk_real_id = request.params[0]; // todo: validate
+        const chunk = await ProviderChunk.findBy('real_id', chunk_real_id);
+        if (!chunk) return next(new Error('ECHUNKNOTFOUND: Decrypted chunk with id '+chunk_real_id+' is not found'));
 
-        // todo: cache
         if (! chunk.hasDecryptedData()) {
             chunk.getData(); // We're calling this so that if the chunk file doesn't exist, it gets reassembled from the chunks
             await this.decryptChunkAsync(chunk);
         }
 
-        // todo: validate response hash
-
         let decrypted = await chunk.getDecryptedData();
-        response.send([chunk_id, decrypted]);
+
+        if (this.config.revalidate_decrypted_chunk) {
+            if (this.ctx.utils.hashFnHex(decrypted) !== chunk_real_id) {
+                console.error(decrypted.toString(), decrypted.toString('hex'), chunk_real_id, this.ctx.utils.hashFnHex(decrypted));
+                return next(new Error('ECHUNKLOST: Sorry, can\'t decrypt it for some reason...')); // todo: uhm, maybe don't do that?
+            }
+        }
+
+        response.send([chunk_real_id, decrypted]); // todo: I hope this buf is not being sent as an array through json/bson
     }
 
     async decryptChunkAsync(chunk) {
