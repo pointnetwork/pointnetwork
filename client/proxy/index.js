@@ -96,10 +96,12 @@ class ZProxy {
 
             let sanitized;
             if (contentType === 'text/html') {
-                sanitized = this.sanitize(rendered);
+                if (this.config.sanitize_html) {
+                    sanitized = this.sanitize(rendered);
+                }
             } else {
                 // todo: potential security vulnerability here, e.g. if browser still thinks it's to be interpreted as html,
-                // todo: and you didn't sanitize it, could get ugly
+                // todo: and you didn't sanitize it, could get ugly. is contentType!=='text/html' check enough?
                 sanitized = rendered;
             }
 
@@ -178,8 +180,8 @@ class ZProxy {
                 await this.ctx.keyvalue.propagate(host, newKey, data);
 
                 console.log('Redirecting to '+redirect+'...');
-                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
-                resolve(redirectHtml); // todo: sanitize! don't trust it
+                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
+                resolve(redirectHtml);
             });
             request.on('error', (e) => {
                 reject('Error:', e);

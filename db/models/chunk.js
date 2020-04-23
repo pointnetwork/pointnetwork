@@ -37,7 +37,7 @@ class Chunk extends Model {
         if (this.id) {
             if (this.id !== hash) {
                 // console.debug(rawData.toString());
-                console.debug({rawData: rawData.toString('hex'), hash, id: this.id});
+                console.debug({rawDataHex: rawData.toString('hex'), rawData: rawData.toString(), hash, id: this.id}); // todo: remove at least .toString() parts for prod
                 throw Error('Chunk ID and data hash don\'t match');
             }
         } else {
