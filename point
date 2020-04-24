@@ -20,6 +20,7 @@ program.description(`
 // todo: add alpha version disclaimer like in raiden
 
 // NOTE: After changing parameters here, update the documentation
+program.command('go', { isDefault: true }).description('start the node').action(() => {});
 program.option('--config <file>', 'path to the configuration file');
 program.option('--datadir <path>', 'path to the data directory', path.join(homedir(), '.point/'));
 program.option('-v, --verbose', 'force the logger to show debug level messages', false);
