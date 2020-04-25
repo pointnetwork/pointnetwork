@@ -6,7 +6,10 @@
 </head>
 <body>
     <header>
-        <h1><a href="/">Example Blog</a></h1>
+        <h1>
+            <img src="/star_icon.png" class="logo-star" alt="Logo" />
+            <a href="/">Example Blog</a>
+        </h1>
         <em>Gives you a little glimpse into what it will feel like</em>
         <a href="/admin" class="admin-btn">admin</a>
     </header>

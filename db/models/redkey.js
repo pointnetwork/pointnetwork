@@ -24,7 +24,7 @@ class Redkey extends Model {
 
     // todo: store keys internally in binary format, not text
 
-    static async generateNewForProvider(provider) {
+    static async generateNewForProvider(provider, keyIndex) {
         return new Promise((resolve, reject) => {
             crypto.generateKeyPair('rsa', {
                 modulusLength: BITS,
@@ -46,8 +46,8 @@ class Redkey extends Model {
                 key.pub = publicKey;
                 key.priv = privateKey;
                 key.provider = provider;
-                key.index = 0;
-                key.id = 'redkey' + key.provider_id + '_' + key.index;
+                key.index = keyIndex;
+                key.id = 'redkey' + key.provider_id.replace(/[\:\/#]/g, '-') + '_' + key.index;
                 await key.save();
 
                 resolve(key);
@@ -56,7 +56,7 @@ class Redkey extends Model {
     }
 
     static async allByProvider(provider) {
-        return await this.allBy('provider', provider);
+        return await this.allBy('provider_id', provider.id);
     };
 }
 

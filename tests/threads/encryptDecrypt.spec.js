@@ -21,7 +21,7 @@ describe("Thread/{Encrypt,Decrypt}", () => {
         const alicePublicKey  = fs.readFileSync('./tests/_helpers/keys/alice-'+BITS+'.pub');
 
         // todo: rewrite both the files and the test so that they support streams, not just files
-        let filesToTest = ['simple-numbers.txt', 'moby-dick.txt', 'tree.jpg'];
+        let filesToTest = ['simple-numbers.txt', 'moby-dick.txt', 'tree-unsplash.jpg', 'test1.css', 'test1.json'];
 
         for(let file of filesToTest) {
             encryptDecrypt(alicePublicKey, alicePrivateKey, fs.readFileSync('./tests/_helpers/encryptDecrypt/'+file));
