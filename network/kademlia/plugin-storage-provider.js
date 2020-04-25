@@ -156,7 +156,7 @@ class StorageProviderPlugin {
 
         if (this.config.revalidate_decrypted_chunk) {
             if (this.ctx.utils.hashFnHex(decrypted) !== chunk_real_id) {
-                console.error(decrypted.toString(), decrypted.toString('hex'), chunk_real_id, this.ctx.utils.hashFnHex(decrypted));
+                console.error(decrypted.toString(), decrypted.toString('hex'), chunk_real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: remove
                 return next(new Error('ECHUNKLOST: Sorry, can\'t decrypt it for some reason...')); // todo: uhm, maybe don't do that?
             }
         }
