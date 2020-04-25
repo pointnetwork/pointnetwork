@@ -31,8 +31,17 @@ class Renderer {
                     },
                     parse: function (token, context, chain) {
                         var template,
-                            that = this,
-                            innerContext = Twig.ChildContext(context);
+                            that = this;
+
+                        //innerContext = Twig.ChildContext(context);
+                        // Twig.lib.copy = function (src) {
+                        var innerContext = {};
+                        let _key;
+                        for (_key in context) {
+                            if (Object.hasOwnProperty.call(context, _key)) {
+                                innerContext[_key] = context[_key];
+                            }
+                        }
 
                         // Resolve filename
                         return Twig.expression.parseAsync.call(this, token.stack, context)
@@ -44,7 +53,7 @@ class Renderer {
                                     template = file;
                                 } else {
                                     // Import file
-                                    template = that.importFile(file);
+                                    template = that.template.importFile(file);
                                 }
 
                                 // Render the template in case it puts anything in its context
@@ -55,7 +64,11 @@ class Renderer {
                             })
                             .then(function() {
                                 // Extend the parent context with the extended context
-                                Twig.lib.extend(context, innerContext);
+                                context = {
+                                    ...context,
+                                    // override with anything in innerContext
+                                    ...innerContext
+                                };
 
                                 return {
                                     chain: chain,
