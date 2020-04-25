@@ -95,15 +95,15 @@ class ZProxy {
             }
 
             let sanitized;
-            if (contentType === 'text/html') {
-                if (this.config.sanitize_html) {
-                    sanitized = this.sanitize(rendered);
-                }
+            if (contentType === 'text/html' && this.config.sanitize_html) {
+                sanitized = this.sanitize(rendered);
             } else {
                 // todo: potential security vulnerability here, e.g. if browser still thinks it's to be interpreted as html,
                 // todo: and you didn't sanitize it, could get ugly. is contentType!=='text/html' check enough?
                 sanitized = rendered;
             }
+
+            if (typeof sanitized === 'undefined') sanitized = ''; // to avoid "response expected a string but got undefined"
 
             const headers = {
                 'Content-Type': contentType
@@ -113,7 +113,7 @@ class ZProxy {
             response.end();
 
         } catch(e) {
-            //throw 'ZProxy Error: '+e; // todo: remove
+            // throw 'ZProxy Error: '+e; // todo: remove
             return this.abortError(response, 'ZProxy Error: '+e);
         }
 
@@ -161,7 +161,7 @@ class ZProxy {
                         delete postData[k];
                     } else if (_.startsWith(k, 'storage[')) {
                         // storage
-                        const cache_dir = path.join(this.ctx.datadir, 'proxy_cache'); // todo: put into defaultConfig
+                        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
                         this.ctx.utils.makeSurePathExists(cache_dir);
                         const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(v));
                         fs.writeFileSync(tmpPostDataFilePath, v);
@@ -219,7 +219,7 @@ class ZProxy {
                         delete postData[k];
                     } else if (_.startsWith(k, 'storage[')) {
                         // storage
-                        const cache_dir = path.join(this.ctx.datadir, 'proxy_cache'); // todo: put into defaultConfig
+                        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
                         this.ctx.utils.makeSurePathExists(cache_dir);
                         const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(v));
                         fs.writeFileSync(tmpPostDataFilePath, v);

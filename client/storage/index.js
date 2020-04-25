@@ -199,8 +199,9 @@ class Storage {
 
         this.send('GET_DECRYPTED_CHUNK', [chunk.id], provider.id, async(err, result) => { // todo: also send conditions
             if (err) {
+                console.log(err); // todo: for some reason, throw err doesn't display the error
+
                 if (_.startsWith(err, 'Error: ECHUNKNOTFOUND')) {
-                    console.log(err);
                     chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
                     await chunk.save();
                     await chunk.reconsiderDownloadingStatus(true);

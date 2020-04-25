@@ -15,12 +15,15 @@ program.version(`
 `); // todo
 
 program.description(`
+    Point Network
+    https://pointnetwork.io/
+    
     Licensed under MIT license
 `); // todo: MIT? // todo: more description, --help is ugly
 // todo: add alpha version disclaimer like in raiden
 
 // NOTE: After changing parameters here, update the documentation
-program.command('go', { isDefault: true }).description('start the node').action(() => {});
+program.command('go', { isDefault: true }).description('start the node').action(() => { program.go = true; });
 program.option('--config <file>', 'path to the configuration file');
 program.option('--datadir <path>', 'path to the data directory', path.join(homedir(), '.point/'));
 program.option('-v, --verbose', 'force the logger to show debug level messages', false);
@@ -106,6 +109,12 @@ if (program.deploy) {
     return;
 }
 
+// ------------ Main Cycle After This Block ---------- //
+if (! program.go || program.args.length > 0) {
+    program.help();
+    this.ctx.die();
+}
+
 // ---------------------- PID ------------------------ //
 
 const pidFilePath = path.join(ctx.datadir, 'point.pid');
@@ -157,9 +166,9 @@ process.on('uncaughtException', (err) => {
     ctx.log.debug(err.stack);
     process.exit(1);
 });
-process.on('unhandledRejection', (err) => {
+process.on('unhandledRejection', (err, second) => {
     npid.remove(pidFilePath);
-    ctx.log.error('Unhandled Rejection:', err.message);
+    ctx.log.error('Unhandled Rejection: ' + err.message);
     ctx.log.debug(err.stack);
     process.exit(1);
 });
