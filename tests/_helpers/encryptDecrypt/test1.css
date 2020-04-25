@@ -41,12 +41,6 @@ header .admin-btn {
 header .admin-btn:hover {
     background: rgba(0,0,0, 0.3);
 }
-header .logo-star {
-    width: 36px;
-    height: 36px;
-    float: left;
-    margin-right: 7px;
-}
 footer {
     position: absolute;
     bottom: 0;

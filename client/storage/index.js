@@ -7,6 +7,7 @@ const path = require('path');
 const { fork } = require('child_process');
 const _ = require('lodash');
 const fs = require('fs');
+const lock = require('level-lock');
 
 class Storage {
     constructor(ctx) {
@@ -516,6 +517,7 @@ class Storage {
 
                         resolve(true);
                     } catch (e) {
+                        // todo: don't just put this into the console, this is for debugging purposes
                         console.debug('FAILED CHUNK', {err, result}, chunk.id, e);
                         link.status = StorageLink.STATUS_FAILED;
                         link.error = e.toString();
@@ -601,11 +603,39 @@ class Storage {
     async removeChunk() { /*todo*/ }
 
     async getRedkeyId(provider) {
+        // Note: locking here is important because of concurrency issues. I've spent hours debugging random errors in
+        // encryption when it turned out that several keys were generated for the same provider at once and they were
+        // all mixed up when they were actually sent to the service provider, which made for invalid decryption
+
+        let unlock = lock(this.ctx.db._db, 'redkey'+'!'+provider.id, 'w');
+        if (!unlock) {
+            return new Promise((resolve, reject) => {
+                setTimeout(async() => {
+                    resolve(await this.getRedkeyId(provider));
+                }, 100);
+            });
+        }
+
         let keys = await Redkey.allByProvider(provider);
         if (keys.length === 0) {
-            return (await Redkey.generateNewForProvider(provider)).id;
+            // Generate a new one
+
+            const keyIndex = 0;
+            try {
+                let redkey = await Redkey.generateNewForProvider(provider, keyIndex);
+                unlock();
+                return redkey.id;
+            } catch(e) {
+                unlock();
+                throw e;
+            }
+
+        } else {
+            // Return existing
+            unlock();
+            return keys[0].id;
         }
-        return keys[0].id;
+
         // todo: multiple?
     }
 }

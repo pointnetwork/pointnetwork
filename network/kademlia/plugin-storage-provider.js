@@ -44,16 +44,18 @@ class StorageProviderPlugin {
         // Assemble, decrypt and verify
         let real_id = chunk.real_id;
         if (! chunk.hasDecryptedData()) {
-            chunk.getData(); // We're calling this so that if the chunk file doesn't exist, it gets reassembled from the chunks
+            chunk.getData(); // We're calling this so that if the file with the encrypted chunk itself doesn't exist, it gets reassembled from the segments
             await this.decryptChunkAsync(chunk);
         }
 
         let decrypted = await chunk.getDecryptedData();
+        //todo: remove
         // if (this.ctx.utils.hashFnHex(decrypted) !== real_id) {
         //     console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
         //     console.log('INVALID ---------------------');
         //     return next(new Error('EINVALIDCHUNKREALID: chunk.real_id does not match the decrypted data'));
         // } else {
+        //     console.log('SUCCESS DECRYPTING BACK: ', decrypted.toString(), decrypted.toString('hex'), {chunk_id, real_id, decrypted_id:this.ctx.utils.hashFnHex(decrypted)});
         //     console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
         //     console.log('YEP DECRYPTED FINE ---------------------');
         // }

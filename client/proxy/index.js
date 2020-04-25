@@ -96,6 +96,7 @@ class ZProxy {
 
             let sanitized;
             if (contentType === 'text/html' && this.config.sanitize_html) {
+                console.log('Sanitizing...' + contentType + this.config.sanitize_html + rendered);
                 sanitized = this.sanitize(rendered);
             } else {
                 // todo: potential security vulnerability here, e.g. if browser still thinks it's to be interpreted as html,
@@ -129,7 +130,8 @@ class ZProxy {
     }
 
     getContentTypeFromExt(ext) {
-        return mime.lookup(ext) || 'application/octet-stream';
+        // Note: just "css" won't work, so we prepend a dot
+        return mime.lookup('.'+ext) || 'application/octet-stream';
     }
 
     keyValueAppend(host, request, response) {
