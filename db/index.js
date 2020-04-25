@@ -99,6 +99,27 @@ class DB {
         for (const file of files) {
             fs.unlinkSync(path.join(dbpath, file));
         }
+
+        let dirs = [ctx.config.client.storage.cache_path, ctx.config.service_provider.storage.cache_path, ctx.config.client.zproxy.cache_path];
+        for(let dir of dirs) {
+            if (typeof dir !== 'string' || dir.length < 5) {
+                console.warn('ABORT! Trying to delete files from '+dir+'/**/*');
+                ctx.die('ABORT! Trying to delete files from '+dir+'/**/*');
+                return;
+            }
+
+            let cache_dir = path.join(ctx.datadir, dir);
+
+            if (fs.existsSync(cache_dir)) {
+                let files = fs.readdirSync(cache_dir);
+                for (const file of files) {
+                    // console.log('Removing '+path.join(cache_dir, file));
+                    fs.unlinkSync(path.join(cache_dir, file));
+                }
+            }
+        }
+
+        ctx.log.info('__debugClearCompletely executed.');
     }
 
     async __debugDeleteTable(tableName) {

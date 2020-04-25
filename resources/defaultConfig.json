@@ -34,7 +34,8 @@
     },
     "zproxy": {
       "port": 8666,
-      "sanitize_html": false
+      "sanitize_html": false,
+      "cache_path": "data/zproxy_cache"
     },
     "wallet": {
       "__do not remove this section__":  null,
@@ -49,7 +50,7 @@
     "____segment_size_bytes": 8192,
     "segment_size_bytes": 16384,
     "redkey_encryption_bits": 1024,
-    "redkey_stupid_padding": 2,
+    "redkey_stupid_padding": 1,
     "____redkey_public_exponent": 65537
   },
   "network": {
@@ -69,7 +70,7 @@
       "cooldown_reset_time": "60M"
     },
 
-    "identity_contract_address": "0x3CE9B7DdE7368096e22F5f8B7C010739eCFB9663"
+    "identity_contract_address": "0x8436a56b30f6543DD0245b9E333A63752415184f"
   },
   "simulation_delay": 10000,
   "hardcode_default_provider": "http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc"

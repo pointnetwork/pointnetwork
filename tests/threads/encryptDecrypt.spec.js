@@ -4,16 +4,27 @@ const fs = require('fs');
 
 //todo
 
+// openssl genrsa 768 > ./_local/alice-768.key
+// openssl genrsa 768 > ./_local/bob-768.key
+// openssl genrsa 512 > ./_local/alice-512.key
+// openssl genrsa 512 > ./_local/bob-512.key
+// openssl rsa -in ./_local/alice-768.key -pubout > ./_local/alice-768.pub
+// openssl rsa -in ./_local/bob-768.key -pubout > ./_local/bob-768.pub
+// openssl rsa -inform PEM -pubin -in ./_local/bob.pub -text -noout
+
+const defaultConfig = require('../../resources/defaultConfig.json');
+const BITS = defaultConfig.storage.redkey_encryption_bits; // todo: make it read from the actual config, not default
+
 describe("Thread/{Encrypt,Decrypt}", () => {
     test("D(E(plaintext)) should return plaintext", () => {
-        const alicePrivateKey1024 = fs.readFileSync('./tests/_helpers/alice-1024.key');
-        const alicePublicKey1024  = fs.readFileSync('./tests/_helpers/alice-1024.pub');
+        const alicePrivateKey = fs.readFileSync('./tests/_helpers/keys/alice-'+BITS+'.key');
+        const alicePublicKey  = fs.readFileSync('./tests/_helpers/keys/alice-'+BITS+'.pub');
 
         // todo: rewrite both the files and the test so that they support streams, not just files
         let filesToTest = ['simple-numbers.txt', 'moby-dick.txt', 'tree.jpg'];
 
         for(let file of filesToTest) {
-            encryptDecrypt(alicePublicKey1024, alicePrivateKey1024, fs.readFileSync('./tests/_helpers/encryptDecrypt/'+file));
+            encryptDecrypt(alicePublicKey, alicePrivateKey, fs.readFileSync('./tests/_helpers/encryptDecrypt/'+file));
         }
     });
 });

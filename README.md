@@ -17,7 +17,7 @@ It's very raw prototype code, so you have to do lots of things manually right no
     ```
     truffle deploy --network development
     ```
-1. Note the addresses at which the contracts were deployed and put them into `resources/defaultConfig.json`: `network/zdns_contract_address` and `network/keyvalue_contract_address` 
+1. Note the addresses at which the contracts were deployed and put them into `resources/defaultConfig.json`: `network/zdns_contract_address` 
 1. Run the nodes in different tabs 
     ```
     ./point --datadir ~/.point/test1 -v

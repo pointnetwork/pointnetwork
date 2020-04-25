@@ -23,9 +23,13 @@ function decryptFile(fileIn, fileOut, pubKey) {
         let decrypted = crypto.publicDecrypt({key: pubKey, padding: crypto.constants.RSA_NO_PADDING}, readBuffer);
 
         // Turning ECB mode into CBC mode
-        decrypted = utils.xorBuffersInPlace(decrypted, previousReadBuffer);
+        let mixIn = Buffer.alloc(writeSize);
+        previousReadBuffer.copy(mixIn, STUPID_PADDING, STUPID_PADDING, writeSize);
+        decrypted = utils.xorBuffersInPlace(decrypted, mixIn);
 
-        // decrypted now has decrypted data starting at byte 1, and byte 0 should be zero // todo: validate that the first byte is 0?
+        // for STUPID_PADDING==1, decrypted now has decrypted data starting at byte 1, and byte 0 should be 0x00
+        // todo: validate that the stupid padding bytes are 0x00 (or valid)?
+        // todo: validate that the rest of the padding is filled with 0x00
 
         fs.writeSync(fd, decrypted, STUPID_PADDING, decrypted.length-STUPID_PADDING);
 

@@ -20,18 +20,24 @@ function encryptFile(filePath, toFile, privKey) {
     let fd = fs.openSync(fromFile, 'r');
     let fe = fs.openSync(toFile, 'w+');
     let c = 0;
-    let encrypted = Buffer.alloc(readSize); // initial buffer for CBC mode
+    let encrypted = Buffer.alloc(readSize); // initial empty buffer for CBC mode
     while (true) {
         let buffer = Buffer.alloc(writeSize);
         let bytesRead = fs.readSync(fd, buffer, STUPID_PADDING, readSize, null);
 
         // Turning ECB mode into CBC mode
-        buffer = utils.xorBuffersInPlace(buffer, encrypted);
+
+        // Note: We do encrypted.slice to never have the first STUPID_PADDING bytes not 0x00 even after XOR
+        let mixIn = Buffer.alloc(readSize);
+        encrypted.copy(mixIn, STUPID_PADDING, STUPID_PADDING, readSize);
+
+        buffer = utils.xorBuffersInPlace(buffer, mixIn);
 
         try {
             encrypted = crypto.privateEncrypt({key: privKey, padding: crypto.constants.RSA_NO_PADDING}, buffer);
         } catch(e) {
-            console.log(buffer.length, buffer.toString('hex'), buffer.toString());
+            console.log('crypto.privateEncrypt returned error: '+e);
+            console.log('Initial buffer:', buffer.length+" bytes:", buffer.toString('hex'), buffer.toString());
             console.log({privKey});
             console.log({c});
             throw e;
