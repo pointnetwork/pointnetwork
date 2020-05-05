@@ -27,8 +27,8 @@ program.command('go', { isDefault: true }).description('start the node').action(
 program.option('--config <file>', 'path to the configuration file');
 program.option('--datadir <path>', 'path to the data directory', path.join(homedir(), '.point/'));
 program.option('-v, --verbose', 'force the logger to show debug level messages', false);
-program.command('attach', 'attach to the running point process');
-program.command('demo', 'dump demo configs to ~/.point');
+program.command('attach').description('attach to the running point process').action(() => program.attach = true);
+program.command('demo').description('dump demo configs to ~/.point').action(() => program.demo = true);
 program.command('deploy <path>').description('deploy a website').action(path => program.deploy = path);
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
