@@ -1,0 +1,96 @@
+{% extends "base.zhtml" %}
+{% block title %}Example profile{% endblock %}
+{% block header %}
+        <header>
+            <div id="person">
+{% set firstName = keyvalue_get(host, 'firstName') %}
+{% set lastName = keyvalue_get(host, 'lastName') %}
+                <h1>{{ firstName }} {{ lastName }}</h1>
+{% set position = keyvalue_get(host, 'position') %}
+                <h2>{{ position }}</h2>
+{% set photo = keyvalue_get(host, 'photo') %}
+                <div id="photo" style="background-image: url({{ photo }});"></div>
+            </div>
+            <div id="contacts">
+                <table>
+                    <tbody>
+{% set contacts = keyvalue_list(host, 'contacts') %}
+{% for contact_json in contacts %}
+{% set contact = contact_json | unjson %}
+                        <tr><td>{{ contact.key }}</td><td>{{ contact.value }}</td></tr>
+{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div id="links">
+                <ul>
+{% set links = keyvalue_list(host, 'links') %}
+{% for link_json in links %}
+{% set link = link_json | unjson %}
+                    <li><a href="{{ link.href }}" title="{{ link.title }}">{{ link.title }}</a></li>
+{% endfor %}
+                </ul>
+            </div>
+        </header>
+{% endblock %}
+{% block main %}
+        <main>
+            <section id="summary">
+                <h3>Summary</h3>
+{% set summary_cid = keyvalue_get(host, 'summary') %}
+{% set summary = storage_get(summary_cid) %}
+                <p>{{ summary }}</p>
+            </section>
+            <section id="employment">
+                <h3>Employment history</h3>
+                <ul>
+{% set employments = keyvalue_list(host, 'employments') %}
+{% for employment_json in employments %}
+{% set employment = employment_json | unjson %}
+                    <li>
+                        <h4>{{ employment.position }}</h4>
+                        <h5>{{ employment.company }}</h5>
+                        <h6>{{ employment.location }}</h6>
+                        <span>{{ employment.start|date("M Y") }} - {{ employment.end ? (employment.end|date("M Y")) : 'Present' }}</span>
+{% set employment_description = storage_get(employment.description) %}
+                        <p>{{ employment_description }}</p>
+                    </li>
+{% endfor %}
+                </ul>
+            </section>
+            <section id="projects">
+                <h3>Projects</h3>
+                <ul>
+{% set projects = keyvalue_list(host, 'projects') %}
+{% for project_json in projects %}
+{% set project = project_json | unjson %}
+                    <li>
+                        <a href="{{ project.href }}">
+                            <div style="background-image: url({{ project.photo }});"></div>
+                            <h4>{{ project.title }}</h4>
+{% set project_description = storage_get(project.description) %}
+                            <p>{{ project_description }}</p>
+                        </a>
+                    </li>
+{% endfor %}
+                </ul>
+            </section>
+            <section id="education">
+                <h3>Education</h3>
+                <ul>
+{% set educations = keyvalue_list(host, 'educations') %}
+{% for education_json in educations %}
+{% set education = education_json | unjson %}
+                    <li>
+                        <h4>{{ education.degree }}</h4>
+                        <h5>{{ education.institution }}</h5>
+                        <h6>{{ education.location }}</h6>
+                        <span>{{ education.start|date("M Y") }} - {{ education.end ? (education.end|date("M Y")) : 'Present' }}</span>
+{% set education_description = storage_get(education.description) %}
+                        <p>{{ education_description }}</p>
+                    </li>
+{% endfor %}
+                </ul>
+            </section>
+        </main>
+{% endblock %}

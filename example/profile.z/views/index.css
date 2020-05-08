@@ -1,0 +1,380 @@
+/* reset.css */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/* index.css */
+
+body, body * {
+    font-family: Helvetica, sans-serif;
+    color: #444;
+}
+
+a {
+    text-decoration: none;
+    color: #48B
+}
+
+header,
+main {
+    margin: 0 8vw;
+}
+
+header:not(.admin-header) {
+    padding: 4vw 0 5.6vw 20vw;
+}
+
+header.admin-header a {
+    font-size: 1.2vw;
+}
+
+header.admin-header {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    height: 4vw;
+    align-items: center;
+    box-shadow: 0 0.02vw 0 0 #484848;
+    margin-bottom: 5.6vw;
+}
+
+#person {
+    position: relative;
+}
+
+#person h1 {
+    font-size: 4vw;
+    font-weight: bolder;
+    margin-bottom: 0.8vw;
+}
+
+#person h2 {
+    font-size: 2vw;
+    margin-bottom: 2vw;
+}
+
+#photo {
+    position: absolute;
+    top: 0;
+    left: -20vw;
+    width: 12vw;
+    height: 12vw;
+    border-radius: 50%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    border: 0.5vw solid white;
+    box-shadow: 0 0 0 0.02vw #484848;
+}
+
+#contacts {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 8vw;
+}
+
+#links li a,
+#contacts tr td {
+    padding-bottom: 0.4vw;
+    font-size: 1.32vw;
+    line-height: 1.6vw;
+    height: 1.6vw;
+}
+
+#links li a {
+    display: table-cell;
+}
+
+#contacts tr td:first-child {
+    padding-right: 2vw;
+    color: #888;
+}
+
+#links {
+    display: inline-block;
+    vertical-align: top;
+}
+
+main {
+    margin-bottom: 5.6vw;
+}
+
+main section {
+    margin-bottom: 5.6vw;
+}
+
+main h3 {
+    font-size: 2.4vw;
+    font-weight: bolder;
+    margin-bottom: 3.2vw;
+    color: #48B
+}
+
+#summary p {
+    font-size: 1.32vw;
+}
+
+#education li,
+#employment li {
+    position: relative;
+    padding-left: 16vw;
+}
+
+#education li+li,
+#employment li+li {
+    margin-top: 3.2vw;
+}
+
+#education li h4,
+#education li h5,
+#education li h6,
+#education li span,
+#employment li h4,
+#employment li h5,
+#employment li h6,
+#employment li span {
+    position: relative;
+    left: -16vw;
+}
+
+#education li h4,
+#employment li h4 {
+    font-size: 2vw;
+    font-weight: bolder;
+    margin-bottom: 0.8vw;
+    width: 14.4vw;
+}
+
+#education li h5,
+#employment li h5 {
+    font-size: 1.6vw;
+    margin-bottom: 0.656vw;
+    width: 14.4vw;
+}
+
+#education li h6,
+#employment li h6 {
+    font-size: 1.44vw;
+    margin-bottom: 0.636vw;
+    color: #888;
+    width: 14.4vw;
+}
+
+#education li span,
+#employment li span {
+    display: block;
+    font-size: 1.16vw;
+    width: 14.4vw;
+}
+
+#education li p,
+#employment li p {
+    position: absolute;
+    top: 0;
+    left: 16vw;
+    right: 0;
+    font-size: 1.32vw;
+}
+
+#projects ul {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+}
+
+#projects ul li {
+    flex: 1 1 50%;
+    overflow: hidden;
+}
+
+#projects ul li:nth-child(2n) {
+    margin-left: 8vw;
+}
+
+#projects ul li img {
+    width: 16vw;
+    height: 16vw;
+    background-size: contain;
+    margin-bottom: 2vw;
+}
+
+#projects ul li div {
+    width: 16vw;
+    height: 16vw;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin-bottom: 2vw;
+}
+
+#projects ul li h4 {
+    font-size: 2vw;
+    font-weight: bolder;
+    margin-bottom: 1.6vw;
+}
+
+#projects ul li p {
+    font-size: 1.32vw;
+}
+
+footer {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    height: 8vw;
+    align-items: center;
+    justify-content: center;
+}
+
+footer a {
+    font-size: 1vw;
+    color: #888;
+}
+
+main.admin-main h1 {
+    font-size: 2vw;
+    line-height: 2.4vw;
+    height: 2.4vw;
+    margin-bottom: 2.4vw;
+    color: #444
+}
+
+form.add-employment {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+form.add-employment textarea,
+form.add-employment label {
+    display: block;
+    margin-bottom: 1.2vw;
+}
+
+form.add-employment textarea {
+    flex: 7;
+    margin-right: 2vw;
+    resize: vertical;
+    height: 12vw;
+    min-height: 4vw;
+    border-radius: 0.16vw;
+    -webkit-appearance: none;
+    outline: none;
+    border: none;
+    box-shadow: 0 0 0 0.064vw #888;
+    font-size: 1.2vw;
+    padding: 0.8vw;
+    color: #888;
+}
+
+form.add-employment label {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+form.add-employment label:not(.description-input) {
+    height: 2vw;
+}
+
+form.add-employment label input[type=text] {
+    display: block;
+    flex: 7;
+    border-radius: 0.16vw;
+    margin-right: 2vw;
+    -webkit-appearance: none;
+    outline: none;
+    border: none;
+    box-shadow: 0 0 0 0.064vw #888;
+    height: 100%;
+    font-size: 1.2vw;
+    padding: 0 0.8vw;
+    color: #888;
+}
+
+form.add-employment label input[type=text]::-webkit-input-placeholder {
+  color: #ddd;
+}
+
+form.add-employment label input[type=text]:-ms-input-placeholder {
+  color: #ddd;
+}
+
+form.add-employment label input[type=text]::placeholder {
+  color: #ddd;
+}
+
+form.add-employment label span {
+    flex: 1;
+    font-size: 1.2vw;
+    height: 2vw;
+    line-height: 2vw;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+form.add-employment input[type=submit] {
+    display: block;
+    border-radius: 0.16vw;
+    -webkit-appearance: none;
+    outline: none;
+    border: none;
+    box-shadow: 0 0 0 0.064vw #888;
+    height: 2.4vw;
+    font-size: 1.2vw;
+    color: #48b;
+    position: absolute;
+    top: -4.4vw;
+    right: 0;
+    width: 10vw;
+}
+
+form.add-employment input:focus,
+form.add-employment textarea:focus {
+    outline: none !important;
+}
