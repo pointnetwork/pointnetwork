@@ -127,7 +127,7 @@ class Deployer {
 
         await this.updateZDNS(target, routeFileUploaded.id);
 
-        await this.updateKeyValue(target, deployConfig.keyvalue);
+        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath);
 
         console.log('Deploy finished');
     }
@@ -214,23 +214,78 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
     }
 
-    async updateKeyValue(target, values) {
-        for(let key in values) {
-            let value = Object.assign({}, values[key]);
-            for(let k in value) {
-                let v = value[k];
-                if (_.startsWith(k, '__')) {
-                    console.log('uploading keyvalue from config', key, k);
-                    const tmpFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(v));
-                    fs.writeFileSync(tmpFilePath, v);
-                    let uploaded = await this.ctx.client.storage.putFile(tmpFilePath); // todo: and more options
+    async updateKeyValue (target, values, deployPath) {
 
-                    delete value[k];
-                    value[k.replace('__', '')] = uploaded.id;
+        const replaceContentsWithCids = async obj => {
+
+            const result = {}
+
+            for (let [key, value] of Object.entries (obj)) {
+
+                if (/^storage\[[^\]]+\]$/.test (key)) {
+
+                    key = key.replace (/.*storage\[([^\]]+)\].*/, '$1')
+
+                    if ('blob' in value) {
+
+                        const tmpFilePath = path.join (
+                            this.getCacheDir (),
+                            this.ctx.utils.hashFnHex (value.blob)
+                        )
+
+                        fs.writeFileSync (tmpFilePath, String (value.blob))
+                        const uploaded = await this.ctx.client.storage.putFile (tmpFilePath)
+
+                        value = uploaded.id
+
+                    } else if ('file' in value) {
+
+                        const file = path.join (deployPath, 'views', value.file)
+
+                        if (!fs.existsSync (file)) {
+                            throw new Error ('File not found: ' + file)
+                        }
+
+                        const ext = value.file.replace (/.*\.([a-zA-Z0-9]+)$/, '$1')
+                        const cid = await this.processTemplate (file, deployPath)
+
+                        value = '/_storage/' + cid + '.' + ext
+
+                    } else {
+
+                        throw new Error ('Storage resource not specified: ' + JSON.stringify (value))
+                    }
+
+                } else if (typeof value === 'object') {
+
+                    value = await replaceContentsWithCids (value)
+
+                } else if (Array.isArray (value)) {
+
+                    for (let i in value) {
+
+                        if (typeof value[i] === 'object') {
+
+                            value[i] = await replaceContentsWithCids (value[i])
+                        }
+                    }
                 }
+
+                result[key] = value
             }
-            console.log(value);
-            await this.ctx.web3bridge.putKeyValue(target, key, JSON.stringify(value));
+
+            return result
+        }
+
+        values = await replaceContentsWithCids (values)
+
+        // console.log ({ 'processed_values': values })
+
+        for (let [key, value] of Object.entries (values)) {
+            if (value && (Array.isArray (value) || typeof value === 'object')) {
+                value = JSON.stringify (value)
+            }
+            await this.ctx.web3bridge.putKeyValue (target, key, String (value))
         }
     }
 }
