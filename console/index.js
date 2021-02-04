@@ -43,7 +43,7 @@ class Console {
     }
 
     async cmd_api(...args) {
-        const api_base_url = 'http://localhost:'+parseInt(this.ctx.config.api.port)+'/';
+        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/';
         const api_cmd = args.shift();
 
         let params = "";
