@@ -17,8 +17,8 @@
       "port": 65500
     },
     "wallet": {
-      "account": "0x438773aCB694ed5492433d6E78E6D8C389136067",
-      "privateKey": "682f8597f483d5bf99d83e69198b05e6203cedd088b7f4a8a3e19d76af6fb2e9"
+      "account": "0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB",
+      "privateKey": "8c8d57550b7f0d0d9410d842f3a9188d316e85a28daab498231e7577e863c643"
     }
   }
 }

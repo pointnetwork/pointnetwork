@@ -17,8 +17,8 @@
       "port": 65501
     },
     "wallet": {
-      "account": "0xE8a534F0816538bc0923F707dA975E25C0623307",
-      "privateKey": "dd97068b366eb4f28feae677a1bfd6755006080949acaadc6c33b1f77eada249"
+      "account": "0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8",
+      "privateKey": "4e094c21d2b1a068da6ecbb8d0aeea65569741a6c14c592cb29d8b7aadf5ea49"
     }
   }
 }
