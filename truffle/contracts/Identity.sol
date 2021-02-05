@@ -14,15 +14,15 @@ contract Identity {
 
     constructor() public {
         // Some initial domains for the demos, you can add your own, or better yet, register through normal means
-        identityToOwner['storage_provider'] = 0x989695771D51dE19e9ccb943d32E58F872267fcC;
-        ownerToIdentity[0x989695771D51dE19e9ccb943d32E58F872267fcC] = 'storage_provider';
+        identityToOwner['storage_provider'] = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
+        ownerToIdentity[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = 'storage_provider';
 
-        identityToOwner['example'] = 0x438773aCB694ed5492433d6E78E6D8C389136067;
-        identityToOwner['twitter'] = 0x438773aCB694ed5492433d6E78E6D8C389136067;
-        ownerToIdentity[0x438773aCB694ed5492433d6E78E6D8C389136067] = 'example';
+        identityToOwner['example'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        identityToOwner['twitter'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'example';
 
-        identityToOwner['test3'] = 0xE8a534F0816538bc0923F707dA975E25C0623307;
-        ownerToIdentity[0xE8a534F0816538bc0923F707dA975E25C0623307] = 'test3';
+        identityToOwner['test3'] = 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8;
+        ownerToIdentity[0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8] = 'test3';
     }
 
     function register(string memory handle, address identityOwner) public {

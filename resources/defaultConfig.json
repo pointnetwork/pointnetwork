@@ -70,8 +70,8 @@
       "cooldown_reset_time": "60M"
     },
 
-    "identity_contract_address": "0x8436a56b30f6543DD0245b9E333A63752415184f"
+    "identity_contract_address": "0x9d00b186CB89CA253D910e7ccB94C1755504EE42"
   },
   "simulation_delay": 10000,
-  "hardcode_default_provider": "http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc"
+  "hardcode_default_provider": "http://127.0.0.1:12345/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301"
 }
