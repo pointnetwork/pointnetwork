@@ -1,4 +1,6 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0 <0.8.0;
 
 contract Identity {
     mapping(string => address) identityToOwner;
@@ -12,7 +14,7 @@ contract Identity {
     event IdentityRegistered(string handle, address identityOwner);
     event IKVSet(string identity, string key, string value);
 
-    constructor() public {
+    constructor() {
         // Some initial domains for the demos, you can add your own, or better yet, register through normal means
         identityToOwner['storage_provider'] = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
         ownerToIdentity[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = 'storage_provider';
