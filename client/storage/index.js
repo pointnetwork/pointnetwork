@@ -8,6 +8,11 @@ const { fork } = require('child_process');
 const _ = require('lodash');
 const fs = require('fs');
 const lock = require('level-lock');
+const {
+    checkExistingChannel,
+    createChannel,
+    makePayment,
+  } = require('./payments')
 
 class Storage {
     constructor(ctx) {
@@ -72,7 +77,6 @@ class Storage {
         autorenew = this.config.default_autorenew)
     {
         const file_id = await this.enqueueFileForUpload(path, redundancy, expires, autorenew);
-
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(async() => {
                 let file = await File.find(file_id);
@@ -174,7 +178,8 @@ class Storage {
 
     async chooseProviderCandidate() {
         const id = this.ctx.config.hardcode_default_provider; // todo
-        return await this.ctx.db.provider.findOrCreateAndSave(id);
+        const address = this.ctx.config.hardcode_default_provider_address; // todo
+        return await this.ctx.db.provider.findOrCreateAndSave(id, address);
         // todo: remove blacklist from options
         // todo: remove those already in progress or failed in this chunk
     }
@@ -258,6 +263,12 @@ class Storage {
                     if (!err) {
                         link.status = StorageLink.STATUS_AGREED;
                         await link.save();
+                        if (provider.address !== null) {
+                            const channelExist = await checkExistingChannel(provider.address)
+                            if (!channelExist) {
+                                await createChannel(provider.address, 100)
+                            }
+                        }
                         resolve(true);
                     } else {
                         link.error = err.toString();
@@ -512,6 +523,8 @@ class Storage {
                         link.status = StorageLink.STATUS_SIGNED;
                         await link.save();
 
+                        // create payment with raiden
+                        
                         // const chunk = await link.getChunk();
                         // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
 

@@ -88,6 +88,9 @@ class Web3Bridge {
         const method = contract.methods.ikvPut(identity, key, value);
         console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
     }
+    async toChecksumAddress(address) {
+        return this.web3.utils.toChecksumAddress(address)
+    }
 }
 
 module.exports = Web3Bridge;
