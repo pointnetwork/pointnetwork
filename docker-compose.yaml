@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  peer1:
+    build:
+      context: .
+      dockerfile: peer.Dockerfile
+    links:
+      - blockchain_provider
+    volumes:
+      - ./resources/demo/config.test1.json:/.point/config.json:ro
+      - ./peer.setup.sh:/setup.sh:ro
+
+  # peer2:
+  #   build:
+  #     context: .
+  #     dockerfile: peer.Dockerfile
+  #   link:
+  #     - peer1
+  #   volumes:
+  #     - ./resources/demo/config.test2.json:/.point/config.json:ro
+
+  # peer3:
+  #   build:
+  #     context: .
+  #     dockerfile: peer.Dockerfile
+  #   link:
+  #     - peer1
+  #   volumes:
+  #     - ./resources/demo/config.test3.json:/.point/config.json:ro
+
+  blockchain_provider:
+    build:
+      context: .
+      dockerfile: bc_provider.Dockerfile
+      args:
+        - WEBSITE_OWNER=$WEBSITE_OWNER_PUBKEY
+        - STORAGE_PROVIDER=$STORAGE_PROVIDER_PUBKEY
+        - TEST_PEER=$TEST_PEER_PUBKEY
+        - BALANCE=$DEFAULT_BALANCE
+        - PORT=$BLOCKCHAIN_PROVIDER_PORT
+        - MNEMONIC=$BLOCKCHAIN_PROVIDER_MNEMONIC
