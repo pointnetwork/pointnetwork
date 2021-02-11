@@ -36,7 +36,7 @@ class Model extends Indexable {
         }
     }
 
-    static async findOrCreateAndSave(id, address) {
+    static async findOrCreateAndSave(id) {
         let result = await this.find(id);
 
         if (result !== null) {
@@ -44,7 +44,6 @@ class Model extends Indexable {
         } else {
             let created = await this.new();
             created.id = id;
-            created.address = address;
             await created.save();
             return created;
         }
@@ -135,7 +134,7 @@ class Model extends Indexable {
         this._attributes.id = this.id;
         let batch = this.db.batch();
         batch = this._fixIndices(batch);
-        batch = batch.put(this.id, this._attributes, this.address);
+        batch = batch.put(this.id, this._attributes);
         await new Promise((resolve, reject) => {
             batch.write((err) => {
                 if (err) reject(err);

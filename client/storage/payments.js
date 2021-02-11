@@ -6,9 +6,9 @@ const raidenBaseUrl = 'http://localhost:5001/api/v1';
 const checkExistingChannel = async (serviceProviderAddress) => {
   try {
     const allUnsettledChannels = await axios.get(`${raidenBaseUrl}/channels/${token_address}`);
-    const channelExists = allUnsettledChannels.data.find((_channel) => _channel.partner_address === serviceProviderAddress)
-    if (channelExists) return true;
-    return false;
+    return allUnsettledChannels.data.find((_channel) => {
+      if (_channel.partner_address === serviceProviderAddress && _channel.state === 'opened') return true;
+    });
   } catch (error) {
     console.error(error.response);
   }
@@ -25,7 +25,7 @@ const createChannel = async (serviceProviderAddress, totalDeposit, revealTimeout
     })
     return newChannel;
   } catch (error) {
-    console.error(error);
+    console.error(error.response);
   }
 }
 
@@ -34,10 +34,9 @@ const makePayment = async (serviceProviderAddress, amount) => {
     const newPayment = await axios.post(`${raidenBaseUrl}/payments/${token_address}/${serviceProviderAddress}`, {
       amount,
     })
-    console.log(newPayment);
     return newPayment;
   } catch (error) {
-    console.error(error);
+    console.error(error.response);
   }
 }
 

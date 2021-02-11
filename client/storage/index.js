@@ -178,8 +178,7 @@ class Storage {
 
     async chooseProviderCandidate() {
         const id = this.ctx.config.hardcode_default_provider; // todo
-        const address = this.ctx.config.hardcode_default_provider_address; // todo
-        return await this.ctx.db.provider.findOrCreateAndSave(id, address);
+        return await this.ctx.db.provider.findOrCreateAndSave(id);
         // todo: remove blacklist from options
         // todo: remove those already in progress or failed in this chunk
     }
@@ -263,11 +262,10 @@ class Storage {
                     if (!err) {
                         link.status = StorageLink.STATUS_AGREED;
                         await link.save();
-                        if (provider.address !== null) {
-                            const channelExist = await checkExistingChannel(provider.address)
-                            if (!channelExist) {
-                                await createChannel(provider.address, 100)
-                            }
+                        const checksum = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
+                        const channelExist = await checkExistingChannel(checksum)
+                        if (channelExist === undefined) {
+                            await createChannel(checksum, 1000)  // todo: make channel deposit amount dynamic
                         }
                         resolve(true);
                     } else {
@@ -522,8 +520,9 @@ class Storage {
                         link.validatePledge();
                         link.status = StorageLink.STATUS_SIGNED;
                         await link.save();
-
-                        // create payment with raiden
+                        const provider = await link.provider
+                        const checksum = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
+                        await makePayment(checksum, 10) // todo: calculate amount using cost per kb for service provider
                         
                         // const chunk = await link.getChunk();
                         // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
