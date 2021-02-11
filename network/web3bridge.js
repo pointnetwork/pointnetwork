@@ -89,7 +89,8 @@ class Web3Bridge {
         console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
     }
     async toChecksumAddress(address) {
-        return this.web3.utils.toChecksumAddress(address)
+        const checksumAddress = await this.web3.utils.toChecksumAddress(address)
+        return checksumAddress
     }
 }
 

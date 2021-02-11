@@ -102,6 +102,7 @@ if (program.demo) {
 // -------------------- Deployer --------------------- //
 
 if (program.deploy) {
+    console.log('program.datadir',program.datadir);
     if (program.deploy.length === 0) return this.ctx.die('error: missing path');
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
