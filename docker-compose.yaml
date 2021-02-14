@@ -8,8 +8,17 @@ services:
     links:
       - blockchain_provider
     volumes:
-      - ./resources/demo/config.test1.json:/.point/config.json:ro
-      - ./peer.setup.sh:/setup.sh:ro
+      - ./resources/demo/config.test1.json:/config.json
+      - ./peer.setup.js:/setup.js
+      - volume1:/.point
+    environment:
+      - HOST=localhost
+      - PORT=12345
+      - PUB_KEY=$WEBSITE_OWNER_PUBKEY
+      - PRV_KEY=$WEBSITE_OWNER_PRVKEY
+      # - API_PORT
+      # - ZPROXY_PORT
+      # - BOOTSTRAP_NODE
 
   # peer2:
   #   build:
@@ -30,15 +39,19 @@ services:
   #     - ./resources/demo/config.test3.json:/.point/config.json:ro
 
   blockchain_provider:
-    build:
-      context: .
-      dockerfile: bc_provider.Dockerfile
+    image: trufflesuite/ganache-cli
     ports:
       - "$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT"
-    environment:
-      - WEBSITE_OWNER=$WEBSITE_OWNER_PRVKEY
-      - STORAGE_PROVIDER=$STORAGE_PROVIDER_PRVKEY
-      - TEST_PEER=$TEST_PEER_PRVKEY
-      - BALANCE=$DEFAULT_BALANCE
-      - PORT=$BLOCKCHAIN_PROVIDER_PORT
-      - MNEMONIC=$BLOCKCHAIN_PROVIDER_MNEMONIC
+    command:
+      - -p
+      - $BLOCKCHAIN_PROVIDER_PORT
+      - -m
+      - $BLOCKCHAIN_PROVIDER_MNEMONIC
+      - --account="$WEBSITE_OWNER_PRVKEY,$DEFAULT_BALANCE"
+      - --account="$STORAGE_PROVIDER_PRVKEY,$DEFAULT_BALANCE"
+      - --account="$TEST_PEER_PRVKEY,$DEFAULT_BALANCE"
+
+volumes:
+  volume1:
+  volume2:
+  volume3:

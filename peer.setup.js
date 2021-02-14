@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
-const { execSync } = require ('child_process')
+const { execSync, spawn } = require ('child_process')
 const { writeFileSync } = require('fs')
-
-const config = require('/.point/config.json')
+const config = require('/config.json')
 const {
     HOST,
     PORT,
@@ -13,6 +12,8 @@ const {
     ZPROXY_PORT,
     BOOTSTRAP_NODE,
 } = process.env
+
+process.on ('unhandledRejection', (rejection) => console.log ('Unhandled:', rejection))
 
 console.log ('Deploying the contracts', process.env)
 
@@ -28,5 +29,19 @@ console.log ({ config })
 
 writeFileSync('/.point/config.json', config, 'utf-8')
 
-const result = execSync ('pushd truffle && truffle deploy --network development && popd', 'utf-8')
+const result = execSync (
+    'truffle deploy --network development',
+    { cwd: '/app/truffle', encoding: 'utf-8' }
+)
+
 console.log ('Result:', result)
+
+;(() => new Promise ((resolve, reject) => {
+    const runtime = spawn ('./point', ['--datadir', '/.point'], { cmd: '/app' })
+
+    runtime.stdout.pipe (process.stdout)
+    runtime.stderr.pipe (process.stderr)
+    runtime.on ('close', (code) => console.log (`Pointnetwork process is closed with code ${code}`))
+    runtime.on ('exit', resolve)
+    runtime.on ('error', reject)
+})) ()

@@ -14,15 +14,6 @@ FROM node:10.23.2-alpine3.11
 WORKDIR /app
 COPY --from=builder /app /app
 
-RUN ls -ahl /app
-RUN ls -ahl /app/resources
-RUN cat /app/resources/defaultConfig.json
+RUN mkdir -p /.point/data/db
 
-RUN mkdir -p /.point/data/db && \
-    touch /setup.js && \
-    chmod +x /setup.js && \
-    /setup.js
-
-RUN echo 'all is set up'
-
-CMD [ "./point", "--datadir", "/.point" ]
+CMD [ "/setup.js" ]
