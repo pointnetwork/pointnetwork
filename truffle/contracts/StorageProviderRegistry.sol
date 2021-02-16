@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.6.0 <0.8.0;
-
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract StorageProviderRegistry {
@@ -48,5 +47,14 @@ contract StorageProviderRegistry {
 
     function readCheapestProvider() public view returns (address result) {
         return cheapest_provider;
+    }
+
+    function readAllProviders() public view returns (address[] memory){
+        return providerIds;
+    }
+
+    function getProvider(address provider_id) public view returns (string memory connection, uint cost_per_kb) {
+        connection = providers[provider_id].connection;
+        cost_per_kb = providers[provider_id].cost_per_kb;
     }
 }
