@@ -6,7 +6,6 @@ class Model extends Indexable {
     constructor(_this) {
         super();
         this.id = null;
-        this.address = null;
         this._attributes = {};
         this._originalAttributes = {};
     }

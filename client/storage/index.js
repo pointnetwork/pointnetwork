@@ -156,7 +156,6 @@ class Storage {
         // todo:  join the network from the raiden wallet
         // todo:  .get(data_id)
         // todo:  .put(data, ) returns data_id
-
         if (mode === 'all' || mode === 'uploading') {
             let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
             uploadingChunks.forEach((chunk) => {
@@ -177,7 +176,10 @@ class Storage {
     }
 
     async chooseProviderCandidate() {
-        const id = this.ctx.config.hardcode_default_provider; // todo
+        const storageProviders = await this.ctx.web3bridge.getAllStorageProvider()
+        const randomProvider = storageProviders[storageProviders.length * Math.random() | 0]
+        const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider)
+        const id = getProviderDetails['0']
         return await this.ctx.db.provider.findOrCreateAndSave(id);
         // todo: remove blacklist from options
         // todo: remove those already in progress or failed in this chunk
@@ -255,7 +257,6 @@ class Storage {
             link.chunk_id = chunk.id;
             link.status = StorageLink.STATUS_CREATED;
             await link.save();
-
             linkStatusChanged = await new Promise((resolve, reject) => {
                 this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
                     await link.refresh();
@@ -564,7 +565,6 @@ class Storage {
             'internal_id': (new Date).getTime().toString() + Math.random().toString(),
             cmd, data, contact, callback
         };
-
         if (!this.queued_requests[contact]) this.queued_requests[contact] = [];
         this.queued_requests[contact].push(request);
 
@@ -576,10 +576,8 @@ class Storage {
         const requests_length = (this.current_requests[contact]) ? this.current_requests[contact].length : 0;
         if (requests_length < MAX_PARALLEL_PER_PROVIDER && this.queued_requests[contact] && this.queued_requests[contact].length > 0) {
             const req = this.queued_requests[contact].shift();
-
             if (!this.current_requests[contact]) this.current_requests[contact] = [];
             this.current_requests[contact].push(req);
-
             return this.ctx.network.kademlia.node.send(req.cmd, req.data, this.ctx.utils.urlToContact(contact), (err, result) => {
                 this.current_requests = _.remove(this.current_requests, function(n) {
                     return n.internal_id === req.internal_id;
