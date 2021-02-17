@@ -7,6 +7,51 @@ const path = require('path');
 let Chunk;
 let Redkey;
 
+// State Machine Definitions
+const { Machine, interpret } = require('xstate')
+
+const storageLinkMachine = Machine(
+  {
+    id: 'storageLink',
+    initial: 'initialized',
+    states: {
+      initialized: {
+        on: {
+          CREATE: 'created',
+        }
+      },
+      created: {
+        on: {
+          AGREE: 'agreed',
+        },
+        entry: ['STORE_CHUNK_REQUEST']
+      },
+      agreed: {
+        on: {
+          ENCRYPT: 'encrypting'
+        }
+      },
+      encrypting: {},
+      failed: {
+        type: 'final'
+      }
+    }
+  },
+  {
+    actions: {
+      STORE_CHUNK_REQUEST: (context, event) => {
+        console.log(`STORE_CHUNK_REQUEST action fired.`)
+      }
+    }
+  }
+)
+
+// Create a state machine service
+const storageLinkService = interpret(storageLinkMachine).onTransition(state => {
+  state
+  console.log(`Current State: ${state.value}`)
+})
+
 class StorageLink extends Model {
     constructor(...args) {
         super(...args);
@@ -14,6 +59,17 @@ class StorageLink extends Model {
         // This is to avoid circular dependencies:
         Chunk = require('./chunk');
         Redkey = require('./redkey');
+
+        // start the storage link machine service
+        storageLinkService.start()
+    }
+
+    get stateMachine() {
+        return storageLinkService
+    }
+
+    get currentState() {
+        return storageLinkService.state.value
     }
 
     static _buildIndices() {
