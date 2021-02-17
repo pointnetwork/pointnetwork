@@ -250,6 +250,8 @@ class Storage {
             link.redkeyId = await this.getRedkeyId(provider);
             link.chunk_id = chunk.id;
             link.status = StorageLink.STATUS_CREATED;
+            // using state machine
+            link.stateMachine.send('CREATE')
             await link.save();
 
             linkStatusChanged = await new Promise((resolve, reject) => {
