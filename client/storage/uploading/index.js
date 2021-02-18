@@ -1,5 +1,6 @@
 const SEND_STORE_CHUNK_REQUEST = (chunk, link) => {
   return Promise.resolve(true)
+  // return Promise.reject('THERE WAS AN ERROR!!!')
   // return new Promise((resolve, reject) => {
   //     this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
   //         await link.refresh();
