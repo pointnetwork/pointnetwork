@@ -1,8 +1,7 @@
-Point Network
-=============
+# Point Network
+===============
 
-How to run the demo
--------------------
+### How to run the demo
 
 It's very raw prototype code, so you have to do lots of things manually right now.
 
@@ -57,6 +56,18 @@ It's very raw prototype code, so you have to do lots of things manually right no
 1. Now you can stop the second node (Ctrl+C).
 1. Run the [Point Browser](https://github.com/pointnetwork/pointbrowser)
 1. Navigate to `http://example.z` and it will open the home page of the Example Blog.
+
+### Run a Point Node in a VS Code Debugger
+
+The VS Code debugger is configured using the [VS Code launch config](./vscode/launch.json) file. Its configured to launch a test node under your `~/.point/test1` directory.
+
+To start the VS Code debugger, click on the debugger button and at the top select `Launch Point Node` from the drop down and hit the _play_ button.
+
+Now you can add breakpoints and run a depolyment from a separate terminal window to hit the breakpoint.
+
+Note that it may fail to start and this is usually due to the `point.pid` file still being present in the `~/.point/test1` directory. Simply delete that file (`rm ~/.point/test1/point.pid`) and run the debugger again.
+
+Note also that the launch config makes use of the `$HOME` environment variable for the `--datadir` param. If you do not have this environment variable set, then you will need to do so and run the debugger again.
 
 Please let us know if you hit any obstacles of encounter errors or bugs by opening an issue or emailing info@pointnetwork.io.
 
