@@ -26,6 +26,7 @@
   "client": {
     "storage": {
       "cache_path": "data/client_storage_cache",
+      "storage_provider_cache": "data/storage_provider_cache.json",
       "default_redundancy": 1,
       "default_expires_period_seconds": 86400,
       "default_autorenew": true,

@@ -113,7 +113,7 @@ class Web3Bridge {
     }
     async getAllStorageProvider() {
         const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.readAllProviders().call();
+        return contract.methods.readAllProviders().call(); // todo: cache response and return cache if exists
     }
     async getSingleProvider(address) {
         const contract = await this.loadStorageProviderRegistryContract();

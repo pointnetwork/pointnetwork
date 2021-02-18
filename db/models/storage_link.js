@@ -64,6 +64,7 @@ class StorageLink extends Model {
 
 StorageLink.STATUS_ALL = 'all';
 StorageLink.STATUS_CREATED = 'created'; // candidates
+StorageLink.STATUS_ESTABLISH_PAYMENT_CHANNEL = 'establish_payment_channel';
 StorageLink.STATUS_AGREED = 'agreed';
 StorageLink.STATUS_ENCRYPTING = 'encrypting';
 StorageLink.STATUS_ENCRYPTED = 'encrypted';

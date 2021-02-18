@@ -20,6 +20,19 @@ contract StorageProviderRegistry {
 
     event Announcement(address id, string connection, uint collateral, uint collateral_lock_period, uint cost_per_kb);
 
+    constructor() {
+        // Some initial domains for the demos, you can add your own, or better yet, register through normal means
+        providers[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = Provider({
+            id: 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301,
+            connection: 'http://127.0.0.1:12345/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301',
+            announced_at: 1613647823,
+            collateral: 50,
+            cost_per_kb: 5,
+            collateral_lock_period: 500
+        });
+        cheapest_provider = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
+        providerIds.push(0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301);
+    }
     function announce(string memory connection, uint collateral_lock_period, uint cost_per_kb) payable public {
         if (providers[msg.sender].id == address(0)) providerIds.push(msg.sender);
 
