@@ -249,8 +249,8 @@ class Storage {
 
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
-            let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
             let link = StorageLink.new();
+            let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
             link.id = DB.generateRandomIdForNewRecord();
             link.provider = provider;
             link.redkeyId = await this.getRedkeyId(provider);
@@ -261,12 +261,14 @@ class Storage {
                 this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
                     await link.refresh();
                     if (!err) {
-                        link.status = StorageLink.STATUS_AGREED;
-                        await link.save();
-                        const checksum = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
-                        const channelExist = await checkExistingChannel(checksum)
+                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
+                        const channelExist = await checkExistingChannel(checksumAddress)
                         if (channelExist === undefined) {
-                            await createChannel(checksum, 1000)  // todo: make channel deposit amount dynamic
+                            link.status = StorageLink.STATUS_ESTABLISH_PAYMENT_CHANNEL;
+                            await link.save();
+                        }else {
+                            link.status = StorageLink.STATUS_AGREED;
+                            await link.save();
                         }
                         resolve(true);
                     } else {
@@ -279,6 +281,31 @@ class Storage {
             });
         }
 
+        // Create raiden channel for providers without without open channel
+
+        const payment_channel = await chunk.storage_links[ StorageLink.STATUS_ESTABLISH_PAYMENT_CHANNEL ];
+        let previousProviders = [];
+        for(let link of payment_channel){
+            await link.refresh();
+            linkStatusChanged = await new Promise(async(resolve, reject) => {
+                let currentProvider = await link.provider_id
+                const storage_provider_cache = path.join(this.ctx.datadir, this.config.storage_provider_cache);
+                let sent_providers = '[]';
+                if (fs.existsSync(storage_provider_cache)) {
+                    sent_providers = fs.readFileSync(storage_provider_cache)
+                }
+                const parsed_sent_providers = JSON.parse(sent_providers)
+                fs.writeFileSync(storage_provider_cache, JSON.stringify([...new Set([...parsed_sent_providers, currentProvider])]));
+                if (!previousProviders.includes(currentProvider) || !parsed_sent_providers.includes(currentProvider)) {
+                    const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`)
+                    await createChannel(checksumAddress, 1000)  // todo: make channel deposit amount dynamic
+                    link.status = StorageLink.STATUS_AGREED;
+                    await link.save();
+                }
+                previousProviders.push(currentProvider)
+                resolve(true);
+            })
+        }
         // todo: limit encryptors amount, queue them (10 instead of 100 parallel)
         // todo: reuse the process instead of killing?
         // Encrypt the "agreed"
@@ -522,8 +549,8 @@ class Storage {
                         link.status = StorageLink.STATUS_SIGNED;
                         await link.save();
                         const provider = await link.provider
-                        const checksum = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
-                        await makePayment(checksum, 10) // todo: calculate amount using cost per kb for service provider
+                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
+                        await makePayment(checksumAddress, 10) // todo: calculate amount using cost per kb for service provider
                         
                         // const chunk = await link.getChunk();
                         // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
