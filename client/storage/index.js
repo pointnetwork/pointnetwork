@@ -220,6 +220,25 @@ class Storage {
         });
     }
 
+    static SEND_STORE_CHUNK_REQUEST(chunk, link) {
+        // return Promise.resolve(true)
+        return new Promise((resolve, reject) => {
+            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
+                await link.refresh();
+                if (!err) {
+                    link.status = StorageLink.STATUS_AGREED;
+                    await link.save();
+                    resolve(true);
+                } else {
+                    link.error = err.toString();
+                    link.status = StorageLink.STATUS_FAILED; // todo: but why? declined?
+                    await link.save();
+                    reject(err);
+                }
+            });
+        });
+    }
+
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
         if (this.uploadingChunksProcessing[chunk.id]) return;
@@ -251,24 +270,7 @@ class Storage {
             link.chunk_id = chunk.id;
             link.status = StorageLink.STATUS_CREATED;
             // using state machine
-            link.stateMachine.send('CREATE')
-            await link.save();
-
-            linkStatusChanged = await new Promise((resolve, reject) => {
-                this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
-                    await link.refresh();
-                    if (!err) {
-                        link.status = StorageLink.STATUS_AGREED;
-                        await link.save();
-                        resolve(true);
-                    } else {
-                        link.error = err.toString();
-                        link.status = StorageLink.STATUS_FAILED; // todo: but why? declined?
-                        await link.save();
-                        reject(err);
-                    }
-                });
-            });
+            link.stateMachine.send('CREATE', { chunk })
         }
 
         // todo: limit encryptors amount, queue them (10 instead of 100 parallel)
