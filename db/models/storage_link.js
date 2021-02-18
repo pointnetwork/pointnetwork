@@ -4,7 +4,7 @@ const sublevel = require('sublevel');
 const AutoIndex = require('level-auto-index');
 const fs = require('fs');
 const path = require('path');
-const storage = require('../../client/storage')
+const uploadingSteps = require('../../client/storage/uploading')
 let Chunk;
 let Redkey;
 
@@ -33,7 +33,7 @@ const createStateMachine = (model) => {
           // save the model
           invoke: {
             id: 'SEND_STORE_CHUNK_REQUEST',
-            src: (context, event) => storage.SEND_STORE_CHUNK_REQUEST(event.chunk, context.model),
+            src: (context, event) => uploadingSteps.SEND_STORE_CHUNK_REQUEST(event.chunk, context.model),
             onDone: {
               actions: 'REFRESH_MODEL',
               target: 'agreed',
