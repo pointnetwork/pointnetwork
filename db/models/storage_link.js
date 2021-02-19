@@ -5,24 +5,15 @@ const AutoIndex = require('level-auto-index');
 const fs = require('fs');
 const path = require('path');
 const { interpret } = require('xstate');
-let Chunk;
-let Redkey;
 
 class StorageLink extends Model {
-  constructor(...args) {
+    constructor(...args) {
       super(...args);
-
-      // This is to avoid circular dependencies:
-      Chunk = require('./chunk');
-      Redkey = require('./redkey');
     }
 
-    startStateMachine(storage) {
-      this._stateMachine
-      this._storageLinkService
-
+    initStateMachine() {
       // create a state machine using the factory
-      this._stateMachine = storageLinkMachine.createStateMachine(this, storage)
+      this._stateMachine = storageLinkMachine.createStateMachine(this, this.ctx.client.storage)
 
       this._storageLinkService = interpret(this._stateMachine).onTransition(state => console.log(`Current State: ${state.value}`))
 
@@ -31,11 +22,11 @@ class StorageLink extends Model {
     }
 
     get stateMachine() {
-        return this._storageLinkService
+      return this._storageLinkService
     }
 
     get currentState() {
-        return this._storageLinkService.state.value
+      return this.stateMachine.state.value
     }
 
     static _buildIndices() {
@@ -109,3 +100,5 @@ module.exports = StorageLink;
 
 // require statement declared after module.exports to avoid circular dependencies
 const { storageLinkMachine } = require('../../client/storage/machines');
+const Chunk = require('./chunk');
+const Redkey = require('./redkey');
