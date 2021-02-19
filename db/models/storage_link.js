@@ -4,104 +4,30 @@ const sublevel = require('sublevel');
 const AutoIndex = require('level-auto-index');
 const fs = require('fs');
 const path = require('path');
-const uploadingSteps = require('../../client/storage/uploading')
+const { interpret } = require('xstate');
 let Chunk;
 let Redkey;
 
-// State Machine Definitions
-const { Machine, interpret, assign } = require('xstate');
-
-const createStateMachine = (model) => {
-  return Machine(
-    {
-      id: 'storageLink',
-      initial: 'initialized',
-      context: { model },
-      states: {
-        initialized: {
-          on: {
-            CREATE: 'created',
-          }
-        },
-        created: {
-          // save the model
-          // send STORE_CHUNK_REQUEST
-          // refresh the model
-          // onSuccess -> set state to agreed
-          // onError -> set state to failed
-          // onError -> set .err to error string
-          // save the model
-          invoke: {
-            id: 'SEND_STORE_CHUNK_REQUEST',
-            src: (context, event) => uploadingSteps.SEND_STORE_CHUNK_REQUEST(event.chunk, context.model),
-            onDone: {
-              actions: 'REFRESH_MODEL',
-              target: 'agreed',
-            },
-            onError: {
-              actions: ['REFRESH_MODEL', 'UPDATE_MODEL_ERR_CONTEXT'],
-              target: 'failed',
-            }
-          },
-          enter: 'SAVE_MODEL',
-          exit: 'SAVE_MODEL'
-        },
-        agreed: {
-          on: {
-            ENCRYPT: 'encrypting'
-          },
-          enter: ['UPDATE_LEGACY_STATUS_AGREED', 'SAVE_MODEL']
-        },
-        encrypting: {},
-        success: {
-          type: 'final'
-        },
-        failed: {
-          type: 'final'
-        }
-      }
-    },
-    {
-      actions: {
-        SAVE_MODEL: async () => {
-          console.log(`Saving the model from the state machine`)
-          await model.save()
-        },
-        REFRESH_MODEL: async () => {
-          console.log(`Refresing the model from the state machine`)
-          await model.refresh()
-        },
-        UPDATE_LEGACY_STATUS_AGREED: assign({
-          model: {
-            status: StorageLink.STATUS_AGREED
-          }
-        }),
-        UPDATE_MODEL_ERR_CONTEXT: assign({
-          model: {
-            err: (context, event) => event.data.err
-          }
-        })
-      }
-    }
-  )
-}
-
 class StorageLink extends Model {
+  constructor(...args) {
+      super(...args);
 
-    constructor(...args) {
-        super(...args);
+      // This is to avoid circular dependencies:
+      Chunk = require('./chunk');
+      Redkey = require('./redkey');
+    }
 
-        // This is to avoid circular dependencies:
-        Chunk = require('./chunk');
-        Redkey = require('./redkey');
+    startStateMachine(storage) {
+      this._stateMachine
+      this._storageLinkService
 
-        // create a state machine using the factory
-        this._stateMachine = createStateMachine(this)
+      // create a state machine using the factory
+      this._stateMachine = storageLinkMachine.createStateMachine(this, storage)
 
-        this._storageLinkService = interpret(this._stateMachine).onTransition(state => console.log(`Current State: ${state.value}`))
+      this._storageLinkService = interpret(this._stateMachine).onTransition(state => console.log(`Current State: ${state.value}`))
 
-        // start the storage link machine service
-        this._storageLinkService.start()
+      // start the storage link machine service
+      this._storageLinkService.start()
     }
 
     get stateMachine() {
@@ -180,3 +106,6 @@ StorageLink.allStatuses = () => {
 };
 
 module.exports = StorageLink;
+
+// require statement declared after module.exports to avoid circular dependencies
+const { storageLinkMachine } = require('../../client/storage/machines');
