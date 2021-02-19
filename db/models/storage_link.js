@@ -26,11 +26,11 @@ class StorageLink extends Model {
     }
 
     get state() {
-      return this.stateMachine.state.value
+      return this.machine.state.value
     }
 
     get hasFailed() {
-      return this.stateMachine.state.value == 'failed'
+      return this.machine.state.value == 'failed'
     }
 
     static _buildIndices() {
