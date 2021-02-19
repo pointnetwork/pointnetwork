@@ -261,7 +261,7 @@ class Storage {
             link.initStateMachine()
             // use storage link state machine to sent CREATE event
             link.machine.send('CREATE', { chunk })
-            linkStatusChanged = link.machine.state.changed && !link.hasFailed
+            linkStatusChanged = true //link.machine.state.changed && !link.hasFailed
         }
 
         // todo: limit encryptors amount, queue them (10 instead of 100 parallel)

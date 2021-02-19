@@ -56,17 +56,17 @@ exports.createStateMachine = function createStateMachine(model, storage) {
         SAVE_MODEL: async () => {
           console.log(`SAVE_MODEL model.id ${model.id}`)
           console.log(`SAVE_MODEL model.status (LEGACY) ${model.status}`)
-          console.log(`SAVE_MODEL model.currentState ${model.currentState}`)
+          console.log(`SAVE_MODEL model.state ${model.state}`)
           await model.save()
         },
         REFRESH_MODEL: async () => {
           await model.refresh()
           console.log(`model.id ${model.id}`)
           console.log(`model.status (LEGACY) ${model.status}`)
-          console.log(`model.currentState ${model.currentState}`)
+          console.log(`model.state ${model.state}`)
         },
         UPDATE_LEGACY_STATUS: async () => {
-          model.status = model.currentState
+          model.status = model.state
           await model.save()
           console.log(`UPDATE_LEGACY_STATUS: model.status: ${model.status}`)
           console.log(`UPDATE_LEGACY_STATUS: model.err: ${model.err}`)
