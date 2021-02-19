@@ -39,14 +39,15 @@ exports.createStateMachine = function createStateMachine(model, storage) {
           on: {
             ENCRYPT: 'encrypting'
           },
-          entry: ['UPDATE_LEGACY_STATUS', 'SAVE_MODEL']
+          entry: 'UPDATE_LEGACY_STATUS'
         },
         encrypting: {},
         success: {
           type: 'final'
         },
         failed: {
-          type: 'final'
+          type: 'final',
+          entry: 'UPDATE_LEGACY_STATUS'
         }
       }
     },
@@ -68,9 +69,10 @@ exports.createStateMachine = function createStateMachine(model, storage) {
           model.status = model.currentState
           await model.save()
           console.log(`UPDATE_LEGACY_STATUS: model.status: ${model.status}`)
+          console.log(`UPDATE_LEGACY_STATUS: model.err: ${model.err}`)
         },
         UPDATE_MODEL_ERR: async (context, event) => {
-          model.err = event.data.err
+          model.err = event.data
         },
       }
     }
