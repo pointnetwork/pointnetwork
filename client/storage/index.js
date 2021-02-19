@@ -222,9 +222,7 @@ class Storage {
 
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
         return new Promise((resolve, reject) => {
-            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
-                (!err) ? resolve(true) : reject(err)
-            });
+            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {(!err) ? resolve(true) : reject(err)});
         });
     }
 
@@ -247,7 +245,7 @@ class Storage {
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
-        let linkStatusChanged = false;
+        let linkStatusChanged = true;
 
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
@@ -261,9 +259,6 @@ class Storage {
             link.startStateMachine(this)
             // using state machine
             link.stateMachine.send('CREATE', { chunk })
-
-            console.log(`chunkUploadingTick model.id: ${link.id}`)
-            console.log(`chunkUploadingTick status (LEGACY): ${link.status}`)
         }
 
         // todo: limit encryptors amount, queue them (10 instead of 100 parallel)
