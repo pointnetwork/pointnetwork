@@ -11,14 +11,14 @@ class StorageLink extends Model {
       super(...args);
     }
 
-    initStateMachine() {
+    initStateMachine(initialState='initialized') {
       // create a state machine using the factory
       this._stateMachine = storageLinkMachine.createStateMachine(this, this.ctx.client.storage)
 
       this._storageLinkService = interpret(this._stateMachine).onTransition(state => console.log(`Current State: ${state.value}`))
 
       // start the storage link machine service
-      this._storageLinkService.start()
+      this._storageLinkService.start(initialState)
     }
 
     get machine() {
@@ -90,6 +90,7 @@ StorageLink.STATUS_DATA_RECEIVED = 'data_received';
 StorageLink.STATUS_ASKING_FOR_SIGNATURE = 'asking_for_signature';
 StorageLink.STATUS_SIGNED = 'signed';
 StorageLink.STATUS_FAILED = 'failed';
+
 StorageLink.allStatuses = () => {
     let statuses = [];
     for(let i in StorageLink) {
