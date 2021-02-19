@@ -21,12 +21,16 @@ class StorageLink extends Model {
       this._storageLinkService.start()
     }
 
-    get stateMachine() {
+    get machine() {
       return this._storageLinkService
     }
 
-    get currentState() {
+    get state() {
       return this.stateMachine.state.value
+    }
+
+    get hasFailed() {
+      return this.stateMachine.state.value == 'failed'
     }
 
     static _buildIndices() {
