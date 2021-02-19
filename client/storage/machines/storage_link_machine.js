@@ -32,7 +32,7 @@ exports.createStateMachine = function createStateMachine(model, storage) {
               target: 'failed',
             }
           },
-          // entry: 'SAVE_MODEL',
+          entry: ['UPDATE_LEGACY_STATUS', 'SAVE_MODEL'],
           exit: 'SAVE_MODEL'
         },
         agreed: {
@@ -54,22 +54,14 @@ exports.createStateMachine = function createStateMachine(model, storage) {
     {
       actions: {
         SAVE_MODEL: async () => {
-          console.log(`SAVE_MODEL model.id ${model.id}`)
-          console.log(`SAVE_MODEL model.status (LEGACY) ${model.status}`)
-          console.log(`SAVE_MODEL model.state ${model.state}`)
           await model.save()
         },
         REFRESH_MODEL: async () => {
           await model.refresh()
-          console.log(`model.id ${model.id}`)
-          console.log(`model.status (LEGACY) ${model.status}`)
-          console.log(`model.state ${model.state}`)
         },
         UPDATE_LEGACY_STATUS: async () => {
           model.status = model.state
           await model.save()
-          console.log(`UPDATE_LEGACY_STATUS: model.status: ${model.status}`)
-          console.log(`UPDATE_LEGACY_STATUS: model.err: ${model.err}`)
         },
         UPDATE_MODEL_ERR: async (context, event) => {
           model.err = event.data

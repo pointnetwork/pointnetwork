@@ -257,7 +257,6 @@ class Storage {
             link.provider = provider;
             link.redkeyId = await this.getRedkeyId(provider);
             link.chunk_id = chunk.id;
-            link.status = StorageLink.STATUS_CREATED;
             link.initStateMachine()
             // use storage link state machine to sent CREATE event
             link.machine.send('CREATE', { chunk })
