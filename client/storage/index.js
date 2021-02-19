@@ -1,7 +1,7 @@
 const Chunk = require('../../db/models/chunk');
 const File = require('../../db/models/file');
-const StorageLink = require('../../db/models/storage_link');
 const Redkey = require('../../db/models/redkey');
+const StorageLink = require('../../db/models/storage_link');
 const DB = require('../../db');
 const path = require('path');
 const { fork } = require('child_process');
@@ -220,6 +220,14 @@ class Storage {
         });
     }
 
+    async SEND_STORE_CHUNK_REQUEST(chunk, link) {
+        return new Promise((resolve, reject) => {
+            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
+                (!err) ? resolve(true) : reject(err)
+            });
+        });
+    }
+
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
         if (this.uploadingChunksProcessing[chunk.id]) return;
@@ -250,8 +258,12 @@ class Storage {
             link.redkeyId = await this.getRedkeyId(provider);
             link.chunk_id = chunk.id;
             link.status = StorageLink.STATUS_CREATED;
+            link.startStateMachine(this)
             // using state machine
             link.stateMachine.send('CREATE', { chunk })
+
+            console.log(`chunkUploadingTick model.id: ${link.id}`)
+            console.log(`chunkUploadingTick status (LEGACY): ${link.status}`)
         }
 
         // todo: limit encryptors amount, queue them (10 instead of 100 parallel)
