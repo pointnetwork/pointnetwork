@@ -268,6 +268,9 @@ class Storage {
         // Encrypt the "agreed"
         const agreed = await chunk.storage_links[ StorageLink.STATUS_AGREED ];
         for(let link of agreed) {
+            link.initStateMachine(StorageLink.STATUS_AGREED)
+            console.log(`STATUS_AGREED: Link STATE: ${link.state}`)
+            console.log(`STATUS_AGREED: Link LEGACY STATUS: ${link.status}`)
             await link.refresh();
             link.status = StorageLink.STATUS_ENCRYPTING;
             await link.save();
