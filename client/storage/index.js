@@ -223,6 +223,7 @@ class Storage {
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
         return new Promise((resolve, reject) => {
             this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
+                await link.refresh();
                 (!err) ? resolve(true) : reject(err) // machine will move to next state
             });
         });
@@ -238,7 +239,6 @@ class Storage {
 
             chunk_encryptor.on('message', async (message) => {
                 if (message.command === 'encrypt' && message.success === true) {
-                    // let link = await this.ctx.db.storage_link.find(message.linkId);
                     // Let's calculate merkle tree
                     const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes; // todo: check that it's not 0/null or some weird value
                     const data = link.getEncryptedData();
@@ -258,7 +258,6 @@ class Storage {
                     link.segment_hashes = segment_hashes.map(x => x.toString('hex'));
                     link.merkle_tree = merkleTree.map(x => x.toString('hex'));
                     link.merkle_root = link.merkle_tree[link.merkle_tree.length - 1].toString('hex');
-
                     // cleanup chunk encryptor
                     let chunk_encryptor = this.chunk_encryptors[chunk.id + link.id];
                     chunk_encryptor.kill('SIGINT');
@@ -346,6 +345,7 @@ class Storage {
             link.redkeyId = await this.getRedkeyId(provider);
             link.chunk_id = chunk.id;
             link.initStateMachine()
+            await link.save()
             // use storage link state machine to sent CREATE event
             link.machine.send('CREATE', { chunk })
             linkStatusChanged = link.machine.state.changed && !link.hasFailed

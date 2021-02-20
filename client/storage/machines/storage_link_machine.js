@@ -1,6 +1,7 @@
 // State Machine Definitions
 const { Machine } = require('xstate');
 
+
 exports.createStateMachine = function createStateMachine(model, storage) {
   return Machine(
     {
@@ -17,7 +18,6 @@ exports.createStateMachine = function createStateMachine(model, storage) {
             id: 'SEND_STORE_CHUNK_REQUEST',
             src: (context, event) => storage.SEND_STORE_CHUNK_REQUEST(event.chunk, model),
             onDone: {
-              actions: 'REFRESH_MODEL',
               target: 'agreed',
             },
             onError: {
@@ -25,32 +25,40 @@ exports.createStateMachine = function createStateMachine(model, storage) {
               target: 'failed',
             }
           },
-          entry: 'UPDATE_LEGACY_STATUS',
-          exit: 'SAVE_MODEL'
+          exit: 'UPDATE_LEGACY_STATUS'
         },
         agreed: {
+          invoke: {
+            id: 'SAVE_MODEL_AGREED_STATE',
+            src: (context, event) => model.save()
+          },
           on: {
             ENCRYPT: 'encrypting'
           },
-          entry: 'UPDATE_LEGACY_STATUS'
+          exit: 'UPDATE_LEGACY_STATUS'
         },
         encrypting: {
           invoke: {
             id: 'ENCRYPT_CHUNK',
-            src: (context, event) => storage.ENCRYPT_CHUNK(event.chunk, model),
+            src: async (context, event) => {
+              await model.save()
+              return storage.ENCRYPT_CHUNK(event.chunk, model)
+            },
             onDone: {
-              actions: 'REFRESH_MODEL',
               target: 'encrypted'
             },
             onError: {
               target: 'failed'
             }
           },
-          entry: 'UPDATE_LEGACY_STATUS',
-          exit: 'SAVE_MODEL'
+          exit: 'UPDATE_LEGACY_STATUS'
         },
         encrypted: {
-          entry: 'UPDATE_LEGACY_STATUS'
+          invoke: {
+            id: 'SAVE_MODEL_ENCRYPTED_STATE',
+            src: (context, event) => model.save()
+          },
+          exit: 'UPDATE_LEGACY_STATUS'
         },
         success: {
           type: 'final'
@@ -63,15 +71,8 @@ exports.createStateMachine = function createStateMachine(model, storage) {
     },
     {
       actions: {
-        SAVE_MODEL: async () => {
-          await model.save()
-        },
-        REFRESH_MODEL: async () => {
-          await model.refresh()
-        },
         UPDATE_LEGACY_STATUS: async () => {
           model.status = model.state
-          await model.save()
         },
         UPDATE_MODEL_ERR: async (context, event) => {
           model.err = event.data
