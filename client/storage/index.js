@@ -324,6 +324,36 @@ class Storage {
         });
     }
 
+    async SEND_STORE_CHUNK_DATA(data, link) {
+        // console.log(`SEND_STORE_CHUNK_DATA: ${data}`)
+        return new Promise((resolve, reject) => {
+            this.send('STORE_CHUNK_DATA', data, link.provider_id, async (err, result) => {
+                await link.refresh();
+                // (!err) ? resolve(true) : reject(err) // machine will move to next state
+                let idx = data.idx
+                let totalSegments = data.totalSegments
+                if (!err) {
+                    // todo: use the clues server gives you about which segments it already received (helps in case of duplication?)
+                    if (!link.segments_received) link.segments_received = [];
+                    link.segments_received.push(idx);
+                    link.segments_received = _.uniq(link.segments_received);
+                    if (Object.keys(link.segments_received).length >= totalSegments) {
+                        link.segments_received = null; // todo: delete completely, by using undefined?
+                        link.segments_sent = null; // todo: delete completely, by using undefined?
+                        // link.status = StorageLink.STATUS_DATA_RECEIVED;
+                    }
+                    // await link.save();
+                    resolve(true);
+                } else {
+                    // link.status = StorageLink.STATUS_FAILED;
+                    // link.error = err.toString();
+                    // await link.save();
+                    reject(err);
+                }
+            });
+        });
+    }
+
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
         if (this.uploadingChunksProcessing[chunk.id]) return;
@@ -395,6 +425,7 @@ class Storage {
         const sending = await chunk.storage_links[ StorageLink.STATUS_SENDING_DATA ];
         for(let link of sending) {
             if (this.isProviderQueueFull(link.provider_id)) continue;
+            link.initStateMachine('pre_sending_data')
 
             if (!link.segments_sent) link.segments_sent = {};
             if (!link.segments_received) link.segments_received = [];
@@ -429,33 +460,12 @@ class Storage {
             const data = [
                 link.merkle_root,
                 idx,
+                totalSegments,
                 // Note: Buffer.slice is (start, end) not (start, length)
                 encryptedData.slice(idx * SEGMENT_SIZE_BYTES, idx * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES),
             ];
 
-            linkStatusChanged = await new Promise((resolve, reject) => {
-                this.send('STORE_CHUNK_DATA', data, link.provider_id, async (err, result) => {
-                    await link.refresh();
-                    if (!err) {
-                        // todo: use the clues server gives you about which segments it already received (helps in case of duplication?)
-                        if (!link.segments_received) link.segments_received = [];
-                        link.segments_received.push(idx);
-                        link.segments_received = _.uniq(link.segments_received);
-                        if (Object.keys(link.segments_received).length >= totalSegments) {
-                            link.segments_received = null; // todo: delete completely, by using undefined?
-                            link.segments_sent = null; // todo: delete completely, by using undefined?
-                            link.status = StorageLink.STATUS_DATA_RECEIVED;
-                        }
-                        await link.save();
-                        resolve(true);
-                    } else {
-                        link.status = StorageLink.STATUS_FAILED;
-                        link.error = err.toString();
-                        await link.save();
-                        reject(err);
-                    }
-                });
-            });
+            link.machine.send('SEND_DATA', { data })
         }
 
         // Ask for signature from "received"

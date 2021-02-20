@@ -74,7 +74,7 @@ exports.createStateMachine = function createStateMachine(model, storage) {
               return storage.SEND_STORE_CHUNK_SEGMENTS(event.data, model)
             },
             onDone: {
-              target: 'sending_data',
+              target: 'pre_sending_data',
             },
             onError: {
               actions: 'UPDATE_MODEL_ERR',
@@ -88,10 +88,32 @@ exports.createStateMachine = function createStateMachine(model, storage) {
           },
           exit: 'UPDATE_LEGACY_STATUS'
         },
+        pre_sending_data: {
+          invoke: {
+            id: 'SAVE_MODEL_PRE_SENDING_DATA',
+            src: (context, event) => {
+              model.status = 'sending_data' // hack to get the storage layer to work
+              model.save()
+            }
+          },
+          on: {
+            SEND_DATA: 'sending_data'
+          }
+        },
         sending_data: {
           invoke: {
-            id: 'SAVE_MODEL_SENDING_DATA',
-            src: (context, event) => model.save()
+            id: 'SEND_STORE_CHUNK_DATA',
+            src: async (context, event) => {
+              await model.save()
+              return storage.SEND_STORE_CHUNK_DATA(event.data, model)
+            },
+            onDone: {
+              target: 'data_received',
+            },
+            onError: {
+              actions: 'UPDATE_MODEL_ERR',
+              target: 'failed',
+            },
           },
           exit: 'UPDATE_LEGACY_STATUS'
         },
