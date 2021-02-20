@@ -1,7 +1,6 @@
 // State Machine Definitions
 const { Machine } = require('xstate');
 
-
 exports.createStateMachine = function createStateMachine(model, storage) {
   return Machine(
     {
@@ -11,7 +10,8 @@ exports.createStateMachine = function createStateMachine(model, storage) {
         initialized: {
           on: {
             CREATE: 'created',
-          }
+          },
+          exit: 'UPDATE_LEGACY_STATUS'
         },
         created: {
           invoke: {
@@ -64,8 +64,7 @@ exports.createStateMachine = function createStateMachine(model, storage) {
           type: 'final'
         },
         failed: {
-          type: 'final',
-          entry: 'UPDATE_LEGACY_STATUS'
+          type: 'final'
         },
       },
     },
