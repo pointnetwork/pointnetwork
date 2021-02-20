@@ -48,7 +48,13 @@ It's very raw prototype code, so you have to do lots of things manually right no
     ./point --datadir ~/.point/test3 -v
     ```
 
-1. Tell the second one to deploy the `example.z` website:
+1. Download and Run the Raiden Wizard once started visit `localhost:5001/api/v1/address` to get node address.
+
+1. Fund Raiden Node Address on Goerli testnet with token you plan to use for payment and update `token_address` in [resources/defaultConfig.json](./resources/defaultConfig.json) to the address of that token
+
+1. check out [Raiden Docs](https://docs.raiden.network/raiden-api-1/resources) to register the token.
+
+1. Tell the second node to deploy the `example.z` website:
 
     ```
     ./point deploy example/example.z --datadir ~/.point/test2 -v
