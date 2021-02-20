@@ -16,7 +16,10 @@ exports.createStateMachine = function createStateMachine(model, storage) {
         created: {
           invoke: {
             id: 'SEND_STORE_CHUNK_REQUEST',
-            src: (context, event) => storage.SEND_STORE_CHUNK_REQUEST(event.chunk, model),
+            src: async (context, event) => {
+              await model.save()
+              return storage.SEND_STORE_CHUNK_REQUEST(event.chunk, model)
+            },
             onDone: {
               target: 'agreed',
             },
@@ -58,6 +61,45 @@ exports.createStateMachine = function createStateMachine(model, storage) {
             id: 'SAVE_MODEL_ENCRYPTED_STATE',
             src: (context, event) => model.save()
           },
+          on: {
+            SEND_SEGMENT_MAP: 'sending_segment_map'
+          },
+          exit: 'UPDATE_LEGACY_STATUS'
+        },
+        sending_segment_map: {
+          invoke: {
+            id: 'SEND_STORE_CHUNK_SEGMENTS',
+            src: async (context, event) => {
+              await model.save()
+              return storage.SEND_STORE_CHUNK_SEGMENTS(event.data, model)
+            },
+            onDone: {
+              target: 'sending_data',
+            },
+            onError: {
+              actions: 'UPDATE_MODEL_ERR',
+              target: 'failed',
+            },
+            onError: {
+              actions: 'UPDATE_MODEL_ERR',
+              target: 'data_received',
+              cond: 'nodeAlreadyStoredData'
+            }
+          },
+          exit: 'UPDATE_LEGACY_STATUS'
+        },
+        sending_data: {
+          invoke: {
+            id: 'SAVE_MODEL_SENDING_DATA',
+            src: (context, event) => model.save()
+          },
+          exit: 'UPDATE_LEGACY_STATUS'
+        },
+        data_received: {
+          invoke: {
+            id: 'SAVE_MODEL_DATA_RECEIVED',
+            src: (context, event) => model.save()
+          },
           exit: 'UPDATE_LEGACY_STATUS'
         },
         success: {
@@ -76,6 +118,11 @@ exports.createStateMachine = function createStateMachine(model, storage) {
         UPDATE_MODEL_ERR: async (context, event) => {
           model.err = event.data
         },
+      },
+      guards: {
+        nodeAlreadyStoredData: (context, event) => {
+          _.startsWith(event.data, 'ECHUNKALREADYSTORED')
+        }
       }
     }
   )
