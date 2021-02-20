@@ -223,7 +223,95 @@ class Storage {
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
         return new Promise((resolve, reject) => {
             this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
-                (!err) ? resolve(true) : reject(err)
+                (!err) ? resolve(true) : reject(err) // machine will move to next state
+            });
+        });
+    }
+
+    async ENCRYPT_CHUNK(chunk, link) {
+        if (!this.chunk_encryptors) {
+            this.chunk_encryptors = {};
+        }
+        return new Promise(async(resolve, reject) => {
+            let chunk_encryptor = fork(path.join(this.ctx.basepath, 'threads/encrypt.js'));
+            this.chunk_encryptors[chunk.id + link.id] = chunk_encryptor;
+
+            chunk_encryptor.on('message', async (message) => {
+                if (message.command === 'encrypt' && message.success === true) {
+                    // let link = await this.ctx.db.storage_link.find(message.linkId);
+                    // Let's calculate merkle tree
+                    const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes; // todo: check that it's not 0/null or some weird value
+                    const data = link.getEncryptedData();
+                    const data_length = data.length;
+                    let segment_hashes = [];
+                    for (let i = 0; i < Math.ceil(data_length / SEGMENT_SIZE_BYTES); i++) { // todo: separate into encryption section
+                        // Note: Buffer.slice is (start, end) not (start, length)
+                        segment_hashes.push(this.ctx.utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, i * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES)));
+                    }
+
+                    const merkleTree = this.ctx.utils.merkle.merkle(segment_hashes, this.ctx.utils.hashFn);
+
+                    await link.refresh();
+                    // link.status = StorageLink.STATUS_ENCRYPTED;
+                    link.encrypted_hash = message.hash;
+                    link.encrypted_length = data_length;
+                    link.segment_hashes = segment_hashes.map(x => x.toString('hex'));
+                    link.merkle_tree = merkleTree.map(x => x.toString('hex'));
+                    link.merkle_root = link.merkle_tree[link.merkle_tree.length - 1].toString('hex');
+
+                    // cleanup chunk encryptor
+                    let chunk_encryptor = this.chunk_encryptors[chunk.id + link.id];
+                    chunk_encryptor.kill('SIGINT');
+                    delete this.chunk_encryptors[chunk.id + link.id];
+
+                    resolve(true); // machine will move to next state
+                } else {
+                    console.warn('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ', message);
+                    this.ctx.die();
+                    reject('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ' + message);
+                }
+            });
+            // todo: do we need this?
+            chunk_encryptor.addListener("output", function (data) {
+                console.log('Chunk Encryptor output: ' + data);
+            });
+            // todo: two error listeners?
+            chunk_encryptor.addListener("error", async (data) => { // todo
+                await link.refresh();
+                link.status = StorageLink.STATUS_FAILED;
+                link.error = data;
+                link.errored = true;
+                await link.save();
+                reject('Chunk encryption FAILED:' + link.error);
+            });
+            chunk_encryptor.on("error", async (data) => { // todo
+                await link.refresh();
+                link.status = StorageLink.STATUS_FAILED;
+                link.error = data;
+                link.errored = true;
+                await link.save();
+                reject('Chunk encryption FAILED:' + link.error);
+            });
+            chunk_encryptor.on("exit", async (code) => {
+                if (code === 0 || code === null) {
+                    // do nothing
+                } else {
+                    // todo: figure out which one is failed
+                    link.status = StorageLink.STATUS_FAILED;
+                    //link.error = data;
+                    await link.save();
+                    reject('Chunk encryption FAILED, exit code' + code);
+                }
+            });
+
+            const privKey = (await link.getRedkey()).priv;
+
+            chunk_encryptor.send({
+                command: 'encrypt',
+                filePath: Chunk.getChunkStoragePath(chunk.id),
+                privKey: privKey,
+                chunkId: chunk.id,
+                linkId: link.id
             });
         });
     }
@@ -260,7 +348,7 @@ class Storage {
             link.initStateMachine()
             // use storage link state machine to sent CREATE event
             link.machine.send('CREATE', { chunk })
-            linkStatusChanged = true //link.machine.state.changed && !link.hasFailed
+            linkStatusChanged = link.machine.state.changed && !link.hasFailed
         }
 
         // todo: limit encryptors amount, queue them (10 instead of 100 parallel)
@@ -269,100 +357,8 @@ class Storage {
         const agreed = await chunk.storage_links[ StorageLink.STATUS_AGREED ];
         for(let link of agreed) {
             link.initStateMachine(StorageLink.STATUS_AGREED)
-            console.log(`STATUS_AGREED: Link STATE: ${link.state}`)
-            console.log(`STATUS_AGREED: Link LEGACY STATUS: ${link.status}`)
-            await link.refresh();
-            link.status = StorageLink.STATUS_ENCRYPTING;
-            await link.save();
-
-            if (!this.chunk_encryptors) {
-                this.chunk_encryptors = {};
-            }
-
-            linkStatusChanged = await new Promise(async(resolve, reject) => {
-                let chunk_encryptor = fork(path.join(this.ctx.basepath, 'threads/encrypt.js'));
-                this.chunk_encryptors[chunk.id + link.id] = chunk_encryptor;
-
-                chunk_encryptor.on('message', async (message) => {
-                    if (message.command === 'encrypt' && message.success === true) {
-                        let link = await this.ctx.db.storage_link.find(message.linkId);
-                        // Let's calculate merkle tree
-
-                        const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes; // todo: check that it's not 0/null or some weird value
-                        const data = link.getEncryptedData();
-                        const data_length = data.length;
-                        let segment_hashes = [];
-                        for (let i = 0; i < Math.ceil(data_length / SEGMENT_SIZE_BYTES); i++) { // todo: separate into encryption section
-                            // Note: Buffer.slice is (start, end) not (start, length)
-                            segment_hashes.push(this.ctx.utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, i * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES)));
-                        }
-
-                        const merkleTree = this.ctx.utils.merkle.merkle(segment_hashes, this.ctx.utils.hashFn);
-
-                        await link.refresh();
-                        link.status = StorageLink.STATUS_ENCRYPTED;
-                        link.encrypted_hash = message.hash;
-                        link.encrypted_length = data_length;
-                        link.segment_hashes = segment_hashes.map(x => x.toString('hex'));
-                        link.merkle_tree = merkleTree.map(x => x.toString('hex'));
-                        link.merkle_root = link.merkle_tree[link.merkle_tree.length - 1].toString('hex');
-                        await link.save();
-                        await link.refresh();
-
-                        let chunk_encryptor = this.chunk_encryptors[chunk.id + link.id];
-                        chunk_encryptor.kill('SIGINT');
-                        delete this.chunk_encryptors[chunk.id + link.id];
-
-                        resolve(true);
-                    } else {
-                        console.warn('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ', message);
-                        this.ctx.die();
-                        reject('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ' + message);
-                    }
-                });
-                // todo: do we need this?
-                chunk_encryptor.addListener("output", function (data) {
-                    console.log('Chunk Encryptor output: ' + data);
-                });
-                // todo: two error listeners?
-                chunk_encryptor.addListener("error", async (data) => { // todo
-                    await link.refresh();
-                    link.status = StorageLink.STATUS_FAILED;
-                    link.error = data;
-                    link.errored = true;
-                    await link.save();
-                    reject('Chunk encryption FAILED:' + link.error);
-                });
-                chunk_encryptor.on("error", async (data) => { // todo
-                    await link.refresh();
-                    link.status = StorageLink.STATUS_FAILED;
-                    link.error = data;
-                    link.errored = true;
-                    await link.save();
-                    reject('Chunk encryption FAILED:' + link.error);
-                });
-                chunk_encryptor.on("exit", async (code) => {
-                    if (code === 0 || code === null) {
-                        // do nothing
-                    } else {
-                        // todo: figure out which one is failed
-                        link.status = StorageLink.STATUS_FAILED;
-                        //link.error = data;
-                        await link.save();
-                        reject('Chunk encryption FAILED, exit code' + code);
-                    }
-                });
-
-                const privKey = (await link.getRedkey()).priv;
-
-                chunk_encryptor.send({
-                    command: 'encrypt',
-                    filePath: Chunk.getChunkStoragePath(chunk.id),
-                    privKey: privKey,
-                    chunkId: chunk.id,
-                    linkId: link.id
-                });
-            });
+            link.machine.send('ENCRYPT', { chunk })
+            linkStatusChanged = link.machine.state.changed && !link.hasFailed
         }
 
         // Send segmentation data for "encrypted"

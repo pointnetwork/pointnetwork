@@ -13,18 +13,11 @@ exports.createStateMachine = function createStateMachine(model, storage) {
           }
         },
         created: {
-          // save the model
-          // send STORE_CHUNK_REQUEST
-          // refresh the model
-          // onSuccess -> set state to agreed
-          // onError -> set state to failed
-          // onError -> set .err to error string
-          // save the model
           invoke: {
             id: 'SEND_STORE_CHUNK_REQUEST',
             src: (context, event) => storage.SEND_STORE_CHUNK_REQUEST(event.chunk, model),
             onDone: {
-              // actions: 'REFRESH_MODEL',
+              actions: 'REFRESH_MODEL',
               target: 'agreed',
             },
             onError: {
@@ -32,7 +25,7 @@ exports.createStateMachine = function createStateMachine(model, storage) {
               target: 'failed',
             }
           },
-          entry: ['UPDATE_LEGACY_STATUS', 'SAVE_MODEL'],
+          entry: 'UPDATE_LEGACY_STATUS',
           exit: 'SAVE_MODEL'
         },
         agreed: {
@@ -41,15 +34,32 @@ exports.createStateMachine = function createStateMachine(model, storage) {
           },
           entry: 'UPDATE_LEGACY_STATUS'
         },
-        encrypting: {},
+        encrypting: {
+          invoke: {
+            id: 'ENCRYPT_CHUNK',
+            src: (context, event) => storage.ENCRYPT_CHUNK(event.chunk, model),
+            onDone: {
+              actions: 'REFRESH_MODEL',
+              target: 'encrypted'
+            },
+            onError: {
+              target: 'failed'
+            }
+          },
+          entry: 'UPDATE_LEGACY_STATUS',
+          exit: 'SAVE_MODEL'
+        },
+        encrypted: {
+          entry: 'UPDATE_LEGACY_STATUS'
+        },
         success: {
           type: 'final'
         },
         failed: {
           type: 'final',
           entry: 'UPDATE_LEGACY_STATUS'
-        }
-      }
+        },
+      },
     },
     {
       actions: {
