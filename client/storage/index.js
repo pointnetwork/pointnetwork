@@ -315,6 +315,15 @@ class Storage {
         });
     }
 
+    async SEND_STORE_CHUNK_SEGMENTS(data, link) {
+        return new Promise(async(resolve, reject) => {
+            this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
+                await link.refresh();
+                (!err) ? resolve(true) : reject(err) // machine will move to next state
+            });
+        });
+    }
+
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
         if (this.uploadingChunksProcessing[chunk.id]) return;
@@ -364,14 +373,10 @@ class Storage {
         const encrypted = await chunk.storage_links[ StorageLink.STATUS_ENCRYPTED ];
         for(let link of encrypted) {
             if (this.isProviderQueueFull(link.provider_id)) continue;
+            link.initStateMachine(StorageLink.STATUS_ENCRYPTED)
 
             await link.refresh();
-            link.status = StorageLink.STATUS_SENDING_SEGMENT_MAP;
-            await link.save();
-
             const key = await link.getRedkey();
-
-            const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes;
 
             const data = [
                 link.merkle_root,
@@ -381,27 +386,9 @@ class Storage {
                 key.pub,
                 chunk.length,
             ];
-            linkStatusChanged = await new Promise(async(resolve, reject) => {
-                this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
-                    await link.refresh();
-                    if (!err) {
-                        link.status = StorageLink.STATUS_SENDING_DATA;
-                        await link.save();
-                        resolve(true);
-                    } else {
-                        if (_.startsWith(err, 'ECHUNKALREADYSTORED')) {
-                            link.status = StorageLink.STATUS_DATA_RECEIVED;
-                            await link.save();
-                            reject(err);
-                        } else {
-                            link.status = StorageLink.STATUS_FAILED;
-                            link.error = err.toString();
-                            await link.save();
-                            reject(err);
-                        }
-                    }
-                });
-            });
+
+            link.machine.send('SEND_SEGMENT_MAP', { data })
+            linkStatusChanged = link.machine.state.changed && !link.hasFailed
         }
 
         // Send data

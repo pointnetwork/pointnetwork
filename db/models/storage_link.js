@@ -15,7 +15,7 @@ class StorageLink extends Model {
       // create a state machine using the factory
       this._stateMachine = storageLinkMachine.createStateMachine(this, this.ctx.client.storage)
 
-      this._storageLinkService = interpret(this._stateMachine).onTransition(state => console.log(`Current State: ${state.value}`))
+      this._storageLinkService = interpret(this._stateMachine)//.onTransition(state => console.log(`Current State: ${state.value}`))
 
       // start the storage link machine service
       this._storageLinkService.start(initialState)
