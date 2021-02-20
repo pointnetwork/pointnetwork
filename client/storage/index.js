@@ -296,12 +296,12 @@ class Storage {
                 }
                 const parsed_sent_providers = JSON.parse(sent_providers)
                 fs.writeFileSync(storage_provider_cache, JSON.stringify([...new Set([...parsed_sent_providers, currentProvider])]));
-                if (!previousProviders.includes(currentProvider) || !parsed_sent_providers.includes(currentProvider)) {
+                if (!previousProviders.includes(currentProvider) && !parsed_sent_providers.includes(currentProvider)) {
                     const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`)
-                    await createChannel(checksumAddress, 1000)  // todo: make channel deposit amount dynamic
-                    link.status = StorageLink.STATUS_AGREED;
-                    await link.save();
+                    await createChannel(checksumAddress, 1000)  // todo:wvxshhvcsxhbcvhcsmjhjhsbc make channel deposit amount dynamic
                 }
+                link.status = StorageLink.STATUS_AGREED;
+                await link.save();
                 previousProviders.push(currentProvider)
                 resolve(true);
             })
