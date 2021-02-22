@@ -403,8 +403,6 @@ class Storage {
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
-        let linkStatusChanged = false
-
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
             let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
@@ -413,101 +411,9 @@ class Storage {
             link.provider = provider;
             link.redkeyId = await this.getRedkeyId(provider);
             link.chunk_id = chunk.id;
-            link.initStateMachine()
+            link.initStateMachine(chunk)
             // use storage link state machine to sent CREATE event
-            link.machine.send('CREATE', { chunk })
-            linkStatusChanged = link.machine.state.changed && !link.hasFailed
-        }
-
-        // todo: limit encryptors amount, queue them (10 instead of 100 parallel)
-        // todo: reuse the process instead of killing?
-        // Encrypt the "agreed"
-        const agreed = await chunk.storage_links[ StorageLink.STATUS_AGREED ];
-        for(let link of agreed) {
-            link.initStateMachine(StorageLink.STATUS_AGREED)
-            link.machine.send('ENCRYPT', { chunk })
-            linkStatusChanged = link.machine.state.changed && !link.hasFailed
-        }
-
-        // Send segmentation data for "encrypted"
-        const encrypted = await chunk.storage_links[ StorageLink.STATUS_ENCRYPTED ];
-        for(let link of encrypted) {
-            if (this.isProviderQueueFull(link.provider_id)) continue;
-            link.initStateMachine(StorageLink.STATUS_ENCRYPTED)
-
-            await link.refresh();
-            const key = await link.getRedkey();
-
-            const data = [
-                link.merkle_root,
-                link.segment_hashes.map(x=>Buffer.from(x, 'hex')),
-                link.encrypted_length,
-                chunk.id,
-                key.pub,
-                chunk.length,
-            ];
-
-            link.machine.send('SEND_SEGMENT_MAP', { data })
-            linkStatusChanged = link.machine.state.changed && !link.hasFailed
-        }
-
-        // Send data
-        const sending = await chunk.storage_links[ StorageLink.STATUS_SENDING_DATA ];
-        for(let link of sending) {
-            if (this.isProviderQueueFull(link.provider_id)) continue;
-            link.initStateMachine('pre_sending_data')
-
-            if (!link.segments_sent) link.segments_sent = {};
-            if (!link.segments_received) link.segments_received = [];
-
-            const totalSegments = link.segment_hashes.length;
-            let idx = -1;
-            for(let i = 0; i < totalSegments; i++) {
-                if (!link.segments_sent[i]) {
-                    idx = i; break;
-                }
-                // Retransmit timed out segments
-                // todo: give up after X attempts to retransmit
-                if (!this.isProviderQueueFull(link.provider_id)) {
-                    if (!link.segments_received.includes(i) && link.segments_sent[i] && link.segments_sent[i] + this.config.retransmit_segments_timeout_seconds < Math.floor(Date.now()/1000)) {
-                        console.log('retransmitting chunk', link.chunk_id, 'segment', i);
-                        idx = i;
-                        break;
-                    }
-                }
-            }
-            if (idx === -1) {
-                continue;
-            }
-
-            link.segments_sent[idx] = Math.floor(Date.now()/1000);
-            await link.save();
-
-            const encryptedData = link.getEncryptedData(); // todo: optimize using fs ranges // todo: use fs async
-
-            const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes;
-
-            const data = [
-                link.merkle_root,
-                idx,
-                // Note: Buffer.slice is (start, end) not (start, length)
-                encryptedData.slice(idx * SEGMENT_SIZE_BYTES, idx * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES),
-            ];
-
-            link.machine.send('SEND_DATA', { data })
-            linkStatusChanged = link.machine.state.changed && !link.hasFailed
-        }
-
-        // Ask for signature from "received"
-        const received = await chunk.storage_links[ StorageLink.STATUS_DATA_RECEIVED ];
-        for(let link of received) {
-            if (this.isProviderQueueFull(link.provider_id)) continue;
-            link.initStateMachine(StorageLink.STATUS_DATA_RECEIVED)
-            // link.status = StorageLink.STATUS_ASKING_FOR_SIGNATURE;
-            // await link.save();
-            // await link.refresh();
-            link.machine.send('ASK_FOR_SIGNATURE')
-            linkStatusChanged = link.machine.state.changed && !link.hasFailed
+            link.machine.send('CREATE')
         }
 
         for(let link of all) {
@@ -521,12 +427,6 @@ class Storage {
         this.uploadingChunksProcessing[chunk.id] = false;
 
         await chunk.reconsiderUploadingStatus(true);
-
-        if (linkStatusChanged) {
-            setImmediate(async() => { // not waiting, just queueing for execution
-                this.chunkUploadingTick(chunk);
-            });
-        }
     }
 
     send(cmd, data, contact, callback) {

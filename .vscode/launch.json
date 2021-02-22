@@ -5,7 +5,7 @@
       "cwd": "${workspaceFolder}",
       "program": "./point",
       "args": [
-        "--datadir", "${env:HOME}/.point/test1", "-v"
+        "--datadir", "${env:HOME}/.point/test1"
       ],
       "request": "launch",
       "skipFiles": [
