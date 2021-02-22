@@ -124,9 +124,16 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
           invoke: {
             id: 'SEND_STORE_CHUNK_DATA',
             src: async (context, event) => {
+              // nasty hack
               await link.save()
-              const data = await prepareChunkData()
-              return storage.SEND_STORE_CHUNK_DATA(data, link)
+              done = false
+              while(!done) {
+                await link.refresh()
+                data = await prepareChunkData()
+                done = await storage.SEND_STORE_CHUNK_DATA(data, link)
+                await link.save()
+              }
+              Promise.resolve(true)
             },
             onDone: {
               target: 'asking_for_signature',

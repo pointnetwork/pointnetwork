@@ -338,8 +338,10 @@ class Storage {
                     if (Object.keys(link.segments_received).length >= totalSegments) {
                         link.segments_received = null; // todo: delete completely, by using undefined?
                         link.segments_sent = null; // todo: delete completely, by using undefined?
+                        // Then we are done
+                        resolve(true);
                     }
-                    resolve(true);
+                    resolve(false) // not done yet
                 } else {
                     reject(err);
                 }
