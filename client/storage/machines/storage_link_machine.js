@@ -33,7 +33,7 @@ exports.createStateMachine = function createStateMachine(model, storage) {
         agreed: {
           invoke: {
             id: 'SAVE_MODEL_AGREED_STATE',
-            src: (context, event) => model.save()
+            src: () => model.save()
           },
           on: {
             ENCRYPT: 'encrypting'
@@ -59,7 +59,7 @@ exports.createStateMachine = function createStateMachine(model, storage) {
         encrypted: {
           invoke: {
             id: 'SAVE_MODEL_ENCRYPTED_STATE',
-            src: (context, event) => model.save()
+            src: () => model.save()
           },
           on: {
             SEND_SEGMENT_MAP: 'sending_segment_map'
@@ -119,11 +119,35 @@ exports.createStateMachine = function createStateMachine(model, storage) {
         data_received: {
           invoke: {
             id: 'SAVE_MODEL_DATA_RECEIVED',
-            src: (context, event) => model.save()
+            src: () => model.save()
+          },
+          on: {
+            ASK_FOR_SIGNATURE: 'asking_for_signature'
           },
           exit: 'UPDATE_LEGACY_STATUS'
         },
-        success: {
+        asking_for_signature: {
+          invoke: {
+            id: 'SEND_STORE_CHUNK_SIGNATURE_REQUEST',
+            src: async (context, event) => {
+              await model.save()
+              return storage.SEND_STORE_CHUNK_SIGNATURE_REQUEST(model)
+            },
+            onDone: {
+              target: 'signed',
+            },
+            onError: {
+              actions: 'UPDATE_MODEL_ERR',
+              target: 'failed',
+            },
+          },
+          exit: 'UPDATE_LEGACY_STATUS'
+        },
+        signed: {
+          invoke: {
+            id: 'SAVE_MODEL_SIGNED',
+            src: () => model.save()
+          },
           type: 'final'
         },
         failed: {
