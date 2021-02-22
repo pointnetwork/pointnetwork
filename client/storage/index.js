@@ -423,10 +423,6 @@ class Storage {
         }
 
         // todo: what about expiring and renewing?
-
-        this.uploadingChunksProcessing[chunk.id] = false;
-
-        await chunk.reconsiderUploadingStatus(true);
     }
 
     send(cmd, data, contact, callback) {
