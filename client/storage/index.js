@@ -325,13 +325,11 @@ class Storage {
     }
 
     async SEND_STORE_CHUNK_DATA(data, link) {
-        // console.log(`SEND_STORE_CHUNK_DATA: ${data}`)
         return new Promise((resolve, reject) => {
             this.send('STORE_CHUNK_DATA', data, link.provider_id, async (err, result) => {
                 await link.refresh();
-                // (!err) ? resolve(true) : reject(err) // machine will move to next state
-                let idx = data.idx
-                let totalSegments = data.totalSegments
+                let idx = data[1]
+                const totalSegments = link.segment_hashes.length;
                 if (!err) {
                     // todo: use the clues server gives you about which segments it already received (helps in case of duplication?)
                     if (!link.segments_received) link.segments_received = [];
@@ -340,14 +338,9 @@ class Storage {
                     if (Object.keys(link.segments_received).length >= totalSegments) {
                         link.segments_received = null; // todo: delete completely, by using undefined?
                         link.segments_sent = null; // todo: delete completely, by using undefined?
-                        // link.status = StorageLink.STATUS_DATA_RECEIVED;
                     }
-                    // await link.save();
                     resolve(true);
                 } else {
-                    // link.status = StorageLink.STATUS_FAILED;
-                    // link.error = err.toString();
-                    // await link.save();
                     reject(err);
                 }
             });
@@ -460,7 +453,6 @@ class Storage {
             const data = [
                 link.merkle_root,
                 idx,
-                totalSegments,
                 // Note: Buffer.slice is (start, end) not (start, length)
                 encryptedData.slice(idx * SEGMENT_SIZE_BYTES, idx * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES),
             ];
