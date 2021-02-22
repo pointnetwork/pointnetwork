@@ -252,7 +252,6 @@ class Storage {
                     const merkleTree = this.ctx.utils.merkle.merkle(segment_hashes, this.ctx.utils.hashFn);
 
                     await link.refresh();
-                    // link.status = StorageLink.STATUS_ENCRYPTED;
                     link.encrypted_hash = message.hash;
                     link.encrypted_length = data_length;
                     link.segment_hashes = segment_hashes.map(x => x.toString('hex'));
@@ -276,29 +275,15 @@ class Storage {
             });
             // todo: two error listeners?
             chunk_encryptor.addListener("error", async (data) => { // todo
-                await link.refresh();
-                link.status = StorageLink.STATUS_FAILED;
-                link.error = data;
-                link.errored = true;
-                await link.save();
                 reject('Chunk encryption FAILED:' + link.error);
             });
             chunk_encryptor.on("error", async (data) => { // todo
-                await link.refresh();
-                link.status = StorageLink.STATUS_FAILED;
-                link.error = data;
-                link.errored = true;
-                await link.save();
                 reject('Chunk encryption FAILED:' + link.error);
             });
             chunk_encryptor.on("exit", async (code) => {
                 if (code === 0 || code === null) {
                     // do nothing
                 } else {
-                    // todo: figure out which one is failed
-                    link.status = StorageLink.STATUS_FAILED;
-                    //link.error = data;
-                    await link.save();
                     reject('Chunk encryption FAILED, exit code' + code);
                 }
             });
