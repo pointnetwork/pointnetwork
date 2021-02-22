@@ -62,7 +62,7 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
           on: {
             CREATE: 'created',
           },
-          exit: 'UPDATE_LEGACY_STATUS'
+          exit: 'UPDATE_MODEL_STATUS'
         },
         created: {
           invoke: {
@@ -79,7 +79,7 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
               target: 'failed',
             }
           },
-          exit: 'UPDATE_LEGACY_STATUS'
+          exit: 'UPDATE_MODEL_STATUS'
         },
         encrypting: {
           invoke: {
@@ -95,7 +95,7 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
               target: 'failed'
             }
           },
-          exit: 'UPDATE_LEGACY_STATUS'
+          exit: 'UPDATE_MODEL_STATUS'
         },
         sending_segment_map: {
           invoke: {
@@ -118,13 +118,13 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
               cond: 'nodeAlreadyStoredData'
             }
           },
-          exit: 'UPDATE_LEGACY_STATUS'
+          exit: 'UPDATE_MODEL_STATUS'
         },
         sending_data: {
           invoke: {
             id: 'SEND_STORE_CHUNK_DATA',
             src: async (context, event) => {
-              // nasty hack
+              // nasty hack to ensure all chunks are uploaded
               await link.save()
               done = false
               while(!done) {
@@ -143,7 +143,7 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
               target: 'failed',
             },
           },
-          exit: 'UPDATE_LEGACY_STATUS'
+          exit: 'UPDATE_MODEL_STATUS'
         },
         asking_for_signature: {
           invoke: {
@@ -160,7 +160,7 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
               target: 'failed',
             },
           },
-          exit: 'UPDATE_LEGACY_STATUS'
+          exit: 'UPDATE_MODEL_STATUS'
         },
         signed: {
           invoke: {
@@ -174,16 +174,24 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
           type: 'final'
         },
         failed: {
+          invoke: {
+            id: 'SAVE_MODEL_FAILED',
+            src: async () => {
+              storage.uploadingChunksProcessing[chunk.id] = false;
+              return link.save()
+            }
+          },
           type: 'final'
         },
       },
     },
     {
       actions: {
-        UPDATE_LEGACY_STATUS: async () => {
+        UPDATE_MODEL_STATUS: async () => {
           link.status = link.state
         },
         UPDATE_MODEL_ERR: async (context, event) => {
+          link.errored = true
           link.err = event.data
         },
       },
