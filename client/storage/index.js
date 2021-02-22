@@ -347,6 +347,43 @@ class Storage {
         });
     }
 
+    async SEND_STORE_CHUNK_SIGNATURE_REQUEST(link) {
+        return new Promise((resolve, reject) => {
+            this.send('STORE_CHUNK_SIGNATURE_REQUEST', [link.merkle_root], link.provider_id, async (err, result) => {
+                await link.refresh();
+                try {
+                    if (err) reject('Provider responded with: ' + err); // todo
+
+                    // Verify the signature
+                    const chunk_id = result[0]; // todo: validate
+                    const signature = result[1];
+
+                    // todo: now count the debt
+                    // todo: and finally pay it before your next request
+
+                    let conditions = {
+                        chunk_id: link.merkle_root
+                    }; // todo // also todo combined pledge?
+
+                    link.pledge = {
+                        conditions,
+                        signature
+                    };
+                    link.validatePledge();
+
+                    // const chunk = await link.getChunk();
+                    // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
+
+                    resolve(true);
+                } catch (e) {
+                    // todo: don't just put this into the console, this is for debugging purposes
+                    console.debug('FAILED CHUNK', {err, result}, chunk.id, e);
+                    reject(e);
+                }
+            });
+        });
+    }
+
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
         if (this.uploadingChunksProcessing[chunk.id]) return;
@@ -458,55 +495,19 @@ class Storage {
             ];
 
             link.machine.send('SEND_DATA', { data })
+            linkStatusChanged = link.machine.state.changed && !link.hasFailed
         }
 
         // Ask for signature from "received"
         const received = await chunk.storage_links[ StorageLink.STATUS_DATA_RECEIVED ];
         for(let link of received) {
             if (this.isProviderQueueFull(link.provider_id)) continue;
-
-            link.status = StorageLink.STATUS_ASKING_FOR_SIGNATURE;
-            await link.save();
-
-            linkStatusChanged = await new Promise((resolve, reject) => {
-                this.send('STORE_CHUNK_SIGNATURE_REQUEST', [link.merkle_root], link.provider_id, async (err, result) => {
-                    await link.refresh();
-                    try {
-                        if (err) reject('Provider responded with: ' + err); // todo
-
-                        // Verify the signature
-                        const chunk_id = result[0]; // todo: validate
-                        const signature = result[1];
-
-                        // todo: now count the debt
-                        // todo: and finally pay it before your next request
-
-                        let conditions = {
-                            chunk_id: link.merkle_root
-                        }; // todo // also todo combined pledge?
-
-                        link.pledge = {
-                            conditions,
-                            signature
-                        };
-                        link.validatePledge();
-                        link.status = StorageLink.STATUS_SIGNED;
-                        await link.save();
-
-                        // const chunk = await link.getChunk();
-                        // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
-
-                        resolve(true);
-                    } catch (e) {
-                        // todo: don't just put this into the console, this is for debugging purposes
-                        console.debug('FAILED CHUNK', {err, result}, chunk.id, e);
-                        link.status = StorageLink.STATUS_FAILED;
-                        link.error = e.toString();
-                        await link.save();
-                        reject(e);
-                    }
-                });
-            });
+            link.initStateMachine(StorageLink.STATUS_DATA_RECEIVED)
+            // link.status = StorageLink.STATUS_ASKING_FOR_SIGNATURE;
+            // await link.save();
+            // await link.refresh();
+            link.machine.send('ASK_FOR_SIGNATURE')
+            linkStatusChanged = link.machine.state.changed && !link.hasFailed
         }
 
         for(let link of all) {
