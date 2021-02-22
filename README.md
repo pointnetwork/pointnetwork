@@ -59,7 +59,7 @@ It's very raw prototype code, so you have to do lots of things manually right no
 
 ### Run a Point Node in a VS Code Debugger
 
-The VS Code debugger is configured using the [VS Code launch config](./vscode/launch.json) file. Its configured to launch a test node under your `~/.point/test1` directory.
+The VS Code debugger is configured using the [VS Code launch config](.vscode/launch.json) file. Its configured to launch a test node under your `~/.point/test1` directory.
 
 To start the VS Code debugger, click on the debugger button and at the top select `Launch Point Node` from the drop down and hit the _play_ button.
 
