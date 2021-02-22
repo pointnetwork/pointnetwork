@@ -85,8 +85,7 @@ exports.createStateMachine = function createStateMachine(model, storage) {
               target: 'data_received',
               cond: 'nodeAlreadyStoredData'
             }
-          },
-          exit: 'UPDATE_LEGACY_STATUS'
+          } // no exit here since we need an intermediate state (pre_sending_data)
         },
         pre_sending_data: {
           invoke: {
