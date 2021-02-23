@@ -33,6 +33,14 @@ class Web3Bridge {
         return new this.web3.eth.Contract(abi, at);
     }
 
+    async loadStorageProviderRegistryContract() {
+        const at = this.ctx.config.network.storage_provider_registry_contract_address;
+        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/StorageProviderRegistry.json');
+        const abiFile = JSON.parse(fs.readFileSync(abiFileName));
+        const abi = abiFile.abi;
+        return new this.web3.eth.Contract(abi, at);
+    }
+
     async web3send(method, gasLimit) {
         const account = this.web3.eth.defaultAccount;
         const gasPrice = await this.web3.eth.getGasPrice();
@@ -87,6 +95,29 @@ class Web3Bridge {
         const contract = await this.loadIdentityContract();
         const method = contract.methods.ikvPut(identity, key, value);
         console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
+    }
+    async toChecksumAddress(address) {
+        const checksumAddress = await this.web3.utils.toChecksumAddress(address)
+        return checksumAddress
+    }
+    async announceStorageProvider(connection, collateral_lock_period, cost_per_kb) {
+        const contract = await this.loadStorageProviderRegistryContract();
+        const method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
+        const account = '0xC23BC0E252c716281F562695a6617eE81457DE21';
+        const gasPrice = await this.web3.eth.getGasPrice();
+        return await method.send({ from: account, gasPrice, gas: 2000000, value: 100});
+    }
+    async getCheapestStorageProvider() {
+        const contract = await this.loadStorageProviderRegistryContract();
+        return contract.methods.readCheapestProvider().call();
+    }
+    async getAllStorageProvider() {
+        const contract = await this.loadStorageProviderRegistryContract();
+        return contract.methods.readAllProviders().call(); // todo: cache response and return cache if exists
+    }
+    async getSingleProvider(address) {
+        const contract = await this.loadStorageProviderRegistryContract();
+        return contract.methods.getProvider(address).call();
     }
 }
 
