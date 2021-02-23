@@ -5,10 +5,10 @@
 
 It's very raw prototype code, so you have to do lots of things manually right now.
 
-1. Install using yarn:
+1. Install using npm:
 
     ```
-    yarn install
+    npm i
     ```
 
 1. Start your private Ethereum-compatible web3 provider/blockchain on port `7545` ([Ganache](https://www.trufflesuite.com/ganache) is recommended) and use a `mnemonic` like so:
@@ -47,11 +47,15 @@ It's very raw prototype code, so you have to do lots of things manually right no
     ./point --datadir ~/.point/test3 -v
     ```
 
-1. Download and Run the Raiden Wizard once started visit `localhost:5001/api/v1/address` to get node address.
+1. [Download and Run the Raiden Wizard](https://docs.raiden.network/installation/quick-start/download-and-run-the-raiden-wizard#download-the-raiden-wizard). This will install, setup and automatically start a private Raiden Node on your computer connected to Goerli Testnet. Be patient - the process can take about 10 minutes!
 
-1. Fund Raiden Node Address on Goerli testnet with token you plan to use for payment and update `token_address` in [resources/defaultConfig.json](./resources/defaultConfig.json) to the address of that token
+1. Once started visit [http://localhost:5001/api/v1/address](http://localhost:5001/api/v1/address) to get your private node address (it's also available in the Raiden Web UI at the top).
 
-1. check out [Raiden Docs](https://docs.raiden.network/raiden-api-1/resources) to register the token.
+1. Fund your Raiden Node Address on Goerli testnet with token you plan to use for payment.
+
+1. Next [Join a Token Network](https://docs.raiden.network/the-raiden-web-interface/join-a-token-network#registering-a-new-token) that you want to use for payments.
+
+1. Update `token_address` in [resources/defaultConfig.json](./resources/defaultConfig.json) to the address of that token.
 
 1. Tell the second node to deploy the `example.z` website:
 

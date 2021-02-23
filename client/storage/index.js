@@ -230,22 +230,48 @@ class Storage {
         return new Promise((resolve, reject) => {
             this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
                 await link.refresh();
-                if (!err) {
-                    const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
-                    const channelExist = await checkExistingChannel(checksumAddress)
-                    if (channelExist === undefined) {
-                        link.status = StorageLink.STATUS_ESTABLISH_PAYMENT_CHANNEL;
-                        await link.save();
-                    }else {
-                        link.status = StorageLink.STATUS_AGREED;
-                        await link.save();
-                    }
-                    resolve(true);
-                } else {
-                    reject(err);
-                }
+                (!err) ? resolve(true) : reject(err) // machine will move to next state
             });
         });
+    }
+
+    async CREATE_PAYMENT_CHANNEL(link) {
+        // Create raiden channel for providers without without open channel
+
+        return new Promise(async(resolve, reject) => {
+            let previousProviders = [];
+            console.log(`**** IN CREATE_PAYMENT_CHANNEL`)
+            try{
+                const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${link.provider_id.split('#')[1]}`)
+                const channelExists = await checkExistingChannel(checksumAddress)
+                console.log(`**** IN CREATE_PAYMENT_CHANNEL channelExists ${channelExists}`)
+
+                if (channelExists === undefined) {
+                    let currentProvider = await link.provider_id
+                    console.log(`**** IN CREATE_PAYMENT_CHANNEL currentProvider ${currentProvider}`)
+                    const storage_provider_cache = path.join(this.ctx.datadir, this.config.storage_provider_cache);
+                    let sent_providers = '[]';
+                    if (fs.existsSync(storage_provider_cache)) {
+                        sent_providers = fs.readFileSync(storage_provider_cache)
+                    }
+                    const parsed_sent_providers = JSON.parse(sent_providers)
+                    fs.writeFileSync(storage_provider_cache, JSON.stringify([...new Set([...parsed_sent_providers, currentProvider])]));
+                    if (!previousProviders.includes(currentProvider) && !parsed_sent_providers.includes(currentProvider)) {
+                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`)
+                        await createChannel(checksumAddress, 1000)  // todo:wvxshhvcsxhbcvhcsmjhjhsbc make channel deposit amount dynamic
+                        console.log(`**x** IN CREATE_PAYMENT_CHANNEL checksumAddress ${checksumAddress}`)
+                    }
+                    previousProviders.push(currentProvider)
+                }
+
+                // channel exists
+                resolve(true);
+            } catch (e) {
+                console.log(`CREATE_PAYMENT_CHANNEL ERROR: ${e}`)
+                // error creating channel so reject
+                reject(e)
+            }
+        })
     }
 
     async ENCRYPT_CHUNK(chunk, link) {
@@ -424,31 +450,6 @@ class Storage {
             link.initStateMachine(chunk)
             // use storage link state machine to sent CREATE event
             link.machine.send('CREATE')
-        }
-
-        // Create raiden channel for providers without without open channel
-        const payment_channel = await chunk.storage_links[ StorageLink.STATUS_ESTABLISH_PAYMENT_CHANNEL ];
-        let previousProviders = [];
-        for(let link of payment_channel){
-            await link.refresh();
-            linkStatusChanged = await new Promise(async(resolve, reject) => {
-                let currentProvider = await link.provider_id
-                const storage_provider_cache = path.join(this.ctx.datadir, this.config.storage_provider_cache);
-                let sent_providers = '[]';
-                if (fs.existsSync(storage_provider_cache)) {
-                    sent_providers = fs.readFileSync(storage_provider_cache)
-                }
-                const parsed_sent_providers = JSON.parse(sent_providers)
-                fs.writeFileSync(storage_provider_cache, JSON.stringify([...new Set([...parsed_sent_providers, currentProvider])]));
-                if (!previousProviders.includes(currentProvider) && !parsed_sent_providers.includes(currentProvider)) {
-                    const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`)
-                    await createChannel(checksumAddress, 1000)  // todo:wvxshhvcsxhbcvhcsmjhjhsbc make channel deposit amount dynamic
-                }
-                link.status = StorageLink.STATUS_AGREED;
-                await link.save();
-                previousProviders.push(currentProvider)
-                resolve(true);
-            })
         }
 
         for(let link of all) {

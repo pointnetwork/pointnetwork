@@ -72,6 +72,23 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
               return storage.SEND_STORE_CHUNK_REQUEST(chunk, link)
             },
             onDone: {
+              target: 'creating_payment_channel',
+            },
+            onError: {
+              actions: 'UPDATE_MODEL_ERR',
+              target: 'failed',
+            }
+          },
+          exit: 'UPDATE_MODEL_STATUS'
+        },
+        creating_payment_channel: {
+          invoke: {
+            id: 'SEND_CREATE_PAYMENT_CHANNEL',
+            src: async (context, event) => {
+              await link.save()
+              return storage.CREATE_PAYMENT_CHANNEL(link)
+            },
+            onDone: {
               target: 'encrypting',
             },
             onError: {
