@@ -11,6 +11,7 @@ const kadenceUtils = require('@deadcanaries/kadence/lib/utils');
 const pino = require('pino');
 const SerializerBSON = require('./serializer-bson');
 const Messenger = require('@deadcanaries/kadence/lib/messenger');
+const { log } = require('console');
 
 class Kademlia {
     constructor(ctx) {
@@ -28,7 +29,6 @@ class Kademlia {
         const networkPublicKey = ethUtil.privateToPublic(networkPrivateKey); // todo: different source than networkPrivateKeyHex, cross validate them!
         const address = ethUtil.privateToAddress(networkPrivateKey);
         const identity = address;
-
         this.ctx.log.info('Starting kadence DHT network...');
 
         // Initialize public contact data
@@ -191,7 +191,6 @@ class Kademlia {
                     joinNetwork(callback)
                 });
             }
-
             this.ctx.log.info(`joining network from ${peers.length} seeds`);
             _async.detectSeries(peers, (url, done) => {
                 const contact = kadence.utils.parseContactURL(url);

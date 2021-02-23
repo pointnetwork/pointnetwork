@@ -8,6 +8,11 @@ const { fork } = require('child_process');
 const _ = require('lodash');
 const fs = require('fs');
 const lock = require('level-lock');
+const {
+    checkExistingChannel,
+    createChannel,
+    makePayment,
+  } = require('./payments')
 
 class Storage {
     constructor(ctx) {
@@ -72,7 +77,6 @@ class Storage {
         autorenew = this.config.default_autorenew)
     {
         const file_id = await this.enqueueFileForUpload(path, redundancy, expires, autorenew);
-
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(async() => {
                 let file = await File.find(file_id);
@@ -152,7 +156,6 @@ class Storage {
         // todo:  join the network from the raiden wallet
         // todo:  .get(data_id)
         // todo:  .put(data, ) returns data_id
-
         if (mode === 'all' || mode === 'uploading') {
             let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
             uploadingChunks.forEach((chunk) => {
@@ -173,7 +176,10 @@ class Storage {
     }
 
     async chooseProviderCandidate() {
-        const id = this.ctx.config.hardcode_default_provider; // todo
+        const storageProviders = await this.ctx.web3bridge.getAllStorageProvider()
+        const randomProvider = storageProviders[storageProviders.length * Math.random() | 0]
+        const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider)
+        const id = getProviderDetails['0']
         return await this.ctx.db.provider.findOrCreateAndSave(id);
         // todo: remove blacklist from options
         // todo: remove those already in progress or failed in this chunk
@@ -224,7 +230,20 @@ class Storage {
         return new Promise((resolve, reject) => {
             this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
                 await link.refresh();
-                (!err) ? resolve(true) : reject(err) // machine will move to next state
+                if (!err) {
+                    const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
+                    const channelExist = await checkExistingChannel(checksumAddress)
+                    if (channelExist === undefined) {
+                        link.status = StorageLink.STATUS_ESTABLISH_PAYMENT_CHANNEL;
+                        await link.save();
+                    }else {
+                        link.status = StorageLink.STATUS_AGREED;
+                        await link.save();
+                    }
+                    resolve(true);
+                } else {
+                    reject(err);
+                }
             });
         });
     }
@@ -358,6 +377,10 @@ class Storage {
                     };
                     link.validatePledge();
 
+                    const provider = await link.provider
+                    const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
+                    await makePayment(checksumAddress, 10) // todo: calculate amount using cost per kb for service provider
+
                     // const chunk = await link.getChunk();
                     // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
 
@@ -392,8 +415,8 @@ class Storage {
 
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
-            let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
             let link = StorageLink.new();
+            let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
             link.id = DB.generateRandomIdForNewRecord();
             link.provider = provider;
             link.redkeyId = await this.getRedkeyId(provider);
@@ -401,6 +424,31 @@ class Storage {
             link.initStateMachine(chunk)
             // use storage link state machine to sent CREATE event
             link.machine.send('CREATE')
+        }
+
+        // Create raiden channel for providers without without open channel
+        const payment_channel = await chunk.storage_links[ StorageLink.STATUS_ESTABLISH_PAYMENT_CHANNEL ];
+        let previousProviders = [];
+        for(let link of payment_channel){
+            await link.refresh();
+            linkStatusChanged = await new Promise(async(resolve, reject) => {
+                let currentProvider = await link.provider_id
+                const storage_provider_cache = path.join(this.ctx.datadir, this.config.storage_provider_cache);
+                let sent_providers = '[]';
+                if (fs.existsSync(storage_provider_cache)) {
+                    sent_providers = fs.readFileSync(storage_provider_cache)
+                }
+                const parsed_sent_providers = JSON.parse(sent_providers)
+                fs.writeFileSync(storage_provider_cache, JSON.stringify([...new Set([...parsed_sent_providers, currentProvider])]));
+                if (!previousProviders.includes(currentProvider) && !parsed_sent_providers.includes(currentProvider)) {
+                    const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`)
+                    await createChannel(checksumAddress, 1000)  // todo:wvxshhvcsxhbcvhcsmjhjhsbc make channel deposit amount dynamic
+                }
+                link.status = StorageLink.STATUS_AGREED;
+                await link.save();
+                previousProviders.push(currentProvider)
+                resolve(true);
+            })
         }
 
         for(let link of all) {
@@ -417,7 +465,6 @@ class Storage {
             'internal_id': (new Date).getTime().toString() + Math.random().toString(),
             cmd, data, contact, callback
         };
-
         if (!this.queued_requests[contact]) this.queued_requests[contact] = [];
         this.queued_requests[contact].push(request);
 
@@ -429,10 +476,8 @@ class Storage {
         const requests_length = (this.current_requests[contact]) ? this.current_requests[contact].length : 0;
         if (requests_length < MAX_PARALLEL_PER_PROVIDER && this.queued_requests[contact] && this.queued_requests[contact].length > 0) {
             const req = this.queued_requests[contact].shift();
-
             if (!this.current_requests[contact]) this.current_requests[contact] = [];
             this.current_requests[contact].push(req);
-
             return this.ctx.network.kademlia.node.send(req.cmd, req.data, this.ctx.utils.urlToContact(contact), (err, result) => {
                 this.current_requests = _.remove(this.current_requests, function(n) {
                     return n.internal_id === req.internal_id;
