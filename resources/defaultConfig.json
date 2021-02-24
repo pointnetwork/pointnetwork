@@ -53,6 +53,9 @@
     "redkey_stupid_padding": 1,
     "____redkey_public_exponent": 65537
   },
+  "provider": {
+
+  },
   "network": {
     "web3": "http://localhost:7545/",
     "web3_network_id": 5777,
@@ -70,7 +73,8 @@
       "cooldown_reset_time": "60M"
     },
 
-    "identity_contract_address": "0x8436a56b30f6543DD0245b9E333A63752415184f"
+    "identity_contract_address": "0x8436a56b30f6543DD0245b9E333A63752415184f",
+    "storage_provider_contract_address": "0x3E147fdB417d7D29a9F44fcfa120f34a3e333e35"
   },
   "simulation_delay": 10000,
   "hardcode_default_provider": "http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc"
