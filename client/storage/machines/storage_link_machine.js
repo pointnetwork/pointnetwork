@@ -208,6 +208,7 @@ exports.createStateMachine = function createStateMachine(link, chunk, storage) {
           link.status = link.state
         },
         UPDATE_MODEL_ERR: async (context, event) => {
+          console.error(`UPDATE_MODEL_ERR: ${event.data}`)
           link.errored = true
           link.err = event.data
         },
