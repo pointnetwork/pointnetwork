@@ -25,7 +25,7 @@ const createChannel = async (serviceProviderAddress, totalDeposit, revealTimeout
     })
     return newChannel;
   } catch (error) {
-    console.error(error.response);
+    console.error(`Error in payments.createChannel: ${error.response.data.errors}`);
   }
 }
 
@@ -36,7 +36,7 @@ const makePayment = async (serviceProviderAddress, amount) => {
     })
     return newPayment;
   } catch (error) {
-    console.error(error.response);
+    console.error(`Error in payments.makePayment: ${error.response.data.errors}`);
   }
 }
 
