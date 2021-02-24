@@ -59,7 +59,7 @@ It's very raw prototype code, so you have to do lots of things manually right no
 
 1. Update `token_address` in [resources/defaultConfig.json](./resources/defaultConfig.json) to the address of that token.
 
-1. Now you need to create a second Raiden node for the _deployer_ PN node to use. The setup is similar to above. You can add another provider to the `StorageProviderRegistry` for this second node but, for now, keep `cheapest_provider` set to the Raiden Node address of the first 'storage provider' node.
+1. Now you need to create a second Raiden node for the _deployer_ PN node to use. This needs to be setup either in a separate computer or within a container such as Docker. Specific details to follow soon.
 
 1. Tell the second node to deploy the `example.z` website:
 
