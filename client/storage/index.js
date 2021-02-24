@@ -237,18 +237,15 @@ class Storage {
 
     async CREATE_PAYMENT_CHANNEL(link) {
         // Create raiden channel for providers without without open channel
+        let previousProviders = [];
 
         return new Promise(async(resolve, reject) => {
-            let previousProviders = [];
-            console.log(`**** IN CREATE_PAYMENT_CHANNEL`)
             try{
                 const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${link.provider_id.split('#')[1]}`)
                 const channelExists = await checkExistingChannel(checksumAddress)
-                console.log(`**** IN CREATE_PAYMENT_CHANNEL channelExists ${channelExists}`)
 
                 if (channelExists === undefined) {
                     let currentProvider = await link.provider_id
-                    console.log(`**** IN CREATE_PAYMENT_CHANNEL currentProvider ${currentProvider}`)
                     const storage_provider_cache = path.join(this.ctx.datadir, this.config.storage_provider_cache);
                     let sent_providers = '[]';
                     if (fs.existsSync(storage_provider_cache)) {
@@ -259,7 +256,6 @@ class Storage {
                     if (!previousProviders.includes(currentProvider) && !parsed_sent_providers.includes(currentProvider)) {
                         const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`)
                         await createChannel(checksumAddress, 1000)  // todo:wvxshhvcsxhbcvhcsmjhjhsbc make channel deposit amount dynamic
-                        console.log(`**x** IN CREATE_PAYMENT_CHANNEL checksumAddress ${checksumAddress}`)
                     }
                     previousProviders.push(currentProvider)
                 }

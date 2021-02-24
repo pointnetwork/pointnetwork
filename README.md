@@ -53,9 +53,13 @@ It's very raw prototype code, so you have to do lots of things manually right no
 
 1. Fund your Raiden Node Address on Goerli testnet with token you plan to use for payment.
 
+1. Update the `storage_provider` address in [StorageProviderRegistry.sol](./truffle/contracts/StorageProviderRegistry.sol) to the address of your private Raiden node.
+
 1. Next [Join a Token Network](https://docs.raiden.network/the-raiden-web-interface/join-a-token-network#registering-a-new-token) that you want to use for payments.
 
 1. Update `token_address` in [resources/defaultConfig.json](./resources/defaultConfig.json) to the address of that token.
+
+1. Now you need to create a second Raiden node for the _deployer_ PN node to use. The setup is similar to above. You can add another provider to the `StorageProviderRegistry` for this second node but, for now, keep `cheapest_provider` set to the Raiden Node address of the first 'storage provider' node.
 
 1. Tell the second node to deploy the `example.z` website:
 
