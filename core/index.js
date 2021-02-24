@@ -5,6 +5,7 @@ const fs = require('fs');
 const ApiServer = require('../api');
 const Network = require('../network');
 const Client = require('../client');
+const Provider = require('../provider');
 const Wallet = require('../wallet');
 const DB = require('../db');
 const utils = require('./utils');
@@ -30,6 +31,7 @@ class Core {
         await this.initApiServer();
         await this.initNetwork();
         await this.initClient();
+        await this.initProvider();
 
         await this.postInit();
     }
@@ -98,6 +100,11 @@ class Core {
     async initWallet() { // todo: rename to keychain?
         this.ctx.wallet = new Wallet(ctx);
         await this.ctx.wallet.start();
+    }
+
+    async initProvider() {
+        this.ctx.provider = new Provider(ctx);
+        await this.ctx.provider.start();
     }
 
     async initDatabase() {

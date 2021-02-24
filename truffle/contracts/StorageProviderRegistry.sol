@@ -5,6 +5,7 @@ contract StorageProviderRegistry {
         address id;
         string connection;
         uint announced_at;
+        address announced_by;
         uint collateral;
     }
 
@@ -13,19 +14,28 @@ contract StorageProviderRegistry {
 
     event Announcement(address id, string connection, uint collateral);
 
-    function announce(address id, string memory connection) payable public {
+    function announce(string memory connection) payable public {
+        address memory id = msg.sender;
+
+        // If there is no record of this provider yet, we need to add its id to the list of all provider ids
         if (providers[id].id == address(0)) providerIds.push(id);
 
-        if (msg.value == 0) revert('No collateral');
+        if (msg.value == 0) revert('No collateral supplied');
 
-        uint collateral = msg.value;
+        uint memory added_collateral = msg.value;
 
         Provider memory sp = Provider({
             id: id,
             connection: connection,
             announced_at: block.timestamp,
-            collateral: collateral // todo: add instead of rewriting if exists
+            announced_by: msg.sender,
+            collateral: added_collateral
         });
+
+        if (providers[id].id != address(0)) {
+            sp.collateral += providers[id].collateral;
+        }
+
         providers[id] = sp;
 
         emit Announcement(id, connection, sp.collateral);
