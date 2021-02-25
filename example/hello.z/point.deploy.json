@@ -1,4 +1,5 @@
 {
   "version": 1,
-  "target": "hello.z"
+  "target": "hello.z",
+  "keyvalue": {}
 }
