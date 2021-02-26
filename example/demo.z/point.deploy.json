@@ -1,0 +1,8 @@
+{
+    "version": 1,
+    "target": "demo.z",
+    "upload": {
+        "redundancy": 10,
+        "timeperiod": 10000
+    }
+}
