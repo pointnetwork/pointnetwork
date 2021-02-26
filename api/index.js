@@ -1,4 +1,5 @@
 const fastify = require('fastify');
+const { checkRegisteredToken, registerToken } = require('../client/storage/payments');
 
 class ApiServer {
     constructor(ctx) {
@@ -33,8 +34,9 @@ class ApiServer {
                 next()
             });
 
-            await this.server.listen(parseInt(this.config.port), (err, address) => {
+            await this.server.listen(parseInt(this.config.port), async (err, address) => {
                 if (err) throw err;
+                if (await checkRegisteredToken() === undefined) await registerToken();
                 this.server.log.info(`api_server listening on ${address}`);
             });
         } catch (err) {
