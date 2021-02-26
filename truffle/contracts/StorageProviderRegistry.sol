@@ -8,6 +8,8 @@ contract StorageProviderRegistry {
     struct Provider {
         address id;
         string connection;
+        uint announced_at;
+        address announced_by;
         uint collateral;
         uint collateral_lock_period;
         uint cost_per_kb;
@@ -37,9 +39,9 @@ contract StorageProviderRegistry {
     function announce(string memory connection, uint collateral_lock_period, uint cost_per_kb) payable public {
         if (providers[msg.sender].id == address(0)) providerIds.push(msg.sender);
 
-        if (msg.value == 0) revert('No collateral');
+        if (msg.value == 0) revert('No collateral supplied');
 
-        uint collateral = msg.value;
+        uint memory added_collateral = msg.value;
 
         Provider memory sp = Provider({
             id: msg.sender,

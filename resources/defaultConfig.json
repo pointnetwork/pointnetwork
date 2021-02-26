@@ -54,6 +54,9 @@
     "redkey_stupid_padding": 1,
     "____redkey_public_exponent": 65537
   },
+  "provider": {
+
+  },
   "network": {
     "web3": "http://localhost:7545/",
     "web3_network_id": 5777,
