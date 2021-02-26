@@ -84,7 +84,7 @@ class Web3Bridge {
     }
 
     async announceProvider(connection, collateralSize) {
-        const providerContract = await this.loadProviderContract();
+        const providerContract = await this.loadStorageProviderRegistryContract();
         const method = providerContract.methods.announce(connection);
         console.log(await this.web3send(method, 2000000, collateralSize)); // todo: remove console.log // todo: magic number
     }
