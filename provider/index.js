@@ -50,8 +50,9 @@ class Provider {
         console.log('Announcing '+this.getConnectionString()+'...');
 
         let collateralSizeEth = "5"; // todo: magic number
+        let cost_per_kb = "1"; // todo: magic numbers
 
-        return await this.ctx.web3bridge.announceProvider(this.getConnectionString(), collateralSizeEth);
+        return await this.ctx.web3bridge.announceStorageProvider(this.getConnectionString(), collateralSizeEth, cost_per_kb);
     }
 }
 

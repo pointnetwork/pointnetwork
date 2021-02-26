@@ -13,7 +13,6 @@ contract StorageProviderRegistry {
         uint collateral;
         uint collateral_lock_period;
         uint cost_per_kb;
-        uint announced_at;
     }
 
     address cheapest_provider;
@@ -29,6 +28,7 @@ contract StorageProviderRegistry {
             id: 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301,
             connection: 'http://127.0.0.1:12345/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301',
             announced_at: 1613647823,
+            announced_by: msg.sender,
             collateral: 50,
             cost_per_kb: 5,
             collateral_lock_period: 500
@@ -41,13 +41,14 @@ contract StorageProviderRegistry {
 
         if (msg.value == 0) revert('No collateral supplied');
 
-        uint memory added_collateral = msg.value;
+        uint added_collateral = msg.value;
 
         Provider memory sp = Provider({
             id: msg.sender,
             connection: connection,
             announced_at: block.timestamp,
-            collateral: providers[msg.sender].collateral.add(collateral),
+            announced_by: msg.sender,
+            collateral: providers[msg.sender].collateral.add(added_collateral),
             cost_per_kb: cost_per_kb,
             collateral_lock_period: providers[msg.sender].collateral_lock_period.add(collateral_lock_period)
         });
