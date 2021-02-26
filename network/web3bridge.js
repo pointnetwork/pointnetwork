@@ -23,9 +23,8 @@ class Web3Bridge {
     async start() {
     }
 
-    async loadIdentityContract() {
-        const at = this.ctx.config.network.identity_contract_address;
-        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/Identity.json');
+    async loadContract(contractName, at) {
+        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/'+contractName+'.json');
         const abiFile = JSON.parse(fs.readFileSync(abiFileName));
         const abi = abiFile.abi;
         // const bytecode = abiFile.bytecode;
@@ -34,18 +33,30 @@ class Web3Bridge {
     }
 
     async loadStorageProviderRegistryContract() {
-        const at = this.ctx.config.network.storage_provider_registry_contract_address;
-        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/StorageProviderRegistry.json');
-        const abiFile = JSON.parse(fs.readFileSync(abiFileName));
-        const abi = abiFile.abi;
-        return new this.web3.eth.Contract(abi, at);
+        const at = this.ctx.config.network.storage_provider_contract_address;
+        return await this.loadContract('StorageProviderRegistry', at);
     }
 
-    async web3send(method, gasLimit) {
+    async loadIdentityContract() {
+        const at = this.ctx.config.network.identity_contract_address;
+        return await this.loadContract('Identity', at);
+    }
+
+    async web3send(method, gasLimit, amountEth = 0) {
         const account = this.web3.eth.defaultAccount;
         const gasPrice = await this.web3.eth.getGasPrice();
         if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
-        return await method.send({ from: account, gasPrice, gas: gasLimit });
+        return await method.send({ from: account, gasPrice, gas: gasLimit, value: this.web3.utils.toWei(amountEth, "ether") });
+        /*
+        .on('transactionHash', function(hash){
+            ...
+        })
+        .on('confirmation', function(confirmationNumber, receipt){
+            ...
+        })
+        .on('receipt', function(receipt){
+        https://web3js.readthedocs.io/en/v1.2.11/web3-eth-contract.html#id37
+         */
     }
 
     async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage
@@ -70,6 +81,12 @@ class Web3Bridge {
         const identityContract = await this.loadIdentityContract();
         const method = identityContract.methods.getIdentityByOwner(owner);
         return await method.call();
+    }
+
+    async announceProvider(connection, collateralSize) {
+        const providerContract = await this.loadProviderContract();
+        const method = providerContract.methods.announce(connection);
+        console.log(await this.web3send(method, 2000000, collateralSize)); // todo: remove console.log // todo: magic number
     }
 
     async getZRecord(domain) {
