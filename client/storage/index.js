@@ -399,9 +399,11 @@ class Storage {
                     };
                     link.validatePledge();
 
-                    const provider = await link.provider
-                    const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
-                    await makePayment(checksumAddress, 10) // todo: calculate amount using cost per kb for service provider
+                    // Uncomment after demo for payments
+
+                    // const provider = await link.provider
+                    // const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
+                    // await makePayment(checksumAddress, 10) // todo: calculate amount using cost per kb for service provider
 
                     // const chunk = await link.getChunk();
                     // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
