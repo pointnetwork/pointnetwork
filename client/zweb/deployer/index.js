@@ -162,7 +162,10 @@ class Deployer {
             }
         };
 
-        let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), getImports));
+        // Not calling with getImports callback since this causes the following error 'AssertionError [ERR_ASSERTION]: Invalid callback object specified'. Its likely fixed by using the approach suggested here:
+        // https://github.com/ethereum/solc-js#example-usage-with-import-callback
+        //let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), getImports));
+        let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig)));
 
         if (!compiledSources) {
             throw new Error(">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\nNO OUTPUT");
@@ -175,7 +178,7 @@ class Deployer {
                     continue;
                 }
                 found = true;
-                msg += error.formattedMessage + "\n"
+                msg += e.formattedMessage + "\n"
             }
             msg = ">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\n" + msg;
             if (found) throw new Error(msg);
