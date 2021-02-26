@@ -33,7 +33,7 @@ class Web3Bridge {
     }
 
     async loadStorageProviderRegistryContract() {
-        const at = this.ctx.config.network.storage_provider_contract_address;
+        const at = this.ctx.config.network.storage_provider_registry_contract_address;
         return await this.loadContract('StorageProviderRegistry', at);
     }
 
@@ -42,7 +42,7 @@ class Web3Bridge {
         return await this.loadContract('Identity', at);
     }
 
-    async web3send(method, gasLimit, amountEth = 0) {
+    async web3send(method, gasLimit, amountEth = '0') {
         const account = this.web3.eth.defaultAccount;
         const gasPrice = await this.web3.eth.getGasPrice();
         if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
