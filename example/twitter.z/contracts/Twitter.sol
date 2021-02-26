@@ -4,15 +4,15 @@ pragma experimental ABIEncoderV2;
 contract Twitter {
     struct Tweet {
         address from;
-        address contents;
+        string location;
         uint timestamp;
         uint likes;
     }
 
     Tweet[] tweets;
 
-    function tweet(address contents) public {
-        Tweet memory _tweet = Tweet(msg.sender, contents, block.timestamp, 0);
+    function tweet(string memory location) public {
+        Tweet memory _tweet = Tweet(msg.sender, location, block.timestamp, 0);
         tweets.push(_tweet);
     }
 
