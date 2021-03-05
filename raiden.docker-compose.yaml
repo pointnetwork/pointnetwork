@@ -1,4 +1,4 @@
-version: '3'
+version: "3.9"
 
 services:
   ganache:
@@ -18,6 +18,8 @@ services:
     image: raidennetwork/raiden:latest
     ports:
       - "5011:5001"
+    volumes:
+      - "./test_keystore:/keystore:ro"
     command:
       # - --help
       - --accept-disclaimer
@@ -25,6 +27,8 @@ services:
       - "ganache:8545"
       - --network-id
       - "123"
+      - --keystore-path
+      - "/keystore"
 
   # node2:
   #   image: raidennetwork/raiden:latest
