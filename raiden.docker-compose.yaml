@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  ganache:
+    image: trufflesuite/ganache-cli
+    ports:
+      - "8545:8545"
+    command:
+      - -p
+      - "8545"
+      - -m
+      - "theme narrow finger canal enact photo census miss economy hotel often"
+      - --account="0xfeec30f685ff378c117d1bb67095815a4604f03f1759a418e82df05b8c3be245,0x56BC75E2D63100000"
+      - --networkId
+      - "123"
+
+  raiden_node1:
+    image: raidennetwork/raiden:latest
+    ports:
+      - "5011:5001"
+    command:
+      # - --help
+      - --accept-disclaimer
+      - --eth-rpc-endpoint
+      - "ganache:8545"
+      - --network-id
+      - "123"
+
+  # node2:
+  #   image: raidennetwork/raiden:latest
+  #   ports:
+  #     - "5012:5001"
