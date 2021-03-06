@@ -1,36 +1,112 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  ganache:
-    image: trufflesuite/ganache-cli
-    ports:
-      - "8545:8545"
-    command:
-      - -p
-      - "8545"
-      - -m
-      - "theme narrow finger canal enact photo census miss economy hotel often"
-      - --account="0xfeec30f685ff378c117d1bb67095815a4604f03f1759a418e82df05b8c3be245,0x56BC75E2D63100000"
-      - --networkId
-      - "123"
-
-  raiden_node1:
-    image: raidennetwork/raiden:latest
-    ports:
-      - "5011:5001"
+  parity:
+    image: parity/parity:v2.7.2-stable
     volumes:
-      - "./test_keystore:/keystore:ro"
+      - parity_data:/home/parity/data:rw
+      - parity_db:/home/parity/db:rw
+      - ./test_keystore:/home/parity/keystore:ro
+    ports:
+      - 30303:30303
+      - 30303:30303/udp
+      - 8545:8545
+    entrypoint:
+      - /bin/ls
+      - -ahl
+      # - --help
+      # - --chain=dev
+      # - --keys-path=/home/parity/io.parity.ethereum/keystore
+      # - --base-path=/home/parity/io.parity.ethereum/data
+      # - --db-path=/home/parity/io.parity.ethereum/db
+      # - --network-id=1337
+      # - --jsonrpc-apis=eth,net,web3
+      # - --jsonrpc-hosts=all
+      # - --jsonrpc-cors=all
+      # - --jsonrpc-interface=all
+
+  raiden_node_1:
+    image: raidennetwork/raiden:latest
+    depends_on:
+      - parity
+    ports:
+      - 5011:5001
+    volumes:
+      - ./test_keystore:/keystore:ro
+      - ./test_address_pswrd:/pswrd
     command:
       # - --help
+      - --address
+      - '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301'
+      - --password-file
+      - /pswrd
+      - --network-id
+      - '1337'
       - --accept-disclaimer
       - --eth-rpc-endpoint
-      - "ganache:8545"
-      - --network-id
-      - "123"
+      - http://parity:8545
+      # - --routing-mode
+      # - pfs
+      # - --pathfinding-service-address
+      # - https://pfs-goerli.services-dev.raiden.network
       - --keystore-path
-      - "/keystore"
+      - /keystore
 
-  # node2:
-  #   image: raidennetwork/raiden:latest
+  # geth:
+  #   image: ethereum/client-go:v1.9.11
   #   ports:
-  #     - "5012:5001"
+  #     - 30303:30303
+  #     - 30303:30303/udp
+  #     - 8545:8545
+  #   volumes:
+  #     - geth_data:/data:rw
+  #     - ./test_keystore:/keystore:ro
+  #   command:
+  #     - --keystore
+  #     - /keystore
+  #     - --goerli
+  #     - --syncmode
+  #     - fast
+  #     - --datadir
+  #     - /data
+  #     - --rpc
+  #     - --rpcapi
+  #     - eth,net,web3
+  #     - --rpcaddr
+  #     - '0.0.0.0'
+  #     - --rpcvhosts
+  #     - '*'
+  #     - --rpccorsdomain
+  #     - '*'
+
+  # raiden_node_1:
+  #   image: raidennetwork/raiden:latest
+  #   depends_on:
+  #     - geth
+  #   ports:
+  #     - 5011:5001
+  #   volumes:
+  #     - ./test_keystore:/keystore:ro
+  #     - ./test_address_pswrd:/pswrd
+  #   command:
+  #     # - --help
+  #     - --address
+  #     - '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301'
+  #     - --password-file
+  #     - /pswrd
+  #     - --network-id
+  #     - '5' # goerli
+  #     - --accept-disclaimer
+  #     - --eth-rpc-endpoint
+  #     - http://geth:8545
+  #     - --routing-mode
+  #     - pfs
+  #     - --pathfinding-service-address
+  #     - https://pfs-goerli.services-dev.raiden.network
+  #     - --keystore-path
+  #     - /keystore
+
+volumes:
+  geth_data:
+  parity_data:
+  parity_db:
