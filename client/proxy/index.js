@@ -82,7 +82,7 @@ class ZProxy {
                 if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
 
                 let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
-                if (!routes) return this.abort404(response); // todo: should be a different error
+                if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
 
                 let template_id = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
                 if (!template_id) return this.abort404(response, 'route not found'); // todo: write a better msg
