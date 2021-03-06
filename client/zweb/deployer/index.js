@@ -46,20 +46,29 @@ class Deployer {
 
             const reg = /{% extends ['"](.*?)['"] %}/g;
             let result;
-            while((result = reg.exec(template)) !== null) { // todo: what if it's already a hash?
-                const subTemplate = path.join(deployPath, 'views', result[1]);
-                if (!fs.existsSync(subTemplate)) throw new Error('Template '+result[1]+' ('+subTemplate+') not found!'); // todo: +stack etc.
+            while((result = reg.exec(template)) !== null) { // todo: what if it's already a hash? // todo: what if it's https:// or something? // todo: what if it's /_storage/<hash>?
+                if (result[1].startsWith('http://') || result[1].startsWith('https://')) {
+                    template = template;
+                } else {
+                    const fl = path.join(deployPath, 'views', result[1]);
+                    if (!fs.existsSync(fl)) {
+                        console.error('Warning: Mentioned file '+result[1]+' ('+fl+') not found!');
+                    }//throw new Error('Warning: Mentioned file '+result[1]+' ('+fl+') not found!'); // todo: +stack etc. // todo: make it a warning?
 
-                const hash = await this.processTemplate(subTemplate, deployPath); // todo: parallelize
-                template = template.replace(result[1], hash); // todo: replace using outer stuff as well
+                    let ext = /(?:\.([^.]+))?$/.exec(result[1])[1];
+
+                    const hash = await this.processTemplate(fl, deployPath); // todo: parallelize
+                    template = template.replace(result[1], '/_storage/'+hash+'.'+ext); // todo: replace using outer stuff as well
+                }
             }
-
             ///
 
             // todo: dont parse html with regex!1 you'll go to hell for that! or worse, Turbo Pascal coding bootcamp!
             const regs = [
                 /\<link[^\>]*?href=['"](.*?)['"]/g,
                 /\<img[^\>]*?src=['"](.*?)['"]/g,
+                /\<body[^\>]*?background=['"](.*?)['"]/g,
+                /\<table[^\>]*?background=['"](.*?)['"]/g,
             ];
             for(let reg of regs) {
                 while((result = reg.exec(template)) !== null) { // todo: what if it's already a hash? // todo: what if it's https:// or something? // todo: what if it's /_storage/<hash>?
