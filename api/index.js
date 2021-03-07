@@ -14,6 +14,13 @@ class ApiServer {
         });
 
         try {
+            this.server
+                .register(require('fastify-nextjs')) // https://github.com/fastify/fastify-nextjs - for react apps
+                .after(() => {
+                    console.log(this.server)
+                    this.server.next('/hello');
+                })
+
             this.connectRoutes();
 
             this.server.setErrorHandler(function (error, request, reply) {
@@ -46,7 +53,7 @@ class ApiServer {
     }
 
     connectRoutes() {
-        const routes = require('../resources/api_routes');
+        const routes = require('./api_routes');
 
         /*
          * Example: ['GET', '/ping', 'ping'],
@@ -64,7 +71,7 @@ class ApiServer {
                 },
                 handler: async (request, reply) => {
                     let controller = new (require('./controllers/'+controllerName))(this.ctx, request);
-                    return controller[actionName]();
+                    return controller[actionName]( request, reply );
                 }
             });
         }
