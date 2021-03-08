@@ -13,7 +13,7 @@
     "buffer-chunks": "^0.1.1",
     "commander": "^5.1.0",
     "ethereumjs-util": "^6.2.0",
-    "fastify": "^2.13.1",
+    "fastify": "^3.12.0",
     "fastify-nextjs": "^5.2.0",
     "fs-extra": "^9.0.0",
     "level": "^6.0.1",

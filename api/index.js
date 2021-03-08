@@ -1,5 +1,6 @@
 const fastify = require('fastify');
 const { checkRegisteredToken, registerToken } = require('../client/storage/payments');
+const Next = require('next');
 
 class ApiServer {
     constructor(ctx) {
@@ -12,15 +13,12 @@ class ApiServer {
             logger: this.ctx.log
             // todo: more configuration?
         });
-
+        
         try {
-            this.server
-                .register(require('fastify-nextjs')) // https://github.com/fastify/fastify-nextjs - for react apps
-                .after(() => {
-                    console.log(this.server)
-                    this.server.next('/hello');
-                })
-
+            await this.server.register(require('fastify-nextjs'), { dev: true }) // https://github.com/fastify/fastify-nextjs - for react apps
+            await this.server.after(() => {
+                this.server.next('/hello');
+            })
             this.connectRoutes();
 
             this.server.setErrorHandler(function (error, request, reply) {
@@ -63,6 +61,7 @@ class ApiServer {
             let [controllerName, actionName] = route[2].split('@');
 
             this.server.route({
+
                 method: route[0],
                 url: route[1],
                 // this function is executed for every request before the handler is executed
