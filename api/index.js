@@ -13,7 +13,7 @@ class ApiServer {
             logger: this.ctx.log
             // todo: more configuration?
         });
-        
+
         try {
             await this.server.register(require('fastify-nextjs'), { dev: true }) // https://github.com/fastify/fastify-nextjs - for react apps
             await this.server.after(() => {
@@ -61,7 +61,6 @@ class ApiServer {
             let [controllerName, actionName] = route[2].split('@');
 
             this.server.route({
-
                 method: route[0],
                 url: route[1],
                 // this function is executed for every request before the handler is executed
