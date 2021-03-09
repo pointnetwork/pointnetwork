@@ -2,9 +2,6 @@
   "api": {
     "port": 2469
   },
-  "service_provider": {
-    "enabled": true
-  },
   "network": {
     "communication_external_host": "localhost",
     "communication_port": "12346",
