@@ -54,7 +54,7 @@ class ApiServer {
         const routes = require('./api_routes');
 
         /*
-         * Example: ['GET', '/ping', 'ping'],
+         * Example: ['GET', '/ping', 'PingController@ping'],
          */
 
         for (let route of routes) {
