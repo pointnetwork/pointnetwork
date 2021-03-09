@@ -92,7 +92,9 @@ You can run the following scripts in one terminal window which will clear all yo
 ./scripts/run-node.sh
 ```
 
-If you want a bit more control / visibility then below is a set of scripts to run to get 3 nodes up and running in 3 differnet terminal windows and then deploy 3 example sites for testing in the Point Browser. Note: you will need to have your local ganache running and the Point Netowrk contracts deployed (see above).
+If you want a bit more control / visibility then below is a set of scripts to run to get 3 nodes up and running in 3 differnet terminal windows and then deploy 3 example sites for testing in the Point Browser.
+
+**NOTE**: you will need to have your local ganache running and the Point Netowrk contracts deployed as described above.
 
 ```
 ./scripts/clear-node.sh
