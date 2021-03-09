@@ -1,3 +1,6 @@
+# Run this script from within the project root folder like so:
+# ./scripts/run-node.sh
+
 trap "kill 0" EXIT
 nodeVer=$(node -v)
 frontVer=$(echo "${nodeVer}" |cut -c1-3)
@@ -9,11 +12,10 @@ fi
 ganache-cli -p 7545 -m 'theme narrow finger canal enact photo census miss economy hotel often' &
 sleep 2s
 
-cd ../truffle
+cd truffle
 truffle deploy --network development
-cd ../scripts
-sleep 3s
 cd ..
+sleep 3s
 
 ./point --datadir ~/.point/test1 -v &
 ./point --datadir ~/.point/test2 -v &
