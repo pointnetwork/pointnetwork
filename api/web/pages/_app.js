@@ -1,7 +1,8 @@
-import 'bootstrap/dist/css/bootstrap.css' // add bootstrap css
-// import styles from '../components/layout.module.css'
+// import bootstrap css (installed via npm)
+import 'bootstrap/dist/css/bootstrap.css'
 import Head from "next/head";
 import "../styles/globals.css";
+import NavBar from "../components/navbar"
 
 function App({ Component, pageProps }) {
     return (
@@ -14,7 +15,15 @@ function App({ Component, pageProps }) {
             <title>Point Network Web API</title>
             <link rel="icon" href="images/favicon.ico" />
         </Head>
+        <NavBar />
         <Component {...pageProps} />
+        <footer className="footer">
+            <section class="container text-muted">
+                © Copyright 2020-2021 Point Network Limited
+                ·
+                Email: <a href="mailto:info@pointnetwork.io">info@pointnetwork.io</a>
+            </section>
+        </footer>
         </>
     )
 }
