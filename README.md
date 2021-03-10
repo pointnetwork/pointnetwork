@@ -123,3 +123,7 @@ Note also that the launch config makes use of the `$HOME` environment variable f
 Please let us know if you hit any obstacles of encounter errors or bugs by opening an issue or emailing info@pointnetwork.io.
 
 Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
+
+### Developing the Point Network Web App Utility
+
+For details on [Developing the Point Network Web App Utility](./api/web/README.md) please refer to this separate [README]((./api/web/README.md)).
