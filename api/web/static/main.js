@@ -1,1 +1,0 @@
-$( "#app" ).append( "<p>Progress Bar...</p>" );
