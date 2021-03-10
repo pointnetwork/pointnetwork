@@ -15,9 +15,10 @@ class ApiServer {
         });
 
         try {
-            await this.server.register(require('fastify-nextjs'), { dev: true }) // https://github.com/fastify/fastify-nextjs - for react apps
+            // https://github.com/fastify/fastify-nextjs - for react apps
+            await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
             await this.server.after(() => {
-                this.server.next('/hello');
+                this.server.next('/'); // this automatically routes to /pages/index.js
             })
             this.connectRoutes();
 
