@@ -78,20 +78,23 @@ class ApiServer {
             });
         }
 
+        /*
+         * Example: ['GET', '/ws/deploy/progress', 'DeployProgressSocket'],
+         */
         const ws_routes = require('./ws_routes');
 
         for (let wsRoute of ws_routes) {
-            let [controllerName, actionName] = wsRoute[2].split('@');
+            let socketName = wsRoute[2];
 
             this.server.route({
                 method: wsRoute[0],
                 url: wsRoute[1],
+
                 handler: async (request, reply) => {
-                    return undefined
+                    return undefined // needed otherwise 'handler not defined error' is thrown by fastify
                 },
                 wsHandler: async (conn, req) => {
-                    return new (require('./controllers/'+controllerName))(this.ctx, conn);
-                    // return controller[actionName]( conn );
+                    return new (require('./sockets/'+socketName))(this.ctx, conn);
                 }
             });
         }
