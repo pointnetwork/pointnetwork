@@ -11,7 +11,16 @@ export default function navbar() {
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
       <ul class="navbar-nav mr-auto">
         <li class="nav-item active">
-            <a class="nav-link" href="#">Home</a>
+            <a class="nav-link active" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/deployments/files">Files</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/deployments/chunks">Chunks</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/deployments/peers">Peers</a>
         </li>
       </ul>
       <form class="form-inline my-2 my-lg-0">

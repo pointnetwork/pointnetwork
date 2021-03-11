@@ -1,5 +1,5 @@
 module.exports = [
-    ['GET', '/ping', 'PingController@ping'],
-    ['GET', '/deploy', 'DeployController@deploy'],
-    ['GET', '/deploy/:id', 'DeployController@deployerProgress']
+    ['GET', '/api/ping', 'PingController@ping'],
+    ['GET', '/api/deploy', 'DeployController@deploy'],
+    ['GET', '/api/deploy/progress', 'DeployController@progress']
 ];

@@ -3,6 +3,8 @@
 
 The **Point Network Web App Utility** is rendered using the [Fastify-NextJS](https://github.com/fastify/fastify-nextjs) plugin. Essentially this plugin enables server side rendering of React JS components via a Fastify Node JS API.
 
+When you start up a node, for example Node 1, then the Point Network Web Utility will be available via [http://localhost:2468/](http://localhost:2468/).
+
 ## Folder Structure
 
 The application is structured as follows:

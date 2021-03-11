@@ -2,7 +2,7 @@ class DeployController {
     constructor(ctx, request) {
         this.ctx = ctx;
         this.request = request;
-        this.progress = require('../../client/zweb/deployer/progress')
+        this.deployerProgress = require('../../client/zweb/deployer/progress')
     }
 
     async deploy() {
@@ -19,8 +19,8 @@ class DeployController {
         }
     }
 
-    deployerProgress() {
-        return this.progress.getProgressForDeployment(1)
+    progress() {
+        return this.deployerProgress.getProgressForDeployment()
     }
 }
 

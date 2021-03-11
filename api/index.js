@@ -17,8 +17,9 @@ class ApiServer {
         try {
             // https://github.com/fastify/fastify-nextjs - for react apps
             await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
+            const web_routes = require('./web_routes')
             await this.server.after(() => {
-                this.server.next('/'); // this automatically routes to /pages/index.js
+                web_routes.forEach(route => {this.server.next(route)})
             })
             this.connectRoutes();
 
@@ -55,7 +56,7 @@ class ApiServer {
         const routes = require('./api_routes');
 
         /*
-         * Example: ['GET', '/ping', 'PingController@ping'],
+         * Example: ['GET', '/api/ping', 'PingController@ping'],
          */
 
         for (let route of routes) {

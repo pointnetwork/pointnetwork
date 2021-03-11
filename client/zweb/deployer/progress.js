@@ -4,8 +4,7 @@ let progressEventEmitter = new events.EventEmitter()
 const FILE_QUEUED_EVENT = 'FileQueuedEvent'
 
 progress = {
-  deployment_id: '945cef50-06ee-4767-b947-45a033ff5c56',
-  files: []
+  files: ['']
 }
 
 module.exports = {
@@ -14,7 +13,7 @@ module.exports = {
   FILE_QUEUED_EVENT: FILE_QUEUED_EVENT
 }
 
-function getProgressForDeployment(id){
+function getProgressForDeployment(){
   return progress
 }
 
