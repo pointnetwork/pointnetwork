@@ -1,3 +1,3 @@
 module.exports = [
-  ['GET', '/ws/deploy/progress', 'WSDeployController@progress']
+  ['GET', '/ws/deploy/progress', 'DeployProgressSocket']
 ]
