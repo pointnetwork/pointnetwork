@@ -1,6 +1,6 @@
 const files = () => {
   return (
-    <b>Here be files {data}</b>
+    <b>Here be files</b>
   )
 }
 
