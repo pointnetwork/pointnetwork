@@ -15,8 +15,10 @@ class ApiServer {
         });
 
         try {
-            // https://github.com/fastify/fastify-nextjs - for react apps
+            // https://github.com/fastify/fastify-nextjs - for react app support
             await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
+            // https://github.com/fastify/fastify-websocket - for websocket support
+            this.server.register(require('fastify-websocket'))
             const web_routes = require('./web_routes')
             await this.server.after(() => {
                 web_routes.forEach(route => {this.server.next(route)})
@@ -53,18 +55,18 @@ class ApiServer {
     }
 
     connectRoutes() {
-        const routes = require('./api_routes');
-
         /*
          * Example: ['GET', '/api/ping', 'PingController@ping'],
          */
+        const api_routes = require('./api_routes');
 
-        for (let route of routes) {
-            let [controllerName, actionName] = route[2].split('@');
+        for (let apiRoute of api_routes) {
+            let [controllerName, actionName] = apiRoute[2].split('@');
 
             this.server.route({
-                method: route[0],
-                url: route[1],
+                method: apiRoute[0],
+                url: apiRoute[1],
+
                 // this function is executed for every request before the handler is executed
                 preHandler: async (request, reply) => {
                     // E.g. check authentication
@@ -72,6 +74,24 @@ class ApiServer {
                 handler: async (request, reply) => {
                     let controller = new (require('./controllers/'+controllerName))(this.ctx, request);
                     return controller[actionName]( request, reply );
+                }
+            });
+        }
+
+        const ws_routes = require('./ws_routes');
+
+        for (let wsRoute of ws_routes) {
+            let [controllerName, actionName] = wsRoute[2].split('@');
+
+            this.server.route({
+                method: wsRoute[0],
+                url: wsRoute[1],
+                handler: async (request, reply) => {
+                    return undefined
+                },
+                wsHandler: async (conn, req) => {
+                    return new (require('./controllers/'+controllerName))(this.ctx, conn);
+                    // return controller[actionName]( conn );
                 }
             });
         }

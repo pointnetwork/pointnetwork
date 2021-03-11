@@ -11,16 +11,12 @@ class DeployController {
 
         try {
             const Deployer = require('../../client/zweb/deployer');
-            this.deployer = new Deployer(this.ctx, this.progress);
+            this.deployer = new Deployer(this.ctx, this.deployerProgress);
             await this.deployer.deploy(deploy_path);
             return {'status': 'success'};
         } catch(e) {
             return {'status': 'error', 'error': e.toString()};
         }
-    }
-
-    progress() {
-        return this.deployerProgress.getProgressForDeployment()
     }
 }
 
