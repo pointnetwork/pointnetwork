@@ -7,7 +7,11 @@
     "eip158Block": 0,
     "ByzantiumBlock": 0
   },
-  "alloc": {},
   "difficulty": "0x1",
-  "gasLimit": "0x9880000"
+  "gasLimit": "0x9880000",
+  "alloc" : {
+    "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301": {
+      "balance": "10000000000000000000"
+    }
+  }
 }

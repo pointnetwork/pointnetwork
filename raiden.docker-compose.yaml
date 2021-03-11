@@ -61,8 +61,10 @@ services:
     volumes:
       - ./geth_data:/data:rw
       - ./test_keystore:/keystore:ro
+      - ./genesis.json:/genesis.json:ro
+      - ./geth.init.sh:/init.sh:ro
+    entrypoint: /init.sh
     command:
-      - --mine 
       - --keystore
       - /keystore
       - --networkid
@@ -78,9 +80,14 @@ services:
       - '*'
       - --rpccorsdomain
       - '*'
+      - --mine
+      - --miner.threads
+      - "1"
+      - --miner.etherbase
+      - "0x0000000000000000000000000000000000000000"
 
   raiden_node_1:
-    image: raidennetwork/raiden:latest
+    image: raidennetwork/raiden:v0.200.0-rc9
     depends_on:
       - geth
     ports:
