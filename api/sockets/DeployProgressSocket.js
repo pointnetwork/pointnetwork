@@ -1,8 +1,11 @@
+const WebSocket = require('ws')
+
 class DeployProgressSocket {
-  constructor(ctx, conn) {
+  constructor(ctx, conn, wss) {
     this.ctx = ctx;
-    this.conn = conn;
-    this.ctx.client.deployerProgress.socket = this.conn.socket
+    this.ws = conn.socket;
+    this.wss = wss;
+    this.ctx.client.deployerProgress.wss = this
     this.socket_status = {
       type: 'socket_status',
       status: 'Running'
@@ -11,9 +14,19 @@ class DeployProgressSocket {
   }
 
   init() {
-    this.conn.socket.on('message', message => {
-      this.conn.socket.send(JSON.stringify(this.responseFor(message)))
+    this.ws.on('message', message => {
+      this.publishToClients(this.responseFor(message))
     })
+  }
+
+  publishToClients(progress) {
+    if(this.wss) {
+      this.wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(progress));
+        }
+      });
+    }
   }
 
   responseFor(message) {
