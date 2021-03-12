@@ -1,14 +1,15 @@
-events = require('events')
+let events = require('events')
+let path = require('path')
 
 class DeployerProgress {
   constructor(ctx) {
     this.ctx = ctx
-    this.STATE_UPDATED = 'STATE_UPDATED'
+    this.PROGRESS_UPDATED = 'PROGRESS_UPDATED'
   }
 
   init() {
     this.progressEventEmitter = new events.EventEmitter()
-    this.progressEventEmitter.on(this.STATE_UPDATED, () => {
+    this.progressEventEmitter.on(this.PROGRESS_UPDATED, () => {
       this._publishToSocket()
     })
     this.progress = {
@@ -20,22 +21,30 @@ class DeployerProgress {
   // this is set by the DeployProgressSocket once a connection is established with a client
   set socket(ws){
     this.ws = ws
-    this.ws.send(JSON.stringify(this.progress))
+    this._publishToSocket()
   }
 
-  update(filename, progress = 0, status = 'UNKNOWN') {
-    status = status.toUpperCase()
-    let existingRow = this.fetchExisitngRow(filename)
+  update(_filename, _progress = 0, _status = 'UNKNOWN') {
+    let inputs = this._formatInputs(_filename, _progress, _status)
+    let existingRow = this._fetchExisitngRow(inputs.filename)
     if(existingRow) {
-      existingRow.progress = progress
-      existingRow.status = status
+      existingRow.progress = inputs.progress
+      existingRow.status = inputs.status
     } else {
-      this.progress.data.push({filename, progress, status})
+      this.progress.data.push(inputs)
     }
-    this.progressEventEmitter.emit(this.STATE_UPDATED)
+    this.progressEventEmitter.emit(this.PROGRESS_UPDATED)
   }
 
-  fetchExisitngRow(filename) {
+  // private functions
+  _formatInputs(_filename, _progress, _status) {
+    let filename = path.basename(_filename)
+    let status = _status.toUpperCase()
+    let progress = _progress
+    return {filename, progress, status}
+  }
+
+  _fetchExisitngRow(filename) {
     return this.progress.data.find(row => row.filename === filename)
   }
 

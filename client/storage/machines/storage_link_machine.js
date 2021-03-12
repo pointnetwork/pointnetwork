@@ -72,7 +72,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             id: 'SEND_STORE_CHUNK_REQUEST',
             src: async (context, event) => {
               await link.save()
-              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 10, link.state)
+              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 0, link.state)
               return storage.SEND_STORE_CHUNK_REQUEST(chunk, link)
             },
             onDone: {
@@ -90,7 +90,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             id: 'SEND_CREATE_PAYMENT_CHANNEL',
             src: async (context, event) => {
               await link.save()
-              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 20, link.state)
+              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 10, link.state)
               return storage.CREATE_PAYMENT_CHANNEL(link)
             },
             onDone: {
@@ -108,6 +108,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             id: 'ENCRYPT_CHUNK',
             src: async (context, event) => {
               await link.save()
+              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 20, link.state)
               return storage.ENCRYPT_CHUNK(chunk, link)
             },
             onDone: {
@@ -124,6 +125,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             id: 'SEND_STORE_CHUNK_SEGMENTS',
             src: async (context, event) => {
               await link.save()
+              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 40, link.state)
               const data = await prepareChunkSegment()
               return storage.SEND_STORE_CHUNK_SEGMENTS(data, link)
             },
@@ -148,6 +150,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             src: async (context, event) => {
               // nasty hack to ensure all chunks are uploaded
               await link.save()
+              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 60, link.state)
               done = false
               while(!done) {
                 await link.refresh()
@@ -172,6 +175,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             id: 'SEND_STORE_CHUNK_SIGNATURE_REQUEST',
             src: async (context, event) => {
               await link.save()
+              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 80, link.state)
               return storage.SEND_STORE_CHUNK_SIGNATURE_REQUEST(link)
             },
             onDone: {
@@ -189,6 +193,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             id: 'SAVE_MODEL_SIGNED',
             src: async () => {
               await link.save()
+              ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 100, link.state)
               storage.uploadingChunksProcessing[chunk.id] = false;
               return chunk.reconsiderUploadingStatus(true);
             }
