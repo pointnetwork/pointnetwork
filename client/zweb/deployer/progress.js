@@ -10,7 +10,7 @@ class DeployerProgress {
   init() {
     this.progressEventEmitter = new events.EventEmitter()
     this.progressEventEmitter.on(this.PROGRESS_UPDATED, () => {
-      this._publishToSocket()
+      this.wsserver.publishToClients(this.progress)
     })
     this.progress = {
       type: 'request_deployment-progress',
@@ -19,9 +19,9 @@ class DeployerProgress {
   }
 
   // this is set by the DeployProgressSocket once a connection is established with a client
-  set socket(ws){
-    this.ws = ws
-    this._publishToSocket()
+  set wss(_wss) {
+    this.wsserver = _wss
+    this.progressEventEmitter.emit(this.PROGRESS_UPDATED)
   }
 
   update(_filename, _progress = 0, _status = 'UNKNOWN') {
@@ -46,10 +46,6 @@ class DeployerProgress {
 
   _fetchExisitngRow(filename) {
     return this.progress.data.find(row => row.filename === filename)
-  }
-
-  _publishToSocket() {
-    if(this.ws) this.ws.send(JSON.stringify(this.progress))
   }
 }
 

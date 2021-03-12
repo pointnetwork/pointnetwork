@@ -18,7 +18,9 @@ class ApiServer {
             // https://github.com/fastify/fastify-nextjs - for react app support
             await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
             // https://github.com/fastify/fastify-websocket - for websocket support
-            this.server.register(require('fastify-websocket'))
+            this.server.register(require('fastify-websocket'), {
+                options: { clientTracking: true }
+            })
             const web_routes = require('./web_routes')
             await this.server.after(() => {
                 web_routes.forEach(route => {this.server.next(route)})
@@ -94,7 +96,7 @@ class ApiServer {
                     return undefined // needed otherwise 'handler not defined error' is thrown by fastify
                 },
                 wsHandler: async (conn, req) => {
-                    return new (require('./sockets/'+socketName))(this.ctx, conn);
+                    return new (require('./sockets/'+socketName))(this.ctx, conn, this.server.websocketServer);
                 }
             });
         }
