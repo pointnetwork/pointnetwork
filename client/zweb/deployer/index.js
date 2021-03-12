@@ -3,11 +3,10 @@ const fs = require('fs');
 const _ = require('lodash');
 
 class Deployer {
-    constructor(ctx, progress) {
+    constructor(ctx) {
         this.ctx = ctx;
         this.config = this.ctx.config.deployer;
         this.cache_uploaded = {};
-        this.progress = progress;
     }
 
     async start() {
@@ -23,7 +22,8 @@ class Deployer {
     // todo: beware of infinite recursion!
     async processTemplate(fileName, deployPath) {
         if (fileName in this.cache_uploaded) return this.cache_uploaded[ fileName ];
-        this.progress.progressEventEmitter.emit(this.progress.FILE_QUEUED_EVENT, fileName)
+
+        this.ctx.client.deployerProgress.update(fileName)
 
         console.log('uploading '+fileName+'...');
 
@@ -134,7 +134,7 @@ class Deployer {
         console.log('uploading route file...');
         const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
         fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
-        this.progress.progressEventEmitter.emit(this.progress.FILE_QUEUED_EVENT, routesFilePath)
+        this.ctx.client.deployerProgress.update(routesFilePath)
         let routeFileUploaded = await this.ctx.client.storage.putFile(tmpRoutesFilePath); // todo: and more options
 
         await this.updateZDNS(target, routeFileUploaded.id);
@@ -145,7 +145,7 @@ class Deployer {
     }
 
     async deployContract(target, contractName, fileName) {
-        this.progress.progressEventEmitter.emit(this.progress.FILE_QUEUED_EVENT, fileName)
+        this.ctx.client.deployerProgress.update(fileName)
         const path = require('path');
         const solc = require('solc');
         const fs = require('fs-extra');
