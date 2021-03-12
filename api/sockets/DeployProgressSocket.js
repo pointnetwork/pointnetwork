@@ -2,7 +2,7 @@ class DeployProgressSocket {
   constructor(ctx, conn) {
     this.ctx = ctx;
     this.conn = conn;
-    this.ctx.client.deployerProgress.setSocket(this.conn.socket)
+    this.ctx.client.deployerProgress.socket = this.conn.socket
     this.socket_status = {
       type: 'socket_status',
       status: 'Running'

@@ -1,24 +1,9 @@
-// {
-//   type: 'request_deployment-progress',
-//   data: [{
-//     filename: 'example/hello.z/views/index.html',
-//     progress: 100,
-//     status: 'STORED'
-//   },
-//   {
-//     filename: 'example/hello.z/routes.json',
-//     progress: 40,
-//     status: 'PARSING'
-//   }]
-// }
-
 events = require('events')
 
 class DeployerProgress {
   constructor(ctx) {
     this.ctx = ctx
     this.STATE_UPDATED = 'STATE_UPDATED'
-    this.socket
   }
 
   init() {
@@ -27,22 +12,35 @@ class DeployerProgress {
       this._publishToSocket()
     })
     this.progress = {
-      state: []
+      type: 'request_deployment-progress',
+      data: []
     }
   }
 
-  setSocket(_socket){
-    this.socket = _socket
-    this.socket.send(JSON.stringify(this.progress))
+  // this is set by the DeployProgressSocket once a connection is established with a client
+  set socket(ws){
+    this.ws = ws
+    this.ws.send(JSON.stringify(this.progress))
   }
 
-  update(state) {
-    this.progress.state.push(state)
+  update(filename, progress = 0, status = 'UNKNOWN') {
+    status = status.toUpperCase()
+    let existingRow = this.fetchExisitngRow(filename)
+    if(existingRow) {
+      existingRow.progress = progress
+      existingRow.status = status
+    } else {
+      this.progress.data.push({filename, progress, status})
+    }
     this.progressEventEmitter.emit(this.STATE_UPDATED)
   }
 
+  fetchExisitngRow(filename) {
+    return this.progress.data.find(row => row.filename === filename)
+  }
+
   _publishToSocket() {
-    if(this.socket) this.socket.send(JSON.stringify(this.progress))
+    if(this.ws) this.ws.send(JSON.stringify(this.progress))
   }
 }
 
