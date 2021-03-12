@@ -2,7 +2,6 @@ class DeployController {
     constructor(ctx, request) {
         this.ctx = ctx;
         this.request = request;
-        this.deployerProgress = require('../../client/zweb/deployer/progress')
     }
 
     async deploy() {
@@ -11,7 +10,7 @@ class DeployController {
 
         try {
             const Deployer = require('../../client/zweb/deployer');
-            this.deployer = new Deployer(this.ctx, this.deployerProgress);
+            this.deployer = new Deployer(this.ctx);
             await this.deployer.deploy(deploy_path);
             return {'status': 'success'};
         } catch(e) {

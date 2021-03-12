@@ -1,33 +1,49 @@
-let events = require('events')
-let progressEventEmitter = new events.EventEmitter()
+// {
+//   type: 'request_deployment-progress',
+//   data: [{
+//     filename: 'example/hello.z/views/index.html',
+//     progress: 100,
+//     status: 'STORED'
+//   },
+//   {
+//     filename: 'example/hello.z/routes.json',
+//     progress: 40,
+//     status: 'PARSING'
+//   }]
+// }
 
-const FILE_QUEUED_EVENT = 'FileQueuedEvent'
-let socket
+events = require('events')
 
-progress = {
-  files: []
+class DeployerProgress {
+  constructor(ctx) {
+    this.ctx = ctx
+    this.STATE_UPDATED = 'STATE_UPDATED'
+    this.socket
+  }
+
+  init() {
+    this.progressEventEmitter = new events.EventEmitter()
+    this.progressEventEmitter.on(this.STATE_UPDATED, () => {
+      this._publishToSocket()
+    })
+    this.progress = {
+      state: []
+    }
+  }
+
+  setSocket(_socket){
+    this.socket = _socket
+    this.socket.send(JSON.stringify(this.progress))
+  }
+
+  update(state) {
+    this.progress.state.push(state)
+    this.progressEventEmitter.emit(this.STATE_UPDATED)
+  }
+
+  _publishToSocket() {
+    if(this.socket) this.socket.send(JSON.stringify(this.progress))
+  }
 }
 
-module.exports = {
-  setSocket: setSocket,
-  progressEventEmitter: progressEventEmitter,
-  FILE_QUEUED_EVENT: FILE_QUEUED_EVENT,
-}
-
-function setSocket(_socket){
-  socket = _socket
-  socket.send(JSON.stringify(progress))
-}
-
-function _pubSocket() {
-  if(socket) socket.send(JSON.stringify(progress))
-}
-
-function updateStatus(fileName) {
-  progress.files.push(fileName)
-}
-
-progressEventEmitter.on(FILE_QUEUED_EVENT, (fileName) => {
-  updateStatus(fileName)
-  _pubSocket()
-})
+module.exports = DeployerProgress
