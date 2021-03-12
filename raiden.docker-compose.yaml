@@ -84,7 +84,7 @@ services:
       - --miner.threads
       - "1"
       - --miner.etherbase
-      - "0x0000000000000000000000000000000000000000"
+      - "0xE6315BC1e4E12Cb76Dd18258420298E9ad174e67"
 
   raiden_node_1:
     image: raidennetwork/raiden:v0.200.0-rc9
