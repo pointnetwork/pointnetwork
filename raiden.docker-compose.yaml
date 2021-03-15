@@ -1,59 +1,8 @@
 version: '3.9'
 
 services:
-  # parity:
-  #   image: parity/parity:v2.7.2-stable
-  #   volumes:
-  #     - parity_data:/home/parity/data:rw
-  #     - parity_db:/home/parity/db:rw
-  #     - ./test_keystore:/home/parity/keystore:ro
-  #   ports:
-  #     - 30303:30303
-  #     - 30303:30303/udp
-  #     - 8545:8545
-  #   entrypoint:
-  #     - /bin/ls
-  #     - -ahl
-      # - --help
-      # - --chain=dev
-      # - --keys-path=/home/parity/io.parity.ethereum/keystore
-      # - --base-path=/home/parity/io.parity.ethereum/data
-      # - --db-path=/home/parity/io.parity.ethereum/db
-      # - --network-id=1337
-      # - --jsonrpc-apis=eth,net,web3
-      # - --jsonrpc-hosts=all
-      # - --jsonrpc-cors=all
-      # - --jsonrpc-interface=all
-
-  # raiden_node_1:
-  #   image: raidennetwork/raiden:latest
-  #   depends_on:
-  #     - parity
-  #   ports:
-  #     - 5011:5001
-  #   volumes:
-  #     - ./test_keystore:/keystore:ro
-  #     - ./test_address_pswrd:/pswrd
-  #   command:
-  #     # - --help
-  #     - --address
-  #     - '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301'
-  #     - --password-file
-  #     - /pswrd
-  #     - --network-id
-  #     - '1337'
-  #     - --accept-disclaimer
-  #     - --eth-rpc-endpoint
-  #     - http://parity:8545
-  #     # - --routing-mode
-  #     # - pfs
-  #     # - --pathfinding-service-address
-  #     # - https://pfs-goerli.services-dev.raiden.network
-  #     - --keystore-path
-  #     - /keystore
-
   geth:
-    image: ethereum/client-go:v1.9.11
+    image: ethereum/client-go:v1.9.21
     ports:
       - 30303:30303
       - 30303:30303/udp
@@ -82,9 +31,9 @@ services:
       - '*'
       - --mine
       - --miner.threads
-      - "1"
+      - '1'
       - --miner.etherbase
-      - "0xE6315BC1e4E12Cb76Dd18258420298E9ad174e67"
+      - '0xE6315BC1e4E12Cb76Dd18258420298E9ad174e67'
 
   raiden_node_1:
     image: raidennetwork/raiden:v0.200.0-rc9
@@ -93,16 +42,22 @@ services:
     ports:
       - 5011:5001
     volumes:
+      - raiden_data:/data
       - ./test_keystore:/keystore:ro
       - ./test_address_pswrd:/pswrd:ro
       - ./tmp:/tmp:rw
+      - ./debug/deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0/deployment_private_net.json:rw
       - ./raiden.docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
     entrypoint:
-      - "/docker-entrypoint-initdb.d/deploy.contracts.sh"
-    # command:
-      # - --help
+      - '/docker-entrypoint-initdb.d/deploy.contracts.sh'
+    command:
+      - --help
       # - --address
       # - '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301'
+      # - --datadir
+      # - /data
+      # - --keystore-path
+      # - /keystore
       # - --password-file
       # - /pswrd
       # - --network-id
@@ -110,14 +65,14 @@ services:
       # - --accept-disclaimer
       # - --eth-rpc-endpoint
       # - http://geth:8545
-      # # - --routing-mode
-      # # - pfs
-      # # - --pathfinding-service-address
-      # # - https://pfs-goerli.services-dev.raiden.network
-      # - --keystore-path
-      # - /keystore
+      # - --rpc
+      # - --api-address
+      # - '0.0.0.0:5001'
+      # - --web-ui
+      # - --environment-type
+      # - 'development'
+      # - --routing-mode
+      # - 'private'
 
-# volumes:
-#   geth_data:
-#   parity_data:
-#   parity_db:
+volumes:
+  raiden_data:

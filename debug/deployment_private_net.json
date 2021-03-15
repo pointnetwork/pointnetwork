@@ -1,0 +1,41 @@
+{
+  "contracts_version": "0.25.0",
+  "chain_id": 4321,
+  "contracts": {
+    "SecretRegistry": {
+      "address": "0x023384d0A217032BE1De2c46e50BCB6a490bf0E5",
+      "transaction_hash": "0xb0caa6c55b85e57f5dda8a55402c796088cbbeccf89136f0ba46bf2c8b04e730",
+      "block_number": 335,
+      "gas_cost": 298578,
+      "constructor_arguments": []
+    },
+    "TokenNetworkRegistry": {
+      "address": "0x9C8Fb028506307Ff1eb15E604BE0E2dab15C9009",
+      "transaction_hash": "0xf4d5ef7f6d47378e05a36f652cc7bee560ccb69cbf51ed40daad8b41bd970755",
+      "block_number": 337,
+      "gas_cost": 5031009,
+      "constructor_arguments": [
+        "0x023384d0A217032BE1De2c46e50BCB6a490bf0E5",
+        4321,
+        500,
+        555428,
+        115792089237316195423570985008687907853269984665640564039457584007913129639935
+      ]
+    }
+  },
+  "token_networks": [
+    {
+      "token_network_address": "0xD458b7a12fa05ffE309E2F44027e6Ae67F02f181",
+      "constructor_arguments": {
+        "_token_address": "0x1134DFFc3398E5053c14A67F0ABa8eb8dfA47AdB",
+        "_secret_registry": "0x023384d0A217032BE1De2c46e50BCB6a490bf0E5",
+        "_chain_id": 4321,
+        "_settlement_timeout_min": 500,
+        "_settlement_timeout_max": 555428,
+        "_deprecation_executor": "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301",
+        "_channel_participant_deposit_limit": 10000000,
+        "_token_network_deposit_limit": 1000000000
+      }
+    }
+  ]
+}
