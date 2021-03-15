@@ -10,7 +10,7 @@ class DeployerProgress {
   init() {
     this.progressEventEmitter = new events.EventEmitter()
     this.progressEventEmitter.on(this.PROGRESS_UPDATED, () => {
-      this.wsserver.publishToClients(this.progress)
+      if (this.wsserver) this.wsserver.publishToClients(this.progress)
     })
     this.progress = {
       type: 'request_deployment-progress',
