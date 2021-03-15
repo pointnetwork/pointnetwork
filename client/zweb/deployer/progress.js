@@ -9,9 +9,7 @@ class DeployerProgress {
 
   init() {
     this.progressEventEmitter = new events.EventEmitter()
-    this.progressEventEmitter.on(this.PROGRESS_UPDATED, () => {
-      if (this.wsserver) this.wsserver.publishToClients(this.progress)
-    })
+    this._initEventHandlerFunction()
     this.progress = {
       type: 'request_deployment-progress',
       data: []
@@ -21,22 +19,38 @@ class DeployerProgress {
   // this is set by the DeployProgressSocket once a connection is established with a client
   set wss(_wss) {
     this.wsserver = _wss
-    this.progressEventEmitter.emit(this.PROGRESS_UPDATED)
   }
 
   update(_filename, _progress = 0, _status = 'UNKNOWN') {
-    let inputs = this._formatInputs(_filename, _progress, _status)
-    let existingRow = this._fetchExisitngRow(inputs.filename)
-    if(existingRow) {
-      existingRow.progress = inputs.progress
-      existingRow.status = inputs.status
-    } else {
-      this.progress.data.push(inputs)
-    }
-    this.progressEventEmitter.emit(this.PROGRESS_UPDATED)
+    // forward this onto the event handler function
+    this.progressEventEmitter.emit(this.PROGRESS_UPDATED, _filename, _progress, _status)
+  }
+
+  _initEventHandlerFunction() {
+    this.progressEventEmitter.on(this.PROGRESS_UPDATED, (filename, progress, status) => {
+      if (this.wsserver) {
+        this._updateProgress(filename, progress, status)
+        this.wsserver.publishToClients(this.progress)
+      }
+    })
   }
 
   // private functions
+  _updateProgress(_filename, _progress, _status) {
+    let inputs = this._formatInputs(_filename, _progress, _status)
+    let existingRow = this._fetchExisitngRow(inputs.filename)
+    existingRow ? this._updateExistingRow(existingRow, inputs) : this._createNewRow(inputs)
+  }
+
+  _updateExistingRow(existingRow, inputs) {
+    existingRow.progress = inputs.progress
+    existingRow.status = inputs.status
+  }
+
+  _createNewRow(row) {
+    this.progress.data.push(row)
+  }
+
   _formatInputs(_filename, _progress, _status) {
     let filename = path.basename(_filename)
     let status = _status.toUpperCase()
