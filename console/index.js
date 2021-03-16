@@ -43,24 +43,35 @@ class Console {
     }
 
     async cmd_api(...args) {
-        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/';
+        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/api/';
         const api_cmd = args.shift();
+        try {
+            let params = "";
 
-        let params = "";
-        for(let p of args) {
-            if (p.split('=').length === 2) {
-                params += p;
-            } else {
-                params += 'p0=' + p;
+            for(let p of args) {
+                if (p.split('=').length === 2) {
+                    params += p;
+                } else {
+                    params += 'p0=' + p;
+                }
+                params += '&';
             }
-            params += '&';
-        }
 
-        const url = api_base_url + api_cmd + '?' + params;
-        console.log('Querying '+url);
-        const response = await axios.get(url);
-        console.log(response.data);
-        return response.data
+            const url = api_base_url + api_cmd + '?' + params;
+            console.log('Querying '+url);
+            const response = await axios.get(url);
+            console.log(response.data);
+            return response.data
+        } catch (e) {
+            return {error: `Error fetching ${api_cmd} : ${e.message}`}
+        }
+    }
+
+    cmd_ping() {
+        // in the console type 'ping'
+        // > ping
+        // pong
+        console.log('pong')
     }
 }
 
