@@ -124,6 +124,30 @@ Please let us know if you hit any obstacles of encounter errors or bugs by openi
 
 Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
 
+### Attaching to a node using Point Network console
+
+To attach to a node use the following (for example use the `--datadir` flag to specify `Test 2`):
+
+```
+./point attach --datadir ~/.point/test2
+```
+
+In the console REPL you can now issue commands to the node. For example, the command `api ping` will call the `PingController#ping` API endpoint:
+
+```
+> api ping
+Querying http://localhost:2469/api/ping?
+{ ping: 'pong' }
+```
+
+To run a deployment via the Console you need to specify the absolute path of the site you want to deploy. For example, to deploy the `example/hello.z` site run the following command in the attached Point Network console (**NOTE**: change `<ABSOLUTEPATHTO>` to your absolute path):
+
+```
+> api deploy deploy_path=/<ABSOLUTEPATHTO>/pointnetwork/example/hello.z
+Querying http://localhost:2469/api/deploy?deploy_path=/<ABSOLUTEPATHTO>/pointnetwork/example/hello.z
+{ status: 'success' }
+```
+
 ### Developing the Point Network Web App Utility
 
 For details on [Developing the Point Network Web App Utility](./api/web/README.md) please refer to this separate [README]((./api/web/README.md)).

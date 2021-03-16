@@ -28,7 +28,7 @@ class Console {
             const method = "cmd_"+cmd.replace('.', '_');
 
             if (this[method] && typeof this[method] === 'function') {
-                await this[method](args);
+                await this[method](...args);
             } else {
                 console.error('Invalid command');
             }
@@ -65,13 +65,6 @@ class Console {
         } catch (e) {
             return {error: `Error fetching ${api_cmd} : ${e.message}`}
         }
-    }
-
-    cmd_ping() {
-        // in the console type 'ping'
-        // > ping
-        // pong
-        console.log('pong')
     }
 }
 

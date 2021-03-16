@@ -4,7 +4,6 @@ Start up all Point Network nodes
 Run this file at the terminal `node tests/sockets/client_test.js`
 You should see output like so:
 
-{"data":{"status": {...}}}
 {"data":{"ping":"pong"}}
 
 Now run a deployment. You should see the stream update as the files are deployed!
