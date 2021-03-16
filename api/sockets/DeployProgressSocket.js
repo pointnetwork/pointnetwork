@@ -1,4 +1,5 @@
-const WebSocket = require('ws')
+const WebSocket = require('ws');
+const Console = require('../../console');
 
 class DeployProgressSocket {
   constructor(ctx, conn, wss) {
@@ -6,16 +7,13 @@ class DeployProgressSocket {
     this.ws = conn.socket;
     this.wss = wss;
     this.ctx.client.deployerProgress.wss = this
-    this.socket_status = {
-      type: 'socket_status',
-      status: 'Running'
-    }
     this.init()
   }
 
   init() {
-    this.ws.on('message', message => {
-      this.publishToClients(this.responseFor(message))
+    this.console = new Console();
+    this.ws.on('message', async (message) => {
+      this.publishToClients(await this.responseFor(message))
     })
   }
 
@@ -29,15 +27,8 @@ class DeployProgressSocket {
     }
   }
 
-  responseFor(message) {
-    switch (message) {
-      case 'status':
-        return this.socket_status
-      case 'ping':
-        return {type: 'message', value: 'pong'}
-      default:
-        break;
-    }
+  async responseFor(message) {
+    return await this.console.cmd_api(`api/${message}`)
   }
 }
 
