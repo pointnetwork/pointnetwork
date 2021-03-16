@@ -60,6 +60,7 @@ class Console {
         console.log('Querying '+url);
         const response = await axios.get(url);
         console.log(response.data);
+        return response.data
     }
 }
 
