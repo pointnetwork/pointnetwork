@@ -28,7 +28,7 @@ class Socket {
 
   async responseFor(cmdstr) {
     let [cmd, params] = this._parseCmd(cmdstr)
-    let response = await this.console.cmd_api(`${cmd}`, ...params)
+    let response = await this.console.cmd_api(cmd, ...params)
     return this._formatResponse(response)
   }
 
