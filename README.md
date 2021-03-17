@@ -108,7 +108,7 @@ If you want a bit more control / visibility then below is a set of scripts to ru
 ./point deploy example/hello.z --datadir ~/.point/test2 -v
 ```
 
-### Run a Point Node in a VS Code Debugger
+### Run a Point Network Node in a VS Code Debugger
 
 The VS Code debugger is configured using the [VS Code launch config](.vscode/launch.json) file. Its configured to launch a test node under your `~/.point/test1` directory.
 
@@ -124,7 +124,7 @@ Please let us know if you hit any obstacles of encounter errors or bugs by openi
 
 Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
 
-### Attaching to a node using Point Network console
+### Attaching to a Point Network Node using Point Network console
 
 To attach to a node use the following (for example use the `--datadir` flag to specify `Test 2`):
 
@@ -146,6 +146,20 @@ To run a deployment via the Console you need to specify the absolute path of the
 > api deploy deploy_path=/<ABSOLUTEPATHTO>/pointnetwork/example/hello.z
 Querying http://localhost:2469/api/deploy?deploy_path=/<ABSOLUTEPATHTO>/pointnetwork/example/hello.z
 { status: 'success' }
+```
+
+### Using the Point Network LevelDB Playground
+
+Under `scripts/db` there is a js file `playground.js` that can be used to test out interacting with the local LevelDB of one of the nodes.
+
+The playground first loads the `scripts/db/init.js` file which initializes the Point Network Database for the test node specified in that file.
+
+Then in the playground you can load any of the `db/models` and interact with the LevelDB. For example, to use the `File` model:
+
+```
+require('./init')
+const File = require('../../db/models/file');
+... use the File model ...
 ```
 
 ### Developing the Point Network Web App Utility
