@@ -14,6 +14,6 @@ const File = require('../../db/models/file');
   console.log(files)
 
   console.log(`Find file ${files[0].id}: `)
-  const fileById = await File.findBy('id', files[0].id)
-  console.log(fileById)
+  const file = await File.find(files[0].id)
+  console.log(file._attributes)
 })()
