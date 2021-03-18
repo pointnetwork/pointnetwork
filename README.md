@@ -162,6 +162,16 @@ const File = require('../../db/models/file');
 ... use the File model ...
 ```
 
+### Using nodemon during development
+
+If you are a developer, you might be interested to run the Point Network node using `nodemon` like so:
+
+```
+npx nodemon ./point --datadir ~/.point/test2
+```
+
+That way, changes in the applications code are detected by nodemon and the Point Network node is then automatically restarted.
+
 ### Developing the Point Network Web App Utility
 
 For details on [Developing the Point Network Web App Utility](./api/web/README.md) please refer to this separate [README]((./api/web/README.md)).

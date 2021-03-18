@@ -22,8 +22,8 @@ class Core {
         this.ctx.utils = utils;
 
         // todo: remove in prod
-        // if (this.ctx.config.client.wallet.account !== '0x989695771d51de19e9ccb943d32e58f872267fcc') {
-            DB.__debugClearCompletely(this.ctx);
+        // if (this.ctx.config.client.wallet.account !== '0x989695771D51dE19e9ccb943d32E58F872267fcC') {
+            // DB.__debugClearCompletely(this.ctx);
         // }
 
         await this.initDatabase();
@@ -75,7 +75,7 @@ class Core {
             // console.log(this.ctx.utils.hashFnHex(fl));
             // this.ctx.die();
 
-            // console.log(await this.ctx.web3bridge.putZRecord('example', '0x05990c8f559f3f16b84595bb46aa6e7ab3b7a19d'));
+            // console.log(await this.ctx.web3bridge.putZRecord('example', '0x05990c8f559f3f16B84595BB46Aa6E7AB3b7a19D'));
             // console.log(await this.ctx.web3bridge.getZRecord('example'));
             // this.ctx.die();
         }, 0);
