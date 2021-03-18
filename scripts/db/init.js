@@ -15,6 +15,12 @@ ctx.basepath = __dirname;
 ctx.log = pino()
 ctx.config = _.merge(defaultConfig, config)
 
+process.on('uncaughtException', (err) => {
+  ctx.log.error(err.message);
+  ctx.log.debug(err.stack);
+  process.exit(1);
+});
+
 const Point = require('../../core');
 point = new Point(ctx);
 
