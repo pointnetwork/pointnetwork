@@ -162,6 +162,14 @@ const File = require('../../db/models/file');
 ... use the File model ...
 ```
 
+### Using the WebSocket Test client
+
+You can start the `WebSocket Test client` using the following at the terminal:
+
+```
+node scripts/ws/clientTest.js
+```
+
 ### Using nodemon during development
 
 If you are a developer, you might be interested to run the Point Network node using `nodemon` like so:
