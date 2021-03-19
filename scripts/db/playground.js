@@ -12,6 +12,7 @@ const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
 
 (async() => {
+  // Some examples below to try:
   const allFiles = await File.allBy('ul_status', File.UPLOADING_STATUS_UPLOADED)
 
   const files = allFiles.map((file) =>
@@ -19,11 +20,10 @@ const Chunk = require('../../db/models/chunk');
 
   console.log(files)
 
-  console.log(`Find file ${files[0].id}: `)
-  const file = await File.find(files[0].id)
-  console.log(file._attributes)
-
   const allChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
   chunks = allChunks.map((chunk) => chunk._attributes)
   console.log(chunks)
+
+  const fileKeys = await File.allKeys();
+  console.log(`FileCount: ${fileKeys.length}`);
 })()

@@ -10,7 +10,11 @@ Now run a deployment. You should see the stream update as the files are deployed
 */
 const WebSocket = require('ws');
 
-const ws = new WebSocket('ws://localhost:2469/ws/deploy/progress');
+const node1Config = require('../../resources/defaultConfig.json')
+const node2Config = require('../../resources/demo/config.test2.json')
+const node3Config = require('../../resources/demo/config.test3.json')
+
+const ws = new WebSocket(`ws://localhost:${node2Config.api.port}/ws/deploy/progress`);
 
 const path = require('path')
 
