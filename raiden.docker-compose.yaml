@@ -2,7 +2,9 @@ version: '3.9'
 
 services:
   geth:
+    # image: ethereum/client-go:v1.10.1
     image: ethereum/client-go:v1.9.21
+    # image: ethereum/client-go:v1.9.7
     ports:
       - 30303:30303
       - 30303:30303/udp
@@ -36,7 +38,10 @@ services:
       - '0xE6315BC1e4E12Cb76Dd18258420298E9ad174e67'
 
   raiden_node_1:
-    image: raidennetwork/raiden:v0.200.0-rc9
+    image: raidennetwork/raiden:v1.2.0
+    # image: raidennetwork/raiden:v0.100.3-rc2
+    # image: raidennetwork/raiden:v0.100.3-rc6
+    # image: raidennetwork/raiden:0.100.5a1.dev1577-ge9f080b7e.d20200305
     depends_on:
       - geth
     ports:
@@ -46,33 +51,39 @@ services:
       - ./test_keystore:/keystore:ro
       - ./test_address_pswrd:/pswrd:ro
       - ./tmp:/tmp:rw
-      - ./debug/deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0/deployment_private_net.json:rw
+      # - ./debug/deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.4.0/deployment_private_net.json:rw
+      # - ./debug/deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.37.0/deployment_private_net.json:rw
+      # - ./debug/deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0/deployment_private_net.json:rw
+      # - ./debug/site-packages:/opt/venv/lib/python3.7/site-packages:rw
+      # - ./debug:/debug:rw
+      # - ./debug/data_0.25.0:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0:rw
+      - ./raiden-contracts/raiden_contracts/data_0.33.0:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.33.0:rw
       - ./raiden.docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
     entrypoint:
       - '/docker-entrypoint-initdb.d/deploy.contracts.sh'
     command:
-      - --help
-      # - --address
-      # - '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301'
-      # - --datadir
-      # - /data
-      # - --keystore-path
-      # - /keystore
-      # - --password-file
-      # - /pswrd
-      # - --network-id
-      # - '4321'
-      # - --accept-disclaimer
-      # - --eth-rpc-endpoint
-      # - http://geth:8545
-      # - --rpc
-      # - --api-address
-      # - '0.0.0.0:5001'
-      # - --web-ui
-      # - --environment-type
-      # - 'development'
-      # - --routing-mode
-      # - 'private'
+      # - --help
+      - --address
+      - '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301'
+      - --datadir
+      - /data
+      - --keystore-path
+      - /keystore
+      - --password-file
+      - /pswrd
+      - --network-id
+      - '4321'
+      - --accept-disclaimer
+      - --eth-rpc-endpoint
+      - http://geth:8545
+      - --rpc
+      - --api-address
+      - '0.0.0.0:5001'
+      - --web-ui
+      - --environment-type
+      - 'development'
+      - --routing-mode
+      - 'private'
 
 volumes:
   raiden_data:
