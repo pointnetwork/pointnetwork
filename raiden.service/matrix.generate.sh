@@ -1,5 +1,5 @@
 docker run -it --rm \
-    -v $(pwd)/matrix_data:/data \
+    -v $(pwd)/matrix.data:/data \
     -e SYNAPSE_SERVER_NAME=matrix \
     -e SYNAPSE_REPORT_STATS=yes \
     -e UID=1000 \

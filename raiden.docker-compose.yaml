@@ -42,8 +42,7 @@ services:
       - "8448:8448"
       - "3478:3478"
     volumes:
-      - matrix_data:/data
-      - ${PWD}/raiden.service/matrix.homeserver.yaml:/data/homeserver.yaml:ro
+      - ${PWD}/raiden.service/matrix.data:/data:rw
 
   raiden_node_1:
     image: raidennetwork/raiden:v0.200.0-rc1
@@ -88,6 +87,5 @@ services:
 
 volumes:
   geth_data:
-  matrix_data:
   raiden_data:
   raiden_shared:

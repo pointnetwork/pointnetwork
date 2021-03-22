@@ -1233,7 +1233,7 @@ account_validity:
 # If set, allows registration of standard or admin accounts by anyone who
 # has the shared secret, even if registration is otherwise disabled.
 #
-registration_shared_secret: "mKB:@lqM^7YD3HKVTzx:#WatRhSOGf;,+hAQL_1AOAIkZ4lJAp"
+registration_shared_secret: "4ZCn^xsKg5qCB&hOkTcXO6_RvK3LJ@PrOrxaZ2#lftniEew3An"
 
 # Set the number of bcrypt rounds used to generate password hash.
 # Larger numbers increase the work factor needed to generate the hash.
@@ -1451,13 +1451,13 @@ report_stats: true
 # the registration_shared_secret is used, if one is given; otherwise,
 # a secret key is derived from the signing key.
 #
-macaroon_secret_key: "+N5yjYY5J2j&PyPbwOsLnpXjJJbGg_5ad0iqdZij~wOO49DZd^"
+macaroon_secret_key: "Jk9:xWN5Ny;1Yb8kv~qMSbN.O8C_8_PCDXGk8GOZU*&-b;U3;l"
 
 # a secret which is used to calculate HMACs for form values, to stop
 # falsification of values. Must be specified for the User Consent
 # forms to work.
 #
-form_secret: "-m:80@rqLFr6.p3LRolZb1Sq87wr2zdNCa64b^B_fn#k1@RO:4"
+form_secret: "C+~beAduTipMR~ukde_=N6TdsboC92+p2QFE,wBI3rPACW,vsl"
 
 ## Signing Keys ##
 
