@@ -3,3 +3,5 @@
 /.idea
 .DS_Store
 resources/demo/config.test4.json
+homeserver.db
+
