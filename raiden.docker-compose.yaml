@@ -50,11 +50,15 @@ services:
       - geth
       - matrix
     ports:
-      - 5001:5001
+      - 5011:5001
+    deploy:
+      restart_policy:
+        condition: on-failure
     volumes:
       - raiden_data:/data
       - raiden_shared:/shared
       - ${PWD}/raiden.service/keystore:/keystore:ro
+      - ${PWD}/raiden.service/raiden.password.txt:/password.txt:ro
       - ${PWD}/raiden.service/raiden.deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0/deployment_private_net.json:rw
       - ${PWD}/raiden.service/raiden.entrypoint.sh:/entrypoint.sh:ro
     entrypoint:
@@ -68,7 +72,7 @@ services:
       - --keystore-path
       - /keystore
       - --password-file
-      - /pswrd
+      - /password.txt
       - --network-id
       - '4321'
       - --accept-disclaimer
