@@ -19,7 +19,7 @@ export PRIV_KEY="/keystore/$(ls /keystore/ | grep c01011611e3501c6b3f6dc4b6d3fe6
 export KEY_PSWD="/pswrd"
 export MAX_UINT256=115792089237316195423570985008687907853269984665640564039457584007913129639935
 export PROVIDER="http://geth:8545"
-export STORAGE="/tmp"
+export STORAGE="/shared"
 
 echo "Raiden-contracts version: $CURRENT_VERSION"
 echo "Contract Version: $VERSION"

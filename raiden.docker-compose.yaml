@@ -2,19 +2,17 @@ version: '3.9'
 
 services:
   geth:
-    # image: ethereum/client-go:v1.10.1
     image: ethereum/client-go:v1.9.21
-    # image: ethereum/client-go:v1.9.7
     ports:
       - 30303:30303
       - 30303:30303/udp
       - 8545:8545
     volumes:
-      - ./geth_data:/data:rw
-      - ./test_keystore:/keystore:ro
-      - ./genesis.json:/genesis.json:ro
-      - ./geth.init.sh:/init.sh:ro
-    entrypoint: /init.sh
+      - geth_data:/root/.ethereum
+      - ${PWD}/raiden.service/keystore:/keystore:ro
+      - ${PWD}/raiden.service/geth.genesis.json:/genesis.json:ro
+      - ${PWD}/raiden.service/geth.entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: /entrypoint.sh
     command:
       - --keystore
       - /keystore
@@ -37,32 +35,33 @@ services:
       - --miner.etherbase
       - '0xE6315BC1e4E12Cb76Dd18258420298E9ad174e67'
 
-  raiden_node_1:
-    image: raidennetwork/raiden:v1.2.0
-    # image: raidennetwork/raiden:v0.100.3-rc2
-    # image: raidennetwork/raiden:v0.100.3-rc6
-    # image: raidennetwork/raiden:0.100.5a1.dev1577-ge9f080b7e.d20200305
-    depends_on:
-      - geth
+  matrix:
+    image: matrixdotorg/synapse:v1.30.0rc1
     ports:
-      - 5011:5001
+      - "8008:8008"
+      - "8448:8448"
+      - "3478:3478"
+    volumes:
+      - matrix_data:/data
+      - ${PWD}/raiden.service/matrix.homeserver.yaml:/data/homeserver.yaml:ro
+
+  raiden_node_1:
+    image: raidennetwork/raiden:v0.200.0-rc1
+    depends_on: 
+      - geth
+      - matrix
+    ports:
+      - 5001:5001
     volumes:
       - raiden_data:/data
-      - ./test_keystore:/keystore:ro
-      - ./test_address_pswrd:/pswrd:ro
-      - ./tmp:/tmp:rw
-      # - ./debug/deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.4.0/deployment_private_net.json:rw
-      # - ./debug/deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.37.0/deployment_private_net.json:rw
-      # - ./debug/deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0/deployment_private_net.json:rw
-      # - ./debug/site-packages:/opt/venv/lib/python3.7/site-packages:rw
-      # - ./debug:/debug:rw
-      # - ./debug/data_0.25.0:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0:rw
-      - ./raiden-contracts/raiden_contracts/data_0.33.0:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.33.0:rw
-      - ./raiden.docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+      - raiden_shared:/shared
+      - ${PWD}/raiden.service/keystore:/keystore:ro
+      - ${PWD}/raiden.service/raiden.deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0/deployment_private_net.json:rw
+      - ${PWD}/raiden.service/raiden.entrypoint.sh:/entrypoint.sh:ro
     entrypoint:
-      - '/docker-entrypoint-initdb.d/deploy.contracts.sh'
+      - /entrypoint.sh
     command:
-      # - --help
+      - --no-sync-check
       - --address
       - '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301'
       - --datadir
@@ -84,6 +83,11 @@ services:
       - 'development'
       - --routing-mode
       - 'private'
+      - --matrix-server
+      - 'http://matrix:8008'
 
 volumes:
+  geth_data:
+  matrix_data:
   raiden_data:
+  raiden_shared:
