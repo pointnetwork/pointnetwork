@@ -4,8 +4,11 @@ RUN apt update
 RUN apt install -y wget
 RUN apt-get install -y unzip
 
-RUN wget "https://github.com/raiden-network/raiden/archive/refs/tags/v0.100.3-rc6.zip"
-RUN mkdir raiden && unzip "v0.100.3-rc6.zip"
+# RUN wget "https://github.com/raiden-network/raiden/archive/refs/tags/v0.100.3-rc6.zip"
+# RUN mkdir raiden && unzip "v0.100.3-rc6.zip"
+
+RUN wget "https://github.com/raiden-network/raiden/archive/refs/tags/v1.2.0.zip"
+RUN unzip "v1.2.0.zip"
 
 # ==============================================================================
 
@@ -32,10 +35,14 @@ RUN apt-get install -y libncurses5-dev
 RUN ln -s $(which python3.7) /usr/bin/python
 RUN apt-get install -y python3-pip
 RUN ln -s $(which pip3) /usr/bin/pip
-RUN pip3 install virtualenv
+RUN pip install pip-tools
+# RUN pip install virtualenv
 
-WORKDIR /priv_chain
+# COPY --from=raiden-loader /raiden-0.100.3-rc6 /priv_chain/raiden
+COPY --from=raiden-loader /raiden-1.2.0 /raiden
 
-COPY --from=raiden-loader /raiden-0.100.3-rc6 /priv_chain/raiden
+WORKDIR /raiden
+
+RUN make install-dev
 
 ENTRYPOINT [ "/bin/bash" ]
