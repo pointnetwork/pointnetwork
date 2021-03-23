@@ -1,7 +1,18 @@
 # Point Network
 ===============
 
-### How to run the demo
+### Quick run
+
+You can run the following scripts in one terminal window which will clear all your nodes cache, redeploy the config to each node, start Ganache, deploy the smart contracts, start 3 nodes and deploy the example site!
+
+```
+./scripts/clear-node.sh
+./scripts/run-node.sh
+```
+
+Now you can connect to the node to load one of the deployed sites, deploy a new site, or interact with one of the http/ws endpoints. See below for details.
+
+### How to run the full demo with Raiden
 
 It's very raw prototype code, so you have to do lots of things manually right now.
 
@@ -82,31 +93,6 @@ To completely reset the nodes, clear all the cache data and redeploy your config
 If the nodes do not appear to cache all the data then ensure that `client.storage.default_redundancy` setting is set to the number of nodes you have running (3).
 
 If the expected node is not responding with the data requests then ensure that `service_provider.enabled` is set to `false` for that node. Typically for the demo we want to have `Node 1` set to true and the others set to false.
-
-### Quick run
-
-You can run the following scripts in one terminal window which will clear all your nodes cache, redeploy the config to each node, start Ganache, deploy the smart contracts, start 3 nodes and deploy the example site!
-
-```
-./scripts/clear-node.sh
-./scripts/run-node.sh
-```
-
-If you want a bit more control / visibility then below is a set of scripts to run to get 3 nodes up and running in 3 differnet terminal windows and then deploy 3 example sites for testing in the Point Browser.
-
-**NOTE**: you will need to have your local ganache running and the Point Netowrk contracts deployed as described above.
-
-```
-./scripts/clear-node.sh
-
-./point --datadir ~/.point/test1 -v
-./point --datadir ~/.point/test2 -v
-./point --datadir ~/.point/test3 -v
-
-./point deploy example/example.z --datadir ~/.point/test2 -v
-./point deploy example/twitter.z --datadir ~/.point/test2 -v
-./point deploy example/hello.z --datadir ~/.point/test2 -v
-```
 
 ### Run a Point Network Node in a VS Code Debugger
 
