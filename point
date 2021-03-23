@@ -10,6 +10,9 @@ const multistream = require('pino-multi-stream').multistream;
 const npid = require('npid');
 const mkdirp = require('mkdirp');
 
+// Disable https://nextjs.org/telemetry
+process.env['NEXT_TELEMETRY_DISABLED'] = '1'
+
 program.version(`
     0.0 alpha
 `); // todo

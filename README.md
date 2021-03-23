@@ -1,7 +1,18 @@
 # Point Network
 ===============
 
-### How to run the demo
+### Quick run
+
+You can run the following scripts in one terminal window which will clear all your nodes cache, redeploy the config to each node, start Ganache, deploy the smart contracts, start 3 nodes and deploy the example site!
+
+```
+./scripts/clear-node.sh
+./scripts/run-node.sh
+```
+
+Now you can connect to the node to load one of the deployed sites, deploy a new site, or interact with one of the http/ws endpoints. See below for details.
+
+### How to run the full demo with Raiden
 
 It's very raw prototype code, so you have to do lots of things manually right now.
 
@@ -83,30 +94,7 @@ If the nodes do not appear to cache all the data then ensure that `client.storag
 
 If the expected node is not responding with the data requests then ensure that `service_provider.enabled` is set to `false` for that node. Typically for the demo we want to have `Node 1` set to true and the others set to false.
 
-### Quick run
-
-You can run the following scripts in one terminal window which will clear all your nodes cache, redeploy the config to each node, start Ganache, deploy the smart contracts, start 3 nodes and deploy the example site!
-
-```
-./scripts/clear-node.sh
-./scripts/run-node.sh
-```
-
-If you want a bit more control / visibility then below is a set of scripts to run to get 3 nodes up and running in 3 differnet terminal windows and then deploy 3 example sites for testing in the Point Browser. Note: you will need to have your local ganache running and the Point Netowrk contracts deployed (see above).
-
-```
-./scripts/clear-node.sh
-
-./point --datadir ~/.point/test1 -v
-./point --datadir ~/.point/test2 -v
-./point --datadir ~/.point/test3 -v
-
-./point deploy example/example.z --datadir ~/.point/test2 -v
-./point deploy example/twitter.z --datadir ~/.point/test2 -v
-./point deploy example/hello.z --datadir ~/.point/test2 -v
-```
-
-### Run a Point Node in a VS Code Debugger
+### Run a Point Network Node in a VS Code Debugger
 
 The VS Code debugger is configured using the [VS Code launch config](.vscode/launch.json) file. Its configured to launch a test node under your `~/.point/test1` directory.
 
@@ -121,3 +109,63 @@ Note also that the launch config makes use of the `$HOME` environment variable f
 Please let us know if you hit any obstacles of encounter errors or bugs by opening an issue or emailing info@pointnetwork.io.
 
 Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
+
+### Attaching to a Point Network Node using Point Network console
+
+To attach to a node use the following (for example use the `--datadir` flag to specify `Test 2`):
+
+```
+./point attach --datadir ~/.point/test2
+```
+
+In the console REPL you can now issue commands to the node. For example, the command `api ping` will call the `PingController#ping` API endpoint:
+
+```
+> api ping
+Querying http://localhost:2469/api/ping?
+{ ping: 'pong' }
+```
+
+To run a deployment via the Console you need to specify the absolute path of the site you want to deploy. For example, to deploy the `example/hello.z` site run the following command in the attached Point Network console (**NOTE**: change `<ABSOLUTEPATHTO>` to your absolute path):
+
+```
+> api deploy deploy_path=/<ABSOLUTEPATHTO>/pointnetwork/example/hello.z
+Querying http://localhost:2469/api/deploy?deploy_path=/<ABSOLUTEPATHTO>/pointnetwork/example/hello.z
+{ status: 'success' }
+```
+
+### Using the Point Network LevelDB Playground
+
+Under `scripts/db` there is a js file `playground.js` that can be used to test out interacting with the local LevelDB of one of the nodes.
+
+The playground first loads the `scripts/db/init.js` file which initializes the Point Network Database for the test node specified in that file.
+
+Then in the playground you can load any of the `db/models` and interact with the LevelDB. For example, to use the `File` model:
+
+```
+require('./init')
+const File = require('../../db/models/file');
+... use the File model ...
+```
+
+### Using the WebSocket Test client
+
+You can start the `WebSocket Test client` using the following at the terminal:
+
+```
+node scripts/ws/clientTest.js
+```
+
+### Using nodemon during development
+
+If you are a developer, you might be interested to run the Point Network node using `nodemon` like so:
+
+```
+npx nodemon ./point --datadir ~/.point/test2
+```
+
+That way, changes in the applications code are detected by nodemon and the Point Network node is then automatically restarted.
+
+### Developing the Point Network Web App Utility
+
+For details on [Developing the Point Network Web App Utility](./api/web/README.md) please refer to this separate [README]((./api/web/README.md)).

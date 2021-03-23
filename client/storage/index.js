@@ -459,6 +459,8 @@ class Storage {
         // todo: what about expiring and renewing?
     }
 
+
+
     send(cmd, data, contact, callback) {
         const request = {
             'internal_id': (new Date).getTime().toString() + Math.random().toString(),
