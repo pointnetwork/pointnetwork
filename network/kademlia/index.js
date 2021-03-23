@@ -223,9 +223,10 @@ class Kademlia {
                     this.ctx.log.debug(err.stack);
                     process.exit(1);
                 }
-
                 this.ctx.log.info(`Connected to Kadence DHT network via ${entry}`);
                 this.ctx.log.info(`Discovered ${node.router.size} peers from seed`);
+
+                this.ctx.network.peersCount = node.router.size
             });
         });
     }
