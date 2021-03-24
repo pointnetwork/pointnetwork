@@ -57,10 +57,8 @@ class Deployer {
                         console.error('Warning: Mentioned file '+result[1]+' ('+fl+') not found!');
                     }//throw new Error('Warning: Mentioned file '+result[1]+' ('+fl+') not found!'); // todo: +stack etc. // todo: make it a warning?
 
-                    let ext = /(?:\.([^.]+))?$/.exec(result[1])[1];
-
                     const hash = await this.processTemplate(fl, deployPath); // todo: parallelize
-                    template = template.replace(result[1], '/_storage/'+hash+'.'+ext); // todo: replace using outer stuff as well
+                    template = template.replace(result[1], hash); // todo: replace using outer stuff as well
                 }
             }
             ///
