@@ -4,6 +4,7 @@ const Console = require('../../console');
 class Socket {
   constructor(ctx, conn, wss) {
     this.ctx = ctx
+    this.conn = conn
     this.ws = conn.socket
     this.wss = wss
     this.init()
@@ -16,11 +17,11 @@ class Socket {
     })
   }
 
-  publishToClients(progress) {
+  publishToClients(msg) {
     if(this.wss) {
       this.wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(progress));
+          client.send(JSON.stringify(msg));
         }
       });
     }

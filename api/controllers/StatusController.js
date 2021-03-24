@@ -5,7 +5,7 @@ const ws_routes = require('../ws_routes');
 
 class StatusController {
   constructor(ctx) {
-      this.ctx = ctx;
+    this.ctx = ctx;
   }
 
   async status() {
