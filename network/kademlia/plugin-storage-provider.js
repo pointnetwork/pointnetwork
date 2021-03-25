@@ -82,7 +82,11 @@ class StorageProviderPlugin {
         // todo: make sure you agreed to storing it + conditions
 
         const segment_index = request.params[1]; // todo: validate
-        const segment_data = request.params[2]; // todo: validate // todo: validate that it's buffer
+        const segment_data = request.params[2]; // todo: validate
+
+        if(! Buffer.isBuffer(segment_data) ) {
+            return next(new Error('Error while loading segement data from params: segment_data should be a buffer'));
+        }
 
         try {
             await chunk.setSegmentData(segment_data, segment_index);
