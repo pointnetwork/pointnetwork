@@ -12,7 +12,7 @@ You can run the following scripts in one terminal window which will clear all yo
 
 Now you can connect to the node to load one of the deployed sites, deploy a new site, or interact with one of the http/ws endpoints. See below for details.
 
-### How to run the full demo with Raiden
+### How to run the full demo
 
 It's very raw prototype code, so you have to do lots of things manually right now.
 
@@ -57,20 +57,6 @@ It's very raw prototype code, so you have to do lots of things manually right no
     ./point --datadir ~/.point/test2 -v
     ./point --datadir ~/.point/test3 -v
     ```
-
-1. [Download and Run the Raiden Wizard](https://docs.raiden.network/installation/quick-start/download-and-run-the-raiden-wizard#download-the-raiden-wizard). This will install, setup and automatically start a private Raiden Node on your computer connected to Goerli Testnet. Be patient - the process can take about 10 minutes!
-
-1. Once started visit [http://localhost:5001/api/v1/address](http://localhost:5001/api/v1/address) to get your private node address (it's also available in the Raiden Web UI at the top).
-
-1. Fund your Raiden Node Address on Goerli testnet with token you plan to use for payment.
-
-1. Update the `storage_provider` address in [StorageProviderRegistry.sol](./truffle/contracts/StorageProviderRegistry.sol) to the address of your private Raiden node.
-
-1. Next [Join a Token Network](https://docs.raiden.network/the-raiden-web-interface/join-a-token-network#registering-a-new-token) that you want to use for payments.
-
-1. Update `token_address` in [resources/defaultConfig.json](./resources/defaultConfig.json) to the address of that token.
-
-1. Now you need to create a second Raiden node for the _deployer_ PN node to use. This needs to be setup either in a separate computer or within a container such as Docker. Specific details to follow soon.
 
 1. Tell the second node to deploy the `example.z` website:
 
@@ -168,4 +154,4 @@ That way, changes in the applications code are detected by nodemon and the Point
 
 ### Developing the Point Network Web App Utility
 
-For details on [Developing the Point Network Web App Utility](./api/web/README.md) please refer to this separate [README]((./api/web/README.md)).
+For details on [Developing the Point Network Web App Utility](../api/web/README.md) please refer to this separate [README]((../api/web/README.md)).
