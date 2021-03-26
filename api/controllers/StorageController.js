@@ -8,7 +8,10 @@ class StorageController {
   }
 
   async files() {
-    const allFiles = await File.allBy('ul_status', File.UPLOADING_STATUS_UPLOADED)
+    const allUploadedFiles = await File.allBy('ul_status', File.UPLOADING_STATUS_UPLOADED)
+    const allDownloadedFiles = await File.allBy('dl_status', File.DOWNLOADING_STATUS_DOWNLOADED)
+    // union all uploaded and downloaded files to a unique list
+    var allFiles = [...new Set([...allUploadedFiles, ...allDownloadedFiles])];
     // return a subset of the attributes to the client
     const files = allFiles.map((file) =>
       (({ id, localPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, localPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
@@ -23,7 +26,10 @@ class StorageController {
   }
 
   async chunks() {
-    const allChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
+    const allUploadedChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
+    const allDownloadedChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADED)
+    // union all uploaded and downloaded chunks to a unique list
+    var allChunks = [...new Set([...allUploadedChunks, ...allDownloadedChunks])];
     // return a subset of the attributes to the client
     const chunks = allChunks.map((chunk) =>
       (({ id, redundancy, expires, autorenew }) => ({ id, redundancy, expires, autorenew }))(chunk))
