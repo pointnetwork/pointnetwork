@@ -41,7 +41,8 @@
     "wallet": {
       "__do not remove this section__":  null,
       "account": "",
-      "privateKey": ""
+      "privateKey": "",
+      "keystore_path": "wallets/keystore"
     },
     "max_parallel_requests_per_provider": 3
   },
