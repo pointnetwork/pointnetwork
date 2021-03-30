@@ -5,11 +5,8 @@ class WalletController {
   constructor(ctx, req) {
     this.ctx = ctx;
     this.web3 = this.ctx.network.web3;
-    this.walletToken = req.headers['wallet-token'];
-    this._validateWalletToken();
-    this.walletId = this.walletToken.slice(0,36)
-    this.passcode = this.walletToken.slice(37, 103)
     this.keystorePath = this.ctx.wallet.keystore_path;
+    this.walletToken = req.headers['wallet-token'];
     this.wallet;
   }
 
@@ -22,10 +19,10 @@ class WalletController {
     // todo set file path from config
     fs.writeFileSync(`${this.keystorePath}/${keystore.id}`, JSON.stringify(keystore))
 
-    return {
+    return this._response({
       walletId: keystore.id,
       passcode
-    }
+    })
   }
 
   publicKey() {
@@ -35,9 +32,9 @@ class WalletController {
     let publicKey = ethereumjs.bufferToHex(publicKeyBuffer)
 
     // return the public key
-    return {
+    return this._response({
       publicKey
-    }
+    })
   }
 
   async balance() {
@@ -46,9 +43,9 @@ class WalletController {
     let balance = (await this.web3.eth.getBalance(this.wallet[0].address)).toString()
 
     // return the wallet balance
-    return {
+    return this._response({
       balance
-    }
+    })
   }
 
   /* Private Functions */
@@ -60,10 +57,16 @@ class WalletController {
     if(this.walletToken.length < 103) {
       throw new Error('wallet-token invalid.')
     }
+  }
 
+  _parseWalletToken() {
+    this._validateWalletToken();
+    this.walletId = this.walletToken.slice(0,36)
+    this.passcode = this.walletToken.slice(37, 103)
   }
 
   _loadWallet() {
+    this._parseWalletToken()
     // load the wallet from the keystore file
     // todo what if it does not exist?
     let keystoreBuffer = fs.readFileSync(`${this.keystorePath}/${this.walletId}`)
@@ -71,6 +74,13 @@ class WalletController {
 
     // decrypt it using the passcode
     this.wallet = this.web3.eth.accounts.wallet.decrypt([keystore], this.passcode);
+  }
+
+  _response(payload) {
+    return {
+      status: 200,
+      data: payload
+    }
   }
 }
 
