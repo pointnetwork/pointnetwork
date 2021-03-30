@@ -13,10 +13,11 @@ class WalletController {
   generate() {
     let account = this.web3.eth.accounts.create(this.web3.utils.randomHex(32))
     let wallet = this.web3.eth.accounts.wallet.add(account);
+
     let passcode = this.web3.utils.randomHex(32) // todo: improve entropy
     let keystore = wallet.encrypt(passcode);
 
-    // todo set file path from config
+    // write the encrypted wallet to disk
     fs.writeFileSync(`${this.keystorePath}/${keystore.id}`, JSON.stringify(keystore))
 
     return this._response({
@@ -28,7 +29,7 @@ class WalletController {
   publicKey() {
     this._loadWallet()
 
-    let publicKeyBuffer = ethereumjs.privateToPublic(this.wallet[0].privateKey)
+    let publicKeyBuffer = ethereumjs.privateToPublic(this.wallet.privateKey)
     let publicKey = ethereumjs.bufferToHex(publicKeyBuffer)
 
     // return the public key
@@ -40,11 +41,22 @@ class WalletController {
   async balance() {
     this._loadWallet()
 
-    let balance = (await this.web3.eth.getBalance(this.wallet[0].address)).toString()
+    let balance = (await this.web3.eth.getBalance(this.wallet.address)).toString()
 
     // return the wallet balance
     return this._response({
       balance
+    })
+  }
+
+  hash() {
+    this._loadWallet()
+
+    let hashBuffer = ethereumjs.sha256(Buffer.from(this.wallet.privateKey))
+    let hash = ethereumjs.bufferToHex(hashBuffer)
+
+    return this._response({
+      hash
     })
   }
 
@@ -73,7 +85,9 @@ class WalletController {
     let keystore = JSON.parse(keystoreBuffer)
 
     // decrypt it using the passcode
-    this.wallet = this.web3.eth.accounts.wallet.decrypt([keystore], this.passcode);
+    let decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], this.passcode);
+
+    this.wallet = decryptedWallets[1] // the new decrypted wallet is the second wallet
   }
 
   _response(payload) {
