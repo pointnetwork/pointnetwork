@@ -1,3 +1,7 @@
+const fs = require('fs');
+const path = require('path');
+const mkdirp = require('mkdirp');
+
 class Wallet {
     constructor(ctx) {
         this.ctx = ctx;
@@ -7,7 +11,12 @@ class Wallet {
     }
 
     async start() {
-        // todo
+        this.keystore_path = path.join(this.ctx.datadir, this.config.keystore_path);
+        if (! fs.existsSync(this.keystore_path)) {
+            mkdirp.sync(this.keystore_path);
+        }
+
+        // todo: other setup?
     }
 
     async getNetworkAccountBalanceInWei() {
