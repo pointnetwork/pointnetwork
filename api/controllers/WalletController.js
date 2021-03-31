@@ -33,10 +33,11 @@ class WalletController {
   async tx() {
     this._loadWallet()
 
+    let from = this.wallet.address
     let to = this.payload.to
     let value = this.payload.value
 
-    let receipt = await this.web3.eth.sendTransaction({from: this.wallet.address, to: to, value: value, gas: 21000})
+    let receipt = await this.ctx.wallet.sendTransaction(from, to, value)
     let transactionHash = receipt.transactionHash;
 
     return this._response({
