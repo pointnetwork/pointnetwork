@@ -7,6 +7,7 @@ class WalletController {
     this.web3 = this.ctx.network.web3;
     this.keystorePath = this.ctx.wallet.keystore_path;
     this.walletToken = req.headers['wallet-token'];
+    this.payload = req.body;
     this.wallet;
   }
 
@@ -20,9 +21,26 @@ class WalletController {
     // write the encrypted wallet to disk
     fs.writeFileSync(`${this.keystorePath}/${keystore.id}`, JSON.stringify(keystore))
 
+    // todo: remove
+    this._fundWallet(account.address)
+
     return this._response({
       walletId: keystore.id,
       passcode
+    })
+  }
+
+  async tx() {
+    this._loadWallet()
+
+    let to = this.payload.to
+    let value = this.payload.value
+
+    let receipt = await this.web3.eth.sendTransaction({from: this.wallet.address, to: to, value: value, gas: 21000})
+    let transactionHash = receipt.transactionHash;
+
+    return this._response({
+      transactionHash
     })
   }
 
@@ -91,6 +109,11 @@ class WalletController {
     let address = ethereumjs.addHexPrefix(keystore.address)
 
     this.wallet = decryptedWallets[address] // set the wallet using the address in the loaded keystore
+  }
+
+  // todo: remove
+  _fundWallet(_address) {
+    this.web3.eth.sendTransaction({from: this.ctx.wallet.network_account, to: _address, value: 1e18, gas: 21000})
   }
 
   _response(payload) {
