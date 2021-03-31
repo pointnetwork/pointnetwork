@@ -1,5 +1,6 @@
 const { Machine } = require('xstate');
 
+
 exports.createStateMachine = function createStateMachine(link, chunk) {
   let ctx = link.ctx
   let storage = link.ctx.client.storage
@@ -75,9 +76,12 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
               ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 0, link.state)
               return storage.SEND_STORE_CHUNK_REQUEST(chunk, link)
             },
-            onDone: {
+            onDone: [{
               target: 'creating_payment_channel',
-            },
+              cond: () => ctx.config.payments.enabled,
+            }, {
+              target: 'encrypting',
+            }],
             onError: {
               actions: 'UPDATE_MODEL_ERR',
               target: 'failed',
