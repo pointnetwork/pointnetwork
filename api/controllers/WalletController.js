@@ -52,7 +52,8 @@ class WalletController {
   hash() {
     this._loadWallet()
 
-    let hashBuffer = ethereumjs.sha256(Buffer.from(this.wallet.privateKey))
+    let partialPK = this.wallet.privateKey.substr(0, 33)
+    let hashBuffer = ethereumjs.sha256(Buffer.from(partialPK))
     let hash = ethereumjs.bufferToHex(hashBuffer)
 
     return this._response({
