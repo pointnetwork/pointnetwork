@@ -13,7 +13,6 @@ const {
     createChannel,
     makePayment,
   } = require('./payments')
-const defaultConfig = require('../../resources/defaultConfig.json');
 
 class Storage {
     constructor(ctx) {
@@ -399,7 +398,7 @@ class Storage {
                         signature
                     };
                     link.validatePledge();
-                    if (defaultConfig.raiden.switch === 'ON') {
+                    if (this.ctx.config.payments.enabled) {
                         const provider = await link.provider
                         const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
                         await makePayment(checksumAddress, 10) // todo: calculate amount using cost per kb for service provider
