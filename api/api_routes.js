@@ -9,5 +9,6 @@ module.exports = [
     ['GET', '/api/wallet/generate', 'WalletController@generate'],
     ['GET', '/api/wallet/publicKey', 'WalletController@publicKey'],
     ['GET', '/api/wallet/balance', 'WalletController@balance'],
-    ['GET', '/api/wallet/hash', 'WalletController@hash']
+    ['GET', '/api/wallet/hash', 'WalletController@hash'],
+    ['POST', '/api/wallet/tx', 'WalletController@tx']
 ];
