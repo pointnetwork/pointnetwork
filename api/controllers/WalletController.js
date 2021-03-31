@@ -87,7 +87,9 @@ class WalletController {
     // decrypt it using the passcode
     let decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], this.passcode);
 
-    this.wallet = decryptedWallets[1] // the new decrypted wallet is the second wallet
+    let address = ethereumjs.addHexPrefix(keystore.address)
+
+    this.wallet = decryptedWallets[address] // set the wallet using the address in the loaded keystore
   }
 
   _response(payload) {
