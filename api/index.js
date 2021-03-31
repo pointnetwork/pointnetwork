@@ -16,14 +16,16 @@ class ApiServer {
 
         try {
             // https://github.com/fastify/fastify-nextjs - for react app support
-            await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
-            // https://github.com/fastify/fastify-websocket - for websocket support
-            this.server.register(require('fastify-websocket'), {
-                options: { clientTracking: true }
-            })
+
+            await this.server.register(require('fastify-nextjs'), { dir: './api/web' })
             const web_routes = require('./web_routes')
             await this.server.after(() => {
                 web_routes.forEach(route => {this.server.next(route)})
+            })
+
+            // https://github.com/fastify/fastify-websocket - for websocket support
+            this.server.register(require('fastify-websocket'), {
+                options: { clientTracking: true }
             })
             this.connectRoutes();
 
