@@ -19,7 +19,7 @@ rm -rf ~/.point/test3/wallets
 # Replace the config
 ./point demo
 
-# Create the data/db directlry
+# Create the data/db directory
 mkdir -p ~/.point/test1/data/db
 mkdir -p ~/.point/test2/data/db
 mkdir -p ~/.point/test3/data/db
