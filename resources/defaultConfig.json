@@ -77,10 +77,10 @@
     "identity_contract_address": "0x9d00b186CB89CA253D910e7ccB94C1755504EE42",
     "storage_provider_registry_contract_address": "0x947D4038b17954d544336aFF8C8dF08AF31bb52F"
   },
+  "payments" : {
+    "enabled": false
+  },
   "simulation_delay": 10000,
   "hardcode_default_provider": "http://127.0.0.1:12345/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301",
-  "token_address": "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D",
-  "raiden" : {
-    "switch": "OFF"
-  }
+  "token_address": "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
 }

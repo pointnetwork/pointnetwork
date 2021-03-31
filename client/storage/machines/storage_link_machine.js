@@ -1,5 +1,4 @@
 const { Machine } = require('xstate');
-const defaultConfig = require('../../../resources/defaultConfig.json');
 
 
 exports.createStateMachine = function createStateMachine(link, chunk) {
@@ -79,7 +78,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             },
             onDone: [{
               target: 'creating_payment_channel',
-              cond: () => defaultConfig.raiden.switch === 'ON',
+              cond: () => ctx.config.payments.enabled,
             }, {
               target: 'encrypting',
             }],
