@@ -12,20 +12,11 @@ class WalletController {
   }
 
   generate() {
-    let account = this.web3.eth.accounts.create(this.web3.utils.randomHex(32))
-    let wallet = this.web3.eth.accounts.wallet.add(account);
-
     let passcode = this.web3.utils.randomHex(32) // todo: improve entropy
-    let keystore = wallet.encrypt(passcode);
-
-    // write the encrypted wallet to disk
-    fs.writeFileSync(`${this.keystorePath}/${keystore.id}`, JSON.stringify(keystore))
-
-    // todo: remove
-    this._fundWallet(account.address)
+    let keystoreId = this.ctx.wallet.generate(passcode)
 
     return this._response({
-      walletId: keystore.id,
+      walletId: keystoreId,
       passcode
     })
   }
@@ -100,21 +91,7 @@ class WalletController {
   _loadWallet() {
     this._parseWalletToken()
     // load the wallet from the keystore file
-    // todo what if it does not exist?
-    let keystoreBuffer = fs.readFileSync(`${this.keystorePath}/${this.walletId}`)
-    let keystore = JSON.parse(keystoreBuffer)
-
-    // decrypt it using the passcode
-    let decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], this.passcode);
-
-    let address = ethereumjs.addHexPrefix(keystore.address)
-
-    this.wallet = decryptedWallets[address] // set the wallet using the address in the loaded keystore
-  }
-
-  // todo: remove
-  _fundWallet(_address) {
-    this.web3.eth.sendTransaction({from: this.ctx.wallet.network_account, to: _address, value: 1e18, gas: 21000})
+    this.wallet = this.ctx.wallet.loadWalletFromKeystore(this.walletId, this.passcode)
   }
 
   _response(payload) {
