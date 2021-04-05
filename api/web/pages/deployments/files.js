@@ -1,7 +1,5 @@
-const files = () => {
+export default () => {
   return (
     <b>Here be files</b>
   )
 }
-
-export default files;
