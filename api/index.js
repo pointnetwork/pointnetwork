@@ -1,6 +1,5 @@
 const fastify = require('fastify');
 const { checkRegisteredToken, registerToken } = require('../client/storage/payments');
-const Next = require('next');
 
 class ApiServer {
     constructor(ctx) {
@@ -10,20 +9,23 @@ class ApiServer {
 
     async start() {
         this.server = fastify({
-            logger: this.ctx.log
+            logger: this.ctx.log,
+            pluginTimeout: 20000
             // todo: more configuration?
         });
 
         try {
             // https://github.com/fastify/fastify-nextjs - for react app support
+            const web_routes = require('./web_routes')
             await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
+            await this.server.after(() => {
+                web_routes.forEach(route => {this.server.next(route)})
+            })
+            // end react app setup
+
             // https://github.com/fastify/fastify-websocket - for websocket support
             this.server.register(require('fastify-websocket'), {
                 options: { clientTracking: true }
-            })
-            const web_routes = require('./web_routes')
-            await this.server.after(() => {
-                web_routes.forEach(route => {this.server.next(route)})
             })
             this.connectRoutes();
 
