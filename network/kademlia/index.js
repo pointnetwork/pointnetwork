@@ -49,7 +49,7 @@ class Kademlia {
             storage,
             messenger,
             logger: this.ctx.log,
-            transport: new kadence.UDPTransport(),
+            transport: new kadence.HTTPTransport(),
             contact
         });
 
