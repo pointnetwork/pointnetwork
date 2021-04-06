@@ -142,6 +142,14 @@ You can start the `WebSocket Test client` using the following at the terminal:
 node scripts/ws/clientTest.js
 ```
 
+### Testing all example sites deployment
+
+There is a convenience script that will deploy all the example sites (found in the [./example](./example) folder). This is useful as a check to make sure the nodes can still run a sucessful deployment of all the example sites. The script to run is:
+
+```
+./scripts/deploy-sites.sh
+```
+
 ### Using nodemon during development
 
 If you are a developer, you might be interested to run the Point Network node using `nodemon` like so:
