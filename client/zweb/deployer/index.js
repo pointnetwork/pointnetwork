@@ -96,7 +96,6 @@ class Deployer {
     }
 
     async deploy(deployPath) {
-
         // todo: error handling, as usual
         let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
@@ -146,7 +145,6 @@ class Deployer {
 
     async deployContract(target, contractName, fileName) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling')
-
         const path = require('path');
         const solc = require('solc');
         const fs = require('fs-extra');
@@ -176,11 +174,7 @@ class Deployer {
             }
         };
 
-        // Not calling with getImports callback since this causes the following error 'AssertionError [ERR_ASSERTION]: Invalid callback object specified'. Its likely fixed by using the approach suggested here:
-        // https://github.com/ethereum/solc-js#example-usage-with-import-callback
-        //let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), getImports));
-        let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig)));
-
+        let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), { import: getImports }));
         this.ctx.client.deployerProgress.update(fileName, 20, 'compiled')
 
         if (!compiledSources) {
@@ -220,14 +214,11 @@ class Deployer {
         const artifactsJSON = JSON.stringify(artifacts);
         const tmpFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(artifactsJSON));
         fs.writeFileSync(tmpFilePath, artifactsJSON);
-
         this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts')
         let artifacts_storage_id = (await this.ctx.client.storage.putFile(tmpFilePath)).id;
-
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`)
         await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/address/'+contractName, address);
         await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/abi/'+contractName, artifacts_storage_id);
-
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`)
 
         console.log('Contract '+contractName+' deployed');
