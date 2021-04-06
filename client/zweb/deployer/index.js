@@ -96,6 +96,7 @@ class Deployer {
     }
 
     async deploy(deployPath) {
+
         // todo: error handling, as usual
         let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
