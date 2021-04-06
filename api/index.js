@@ -50,7 +50,6 @@ class ApiServer {
             await this.server.listen(parseInt(this.config.port), async (err, address) => {
                 if (err) throw err;
                 if (await checkRegisteredToken() === undefined) await registerToken();
-                this.server.log.info(`api_server listening on ${address}`);
             });
         } catch (err) {
             this.server.log.error(err);
