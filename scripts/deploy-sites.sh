@@ -13,6 +13,7 @@ do
   echo
 
   ./point deploy $SITE --datadir ~/.point/test2
+  sleep 10
 
   echo
   echo "FINISHED: ${SITE}"
