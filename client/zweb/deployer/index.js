@@ -145,6 +145,7 @@ class Deployer {
 
     async deployContract(target, contractName, fileName) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling')
+
         const path = require('path');
         const solc = require('solc');
         const fs = require('fs-extra');
@@ -214,11 +215,14 @@ class Deployer {
         const artifactsJSON = JSON.stringify(artifacts);
         const tmpFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(artifactsJSON));
         fs.writeFileSync(tmpFilePath, artifactsJSON);
+
         this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts')
         let artifacts_storage_id = (await this.ctx.client.storage.putFile(tmpFilePath)).id;
+
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`)
         await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/address/'+contractName, address);
         await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/abi/'+contractName, artifacts_storage_id);
+
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`)
 
         console.log('Contract '+contractName+' deployed');
