@@ -21,7 +21,7 @@ contract StorageProviderRegistry {
 
     event Announcement(address id, string connection, uint collateral, uint collateral_lock_period, uint cost_per_kb);
 
-    constructor() {
+    constructor() public {
         // Set the provider address to the Raiden node address of that provider and keep the 'connection' property
         // set to the kademlia connection url of the PN node.
         providers[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = Provider({

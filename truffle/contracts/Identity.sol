@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity >=0.6.0 <0.8.0;
 
 contract Identity {
@@ -14,20 +13,21 @@ contract Identity {
     event IdentityRegistered(string handle, address identityOwner);
     event IKVSet(string identity, string key, string value);
 
-    constructor() {
+    constructor() public {
         // Some initial domains for the demos, you can add your own, or better yet, register through normal means
         identityToOwner['storage_provider'] = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
         ownerToIdentity[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = 'storage_provider';
 
-        identityToOwner['hello'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        identityToOwner['demo'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['example'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        identityToOwner['hello'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        identityToOwner['profile'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['twitter'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'hello';
+        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'demo';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'example';
+        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'hello';
+        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'profile';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'twitter';
-
-        identityToOwner['test3'] = 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8;
-        ownerToIdentity[0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8] = 'test3';
     }
 
     function register(string memory handle, address identityOwner) public {
