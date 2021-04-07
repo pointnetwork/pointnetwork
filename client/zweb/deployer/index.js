@@ -176,11 +176,7 @@ class Deployer {
             }
         };
 
-        // Not calling with getImports callback since this causes the following error 'AssertionError [ERR_ASSERTION]: Invalid callback object specified'. Its likely fixed by using the approach suggested here:
-        // https://github.com/ethereum/solc-js#example-usage-with-import-callback
-        //let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), getImports));
-        let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig)));
-
+        let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), { import: getImports }));
         this.ctx.client.deployerProgress.update(fileName, 20, 'compiled')
 
         if (!compiledSources) {
