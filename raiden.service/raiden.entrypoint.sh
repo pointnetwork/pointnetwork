@@ -6,33 +6,22 @@ echo "Please see https://github.com/raiden-network/raiden/blob/master/docs/priva
 # cp -R /opt/venv/lib/python3.7/site-packages/raiden_contracts /debug/raiden_contracts
 # exit
 
-# cp -R /opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0 /debug/data_0.25.0
-# exit
-
 # ==============================================================================
 
 source /opt/venv/bin/activate
 
-# echo "/opt/venv/bin/pip list | grep contracts" && /opt/venv/bin/pip list | grep contracts
+# echo "/opt/venv/bin/pip list | grep contracts"
+# /opt/venv/bin/pip list | grep contracts
 
-export CURRENT_VERSION=$(grep 'CONTRACTS_VERSION = ' -r /opt/venv/lib/python3.7/site-packages/raiden_contracts | awk '{ print $3 }')
 export VERSION="0.37.0"
 export PRIV_KEY="/keystore/$(ls /keystore/ | grep c01011611e3501c6b3f6dc4b6d3fe644d21ab301)"
-export KEY_PSWD="/pswrd"
 export MAX_UINT256=115792089237316195423570985008687907853269984665640564039457584007913129639935
 export PROVIDER="http://geth:8545"
 export STORAGE="/shared"
 
-# rm "$STORAGE/TransferToken"
-# ls -ahl "$STORAGE"
-
+# rm "$STORAGE/SecretRegistry" "$STORAGE/TokenNetworkRegistry"
+# ls -ahl /opt/venv/lib/python3.7/site-packages/raiden_contracts/data
 # exit
-
-echo "Raiden-contracts version: $CURRENT_VERSION"
-echo "Contract Version: $VERSION"
-echo "Private key store: $PRIV_KEY"
-echo "Max UInt256: $MAX_UINT256"
-echo "BC Provider: $PROVIDER"
 
 # ==============================================================================
 
@@ -126,6 +115,7 @@ echo "TokenNetworkRegistry contract address: $TokenNetworkRegistry"
 
 deploy_service_token() {
     local IFS=
+    # local RESULT=$(deploy token --rpc-provider "$PROVIDER" --private-key "$PRIV_KEY" --gas-price 10 --gas-limit 6000000 --token-supply 10000000000 --token-name ServiceToken --token-decimals 18 --token-symbol SVT --contracts-version "$VERSION")
     local RESULT=$(deploy token --rpc-provider "$PROVIDER" --private-key "$PRIV_KEY" --gas-price 10 --gas-limit 6000000 --token-supply 10000000000 --token-name ServiceToken --token-decimals 18 --token-symbol SVT)
     local ServiceToken=$(get_json_value "CustomToken" "$RESULT")
     local ServiceTokenCode=$(check_contract_code "$ServiceToken")
@@ -156,6 +146,7 @@ echo "Captured Service Token contract address: $SERVICE_TOKEN"
 
 deploy_user_deposit_related_contracts() {
     local IFS=
+    # local RESULT=$(deploy services --rpc-provider "$PROVIDER" --private-key "$PRIV_KEY" --gas-price 10 --gas-limit 6000000  --token-address "$SERVICE_TOKEN" --user-deposit-whole-limit "$MAX_UINT256" --service-deposit-bump-numerator 5 --service-deposit-bump-denominator 4 --service-deposit-decay-constant 100000000 --initial-service-deposit-price 100000000000 --service-deposit-min-price 1000 --service-registration-duration 234000000 --contracts-version "$VERSION" --token-network-registry-address "$TokenNetworkRegistry" --service-registry-controller "0x0000000000000000000000000000000000000000")
     local RESULT=$(deploy services --rpc-provider "$PROVIDER" --private-key "$PRIV_KEY" --gas-price 10 --gas-limit 6000000 --token-address "$SERVICE_TOKEN" --user-deposit-whole-limit "$MAX_UINT256" --service-deposit-bump-numerator 5 --service-deposit-bump-denominator 4 --service-deposit-decay-constant 100000000 --initial-service-deposit-price 100000000000 --service-deposit-min-price 1000 --service-registration-duration 234000000 --token-network-registry-address "$TokenNetworkRegistry" --service-registry-controller "0x0000000000000000000000000000000000000000")
 
     local ServiceRegistry=$(get_json_value "ServiceRegistry" "$RESULT")
@@ -218,6 +209,7 @@ echo "Captured One To N contract address: $OneToN"
 
 deploy_transfer_token() {
     local IFS=
+    # local RESULT=$(deploy token --rpc-provider "$PROVIDER" --private-key "$PRIV_KEY" --gas-price 10 --gas-limit 6000000 --token-supply 10000000000 --token-name Token --token-decimals 18 --token-symbol TKN --contracts-version "$VERSION")
     local RESULT=$(deploy token --rpc-provider "$PROVIDER" --private-key "$PRIV_KEY" --gas-price 10 --gas-limit 6000000 --token-supply 10000000000 --token-name Token --token-decimals 18 --token-symbol TKN)
     local TransferToken=$(get_json_value "CustomToken" "$RESULT")
     local TransferTokenCode=$(check_contract_code "$TransferToken")
@@ -251,6 +243,7 @@ else
 
     echo "Registring Transfer Token"
 
+    # export TransferTokenRegistration=$(deploy register --rpc-provider "$PROVIDER" --private-key "$PRIV_KEY" --gas-price 10 --gas-limit 6000000 --token-address "$TOKEN" --token-network-registry-address "$TokenNetworkRegistry" --contracts-version "$VERSION" --channel-participant-deposit-limit 10000000 --token-network-deposit-limit 1000000000 --wait 300)
     export TransferTokenRegistration=$(deploy register --rpc-provider "$PROVIDER" --private-key "$PRIV_KEY" --gas-price 10 --gas-limit 6000000 --token-address "$TOKEN" --token-network-registry-address "$TokenNetworkRegistry" --channel-participant-deposit-limit 10000000 --token-network-deposit-limit 1000000000 --wait 300)
 
     [[ -z "$TransferTokenRegistration" ]] && exit
@@ -262,11 +255,4 @@ echo "Captured Transfer Token contract address: $TOKEN"
 
 # ==============================================================================
 
-/opt/venv/bin/python3 -m raiden \
-    --user-deposit-contract-address "$UserDeposit" \
-    --monitoring-service-contract-address "$MonitoringService" \
-    --one-to-n-contract-address "$OneToN" \
-    --service-registry-contract-address "$ServiceRegistry" \
-    --secret-registry-contract-address "$SecretRegistry" \
-    --tokennetwork-registry-contract-address "$TokenNetworkRegistry" \
-    "$@"
+/opt/venv/bin/python3 -m raiden --user-deposit-contract-address "$UserDeposit" "$@"
