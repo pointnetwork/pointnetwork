@@ -99,7 +99,7 @@ Now when you run the installation, the script will not attempt to download TOR b
 
 ```
 ...
-> @deadcanaries/granax@3.2.5 postinstall /Users/darren/workspace/learning/javascript/kadence/node_modules/@deadcanaries/granax
+> @deadcanaries/granax@3.2.5 postinstall ~/pointnetwork/node_modules/@deadcanaries/granax
 > node script/download-tbb.js
 
 Skipping automatic Tor installation...
@@ -118,10 +118,6 @@ Now you can add breakpoints and run a depolyment from a separate terminal window
 Note that it may fail to start and this is usually due to the `point.pid` file still being present in the `~/.point/test1` directory. Simply delete that file (`rm ~/.point/test1/point.pid`) and run the debugger again.
 
 Note also that the launch config makes use of the `$HOME` environment variable for the `--datadir` param. If you do not have this environment variable set, then you will need to do so and run the debugger again.
-
-Please let us know if you hit any obstacles of encounter errors or bugs by opening an issue or emailing info@pointnetwork.io.
-
-Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
 
 ### Attaching to a Point Network Node using Point Network console
 
@@ -190,3 +186,7 @@ That way, changes in the applications code are detected by nodemon and the Point
 ### Developing the Point Network Web App Utility
 
 For details on [Developing the Point Network Web App Utility](../api/web/README.md) please refer to this separate [README]((../api/web/README.md)).
+
+Please let us know if you hit any obstacles of encounter errors or bugs by opening an issue or emailing info@pointnetwork.io.
+
+Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
