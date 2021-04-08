@@ -1,16 +1,13 @@
 version: '3'
 
 services:
-  peer1:
-    build:
-      context: .
-      dockerfile: peer.Dockerfile
-    links:
+  peer_1:
+    image: pointnetwork_node
+    depends_on:
       - blockchain_provider
     volumes:
-      - ./resources/demo/config.test1.json:/config.json
-      - ./peer.setup.js:/setup.js
-      - volume1:/.point
+      - peer_1_data:/data:rw
+      - ${PWD}/resources/demo/config.test1.json:/data/config.json:ro
     environment:
       - HOST=localhost
       - PORT=12345
@@ -52,6 +49,4 @@ services:
       - --account="$TEST_PEER_PRVKEY,$DEFAULT_BALANCE"
 
 volumes:
-  volume1:
-  volume2:
-  volume3:
+  peer_1_data:
