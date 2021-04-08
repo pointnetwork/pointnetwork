@@ -91,14 +91,14 @@ module.exports = {
 
   // Configure your compilers
     compilers: {
-        // solc: {
-        //     version: '0.5.0-nightly.2018.11.5+commit.88aee34c',
-        //     settings: {
-        //         optimizer: {
-        //             enabled: true,
-        //             runs: 200
-        //         },
-        //     },
-        // },
+        solc: {
+            version: '0.7.6',
+            settings: {
+                optimizer: {
+                    enabled: true,
+                    runs: 200
+                },
+            },
+        },
     },
 }

@@ -16,6 +16,9 @@ class StorageProviderPlugin {
         this.privateKey = privateKey;
         this.chainId = this.ctx.config.network.web3_chain_id;
 
+        // If storage provider functionality is not enabled, why are we even here?
+        if (! this.ctx.config.service_provider.enabled) return;
+
         // todo: limit decryptors amount, queue them (10 instead of 100 parallel)
         this.chunk_decryptors = {};
 
@@ -49,16 +52,15 @@ class StorageProviderPlugin {
         }
 
         let decrypted = await chunk.getDecryptedData();
-        //todo: remove
-        // if (this.ctx.utils.hashFnHex(decrypted) !== real_id) {
-        //     console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
-        //     console.log('INVALID ---------------------');
-        //     return next(new Error('EINVALIDCHUNKREALID: chunk.real_id does not match the decrypted data'));
-        // } else {
-        //     console.log('SUCCESS DECRYPTING BACK: ', decrypted.toString(), decrypted.toString('hex'), {chunk_id, real_id, decrypted_id:this.ctx.utils.hashFnHex(decrypted)});
-        //     console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
-        //     console.log('YEP DECRYPTED FINE ---------------------');
-        // }
+        if (this.ctx.utils.hashFnHex(decrypted) !== real_id) {
+            // console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
+            // console.log('INVALID ---------------------');
+            return next(new Error('EINVALIDCHUNKREALID: chunk.real_id does not match the decrypted data'));
+        } else {
+            // console.log('SUCCESS DECRYPTING BACK: ', decrypted.toString(), decrypted.toString('hex'), {chunk_id, real_id, decrypted_id:this.ctx.utils.hashFnHex(decrypted)});
+            // console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
+            // console.log('YEP DECRYPTED FINE ---------------------');
+        }
 
         chunk.real_id_verified = true;
         await chunk.save();
@@ -80,7 +82,11 @@ class StorageProviderPlugin {
         // todo: make sure you agreed to storing it + conditions
 
         const segment_index = request.params[1]; // todo: validate
-        const segment_data = request.params[2]; // todo: validate // todo: validate that it's buffer
+        const segment_data = request.params[2]; // todo: validate
+
+        if(! Buffer.isBuffer(segment_data) ) {
+            return next(new Error('Error while loading segement data from params: segment_data should be a buffer'));
+        }
 
         try {
             await chunk.setSegmentData(segment_data, segment_index);

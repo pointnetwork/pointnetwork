@@ -16,7 +16,6 @@ class DeployController {
         } catch(e) {
             return {'status': 'error', 'error': e.toString()};
         }
-
     }
 }
 
