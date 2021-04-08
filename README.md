@@ -1,26 +1,32 @@
 # Point Network
-===============
+
+### Install Dependencies
+
+Install all global and project dependencies. Run the following under the project root folder:
+
+```
+nvm install
+nvm use
+npm i -g truffle
+npm i -g ganache-cli
+npm i
+```
 
 ### Quick run
 
-You can run the following scripts in one terminal window which will clear all your nodes cache, redeploy the config to each node, start Ganache, deploy the smart contracts, start 3 nodes and deploy the example site!
+You can run the following scripts in one terminal window which will clear all your nodes cache, redeploy the config to each node, start Ganache, deploy the smart contracts, start 3 nodes and deploy the example sites! NOTE: This assumes you have already [installed the global and project dependencies](#install-dependencies) as mentioned above.
 
 ```
 ./scripts/clear-node.sh
 ./scripts/run-node.sh
+./scripts/deploy-sites.sh
 ```
 
 Now you can connect to the node to load one of the deployed sites, deploy a new site, or interact with one of the http/ws endpoints. See below for details.
 
 ### How to run the full demo
 
-It's very raw prototype code, so you have to do lots of things manually right now.
-
-1. Install using npm:
-
-    ```
-    npm i
-    ```
+1. Firstly, make sure you [install all the dependencies](#install-dependencies) as mentioned above.
 
 1. Start your private Ethereum-compatible web3 provider/blockchain on port `7545` ([Ganache](https://www.trufflesuite.com/ganache) is recommended) and use a `mnemonic` like so:
 
