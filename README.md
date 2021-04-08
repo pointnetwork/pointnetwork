@@ -80,6 +80,27 @@ If the nodes do not appear to cache all the data then ensure that `client.storag
 
 If the expected node is not responding with the data requests then ensure that `service_provider.enabled` is set to `false` for that node. Typically for the demo we want to have `Node 1` set to true and the others set to false.
 
+### Troubleshooting installing TOR browser during NPM install
+
+There are dependencies installed that require the TOR browser. These dependencies attempt to download and install TOR. If you have issues during this step then you can set an environment variable and run the installation again which will skip downloading TOR like so:
+
+```
+export GRANAX_USE_SYSTEM_TOR=1
+npm i
+```
+
+Now when you run the installation, the script will not attempt to download TOR but will instead output:
+
+```
+...
+> @deadcanaries/granax@3.2.5 postinstall /Users/darren/workspace/learning/javascript/kadence/node_modules/@deadcanaries/granax
+> node script/download-tbb.js
+
+Skipping automatic Tor installation...
+Be sure to install Tor using your package manager!
+...
+```
+
 ### Run a Point Network Node in a VS Code Debugger
 
 The VS Code debugger is configured using the [VS Code launch config](.vscode/launch.json) file. Its configured to launch a test node under your `~/.point/test1` directory.
