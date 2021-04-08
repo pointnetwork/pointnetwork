@@ -1,5 +1,6 @@
 const Storage = require('./storage');
 const ZProxy = require('./proxy');
+const DeployerProgress = require('./zweb/deployer/progress');
 
 class Client {
     constructor(ctx) {
@@ -26,6 +27,9 @@ class Client {
 
         this.proxy = new ZProxy(ctx);
         this.proxy.start();
+
+        this.deployerProgress = new DeployerProgress(ctx);
+        this.deployerProgress.init();
 
         // start other services
     }

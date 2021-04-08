@@ -398,20 +398,18 @@ class Storage {
                         signature
                     };
                     link.validatePledge();
-
-                    // Uncomment after demo for payments
-
-                    // const provider = await link.provider
-                    // const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
-                    // await makePayment(checksumAddress, 10) // todo: calculate amount using cost per kb for service provider
-
+                    if (this.ctx.config.payments.enabled) {
+                        const provider = await link.provider
+                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
+                        await makePayment(checksumAddress, 10) // todo: calculate amount using cost per kb for service provider
+                    }
                     // const chunk = await link.getChunk();
                     // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
 
                     resolve(true);
                 } catch (e) {
                     // todo: don't just put this into the console, this is for debugging purposes
-                    console.debug('FAILED CHUNK', {err, result}, chunk.id, e);
+                    console.debug('FAILED CHUNK', {err, result}, e);
                     reject(e);
                 }
             });
@@ -458,6 +456,8 @@ class Storage {
 
         // todo: what about expiring and renewing?
     }
+
+
 
     send(cmd, data, contact, callback) {
         const request = {
