@@ -1,0 +1,18 @@
+{
+  "configurations": [
+    {
+      "name": "Launch Point Node",
+      "cwd": "${workspaceFolder}",
+      "program": "./point",
+      "args": [
+        "--datadir", "${env:HOME}/.point/test2"
+      ],
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node",
+      "outputCapture": "std"
+    }
+  ]
+}

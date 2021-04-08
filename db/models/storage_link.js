@@ -4,16 +4,33 @@ const sublevel = require('sublevel');
 const AutoIndex = require('level-auto-index');
 const fs = require('fs');
 const path = require('path');
-let Chunk;
-let Redkey;
+const { interpret } = require('xstate');
 
 class StorageLink extends Model {
     constructor(...args) {
-        super(...args);
+      super(...args);
+    }
 
-        // This is to avoid circular dependencies:
-        Chunk = require('./chunk');
-        Redkey = require('./redkey');
+    initStateMachine(chunk) {
+      // create a state machine using the factory
+      this._stateMachine = storageLinkMachine.createStateMachine(this, chunk)
+
+      this._storageLinkService = interpret(this._stateMachine)//.onTransition(state => console.log(`Current State: ${state.value}`))
+
+      // start the storage link machine service
+      this._storageLinkService.start()
+    }
+
+    get machine() {
+      return this._storageLinkService
+    }
+
+    get state() {
+      return this.machine.state.value
+    }
+
+    get hasFailed() {
+      return this.machine.state.value == 'failed'
     }
 
     static _buildIndices() {
@@ -64,6 +81,7 @@ class StorageLink extends Model {
 
 StorageLink.STATUS_ALL = 'all';
 StorageLink.STATUS_CREATED = 'created'; // candidates
+StorageLink.STATUS_ESTABLISH_PAYMENT_CHANNEL = 'establish_payment_channel';
 StorageLink.STATUS_AGREED = 'agreed';
 StorageLink.STATUS_ENCRYPTING = 'encrypting';
 StorageLink.STATUS_ENCRYPTED = 'encrypted';
@@ -73,6 +91,7 @@ StorageLink.STATUS_DATA_RECEIVED = 'data_received';
 StorageLink.STATUS_ASKING_FOR_SIGNATURE = 'asking_for_signature';
 StorageLink.STATUS_SIGNED = 'signed';
 StorageLink.STATUS_FAILED = 'failed';
+
 StorageLink.allStatuses = () => {
     let statuses = [];
     for(let i in StorageLink) {
@@ -84,3 +103,8 @@ StorageLink.allStatuses = () => {
 };
 
 module.exports = StorageLink;
+
+// require statement declared after module.exports to avoid circular dependencies
+const { storageLinkMachine } = require('../../client/storage/machines');
+const Chunk = require('./chunk');
+const Redkey = require('./redkey');

@@ -1,4 +1,5 @@
 const fastify = require('fastify');
+const { checkRegisteredToken, registerToken } = require('../client/storage/payments');
 
 class ApiServer {
     constructor(ctx) {
@@ -8,11 +9,24 @@ class ApiServer {
 
     async start() {
         this.server = fastify({
-            logger: this.ctx.log
+            logger: this.ctx.log,
+            pluginTimeout: 20000
             // todo: more configuration?
         });
 
         try {
+            // https://github.com/fastify/fastify-nextjs - for react app support
+            const web_routes = require('./web_routes')
+            await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
+            await this.server.after(() => {
+                web_routes.forEach(route => {this.server.next(route)})
+            })
+            // end react app setup
+
+            // https://github.com/fastify/fastify-websocket - for websocket support
+            this.server.register(require('fastify-websocket'), {
+                options: { clientTracking: true }
+            })
             this.connectRoutes();
 
             this.server.setErrorHandler(function (error, request, reply) {
@@ -33,9 +47,9 @@ class ApiServer {
                 next()
             });
 
-            await this.server.listen(parseInt(this.config.port), (err, address) => {
+            await this.server.listen(parseInt(this.config.port), async (err, address) => {
                 if (err) throw err;
-                this.server.log.info(`api_server listening on ${address}`);
+                if (await checkRegisteredToken() === undefined) await registerToken();
             });
         } catch (err) {
             this.server.log.error(err);
@@ -44,25 +58,46 @@ class ApiServer {
     }
 
     connectRoutes() {
-        const routes = require('../resources/api_routes');
-
         /*
-         * Example: ['GET', '/ping', 'ping'],
+         * Example: ['GET', '/api/ping', 'PingController@ping'],
          */
+        const api_routes = require('./api_routes');
 
-        for (let route of routes) {
-            let [controllerName, actionName] = route[2].split('@');
+        for (let apiRoute of api_routes) {
+            let [controllerName, actionName] = apiRoute[2].split('@');
 
             this.server.route({
-                method: route[0],
-                url: route[1],
+                method: apiRoute[0],
+                url: apiRoute[1],
+
                 // this function is executed for every request before the handler is executed
                 preHandler: async (request, reply) => {
                     // E.g. check authentication
                 },
                 handler: async (request, reply) => {
                     let controller = new (require('./controllers/'+controllerName))(this.ctx, request);
-                    return controller[actionName]();
+                    return controller[actionName]( request, reply );
+                }
+            });
+        }
+
+        /*
+         * Example: ['GET', '/ws/deploy/progress', 'DeployProgressSocket'],
+         */
+        const ws_routes = require('./ws_routes');
+
+        for (let wsRoute of ws_routes) {
+            let socketName = wsRoute[2];
+
+            this.server.route({
+                method: wsRoute[0],
+                url: wsRoute[1],
+
+                handler: async (request, reply) => {
+                    return undefined // needed otherwise 'handler not defined error' is thrown by fastify
+                },
+                wsHandler: async (conn, req) => {
+                    return new (require('./sockets/'+socketName))(this.ctx, conn, this.server.websocketServer);
                 }
             });
         }

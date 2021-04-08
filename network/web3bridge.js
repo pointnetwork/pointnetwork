@@ -23,9 +23,8 @@ class Web3Bridge {
     async start() {
     }
 
-    async loadIdentityContract() {
-        const at = this.ctx.config.network.identity_contract_address;
-        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/Identity.json');
+    async loadContract(contractName, at) {
+        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/'+contractName+'.json');
         const abiFile = JSON.parse(fs.readFileSync(abiFileName));
         const abi = abiFile.abi;
         // const bytecode = abiFile.bytecode;
@@ -33,11 +32,31 @@ class Web3Bridge {
         return new this.web3.eth.Contract(abi, at);
     }
 
-    async web3send(method, gasLimit) {
+    async loadStorageProviderRegistryContract() {
+        const at = this.ctx.config.network.storage_provider_registry_contract_address;
+        return await this.loadContract('StorageProviderRegistry', at);
+    }
+
+    async loadIdentityContract() {
+        const at = this.ctx.config.network.identity_contract_address;
+        return await this.loadContract('Identity', at);
+    }
+
+    async web3send(method, gasLimit, amountEth = '0') {
         const account = this.web3.eth.defaultAccount;
         const gasPrice = await this.web3.eth.getGasPrice();
         if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
-        return await method.send({ from: account, gasPrice, gas: gasLimit });
+        return await method.send({ from: account, gasPrice, gas: gasLimit, value: this.web3.utils.toWei(amountEth, "ether") });
+        /*
+        .on('transactionHash', function(hash){
+            ...
+        })
+        .on('confirmation', function(confirmationNumber, receipt){
+            ...
+        })
+        .on('receipt', function(receipt){
+        https://web3js.readthedocs.io/en/v1.2.11/web3-eth-contract.html#id37
+         */
     }
 
     async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage
@@ -87,6 +106,29 @@ class Web3Bridge {
         const contract = await this.loadIdentityContract();
         const method = contract.methods.ikvPut(identity, key, value);
         console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
+    }
+    async toChecksumAddress(address) {
+        const checksumAddress = await this.web3.utils.toChecksumAddress(address)
+        return checksumAddress
+    }
+    async announceStorageProvider(connection, collateral_lock_period, cost_per_kb) {
+        const contract = await this.loadStorageProviderRegistryContract();
+        const method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
+        const account = '0xC23BC0E252c716281F562695a6617eE81457DE21';
+        const gasPrice = await this.web3.eth.getGasPrice();
+        return await method.send({ from: account, gasPrice, gas: 2000000, value: 100});
+    }
+    async getCheapestStorageProvider() {
+        const contract = await this.loadStorageProviderRegistryContract();
+        return contract.methods.readCheapestProvider().call();
+    }
+    async getAllStorageProvider() {
+        const contract = await this.loadStorageProviderRegistryContract();
+        return contract.methods.readAllProviders().call(); // todo: cache response and return cache if exists
+    }
+    async getSingleProvider(address) {
+        const contract = await this.loadStorageProviderRegistryContract();
+        return contract.methods.getProvider(address).call();
     }
 }
 

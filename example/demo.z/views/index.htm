@@ -1,0 +1,548 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns="http://www.w3.org/TR/REC-html40" lang="en">
+
+<head>
+<meta name="description" content="Welcome to the World's Worst Website Ever!">
+<meta name="author" content="THIS CODE IS SUPPOSED TO BE ATROCIOUS. It's 100% safe to visit TWWWE.  The site may be awful, but it ain't dangerous.">
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta http-equiv="Page-Enter" content="blendTrans(Duration=1.0)">
+<bgsound src="outkast_-_hey_ya.mid" loop="-1">
+<link rel="File-List" href="index_files/filelist.xml">
+
+<title>The World's Worst Website Ever!</title>
+<!--[if !mso]>
+<style>
+v\:*         { behavior: url(#default#VML) }
+o\:*         { behavior: url(#default#VML) }
+.shape       { behavior: url(#default#VML) }
+.style1 {
+	font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+	font-size: 32pt;
+}
+.style2 {
+	font-size: 164pt;
+}
+.style3 {
+	font-size: 42pt;
+}
+.style4 {
+	font-size: 400pt;
+}
+</style>
+<![endif]-->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-46911809-1', 'theworldsworstwebsiteever.com');
+  ga('send', 'pageview');
+
+</script>
+<script language="JavaScript" fptype="dynamicanimation">
+<!--
+function dynAnimation() {}
+function clickSwapImg() {}
+//-->
+</script>
+<script language="JavaScript1.2" fptype="dynamicanimation" src="animate.js">
+</script>
+<!--[if gte mso 9]>
+<xml><o:shapedefaults v:ext="edit" spidmax="1027"/>
+</xml><![endif]-->
+</head>
+
+<body background="images/background.jpg" onload="dynAnimation()" language="Javascript1.2">
+<SCRIPT LANGUAGE="JavaScript1.2">
+
+/*
+Analog Clock III- Kurt Grigg (kurt.grigg@virgin.net)
+For full source code, 100's more DHTML scripts, and TOS,
+visit http://www.dynamicdrive.com
+*/
+
+colors = new Array('330099','00ff00','ff00ff');  //Clock face colors.
+sCol = 'ff00ff';  //seconds colour.
+mCol = '00ff00';  //minutes colour.
+hCol = 'red';  //hours colour.
+//Alter nothing below!
+H = '***';
+H = H.split('');
+H = H.reverse();
+M = '****';
+M = M.split('');
+M = M.reverse();
+S = '*****';
+S = S.split('');
+S = S.reverse();
+dots = 12;
+var Ypos = 0,Xpos = 0,Ybase = 0,Xbase = 0;
+var ay = 0, ax = 0, Ay = 0, Ax = 0, by = 0, bx = 0, By = 0, Bx = 0, cy 
+= 0, cx = 0, Cy = 0, Cx = 0, dy = 0, dx = 0, Dy = 0, Dx = 0;
+count = 0;
+count_a = 0;
+move = 1;
+ie4=document.all
+ns = (document.layers)?1:0;
+
+viz = (document.layers)?'hide':'hidden';
+if (ns) {
+for (i = 0; i < dots; i++)
+document.write('<layer name=nface'+i+' top=0 left=0 bgcolor=#000099 clip="0,0,3,3"></layer>');
+for (i = 0; i < S.length; i++)
+document.write('<layer name=nx'+i+' top=0 left=0 width=36 height=36><font face=Verdana size=2 color='+sCol+'><center>'+S[i]+'</center></font></layer>');
+for (i = 0; i < M.length; i++)
+document.write('<layer name=ny'+i+' top=0 left=0 width=36 height=36><font face=Verdana size=2 color='+mCol+'><center>'+M[i]+'</center></font></layer>');
+for (i = 0; i < H.length; i++)
+document.write('<layer name=nz'+i+' top=0 left=0 width=36 height=36><font face=Verdana size=2 color='+hCol+'><center>'+H[i]+'</center></font></layer>');
+}
+else if (ie4){
+document.write('<div id="W" style="position:absolute;top:0px;left:0px"><div style="position:relative">');
+for (i = 0; i < dots; i++) {
+document.write('<div id="face" style="position:absolute;top:0px;left:0px;width:3px;height:3px;font-size:3px;background:#000099"></div>');
+}
+document.write('</div></div>');
+document.write('<div id="X" style="position:absolute;top:0px;left:0px"><div style="position:relative">');
+for (i = 0; i < S.length; i++) {
+document.write('<div id="x" style="position:absolute;width:36px;height:36px;font-family:Verdana;font-size:12px;color:'+sCol+';text-align:center;padding-top:10px">'+S[i]+'</div>');
+}
+document.write('</div></div>')
+document.write('<div id="Y" style="position:absolute;top:0px;left:0px"><div style="position:relative">');
+for (i = 0; i < M.length; i++) {
+document.write('<div id="y" style="position:absolute;width:36px;height:36px;font-family:Verdana;font-size:12px;color:'+mCol+';text-align:center;padding-top:10px">'+M[i]+'</div>');
+}
+document.write('</div></div>')
+document.write('<div id="Z" style="position:absolute;top:0px;left:0px"><div style="position:relative">');
+for (i = 0; i < H.length; i++) {
+document.write('<div id="z" style="position:absolute;width:36px;height:36px;font-family:Verdana;font-size:12px;color:'+hCol+';text-align:center;padding-top:10px">'+H[i]+'</div>');
+}
+document.write('</div></div>');
+}
+if (ns) {
+window.captureEvents(Event.MOUSEMOVE);
+function nsMouse(evnt) {
+Ypos = evnt.pageY + 100;
+Xpos = evnt.pageX + 100;
+}
+window.onMouseMove = nsMouse;
+}
+else if (ie4){
+function ieMouse() {
+Ypos = event.y + 100;
+Xpos = event.x + 100;
+}
+document.onmousemove = ieMouse;
+}
+function clock() {
+time = new Date ();
+secs = time.getSeconds();
+sec = -1.57 + Math.PI * secs / 30;
+mins = time.getMinutes();
+min = -1.57 + Math.PI * mins / 30;
+hr = time.getHours();
+hrs = -1.575 + Math.PI * hr / 6 + Math.PI * parseInt(time.getMinutes()) 
+/ 360;
+Ybase = 15;
+Xbase = 15;
+
+if (ns) {
+document.layers["nx"+0].visibility = viz;
+document.layers["ny"+0].visibility = viz;
+document.layers["nz"+0].visibility = viz;
+for (i = 0; i < S.length; i++) {
+document.layers["nx"+i].top = ay - 12 + (i * Ybase) * Math.sin(sec);
+document.layers["nx"+i].left = ax - 12 + (i * Xbase) * Math.cos(sec);
+}
+for (i = 0; i < M.length; i++) {
+document.layers["ny"+i].top = by - 12 + (i * Ybase) * Math.sin(min);
+document.layers["ny"+i].left = bx - 12 + (i * Xbase) * Math.cos(min);
+}
+for (i = 0; i < H.length; i++) {
+document.layers["nz"+i].top = cy - 12 + (i * Ybase) * Math.sin(hrs);
+document.layers["nz"+i].left = cx - 12 + (i * Xbase) * Math.cos(hrs);
+}
+for (i = 0; i < dots; ++i) {
+document.layers["nface"+i].top = dy - 2 + (70 * 
+Math.sin(-0.49+dots+i/1.9));
+document.layers["nface"+i].left = dx + 4 + (70 * 
+Math.cos(-0.49+dots+i/1.9));
+   }
+}
+else if (ie4) {
+var scrll = document.body.scrollTop;
+W.style.pixelTop = scrll;
+X.style.pixelTop = scrll;
+Y.style.pixelTop = scrll;
+Z.style.pixelTop = scrll;
+x[0].style.visibility=viz;
+y[0].style.visibility = viz;
+z[0].style.visibility = viz;
+for (i = 0; i < S.length; i++) {
+x[i].style.pixelTop = ay - 12 + (i * Ybase) * Math.sin(sec);
+x[i].style.pixelLeft = ax - 12 + (i * Xbase) * Math.cos(sec);
+}
+for (i = 0; i < M.length; i++) {
+y[i].style.pixelTop = by - 12 + (i * Ybase) * Math.sin(min);
+y[i].style.pixelLeft = bx - 12 + (i * Xbase) * Math.cos(min);
+}
+for (i = 0; i < H.length; i++) {
+z[i].style.pixelTop = cy - 12 + (i * Ybase) * Math.sin(hrs);
+z[i].style.pixelLeft = cx - 12 + (i * Xbase) * Math.cos(hrs);
+}
+for (i = 0; i < dots; ++i) {
+face[i].style.pixelTop = dy + 6 + (70 * Math.sin(-0.49 + dots + i / 
+1.9));
+face[i].style.pixelLeft = dx + 4 + (70 * Math.cos(-0.49 + dots + i / 
+1.9));
+      }
+   }
+}
+function MouseFollow() {
+ay = Math.round(Ay += ((Ypos) - Ay) * 4 / 15);
+ax = Math.round(Ax += ((Xpos) - Ax) * 4 / 15);
+by = Math.round(By += (ay - By) * 4 / 15);
+bx = Math.round(Bx += (ax - Bx) * 4 / 15);
+cy = Math.round(Cy += (by - Cy) * 4 / 15);
+cx = Math.round(Cx += (bx - Cx) * 4 / 15);
+dy = Math.round(Dy += (cy - Dy) * 4 / 15);
+dx = Math.round(Dx += (cx - Dx) * 4 / 15);
+clock();
+setTimeout('MouseFollow()',10);
+}
+
+function StartAll() {
+MouseFollow();
+}
+if (document.layers || document.all) window.onload = StartAll;
+//  End -->
+</script>
+
+<table border="3" width="90%" cellspacing="4" cellpadding="5" bordercolor="#000080">
+	<tr>
+		<td>		
+		<img border="0" src="images/logo.gif" width="1206" height="79"><br>
+		<font size="5">COMING SOON:  An even worse site!  Look for it sometime 
+		later, eventually!&nbsp; we PROMISE!</font></td>
+	</tr>
+</table>
+<table border="0" cellpadding="0" style="border-collapse: collapse" width="900" height="300">
+	<tr>
+		<td width="316">
+		<table border="0" width="300" height="336" cellpadding="0" background="images/brownsign1.gif" style="border-collapse: collapse">
+			<tr>
+				<td height="152" width="332" valign="bottom">
+				<table border="0" width="300" height="79" cellpadding="0" style="border-collapse: collapse">
+					<tr>
+						<td width="100">&nbsp;</td>
+						<td width="54" align="center">
+						<img alt="" height="60" src="images/9.gif" width="40"></td>
+						<td width="51" align="center">
+						<img alt="" height="60" src="images/9.gif" width="40"></td>
+						<td width="50" align="center">
+						<img alt="" height="60" src="images/9.gif" width="40"></td>
+						<td width="46">&nbsp;</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td height="86" width="332" valign="bottom">
+				<table border="0" width="300" height="76" cellpadding="0" style="border-collapse: collapse">
+					<tr>
+						<td width="100">&nbsp;</td>
+						<td width="54" align="center">
+						<img alt="" height="60" src="images/9.gif" width="40"></td>
+						<td width="50" align="center">
+						<img alt="" height="60" src="images/9.gif" width="40"></td>
+						<td width="51" align="center">
+						<img alt="" height="60" src="images/9.gif" width="40"></td>
+						<td width="45">&nbsp;</td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td height="93" width="332" valign="bottom">
+				&nbsp;<table border="0" width="300" height="76" cellpadding="0" style="border-collapse: collapse">
+					<tr>
+						<td width="102">
+						<img style="float: right" alt="" height="60" src="images/1.gif" width="40"></td>
+						<td width="54" align="center">
+						<img alt="" height="60" src="images/4.gif" width="40"></td>
+						<td width="50" align="center">
+						<img alt="" height="60" src="images/0.gif" width="40"></td>
+						<td width="51" align="center">
+						<img alt="" height="60" src="images/5.gif" width="40"></td>
+						<td width="45"><img alt="" height="60" src="images/8.gif" width="40"></td>
+					</tr>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td height="5" width="332" valign="bottom">
+				<span style="font-size: 1pt">&nbsp;</span></td>
+			</tr>
+		</table>
+		<p>&nbsp;</td>
+		<td valign="top">
+<table border="2" width="100%" cellspacing="0" cellpadding="0" bgcolor="#FFFF00" bordercolor="#FF0000">
+	<tr>
+		<td>
+		<div style="position: absolute; left: 937px; top: 174px; width: 800px; height: 333px; border: 10px dotted purple;">
+			<span class="style1">OHHH BOY! </span><br><span class="style2" style="line-height: 150px;">v 2.0
+			</span><br><span class="style3">of TWWWE coming SHORTlY!</span></div>
+		<p align="left"><i><font size="4">&gt;&gt;&gt;&gt;&gt; You've found</font></i><font size="7">
+		</font><img src="images/shimmering-multistars.gif" border="0" width="64" height="64"><font size="7"><font color="#FF00FF">T</font><font color="#00FF00">h</font><font color="#000080">e</font>
+		<font color="#808080">World's</font> </font><i>
+		<font color="#0000FF" style="font-size: 42pt">Worst</font></i><font size="7">
+		<font color="#00FF00">Website</font> </font>
+		<blink><i><u><font size="6"><b>
+		<font color="#008080">E</font><font color="#FF0000">v</font><font color="#00FFFF">e</font><font color="#FF00FF">r</font><font color="#FFFFFF">!</font></b></font></u></i></blink><img src="images/shimmering-multistars.gif" border="0" width="202" height="64"></td>
+	</tr>
+</table>
+<div align="center">
+	<table border="1" width="100%" cellspacing="1" cellpadding="4" bgcolor="#FFFFFF" bordercolor="#808080">
+		<tr>
+			<td>
+			<p align="center"><span style="font-size: 8pt">&nbsp; TWWWE is a 
+			project to highlight errors in web design by breaking every single 
+			design rule imaginable.<br>
+			<a href="new_page_1.htm">Click here</a> for an incomplete list of 
+			errors found on this site.</span></td>
+		</tr>
+	</table>
+</div>
+		<p>
+<img height="32" alt="2 workers" src="images/2_workers.gif" width="600" border="0"></p>
+		<p align="center">
+<font size="4" face="Comic Sans MS"><span style="background-color: #FFFF00">
+WATCH OUT! </span>&nbsp;<span style="background-color: #FF6600">This site is 
+under construction! =) <br>
+		</span></font>
+<img height="52" alt="email box" src="images/email_10_animated.gif" width="45" border="0">&nbsp;&nbsp;&nbsp; 
+&lt;-- send us email!</td>
+	</tr>
+</table>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-1190779243209714"
+     data-ad-slot="9721947463"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script><table border="1" width="110%" cellspacing="3" cellpadding="2" bordercolor="#FF6600" height="52">
+	<tr>
+		<td width="225" valign="top" bgcolor="#FF0000">
+		<p align="center"><font face="Arial, Arial, Helvetica"><b>
+		<font color="#ff0000">
+		<img height="10" src="images/arrowright.gif" width="40" border="0"></font></b></font><font size="6" color="#0000FF" face="Impact">MAIN 
+		MENU</font><font face="Verdana" size="6" color="#0000FF"><br>
+		</font><font face="Verdana" color="#0000FF" size="1">(and other kewl 
+		links!)<br>
+		<b>*smile*</b></font></td>
+		<td>&nbsp; <img height="20" src="images/new21.gif" width="38"><font size="4"><font color="#FFFF00"><b><span style="background-color: #FF6600"><a dynamicanimation="fpAnimformatRolloverFP1" fprolloverstyle="font-size: 18pt" onmouseover="rollIn(this)" onmouseout="rollOut(this)" language="Javascript1.2" href="index.htm#news">NEW 
+		TO THE SITE</a></span></b></font><span style="background-color: #FF6600">
+		</span>&nbsp; </font>&nbsp;<img border="3" src="images/MCj03710640000%5B1%5D.jpg" width="36" height="33">&nbsp;&nbsp;
+		<font face="Verdana"><i>
+		<a dynamicanimation="fpAnimformatRolloverFP1" fprolloverstyle="font-size: 18pt" onmouseover="rollIn(this)" onmouseout="rollOut(this)" language="Javascript1.2" href="http://news.yahoo.com">YAHOO NEWS</a>&nbsp;&nbsp;
+		<img border="3" src="images/j0293828.jpg" width="26" height="27"> 
+		<a href="http://www.weather.">WEATHER</a>&nbsp;&nbsp;&nbsp; G<a href="https://www.theworldsworstwebsiteever.com/maps.google.com">OOGLE 
+		MAPS</a>&nbsp;&nbsp;
+		<br>
+		</i></font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<font face="Times New Roman">ABOUT TWWWE&nbsp;&nbsp;&nbsp; </font><b>
+		<font face="Times New Roman">
+		<a href="https://www.explorekentuckylake.com">VISIT KENTUCKY LAKE!</a> &nbsp;&nbsp;
+		<blink><a href="index.htm#photos">SHOCKING PICTURES!</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<a href="index.htm#colors">AMAZING COLOURS</a>&nbsp;&nbsp;&nbsp;
+		<a href="https://www.smokiesadventure.com">SMOKY MOUNTAINS!</a></blink></font></b></td>
+	</tr>
+</table>
+<table border="0" width="60%" height="12" cellspacing="0" cellpadding="0">
+	<tr>
+		<td>
+		<marquee scrollamount="9" style="font-family: Arial; font-size: 10pt; color: #FF0000; font-weight: bold">BREAKING NEWS:&nbsp; 3 out of 4 people say this is a terrible website!</marquee></td>
+	</tr>
+</table>
+<table border="3" width="900" cellspacing="4" cellpadding="0" height="168">
+	<tr>
+		<td valign="top" width="760"><!--[if gte vml 1]><v:shapetype id="_x0000_t154"
+ coordsize="21600,21600" o:spt="154" adj="9600" path="m0@2l21600,m,21600l21600@0e">
+ <v:formulas>
+  <v:f eqn="val #0"/>
+  <v:f eqn="sum 21600 0 #0"/>
+  <v:f eqn="prod @1 1 4"/>
+  <v:f eqn="prod #0 1 2"/>
+  <v:f eqn="prod @2 1 2"/>
+  <v:f eqn="sum @3 10800 0"/>
+  <v:f eqn="sum @4 10800 0"/>
+  <v:f eqn="sum @0 21600 @2"/>
+  <v:f eqn="prod @7 1 2"/>
+ </v:formulas>
+ <v:path textpathok="t" o:connecttype="custom" o:connectlocs="10800,@4;0,@6;10800,@5;21600,@3"
+  o:connectangles="270,180,90,0"/>
+ <v:textpath on="t" fitshape="t"/>
+ <v:handles>
+  <v:h position="bottomRight,#0" yrange="6171,21600"/>
+ </v:handles>
+ <o:lock v:ext="edit" text="t" shapetype="t"/>
+</v:shapetype><v:shape id="_x0000_s1027" type="#_x0000_t154" alt="WHAT'S NEW"
+ style='width:251.25pt;height:69pt;float:left' fillcolor="#ffe701">
+ <v:fill color2="#fe3e02" focusposition="1,1" focussize="" focus="100%" type="gradient"/>
+ <v:shadow color="#868686"/>
+ <o:extrusion v:ext="view" color="#f60" on="t" rotationangle="18,18"
+  viewpoint="0,0" viewpointorigin="0,0" skewangle="0" skewamt="0" brightness="4000f"
+  lightposition=",50000" lightlevel="52000f" lightlevel2="14000f" type="perspective"
+  lightharsh2="t"/>
+ <v:textpath style='font-family:"Impact";v-text-kern:t' trim="t" fitpath="t"
+  string="WHAT'S NEW"/>
+</v:shape><![endif]--><![if !vml]><img border=0 width=325 height=129
+									   src="index_files/image001.gif" align=left alt="WHAT'S NEW" v:shapes="_x0000_s1027"><![endif]><p align="justify">
+		<img src="https://www.concentric.net/~snwflwr/updated.gif"><a name="news"></a>Welcome to our 
+		new world's Worst WEbsite <blink>EVER!</blink>&nbsp; we're stoked to be able to bring u 
+		da best in REALLY BAD WEBSITE DESIGN!&nbsp; Our goal is to break every 
+		single rule in website deign!!!&nbsp;&nbsp;&nbsp;&nbsp; As an 
+		educational tool, the aim of this sight is to pinpoint and hi-light the 
+		very worst things 1 could do in desinging a website.&nbsp; You can see a 
+		list of all the errors on this sight by <a href="new_page_1.htm">
+		clicking hear</a>!&nbsp; <img height="20" src="images/new21.gif" width="38"><img height="20" src="images/new21.gif" width="38"><img height="20" src="images/new21.gif" width="38"> 
+		We now have added a traffic marquee!&nbsp; Isn't it kewl??? LOL!</td>
+	</tr>
+</table>
+<p align="center"><font face="arial">
+<img height="15" src="images/con-1.gif" width="620"></font></p>
+<table border="1" width="1188" height="101">
+	<tr>
+		<td width="1178" colspan="4">
+		<p align="center"><!--[if gte vml 1]><v:shapetype
+ id="_x0000_t170" coordsize="21600,21600" o:spt="170" adj="7200" path="m@0,l@1,m,21600r21600,e">
+ <v:formulas>
+  <v:f eqn="val #0"/>
+  <v:f eqn="sum 21600 0 @0"/>
+  <v:f eqn="prod #0 1 2"/>
+  <v:f eqn="sum 21600 0 @2"/>
+  <v:f eqn="sum @1 21600 @0"/>
+ </v:formulas>
+ <v:path textpathok="t" o:connecttype="custom" o:connectlocs="10800,0;@2,10800;10800,21600;@3,10800"
+  o:connectangles="270,180,90,0"/>
+ <v:textpath on="t" fitshape="t"/>
+ <v:handles>
+  <v:h position="#0,topLeft" xrange="0,10792"/>
+ </v:handles>
+ <o:lock v:ext="edit" text="t" shapetype="t"/>
+</v:shapetype><v:shape id="_x0000_s1026" type="#_x0000_t170" style='width:256.5pt;
+ height:51pt' adj="2158" fillcolor="#520402" strokecolor="#b2b2b2"
+ strokeweight="1pt">
+ <v:fill color2="#fc0" focus="100%" type="gradient"/>
+ <v:shadow on="t" type="perspective" color="#875b0d" opacity="45875f" origin=",.5"
+  matrix=",,,.5,,-4768371582e-16"/>
+ <v:textpath style='font-family:"Arial Black";v-text-kern:t' trim="t"
+  fitpath="t" string="Shocking Photos!"/>
+</v:shape><![endif]--><![if !vml]><img border=0 width=325 height=73
+									   src="index_files/image002.gif" alt="Shocking Photos!" v:shapes="_x0000_s1026"><![endif]><a name="photos"></a></td>
+	</tr>
+	<tr>
+		<td width="288">
+		<p align="center"><font color="#FF0000">
+		<span style="background-color: #000000">These photos are SHOCKINGLY 
+		formatted HORRIFICLY!</span></font></p>
+		<p align="center">
+		<img border="0" src="images/MPj04373460000%5B1%5D.jpg" width="135" height="180"><br>
+		Can u guess how??</td>
+		<td width="288">
+		<p align="center">
+		<img border="0" src="images/jpgbleed.jpg" width="250" height="167"><br>
+		What about this one?</td>
+		<td width="328">
+		<p align="center">
+		<img border="0" src="images/gifsunset.gif" width="280" height="214"><br>
+		and this one??</td>
+		<td width="258">
+		<p align="center">
+		<img border="0" src="images/nuke.jpg" width="307" height="212"><br>
+		And finally... the trifecta!</td>
+	</tr>
+</table>
+<p align="center">
+<marquee scrollamount="15">I'm fast!</marquee><br>
+<marquee scrollamount="16">I'm faster!</marquee><br>
+<marquee scrollamount="18">I'm fastest!</marquee><br>
+<marquee scrollamount="135">I'm fastestest!!!</marquee></p>
+<table border="1" width="1075" cellspacing="5" height="114" bordercolor="#FF6600">
+	<tr>
+		<td bgcolor="#FFFF00" width="213">
+		<p align="center"><!--[if gte vml 1]><v:shapetype
+ id="_x0000_t136" coordsize="21600,21600" o:spt="136" adj="10800" path="m@7,l@8,m@5,21600l@6,21600e">
+ <v:formulas>
+  <v:f eqn="sum #0 0 10800"/>
+  <v:f eqn="prod #0 2 1"/>
+  <v:f eqn="sum 21600 0 @1"/>
+  <v:f eqn="sum 0 0 @2"/>
+  <v:f eqn="sum 21600 0 @3"/>
+  <v:f eqn="if @0 @3 0"/>
+  <v:f eqn="if @0 21600 @1"/>
+  <v:f eqn="if @0 0 @2"/>
+  <v:f eqn="if @0 @4 21600"/>
+  <v:f eqn="mid @5 @6"/>
+  <v:f eqn="mid @8 @5"/>
+  <v:f eqn="mid @7 @8"/>
+  <v:f eqn="mid @6 @7"/>
+  <v:f eqn="sum @6 0 @5"/>
+ </v:formulas>
+ <v:path textpathok="t" o:connecttype="custom" o:connectlocs="@9,0;@10,10800;@11,21600;@12,10800"
+  o:connectangles="270,180,90,0"/>
+ <v:textpath on="t" fitshape="t"/>
+ <v:handles>
+  <v:h position="#0,bottomRight" xrange="6629,14971"/>
+ </v:handles>
+ <o:lock v:ext="edit" text="t" shapetype="t"/>
+</v:shapetype><v:shape id="_x0000_s1025" type="#_x0000_t136" style='width:183pt;
+ height:44.25pt' fillcolor="#9400ed" strokecolor="#eaeaea" strokeweight="1pt">
+ <v:fill color2="blue" angle="-90" colors="0 #a603ab;13763f #0819fb;22938f #1a8d48;34079f yellow;47841f #ee3f17;57672f #e81766;1 #a603ab"
+  method="none" type="gradient"/>
+ <v:shadow on="t" type="perspective" color="silver" opacity="52429f" origin="-.5,.5"
+  matrix=",46340f,,.5,,-4768371582e-16"/>
+ <v:textpath style='font-family:"Brush Script MT";v-text-kern:t' trim="t"
+  fitpath="t" string="Fantastic colors"/>
+</v:shape><![endif]--><![if !vml]><img border=0 width=270 height=63
+									   src="index_files/image003.gif" alt="Fantastic colors" v:shapes="_x0000_s1025"><![endif]></td>
+		<td bgcolor="#00FFFF" width="213">
+		<p align="center"><font face="Trebuchet MS" color="#00FF00">
+		<a name="colors"></a>This box has nothing to do with anything, so you 
+		don't have to read it.</font></td>
+		<td bgcolor="#FF00FF" width="214">
+		<p align="center">
+		<font face="Impact" style="font-size: 72pt" color="#00FFFF">P</font><font face="Impact" style="font-size: 72pt" color="#0000FF">I</font><font face="Impact" style="font-size: 72pt" color="#00FFFF">NK</font></td>
+		<td bgcolor="#0000FF" width="214">
+		<p align="center"><font size="6" color="#FF0000">RED ON BLUE IS GREAT!</font></td>
+		<td bgcolor="#FF0000" width="214">
+		<p align="center"><font color="#0000FF" size="6">BLUE ON RED IS BETTER!</font></td>
+	</tr>
+</table>
+<img border="0" src="images/textgraphic.gif" width="105" height="46"></p>
+<p>
+<a href="https://www.easycounter.com/">
+<img src="https://www.easycounter.com/counter.php?shawn42"
+border="0" alt="HTML Hit Counter"></a>
+<br>since October 3, 2009 +3310 visitors prior. Last Updated:
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%m/%d/%Y %I:%M:%S %p" startspan -->09/06/2018 02:36:34 PM<!--webbot bot="Timestamp" endspan i-checksum="30319" --></p>
+<p>
+<img src="http://www.virtuallandmedia.com/img5/h-lines2/h-line01.gif"><img border="0" src="https://www.theworldsworstwebsiteever.com/images/fir.jpg" width="28" height="28"> <img border="0" src="https://www.theworldsworstwebsiteever.com/images/fir.jpg" width="28" height="28"></p>
+<p>
+<font size="1">This sight is best view through 
+<a href="https://www.microsoft.com">
+<img src="images/ie7.jpg" width="44" height="36"></a>Internet Explorer or
+<a href="https://www.firefox.com">
+<img alt="firefox-3.jpg" src="images/firefox-3.jpg" width="28" height="28"></a>Firefox.&nbsp; 
+1024x768 resolution.&nbsp; Macs are stupid and so is Safari so this sight prolly 
+won't look right through Safari or a Mac.&nbsp; lol&nbsp; oh yeah, Windows Vista 
+stinks, too!</font></p>
+<p>
+<font face="Times New Roman" size="2">© 2008-2018 The World's Worst Website Ever 
+/ <a href="https://www.explorationsmediagroup.com">Explorations Media Group</a>.&nbsp; 
+All Rights Reserved.</font></p>
+
+</body>
+
+</html>

@@ -10,6 +10,9 @@ const multistream = require('pino-multi-stream').multistream;
 const npid = require('npid');
 const mkdirp = require('mkdirp');
 
+// Disable https://nextjs.org/telemetry
+process.env['NEXT_TELEMETRY_DISABLED'] = '1'
+
 program.version(`
     0.0 alpha
 `); // todo
@@ -17,7 +20,7 @@ program.version(`
 program.description(`
     Point Network
     https://pointnetwork.io/
-    
+
     Licensed under MIT license
 `); // todo: MIT? // todo: more description, --help is ugly
 // todo: add alpha version disclaimer like in raiden
@@ -64,9 +67,14 @@ if (program.verbose) ctx.config.log.level = 'debug';
 const logFilePath = path.join(ctx.datadir, 'point.log');
 
 const level = pino.levels.values[ ctx.config.log.level ];
+const formatters = {
+  level: (label) => {
+    return { level: label };
+  },
+}
 const options = {
     enabled: ctx.config.log.enabled,
-    useLevelLabels: true,
+    formatters,
     level
 };
 

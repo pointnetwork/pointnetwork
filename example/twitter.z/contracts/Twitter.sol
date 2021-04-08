@@ -1,18 +1,19 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
 contract Twitter {
     struct Tweet {
         address from;
-        address contents;
+        string contents;
         uint timestamp;
         uint likes;
     }
 
     Tweet[] tweets;
 
-    function tweet(address contents) public {
-        Tweet memory _tweet = Tweet(msg.sender, contents, now, 0);
+    function tweet(string memory contents) public {
+        Tweet memory _tweet = Tweet(msg.sender, contents, block.timestamp, 0);
         tweets.push(_tweet);
     }
 
