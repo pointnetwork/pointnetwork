@@ -1,27 +1,24 @@
 FROM node:10.23.2-alpine3.10 as builder
 
+ENV GRANAX_USE_SYSTEM_TOR="1"
+
 WORKDIR /app
 COPY . /app/
 
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache git make g++ python3 && \
+    apk add git make g++ python3 tor --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ && \
+    rm -rf /var/cache/apk/* && \
+    mkdir -p /etc/tor/ && \
+    echo "SocksPort 0.0.0.0:9050" > /etc/tor/torrc.default && \
     ln -sf python3 /usr/bin/python && \
-    # mkdir /.npm-global && \
-    # NPM_CONFIG_PREFIX=/.npm-global && \
-    # npm install -g truffle --unsafe-perm && \
-    yarn install
+    npm i
 
 FROM node:10.23.2-alpine3.10
 
-# RUN apk update && \
-#     apk upgrade && \
-#     apk add --no-cache python3 && \
-#     ln -sf python3 /usr/bin/python
-
 WORKDIR /app
 COPY --from=builder /app /app
+RUN mkdir -p /data/db
 
-RUN mkdir -p /.point/data/db
-
-CMD [ "/setup.js" ]
+ENTRYPOINT [ "./point" ]
+CMD [ "--datadir", "/data", "-v" ]
