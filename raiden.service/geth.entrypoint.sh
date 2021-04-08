@@ -1,9 +1,11 @@
 #!/bin/sh
 
-if [ ! "$(ls -A /data)" ]; then
-    echo "geth database is empty, running 'geth init'..."
-    geth --datadir /data init /genesis.json
-    echo "...done!"
+DATADIR="/root/.ethereum"
+
+if [ ! "$(ls -A $DATADIR)" ]; then
+    echo "Geth database is empty, initializing"
+    geth --config="/config.toml" init "/genesis.json"
+    echo "Geth is successfully initialized"
 fi
 
 geth "$@"

@@ -8,63 +8,52 @@ services:
       - 30303:30303/udp
       - 8545:8545
     volumes:
-      - geth_data:/root/.ethereum
+      - geth_data:/root/.ethereum:rw
+      - geth_dagdir:/root/.ethash:rw
       - ${PWD}/raiden.service/keystore:/keystore:ro
       - ${PWD}/raiden.service/geth.genesis.json:/genesis.json:ro
       - ${PWD}/raiden.service/geth.entrypoint.sh:/entrypoint.sh:ro
+      - ${PWD}/raiden.service/geth.config.toml:/config.toml:ro
     entrypoint: /entrypoint.sh
     command:
-      - --keystore
-      - /keystore
+      - --config=/config.toml
       - --networkid
       - '4321'
-      - --datadir
-      - /data
-      - --rpc
-      - --rpcapi
-      - eth,net,web3
-      - --rpcaddr
-      - '0.0.0.0'
-      - --rpcvhosts
-      - '*'
-      - --rpccorsdomain
-      - '*'
+      - --fakepow
+      - --ipcdisable
       - --mine
       - --miner.threads
       - '1'
       - --miner.etherbase
       - '0xE6315BC1e4E12Cb76Dd18258420298E9ad174e67'
 
-  matrix:
-    image: matrixdotorg/synapse:v1.30.0rc1
-    ports:
-      - "8008:8008"
-      - "8448:8448"
-      - "3478:3478"
-    volumes:
-      - ${PWD}/raiden.service/matrix.data:/data:rw
-
   raiden_node_1:
-    image: raidennetwork/raiden:v0.200.0-rc1
+    image: raiden-dev
     depends_on: 
       - geth
-      - matrix
     ports:
       - 5011:5001
-    deploy:
-      restart_policy:
-        condition: on-failure
+    # deploy:
+    #   restart_policy:
+    #     condition: on-failure
     volumes:
-      - raiden_data:/data
-      - raiden_shared:/shared
+      - raiden_data:/data:rw
+      - raiden_shared:/shared:rw
+      # - ${PWD}/debug:/debug:rw
+      # - ${PWD}/raiden-contracts-0.37.5/raiden_contracts:/opt/venv/lib/python3.7/site-packages/raiden_contracts:rw
+      - ${PWD}/raiden-contracts-0.37.5/raiden_contracts/data:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.37.0:rw
       - ${PWD}/raiden.service/keystore:/keystore:ro
       - ${PWD}/raiden.service/raiden.password.txt:/password.txt:ro
-      - ${PWD}/raiden.service/raiden.deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.25.0/deployment_private_net.json:rw
+      - ${PWD}/raiden.service/raiden.deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data_0.37.0/deployment_private_net.json:rw
+      - ${PWD}/raiden.service/raiden.deployment_private_net.json:/opt/venv/lib/python3.7/site-packages/raiden_contracts/data/deployment_private_net.json:rw
       - ${PWD}/raiden.service/raiden.entrypoint.sh:/entrypoint.sh:ro
     entrypoint:
       - /entrypoint.sh
     command:
+      # - --help
       - --no-sync-check
+      - --log-config
+      - ':DEBUG'
       - --address
       - '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301'
       - --datadir
@@ -87,9 +76,11 @@ services:
       - --routing-mode
       - 'private'
       - --matrix-server
-      - 'http://matrix:8008'
+      - 'http://transport.transport01.raiden.network'
+      # # - 'http://matrix:8008'
 
 volumes:
   geth_data:
+  geth_dagdir:
   raiden_data:
   raiden_shared:

@@ -9,7 +9,7 @@
     "ConstantinopleBlock": 0,
     "PetersburgBlock": 0
   },
-  "difficulty": "0x0",
+  "difficulty": "0x1",
   "gasLimit": "0x9880000",
   "alloc" : {
     "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301": {
