@@ -17,6 +17,18 @@ services:
       # - ZPROXY_PORT
       # - BOOTSTRAP_NODE
 
+  deployer:
+    image: pointnetwork_deployer
+    depends_on:
+      - blockchain_provider
+    volumes:
+      - ${PWD}/truffle:/truffle:rw
+      - ${PWD}/truffle.deploy.js:/truffle/run.js:ro
+      - shared_contracts:/truffle/build:rw
+    environment:
+      - BLOCKCHAIN_HOST="blockchain_provider"
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+
   # peer2:
   #   build:
   #     context: .
@@ -50,3 +62,4 @@ services:
 
 volumes:
   peer_1_data:
+  shared_contracts:

@@ -24,6 +24,10 @@
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
+const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
+const port = process.env.BLOCKCHAIN_PORT || 7545;
+const network_id = process.env.BLOCKCHAIN_NETWORK_ID || '*';
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -43,9 +47,9 @@ module.exports = {
     // options below to some value.
     //
     development: {
-     host: "127.0.0.1",     // Localhost (default: none)
-     port: 7545,            // Standard Ethereum port (default: none)
-     network_id: "*",       // Any network (default: none)
+     host,        // Localhost (default: none)
+     port,        // Standard Ethereum port (default: none)
+     network_id,  // Any network (default: none)
      // from: '0xe9E2746F42bFF9f0B8cAB18E183dF87bDFb7FFC9',
      // provider: new HDWalletProvider(
      //    'observe valid excite index skill drink argue envelope domain second ten hybrid',
