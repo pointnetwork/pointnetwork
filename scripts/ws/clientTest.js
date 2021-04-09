@@ -1,7 +1,7 @@
 /* Instructions:
 
 Start up all Point Network nodes
-Run this file at the terminal `node tests/sockets/client_test.js`
+Run this file at the terminal `node scripts/ws/clientTest.js`
 You should see output like so:
 
 {"data":{"ping":"pong"}}

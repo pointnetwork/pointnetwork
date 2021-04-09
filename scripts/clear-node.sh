@@ -11,6 +11,11 @@ rm ~/.point/test1/point.pid
 rm ~/.point/test2/point.pid
 rm ~/.point/test3/point.pid
 
+# Remove the node wallets
+rm -rf ~/.point/test1/wallets
+rm -rf ~/.point/test2/wallets
+rm -rf ~/.point/test3/wallets
+
 # Replace the config
 ./point demo
 
