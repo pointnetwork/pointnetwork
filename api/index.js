@@ -47,6 +47,12 @@ class ApiServer {
                 next()
             });
 
+            this.server.decorate('notFound', (request, reply) => {
+                reply.code(404).type('text/html').send('Not Found')
+            })
+
+            this.server.setNotFoundHandler(this.server.notFound)
+
             await this.server.listen(parseInt(this.config.port), async (err, address) => {
                 if (err) throw err;
                 if (await checkRegisteredToken() === undefined) await registerToken();
@@ -75,7 +81,7 @@ class ApiServer {
                     // E.g. check authentication
                 },
                 handler: async (request, reply) => {
-                    let controller = new (require('./controllers/'+controllerName))(this.ctx, request);
+                    let controller = new (require('./controllers/'+controllerName))(this.ctx, request, reply);
                     return controller[actionName]( request, reply );
                 }
             });
