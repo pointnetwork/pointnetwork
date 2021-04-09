@@ -22,12 +22,18 @@ services:
     depends_on:
       - blockchain_provider
     volumes:
-      - ${PWD}/truffle:/truffle:rw
+      - ${PWD}/truffle/truffle-config.js:/truffle/truffle-config.js:ro
+      - ${PWD}/truffle/migrations:/truffle/migrations:ro
+      - ${PWD}/truffle/contracts:/truffle/contracts:ro
       - ${PWD}/truffle.deploy.js:/truffle/run.js:ro
-      - shared_contracts:/truffle/build:rw
+      - shared_contracts:/build:rw
+    entrypoint:
+      - /truffle/run.js
     environment:
-      - BLOCKCHAIN_HOST="blockchain_provider"
+      - BLOCKCHAIN_HOST=blockchain_provider
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - COMPILER_VERSION=native
+      - BUILD_PATH=/build
 
   # peer2:
   #   build:
@@ -51,11 +57,16 @@ services:
     image: trufflesuite/ganache-cli
     ports:
       - "$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT"
+    volumes:
+      - blockchain_data:/data:rw
     command:
+      - -v
       - -p
       - $BLOCKCHAIN_PROVIDER_PORT
       - -m
       - $BLOCKCHAIN_PROVIDER_MNEMONIC
+      - --db
+      - '/data'
       - --account="$WEBSITE_OWNER_PRVKEY,$DEFAULT_BALANCE"
       - --account="$STORAGE_PROVIDER_PRVKEY,$DEFAULT_BALANCE"
       - --account="$TEST_PEER_PRVKEY,$DEFAULT_BALANCE"
@@ -63,3 +74,4 @@ services:
 volumes:
   peer_1_data:
   shared_contracts:
+  blockchain_data:
