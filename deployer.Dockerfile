@@ -1,7 +1,11 @@
+FROM ethereum/solc:0.7.6 AS solc
+
 FROM node:10.23.2-alpine3.10
 
-RUN npm i -g truffle
+COPY --from=solc /usr/bin/solc /usr/bin/solc
 
 WORKDIR /truffle
 
-ENTRYPOINT [ "/truffle/run.js" ]
+RUN npm i -g truffle @openzeppelin/contracts@3.4.0
+
+ENTRYPOINT [ "truffle" ]

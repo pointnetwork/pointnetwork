@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
+const { execSync } = require ('child_process')
 
-console.log(execSync('truffle deploy --network development', { encoding: 'utf8' }));
+function execCommand (command) {
+    try {
+        return execSync (command).toString ()
+    } catch (e) {
+        return e.stderr.toString () || e.stdout.toString ()
+    }
+}
+
+console.log (execCommand ('truffle deploy --network development'))
