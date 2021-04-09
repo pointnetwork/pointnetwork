@@ -9,7 +9,6 @@ class Wallet {
         this.ctx = ctx;
         this.config = ctx.config.client.wallet;
         this.network_account = this.config.account;
-        this.web3 = this.ctx.network.web3;
 
         // Events
         this.TRANSACTION_EVENT = 'TRANSACTION_EVENT'
@@ -24,6 +23,10 @@ class Wallet {
         }
 
         // todo: other setup?
+    }
+
+    get web3() {
+        return this.ctx.network.web3
     }
 
     // this is set by the WalletConnectSocket once a connection is established with a client
@@ -70,15 +73,18 @@ class Wallet {
 
     loadWalletFromKeystore(walletId, passcode) {
         // todo what if it does not exist?
-        let keystoreBuffer = fs.readFileSync(`${this.keystore_path}/${walletId}`)
-        let keystore = JSON.parse(keystoreBuffer)
+        if(fs.existsSync(`${this.keystore_path}/${walletId}`)) {
+            let keystoreBuffer = fs.readFileSync(`${this.keystore_path}/${walletId}`)
+            let keystore = JSON.parse(keystoreBuffer)
 
-        // decrypt it using the passcode
-        let decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], passcode);
+            // decrypt it using the passcode
+            let decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], passcode);
 
-        let address = ethereumjs.addHexPrefix(keystore.address)
-
-        return decryptedWallets[address] // return the wallet using the address in the loaded keystore
+            let address = ethereumjs.addHexPrefix(keystore.address)
+            return decryptedWallets[address] // return the wallet using the address in the loaded keystore
+        } else {
+            return null
+        }
     }
 
     async getNetworkAccountBalanceInWei() {
