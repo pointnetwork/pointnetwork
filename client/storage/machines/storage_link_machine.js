@@ -1,5 +1,5 @@
 const { Machine } = require('xstate');
-
+const _ = require('lodash');
 
 exports.createStateMachine = function createStateMachine(link, chunk) {
   let ctx = link.ctx

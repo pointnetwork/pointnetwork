@@ -1,26 +1,32 @@
 # Point Network
-===============
+
+### Install Dependencies
+
+Install all global and project dependencies. Run the following under the project root folder:
+
+```
+nvm install
+nvm use
+npm i -g truffle
+npm i -g ganache-cli
+npm i
+```
 
 ### Quick run
 
-You can run the following scripts in one terminal window which will clear all your nodes cache, redeploy the config to each node, start Ganache, deploy the smart contracts, start 3 nodes and deploy the example site!
+You can run the following scripts in one terminal window which will clear all your nodes cache, redeploy the config to each node, start Ganache, deploy the smart contracts, start 3 nodes and deploy the example sites! NOTE: This assumes you have already [installed the global and project dependencies](#install-dependencies) as mentioned above.
 
 ```
 ./scripts/clear-node.sh
 ./scripts/run-node.sh
+./scripts/deploy-sites.sh
 ```
 
 Now you can connect to the node to load one of the deployed sites, deploy a new site, or interact with one of the http/ws endpoints. See below for details.
 
 ### How to run the full demo
 
-It's very raw prototype code, so you have to do lots of things manually right now.
-
-1. Install using npm:
-
-    ```
-    npm i
-    ```
+1. Firstly, make sure you [install all the dependencies](#install-dependencies) as mentioned above.
 
 1. Start your private Ethereum-compatible web3 provider/blockchain on port `7545` ([Ganache](https://www.trufflesuite.com/ganache) is recommended) and use a `mnemonic` like so:
 
@@ -80,6 +86,27 @@ If the nodes do not appear to cache all the data then ensure that `client.storag
 
 If the expected node is not responding with the data requests then ensure that `service_provider.enabled` is set to `false` for that node. Typically for the demo we want to have `Node 1` set to true and the others set to false.
 
+### Troubleshooting installing TOR browser during NPM install
+
+There are dependencies installed that require the TOR browser. These dependencies attempt to download and install TOR. If you have issues during this step then you can set an environment variable and run the installation again which will skip downloading TOR like so:
+
+```
+export GRANAX_USE_SYSTEM_TOR=1
+npm i
+```
+
+Now when you run the installation, the script will not attempt to download TOR but will instead output:
+
+```
+...
+> @deadcanaries/granax@3.2.5 postinstall ~/pointnetwork/node_modules/@deadcanaries/granax
+> node script/download-tbb.js
+
+Skipping automatic Tor installation...
+Be sure to install Tor using your package manager!
+...
+```
+
 ### Run a Point Network Node in a VS Code Debugger
 
 The VS Code debugger is configured using the [VS Code launch config](.vscode/launch.json) file. Its configured to launch a test node under your `~/.point/test1` directory.
@@ -93,10 +120,6 @@ Now you can add breakpoints and run a depolyment from a separate terminal window
 **NOTE**: You might see an error when starting the debugger relating to a fastify plugin: `Error: ERR_AVVIO_PLUGIN_TIMEOUT: plugin did not start in time`. If you see this the debugger session will immediately stop. To fix this issue, you will need to comment out the `fastify-nextjs` plugin registration and `web_routes` lines in the `ApiServer` class and start the debugger again!
 
 **NOTE**: The launch config makes use of the `$HOME` environment variable for the `--datadir` param. If you do not have this environment variable set, then you will need to do so and run the debugger again.
-
-Please let us know if you hit any obstacles of encounter errors or bugs by opening an issue or emailing info@pointnetwork.io.
-
-Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
 
 ### Attaching to a Point Network Node using Point Network console
 
@@ -144,6 +167,14 @@ You can start the `WebSocket Test client` using the following at the terminal:
 node scripts/ws/clientTest.js
 ```
 
+### Testing all example sites deployment
+
+There is a convenience script that will deploy all the example sites (found in the [./example](./example) folder). This is useful as a check to make sure the nodes can still run a sucessful deployment of all the example sites. The script to run is:
+
+```
+./scripts/deploy-sites.sh
+```
+
 ### Using nodemon during development
 
 If you are a developer, you might be interested to run the Point Network node using `nodemon` like so:
@@ -157,3 +188,7 @@ That way, changes in the applications code are detected by nodemon and the Point
 ### Developing the Point Network Web App Utility
 
 For details on [Developing the Point Network Web App Utility](../api/web/README.md) please refer to this separate [README]((../api/web/README.md)).
+
+Please let us know if you hit any obstacles of encounter errors or bugs by opening an issue or emailing info@pointnetwork.io.
+
+Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
