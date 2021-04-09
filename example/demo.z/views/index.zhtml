@@ -78,7 +78,7 @@ S = S.split('');
 S = S.reverse();
 dots = 12;
 var Ypos = 0,Xpos = 0,Ybase = 0,Xbase = 0;
-var ay = 0, ax = 0, Ay = 0, Ax = 0, by = 0, bx = 0, By = 0, Bx = 0, cy 
+var ay = 0, ax = 0, Ay = 0, Ax = 0, by = 0, bx = 0, By = 0, Bx = 0, cy
 = 0, cx = 0, Cy = 0, Cx = 0, dy = 0, dx = 0, Dy = 0, Dx = 0;
 count = 0;
 count_a = 0;
@@ -141,7 +141,7 @@ sec = -1.57 + Math.PI * secs / 30;
 mins = time.getMinutes();
 min = -1.57 + Math.PI * mins / 30;
 hr = time.getHours();
-hrs = -1.575 + Math.PI * hr / 6 + Math.PI * parseInt(time.getMinutes()) 
+hrs = -1.575 + Math.PI * hr / 6 + Math.PI * parseInt(time.getMinutes())
 / 360;
 Ybase = 15;
 Xbase = 15;
@@ -163,9 +163,9 @@ document.layers["nz"+i].top = cy - 12 + (i * Ybase) * Math.sin(hrs);
 document.layers["nz"+i].left = cx - 12 + (i * Xbase) * Math.cos(hrs);
 }
 for (i = 0; i < dots; ++i) {
-document.layers["nface"+i].top = dy - 2 + (70 * 
+document.layers["nface"+i].top = dy - 2 + (70 *
 Math.sin(-0.49+dots+i/1.9));
-document.layers["nface"+i].left = dx + 4 + (70 * 
+document.layers["nface"+i].left = dx + 4 + (70 *
 Math.cos(-0.49+dots+i/1.9));
    }
 }
@@ -191,9 +191,9 @@ z[i].style.pixelTop = cy - 12 + (i * Ybase) * Math.sin(hrs);
 z[i].style.pixelLeft = cx - 12 + (i * Xbase) * Math.cos(hrs);
 }
 for (i = 0; i < dots; ++i) {
-face[i].style.pixelTop = dy + 6 + (70 * Math.sin(-0.49 + dots + i / 
+face[i].style.pixelTop = dy + 6 + (70 * Math.sin(-0.49 + dots + i /
 1.9));
-face[i].style.pixelLeft = dx + 4 + (70 * Math.cos(-0.49 + dots + i / 
+face[i].style.pixelLeft = dx + 4 + (70 * Math.cos(-0.49 + dots + i /
 1.9));
       }
    }
@@ -220,9 +220,9 @@ if (document.layers || document.all) window.onload = StartAll;
 
 <table border="3" width="90%" cellspacing="4" cellpadding="5" bordercolor="#000080">
 	<tr>
-		<td>		
+		<td>
 		<img border="0" src="images/logo.gif" width="1206" height="79"><br>
-		<font size="5">COMING SOON:  An even worse site!  Look for it sometime 
+		<font size="5">COMING SOON:  An even worse site!  Look for it sometime
 		later, eventually!&nbsp; we PROMISE!</font></td>
 	</tr>
 </table>
@@ -305,10 +305,10 @@ if (document.layers || document.all) window.onload = StartAll;
 	<table border="1" width="100%" cellspacing="1" cellpadding="4" bgcolor="#FFFFFF" bordercolor="#808080">
 		<tr>
 			<td>
-			<p align="center"><span style="font-size: 8pt">&nbsp; TWWWE is a 
-			project to highlight errors in web design by breaking every single 
+			<p align="center"><span style="font-size: 8pt">&nbsp; TWWWE is a
+			project to highlight errors in web design by breaking every single
 			design rule imaginable.<br>
-			<a href="new_page_1.htm">Click here</a> for an incomplete list of 
+			<a href="new_page_1.htm">Click here</a> for an incomplete list of
 			errors found on this site.</span></td>
 		</tr>
 	</table>
@@ -317,10 +317,10 @@ if (document.layers || document.all) window.onload = StartAll;
 <img height="32" alt="2 workers" src="images/2_workers.gif" width="600" border="0"></p>
 		<p align="center">
 <font size="4" face="Comic Sans MS"><span style="background-color: #FFFF00">
-WATCH OUT! </span>&nbsp;<span style="background-color: #FF6600">This site is 
+WATCH OUT! </span>&nbsp;<span style="background-color: #FF6600">This site is
 under construction! =) <br>
 		</span></font>
-<img height="52" alt="email box" src="images/email_10_animated.gif" width="45" border="0">&nbsp;&nbsp;&nbsp; 
+<img height="52" alt="email box" src="images/email_10_animated.gif" width="45" border="0">&nbsp;&nbsp;&nbsp;
 &lt;-- send us email!</td>
 	</tr>
 </table>
@@ -336,18 +336,18 @@ under construction! =) <br>
 		<td width="225" valign="top" bgcolor="#FF0000">
 		<p align="center"><font face="Arial, Arial, Helvetica"><b>
 		<font color="#ff0000">
-		<img height="10" src="images/arrowright.gif" width="40" border="0"></font></b></font><font size="6" color="#0000FF" face="Impact">MAIN 
+		<img height="10" src="images/arrowright.gif" width="40" border="0"></font></b></font><font size="6" color="#0000FF" face="Impact">MAIN
 		MENU</font><font face="Verdana" size="6" color="#0000FF"><br>
-		</font><font face="Verdana" color="#0000FF" size="1">(and other kewl 
+		</font><font face="Verdana" color="#0000FF" size="1">(and other kewl
 		links!)<br>
 		<b>*smile*</b></font></td>
-		<td>&nbsp; <img height="20" src="images/new21.gif" width="38"><font size="4"><font color="#FFFF00"><b><span style="background-color: #FF6600"><a dynamicanimation="fpAnimformatRolloverFP1" fprolloverstyle="font-size: 18pt" onmouseover="rollIn(this)" onmouseout="rollOut(this)" language="Javascript1.2" href="index.html#news">NEW 
+		<td>&nbsp; <img height="20" src="images/new21.gif" width="38"><font size="4"><font color="#FFFF00"><b><span style="background-color: #FF6600"><a dynamicanimation="fpAnimformatRolloverFP1" fprolloverstyle="font-size: 18pt" onmouseover="rollIn(this)" onmouseout="rollOut(this)" language="Javascript1.2" href="index.html#news">NEW
 		TO THE SITE</a></span></b></font><span style="background-color: #FF6600">
-		</span>&nbsp; </font>&nbsp;<img border="3" src="images/MCj03710640000%5B1%5D.jpg" width="36" height="33">&nbsp;&nbsp;
+		</span>&nbsp; </font>&nbsp;<img border="3" src="images/MCj03710640000.jpg" width="36" height="33">&nbsp;&nbsp;
 		<font face="Verdana"><i>
 		<a dynamicanimation="fpAnimformatRolloverFP1" fprolloverstyle="font-size: 18pt" onmouseover="rollIn(this)" onmouseout="rollOut(this)" language="Javascript1.2" href="http://news.yahoo.com">YAHOO NEWS</a>&nbsp;&nbsp;
-		<img border="3" src="images/j0293828.jpg" width="26" height="27"> 
-		<a href="http://www.weather.">WEATHER</a>&nbsp;&nbsp;&nbsp; G<a href="https://www.theworldsworstwebsiteever.com/maps.google.com">OOGLE 
+		<img border="3" src="images/j0293828.jpg" width="26" height="27">
+		<a href="http://www.weather.">WEATHER</a>&nbsp;&nbsp;&nbsp; G<a href="https://www.theworldsworstwebsiteever.com/maps.google.com">OOGLE
 		MAPS</a>&nbsp;&nbsp;
 		<br>
 		</i></font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -399,14 +399,14 @@ under construction! =) <br>
   string="WHAT'S NEW"/>
 </v:shape><![endif]--><![if !vml]><img border=0 width=325 height=129
 									   src="index_files/image001.gif" align=left alt="WHAT'S NEW" v:shapes="_x0000_s1027"><![endif]><p align="justify">
-		<img src="https://www.concentric.net/~snwflwr/updated.gif"><a name="news"></a>Welcome to our 
-		new world's Worst WEbsite <blink>EVER!</blink>&nbsp; we're stoked to be able to bring u 
-		da best in REALLY BAD WEBSITE DESIGN!&nbsp; Our goal is to break every 
-		single rule in website deign!!!&nbsp;&nbsp;&nbsp;&nbsp; As an 
-		educational tool, the aim of this sight is to pinpoint and hi-light the 
-		very worst things 1 could do in desinging a website.&nbsp; You can see a 
+		<img src="/images/nuke.jpg"><a name="news"></a>Welcome to our
+		new world's Worst WEbsite <blink>EVER!</blink>&nbsp; we're stoked to be able to bring u
+		da best in REALLY BAD WEBSITE DESIGN!&nbsp; Our goal is to break every
+		single rule in website deign!!!&nbsp;&nbsp;&nbsp;&nbsp; As an
+		educational tool, the aim of this sight is to pinpoint and hi-light the
+		very worst things 1 could do in desinging a website.&nbsp; You can see a
 		list of all the errors on this sight by <a href="new_page_1.htm">
-		clicking hear</a>!&nbsp; <img height="20" src="images/new21.gif" width="38"><img height="20" src="images/new21.gif" width="38"><img height="20" src="images/new21.gif" width="38"> 
+		clicking hear</a>!&nbsp; <img height="20" src="images/new21.gif" width="38"><img height="20" src="images/new21.gif" width="38"><img height="20" src="images/new21.gif" width="38">
 		We now have added a traffic marquee!&nbsp; Isn't it kewl??? LOL!</td>
 	</tr>
 </table>
@@ -445,10 +445,10 @@ under construction! =) <br>
 	<tr>
 		<td width="288">
 		<p align="center"><font color="#FF0000">
-		<span style="background-color: #000000">These photos are SHOCKINGLY 
+		<span style="background-color: #000000">These photos are SHOCKINGLY
 		formatted HORRIFICLY!</span></font></p>
 		<p align="center">
-		<img border="0" src="images/MPj04373460000%5B1%5D.jpg" width="135" height="180"><br>
+		<img border="0" src="images/MPj04373460000.jpg" width="135" height="180"><br>
 		Can u guess how??</td>
 		<td width="288">
 		<p align="center">
@@ -509,7 +509,7 @@ under construction! =) <br>
 									   src="index_files/image003.gif" alt="Fantastic colors" v:shapes="_x0000_s1025"><![endif]></td>
 		<td bgcolor="#00FFFF" width="213">
 		<p align="center"><font face="Trebuchet MS" color="#00FF00">
-		<a name="colors"></a>This box has nothing to do with anything, so you 
+		<a name="colors"></a>This box has nothing to do with anything, so you
 		don't have to read it.</font></td>
 		<td bgcolor="#FF00FF" width="214">
 		<p align="center">
@@ -523,24 +523,21 @@ under construction! =) <br>
 <img border="0" src="images/textgraphic.gif" width="105" height="46"></p>
 <p>
 <a href="https://www.easycounter.com/">
-<img src="https://www.easycounter.com/counter.php?shawn42"
+<img src="images/counter.png"
 border="0" alt="HTML Hit Counter"></a>
 <br>since October 3, 2009 +3310 visitors prior. Last Updated:
 <!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%m/%d/%Y %I:%M:%S %p" startspan -->09/06/2018 02:36:34 PM<!--webbot bot="Timestamp" endspan i-checksum="30319" --></p>
-<p>
-<img src="http://www.virtuallandmedia.com/img5/h-lines2/h-line01.gif"><img border="0" src="https://www.theworldsworstwebsiteever.com/images/fir.jpg" width="28" height="28"> <img border="0" src="https://www.theworldsworstwebsiteever.com/images/fir.jpg" width="28" height="28"></p>
-<p>
-<font size="1">This sight is best view through 
+<font size="1">This sight is best view through
 <a href="https://www.microsoft.com">
 <img src="images/ie7.jpg" width="44" height="36"></a>Internet Explorer or
 <a href="https://www.firefox.com">
-<img alt="firefox-3.jpg" src="images/firefox-3.jpg" width="28" height="28"></a>Firefox.&nbsp; 
-1024x768 resolution.&nbsp; Macs are stupid and so is Safari so this sight prolly 
-won't look right through Safari or a Mac.&nbsp; lol&nbsp; oh yeah, Windows Vista 
+<img alt="firefox-3.jpg" src="images/firefox-3.jpg" width="28" height="28"></a>Firefox.&nbsp;
+1024x768 resolution.&nbsp; Macs are stupid and so is Safari so this sight prolly
+won't look right through Safari or a Mac.&nbsp; lol&nbsp; oh yeah, Windows Vista
 stinks, too!</font></p>
 <p>
-<font face="Times New Roman" size="2">© 2008-2018 The World's Worst Website Ever 
-/ <a href="https://www.explorationsmediagroup.com">Explorations Media Group</a>.&nbsp; 
+<font face="Times New Roman" size="2">ï¿½ 2008-2018 The World's Worst Website Ever
+/ <a href="https://www.explorationsmediagroup.com">Explorations Media Group</a>.&nbsp;
 All Rights Reserved.</font></p>
 
 </body>
