@@ -27,8 +27,8 @@ class Core {
         // }
 
         await this.initDatabase();
-        await this.initWallet();
         await this.initApiServer();
+        await this.initWallet();
         await this.initNetwork();
         await this.initClient();
         await this.initProvider();
