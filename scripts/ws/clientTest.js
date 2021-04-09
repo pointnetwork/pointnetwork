@@ -34,7 +34,7 @@ ws.on('open', () => {
 
 ws.on('message', (data) => {
   console.log(JSON.parse(data))
-  console.log("%O", data)
+  // console.log("%O", data)
   _console.prompt();
 });
 

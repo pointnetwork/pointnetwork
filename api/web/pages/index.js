@@ -1,5 +1,4 @@
 import Layout from '../components/layout'
-import DeployerProgress from '../components/deployer_progress'
 
 export default () => (
   <Layout>
