@@ -7,12 +7,17 @@ services:
       - blockchain_provider
     volumes:
       - peer_1_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:rw
       - ${PWD}/resources/demo/config.test1.json:/data/config.json:ro
+      - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
+    # entrypoint: "ls -ahl ./truffle && ls -ahl ./truffle/build/contracts"
     environment:
       - HOST=localhost
       - PORT=12345
       - PUB_KEY=$WEBSITE_OWNER_PUBKEY
       - PRV_KEY=$WEBSITE_OWNER_PRVKEY
+      - BLOCKCHAIN_HOST=blockchain_provider
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       # - API_PORT
       # - ZPROXY_PORT
       # - BOOTSTRAP_NODE
@@ -26,6 +31,7 @@ services:
       - ${PWD}/truffle/migrations:/truffle/migrations:ro
       - ${PWD}/truffle/contracts:/truffle/contracts:ro
       - ${PWD}/truffle.deploy.js:/truffle/run.js:ro
+      - ${PWD}/sharedConfig.json:/sharedConfig.json:rw
       - shared_contracts:/build:rw
     entrypoint:
       - /truffle/run.js
