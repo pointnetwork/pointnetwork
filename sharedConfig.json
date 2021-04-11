@@ -57,7 +57,7 @@
   },
   "provider": {},
   "network": {
-    "web3": "http://blockchain_provider:7545/",
+    "web3": "http://blockchain_node:7545/",
     "web3_network_id": 5777,
     "web3_chain_id": 0,
     "communication_port": 9685,
