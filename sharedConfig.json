@@ -1,0 +1,84 @@
+{
+  "api": {
+    "port": 2468
+  },
+  "db": {
+    "path": "data/db"
+  },
+  "log": {
+    "enabled": true,
+    "level": "info"
+  },
+  "console": {
+    "prompt": "> "
+  },
+  "service_provider": {
+    "enabled": false,
+    "storage": {
+      "cache_path": "data/provider_storage_cache",
+      "revalidate_decrypted_chunk": true,
+      "max_space": "5G"
+    }
+  },
+  "deployer": {
+    "cache_path": "data/deployer_cache"
+  },
+  "client": {
+    "storage": {
+      "cache_path": "data/client_storage_cache",
+      "storage_provider_cache": "data/storage_provider_cache.json",
+      "default_redundancy": 1,
+      "default_expires_period_seconds": 86400,
+      "default_autorenew": true,
+      "request_timeout_seconds": 60,
+      "retransmit_segments_timeout_seconds": 30
+    },
+    "zproxy": {
+      "port": 8666,
+      "sanitize_html": false,
+      "cache_path": "data/zproxy_cache"
+    },
+    "wallet": {
+      "__do not remove this section__": null,
+      "account": "",
+      "privateKey": "",
+      "keystore_path": "wallets/keystore"
+    },
+    "max_parallel_requests_per_provider": 3
+  },
+  "storage": {
+    "chunk_size_bytes": 262144,
+    "___segment_size_bytes": 2048,
+    "____segment_size_bytes": 8192,
+    "segment_size_bytes": 16384,
+    "redkey_encryption_bits": 1024,
+    "redkey_stupid_padding": 1,
+    "____redkey_public_exponent": 65537
+  },
+  "provider": {},
+  "network": {
+    "web3": "http://blockchain_provider:7545/",
+    "web3_network_id": 5777,
+    "web3_chain_id": 0,
+    "communication_port": 9685,
+    "communication_external_host": "127.0.0.0",
+    "bootstrap_nodes": [],
+    "peer_cache_file_path": "data/dht_peercache.db",
+    "solutions_dir_path": "data/dht_solutions/",
+    "ssl_enabled": false,
+    "key_child_derivation_index": 0,
+    "churn_filter": {
+      "cooldown_base_timeout": "5M",
+      "cooldown_multiplier": 2,
+      "cooldown_reset_time": "60M"
+    },
+    "identity_contract_address": "0x5cffa50887937d01dAEbDF6f85EEbF51D593a2FA",
+    "storage_provider_registry_contract_address": "0x58AE10f367D2bDA4FcDf23388bF259B37312c0aE"
+  },
+  "payments": {
+    "enabled": false
+  },
+  "simulation_delay": 10000,
+  "hardcode_default_provider": "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301",
+  "token_address": "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
+}

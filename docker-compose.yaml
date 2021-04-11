@@ -2,7 +2,7 @@ version: '3'
 
 services:
   peer_1:
-    image: pointnetwork_node
+    image: pointnetwork/pointnetwork_node:dev
     depends_on:
       - blockchain_provider
     volumes:
@@ -10,7 +10,6 @@ services:
       - shared_contracts:/app/truffle/build/contracts:rw
       - ${PWD}/resources/demo/config.test1.json:/data/config.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
-    # entrypoint: "ls -ahl ./truffle && ls -ahl ./truffle/build/contracts"
     environment:
       - HOST=localhost
       - PORT=12345
