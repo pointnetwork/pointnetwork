@@ -114,7 +114,7 @@ class Web3Bridge {
     async announceStorageProvider(connection, collateral_lock_period, cost_per_kb) {
         const contract = await this.loadStorageProviderRegistryContract();
         const method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
-        const account = '0xC23BC0E252c716281F562695a6617eE81457DE21';
+        const account = this.ctx.config.hardcode_default_provider;
         const gasPrice = await this.web3.eth.getGasPrice();
         return await method.send({ from: account, gasPrice, gas: 2000000, value: 100});
     }
