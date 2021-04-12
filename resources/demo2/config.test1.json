@@ -3,7 +3,7 @@
     "enabled": true
   },
   "network": {
-    "communication_external_host": "localhost",
+    "communication_external_host": "storage_provider",
     "communication_port": "12345"
   },
   "client": {

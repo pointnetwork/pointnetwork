@@ -3,7 +3,7 @@
     "port": 2469
   },
   "network": {
-    "communication_external_host": "localhost",
+    "communication_external_host": "website_owner",
     "communication_port": "12346",
     "bootstrap_nodes": [
       "http://storage_provider:12345/"

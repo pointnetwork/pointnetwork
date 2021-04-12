@@ -5,11 +5,7 @@
 # ./scripts/deploy-sites.sh
 
 EXAMPLE_SITES="./example/*"
-if [ $# -eq 0 ]; then
-  ARGS="--datadir ~/.point/test2"
-else
-  ARGS="$@"
-fi
+DATADIR=${1:-"~/.point/test2"}
 
 for SITE in $EXAMPLE_SITES;
 do
@@ -17,16 +13,10 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  ./point deploy $SITE $ARGS
+  ./point deploy $SITE --datadir $DATADIR -v
   sleep 10
 
   echo
   echo "FINISHED: ${SITE}"
   echo
 done
-
-if [ $# -eq 0 ]; then
-  exit
-fi
-
-./point $ARGS
