@@ -3,10 +3,10 @@
     "port": 24469
   },
   "network": {
-    "communication_external_host": "localhost",
+    "communication_external_host": "website_visitor",
     "communication_port": "12347",
     "bootstrap_nodes": [
-      "http://127.0.0.1:12345/"
+      "http://storage_provider:12345/"
     ]
   },
   "client": {
