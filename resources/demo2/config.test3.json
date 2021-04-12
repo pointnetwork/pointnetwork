@@ -1,0 +1,21 @@
+{
+  "api": {
+    "port": 24469
+  },
+  "network": {
+    "communication_external_host": "localhost",
+    "communication_port": "12347",
+    "bootstrap_nodes": [
+      "http://127.0.0.1:12345/"
+    ]
+  },
+  "client": {
+    "zproxy": {
+      "port": 65501
+    },
+    "wallet": {
+      "account": "0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8",
+      "privateKey": "4e094c21d2b1a068da6ecbb8d0aeea65569741a6c14c592cb29d8b7aadf5ea49"
+    }
+  }
+}

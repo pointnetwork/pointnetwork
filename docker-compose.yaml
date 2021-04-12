@@ -48,8 +48,12 @@ services:
     volumes:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:rw
-      - ${PWD}/resources/demo/config.test1.json:/data/config.json:ro
+      - ${PWD}/resources/demo2/config.test1.json:/data/config.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
+    ports:
+      - '12345:12345'
+      - '8666:8666'
+      - '2468:2468'
     environment:
       - HOST=localhost
       - PORT=12345
@@ -63,12 +67,17 @@ services:
     image: pointnetwork/pointnetwork_node:dev
     depends_on:
       - blockchain_node
+    ports:
+      - '12346:12346'
+      - '65500:65500'
+      - '2469:2469'
     volumes:
       - storage_provider_data:/data:rw
       - website_owner_data:/app/truffle/build/contracts:rw
-      - ${PWD}/resources/demo/config.test2.json:/data/config.json:ro
+      - ${PWD}/resources/demo2/config.test2.json:/data/config.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
       - ${PWD}/scripts/deploy-sites.sh:/app/scripts/deploy-sites.sh:ro
+      - ${PWD}/console/index.js:/app/console/index.js:ro
     entrypoint: "/app/scripts/deploy-sites.sh"
     command:
       - --datadir
