@@ -47,7 +47,7 @@ services:
       - blockchain_node
     volumes:
       - storage_provider_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
       - ${PWD}/resources/demo2/config.test1.json:/data/config.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
     ports:
@@ -59,9 +59,6 @@ services:
       - PORT=12345
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
-      # - API_PORT
-      # - ZPROXY_PORT
-      # - BOOTSTRAP_NODE
 
   website_owner:
     image: pointnetwork/pointnetwork_node:dev
@@ -72,25 +69,17 @@ services:
       - '65500:65500'
       - '2469:2469'
     volumes:
-      - storage_provider_data:/data:rw
-      - website_owner_data:/app/truffle/build/contracts:rw
+      - website_owner_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
       - ${PWD}/resources/demo2/config.test2.json:/data/config.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
       - ${PWD}/scripts/deploy-sites.sh:/app/scripts/deploy-sites.sh:ro
-      - ${PWD}/console/index.js:/app/console/index.js:ro
-    entrypoint: "/app/scripts/deploy-sites.sh"
-    command:
-      - --datadir
-      - '/data'
-      - -v
+    # entrypoint: "rm /data/point.pid /data/data/db/LOCK"
     environment:
       - HOST=localhost
       - PORT=12346
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
-      # - API_PORT
-      # - ZPROXY_PORT
-      # - BOOTSTRAP_NODE
 
   # peer3:
   #   build:
