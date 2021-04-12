@@ -81,18 +81,29 @@ services:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
 
-  # peer3:
-  #   build:
-  #     context: .
-  #     dockerfile: peer.Dockerfile
-  #   link:
-  #     - peer1
-  #   volumes:
-  #     - ./resources/demo/config.test3.json:/.point/config.json:ro
+  website_visitor:
+    image: pointnetwork/pointnetwork_node:dev
+    depends_on:
+      - blockchain_node
+    ports:
+      - "12347:12347"
+      - "65501:65501"
+      - "24469:24469"
+    volumes:
+      - website_visitor_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ${PWD}/resources/demo2/config.test3.json:/data/config.json:ro
+      - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
+    # entrypoint: "rm /data/point.pid /data/data/db/LOCK"
+    environment:
+      - HOST=localhost
+      - PORT=12347
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
 
 volumes:
   blockchain_data:
   shared_contracts:
   storage_provider_data:
   website_owner_data:
-
+  website_visitor_data:
