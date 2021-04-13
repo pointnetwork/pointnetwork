@@ -49,7 +49,7 @@ class ZProxy {
             let parsedUrl;
             // console.log(request);
             try {
-                parsedUrl = new URL(request.url);
+                parsedUrl = new URL(request.url, `http://${request.headers.host}`);
             } catch(e) {
                 parsedUrl = { pathname: '/error' }; // todo
             }
