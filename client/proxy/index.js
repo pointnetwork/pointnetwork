@@ -16,7 +16,7 @@ class ZProxy {
 
     async start() {
         this.server = http.createServer(this.request.bind(this));
-        this.server.listen(parseInt(this.port), '127.0.0.1'); // '127.0.0.1' = only listen to local requests
+        this.server.listen(parseInt(this.port), '0.0.0.0'); // '127.0.0.1' = only listen to local requests
         this.ctx.log.info('ZProxy server listening on port '+parseInt(this.port)+' on localhost');
     }
 
