@@ -18,7 +18,7 @@ cd ..
 sleep 3s
 
 ./point --datadir ~/.point/test1 -v &
-sleep 10
+sleep 20
 ./point --datadir ~/.point/test2 -v &
 sleep 10
 ./point --datadir ~/.point/test3 -v &
