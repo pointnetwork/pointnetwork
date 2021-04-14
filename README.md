@@ -24,6 +24,20 @@ You can run the following scripts in one terminal window which will clear all yo
 
 Now you can connect to the node to load one of the deployed sites, deploy a new site, or interact with one of the http/ws endpoints. See below for details.
 
+### Quick test of deployed sites
+
+To quickly test each of the deployed sites are responding there is a script that will ping the root path of each of the test sites. Simply run:
+
+```
+./scripts/ping-sites.sh
+```
+
+This is a simple bash script that uses `curl` to fetch the root of each example domain and return the HTTP status code back to terminal. The script works by issuing a GET request to the ZProxy endpoint of Node 3 at http://localhost:65501 and by also setting the `Host` header to the domain being tested.
+
+If the script returns `404` for a domain it means the site is not found so you probably need to deploy it, if you see `500` then there was a server side error on the node so you will need to check the logs and if you see `200` then the example domain was found and root page returned successfully.
+
+All sites should respond with a 200 status code. If not there is something wrong which can be checked in the logs or you may also want to check the troubleshooting section further down in this document.
+
 ### How to run the full demo
 
 1. Firstly, make sure you [install all the dependencies](#install-dependencies) as mentioned above.
