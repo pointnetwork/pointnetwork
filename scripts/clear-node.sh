@@ -25,6 +25,6 @@ mkdir -p ~/.point/test2/data/db
 mkdir -p ~/.point/test3/data/db
 
 # Create the peer cache db file
-touch ~/.point/test1/data/dht_peercache.db
-touch ~/.point/test2/data/dht_peercache.db
-touch ~/.point/test3/data/dht_peercache.db
+echo '{}' > ~/.point/test1/data/dht_peercache.db
+echo '{}' > ~/.point/test2/data/dht_peercache.db
+echo '{}' > ~/.point/test3/data/dht_peercache.db
