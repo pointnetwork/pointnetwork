@@ -4,7 +4,7 @@ services:
   blockchain_node:
     image: trufflesuite/ganache-cli
     ports:
-      - "$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT"
+      - '$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT'
     volumes:
       - blockchain_data:/data:rw
     command:
@@ -30,11 +30,9 @@ services:
       - ${PWD}/truffle/truffle-config.js:/truffle/truffle-config.js:ro
       - ${PWD}/truffle/migrations:/truffle/migrations:ro
       - ${PWD}/truffle/contracts:/truffle/contracts:ro
-      - ${PWD}/truffle.deploy.js:/truffle/run.js:ro
-      - ${PWD}/sharedConfig.json:/sharedConfig.json:rw
+      - ${PWD}/scripts/deploy-contracts-docker.js:/truffle/run.js:ro
       - shared_contracts:/build:rw
-    entrypoint:
-      - /truffle/run.js
+    entrypoint: /truffle/run.js
     environment:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
@@ -45,11 +43,12 @@ services:
     image: pointnetwork/pointnetwork_node:dev
     depends_on:
       - blockchain_node
-    # entrypoint: "rm /data/point.pid /data/data/db/LOCK"
+    entrypoint: './scripts/entrypoint-node.sh'
+    command: '--datadir /data -v'
     volumes:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo2/config.test1.json:/data/config.json:ro
+      - ${PWD}/resources/demo2/config.test1.json:/nodeConfig.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
     ports:
       - '12345:9685'
@@ -69,12 +68,13 @@ services:
       - '12346:9685'
       - '65501:8666'
       - '24681:2468'
+    entrypoint: './scripts/entrypoint-node.sh'
+    command: '--datadir /data -v'
     volumes:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo2/config.test2.json:/data/config.json:ro
+      - ${PWD}/resources/demo2/config.test2.json:/nodeConfig.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
-      - ${PWD}/scripts/deploy-sites.sh:/app/scripts/deploy-sites.sh:ro
     environment:
       - HOST=localhost
       - PORT=9685
@@ -86,13 +86,15 @@ services:
     depends_on:
       - blockchain_node
     ports:
-      - "12347:9685"
-      - "65502:8666"
+      - '12347:9685'
+      - '65502:8666'
       - '24682:2468'
+    entrypoint: './scripts/entrypoint-node.sh'
+    command: '--datadir /data -v'
     volumes:
       - website_visitor_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo2/config.test3.json:/data/config.json:ro
+      - ${PWD}/resources/demo2/config.test3.json:/nodeConfig.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
     environment:
       - HOST=localhost
