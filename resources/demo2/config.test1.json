@@ -3,10 +3,12 @@
     "enabled": true
   },
   "network": {
-    "communication_external_host": "storage_provider",
-    "communication_port": "12345"
+    "communication_external_host": "storage_provider"
   },
   "client": {
+    "zproxy": {
+      "host": "0.0.0.0"
+    },
     "wallet": {
       "account": "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301",
       "privateKey": "feec30f685ff378c117d1bb67095815a4604f03f1759a418e82df05b8c3be245"
