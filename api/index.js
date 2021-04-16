@@ -10,7 +10,7 @@ class ApiServer {
     async start() {
         this.server = fastify({
             logger: this.ctx.log,
-            pluginTimeout: 20000
+            pluginTimeout: 120000
             // todo: more configuration?
         });
 
