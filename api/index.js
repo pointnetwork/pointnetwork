@@ -10,17 +10,17 @@ class ApiServer {
     async start() {
         this.server = fastify({
             logger: this.ctx.log,
-            pluginTimeout: 120000
+            pluginTimeout: 0
             // todo: more configuration?
         });
 
         try {
             // https://github.com/fastify/fastify-nextjs - for react app support
-            const web_routes = require('./web_routes')
-            await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
-            await this.server.after(() => {
-                web_routes.forEach(route => {this.server.next(route)})
-            })
+            // const web_routes = require('./web_routes')
+            // await this.server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })
+            // await this.server.after(() => {
+            //     web_routes.forEach(route => {this.server.next(route)})
+            // })
             // end react app setup
 
             // https://github.com/fastify/fastify-websocket - for websocket support
