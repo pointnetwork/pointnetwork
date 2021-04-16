@@ -35,6 +35,7 @@
     },
     "zproxy": {
       "port": 8666,
+      "host": "127.0.0.1",
       "sanitize_html": false,
       "cache_path": "data/zproxy_cache"
     },
@@ -72,8 +73,8 @@
       "cooldown_multiplier": 2,
       "cooldown_reset_time": "60M"
     },
-    "identity_contract_address": "0xBc2A6780fA7df8b17Da64c408c1811419fAB688A",
-    "storage_provider_registry_contract_address": "0x8EC987fa033b1F8b31f9FFC5dB07B000b44011e8"
+    "identity_contract_address": "0xaf34226C7F56b1a5816115b8A8d78408eeed6D54",
+    "storage_provider_registry_contract_address": "0xCFC257c2D2997C44768eB1cef32fc02F87Fcaa2B"
   },
   "payments": {
     "enabled": false

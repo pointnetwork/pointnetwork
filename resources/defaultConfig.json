@@ -35,6 +35,7 @@
     },
     "zproxy": {
       "port": 8666,
+      "host": "127.0.0.1",
       "sanitize_html": false,
       "cache_path": "data/zproxy_cache"
     },

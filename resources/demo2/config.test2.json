@@ -1,17 +1,13 @@
 {
-  "api": {
-    "port": 2469
-  },
   "network": {
     "communication_external_host": "website_owner",
-    "communication_port": "12346",
     "bootstrap_nodes": [
-      "http://storage_provider:12345/"
+      "http://storage_provider:9685/"
     ]
   },
   "client": {
     "zproxy": {
-      "port": 65500
+      "host": "0.0.0.0"
     },
     "wallet": {
       "account": "0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB",
