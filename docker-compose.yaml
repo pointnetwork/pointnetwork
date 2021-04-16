@@ -54,11 +54,6 @@ services:
       - '12345:9685'
       - '65500:8666'
       - '24680:2468'
-    environment:
-      - HOST=localhost
-      - PORT=9685
-      - BLOCKCHAIN_HOST=blockchain_node
-      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
 
   website_owner:
     image: pointnetwork/pointnetwork_node:dev
@@ -75,11 +70,6 @@ services:
       - shared_contracts:/app/truffle/build/contracts:ro
       - ${PWD}/resources/demo2/config.test2.json:/nodeConfig.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
-    environment:
-      - HOST=localhost
-      - PORT=9685
-      - BLOCKCHAIN_HOST=blockchain_node
-      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
 
   website_visitor:
     image: pointnetwork/pointnetwork_node:dev
@@ -96,11 +86,6 @@ services:
       - shared_contracts:/app/truffle/build/contracts:ro
       - ${PWD}/resources/demo2/config.test3.json:/nodeConfig.json:ro
       - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
-    environment:
-      - HOST=localhost
-      - PORT=9685
-      - BLOCKCHAIN_HOST=blockchain_node
-      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
 
 volumes:
   blockchain_data:
