@@ -13,8 +13,8 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
+  [ -d $SITE/contracts ] && sleep 10
   ./point deploy $SITE --datadir $DATADIR -v
-  sleep 10
 
   echo
   echo "FINISHED: ${SITE}"
