@@ -1,5 +1,29 @@
 # Point Network
 
+### Run demo in docker compose
+
+The demo setup consists of three Point Network nodes running in a separate containers, a dev blockchain node running a test network (currently the `ganache-cli` is used), and a Point Network contract deployment script running in a dedicated container. Each Point Network node assigned to its own role in the demo. The node roles are:
+
+* Storage Provider, z-proxy port `65500`
+* Website Owner, z-proxy port `65501`
+* Website Viewer, z-proxy port `65502`
+
+To run the demo, one should firstly [install `docker`](https://docs.docker.com/get-docker/) on their host system. To start the demo, run:
+
+```bash
+docker-compose up
+# or for detached mode
+docker-compose up -d
+```
+
+Once the compose is up, the Point Network contracts deployment will start. Unless the contracts get deployed, the Point Network nodes will wait for the contract addresses to appear. As soon as the addresses obtained the nodes will get started. At this point you may deploy the demo websites via the following command:
+
+```bash
+./scripts/deploy-sites-docker.sh
+```
+
+Right after the sites are there, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `z-proxy` port. The sites will be available at their regular addresses.
+
 ### Install Dependencies
 
 Install all global and project dependencies. Run the following under the project root folder:
