@@ -50,7 +50,7 @@ services:
     volumes:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo2/config.test1.json:/nodeConfig.json:ro
+      - ${PWD}/resources/demo-docker/config.test1.json:/nodeConfig.json:ro
     ports:
       - '12345:9685'
       - '65500:8666'
@@ -73,7 +73,7 @@ services:
     volumes:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo2/config.test2.json:/nodeConfig.json:ro
+      - ${PWD}/resources/demo-docker/config.test2.json:/nodeConfig.json:ro
     environment:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
@@ -92,7 +92,7 @@ services:
     volumes:
       - website_visitor_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo2/config.test3.json:/nodeConfig.json:ro
+      - ${PWD}/resources/demo-docker/config.test3.json:/nodeConfig.json:ro
     environment:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
