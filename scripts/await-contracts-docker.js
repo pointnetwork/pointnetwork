@@ -24,7 +24,7 @@ while (contractNames.size && (Date.now () - start < timeout)) {
             delete require.cache[require.resolve (filename)]
 
             const { networks } = require (filename)
-            const network = process.env.NETWORK_ID || Math.max (...Object.keys (networks))
+            const network = process.env.BLOCKCHAIN_NETWORK_ID || Math.max (...Object.keys (networks))
 
             if (typeof networks[network].address !== 'string') continue
 
@@ -52,6 +52,7 @@ const config = require (templateConfig)
 
 config.network = {
     ...config.network,
+    web3: `http://${ process.env.BLOCKCHAIN_HOST || 'localhost' }:${ process.env.BLOCKCHAIN_PORT || 7545 }`,
     identity_contract_address: contractAddresses.Identity,
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 }

@@ -13,11 +13,12 @@ services:
       - $BLOCKCHAIN_PROVIDER_PORT
       - -m
       - $BLOCKCHAIN_PROVIDER_MNEMONIC
+      - -e
+      - $DEFAULT_BALANCE
+      - -i
+      - $BLOCKCHAIN_NETWORK_ID
       - --db
       - '/data'
-      - --account="$WEBSITE_OWNER_PRVKEY,$DEFAULT_BALANCE"
-      - --account="$STORAGE_PROVIDER_PRVKEY,$DEFAULT_BALANCE"
-      - --account="$TEST_PEER_PRVKEY,$DEFAULT_BALANCE"
 
   contract_deployer:
     image: pointnetwork/pointnetwork_deployer:dev
@@ -36,6 +37,7 @@ services:
     environment:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
       - COMPILER_VERSION=native
       - BUILD_PATH=/build
 
@@ -49,11 +51,14 @@ services:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ${PWD}/resources/demo2/config.test1.json:/nodeConfig.json:ro
-      - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
     ports:
       - '12345:9685'
       - '65500:8666'
       - '24680:2468'
+    environment:
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
 
   website_owner:
     image: pointnetwork/pointnetwork_node:dev
@@ -69,7 +74,10 @@ services:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ${PWD}/resources/demo2/config.test2.json:/nodeConfig.json:ro
-      - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
+    environment:
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
 
   website_visitor:
     image: pointnetwork/pointnetwork_node:dev
@@ -85,7 +93,10 @@ services:
       - website_visitor_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ${PWD}/resources/demo2/config.test3.json:/nodeConfig.json:ro
-      - ${PWD}/sharedConfig.json:/app/resources/defaultConfig.json:ro
+    environment:
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
 
 volumes:
   blockchain_data:

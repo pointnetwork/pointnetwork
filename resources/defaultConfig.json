@@ -40,7 +40,7 @@
       "cache_path": "data/zproxy_cache"
     },
     "wallet": {
-      "__do not remove this section__":  null,
+      "__do not remove this section__": null,
       "account": "",
       "privateKey": "",
       "keystore_path": "wallets/keystore"
@@ -56,9 +56,7 @@
     "redkey_stupid_padding": 1,
     "____redkey_public_exponent": 65537
   },
-  "provider": {
-
-  },
+  "provider": {},
   "network": {
     "web3": "http://localhost:7545/",
     "web3_network_id": 5777,
@@ -75,14 +73,13 @@
       "cooldown_multiplier": 2,
       "cooldown_reset_time": "60M"
     },
-
     "identity_contract_address": "0x9d00b186CB89CA253D910e7ccB94C1755504EE42",
     "storage_provider_registry_contract_address": "0x947D4038b17954d544336aFF8C8dF08AF31bb52F"
   },
-  "payments" : {
+  "payments": {
     "enabled": false
   },
   "simulation_delay": 10000,
-  "hardcode_default_provider": "http://127.0.0.1:12345/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301",
+  "hardcode_default_provider": "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301",
   "token_address": "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
 }
