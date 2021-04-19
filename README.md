@@ -8,11 +8,9 @@ The demo setup consists of three Point Network nodes running in a separate conta
 * Website Owner, z-proxy port `65501`
 * Website Viewer, z-proxy port `65502`
 
-To run the demo, one should firstly [install `docker`](https://docs.docker.com/get-docker/) on their host system. To start the demo, run:
+To run the demo, one should firstly [install `docker`](https://docs.docker.com/get-docker/) and [`docker-compose`](https://docs.docker.com/compose/install/) on their host system. To start the demo, run:
 
 ```bash
-docker-compose up
-# or for detached mode
 docker-compose up -d
 ```
 
