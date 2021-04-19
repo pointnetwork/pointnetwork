@@ -57,6 +57,10 @@ config.network = {
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 }
 
+if (process.env.BLOCKCHAIN_NETWORK_ID) {
+    config.network.web3_network_id = process.env.BLOCKCHAIN_NETWORK_ID
+}
+
 writeFileSync (targetConfig, JSON.stringify(config, null, 2))
 
 console.info ('Done.')
