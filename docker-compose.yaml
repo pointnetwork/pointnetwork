@@ -2,11 +2,13 @@ version: '3'
 
 services:
   blockchain_node:
-    image: trufflesuite/ganache-cli
+    image: trufflesuite/ganache-cli:v6.12.2
     ports:
       - '$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT'
     volumes:
       - blockchain_data:/data:rw
+    environment:
+      - DOCKER=true
     command:
       - -v
       - -p
@@ -17,6 +19,10 @@ services:
       - $DEFAULT_BALANCE
       - -i
       - $BLOCKCHAIN_NETWORK_ID
+      - --chainId
+      - '0'
+      - --keepAliveTimeout
+      - '20000'
       - --db
       - '/data'
 
