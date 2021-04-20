@@ -74,6 +74,7 @@ services:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ${PWD}/resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ${PWD}/example:/app/example:ro
     environment:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT

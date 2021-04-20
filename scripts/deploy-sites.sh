@@ -5,7 +5,7 @@
 # ./scripts/deploy-sites.sh
 
 EXAMPLE_SITES="./example/*"
-DATADIR=${1:-"~/.point/test2"}
+DATADIR=${1:-~/.point/test2}
 
 for SITE in $EXAMPLE_SITES;
 do
