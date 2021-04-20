@@ -19,11 +19,13 @@ contract Identity {
         ownerToIdentity[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = 'storage_provider';
 
         identityToOwner['demo'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        identityToOwner['email'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['example'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['hello'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['profile'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['twitter'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'demo';
+        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'email';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'example';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'hello';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'profile';
