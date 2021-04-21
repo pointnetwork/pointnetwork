@@ -1,0 +1,113 @@
+version: '3'
+
+services:
+  blockchain_node:
+    image: trufflesuite/ganache-cli:v6.12.2
+    ports:
+      - '$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT'
+    volumes:
+      - blockchain_data:/data:rw
+    environment:
+      - DOCKER=true
+    command:
+      - -v
+      - -p
+      - $BLOCKCHAIN_PROVIDER_PORT
+      - -m
+      - $BLOCKCHAIN_PROVIDER_MNEMONIC
+      - -e
+      - $DEFAULT_BALANCE
+      - -i
+      - $BLOCKCHAIN_NETWORK_ID
+      - --chainId
+      - '0'
+      - --keepAliveTimeout
+      - '20000'
+      - --db
+      - '/data'
+
+  contract_deployer:
+    image: pointnetwork/pointnetwork_deployer:dev
+    depends_on:
+      - blockchain_node
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - ${PWD}/truffle/truffle-config.js:/truffle/truffle-config.js:ro
+      - ${PWD}/truffle/migrations:/truffle/migrations:ro
+      - ${PWD}/truffle/contracts:/truffle/contracts:ro
+      - ${PWD}/scripts/deploy-contracts-docker.js:/truffle/run.js:ro
+      - shared_contracts:/build:rw
+    entrypoint: /truffle/run.js
+    environment:
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+      - COMPILER_VERSION=native
+      - BUILD_PATH=/build
+
+  storage_provider:
+    image: pointnetwork/pointnetwork_node:dev
+    depends_on:
+      - blockchain_node
+    entrypoint: './scripts/entrypoint-node.sh'
+    command: '--datadir /data -v'
+    volumes:
+      - storage_provider_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ${PWD}/resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+    ports:
+      - '12345:9685'
+      - '65500:8666'
+      - '24680:2468'
+    environment:
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+
+  website_owner:
+    image: pointnetwork/pointnetwork_node:dev
+    depends_on:
+      - blockchain_node
+    ports:
+      - '12346:9685'
+      - '65501:8666'
+      - '24681:2468'
+    entrypoint: './scripts/entrypoint-node.sh'
+    command: '--datadir /data -v'
+    volumes:
+      - website_owner_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ${PWD}/resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ${PWD}/example:/app/example:ro
+    environment:
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+
+  website_visitor:
+    image: pointnetwork/pointnetwork_node:dev
+    depends_on:
+      - blockchain_node
+    ports:
+      - '12347:9685'
+      - '65502:8666'
+      - '24682:2468'
+    entrypoint: './scripts/entrypoint-node.sh'
+    command: '--datadir /data -v'
+    volumes:
+      - website_visitor_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ${PWD}/resources/demo-docker/config.test3.json:/nodeConfig.json:ro
+    environment:
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+
+volumes:
+  blockchain_data:
+  shared_contracts:
+  storage_provider_data:
+  website_owner_data:
+  website_visitor_data:
