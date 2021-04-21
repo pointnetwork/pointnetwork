@@ -43,10 +43,17 @@ class Web3Bridge {
     }
 
     async web3send(method, gasLimit, amountEth = '0') {
-        const account = this.web3.eth.defaultAccount;
-        const gasPrice = await this.web3.eth.getGasPrice();
-        if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
-        return await method.send({ from: account, gasPrice, gas: gasLimit, value: this.web3.utils.toWei(amountEth, "ether") });
+        let account, gasPrice
+        try {
+            account = this.web3.eth.defaultAccount;
+            gasPrice = await this.web3.eth.getGasPrice();
+            if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
+            return await method.send({ from: account, gasPrice, gas: gasLimit, value: this.web3.utils.toWei(amountEth, "ether") });
+        } catch (e) {
+            console.info({ method, account, gasPrice, gasLimit, value, amountEth })
+            console.error('web3send error:', e)
+            throw e
+        }
         /*
         .on('transactionHash', function(hash){
             ...
@@ -112,11 +119,18 @@ class Web3Bridge {
         return checksumAddress
     }
     async announceStorageProvider(connection, collateral_lock_period, cost_per_kb) {
-        const contract = await this.loadStorageProviderRegistryContract();
-        const method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
-        const account = this.ctx.config.hardcode_default_provider;
-        const gasPrice = await this.web3.eth.getGasPrice();
-        return await method.send({ from: account, gasPrice, gas: 2000000, value: 100});
+        let contract, method, account, gasPrice
+        try {
+            contract = await this.loadStorageProviderRegistryContract();
+            method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
+            account = this.ctx.config.hardcode_default_provider;
+            gasPrice = await this.web3.eth.getGasPrice();
+            return await method.send({ from: account, gasPrice, gas: 2000000, value: 100});
+        } catch (e) {
+            console.info({ method, gasPrice, account, collateral_lock_period, cost_per_kb })
+            console.error('announceStorageProvider error:', e)
+            throw e
+        }
     }
     async getCheapestStorageProvider() {
         const contract = await this.loadStorageProviderRegistryContract();
