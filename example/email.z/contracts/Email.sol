@@ -19,4 +19,5 @@ contract Email {
         emit SendEmail(msg.sender, to, encryptedMessageHash, encryptedSymmetricKey, block.timestamp);
         return true;
   }
+
 }
