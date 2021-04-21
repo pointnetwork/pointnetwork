@@ -66,6 +66,7 @@ class Deployer {
             // todo: dont parse html with regex!1 you'll go to hell for that! or worse, Turbo Pascal coding bootcamp!
             const regs = [
                 /\<link[^\>]*?href=['"](.*?)['"]/g,
+                /\<script[^\>]*?src=['"](.*?)['"]/g,
                 /\<img[^\>]*?src=['"](.*?)['"]/g,
                 /\<body[^\>]*?background=['"](.*?)['"]/g,
                 /\<table[^\>]*?background=['"](.*?)['"]/g,
