@@ -122,8 +122,8 @@ class File extends Model {
         }
 
         // todo: check full file integrity
-
-        fs.renameSync(temporaryFile, this.localPath);
+        fs.copyFileSync(temporaryFile, this.localPath);
+        fs.unlinkSync(temporaryFile);
     }
 
     // todo: make use of it
