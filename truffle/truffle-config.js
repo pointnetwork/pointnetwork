@@ -24,6 +24,12 @@
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
+const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
+const port = process.env.BLOCKCHAIN_PORT || 7545;
+const network_id = process.env.BLOCKCHAIN_NETWORK_ID || '*';
+const build_path = process.env.BUILD_PATH || './build';
+const compiler_version = process.env.COMPILER_VERSION || '0.7.6';
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -34,7 +40,7 @@ module.exports = {
    *
    * $ truffle test --network <network-name>
    */
-
+  contracts_build_directory: build_path,
   networks: {
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.
@@ -43,16 +49,16 @@ module.exports = {
     // options below to some value.
     //
     development: {
-     host: "127.0.0.1",     // Localhost (default: none)
-     port: 7545,            // Standard Ethereum port (default: none)
-     network_id: "*",       // Any network (default: none)
-     // from: '0xe9E2746F42bFF9f0B8cAB18E183dF87bDFb7FFC9',
-     // provider: new HDWalletProvider(
-     //    'observe valid excite index skill drink argue envelope domain second ten hybrid',
-     //    'http://localhost:7545',
-     // ),
-     // gas: 4500000,
-     // gasPrice: 10000000000,
+      host,        // Localhost (default: none)
+      port,        // Standard Ethereum port (default: none)
+      network_id,  // Any network (default: none)
+      // from: '0xe9E2746F42bFF9f0B8cAB18E183dF87bDFb7FFC9',
+      // provider: new HDWalletProvider(
+      //    'observe valid excite index skill drink argue envelope domain second ten hybrid',
+      //    'http://localhost:7545',
+      // ),
+      // gas: 4500000,
+      // gasPrice: 10000000000,
     },
 
     // Another network with more advanced options...
@@ -90,15 +96,17 @@ module.exports = {
   },
 
   // Configure your compilers
-    compilers: {
-        solc: {
-            version: '0.7.6',
-            settings: {
-                optimizer: {
-                    enabled: true,
-                    runs: 200
-                },
-            },
+  compilers: {
+    solc: {
+      // https://www.trufflesuite.com/docs/truffle/reference/configuration#solc
+      // https://github.com/trufflesuite/truffle/releases/tag/v5.0.0-beta.0#specify-a-solcjs-version
+      version: compiler_version,
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 200
         },
+      },
     },
+  },
 }
