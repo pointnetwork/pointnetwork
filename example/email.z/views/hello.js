@@ -1,1 +1,0 @@
-console.log('Successfully loaded external js file')
