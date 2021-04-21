@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const DB = require('../DB');
+const DB = require('../db');
 const Indexable = require('./indexable');
 
 class Model extends Indexable {

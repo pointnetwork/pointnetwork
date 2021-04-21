@@ -12,12 +12,13 @@ class ZProxy {
         this.ctx = ctx;
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
+        this.host = this.config.host;
     }
 
     async start() {
         this.server = http.createServer(this.request.bind(this));
-        this.server.listen(parseInt(this.port), '127.0.0.1'); // '127.0.0.1' = only listen to local requests
-        this.ctx.log.info('ZProxy server listening on port '+parseInt(this.port)+' on localhost');
+        this.server.listen(this.port, this.host);
+        this.ctx.log.info(`ZProxy server listening on ${ this.host }:${ this.port }`);
     }
 
     abort404(response, message = 'domain not found') {
