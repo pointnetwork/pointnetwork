@@ -1,9 +1,11 @@
 <html>
   <head>
     <title>Point Network Email Example App</title>
+    <script language="JavaScript" src="hello.js"></script>
   </head>
   <body>
     <div>
+      <img alt="" height="100" src="images/0.gif" width="80"></img>
       <p>Point Network Email Example App to show of the powers of ZHTML + Solidity + DHT!!</p>
     </div>
   </body>
