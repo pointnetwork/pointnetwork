@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 const { existsSync, writeFileSync } = require ('fs')
+const Web3 = require('web3')
+
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000
 const templateConfig = '/nodeConfig.json'
 const targetConfig = '/data/config.json'
@@ -11,6 +13,7 @@ const contractAddresses = {
     StorageProviderRegistry: undefined
 }
 
+const sleepSync = time => Atomics.wait (new Int32Array (new SharedArrayBuffer (4)), 0, 0, time)
 const contractNames = new Set (Object.keys (contractAddresses))
 const start = Date.now ()
 
@@ -36,7 +39,7 @@ while (contractNames.size && (Date.now () - start < timeout)) {
         }
     }
 
-    Atomics.wait (new Int32Array (new SharedArrayBuffer (4)), 0, 0, 2048)
+    sleepSync (2048)
 }
 
 if (contractNames.size) {
@@ -64,3 +67,22 @@ if (process.env.BLOCKCHAIN_NETWORK_ID) {
 writeFileSync (targetConfig, JSON.stringify(config, null, 2))
 
 console.info ('Done.')
+
+;(async () => {
+    console.log ('Awaiting for blockchain provider to start...')
+
+    const web3 = new Web3 (config.network.web3)
+    const start = Date.now ()
+
+    while (Date.now () - start < timeout) {
+        try {
+            await web3.eth.getBlockNumber ()
+            return console.info ('Done.')
+        } catch (e) {
+            sleepSync (1024)
+        }
+    }
+
+    console.error (`Unable to reach blockchain provider at ${ config.network.web3 }`)
+    process.exit (1)
+}) ()
