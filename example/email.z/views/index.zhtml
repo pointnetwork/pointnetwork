@@ -4,12 +4,42 @@
     <title>Point Network Email Example App</title>
   </head>
   <body>
-    <div>
-      <img alt="" height="100" src="images/0.gif" width="80"></img>
-      <p>Point Network Email Example App to show of the powers of ZHTML + Solidity + DHT!!</p>
+    {% set address = '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8' %}
+    {% set identity = identity_by_owner(address) %}
+    {% set identity_public_key = identity_ikv_get(address, 'public_key') %}
 
-      <div id="div1">The text above has been created dynamically by the loaded email.js file.</div>
+    <div>
+      <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"></img>
+      <p><b>Point Network Email Example App</b>. Demos the powers of ZHTML + Solidity + DHT!!</p>
     </div>
-    <script language="JavaScript" src="email.js"></script>
+
+    <p>This demo will send a Point Network Email to <b>{{ address }}</b></p>
+
+    {% block contents %}
+      <form method="post" action="/_contract_send/Email.send(to,contents)">
+        <input type="hidden" name="to" value="{{ address }}" />
+        <textarea rows="4" cols="50" name="storage[contents]"></textarea><br/><br/>
+        <input type="submit" value="Encrypt & Send Email"/>
+      </form>
+    {% endblock contents %}
+
+    {% block javascript %}
+
+      <script language="JavaScript">
+        // set local javascript variables from twig variables
+        let identity = "{{ identity }}"
+      </script>
+      <script language="JavaScript" src="email.js"></script>
+
+    {% endblock javascript %}
+
+    <div style="border:blue; border-width:1px; border-style:solid; padding: 5px;">
+      <i>Debug Console (ignore this unless you are a dev!)</i>
+      <br/>
+      <br/>
+      <div id="div1">The text above has been created dynamically by the loaded email js file.</div>
+      <div id="owner">The idenity of {{ address }} is <b>{{ identity }}</b></div>
+      <div id="public_key">The public key of {{ address }} is {{ identity_public_key }}</div>
+    </div>
   </body>
 </html>

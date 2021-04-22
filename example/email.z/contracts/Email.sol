@@ -3,14 +3,14 @@ pragma solidity ^0.6.0;
 pragma experimental ABIEncoderV2;
 
 contract Email  {
-   event SendEmail(string messageHash, address indexed from, address indexed to, string encryptedAESKey);
+   event SendEmail(address indexed to,
+                   string message);
 
-   function sendEmail(
+   function send(
      address to,
-     string memory messageHash,
-     string memory encryptedAESKey
+     string memory message
     ) public returns (bool result) {
-       emit SendEmail(messageHash, msg.sender, to,encryptedAESKey);
+       emit SendEmail(to, message);
 
        return true;
    }
