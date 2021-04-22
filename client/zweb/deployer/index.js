@@ -227,7 +227,7 @@ class Deployer {
 
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`)
 
-        console.log('Contract '+contractName+' deployed');
+        console.log(`Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`);
     };
 
     async updateZDNS(host, id) {

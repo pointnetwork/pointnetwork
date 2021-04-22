@@ -24,12 +24,19 @@ contract Identity {
         identityToOwner['hello'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['profile'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['twitter'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        identityToOwner['node3'] = 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8;
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'demo';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'email';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'example';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'hello';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'profile';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'twitter';
+        ownerToIdentity[0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8] = 'node3';
+
+        // Address 0xf990A ... is for test node 3
+        ikv['nodeowner3@email.z']['public_key'] = '0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2aeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34';
+
+        ikv['0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8']['public_key'] = '0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2aeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34';
     }
 
     function register(string memory handle, address identityOwner) public {
