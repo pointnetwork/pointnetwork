@@ -1,6 +1,8 @@
 const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
+const ethereumWallet = require('ethereumjs-wallet');
+const ethereumUtils = require('ethereumjs-util');
 
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 
@@ -21,6 +23,12 @@ class Web3Bridge {
     }
 
     async start() {
+        const { account, privateKey } = this.ctx.wallet.config;
+        const privateKeyBuffer = ethereumUtils.toBuffer('0x' + privateKey);
+        const wallet = ethereumWallet.default.fromPrivateKey(privateKeyBuffer);
+        const publicKey = wallet.getPublicKeyString();
+        const identity = await this.identityByOwner(account);
+        await this.putKeyValue(identity,'pubkey', publicKey)
     }
 
     async loadContract(contractName, at) {
@@ -50,7 +58,7 @@ class Web3Bridge {
             if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
             return await method.send({ from: account, gasPrice, gas: gasLimit, value: this.web3.utils.toWei(amountEth, "ether") });
         } catch (e) {
-            console.info({ method, account, gasPrice, gasLimit, value, amountEth })
+            console.info({ method, account, gasPrice, gasLimit, amountEth })
             console.error('web3send error:', e)
             throw e
         }
