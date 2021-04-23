@@ -4,21 +4,22 @@
     <title>Point Network Email Example App</title>
   </head>
   <body>
-    {% set address = '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8' %}
-    {% set identity = identity_by_owner(address) %}
-    {% set identity_public_key = identity_ikv_get(address, 'public_key') %}
+    {% set receipient = '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8' %}
+    {% set receipient_public_key = identity_ikv_get(receipient, 'public_key') %}
+    {% set wallet = load_node_wallet() %}
 
     <div>
       <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"></img>
       <p><b>Point Network Email Example App</b>. Demos the powers of ZHTML + Solidity + DHT!!</p>
     </div>
 
-    <p>This demo will send a Point Network Email to <b>{{ address }}</b></p>
+    <p>You are authenticated using account FROM: <b>{{ wallet.address }}</b></p>
+    <p>This demo will send a Point Network Email TO: <b>{{ receipient }}</b></p>
 
     {% block contents %}
-      <form method="post" action="/_contract_send/Email.send(to,contents)">
-        <input type="hidden" name="to" value="{{ address }}" />
-        <textarea rows="4" cols="50" name="storage[contents]"></textarea><br/><br/>
+      <form method="post" action="/_contract_send/Email.send(to,contents)" onSubmit="return encrypt();">
+        <input type="hidden" name="to" value="{{ receipient }}" />
+        <textarea id="body" rows="4" cols="50" name="storage[contents]"></textarea><br/><br/>
         <input type="submit" value="Encrypt & Send Email"/>
       </form>
     {% endblock contents %}
@@ -27,7 +28,7 @@
 
       <script language="JavaScript">
         // set local javascript variables from twig variables
-        let identity = "{{ identity }}"
+        let to = "{{ receipient }}"
       </script>
       <script language="JavaScript" src="email.js"></script>
 
@@ -38,8 +39,7 @@
       <br/>
       <br/>
       <div id="div1">The text above has been created dynamically by the loaded email js file.</div>
-      <div id="owner">The idenity of {{ address }} is <b>{{ identity }}</b></div>
-      <div id="public_key">The public key of {{ address }} is {{ identity_public_key }}</div>
+      <div id="public_key">The public key of {{ receipient }} is {{ receipient_public_key }}</div>
     </div>
   </body>
 </html>
