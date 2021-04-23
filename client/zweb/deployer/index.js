@@ -73,6 +73,7 @@ class Deployer {
             ];
             for(let reg of regs) {
                 while((result = reg.exec(template)) !== null) { // todo: what if it's already a hash? // todo: what if it's https:// or something? // todo: what if it's /_storage/<hash>?
+                    if (result[1].startsWith('https://')) { continue }
                     const fl = path.join(deployPath, 'views', result[1]);
                     if (!fs.existsSync(fl)) throw new Error('Mentioned file '+result[1]+' ('+fl+') not found!'); // todo: +stack etc. // todo: make it a warning?
 
