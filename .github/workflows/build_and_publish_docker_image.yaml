@@ -1,11 +1,10 @@
-name: Git-Job-Staging-FrontEnd-Deployment
+name: Point-Network-Node-Docker-Image-Builder-And-Publisher
 on:
   push:
     branches:
       - image-build-automation # TODO: temp
-    # tags:
-    #   - 'v*'
-
+    tags:
+      - 'v*'
 
 # env:
 #   REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
