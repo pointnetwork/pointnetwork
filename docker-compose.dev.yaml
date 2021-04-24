@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  storage_provider:
+    volumes:
+      - ${PWD}/api:/app/api:ro
+      - ${PWD}/client:/app/client:ro
+      - ${PWD}/console:/app/console:ro
+      - ${PWD}/core:/app/core:ro
+      - ${PWD}/db:/app/db:ro
+      - ${PWD}/example:/app/example:ro
+      - ${PWD}/network:/app/network:ro
+      - ${PWD}/provider:/app/provider:ro
+      - ${PWD}/scripts:/app/scripts:ro
+      - ${PWD}/threads:/app/threads:ro
+      - ${PWD}/wallet:/app/wallet:ro
+      - ${PWD}/point:/app/point:ro
+
+  website_owner:
+    volumes:
+      - ${PWD}/api:/app/api:ro
+      - ${PWD}/client:/app/client:ro
+      - ${PWD}/console:/app/console:ro
+      - ${PWD}/core:/app/core:ro
+      - ${PWD}/db:/app/db:ro
+      - ${PWD}/example:/app/example:ro
+      - ${PWD}/network:/app/network:ro
+      - ${PWD}/provider:/app/provider:ro
+      - ${PWD}/scripts:/app/scripts:ro
+      - ${PWD}/threads:/app/threads:ro
+      - ${PWD}/wallet:/app/wallet:ro
+      - ${PWD}/point:/app/point:ro
+
+  website_visitor:
+    volumes:
+      - ${PWD}/api:/app/api:ro
+      - ${PWD}/client:/app/client:ro
+      - ${PWD}/console:/app/console:ro
+      - ${PWD}/core:/app/core:ro
+      - ${PWD}/db:/app/db:ro
+      - ${PWD}/example:/app/example:ro
+      - ${PWD}/network:/app/network:ro
+      - ${PWD}/provider:/app/provider:ro
+      - ${PWD}/scripts:/app/scripts:ro
+      - ${PWD}/threads:/app/threads:ro
+      - ${PWD}/wallet:/app/wallet:ro
+      - ${PWD}/point:/app/point:ro
