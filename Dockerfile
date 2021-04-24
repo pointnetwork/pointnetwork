@@ -5,13 +5,15 @@ ENV GRANAX_USE_SYSTEM_TOR="1"
 WORKDIR /app
 COPY . /app/
 
-RUN apk update && \
-    apk upgrade && \
-    apk add git make g++ python3 tor --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ && \
-    rm -rf /var/cache/apk/* && \
-    mkdir -p /etc/tor/ && \
-    echo "SocksPort 0.0.0.0:9050" > /etc/tor/torrc.default && \
-    ln -sf python3 /usr/bin/python && \
+RUN apt update && \
+    apt install -y tor git wget build-essential \
+    zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev &&\
+    wget https://www.python.org/ftp/python/3.9.4/Python-3.9.4.tgz &&\
+    tar xzf Python-3.9.4.tgz &&\
+    cd Python-3.9.4 &&\
+    ./configure --enable-optimizations &&\
+    make altinstall &&\
+    export PYTHON=$(which python3.9) &&\
     npm i
 
 FROM node:10.23.2-stretch-slim
