@@ -48,7 +48,7 @@ services:
       - BUILD_PATH=/build
 
   storage_provider:
-    image: pointnetwork/pointnetwork_node:dev
+    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_storage_provider
     depends_on:
       - blockchain_node
@@ -68,7 +68,7 @@ services:
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
 
   website_owner:
-    image: pointnetwork/pointnetwork_node:dev
+    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_website_owner
     depends_on:
       - blockchain_node
@@ -89,7 +89,7 @@ services:
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
 
   website_visitor:
-    image: pointnetwork/pointnetwork_node:dev
+    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_website_visitor
     depends_on:
       - blockchain_node
