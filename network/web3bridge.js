@@ -1,7 +1,6 @@
 const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
-const ethereumWallet = require('ethereumjs-wallet');
 const ethereumUtils = require('ethereumjs-util');
 
 const ZDNS_ROUTES_KEY = 'zdns/routes';
@@ -24,9 +23,8 @@ class Web3Bridge {
 
     async start() {
         const { account, privateKey } = this.ctx.wallet.config;
-        const privateKeyBuffer = ethereumUtils.toBuffer('0x' + privateKey);
-        const wallet = ethereumWallet.default.fromPrivateKey(privateKeyBuffer);
-        const publicKey = wallet.getPublicKeyString();
+        const publicKeyBuffer = ethereumUtils.privateToPublic(ethereumUtils.addHexPrefix(privateKey))
+        const publicKey = ethereumUtils.bufferToHex(publicKeyBuffer)
         const identity = await this.identityByOwner(account);
         await this.putKeyValue(identity,'pubkey', publicKey)
     }
