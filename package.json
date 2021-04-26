@@ -45,7 +45,11 @@
     "nodemon": "^2.0.7"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "start:": "./point",
+    "start:dev": "npx nodemon ./point",
+    "start:docker": "./scripts/await-contracts-docker.js && ./point",
+    "start:docker:dev": "./scripts/await-contracts-docker.js && nodemon ./point"
   },
   "repository": {
     "type": "git",
