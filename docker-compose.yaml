@@ -52,8 +52,8 @@ services:
     container_name: pointnetwork_storage_provider
     depends_on:
       - blockchain_node
-    entrypoint: './scripts/entrypoint-node.sh'
-    command: '--datadir /data -v'
+    entrypoint: 'npm run start:docker'
+    command: '-- --datadir /data -v'
     volumes:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
@@ -76,8 +76,8 @@ services:
       - '12346:9685'
       - '65501:8666'
       - '24681:2468'
-    entrypoint: './scripts/entrypoint-node.sh'
-    command: '--datadir /data -v'
+    entrypoint: 'npm run start:docker'
+    command: '-- --datadir /data -v'
     volumes:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
@@ -97,8 +97,8 @@ services:
       - '12347:9685'
       - '65502:8666'
       - '24682:2468'
-    entrypoint: './scripts/entrypoint-node.sh'
-    command: '--datadir /data -v'
+    entrypoint: 'npm run start:docker'
+    command: '-- --datadir /data -v'
     volumes:
       - website_visitor_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro

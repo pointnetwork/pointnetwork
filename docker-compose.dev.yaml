@@ -2,6 +2,7 @@ version: '3'
 
 services:
   storage_provider:
+    entrypoint: 'npm run start:docker:dev'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
@@ -17,6 +18,7 @@ services:
       - ${PWD}/point:/app/point:ro
 
   website_owner:
+    entrypoint: 'npm run start:docker:dev'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
@@ -32,6 +34,7 @@ services:
       - ${PWD}/point:/app/point:ro
 
   website_visitor:
+    entrypoint: 'npm run start:docker:dev'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
