@@ -48,6 +48,7 @@ const subscribeLogEvent = (contract, eventName) => {
         result.data,
         result.topics.slice(1)
       )
+      // TODO: Hook this up to the Notification UI
       console.log(`You have Point Network Mail! :) ${eventName}!`, eventObj)
     }
   })
