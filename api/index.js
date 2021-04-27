@@ -53,7 +53,7 @@ class ApiServer {
 
             this.server.setNotFoundHandler(this.server.notFound)
 
-            await this.server.listen(parseInt(this.config.port), async (err, address) => {
+            await this.server.listen(parseInt(this.config.port), this.config.address, async (err, address) => {
                 if (err) throw err;
                 if (await checkRegisteredToken() === undefined) await registerToken();
             });
