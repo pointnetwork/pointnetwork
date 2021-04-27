@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . /app/
 
 RUN apt update && apt install -y python3 tor git build-essential && \
-    npm install -g npm nodemon && PYTHON=$(which python3) npm i
+    npm install -g npm && PYTHON=$(which python3) npm i
 
 FROM node:10.15.3-stretch-slim
 
