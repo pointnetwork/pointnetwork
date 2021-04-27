@@ -10,18 +10,22 @@ if (!/^\d+\.\d+\.\d+$/.test (version)) {
 }
 
 const varName = 'POINTNETWORK_NODE_VERSION'
-const envFile = require ('path').resolve (__dirname, '..', '.env')
+const envFile = '.env'
+const envPath = require ('path').resolve (__dirname, '..', envFile)
+const { execSync } = require ('child_process');
 
 try {
-    require ('child_process').execSync (
-        `npm version ${ version } && ` +
-        `sed -i '' 's/${ varName }=v\\([0-9]\\{1,\\}\\.*\\)\\{3\\}/${ varName }=v${ version }/' ${ envFile } && ` +
-        `git add ${ envFile } && git commit -m 'updated image version' && ` +
-        `git push && git push origin v${ version }`
-    ).toString ()
+    execSync (`npm version ${ version }`).toString ()
+    execSync (`sed -i '' 's/${ varName }=v\\([0-9]\\{1,\\}\\.*\\)\\{3\\}/${ varName }=v${ version }/' ${ envPath }`).toString ()
 
-    console.info (`Successfully pushed new version tag "v${ version }"`)
+    if (execSync ('git diff --name-only').toString ().includes (envFile)) {
+        execSync (`git add ${ envPath } && git commit -m 'updated image version'`).toString ()
+    }
+
+    execSync (`git push && git push origin v${ version }`).toString ()
+    console.info (`Successfully pushed new version tag "v${ version }".`)
+
 } catch (e) {
     console.error ((e.stderr && e.stderr.toString ()) || (e.stdout && e.stdout.toString ()) || e.toString ())
-    process.exit (1)
+    throw e
 }
