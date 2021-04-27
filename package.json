@@ -49,7 +49,7 @@
     "start:": "./point",
     "start:dev": "npx nodemon ./point",
     "start:docker": "./scripts/await-contracts-docker.js && ./point",
-    "start:docker:dev": "./scripts/await-contracts-docker.js && nodemon ./point"
+    "start:docker:dev": "./scripts/await-contracts-docker.js && npx nodemon ./point"
   },
   "repository": {
     "type": "git",
