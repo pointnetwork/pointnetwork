@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, writeFileSync } = require ('fs')
+const { existsSync, writeFileSync, unlinkSync } = require ('fs')
 const Web3 = require('web3')
 
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000
@@ -12,6 +12,10 @@ const contractAddresses = {
     Migrations: undefined,
     StorageProviderRegistry: undefined
 }
+
+const lockfiles = ['/data/point.pid', '/data/data/db/LOCK']
+
+for (const lockfile of lockfiles) if (existsSync (lockfile)) unlinkSync (lockfile)
 
 const sleepSync = time => Atomics.wait (new Int32Array (new SharedArrayBuffer (4)), 0, 0, time)
 const contractNames = new Set (Object.keys (contractAddresses))

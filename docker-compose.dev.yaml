@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  storage_provider:
+    entrypoint: npm
+    command: 'run start:docker:dev -- --datadir /data'
+    volumes:
+      - ${PWD}/api:/app/api:ro
+      - ${PWD}/client:/app/client:ro
+      - ${PWD}/console:/app/console:ro
+      - ${PWD}/core:/app/core:ro
+      - ${PWD}/db:/app/db:ro
+      - ${PWD}/example:/app/example:ro
+      - ${PWD}/network:/app/network:ro
+      - ${PWD}/provider:/app/provider:ro
+      - ${PWD}/scripts:/app/scripts:ro
+      - ${PWD}/threads:/app/threads:ro
+      - ${PWD}/wallet:/app/wallet:ro
+      - ${PWD}/point:/app/point:ro
+      - ${PWD}/package.json:/app/package.json:ro
+
+  website_owner:
+    entrypoint: npm
+    command: 'run start:docker:dev -- --datadir /data'
+    volumes:
+      - ${PWD}/api:/app/api:ro
+      - ${PWD}/client:/app/client:ro
+      - ${PWD}/console:/app/console:ro
+      - ${PWD}/core:/app/core:ro
+      - ${PWD}/db:/app/db:ro
+      - ${PWD}/example:/app/example:ro
+      - ${PWD}/network:/app/network:ro
+      - ${PWD}/provider:/app/provider:ro
+      - ${PWD}/scripts:/app/scripts:ro
+      - ${PWD}/threads:/app/threads:ro
+      - ${PWD}/wallet:/app/wallet:ro
+      - ${PWD}/point:/app/point:ro
+      - ${PWD}/package.json:/app/package.json:ro
+
+  website_visitor:
+    entrypoint: npm
+    command: 'run start:docker:dev -- --datadir /data'
+    volumes:
+      - ${PWD}/api:/app/api:ro
+      - ${PWD}/client:/app/client:ro
+      - ${PWD}/console:/app/console:ro
+      - ${PWD}/core:/app/core:ro
+      - ${PWD}/db:/app/db:ro
+      - ${PWD}/example:/app/example:ro
+      - ${PWD}/network:/app/network:ro
+      - ${PWD}/provider:/app/provider:ro
+      - ${PWD}/scripts:/app/scripts:ro
+      - ${PWD}/threads:/app/threads:ro
+      - ${PWD}/wallet:/app/wallet:ro
+      - ${PWD}/point:/app/point:ro
+      - ${PWD}/package.json:/app/package.json:ro
