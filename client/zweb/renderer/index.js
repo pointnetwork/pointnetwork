@@ -86,8 +86,8 @@ class Renderer {
             });
             Twig.exports.extendFunction("storage_get_by_ikv", async(identity, key) => {
                 const fileKey = await this.ctx.web3bridge.getKeyValue(identity, key);
-                return this.ctx.client.storage.readFile(fileKey, 'utf-8');
-            })
+                return await this.ctx.client.storage.readFile(fileKey, 'utf-8');
+            });
             Twig.exports.extendFunction("storage_get", async(key) => {
                 return await this.ctx.client.storage.readFile(key, 'utf-8');
             });
