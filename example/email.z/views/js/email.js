@@ -19,7 +19,12 @@ function encrypt() {
 
 async function subscribeToSendEmailEvent(emailContractAddress) {
   // TODO fetch the artifact from Identiy kv + storage
-  const abi = [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"string","name":"message","type":"string"}],"name":"SendEmail","type":"event"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"string","name":"message","type":"string"}],"name":"send","outputs":[{"internalType":"bool","name":"result","type":"bool"}],"stateMutability":"nonpayable","type":"function"}]
+  // const abi = [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"string","name":"message","type":"string"}],"name":"SendEmail","type":"event"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"string","name":"message","type":"string"}],"name":"send","outputs":[{"internalType":"bool","name":"result","type":"bool"}],"stateMutability":"nonpayable","type":"function"}]
+  console.log({storage_get_by_ikv});
+
+  const abi = storage_get_by_ikv('email.z', 'zweb/contracts/abi/Email');
+
+  console.log({abi})
 
   email = new web3.eth.Contract(abi, emailContractAddress)
 
