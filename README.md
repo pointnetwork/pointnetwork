@@ -14,13 +14,30 @@ To run the demo, one should firstly [install `docker`](https://docs.docker.com/g
 docker-compose up -d
 ```
 
-Once the compose is up, the Point Network contracts deployment will start. Unless the contracts get deployed, the Point Network nodes will wait for the contract addresses to appear. As soon as the addresses obtained the nodes will get started. At this point you may deploy the demo websites via the following command:
+Once the compose is up, the Point Network contracts deployment will start. Unless the contracts get deployed, the Point Network nodes waits for the contract addresses to appear. As soon as the addresses obtained the nodes get started. At this point you may deploy the demo websites via the following command:
 
 ```bash
 ./scripts/deploy-sites-docker.sh
 ```
 
-Right after the sites are there, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `z-proxy` port. The sites will be available at their regular addresses.
+Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `z-proxy` ports. The sites will be available at their regular addresses.
+
+### Develop using the docker compose
+
+If one needs to leverage the Point Network docker-compose and still be able to make changes in the code, they can do so by starting the compose the following way:
+
+```bash
+docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d
+```
+
+When started this way the service has all the local folders [bind-mounted](https://docs.docker.com/storage/bind-mounts/) into each Point Network node container. Therefore all the local changes will be available inside the dockerized nodes.
+
+If you make changes to the code while the compose is already running, you can restart the whole service or a particular container like this:
+
+```bash
+docker-compose restart storage_provider # to restart a specified container
+docker-compose restart # to restart the whole compose
+```
 
 ### Install Dependencies
 

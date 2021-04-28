@@ -1,4 +1,7 @@
 {
+  "api": {
+    "address": "0.0.0.0"
+  },
   "service_provider": {
     "enabled": true
   },
