@@ -1,4 +1,7 @@
 {
+  "api": {
+    "address": "0.0.0.0"
+  },
   "network": {
     "communication_external_host": "website_visitor",
     "bootstrap_nodes": [

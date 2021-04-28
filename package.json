@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Point Network;",
   "main": "point",
   "dependencies": {
@@ -45,7 +45,11 @@
     "nodemon": "^2.0.7"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "start:": "./point",
+    "start:dev": "npx nodemon ./point",
+    "start:docker": "./scripts/await-contracts-docker.js && ./point",
+    "start:docker:dev": "./scripts/await-contracts-docker.js && npx nodemon ./point"
   },
   "repository": {
     "type": "git",

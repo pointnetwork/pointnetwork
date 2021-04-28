@@ -1,5 +1,6 @@
 {
   "api": {
+    "address": "localhost",
     "port": 2468
   },
   "db": {
