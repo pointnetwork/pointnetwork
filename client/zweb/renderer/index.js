@@ -100,7 +100,7 @@ class Renderer {
                 // TODO Use keystore like this: await this.ctx.wallet.loadWalletFromKeystore(id, passcode);
                 let privateKey = this.ctx.wallet.getNetworkAccountPrivateKey()
                 let address = this.ctx.wallet.getNetworkAccount()
-                let wallet = { address, privateKey}
+                let wallet = { address, privateKey }
                 return wallet;
             });
             Twig.exports.extendFunction("contract_list", async(target, contractName, method) => {
