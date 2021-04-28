@@ -1,4 +1,5 @@
 const http = require('http');
+const NodeSession = require('node-session')
 const _ = require('lodash');
 const fs = require('fs');
 const Renderer = require('../zweb/renderer');
@@ -37,6 +38,8 @@ class ZProxy {
 
     async request(request, response) {
         // console.log(request);
+        // this.session = NodeSession({secret: '123123123'})
+        // this.session.startSession(request, response, callback)
 
         // console.log(request);
         // console.log(request.headers);
@@ -75,6 +78,13 @@ class ZProxy {
             } else if (_.startsWith(parsedUrl.pathname, '/_contract_send/')) {
                 try {
                     rendered = await this.contractSend(host, request);
+                } catch(e) {
+                    return this.abortError(response, e);
+                }
+            }
+              else if (_.startsWith(parsedUrl.pathname, '/_auth/')) {
+                try {
+                    rendered = await this.auth(host, request);
                 } catch(e) {
                     return this.abortError(response, e);
                 }
@@ -185,6 +195,42 @@ class ZProxy {
                 console.log('Redirecting to '+redirect+'...');
                 const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
                 resolve(redirectHtml);
+            });
+            request.on('error', (e) => {
+                reject('Error:', e);
+            });
+        });
+    }
+
+    auth(host, request, response) {
+        return new Promise(async(resolve, reject) => {
+            let body = '';
+            request.on('data', (chunk) => {
+                body += chunk;
+            });
+            request.on('end', async() => {
+                if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
+
+                // if it loads then add the id / passcode to the session
+                // this will be used to load the wallet in Twig server side rendering function
+
+                let entries = new URL('http://localhost/?'+body).searchParams.entries();
+                let authData = {};
+                for(let entry of entries){
+                    authData[ entry[0] ] = entry[1];
+                }
+                // try to load the wallet using the id / passcode
+                let wallet = await this.ctx.wallet.loadWalletFromKeystore(authData['walletid'], authData['passcode']);
+
+                if(wallet != undefined){
+                    console.log(`Loaded Wallet with address: ${wallet.address}`)
+                    console.log('Redirecting to site root (default behaviour for now)...');
+                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head></html>';
+                    resolve(redirectHtml);
+                } else {
+                    reject('Unable to load wallet. Do try again!');
+                }
+
             });
             request.on('error', (e) => {
                 reject('Error:', e);

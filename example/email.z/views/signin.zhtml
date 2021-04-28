@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Point Network Email Example App : Sign in</title>
+  </head>
+  <body>
+    <b>This is the sign in page!</b>
+    <p>In this demo, simply enter the Wallet ID and Passcode of a wallet that belongs to the Point Network Node this app is connected to.</p>
+
+    {% block contents %}
+      <form method="post" action="/_auth/">
+        <input name="walletid" value="2ea886ff-9333-4052-b88d-198380cf4316" hint="Enter your wallet id" />
+        <input name="passcode" value="0xd31419be7371c03ef91684302aa80d1543cd8f42106b504b162a1d6fec77921d" hint="Enter your wallet passcode" />
+        <input type="submit" value="Authenticate"/>
+      </form>
+    {% endblock contents %}
+  </body>
+</html>

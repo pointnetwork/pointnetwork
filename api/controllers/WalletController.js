@@ -49,6 +49,17 @@ class WalletController {
     }
   }
 
+  address() {
+    if(this._loadWallet()) {
+      let address = this.wallet.address;
+
+      // return the public key
+      return this._response({
+        address
+      })
+    }
+  }
+
   async balance() {
     if(this._loadWallet()) {
       let balance = (await this.web3.eth.getBalance(this.wallet.address)).toString()
