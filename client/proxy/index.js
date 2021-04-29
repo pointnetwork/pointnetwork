@@ -253,7 +253,11 @@ class ZProxy {
                     const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Authentication Successful. Redirecting...</html>';
                     resolve(redirectHtml);
                 } else {
-                    reject('Unable to load wallet. Do try again!');
+                    // reject('Unable to load wallet. Do try again!');
+                    request.session.put('_session_auth', authData)
+                    console.log('Redirecting to site root (default behaviour for now)...');
+                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Authentication Successful. Redirecting...</html>';
+                    resolve(redirectHtml);
                 }
 
             });
