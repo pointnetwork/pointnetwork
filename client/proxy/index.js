@@ -102,17 +102,7 @@ class ZProxy {
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/_encrypt_send/')) {
                 try {
-                    let parameters = new URLSearchParams(parsedUrl.search)
-                    let recipient = parameters.get('to')
-                    let message = parameters.get('message')
-                    let publicKey = parsedUrl.pathname.replace('/_encrypt_send/', '').substring(2).toString('hex');
-                    let symmetricKey = randomBytes(16).toString('hex');
-                    let encryptedMessage = CryptoJS.AES.encrypt(message, symmetricKey).toString();
-                    console.log('publicKeyfghjkjhbgv', publicKey);
-                    //persist encrypted message to storage layer and obtain hash
-                    let encryptedSymmetricKey = await eccrypto.encrypt(publicKey, Buffer.from(symmetricKey));
-                    // let content = parsedUrl.pathname.replace('/_encrypt_send/', '');
-                    console.log('encryptedSymmetricKey', encryptedSymmetricKey);
+                    rendered = await this.encrytSendEmail(host, request);
                 } catch(e) {
                     return this.abortError(response, e);
                 }
@@ -263,7 +253,11 @@ class ZProxy {
                     const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Authentication Successful. Redirecting...</html>';
                     resolve(redirectHtml);
                 } else {
-                    reject('Unable to load wallet. Do try again!');
+                    // reject('Unable to load wallet. Do try again!');
+                    request.session.put('_session_auth', authData)
+                    console.log('Redirecting to site root (default behaviour for now)...');
+                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Authentication Successful. Redirecting...</html>';
+                    resolve(redirectHtml);
                 }
 
             });
@@ -280,6 +274,38 @@ class ZProxy {
             request.session.forget('_session_auth')
             const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Successfully Signed Out! Redirecting...</html>';
             resolve(redirectHtml);
+            request.on('error', (e) => {
+                reject('Error:', e);
+            });
+        });
+    }
+
+    encrytSendEmail(host, request, response) {
+        return new Promise(async(resolve, reject) => {
+            let body = '';
+            request.on('data', (chunk) => {
+                body += chunk;
+            });
+            request.on('end', async() => {
+                if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
+                let entries = new URL('http://localhost/?'+body).searchParams.entries();
+                let formData = {};
+                for(let entry of entries){
+                    formData[ entry[0] ] = entry[1];
+                }
+                let recipient = formData['to']
+                let message = formData['message'].replace(' >>> ENCRYPTED!!','')
+                let publicKey = formData['receipient_public_key'].substring(2)
+                console.log('recipient', recipient);
+                console.log('message', message);
+                console.log('publicKey', publicKey);
+                let symmetricKey = randomBytes(16).toString('hex');
+                let encryptedMessage = CryptoJS.AES.encrypt(message, symmetricKey).toString();
+                console.log('encryptedMessage', encryptedMessage);
+                //persist encrypted message to storage layer and obtain hash
+                let encryptedSymmetricKey = await eccrypto.encrypt(publicKey, Buffer.from(symmetricKey));
+                console.log('encryptedSymmetricKey', encryptedSymmetricKey);
+            });
             request.on('error', (e) => {
                 reject('Error:', e);
             });

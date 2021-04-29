@@ -16,12 +16,13 @@
 
     <div id="notifications"></div>
 
-    <form method="post" action="/_encrypt_send/{{ receipient_public_key }}" onSubmit="return encrypt();">
+    <form method="post" action="/_encrypt_send/" onSubmit="return encrypt();">
       <label><b>FROM: </b></label>{{ wallet.address }}<br />
       <label><b>TO: </b></label>
       <input type="text" name="to" cols="50" value="{{ receipient }}" /><br />
+      <input type="hidden" name="receipient_public_key" value="{{ receipient_public_key }}" /><br />
       <label><b>BODY: </b></label>
-      <textarea id="body" rows="4" cols="50" name="storage[contents]"></textarea><br/><br/>
+      <textarea id="body" rows="4" cols="50" name="message"></textarea><br/><br/>
       <input type="submit" value="Encrypt & Send Email"/>
     </form>
 
@@ -34,9 +35,6 @@
         let receipient_public_key = "{{ receipient_public_key }}"
       </script>
       <script src="js/web3.min.js"></script>
-      <script src="js/forge.min.js"></script>
-      <script src="js/crypto-js.min.js"></script>
-      <script src="js/jsencrypt.min.js"></script>
       <script language="JavaScript" src="js/email.js"></script>
 
     {% endblock javascript %}
