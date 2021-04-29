@@ -38,8 +38,10 @@ class ZProxy {
 
     async request(request, response) {
         // console.log(request);
-        // this.session = NodeSession({secret: '123123123'})
-        // this.session.startSession(request, response, callback)
+        // Using node-session here to avoid re-write to ExpressJS or Fastify for now
+        // https://www.npmjs.com/package/node-session
+        this.session = new NodeSession({secret: '24tL7rQrHcXPxNevZdFyvNi8RyLGE3jf'})
+        this.session.startSession(request, response, () => {})
 
         // console.log(request);
         // console.log(request.headers);
@@ -88,6 +90,13 @@ class ZProxy {
                 } catch(e) {
                     return this.abortError(response, e);
                 }
+            }
+              else if (_.startsWith(parsedUrl.pathname, '/_signout/')) {
+                try {
+                    rendered = await this.signOut(host, request);
+                } catch(e) {
+                    return this.abortError(response, e);
+                }
             } else {
                 let zroute_id = await this.getZRouteIdFromDomain(host);
                 if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
@@ -102,6 +111,9 @@ class ZProxy {
                 let renderer = new Renderer(ctx);
                 let request_params = {};
                 for(let k of parsedUrl.searchParams.entries()) request_params[ k[0] ] = k[1];
+                // add session auth data to the reqest params for apps that need it
+                let authData = request.session.get('_session_auth');
+                request_params['_session_auth'] = authData == undefined ? {} : authData
                 rendered = await renderer.render(template_file_contents, host, request_params); // todo: sanitize
             }
 
@@ -211,9 +223,6 @@ class ZProxy {
             request.on('end', async() => {
                 if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
 
-                // if it loads then add the id / passcode to the session
-                // this will be used to load the wallet in Twig server side rendering function
-
                 let entries = new URL('http://localhost/?'+body).searchParams.entries();
                 let authData = {};
                 for(let entry of entries){
@@ -223,15 +232,29 @@ class ZProxy {
                 let wallet = await this.ctx.wallet.loadWalletFromKeystore(authData['walletid'], authData['passcode']);
 
                 if(wallet != undefined){
+                    request.session.put('_session_auth', authData)
                     console.log(`Loaded Wallet with address: ${wallet.address}`)
                     console.log('Redirecting to site root (default behaviour for now)...');
-                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head></html>';
+                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Authentication Successful. Redirecting...</html>';
                     resolve(redirectHtml);
                 } else {
                     reject('Unable to load wallet. Do try again!');
                 }
 
             });
+            request.on('error', (e) => {
+                reject('Error:', e);
+            });
+        });
+    }
+
+    signOut(host, request, response) {
+        return new Promise(async(resolve, reject) => {
+            if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
+
+            request.session.forget('_session_auth')
+            const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Successfully Signed Out! Redirecting...</html>';
+            resolve(redirectHtml);
             request.on('error', (e) => {
                 reject('Error:', e);
             });

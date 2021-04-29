@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Point Network Email Example App</title>
+    <link type="text/css" rel="stylesheet" href="index.css"/>
+  </head>
+  <body>
+    <header>
+      <h1>Decentralized Email</h1>
+    </header>
+
+    <main>
+      <div>
+        <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"></img>
+        <p><b>Point Network Email Example App</b>. Demos the powers of ZHTML + Solidity + DHT!!</p>
+      </div>
+      {% block contents %}
+      {% endblock %}
+    </main>
+  </body>
+</html>

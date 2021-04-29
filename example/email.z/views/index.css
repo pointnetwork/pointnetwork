@@ -1,0 +1,77 @@
+html, body {
+  padding: 0;
+  margin: 0;
+  font-family: Avenir;
+}
+
+header {
+  background-color: #ccccff;
+  padding: 10px;
+  font-family: Rockwell;
+  margin-bottom: 60px;
+}
+
+h1 {
+  text-align: center;
+  padding-top: 12px;
+}
+
+.login {
+  width: 382px;
+  overflow: hidden;
+  margin: auto;
+  padding: 80px;
+  background: #ccccff;
+  border-radius: 15px ;
+}
+
+h2 {
+  color: #000000;
+}
+
+label {
+  color: #000000;
+  font-size: 17px;
+}
+
+#walletid {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 3px;
+  padding-left: 8px;
+}
+
+#passcode {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 3px;
+  padding-left: 8px;
+
+}
+
+#authenticate {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 17px;
+  padding-left: 7px;
+  color: blue;
+}
+
+span {
+  color: white;
+  font-size: 17px;
+}
+
+
+main {
+  width: 400px;
+  margin: 0 auto;
+}
+
+textarea {
+  width: 100%;
+}
+
