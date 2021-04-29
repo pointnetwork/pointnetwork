@@ -26,7 +26,7 @@ class Web3Bridge {
         const publicKeyBuffer = ethereumUtils.privateToPublic(ethereumUtils.addHexPrefix(privateKey))
         const publicKey = ethereumUtils.bufferToHex(publicKeyBuffer)
         const identity = await this.identityByOwner(account);
-        await this.putKeyValue(identity,'pubkey', publicKey)
+        await this.putKeyValue(identity,'public_key', publicKey)
     }
 
     async loadContract(contractName, at) {
