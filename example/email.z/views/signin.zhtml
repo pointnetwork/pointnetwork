@@ -1,18 +1,19 @@
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Point Network Email Example App : Sign in</title>
-  </head>
-  <body>
-    <b>This is the sign in page!</b>
-    <p>In this demo, simply enter the Wallet ID and Passcode of a wallet that belongs to the Point Network Node this app is connected to.</p>
+{% extends 'layout.zhtml' %}
 
-    {% block contents %}
-      <form method="post" action="/_auth/">
-        <input name="walletid" value="2ea886ff-9333-4052-b88d-198380cf4316" hint="Enter your wallet id" />
-        <input name="passcode" value="0xd31419be7371c03ef91684302aa80d1543cd8f42106b504b162a1d6fec77921d" hint="Enter your wallet passcode" />
-        <input type="submit" value="Authenticate"/>
-      </form>
-    {% endblock contents %}
-  </body>
-</html>
+{% block contents %}
+
+  <p>In this demo, simply enter the <b>Wallet ID</b> and <b>Wallet Passcode</b> of a wallet that belongs to the Point Network Node this app is connected to.</p>
+
+  <h2>Sign In</h2>
+
+  <div class="login">
+    <form id="login" method="post" action="/_auth/">
+      <label><b>Wallet Id</b></label><br>
+      <input id="walletid" name="walletid" value="6dcb20c2-2be5-43ae-9ac0-964fe46e8408" type="text" placeholder="Enter your node wallet id" /><br><br>
+      <label><b>Wallet Passcode</b></label>
+      <input id="passcode" name="passcode" type="Password" value="0x00e8ed9b934c5930e7ba8bd1b249da51d25ec9e94ef51f67de677d9ca5f88d56" placeholder="Enter your node wallet passcode" /><br><br>
+      <input id="authenticate" name="authenticate" type="submit" value="Authenticate"/>
+    </form>
+  </div>
+
+{% endblock %}
