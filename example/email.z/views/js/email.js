@@ -17,9 +17,18 @@ function encrypt() {
   return true
 }
 
-async function subscribeToSendEmailEvent(emailContractAddress) {
-  // TODO fetch the artifact from Identiy kv + storage
-  const abi = [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"string","name":"message","type":"string"}],"name":"SendEmail","type":"event"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"string","name":"message","type":"string"}],"name":"send","outputs":[{"internalType":"bool","name":"result","type":"bool"}],"stateMutability":"nonpayable","type":"function"}]
+function sanitizeJson(input){
+  var e = document.createElement('textarea')
+  e.innerHTML = input
+  return (e.value || '')
+    .replace(/(\/\*.*?)"(.*?)"(.*?\*\/)/g, '$1\\"$2\\"$3')
+    .replace(/\n/g, '\\n')
+    .replace(/\t/g, '\\t')
+    .replace(/"{(.*?)}"/g, (_, match) => `"{${ match.replace(/"/g, '\\"') }}"`)
+}
+
+async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi) {
+  const {abi} = JSON.parse(sanitizeJson(emailContractAbi))
 
   email = new web3.eth.Contract(abi, emailContractAddress)
 
@@ -56,5 +65,5 @@ const subscribeLogEvent = (contract, eventName) => {
 }
 
 (() => {
-  subscribeToSendEmailEvent(emailContractAddress)
+  subscribeToSendEmailEvent(emailContractAddress, emailContractAbi)
 })()
