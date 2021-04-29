@@ -7,6 +7,7 @@
     {% set receipient = '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8' %}
     {% set receipient_public_key = identity_ikv_get(receipient, 'public_key') %}
     {% set emailContractAddress = identity_ikv_get('email', 'zweb/contracts/address/Email') %}
+    {% set emailContractAbi = storage_get_by_ikv('email', 'zweb/contracts/abi/Email') %}
     {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
 
     <form method="post" action="/_signout/">
@@ -28,6 +29,7 @@
         // set local javascript variables from twig variables
         let to = "{{ receipient }}"
         let emailContractAddress = "{{ emailContractAddress }}"
+        let emailContractAbi = "{{ emailContractAbi }}"
       </script>
       <script src="js/web3.min.js"></script>
       <script language="JavaScript" src="js/email.js"></script>
