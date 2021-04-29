@@ -7,6 +7,9 @@ const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
+const CryptoJS = require("crypto-js");
+const eccrypto = require("eccrypto");
+const randomBytes = require('randombytes');
 
 class ZProxy {
     constructor(ctx) {
@@ -94,6 +97,22 @@ class ZProxy {
               else if (_.startsWith(parsedUrl.pathname, '/_signout/')) {
                 try {
                     rendered = await this.signOut(host, request);
+                } catch(e) {
+                    return this.abortError(response, e);
+                }
+            } else if (_.startsWith(parsedUrl.pathname, '/_encrypt_send/')) {
+                try {
+                    let parameters = new URLSearchParams(parsedUrl.search)
+                    let recipient = parameters.get('to')
+                    let message = parameters.get('message')
+                    let publicKey = parsedUrl.pathname.replace('/_encrypt_send/', '').substring(2).toString('hex');
+                    let symmetricKey = randomBytes(16).toString('hex');
+                    let encryptedMessage = CryptoJS.AES.encrypt(message, symmetricKey).toString();
+                    console.log('publicKeyfghjkjhbgv', publicKey);
+                    //persist encrypted message to storage layer and obtain hash
+                    let encryptedSymmetricKey = await eccrypto.encrypt(publicKey, Buffer.from(symmetricKey));
+                    // let content = parsedUrl.pathname.replace('/_encrypt_send/', '');
+                    console.log('encryptedSymmetricKey', encryptedSymmetricKey);
                 } catch(e) {
                     return this.abortError(response, e);
                 }
