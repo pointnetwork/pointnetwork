@@ -42,6 +42,8 @@
     },
     "wallet": {
       "__do not remove this section__": null,
+      "id": "",
+      "passcode": "",
       "account": "",
       "privateKey": "",
       "keystore_path": "wallets/keystore"
