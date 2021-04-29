@@ -228,8 +228,14 @@ class ZProxy {
                 for(let entry of entries){
                     authData[ entry[0] ] = entry[1];
                 }
+
                 // try to load the wallet using the id / passcode
-                let wallet = await this.ctx.wallet.loadWalletFromKeystore(authData['walletid'], authData['passcode']);
+                let wallet
+                try{
+                    wallet = await this.ctx.wallet.loadWalletFromKeystore(authData['walletid'], authData['passcode'])
+                } catch(e) {
+                    console.error(`Error loading wallet from keystore ${e}`)
+                }
 
                 if(wallet != undefined){
                     request.session.put('_session_auth', authData)

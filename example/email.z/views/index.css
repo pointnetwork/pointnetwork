@@ -23,6 +23,7 @@ h1 {
   padding: 80px;
   background: #ccccff;
   border-radius: 15px ;
+  padding-bottom: 100px;
 }
 
 h2 {
@@ -74,4 +75,3 @@ main {
 textarea {
   width: 100%;
 }
-

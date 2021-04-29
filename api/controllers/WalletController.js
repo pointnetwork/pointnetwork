@@ -89,7 +89,7 @@ class WalletController {
     if(this.walletToken === undefined) {
       throw new Error('Missing wallet-token header.')
     }
-    if(this.walletToken.length < 103) {
+    if(this.walletToken.length < 69) {
       throw new Error('wallet-token invalid.')
     }
   }
