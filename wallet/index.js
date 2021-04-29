@@ -57,6 +57,7 @@ class Wallet {
         let wallet = this.ctx.network.web3.eth.accounts.wallet[0]
         let keystore = wallet.encrypt(passcode)
         fs.writeFileSync(`${this.keystore_path}/${id}`, JSON.stringify(keystore))
+        return
     }
 
     async sendTransaction(from, to, value) {
