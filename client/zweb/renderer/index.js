@@ -96,12 +96,11 @@ class Renderer {
             Twig.exports.extendFunction("contract_get", async(target, contractName, method, params) => {
                 return await this.ctx.web3bridge.callContract(target, contractName, method, params);
             });
-            Twig.exports.extendFunction("load_node_wallet", async(id, passcode) => {
-                // TODO Use keystore like this: await this.ctx.wallet.loadWalletFromKeystore(id, passcode);
-                let privateKey = this.ctx.wallet.getNetworkAccountPrivateKey()
-                let address = this.ctx.wallet.getNetworkAccount()
-                let wallet = { address, privateKey }
-                return wallet;
+            Twig.exports.extendFunction("load_wallet", async(id, passcode) => {
+                return await this.ctx.wallet.loadWalletFromKeystore(id, passcode);
+            });
+            Twig.exports.extendFunction("is_authenticated", async(auth) => {
+                return auth.walletid != undefined
             });
             Twig.exports.extendFunction("contract_list", async(target, contractName, method) => {
                 let i = 0;

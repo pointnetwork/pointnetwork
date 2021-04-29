@@ -1,29 +1,27 @@
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Point Network Email Example App</title>
-  </head>
-  <body>
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  {% if(is_authenticated(_session_auth)) %}
+
     {% set receipient = '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8' %}
     {% set receipient_public_key = identity_ikv_get(receipient, 'public_key') %}
     {% set emailContractAddress = identity_ikv_get('email', 'zweb/contracts/address/Email') %}
-    {% set wallet = load_node_wallet() %}
+    {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
 
-    <div>
-      <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"></img>
-      <p><b>Point Network Email Example App</b>. Demos the powers of ZHTML + Solidity + DHT!!</p>
-    </div>
 
-    <p>You are authenticated using account FROM: <b>{{ wallet.address }}</b></p>
+    <form method="post" action="/_signout/">
+      <input type="submit" value="Sign Out"/>
+    </form>
+
+    <p>You are authenticated using account FROM: <b>{{ wallet.address }}</b>.</p>
     <p>This demo will send a Point Network Email TO: <b>{{ receipient }}</b></p>
 
-    {% block contents %}
-      <form method="post" action="/_contract_send/Email.send(to,contents)" onSubmit="return encrypt();">
-        <input type="hidden" name="to" value="{{ receipient }}" />
-        <textarea id="body" rows="4" cols="50" name="storage[contents]"></textarea><br/><br/>
-        <input type="submit" value="Encrypt & Send Email"/>
-      </form>
-    {% endblock contents %}
+    <form method="post" action="/_contract_send/Email.send(to,contents)" onSubmit="return encrypt();">
+      <input type="hidden" name="to" value="{{ receipient }}" />
+      <textarea id="body" rows="4" cols="50" name="storage[contents]"></textarea><br/><br/>
+      <input type="submit" value="Encrypt & Send Email"/>
+    </form>
 
     {% block javascript %}
 
@@ -44,5 +42,12 @@
       <div id="div1">The text above has been created dynamically by the loaded email js file.</div>
       <div id="public_key">The public key of {{ receipient }} is {{ receipient_public_key }}</div>
     </div>
-  </body>
-</html>
+
+    {% else %}
+
+      <b>You are not authenticated!</b>
+      <p>Try to <a href='/signin'>Sign In</a></p>
+
+    {% endif %}
+
+  {% endblock %}
