@@ -302,7 +302,16 @@ class ZProxy {
                 let symmetricKey = randomBytes(16).toString('hex');
                 let encryptedMessage = CryptoJS.AES.encrypt(message, symmetricKey).toString();
                 console.log('encryptedMessage', encryptedMessage);
+
                 //persist encrypted message to storage layer and obtain hash
+                const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+                this.ctx.utils.makeSurePathExists(cache_dir);
+                const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(encryptedMessage));
+                fs.writeFileSync(tmpPostDataFilePath, encryptedMessage);
+                let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                let encryptedMessageHash = uploaded.id;
+                console.log('encryptedMessageHash', encryptedMessageHash);
+
                 let encryptedSymmetricKey = await eccrypto.encrypt(publicKey, Buffer.from(symmetricKey));
                 console.log('encryptedSymmetricKey', encryptedSymmetricKey);
             });
