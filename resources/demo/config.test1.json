@@ -8,6 +8,8 @@
   },
   "client": {
     "wallet": {
+      "id": "6dcb20c2-2be5-43ae-9ac0-964fe46e8408",
+      "passcode": "XGw26rVTdn9DEW4tp8M6NCr9RmocnSdC",
       "account": "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301",
       "privateKey": "feec30f685ff378c117d1bb67095815a4604f03f1759a418e82df05b8c3be245"
     }
