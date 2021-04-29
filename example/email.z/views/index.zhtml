@@ -9,16 +9,15 @@
     {% set emailContractAddress = identity_ikv_get('email', 'zweb/contracts/address/Email') %}
     {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
 
-
     <form method="post" action="/_signout/">
       <input type="submit" value="Sign Out"/>
     </form>
 
-    <p>You are authenticated using account FROM: <b>{{ wallet.address }}</b>.</p>
-    <p>This demo will send a Point Network Email TO: <b>{{ receipient }}</b></p>
-
     <form method="post" action="/_contract_send/Email.send(to,contents)" onSubmit="return encrypt();">
-      <input type="hidden" name="to" value="{{ receipient }}" />
+      <label><b>FROM: </b></label>{{ wallet.address }}<br />
+      <label><b>TO: </b></label>
+      <input type="text" name="to" cols="50" value="{{ receipient }}" /><br />
+      <label><b>BODY: </b></label>
       <textarea id="body" rows="4" cols="50" name="storage[contents]"></textarea><br/><br/>
       <input type="submit" value="Encrypt & Send Email"/>
     </form>
