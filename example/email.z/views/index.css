@@ -16,6 +16,10 @@ h1 {
   padding-top: 12px;
 }
 
+.emailNotification {
+  color: #f10808
+}
+
 .login {
   width: 382px;
   overflow: hidden;

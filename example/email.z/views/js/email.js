@@ -9,6 +9,15 @@ function addElement() {
   currentDiv.parentNode.insertBefore(newDiv, currentDiv);
 }
 
+function addEmailNotificationElement(messageId) {
+  const emailNotificationDiv = document.createElement("div");
+  emailNotificationDiv.setAttribute("class", "emailNotification");
+  const emailNotificationContent = document.createTextNode(`You have Point Network Mail!! ${messageId}`);
+  emailNotificationDiv.appendChild(emailNotificationContent);
+  const notifcations = document.getElementById("notifications");
+  notifcations.parentNode.insertBefore(emailNotificationDiv, notifcations);
+}
+
 function encrypt() {
   let body = document.getElementById("body");
   origValue = body.value
@@ -59,6 +68,10 @@ const subscribeLogEvent = (contract, eventName) => {
       )
       // TODO: Hook this up to the Notification UI
       console.log(`You have Point Network Mail! :) ${eventName}!`, eventObj)
+      console.log(`Message ID: ${eventObj.message}`)
+
+      // Show the notification on the UI
+      addEmailNotificationElement(eventObj.message)
     }
   })
   subscribedEvents[eventName] = subscription
