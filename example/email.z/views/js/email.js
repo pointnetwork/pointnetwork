@@ -1,3 +1,4 @@
+
 const web3 = new Web3('ws://localhost:7545')
 document.body.onload = addElement;
 
@@ -21,7 +22,6 @@ function addEmailNotificationElement(messageId) {
 function encrypt() {
   let body = document.getElementById("body");
   origValue = body.value
-  // TODO AES encryption would be here...
   body.value = `${origValue} >>> ENCRYPTED!!`
   return true
 }
@@ -43,7 +43,6 @@ async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi)
 
   emails = await email.getPastEvents("SendEmail", {fromBlock: 0, toBlock: 'latest'})
   console.log(`SendEmail Count: ${emails.length}`)
-
   subscribeLogEvent(email, 'SendEmail')
 }
 
