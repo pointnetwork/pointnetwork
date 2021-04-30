@@ -2,10 +2,12 @@
 
 {% block contents %}
 
-  {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
+  {% if(is_authenticated(_session_auth)) %}
 
-  <h2>Inbox for {{ wallet.address }}</h2>
+    <h2>Inbox for {{ wallet.address }}</h2>
 
-  <i>TODO: Show accounts received emails as a list here</i>
+    <i>TODO: Show accounts received emails as a list here</i>
+
+  {% endif %}
 
 {% endblock %}

@@ -2,12 +2,14 @@
 
 {% block contents %}
 
-  <h2>Sign Out</h2>
+  {% if(is_authenticated(_session_auth)) %}
+    <h2>Sign Out</h2>
 
-  <p>Are you sure you want to sign out?</p>
+    <p>Are you sure you want to sign out?</p>
 
-  <form method="post" action="/_signout/">
-    <input type="submit" value="Sign Out"/>
-  </form>
+    <form method="post" action="/_signout/">
+      <input type="submit" value="Sign Out"/>
+    </form>
+  {% endif %}
 
 {% endblock %}

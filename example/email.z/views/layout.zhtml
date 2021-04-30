@@ -7,6 +7,10 @@
   <body>
     <header>
       <h1>Decentralized Email</h1>
+      {% if(is_authenticated(_session_auth)) %}
+        {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
+        <h4>Logged in as: {{ wallet.address }}</h4>
+      {% endif %}
     </header>
 
     <main>

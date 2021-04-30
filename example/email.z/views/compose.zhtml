@@ -4,8 +4,6 @@
 
   {% if(is_authenticated(_session_auth)) %}
 
-    {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
-
     <div class="formback">
       <form method="post" action="/_contract_send/Email.send(to,contents)" onSubmit="return encrypt();">
         <label><b>From</b></label><br>
