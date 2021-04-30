@@ -1,0 +1,7 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  <h2>Here be your inbox</h2>
+
+{% endblock %}

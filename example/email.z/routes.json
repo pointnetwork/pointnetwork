@@ -1,4 +1,7 @@
 {
   "/": "index.zhtml",
-  "/signin": "signin.zhtml"
+  "/signin": "signin.zhtml",
+  "/compose": "compose.zhtml",
+  "/inbox": "inbox.zhtml",
+  "/show": "show.zhtml"
 }

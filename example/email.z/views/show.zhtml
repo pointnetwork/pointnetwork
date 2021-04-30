@@ -1,0 +1,10 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  {% set contents = storage_get(messageid) %}
+
+  <h2>Message Id: {{ messageid }}</h2>
+  <h3>Body: {{ contents }}</h3>
+
+{% endblock %}
