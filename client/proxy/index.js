@@ -7,9 +7,8 @@ const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
-const CryptoJS = require("crypto-js");
+const crypto = require('crypto')
 const eccrypto = require("eccrypto");
-const randomBytes = require('randombytes');
 
 class ZProxy {
     constructor(ctx) {
@@ -17,6 +16,7 @@ class ZProxy {
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
+        this.web3 = this.ctx.network.web3
     }
 
     async start() {
@@ -292,12 +292,9 @@ class ZProxy {
                 let recipient = formData['to']
                 let message = formData['message'].replace(' >>> ENCRYPTED!!','')
                 let publicKey = formData['receipient_public_key'].substring(2)
-                console.log('recipient', recipient);
-                console.log('message', message);
-                console.log('publicKey', publicKey);
-                let symmetricKey = randomBytes(16).toString('hex');
-                let encryptedMessage = CryptoJS.AES.encrypt(message, symmetricKey).toString();
-                console.log('encryptedMessage', encryptedMessage);
+                const { encryptedMessage, encryptedSymmetricKey} = await this.constructor.encryptPlainTextAndKey(host, message, publicKey)
+                console.log('encryptedMessageout', encryptedMessage);
+                console.log('encryptedSymmetricKeyout', encryptedSymmetricKey);
 
                 //persist encrypted message to storage layer and obtain hash
                 const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
@@ -308,8 +305,16 @@ class ZProxy {
                 let encryptedMessageHash = uploaded.id;
                 console.log('encryptedMessageHash', encryptedMessageHash);
 
-                let encryptedSymmetricKey = await eccrypto.encrypt(publicKey, Buffer.from(symmetricKey));
-                console.log('encryptedSymmetricKey', encryptedSymmetricKey);
+                const emailContractAddress = await this.get_from_ikv('email', 'zweb/contracts/address/Email');
+                const emailContractAbi = await this.get_from_ikv('email', 'zweb/contracts/abi/Email');
+                const { abi } = JSON.parse(emailContractAbi)
+                console.log('bhcdncdadress', emailContractAddress);
+                const emailContract = new this.web3.eth.Contract(abi, emailContractAddress)
+                // console.log('sbcnddsdddsd', emailContract);
+                // emailContract.methods.send(recipient, encryptedMessageHash, encryptedSymmetricKey).call()
+              
+                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b> Message Successfully Sent! Redirecting... </html>';
+                resolve(redirectHtml);
             });
             request.on('error', (e) => {
                 reject('Error:', e);
@@ -317,27 +322,30 @@ class ZProxy {
         });
     }
 
-    static async encryptPlainTextAndKey(plaintext, publicKey) {
-        const symmetricKey = randomBytes(24)
-        const iv = randomBytes(16)
-        const cipher = require('crypto').createCipheriv('aes192', symmetricKey, iv)
-        const ciphertext = cipher.update(plaintext, 'utf-8')
-        const remaining = cipher.final()
+    async get_from_ikv(identity, key) {
+        const fileKey = await this.ctx.web3bridge.getKeyValue(identity, key);
+        return await this.ctx.client.storage.readFile(fileKey, 'utf-8');
+    }
 
-        console.log('encryptedMessage', ciphertext.toString('hex'), remaining.toString('hex'))
+    static async encryptPlainTextAndKey(host, plaintext, publicKey) {
+        const symmetricKey = crypto.randomBytes(24)
+        const iv = crypto.randomBytes(16)
+
+        const cipher = crypto.createCipheriv('aes192', symmetricKey, iv)
+        cipher.update(plaintext, 'utf-8')
+        const encryptedMessage = cipher.final('hex')
 
         const publicKeyBuffer = Buffer.concat([
             Buffer.from('04', 'hex'),
             Buffer.from(publicKey.replace('0x', ''), 'hex')
         ])
 
-        console.log(publicKey, publicKeyBuffer, publicKeyBuffer.length)
+        const hostNameHash = crypto.createHash('sha256');
+        hostNameHash.update(host);
+        const encryptedSymmetricObj = await eccrypto.encrypt(publicKeyBuffer, Buffer.from(`|${hostNameHash.digest('hex')}|${symmetricKey.toString('hex')}|`))
+        const encryptedSymmetricKey = JSON.stringify(encryptedSymmetricObj)
 
-        const encryptedSymmetricKey = await eccrypto.encrypt(publicKeyBuffer, symmetricKey)
-
-        console.log('encryptedSymmetricKey', encryptedSymmetricKey)
-
-        return {ciphertext, encryptedSymmetricKey}
+        return {encryptedMessage, encryptedSymmetricKey}
     }
 
     contractSend(host, request, response) {
