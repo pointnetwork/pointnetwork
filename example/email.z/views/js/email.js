@@ -1,14 +1,16 @@
 const web3 = new Web3('ws://localhost:7545')
 
-function addEmailNotificationElement(messageId) {
+function addEmailNotificationElement(to, messageId) {
   // For now build a simple link that navigates to the show page.
-  // <a href='/show?messageid=123456'>Email</a>
+  // <div>New Email for 0xf99022.. with Id: <a href='/show?messageid=123456'>123456</a></div>
   const emailNotificationDiv = document.createElement("div");
-  emailNotificationDiv.setAttribute("class", "emailNotification");
-  const emailNotificationContent = document.createTextNode(`You have Point Network Mail!! ${messageId}`);
+  emailNotificationDiv.setAttribute("class", "emailNotification formback");
+  const emailNotificationContent = document.createTextNode(`New Email for ${to.substr(0,8)}... with Id: `);
+  emailNotificationDiv.appendChild(emailNotificationContent)
+  const emailMessageId = document.createTextNode(messageId);
   const emailLink = document.createElement("a")
   emailLink.setAttribute('href', `/show?messageid=${messageId}`)
-  emailLink.appendChild(emailNotificationContent)
+  emailLink.appendChild(emailMessageId)
   emailNotificationDiv.appendChild(emailLink);
   const notifcations = document.getElementById("notifications");
   notifcations.parentNode.insertBefore(emailNotificationDiv, notifcations);
@@ -65,7 +67,7 @@ const subscribeLogEvent = (contract, eventName) => {
       console.log(`You have Point Network Mail! :) ${eventName}!`, eventObj)
 
       // Show the notification on the UI
-      addEmailNotificationElement(eventObj.message)
+      addEmailNotificationElement(eventObj.to, eventObj.message)
     }
   })
   subscribedEvents[eventName] = subscription

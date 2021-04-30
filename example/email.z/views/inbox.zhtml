@@ -2,6 +2,10 @@
 
 {% block contents %}
 
-  <h2>Here be your inbox</h2>
+  {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
+
+  <h2>Inbox for {{ wallet.address }}</h2>
+
+  <i>TODO: Show accounts received emails as a list here</i>
 
 {% endblock %}
