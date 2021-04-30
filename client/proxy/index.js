@@ -317,6 +317,29 @@ class ZProxy {
         });
     }
 
+    static async encryptPlainTextAndKey(plaintext, publicKey) {
+        const symmetricKey = randomBytes(24)
+        const iv = randomBytes(16)
+        const cipher = require('crypto').createCipheriv('aes192', symmetricKey, iv)
+        const ciphertext = cipher.update(plaintext, 'utf-8')
+        const remaining = cipher.final()
+
+        console.log('encryptedMessage', ciphertext.toString('hex'), remaining.toString('hex'))
+
+        const publicKeyBuffer = Buffer.concat([
+            Buffer.from('04', 'hex'),
+            Buffer.from(publicKey.replace('0x', ''), 'hex')
+        ])
+
+        console.log(publicKey, publicKeyBuffer, publicKeyBuffer.length)
+
+        const encryptedSymmetricKey = await eccrypto.encrypt(publicKeyBuffer, symmetricKey)
+
+        console.log('encryptedSymmetricKey', encryptedSymmetricKey)
+
+        return {ciphertext, encryptedSymmetricKey}
+    }
+
     contractSend(host, request, response) {
         return new Promise(async(resolve, reject) => {
             let body = '';
