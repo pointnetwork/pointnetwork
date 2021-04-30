@@ -2,13 +2,17 @@
 
 {% block contents %}
 
-  {% set contents = storage_get(messageid) %}
+  {% if(is_authenticated(_session_auth)) %}
 
-  <div class="formback">
-    <b>Message Id</b><br>
-    <p>{{ messageid }}</p>
-    <b>Body</b><br>
-    <p>{{ contents }}</p>
-  </div>
+    {% set contents = storage_get(messageid) %}
+
+    <div class="formback">
+      <b>Message Id</b><br>
+      <p>{{ messageid }}</p>
+      <b>Body</b><br>
+      <p>{{ contents }}</p>
+    </div>
+
+  {% endif %}
 
 {% endblock %}
