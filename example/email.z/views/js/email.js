@@ -20,7 +20,7 @@ function encrypt() {
   let body = document.getElementById("body");
   origValue = body.value
   // TODO AES encryption would be here...
-  body.value = `${origValue} >>> ENCRYPTED!!`
+  body.value = `${origValue}`
   return true
 }
 
