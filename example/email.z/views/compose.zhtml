@@ -1,0 +1,39 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  {% if(is_authenticated(_session_auth)) %}
+
+    {% set receipient = '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8' %}
+    {% set receipient_public_key = identity_ikv_get(receipient, 'public_key') %}
+    {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
+
+    <div class="formback">
+      <form method="post" action="/_contract_send/Email.send(to,contents)" onSubmit="return encrypt();">
+        <label><b>From</b></label><br>
+        <span>{{ wallet.address }}</span><br><br>
+
+        <label><b>To</b></label><br>
+        <input type="text" name="to" cols="50" value="{{ receipient }}" /><br><br>
+
+        <label><b>Body</b></label><br>
+        <textarea id="body" rows="4" cols="50" name="storage[contents]"></textarea><br><br>
+        <input type="submit" value="Encrypt & Send Email"/>
+      </form>
+    </div>
+
+    <script language="JavaScript">
+      // set local javascript variables from twig variables
+      let to = "{{ receipient }}"
+    </script>
+    <script src="js/web3.min.js"></script>
+    <script language="JavaScript" src="js/email.js"></script>
+
+  {% else %}
+
+      <b>You are not authenticated!</b>
+      <p>Try to <a href='/signin'>Sign In</a></p>
+
+  {% endif %}
+
+{% endblock %}
