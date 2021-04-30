@@ -16,6 +16,7 @@
       // set local javascript variables from twig variables
       let emailContractAddress = "{{ emailContractAddress }}"
       let emailContractAbi = "{{ emailContractAbi }}"
+      let walletAddress = "{{ wallet.address }}"
     </script>
     <script src="js/web3.min.js"></script>
     <script language="JavaScript" src="js/email.js"></script>

@@ -26,11 +26,6 @@
 
     <script language="JavaScript" src="js/email.js"></script>
 
-  {% else %}
-
-      <b>You are not authenticated!</b>
-      <p>Try to <a href='/signin'>Sign In</a></p>
-
   {% endif %}
 
 {% endblock %}
