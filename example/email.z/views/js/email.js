@@ -34,7 +34,7 @@ function sanitizeJson(input){
     .replace(/"{(.*?)}"/g, (_, match) => `"{${ match.replace(/"/g, '\\"') }}"`)
 }
 
-async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi) {
+async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi, walletAddress) {
   const {abi} = JSON.parse(sanitizeJson(emailContractAbi))
 
   email = new web3.eth.Contract(abi, emailContractAddress)
@@ -42,14 +42,16 @@ async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi)
   emails = await email.getPastEvents("SendEmail", {fromBlock: 0, toBlock: 'latest'})
   console.log(`SendEmail Count: ${emails.length}`)
 
-  subscribeLogEvent(email, 'SendEmail')
+  subscribeLogEvent(email, 'SendEmail', walletAddress)
 }
 
 // a list for saving subscribed event instances
 const subscribedEvents = {}
 
 // Subscriber method
-const subscribeLogEvent = (contract, eventName) => {
+const subscribeLogEvent = (contract, eventName, walletAddress) => {
+  console.log(`Subscribing to Email Events sent to wallet ${walletAddress}`)
+
   const eventJsonInterface = web3.utils._.find(
     contract._jsonInterface,
     o => o.name === eventName && o.type === 'event',
@@ -64,15 +66,18 @@ const subscribeLogEvent = (contract, eventName) => {
         result.data,
         result.topics.slice(1)
       )
-      console.log(`You have Point Network Mail! :) ${eventName}!`, eventObj)
 
-      // Show the notification on the UI
-      addEmailNotificationElement(eventObj.to, eventObj.message)
+      console.log(`New Email Event Emitted ${eventName}!`, eventObj)
+
+      if(eventObj.to === walletAddress) {
+        // Show the notification on the UI
+        addEmailNotificationElement(eventObj.to, eventObj.message)
+      }
     }
   })
   subscribedEvents[eventName] = subscription
 }
 
 (() => {
-  subscribeToSendEmailEvent(emailContractAddress, emailContractAbi)
+  subscribeToSendEmailEvent(emailContractAddress, emailContractAbi, walletAddress)
 })()
