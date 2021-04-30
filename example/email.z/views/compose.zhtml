@@ -4,8 +4,6 @@
 
   {% if(is_authenticated(_session_auth)) %}
 
-    {% set receipient = '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8' %}
-    {% set receipient_public_key = identity_ikv_get(receipient, 'public_key') %}
     {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
 
     <div class="formback">
@@ -14,10 +12,16 @@
         <span>{{ wallet.address }}</span><br><br>
 
         <label><b>To</b></label><br>
-        <input type="text" name="to" cols="50" value="{{ receipient }}" /><br><br>
-
+        <select name="to" id="to">
+          <option value="0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301">Node 1 (Storage Provider 0xC0101...)</option>
+          <option value="0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB">Node 2 (Website Owner 0xf990AB...)</option>
+          <option value="0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8">Node 3 (Website Viewer)</option>
+        </select>
+        <br>
+        <br>
         <label><b>Body</b></label><br>
         <textarea id="body" rows="4" cols="50" name="storage[contents]"></textarea><br><br>
+        <input type="hidden" name="__redirect" value="/" />
         <input type="submit" value="Encrypt & Send Email"/>
       </form>
     </div>

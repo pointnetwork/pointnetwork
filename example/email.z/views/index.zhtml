@@ -8,15 +8,15 @@
     {% set emailContractAbi = storage_get_by_ikv('email', 'zweb/contracts/abi/Email') %}
 
     <form method="post" action="/_signout/">
-      <input type="submit" value="Sign Out"/>
+      <input class="button" type="submit" value="Sign Out"/>
     </form>
 
-    <p><a href='/inbox'>Inbox</a></p>
-    <p><a href='/compose'>Compose</a></p>
+    <p><a class="button" href='/inbox'>Inbox</a></p>
+    <p><a class="button" href='/compose'>Compose</a></p>
+
+    <p><b>Email notifications will appear below<b></p>
 
     <section id="notifications">
-      <p><b>New email notifications will appear below<b></p><br>
-      <a href='/show?messageid=3a0e159d8c686213d165144b4f923ccb961367e3'>Email</a>
     <section>
 
     <script language="JavaScript">
@@ -29,8 +29,8 @@
 
     {% else %}
 
-      <b>You are not authenticated!</b>
-      <p>Try to <a href='/signin'>Sign In</a></p>
+      <h3 style="color:red">You are not authenticated!</h3>
+      <p>Try to <a class="button" href='/signin'>Sign In</a>!</p>
 
     {% endif %}
 

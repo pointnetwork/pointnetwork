@@ -20,6 +20,7 @@ h1 {
   width: 382px;
   overflow: hidden;
   margin: auto;
+  margin-bottom: 5px;
   padding: 80px;
   background: #ccccff;
   border-radius: 15px ;
@@ -29,6 +30,18 @@ h1 {
   color: #f10909;
 }
 
+.button {
+  font: bold 11px Arial;
+  text-decoration: none;
+  background-color: #EEEEEE;
+  color: #333333;
+  padding: 2px 6px 2px 6px;
+  border-top: 1px solid #CCCCCC;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+  border-left: 1px solid #CCCCCC;
+}
+
 h2 {
   color: #000000;
 }
@@ -36,6 +49,15 @@ h2 {
 label {
   color: #000000;
   font-size: 17px;
+}
+
+main {
+  width: 400px;
+  margin: 0 auto;
+}
+
+textarea {
+  width: 100%;
 }
 
 #walletid {
@@ -54,20 +76,3 @@ label {
   padding-left: 8px;
 }
 
-input[type=submit] {
-  width: 300px;
-  height: 30px;
-  border: none;
-  border-radius: 17px;
-  padding-left: 7px;
-  color: blue;
-}
-
-main {
-  width: 400px;
-  margin: 0 auto;
-}
-
-textarea {
-  width: 100%;
-}
