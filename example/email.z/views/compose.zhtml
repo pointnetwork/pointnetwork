@@ -14,8 +14,8 @@
         <label><b>To</b></label><br>
         <select name="to" id="to">
           <option value="0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301">Node 1 (Storage Provider 0xC0101...)</option>
-          <option value="0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB">Node 2 (Website Owner 0xf990AB...)</option>
-          <option value="0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8">Node 3 (Website Viewer)</option>
+          <option value="0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB">Node 2 (Website Owner 0x4f5877...)</option>
+          <option value="0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8">Node 3 (Website Viewer 0xf990AB...)</option>
         </select>
         <br>
         <br>
@@ -26,11 +26,6 @@
       </form>
     </div>
 
-    <script language="JavaScript">
-      // set local javascript variables from twig variables
-      let to = "{{ receipient }}"
-    </script>
-    <script src="js/web3.min.js"></script>
     <script language="JavaScript" src="js/email.js"></script>
 
   {% else %}

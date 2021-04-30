@@ -1,0 +1,13 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  <h2>Sign Out</h2>
+
+  <p>Are you sure you want to sign out?</p>
+
+  <form method="post" action="/_signout/">
+    <input type="submit" value="Sign Out"/>
+  </form>
+
+{% endblock %}
