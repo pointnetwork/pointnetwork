@@ -305,14 +305,11 @@ class ZProxy {
                 let encryptedMessageHash = uploaded.id;
                 console.log('encryptedMessageHash', encryptedMessageHash);
 
-                const emailContractAddress = await this.get_from_ikv('email', 'zweb/contracts/address/Email');
+                const emailContractAddress = await this.ctx.web3bridge.getKeyValue('email', 'zweb/contracts/address/Email')
                 const emailContractAbi = await this.get_from_ikv('email', 'zweb/contracts/abi/Email');
                 const { abi } = JSON.parse(emailContractAbi)
-                console.log('bhcdncdadress', emailContractAddress);
                 const emailContract = new this.web3.eth.Contract(abi, emailContractAddress)
-                // console.log('sbcnddsdddsd', emailContract);
-                // emailContract.methods.send(recipient, encryptedMessageHash, encryptedSymmetricKey).call()
-              
+                await emailContract.methods.send(recipient, encryptedMessageHash, encryptedSymmetricKey).call()
                 const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b> Message Successfully Sent! Redirecting... </html>';
                 resolve(redirectHtml);
             });
