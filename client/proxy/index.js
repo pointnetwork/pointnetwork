@@ -291,7 +291,7 @@ class ZProxy {
                 }
                 let recipient = formData['to']
                 let message = formData['message'].replace(' >>> ENCRYPTED!!','')
-                let publicKey = formData['receipient_public_key'].substring(2)
+                let publicKey = await this.ctx.web3bridge.getKeyValue(recipient, 'public_key')
                 const { encryptedMessage, encryptedSymmetricKey} = await this.constructor.encryptPlainTextAndKey(host, message, publicKey)
                 console.log('encryptedMessageout', encryptedMessage);
                 console.log('encryptedSymmetricKeyout', encryptedSymmetricKey);
