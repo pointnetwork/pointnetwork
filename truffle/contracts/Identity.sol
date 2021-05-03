@@ -44,12 +44,12 @@ contract Identity {
         // Address 0xf990A ... is for test node 3
         ikv['0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8']['public_key'] = '0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2aeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34';
 
-        ownerToEmailIdentity[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = 'socrates@email.z';
-        ownerToEmailIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'plato@email.z';
-        ownerToEmailIdentity[0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8] = 'aristotle@email.z';
-        emailIdentityToOwner['socrates@email.z'] = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
-        emailIdentityToOwner['plato@email.z'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        emailIdentityToOwner['aristotle@email.z'] = 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8;
+        ownerToEmailIdentity[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = 'storage_provider@email.z';
+        ownerToEmailIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'website_owner@email.z';
+        ownerToEmailIdentity[0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8] = 'website_visitor@email.z';
+        emailIdentityToOwner['storage_provider@email.z'] = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
+        emailIdentityToOwner['website_owner@email.z'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        emailIdentityToOwner['website_visitor@email.z'] = 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8;
     }
 
     function register(string memory handle, address identityOwner) public {
