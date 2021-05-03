@@ -13,7 +13,6 @@
     "bson": "^4.0.4",
     "buffer-chunks": "^0.1.1",
     "commander": "^5.1.0",
-    "crypto-js": "^4.0.0",
     "eccrypto": "^1.1.6",
     "ethereumjs-util": "^6.2.0",
     "fastify": "^3.12.0",

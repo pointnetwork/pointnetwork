@@ -9,6 +9,7 @@ header {
   padding: 10px;
   font-family: Rockwell;
   margin-bottom: 60px;
+  text-align: center;
 }
 
 h1 {
@@ -16,18 +17,39 @@ h1 {
   padding-top: 12px;
 }
 
-.emailNotification {
-  color: #f10808
-}
-
-.login {
+.formback {
   width: 382px;
   overflow: hidden;
   margin: auto;
+  margin-bottom: 5px;
   padding: 80px;
   background: #ccccff;
   border-radius: 15px ;
-  padding-bottom: 100px;
+}
+
+.emailNotification {
+  color: #f10909;
+}
+
+.button {
+  font: bold 11px Arial;
+  text-decoration: none;
+  background-color: #EEEEEE;
+  color: #333333;
+  padding: 2px 6px 2px 6px;
+  border-top: 1px solid #CCCCCC;
+  border-right: 1px solid #333333;
+  border-bottom: 1px solid #333333;
+  border-left: 1px solid #CCCCCC;
+}
+
+input[type='submit'] {
+  width: 300px;
+  height: 30px;
+  border: none;
+  border-radius: 17px;
+  padding-left: 7px;
+  color: blue;
 }
 
 h2 {
@@ -37,6 +59,15 @@ h2 {
 label {
   color: #000000;
   font-size: 17px;
+}
+
+main {
+  width: 400px;
+  margin: 0 auto;
+}
+
+textarea {
+  width: 100%;
 }
 
 #walletid {
@@ -53,29 +84,5 @@ label {
   border: none;
   border-radius: 3px;
   padding-left: 8px;
-
 }
 
-#authenticate {
-  width: 300px;
-  height: 30px;
-  border: none;
-  border-radius: 17px;
-  padding-left: 7px;
-  color: blue;
-}
-
-span {
-  color: white;
-  font-size: 17px;
-}
-
-
-main {
-  width: 400px;
-  margin: 0 auto;
-}
-
-textarea {
-  width: 100%;
-}

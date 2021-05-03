@@ -6,12 +6,12 @@
 
   <h2>Sign In</h2>
 
-  <div class="login">
+  <div class="formback">
     <form id="login" method="post" action="/_auth/">
       <label><b>Wallet Id</b></label><br>
-      <input id="walletid" name="walletid" value="58225300-cf00-494a-be15-8a15e42d3758" type="text" placeholder="Enter your node wallet id" /><br><br>
+      <input id="walletid" name="walletid" value="" type="text" placeholder="Enter your node wallet id" /><br><br>
       <label><b>Wallet Passcode</b></label>
-      <input id="passcode" name="passcode" type="Password" value="BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9" placeholder="Enter your node wallet passcode" /><br><br>
+      <input id="passcode" name="passcode" type="Password" value="" placeholder="Enter your node wallet passcode" /><br><br>
       <input id="authenticate" name="authenticate" type="submit" value="Authenticate"/>
     </form>
   </div>

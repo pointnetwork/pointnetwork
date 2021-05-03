@@ -1,0 +1,13 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  {% if(is_authenticated(_session_auth)) %}
+
+    <h2>Inbox for {{ wallet.address }}</h2>
+
+    <i>TODO: Show accounts received emails as a list here</i>
+
+  {% endif %}
+
+{% endblock %}

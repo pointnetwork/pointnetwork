@@ -1,20 +1,17 @@
-
 const web3 = new Web3('ws://localhost:7545')
-document.body.onload = addElement;
 
-function addElement() {
-  const newDiv = document.createElement("div");
-  const newContent = document.createTextNode(`Successfully loaded external email js file for ${to}`);
-  newDiv.appendChild(newContent);
-  const currentDiv = document.getElementById("div1");
-  currentDiv.parentNode.insertBefore(newDiv, currentDiv);
-}
-
-function addEmailNotificationElement(messageId) {
+function addEmailNotificationElement(to, messageId) {
+  // For now build a simple link that navigates to the show page.
+  // <div>New Email for 0xf99022.. with Id: <a href='/show?messageid=123456'>123456</a></div>
   const emailNotificationDiv = document.createElement("div");
-  emailNotificationDiv.setAttribute("class", "emailNotification");
-  const emailNotificationContent = document.createTextNode(`You have Point Network Mail!! ${messageId}`);
-  emailNotificationDiv.appendChild(emailNotificationContent);
+  emailNotificationDiv.setAttribute("class", "emailNotification formback");
+  const emailNotificationContent = document.createTextNode(`New Email for ${to.substr(0,8)}... with Id: `);
+  emailNotificationDiv.appendChild(emailNotificationContent)
+  const emailMessageId = document.createTextNode(messageId);
+  const emailLink = document.createElement("a")
+  emailLink.setAttribute('href', `/show?messageid=${messageId}`)
+  emailLink.appendChild(emailMessageId)
+  emailNotificationDiv.appendChild(emailLink);
   const notifcations = document.getElementById("notifications");
   notifcations.parentNode.insertBefore(emailNotificationDiv, notifcations);
 }
@@ -22,7 +19,8 @@ function addEmailNotificationElement(messageId) {
 function encrypt() {
   let body = document.getElementById("body");
   origValue = body.value
-  body.value = `${origValue} >>> ENCRYPTED!!`
+  // TODO AES encryption would be here...
+  body.value = `${origValue}`
   return true
 }
 
@@ -36,21 +34,24 @@ function sanitizeJson(input){
     .replace(/"{(.*?)}"/g, (_, match) => `"{${ match.replace(/"/g, '\\"') }}"`)
 }
 
-async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi) {
+async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi, walletAddress) {
   const {abi} = JSON.parse(sanitizeJson(emailContractAbi))
 
   email = new web3.eth.Contract(abi, emailContractAddress)
 
   emails = await email.getPastEvents("SendEmail", {fromBlock: 0, toBlock: 'latest'})
   console.log(`SendEmail Count: ${emails.length}`)
-  subscribeLogEvent(email, 'SendEmail')
+
+  subscribeLogEvent(email, 'SendEmail', walletAddress)
 }
 
 // a list for saving subscribed event instances
 const subscribedEvents = {}
 
 // Subscriber method
-const subscribeLogEvent = (contract, eventName) => {
+const subscribeLogEvent = (contract, eventName, walletAddress) => {
+  console.log(`Subscribing to Email Events sent to wallet ${walletAddress}`)
+
   const eventJsonInterface = web3.utils._.find(
     contract._jsonInterface,
     o => o.name === eventName && o.type === 'event',
@@ -65,17 +66,18 @@ const subscribeLogEvent = (contract, eventName) => {
         result.data,
         result.topics.slice(1)
       )
-      // TODO: Hook this up to the Notification UI
-      console.log(`You have Point Network Mail! :) ${eventName}!`, eventObj)
-      console.log(`Message ID: ${eventObj.message}`)
 
-      // Show the notification on the UI
-      addEmailNotificationElement(eventObj.message)
+      console.log(`New Email Event Emitted ${eventName}!`, eventObj)
+
+      if(eventObj.to === walletAddress) {
+        // Show the notification on the UI
+        addEmailNotificationElement(eventObj.to, eventObj.message)
+      }
     }
   })
   subscribedEvents[eventName] = subscription
 }
 
 (() => {
-  subscribeToSendEmailEvent(emailContractAddress, emailContractAbi)
+  subscribeToSendEmailEvent(emailContractAddress, emailContractAbi, walletAddress)
 })()
