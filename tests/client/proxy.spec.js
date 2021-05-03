@@ -42,9 +42,20 @@ describe("Client/ZProxy", () => {
             const plaintext = 'Foo'
             const publicKey = '0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2aeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34'
 
-            const result = await ZProxy.encryptPlainTextAndKey(plaintext, publicKey)
+            const encryptionResult = await ZProxy.encryptPlainTextAndKey('localhost', plaintext, publicKey)
+            const privateKey = '4e094c21d2b1a068da6ecbb8d0aeea65569741a6c14c592cb29d8b7aadf5ea49'
 
-            console.log({result})
+            const encryptedSymmetricObj = Object.fromEntries(
+                Object.entries(JSON.parse(encryptionResult.encryptedSymmetricKey)).map(([k, v]) => [k, Buffer.from(v, 'hex')])
+            )
+
+            const decryptionResult = await ZProxy.decryptCipherTextAndKey(
+                encryptionResult.encryptedMessage,
+                encryptedSymmetricObj, // encryptionResult.encryptedSymmetricObj,
+                privateKey
+            )
+
+            expect(decryptionResult.plaintext.toString()).toEqual(plaintext)
         } catch (e) {
             console.error(e)
             throw e

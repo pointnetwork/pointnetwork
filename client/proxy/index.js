@@ -16,7 +16,7 @@ class ZProxy {
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
-        this.web3 = this.ctx.network.web3
+        // this.web3 = this.ctx.network.web3
     }
 
     async start() {
@@ -329,9 +329,7 @@ class ZProxy {
         const iv = crypto.randomBytes(16)
 
         const cipher = crypto.createCipheriv('aes192', symmetricKey, iv)
-        cipher.update(plaintext, 'utf-8')
-        const encryptedMessage = cipher.final('hex')
-
+        const encryptedMessage = Buffer.concat([cipher.update(plaintext, 'utf-8'), cipher.final()])
         const publicKeyBuffer = Buffer.concat([
             Buffer.from('04', 'hex'),
             Buffer.from(publicKey.replace('0x', ''), 'hex')
@@ -339,10 +337,23 @@ class ZProxy {
 
         const hostNameHash = crypto.createHash('sha256');
         hostNameHash.update(host);
-        const encryptedSymmetricObj = await eccrypto.encrypt(publicKeyBuffer, Buffer.from(`|${hostNameHash.digest('hex')}|${symmetricKey.toString('hex')}|`))
-        const encryptedSymmetricKey = JSON.stringify(encryptedSymmetricObj)
+        const encryptedSymmetricObj = await eccrypto.encrypt(publicKeyBuffer, Buffer.from(
+            `|${hostNameHash.digest('hex')}|${symmetricKey.toString('hex')}|${iv.toString('hex')}|`
+        ))
+        const encryptedSymmetricKey = JSON.stringify(Object.fromEntries(
+            Object.entries(encryptedSymmetricObj).map(([k, v]) => [k, v.toString('hex')])
+        ))
 
-        return {encryptedMessage, encryptedSymmetricKey}
+        return {encryptedMessage, encryptedSymmetricObj, encryptedSymmetricKey}
+    }
+
+    static async decryptCipherTextAndKey(cypertext, encryptedSymmetricObj, privateKey) {
+        const symmetricObj = await eccrypto.decrypt(Buffer.from(privateKey, 'hex'), encryptedSymmetricObj)
+        const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|')
+        const decipher = crypto.createDecipheriv('aes192', Buffer.from(symmetricKey, 'hex'), Buffer.from(iv, 'hex'))
+        const plaintext = Buffer.concat([decipher.update(cypertext), decipher.final()])
+
+        return {plaintext, hostNameHash, symmetricKey, iv}
     }
 
     contractSend(host, request, response) {
