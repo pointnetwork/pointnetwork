@@ -156,7 +156,7 @@ contract Identity {
                     domainComplete = true;
                 } else if (
                     !_isAlphaNumeric(char) &&
-                    !(char == bytes1(uint8(0x95))) && // '_'
+                    !(char == bytes1(uint8(0x5f))) && // '_'
                     !(char == bytes1(uint8(0x2D)))    // '-'
                 ) {
                     return false;
@@ -172,7 +172,7 @@ contract Identity {
                 !_isAlphaNumeric(char) &&
                 !(char == bytes1(uint8(0x2E))) && // '.'
                 !(char == bytes1(uint8(0x2B))) && // '+'
-                !(char == bytes1(uint8(0x95))) && // '_'
+                !(char == bytes1(uint8(0x5f))) && // '_'
                 !(char == bytes1(uint8(0x2D)))    // '-'
             ) {
                 return false;
@@ -209,7 +209,7 @@ contract Identity {
         for(uint i; i<b.length; i++){
             bytes1 char = b[i];
 
-            if(!_isAlphaNumeric(char) && !(char == bytes1(uint8(0x95)))) {
+            if(!_isAlphaNumeric(char) && !(char == bytes1(uint8(0x5f)))) {
                 return false; // neither alpha-numeric nor '_'
             }
         }
