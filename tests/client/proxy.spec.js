@@ -45,9 +45,12 @@ describe("Client/ZProxy", () => {
             const encryptionResult = await ZProxy.encryptPlainTextAndKey('localhost', plaintext, publicKey)
             const privateKey = '4e094c21d2b1a068da6ecbb8d0aeea65569741a6c14c592cb29d8b7aadf5ea49'
 
-            const encryptedSymmetricObj = Object.fromEntries(
-                Object.entries(JSON.parse(encryptionResult.encryptedSymmetricKey)).map(([k, v]) => [k, Buffer.from(v, 'hex')])
-            )
+            const encryptedSymmetricKey = JSON.parse(encryptionResult.encryptedSymmetricKey)
+            const encryptedSymmetricObj = {}
+
+            for (const k in encryptedSymmetricKey) {
+                encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
+            }
 
             const decryptionResult = await ZProxy.decryptCipherTextAndKey(
                 encryptionResult.encryptedMessage,

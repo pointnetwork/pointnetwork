@@ -340,11 +340,18 @@ class ZProxy {
         const encryptedSymmetricObj = await eccrypto.encrypt(publicKeyBuffer, Buffer.from(
             `|${hostNameHash.digest('hex')}|${symmetricKey.toString('hex')}|${iv.toString('hex')}|`
         ))
-        const encryptedSymmetricKey = JSON.stringify(Object.fromEntries(
-            Object.entries(encryptedSymmetricObj).map(([k, v]) => [k, v.toString('hex')])
-        ))
 
-        return {encryptedMessage, encryptedSymmetricObj, encryptedSymmetricKey}
+        const encryptedSymmetricKey = {}
+
+        for (const k in encryptedSymmetricObj) {
+            encryptedSymmetricKey[k] = encryptedSymmetricObj[k].toString('hex')
+        }
+
+        return {
+            encryptedMessage,
+            encryptedSymmetricObj,
+            encryptedSymmetricKey: JSON.stringify(encryptedSymmetricKey)
+        }
     }
 
     static async decryptCipherTextAndKey(cypertext, encryptedSymmetricObj, privateKey) {
