@@ -125,19 +125,20 @@ contract Identity {
     //*** Internal functions ***//
 
     function _isValidEmail(string memory str) internal view returns (bool) {
+        // https://en.wikipedia.org/wiki/Email_address#Syntax
         bytes memory bstr = bytes(str);
 
         if((bstr.length > MAX_EMAIL_LENGTH) || (bstr[0] == bytes1(uint8(0x2E)))) { // '.'
             return false;
         }
 
-        bool memory localPartComplete = false;
-        bool memory domainComplete = false; // currently sub-domains are not supported
-        bool memory topLevelDomainComplete = false;
+        bool localPartComplete = false;
+        bool domainComplete = false; // currently sub-domains are not supported
+        bool topLevelDomainComplete = false;
 
-        uint8 memory localPartLength = 0;
-        uint8 memory domainLength = 0;
-        uint8 memory topLevelDomainLength = 0;
+        uint8 localPartLength = 0;
+        uint8 domainLength = 0;
+        uint8 topLevelDomainLength = 0;
 
         for (uint i = 0; i < bstr.length; i++) {
             bytes1 char = bstr[i];
@@ -193,7 +194,7 @@ contract Identity {
         );
     }
 
-    function _isAlphaNumeric(bytes1 char) internal view returns (bool) {
+    function _isAlphaNumeric(bytes1 char) internal pure returns (bool) {
         return (
             (char >= bytes1(uint8(0x30)) && char <= bytes1(uint8(0x39))) || // 9-0
             (char >= bytes1(uint8(0x41)) && char <= bytes1(uint8(0x5A))) || // A-Z
@@ -208,7 +209,7 @@ contract Identity {
         for(uint i; i<b.length; i++){
             bytes1 char = b[i];
 
-            if(!_isAlphaNumericOrLowdash(char) && !(char == bytes1(uint8(0x95)))) {
+            if(!_isAlphaNumeric(char) && !(char == bytes1(uint8(0x95)))) {
                 return false; // neither alpha-numeric nor '_'
             }
         }
