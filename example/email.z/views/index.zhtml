@@ -4,54 +4,23 @@
 
   {% if(is_authenticated(_session_auth)) %}
 
-    {% set receipient = '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8' %}
-    {% set receipient_public_key = identity_ikv_get(receipient, 'public_key') %}
     {% set emailContractAddress = identity_ikv_get('email', 'zweb/contracts/address/Email') %}
     {% set emailContractAbi = storage_get_by_ikv('email', 'zweb/contracts/abi/Email') %}
-    {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
 
-    <form method="post" action="/_signout/">
-      <input type="submit" value="Sign Out"/>
-    </form>
+    <p><b>Email notifications will appear below<b></p>
 
-    <div id="notifications"></div>
+    <section id="notifications">
+    <section>
 
-    <form method="post" action="/_encrypt_send/" onSubmit="return encrypt();">
-      <label><b>FROM: </b></label>{{ wallet.address }}<br />
-      <label><b>TO: </b></label>
-      <input type="text" name="to" cols="50" value="{{ receipient }}" /><br />
-      <input type="hidden" name="receipient_public_key" value="{{ receipient_public_key }}" /><br />
-      <label><b>BODY: </b></label>
-      <textarea id="body" rows="4" cols="50" name="message"></textarea><br/><br/>
-      <input type="submit" value="Encrypt & Send Email"/>
-    </form>
+    <script language="JavaScript">
+      // set local javascript variables from twig variables
+      let emailContractAddress = "{{ emailContractAddress }}"
+      let emailContractAbi = "{{ emailContractAbi }}"
+      let walletAddress = "{{ wallet.address }}"
+    </script>
+    <script src="js/web3.min.js"></script>
+    <script language="JavaScript" src="js/email.js"></script>
 
-    {% block javascript %}
-      <script language="JavaScript">
-        // set local javascript variables from twig variables
-        let to = "{{ receipient }}"
-        let emailContractAddress = "{{ emailContractAddress }}"
-        let emailContractAbi = "{{ emailContractAbi }}"
-        let receipient_public_key = "{{ receipient_public_key }}"
-      </script>
-      <script src="js/web3.min.js"></script>
-      <script language="JavaScript" src="js/email.js"></script>
+  {% endif %}
 
-    {% endblock javascript %}
-
-    <div style="border:blue; border-width:1px; border-style:solid; padding: 5px;">
-      <i>Debug Console (ignore this unless you are a dev!)</i>
-      <br/>
-      <br/>
-      <div id="div1">The text above has been created dynamically by the loaded email js file.</div>
-      <div id="public_key">The public key of {{ receipient }} is {{ receipient_public_key }}</div>
-    </div>
-
-    {% else %}
-
-      <b>You are not authenticated!</b>
-      <p>Try to <a href='/signin'>Sign In</a></p>
-
-    {% endif %}
-
-  {% endblock %}
+{% endblock %}
