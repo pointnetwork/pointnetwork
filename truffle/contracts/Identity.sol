@@ -9,11 +9,13 @@ contract Identity {
     mapping(string => mapping(string => string)) ikv;
     // At the same time this mapping is used to see if the identity is registered at all
     mapping(string => string) lowercaseToCanonicalIdentities;
+    mapping(string => string) lowercaseToCanonicalEmailIdentities;
 
     uint public MAX_HANDLE_LENGTH = 16;
     uint public MAX_EMAIL_LENGTH = 32;
 
     event IdentityRegistered(string handle, address identityOwner);
+    event EmailIdentityRegistered(string emailIdentity, address identityOwner);
     event IKVSet(string identity, string key, string value);
 
     constructor() public {
@@ -70,8 +72,38 @@ contract Identity {
         emit IdentityRegistered(handle, identityOwner);
     }
 
+    function registerEmailIdentity(string memory emailIdentity, address identityOwner) public {
+        if (!_isValidEmail(emailIdentity)) {
+            revert('Email address is not valid');
+        }
+
+        // Check if the email address is already registered
+        string memory lowercase = _toLower(emailIdentity);
+        if (!_isEmptyString(lowercaseToCanonicalEmailIdentities[lowercase])) {
+            revert('This email address has already been registered');
+        }
+
+        // Check if this owner already has an email address attached
+        if (!_isEmptyString(ownerToEmailIdentity[identityOwner])) {
+            revert('This owner already has an email address attached');
+        }
+
+        // Attach this email address to the owner address
+        emailIdentityToOwner[emailIdentity] = identityOwner;
+        ownerToEmailIdentity[identityOwner] = emailIdentity;
+
+        // Add a canonical version
+        lowercaseToCanonicalEmailIdentities[lowercase] = emailIdentity;
+
+        emit EmailIdentityRegistered(emailIdentity, identityOwner);
+    }
+
     function getIdentityByOwner(address owner) public view returns (string memory identity) {
         return ownerToIdentity[owner];
+    }
+
+    function getEmailIdentityByOwner(address owner) public view returns (string memory emailIdentity) {
+        return ownerToEmailIdentity[owner];
     }
 
     modifier onlyIdentityOwner(string memory identity) {
