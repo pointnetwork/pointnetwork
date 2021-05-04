@@ -17,14 +17,6 @@ function addEmailNotificationElement(to, messageId) {
   notifcations.parentNode.insertBefore(emailNotificationDiv, notifcations);
 }
 
-function encrypt() {
-  let body = document.getElementById("body");
-  origValue = body.value
-  // TODO AES encryption would be here...
-  body.value = `${origValue}`
-  return true
-}
-
 function sanitizeJson(input){
   var e = document.createElement('textarea')
   e.innerHTML = input
@@ -41,6 +33,7 @@ async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi,
   email = new web3.eth.Contract(abi, emailContractAddress)
 
   emails = await email.getPastEvents("SendEmail", {fromBlock: 0, toBlock: 'latest'})
+  console.log('vgsvdbc', emails);
   console.log(`SendEmail Count: ${emails.length}`)
 
   subscribeLogEvent(email, 'SendEmail', walletAddress)

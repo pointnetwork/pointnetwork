@@ -1,11 +1,15 @@
 let Twig = require('twig');
 let moment = require('moment');
+const fs = require('fs');
+const path = require('path');
+let { encryptPlainTextAndKey } = require('../../encryptUtils');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
 class Renderer {
     constructor(ctx) {
         this.ctx = ctx;
+        this.config = ctx.config.client.zproxy;
 
         Twig.extend((Twig) => {
             Twig.exports.extendTag({
@@ -91,6 +95,22 @@ class Renderer {
             Twig.exports.extendFunction("storage_get", async(key) => {
                 return await this.ctx.client.storage.readFile(key, 'utf-8');
             });
+            Twig.exports.extendFunction("storage_put", async(content) => {
+                const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+                this.ctx.utils.makeSurePathExists(cache_dir);
+                const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(content));
+                fs.writeFileSync(tmpPostDataFilePath, content);
+                let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                return uploaded.id;
+            });
+            Twig.exports.extendFunction("request_get", async(key, formData) => {
+                return formData[key];
+            });
+            Twig.exports.extendFunction("encrypt_message", async(host, recipient, message) => {
+                let publicKey = await this.ctx.web3bridge.getKeyValue(recipient, 'public_key')
+                const encryptionResult = await encryptPlainTextAndKey(host, message, publicKey);
+                return encryptionResult
+            });
             Twig.exports.extendFunction("identity_by_owner", async(owner) => {
                 return await this.ctx.web3bridge.identityByOwner(owner);
             });
@@ -102,6 +122,9 @@ class Renderer {
             });
             Twig.exports.extendFunction("contract_get", async(target, contractName, method, params) => {
                 return await this.ctx.web3bridge.callContract(target, contractName, method, params);
+            });
+            Twig.exports.extendFunction("contract_call", async(host, contractName, methodName, params) => {
+                return await this.ctx.web3bridge.sendContract(host.replace('.z', ''), contractName, methodName, params);
             });
             Twig.exports.extendFunction("load_wallet", async(id, passcode) => {
                 return await this.ctx.wallet.loadWalletFromKeystore(id, passcode);

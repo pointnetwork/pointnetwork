@@ -7,8 +7,6 @@ const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
-const crypto = require('crypto')
-const eccrypto = require("eccrypto");
 
 class ZProxy {
     constructor(ctx) {
@@ -102,7 +100,7 @@ class ZProxy {
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/_encrypt_send/')) {
                 try {
-                    rendered = await this.encrytSendEmail(host, request);
+                    rendered = await this.encryptSendEmail(host, request);
                 } catch(e) {
                     return this.abortError(response, e);
                 }
@@ -122,7 +120,9 @@ class ZProxy {
                 for(let k of parsedUrl.searchParams.entries()) request_params[ k[0] ] = k[1];
                 // add session auth data to the reqest params for apps that need it
                 let authData = request.session.get('_session_auth');
+                let composeEmailData = request.session.get('_compose_data');
                 request_params['_session_auth'] = authData == undefined ? {} : authData
+                request_params['_compose_data'] = composeEmailData == undefined ? {} : composeEmailData
                 rendered = await renderer.render(template_file_contents, host, request_params); // todo: sanitize
             }
 
@@ -276,7 +276,7 @@ class ZProxy {
         });
     }
 
-    encrytSendEmail(host, request, response) {
+    encryptSendEmail(host, request, response) {
         return new Promise(async(resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
@@ -289,28 +289,10 @@ class ZProxy {
                 for(let entry of entries){
                     formData[ entry[0] ] = entry[1];
                 }
-                let recipient = formData['to']
-                let message = formData['message'].replace(' >>> ENCRYPTED!!','')
-                let publicKey = await this.ctx.web3bridge.getKeyValue(recipient, 'public_key')
-                const { encryptedMessage, encryptedSymmetricKey} = await this.constructor.encryptPlainTextAndKey(host, message, publicKey)
-                console.log('encryptedMessageout', encryptedMessage);
-                console.log('encryptedSymmetricKeyout', encryptedSymmetricKey);
-
-                //persist encrypted message to storage layer and obtain hash
-                const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                this.ctx.utils.makeSurePathExists(cache_dir);
-                const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(encryptedMessage));
-                fs.writeFileSync(tmpPostDataFilePath, encryptedMessage);
-                let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                let encryptedMessageHash = uploaded.id;
-                console.log('encryptedMessageHash', encryptedMessageHash);
-
-                const emailContractAddress = await this.ctx.web3bridge.getKeyValue('email', 'zweb/contracts/address/Email')
-                const emailContractAbi = await this.get_from_ikv('email', 'zweb/contracts/abi/Email');
-                const { abi } = JSON.parse(emailContractAbi)
-                const emailContract = new this.web3.eth.Contract(abi, emailContractAddress)
-                await emailContract.methods.send(recipient, encryptedMessageHash, encryptedSymmetricKey).call()
-                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b> Message Successfully Sent! Redirecting... </html>';
+                let to = formData['to']
+                let message = formData['message']
+                request.session.put('_compose_data', { to, message })
+                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/encrypt_send" /></head><body><b> Message Successfully Sent! Redirecting... </html>';
                 resolve(redirectHtml);
             });
             request.on('error', (e) => {
@@ -322,45 +304,6 @@ class ZProxy {
     async get_from_ikv(identity, key) {
         const fileKey = await this.ctx.web3bridge.getKeyValue(identity, key);
         return await this.ctx.client.storage.readFile(fileKey, 'utf-8');
-    }
-
-    static async encryptPlainTextAndKey(host, plaintext, publicKey) {
-        const symmetricKey = crypto.randomBytes(24)
-        const iv = crypto.randomBytes(16)
-
-        const cipher = crypto.createCipheriv('aes192', symmetricKey, iv)
-        const encryptedMessage = Buffer.concat([cipher.update(plaintext, 'utf-8'), cipher.final()])
-        const publicKeyBuffer = Buffer.concat([
-            Buffer.from('04', 'hex'),
-            Buffer.from(publicKey.replace('0x', ''), 'hex')
-        ])
-
-        const hostNameHash = crypto.createHash('sha256');
-        hostNameHash.update(host);
-        const encryptedSymmetricObj = await eccrypto.encrypt(publicKeyBuffer, Buffer.from(
-            `|${hostNameHash.digest('hex')}|${symmetricKey.toString('hex')}|${iv.toString('hex')}|`
-        ))
-
-        const encryptedSymmetricKey = {}
-
-        for (const k in encryptedSymmetricObj) {
-            encryptedSymmetricKey[k] = encryptedSymmetricObj[k].toString('hex')
-        }
-
-        return {
-            encryptedMessage,
-            encryptedSymmetricObj,
-            encryptedSymmetricKey: JSON.stringify(encryptedSymmetricKey)
-        }
-    }
-
-    static async decryptCipherTextAndKey(cypertext, encryptedSymmetricObj, privateKey) {
-        const symmetricObj = await eccrypto.decrypt(Buffer.from(privateKey, 'hex'), encryptedSymmetricObj)
-        const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|')
-        const decipher = crypto.createDecipheriv('aes192', Buffer.from(symmetricKey, 'hex'), Buffer.from(iv, 'hex'))
-        const plaintext = Buffer.concat([decipher.update(cypertext), decipher.final()])
-
-        return {plaintext, hostNameHash, symmetricKey, iv}
     }
 
     contractSend(host, request, response) {
