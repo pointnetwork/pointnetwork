@@ -17,6 +17,5 @@ contract Email {
         mail memory _mail = mail(msg.sender, to, encryptedMessageHash, encryptedSymmetricKey, block.timestamp);
         mails.push(_mail);
         emit SendEmail(msg.sender, to, encryptedMessageHash, encryptedSymmetricKey, block.timestamp);
-        return true;
   }
 }
