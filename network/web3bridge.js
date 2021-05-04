@@ -96,6 +96,12 @@ class Web3Bridge {
         return await method.call();
     }
 
+    async emailIdentityByOwner(owner) {
+        const identityContract = await this.loadIdentityContract();
+        const method = identityContract.methods.getEmailIdentityByOwner(owner);
+        return await method.call();
+    }
+
     async getZRecord(domain) {
         domain = domain.replace('.z', ''); // todo: rtrim instead
         let result = await this.getKeyValue(domain, ZDNS_ROUTES_KEY);
