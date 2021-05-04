@@ -94,6 +94,9 @@ class Renderer {
             Twig.exports.extendFunction("identity_by_owner", async(owner) => {
                 return await this.ctx.web3bridge.identityByOwner(owner);
             });
+            Twig.exports.extendFunction("email_identity_by_owner", async(owner) => {
+                return await this.ctx.web3bridge.emailIdentityByOwner(owner);
+            });
             Twig.exports.extendFunction("identity_ikv_get", async(identity, key) => {
                 return await this.ctx.web3bridge.getKeyValue(identity, key);
             });

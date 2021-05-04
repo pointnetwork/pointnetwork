@@ -4,6 +4,10 @@
 
   {% if(is_authenticated(_session_auth)) %}
 
+    {% set node1EmailAddress = email_identity_by_owner('0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301') %}
+    {% set node2EmailAddress = email_identity_by_owner('0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB') %}
+    {% set node3EmailAddress = email_identity_by_owner('0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8') %}
+
     <div class="formback">
       <form method="post" action="/_contract_send/Email.send(to,contents)" onSubmit="return encrypt();">
         <label><b>From</b></label><br>
@@ -11,9 +15,9 @@
 
         <label><b>To</b></label><br>
         <select name="to" id="to">
-          <option value="0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301">Node 1 (Storage Provider 0xC0101...)</option>
-          <option value="0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB">Node 2 (Website Owner 0x4f5877...)</option>
-          <option value="0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8">Node 3 (Website Viewer 0xf990AB...)</option>
+          <option value="0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301">Storage Provider, {{ node1EmailAddress }}</option>
+          <option value="0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB">Website Owner, {{ node2EmailAddress }}</option>
+          <option value="0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8">Website Viewer, {{ node3EmailAddress }}</option>
         </select>
         <br>
         <br>
