@@ -23,19 +23,23 @@ module.exports.encryptPlainTextAndKey = async(host, plaintext, publicKey) => {
       for (const k in encryptedSymmetricObj) {
           encryptedSymmetricKey[k] = encryptedSymmetricObj[k].toString('hex')
       }
-
       return {
-          encryptedMessage,
+          encryptedMessage: encryptedMessage.toString('hex'),
           encryptedSymmetricObj,
           encryptedSymmetricKey: JSON.stringify(encryptedSymmetricKey)
       }
   }
 
-module.exports.decryptCipherTextAndKey = async (cypertext, encryptedSymmetricObj, privateKey) => {
-      const symmetricObj = await eccrypto.decrypt(Buffer.from(privateKey, 'hex'), encryptedSymmetricObj)
-      const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|')
-      const decipher = crypto.createDecipheriv('aes192', Buffer.from(symmetricKey, 'hex'), Buffer.from(iv, 'hex'))
-      const plaintext = Buffer.concat([decipher.update(cypertext), decipher.final()])
+module.exports.decryptCipherTextAndKey = async (host, cypertext, encryptedSymmetricObj, privateKey) => {
+    const decryptHostNameHash = crypto.createHash('sha256');
+    decryptHostNameHash.update(host);
+    const symmetricObj = await eccrypto.decrypt(Buffer.from(privateKey, 'hex'), encryptedSymmetricObj)
+    const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|')
+    if (decryptHostNameHash.digest('hex') !== hostNameHash){
+        return {plaintext: null, hostNameHash: null, symmetricKey: null, iv:null}
+    }
+    const decipher = crypto.createDecipheriv('aes192', Buffer.from(symmetricKey, 'hex'), Buffer.from(iv, 'hex'))
+    const plaintext = Buffer.concat([decipher.update(cypertext), decipher.final()])
 
-      return {plaintext, hostNameHash, symmetricKey, iv}
-  }
+    return {plaintext, hostNameHash, symmetricKey, iv}
+}

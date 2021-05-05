@@ -14,7 +14,6 @@ class ZProxy {
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
-        // this.web3 = this.ctx.network.web3
     }
 
     async start() {
@@ -299,11 +298,6 @@ class ZProxy {
                 reject('Error:', e);
             });
         });
-    }
-
-    async get_from_ikv(identity, key) {
-        const fileKey = await this.ctx.web3bridge.getKeyValue(identity, key);
-        return await this.ctx.client.storage.readFile(fileKey, 'utf-8');
     }
 
     contractSend(host, request, response) {
