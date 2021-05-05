@@ -25,12 +25,4 @@ contract Email {
       }
     }
   }
-  // function getByMessageHash(string memory encryptedMessageHash) public returns (address, a) {
-  //   for (uint i = 0; i < mails.length; i++) {
-  //     if (keccak256(abi.encodePacked(mails[i].encryptedMessageHash)) == keccak256(abi.encodePacked(encryptedMessageHash))) {
-  //       _encryptedData.push([mails[i].from, mails[i].to, mails[i].encryptedMessageHash, mails[i].encryptedSymmetricKey, mails[i].timestamp]);
-  //     }
-  //   }
-  //   return _encryptedData;
-  // }
 }
