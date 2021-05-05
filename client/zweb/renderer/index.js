@@ -2,7 +2,7 @@ let Twig = require('twig');
 let moment = require('moment');
 const fs = require('fs');
 const path = require('path');
-let { encryptPlainTextAndKey } = require('../../encryptUtils');
+let { encryptPlainTextAndKey, decryptCipherTextAndKey } = require('../../encryptUtils');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -125,6 +125,47 @@ class Renderer {
             });
             Twig.exports.extendFunction("contract_call", async(host, contractName, methodName, params) => {
                 return await this.ctx.web3bridge.sendContract(host.replace('.z', ''), contractName, methodName, params);
+            });
+            Twig.exports.extendFunction("retrieve_mail", async(owner, host, contractName, event) => {
+                const { privateKey } = this.ctx.wallet.config;
+                const events = await this.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, 0, 'latest');
+                const emails = await Promise.all(events.map(async (event)=> {
+                    if (owner === event.returnValues.to) {
+                        const encryptedSymmetricKey = JSON.parse(event.returnValues.encryptedSymmetricKey)
+                        const encryptedSymmetricObj = {}
+                        for (const k in encryptedSymmetricKey) {
+                            encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
+                        }
+                        const encryptedMessage = await this.ctx.client.storage.readFile(event.returnValues.encryptedMessageHash, 'utf-8')
+                        const decryptedResult = await decryptCipherTextAndKey(host, Buffer.from(encryptedMessage, 'hex'), encryptedSymmetricObj, privateKey)
+                        return {
+                            messageid: event.returnValues.encryptedMessageHash,
+                            from: event.returnValues.from,
+                            message: decryptedResult.plaintext.toString(),
+                        }
+                    }
+                }))
+                return emails;
+            });
+            Twig.exports.extendFunction("decrypt_one_mail", async(host, owner, encryptedData) => {
+                const { privateKey } = this.ctx.wallet.config;
+                if (owner === encryptedData['1']) {
+                    const encryptedSymmetricKey = JSON.parse(encryptedData['3'])
+                    const encryptedSymmetricObj = {}
+                    for (const k in encryptedSymmetricKey) {
+                        encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
+                    }
+                    const encryptedMessage = await this.ctx.client.storage.readFile(encryptedData['2'], 'utf-8')
+                    const decryptedResult = await decryptCipherTextAndKey(host, Buffer.from(encryptedMessage, 'hex'), encryptedSymmetricObj, privateKey)
+                    return {
+                        from: encryptedData['0'],
+                        message: decryptedResult.plaintext.toString(),
+                    }
+                }
+                return {
+                    from: null,
+                    message: null,
+                }
             });
             Twig.exports.extendFunction("load_wallet", async(id, passcode) => {
                 return await this.ctx.wallet.loadWalletFromKeystore(id, passcode);

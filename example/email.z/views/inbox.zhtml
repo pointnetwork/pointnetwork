@@ -3,11 +3,21 @@
 {% block contents %}
 
   {% if(is_authenticated(_session_auth)) %}
+    {% set emails = retrieve_mail(wallet.address, host, 'Email', 'SendEmail') %}
 
     <h2>Inbox for {{ wallet.address }}</h2>
 
     <i>TODO: Show accounts received emails as a list here</i>
-
+    {% for email in emails %}
+      <div class="formback">
+        <b>Message Id</b><br>
+        <p>{{ email.messageid }}</p>
+        <b>Message From</b><br>
+        <p>{{ email.from }}</p>
+        <b>Body</b><br>
+        <p>{{ email.message }}</p>
+      </div>
+    {% endfor %}
   {% endif %}
 
 {% endblock %}
