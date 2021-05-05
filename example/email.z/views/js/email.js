@@ -33,7 +33,6 @@ async function subscribeToSendEmailEvent(emailContractAddress, emailContractAbi,
   email = new web3.eth.Contract(abi, emailContractAddress)
 
   emails = await email.getPastEvents("SendEmail", {fromBlock: 0, toBlock: 'latest'})
-  console.log('vgsvdbc', emails);
   console.log(`SendEmail Count: ${emails.length}`)
 
   subscribeLogEvent(email, 'SendEmail', walletAddress)
