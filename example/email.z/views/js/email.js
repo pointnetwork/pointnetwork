@@ -65,7 +65,7 @@ const subscribeLogEvent = (contract, eventName, walletAddress) => {
 
       if(eventObj.to === walletAddress) {
         // Show the notification on the UI
-        addEmailNotificationElement(eventObj.to, eventObj.message)
+        addEmailNotificationElement(eventObj.to, eventObj.encryptedMessageHash)
       }
     }
   })
