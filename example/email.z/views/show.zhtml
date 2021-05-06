@@ -1,0 +1,21 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  {% if(is_authenticated(_session_auth)) %}
+
+    {% set encryptedData = contract_get(host, 'Email', 'getByMessageHash', [messageid]) %}
+    {% set content = decrypt_one_mail(host, wallet.address, encryptedData) %}
+
+    <div class="formback">
+      <b>Message Id</b><br>
+      <p>{{ messageid }}</p>
+      <b>Message From</b><br>
+      <p>{{ content.from }}</p>
+      <b>Body</b><br>
+      <p>{{ content.message }}</p>
+    </div>
+
+  {% endif %}
+
+{% endblock %}

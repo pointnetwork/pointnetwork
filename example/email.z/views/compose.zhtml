@@ -1,0 +1,35 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  {% if(is_authenticated(_session_auth)) %}
+
+    {% set node1EmailAddress = email_identity_by_owner('0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301') %}
+    {% set node2EmailAddress = email_identity_by_owner('0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB') %}
+    {% set node3EmailAddress = email_identity_by_owner('0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8') %}
+
+    <div class="formback">
+      <form method="post" action="/_encrypt_send/">
+        <label><b>From</b></label><br>
+        <span>{{ wallet.address }}</span><br><br>
+
+        <label><b>To</b></label><br>
+        <select name="to" id="to">
+          <option value="0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301">Storage Provider, {{ node1EmailAddress }}</option>
+          <option value="0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB">Website Owner, {{ node2EmailAddress }}</option>
+          <option value="0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8">Website Viewer, {{ node3EmailAddress }}</option>
+        </select>
+        <br>
+        <br>
+        <label><b>Body</b></label><br>
+        <textarea id="body" rows="4" cols="50" name="message"></textarea><br><br>
+        <input type="hidden" name="__redirect" value="/" />
+        <input type="submit" value="Encrypt & Send Email"/>
+      </form>
+    </div>
+    <script src="js/web3.min.js"></script>
+    <script language="JavaScript" src="js/email.js"></script>
+
+  {% endif %}
+
+{% endblock %}

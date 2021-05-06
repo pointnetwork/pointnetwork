@@ -37,6 +37,8 @@ class Core {
     }
 
     async postInit() {
+        await this.ctx.wallet.saveDefaultWalletToKeystore()
+
         setTimeout(async() => {
             // register example.z
             // const at = this.ctx.config.network.identity_contract_address;

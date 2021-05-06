@@ -66,12 +66,14 @@ class Deployer {
             // todo: dont parse html with regex!1 you'll go to hell for that! or worse, Turbo Pascal coding bootcamp!
             const regs = [
                 /\<link[^\>]*?href=['"](.*?)['"]/g,
+                /\<script[^\>]*?src=['"](.*?)['"]/g,
                 /\<img[^\>]*?src=['"](.*?)['"]/g,
                 /\<body[^\>]*?background=['"](.*?)['"]/g,
                 /\<table[^\>]*?background=['"](.*?)['"]/g,
             ];
             for(let reg of regs) {
                 while((result = reg.exec(template)) !== null) { // todo: what if it's already a hash? // todo: what if it's https:// or something? // todo: what if it's /_storage/<hash>?
+                    if (result[1].startsWith('https://')) { continue }
                     const fl = path.join(deployPath, 'views', result[1]);
                     if (!fs.existsSync(fl)) throw new Error('Mentioned file '+result[1]+' ('+fl+') not found!'); // todo: +stack etc. // todo: make it a warning?
 
@@ -226,7 +228,7 @@ class Deployer {
 
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`)
 
-        console.log('Contract '+contractName+' deployed');
+        console.log(`Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`);
     };
 
     async updateZDNS(host, id) {

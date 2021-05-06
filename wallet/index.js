@@ -50,6 +50,15 @@ class Wallet {
         })
     }
 
+    saveDefaultWalletToKeystore() {
+        // use the hard coded wallet id, passcode, address and private key to save to the nodes keystore
+        let id = this.config.id
+        let passcode = this.config.passcode
+        let wallet = this.ctx.network.web3.eth.accounts.wallet[0]
+        let keystore = wallet.encrypt(passcode)
+        fs.writeFileSync(`${this.keystore_path}/${id}`, JSON.stringify(keystore))
+    }
+
     async sendTransaction(from, to, value) {
         let receipt = await this.web3.eth.sendTransaction({from: from, to: to, value: value, gas: 21000})
         this.transactionEventEmitter.emit(this.TRANSACTION_EVENT, receipt.transactionHash, from, to, value)
@@ -59,16 +68,19 @@ class Wallet {
     generate(passcode) {
         let account = this.web3.eth.accounts.create(this.web3.utils.randomHex(32))
         let wallet = this.web3.eth.accounts.wallet.add(account);
-
-        let keystore = wallet.encrypt(passcode);
-
-        // write the encrypted wallet to disk
-        fs.writeFileSync(`${this.keystore_path}/${keystore.id}`, JSON.stringify(keystore))
+        let keystore = this.saveWalletToKeystore(wallet, passcode)
 
         // TODO: remove
         this._fundWallet(account.address)
 
         return keystore.id
+    }
+
+    saveWalletToKeystore(wallet, passcode) {
+        let keystore = wallet.encrypt(passcode);
+        fs.writeFileSync(`${this.keystore_path}/${keystore.id}`, JSON.stringify(keystore))
+
+        return keystore
     }
 
     loadWalletFromKeystore(walletId, passcode) {
