@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "target": "email.z",
+  "keyvalue": {},
+  "contracts": [
+    "Email"
+  ]
+}

@@ -10,5 +10,6 @@ module.exports = [
     ['GET', '/api/wallet/publicKey', 'WalletController@publicKey'],
     ['GET', '/api/wallet/balance', 'WalletController@balance'],
     ['GET', '/api/wallet/hash', 'WalletController@hash'],
+    ['GET', '/api/wallet/address', 'WalletController@address'],
     ['POST', '/api/wallet/tx', 'WalletController@tx']
 ];

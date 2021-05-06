@@ -1,0 +1,9 @@
+{
+  "/": "index.zhtml",
+  "/signin": "signin.zhtml",
+  "/signout": "signout.zhtml",
+  "/compose": "compose.zhtml",
+  "/inbox": "inbox.zhtml",
+  "/show": "show.zhtml",
+  "/encrypt_send": "_encrypt_send.zhtml"
+}

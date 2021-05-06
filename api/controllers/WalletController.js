@@ -49,6 +49,17 @@ class WalletController {
     }
   }
 
+  address() {
+    if(this._loadWallet()) {
+      let address = this.wallet.address;
+
+      // return the public key
+      return this._response({
+        address
+      })
+    }
+  }
+
   async balance() {
     if(this._loadWallet()) {
       let balance = (await this.web3.eth.getBalance(this.wallet.address)).toString()
@@ -78,7 +89,7 @@ class WalletController {
     if(this.walletToken === undefined) {
       throw new Error('Missing wallet-token header.')
     }
-    if(this.walletToken.length < 103) {
+    if(this.walletToken.length < 69) {
       throw new Error('wallet-token invalid.')
     }
   }

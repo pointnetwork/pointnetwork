@@ -1,0 +1,19 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  <p>In this demo, simply enter the <b>Wallet ID</b> and <b>Wallet Passcode</b> of a wallet that belongs to the Point Network Node this app is connected to.</p>
+
+  <h2>Sign In</h2>
+
+  <div class="formback">
+    <form id="login" method="post" action="/_auth/">
+      <label><b>Wallet Id</b></label><br>
+      <input id="walletid" name="walletid" value="" type="text" placeholder="Enter your node wallet id" /><br><br>
+      <label><b>Wallet Passcode</b></label>
+      <input id="passcode" name="passcode" type="Password" value="" placeholder="Enter your node wallet passcode" /><br><br>
+      <input id="authenticate" name="authenticate" type="submit" value="Authenticate"/>
+    </form>
+  </div>
+
+{% endblock %}
