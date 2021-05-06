@@ -131,18 +131,13 @@ class Renderer {
                 const events = await this.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, 0, 'latest');
                 const emails = await Promise.all(events.map(async (event)=> {
                     if (owner === event.returnValues.to) {
-                        const encryptedSymmetricKey = JSON.parse(event.returnValues.encryptedSymmetricKey)
-                        const encryptedSymmetricObj = {}
-                        for (const k in encryptedSymmetricKey) {
-                            encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
-                        }
-                        const encryptedMessage = await this.ctx.client.storage.readFile(event.returnValues.encryptedMessageHash, 'utf-8')
-                        const decryptedResult = await decryptCipherTextAndKey(host, Buffer.from(encryptedMessage, 'hex'), encryptedSymmetricObj, privateKey)
-                        return {
-                            messageid: event.returnValues.encryptedMessageHash,
-                            from: event.returnValues.from,
-                            message: decryptedResult.plaintext.toString(),
-                        }
+                        return await this.decryptEmail(
+                            host,
+                            event.returnValues.from,
+                            privateKey,
+                            event.returnValues.encryptedSymmetricKey,
+                            event.returnValues.encryptedMessageHash
+                        )
                     }
                 }))
                 return emails;
@@ -150,22 +145,15 @@ class Renderer {
             Twig.exports.extendFunction("decrypt_one_mail", async(host, owner, encryptedData) => {
                 const { privateKey } = this.ctx.wallet.config;
                 if (owner === encryptedData['1']) {
-                    const encryptedSymmetricKey = JSON.parse(encryptedData['3'])
-                    const encryptedSymmetricObj = {}
-                    for (const k in encryptedSymmetricKey) {
-                        encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
-                    }
-                    const encryptedMessage = await this.ctx.client.storage.readFile(encryptedData['2'], 'utf-8')
-                    const decryptedResult = await decryptCipherTextAndKey(host, Buffer.from(encryptedMessage, 'hex'), encryptedSymmetricObj, privateKey)
-                    return {
-                        from: encryptedData['0'],
-                        message: decryptedResult.plaintext.toString(),
-                    }
+                    return await this.decryptEmail(
+                        host,
+                        encryptedData['0'],
+                        privateKey,
+                        encryptedData['3'],
+                        encryptedData['2']
+                    )
                 }
-                return {
-                    from: null,
-                    message: null,
-                }
+                throw new Error('You are not the recipient of this message')
             });
             Twig.exports.extendFunction("load_wallet", async(id, passcode) => {
                 return await this.ctx.wallet.loadWalletFromKeystore(id, passcode);
@@ -236,6 +224,21 @@ class Renderer {
     async fetchTemplateByHash(hash) {
         console.log('fetching '+hash);
         return await this.ctx.client.storage.readFile(hash, 'utf-8');
+    }
+
+    async decryptEmail(host, from, privateKey, unparsedEncryptedSymmetricKey, encryptedMessageHash) {
+        const encryptedSymmetricKey = JSON.parse(unparsedEncryptedSymmetricKey)
+        const encryptedSymmetricObj = {}
+        for (const k in encryptedSymmetricKey) {
+            encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
+        }
+        const encryptedMessage = await this.ctx.client.storage.readFile(encryptedMessageHash, 'utf-8')
+        const decryptedResult = await decryptCipherTextAndKey(host, Buffer.from(encryptedMessage, 'hex'), encryptedSymmetricObj, privateKey)
+        return {
+            messageid: encryptedMessageHash,
+            from,
+            message: decryptedResult.plaintext.toString(),
+        }
     }
 }
 
