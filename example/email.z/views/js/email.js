@@ -1,3 +1,4 @@
+
 const web3 = new Web3('ws://localhost:7545')
 
 function addEmailNotificationElement(to, messageId) {
@@ -14,14 +15,6 @@ function addEmailNotificationElement(to, messageId) {
   emailNotificationDiv.appendChild(emailLink);
   const notifcations = document.getElementById("notifications");
   notifcations.parentNode.insertBefore(emailNotificationDiv, notifcations);
-}
-
-function encrypt() {
-  let body = document.getElementById("body");
-  origValue = body.value
-  // TODO AES encryption would be here...
-  body.value = `${origValue}`
-  return true
 }
 
 function sanitizeJson(input){
@@ -71,7 +64,7 @@ const subscribeLogEvent = (contract, eventName, walletAddress) => {
 
       if(eventObj.to === walletAddress) {
         // Show the notification on the UI
-        addEmailNotificationElement(eventObj.to, eventObj.message)
+        addEmailNotificationElement(eventObj.to, eventObj.encryptedMessageHash)
       }
     }
   })

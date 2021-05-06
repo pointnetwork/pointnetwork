@@ -9,7 +9,7 @@
     {% set node3EmailAddress = email_identity_by_owner('0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8') %}
 
     <div class="formback">
-      <form method="post" action="/_contract_send/Email.send(to,contents)" onSubmit="return encrypt();">
+      <form method="post" action="/_encrypt_send/">
         <label><b>From</b></label><br>
         <span>{{ wallet.address }}</span><br><br>
 
@@ -22,12 +22,12 @@
         <br>
         <br>
         <label><b>Body</b></label><br>
-        <textarea id="body" rows="4" cols="50" name="storage[contents]"></textarea><br><br>
+        <textarea id="body" rows="4" cols="50" name="message"></textarea><br><br>
         <input type="hidden" name="__redirect" value="/" />
         <input type="submit" value="Encrypt & Send Email"/>
       </form>
     </div>
-
+    <script src="js/web3.min.js"></script>
     <script language="JavaScript" src="js/email.js"></script>
 
   {% endif %}

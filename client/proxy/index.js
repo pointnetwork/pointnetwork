@@ -7,6 +7,8 @@ const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
+const crypto = require('crypto')
+const eccrypto = require("eccrypto");
 
 class ZProxy {
     constructor(ctx) {
@@ -14,6 +16,7 @@ class ZProxy {
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
+        // this.web3 = this.ctx.network.web3
     }
 
     async start() {
@@ -97,6 +100,12 @@ class ZProxy {
                 } catch(e) {
                     return this.abortError(response, e);
                 }
+            } else if (_.startsWith(parsedUrl.pathname, '/_encrypt_send/')) {
+                try {
+                    rendered = await this.encryptSendEmail(host, request);
+                } catch(e) {
+                    return this.abortError(response, e);
+                }
             } else {
                 let zroute_id = await this.getZRouteIdFromDomain(host);
                 if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
@@ -113,7 +122,9 @@ class ZProxy {
                 for(let k of parsedUrl.searchParams.entries()) request_params[ k[0] ] = k[1];
                 // add session auth data to the reqest params for apps that need it
                 let authData = request.session.get('_session_auth');
+                let composeEmailData = request.session.get('_compose_data');
                 request_params['_session_auth'] = authData == undefined ? {} : authData
+                request_params['_compose_data'] = composeEmailData == undefined ? {} : composeEmailData
                 rendered = await renderer.render(template_file_contents, host, request_params); // todo: sanitize
             }
 
@@ -261,6 +272,31 @@ class ZProxy {
             request.session.forget('_session_auth')
             const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Successfully Signed Out! Redirecting...</html>';
             resolve(redirectHtml);
+            request.on('error', (e) => {
+                reject('Error:', e);
+            });
+        });
+    }
+
+    encryptSendEmail(host, request, response) {
+        return new Promise(async(resolve, reject) => {
+            let body = '';
+            request.on('data', (chunk) => {
+                body += chunk;
+            });
+            request.on('end', async() => {
+                if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
+                let entries = new URL('http://localhost/?'+body).searchParams.entries();
+                let formData = {};
+                for(let entry of entries){
+                    formData[ entry[0] ] = entry[1];
+                }
+                let to = formData['to']
+                let message = formData['message']
+                request.session.put('_compose_data', { to, message })
+                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/encrypt_send" /></head><body><b> Message Successfully Sent! Redirecting... </html>';
+                resolve(redirectHtml);
+            });
             request.on('error', (e) => {
                 reject('Error:', e);
             });
