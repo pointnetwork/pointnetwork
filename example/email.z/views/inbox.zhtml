@@ -7,15 +7,12 @@
 
     <h2>Inbox for {{ wallet.address }}</h2>
 
-    <i>TODO: Show accounts received emails as a list here</i>
     {% for email in emails %}
       <div class="formback">
-        <b>Message Id</b><br>
-        <p>{{ email.messageid }}</p>
-        <b>Message From</b><br>
-        <p>{{ email.from }}</p>
-        <b>Body</b><br>
-        <p>{{ email.message }}</p>
+        <p>
+          <b>From</b>:{{ email.from }}
+          <a href='/show?messageid={{ email.messageid }}'>{{ email.messageid }}</a>
+        </p>
       </div>
     {% endfor %}
   {% endif %}
