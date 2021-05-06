@@ -36,7 +36,7 @@ module.exports.decryptCipherTextAndKey = async (host, cypertext, encryptedSymmet
     const symmetricObj = await eccrypto.decrypt(Buffer.from(privateKey, 'hex'), encryptedSymmetricObj)
     const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|')
     if (decryptHostNameHash.digest('hex') !== hostNameHash){
-        return {plaintext: null, hostNameHash: null, symmetricKey: null, iv:null}
+        throw new Error('Host is invalid')
     }
     const decipher = crypto.createDecipheriv('aes192', Buffer.from(symmetricKey, 'hex'), Buffer.from(iv, 'hex'))
     const plaintext = Buffer.concat([decipher.update(cypertext), decipher.final()])

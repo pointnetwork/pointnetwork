@@ -80,17 +80,12 @@ describe("Client/ZProxy", () => {
             for (const k in encryptedSymmetricKey) {
                 encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
             }
-
-            const decryptionResult = await decryptCipherTextAndKey(
+            await expect(decryptCipherTextAndKey(
                 'localhost',
                 Buffer.from(encryptionResult.encryptedMessage, 'hex'),
-                encryptedSymmetricObj, // encryptionResult.encryptedSymmetricObj,
+                encryptedSymmetricObj,
                 privateKey
-            )
-            expect(decryptionResult.plaintext).toEqual(null)
-            expect(decryptionResult.hostNameHash).toEqual(null)
-            expect(decryptionResult.symmetricKey).toEqual(null)
-            expect(decryptionResult.iv).toEqual(null)
+            )).rejects.toThrow('Host is invalid')
         } catch (e) {
             console.error(e)
             throw e
