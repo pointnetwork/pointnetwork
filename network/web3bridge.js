@@ -81,6 +81,14 @@ class Web3Bridge {
         return result;
     }
 
+    async getPastEvents(target, contractName, event, fromBlock = 0, toBlock = 'latest') { // todo: multiple arguments, but check existing usage
+        const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
+        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
+        const abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+        const contract = new this.web3.eth.Contract(abi.abi, at);
+        return await contract.getPastEvents( event,  {fromBlock, toBlock } );;
+    }
+
     async sendContract(target, contractName, methodName, params) { // todo: multiple arguments, but check existing usage
         const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
@@ -93,6 +101,12 @@ class Web3Bridge {
     async identityByOwner(owner) {
         const identityContract = await this.loadIdentityContract();
         const method = identityContract.methods.getIdentityByOwner(owner);
+        return await method.call();
+    }
+
+    async emailIdentityByOwner(owner) {
+        const identityContract = await this.loadIdentityContract();
+        const method = identityContract.methods.getEmailIdentityByOwner(owner);
         return await method.call();
     }
 
