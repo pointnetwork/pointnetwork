@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "target": "example.z",
+    "target": "blog.z",
     "upload": {
         "redundancy": 10,
         "timeperiod": 10000
