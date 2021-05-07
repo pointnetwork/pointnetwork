@@ -25,14 +25,14 @@ contract Identity {
 
         identityToOwner['demo'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['email'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        identityToOwner['example'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
+        identityToOwner['blog'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['hello'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['profile'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['twitter'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
         identityToOwner['node3'] = 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8;
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'demo';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'email';
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'example';
+        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'blog';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'hello';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'profile';
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'twitter';
