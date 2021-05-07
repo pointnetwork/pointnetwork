@@ -7,10 +7,8 @@
   <body>
     <header>
       <h1>Decentralized Email</h1>
-      {% if(is_authenticated(_session_auth)) %}
-        {% set wallet = load_wallet(_session_auth.walletid, _session_auth.passcode) %}
-        <h4>Logged in as: {{ wallet.address }}</h4>
-      {% endif %}
+      {% set wallet_address = default_wallet_address() %}
+      <h4>Wallet Address: {{ wallet_address }}</h4>
     </header>
 
     <main>
@@ -18,19 +16,10 @@
       <div>
         <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"></img>
 
-        {% if(is_authenticated(_session_auth)) %}
-
           <p><a class="button" href='/'>Home</a></p>
           <p><a class="button" href='/inbox'>Inbox</a></p>
           <p><a class="button" href='/compose'>Compose</a></p>
           <p><a class="button" href='/signout'>Sign Out</a></p>
-
-        {% else %}
-
-          <h3 style="color:red">You are not authenticated!</h3>
-          <p><a class="button" href='/signin'>Sign In</a></p>
-
-        {% endif %}
 
         <p><b>Point Network Email Example App</b>. Demos the powers of ZHTML + Solidity + DHT!!</p>
       </div>

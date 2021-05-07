@@ -2,25 +2,21 @@
 
 {% block contents %}
 
-  {% if(is_authenticated(_session_auth)) %}
+  {% set emailContractAddress = identity_ikv_get('email', 'zweb/contracts/address/Email') %}
+  {% set emailContractAbi = storage_get_by_ikv('email', 'zweb/contracts/abi/Email') %}
 
-    {% set emailContractAddress = identity_ikv_get('email', 'zweb/contracts/address/Email') %}
-    {% set emailContractAbi = storage_get_by_ikv('email', 'zweb/contracts/abi/Email') %}
+  <p><b>Email notifications will appear below<b></p>
 
-    <p><b>Email notifications will appear below<b></p>
+  <section id="notifications">
+  <section>
 
-    <section id="notifications">
-    <section>
-
-    <script language="JavaScript">
-      // set local javascript variables from twig variables
-      let emailContractAddress = "{{ emailContractAddress }}"
-      let emailContractAbi = "{{ emailContractAbi }}"
-      let walletAddress = "{{ wallet.address }}"
-    </script>
-    <script src="js/web3.min.js"></script>
-    <script language="JavaScript" src="js/email.js"></script>
-
-  {% endif %}
+  <script language="JavaScript">
+    // set local javascript variables from twig variables
+    let emailContractAddress = "{{ emailContractAddress }}"
+    let emailContractAbi = "{{ emailContractAbi }}"
+    let walletAddress = "{{ wallet_address }}"
+  </script>
+  <script src="js/web3.min.js"></script>
+  <script language="JavaScript" src="js/email.js"></script>
 
 {% endblock %}
