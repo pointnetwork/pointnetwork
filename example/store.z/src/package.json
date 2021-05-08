@@ -1,0 +1,26 @@
+{
+  "name": "store.z",
+  "version": "1.0.0",
+  "description": "store example app",
+  "main": "index.js",
+  "scripts": {
+    "clear": "rm -rf ../views .cache .parcel-cache",
+    "start": "parcel src/index.zhtml",
+    "build": "npm run clear && parcel build src/index.html -d ../views --out-file ../views/index.zhtml --no-source-maps",
+    "watch": "npm run clear && parcel watch src/index.html -d ../views --out-file ../views/index.zhtml",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Point Network",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^15.0.2",
+    "@types/react": "^17.0.5",
+    "@types/react-dom": "^17.0.3",
+    "parcel": "^1.12.3",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  }
+}
