@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Point Network Store Example App</title>
+    <link type="text/css" rel="stylesheet" href="index.css"/>
+  </head>
+  <body>
+    <header>
+      <h1>Decentralized Store</h1>
+      {% set wallet_address = default_wallet_address() %}
+      <h4>Wallet Address: {{ wallet_address }}</h4>
+    </header>
+
+    <main>
+
+      <div>
+        <img alt="Point Network Store" src="images/store-logo.png" width="400" height="122"></img>
+
+        <p><a class="button" href='/'>Home</a></p>
+
+        <p><b>Point Network Store Example App</b>.</p>
+      </div>
+
+      {% block contents %}
+      {% endblock %}
+
+    </main>
+  </body>
+</html>

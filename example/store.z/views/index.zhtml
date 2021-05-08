@@ -1,0 +1,22 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+  {% set storeContractAddress = identity_ikv_get('store', 'zweb/contracts/address/Store') %}
+  {% set storeContractAbi = storage_get_by_ikv('store', 'zweb/contracts/abi/Store') %}
+
+  <p><b>Store notifications will appear below<b></p>
+
+  <section id="notifications">
+  <section>
+
+  <script language="JavaScript">
+    // set local javascript variables from twig variables
+    let storeContractAddress = "{{ storeContractAddress }}"
+    let storeContractAbi = "{{ storeContractAbi }}"
+    let walletAddress = "{{ wallet_address }}"
+  </script>
+  <script src="js/web3.min.js"></script>
+  <script language="JavaScript" src="js/store.js"></script>
+
+{% endblock %}
