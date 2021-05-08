@@ -3,7 +3,7 @@ version: '3'
 services:
   storage_provider:
     entrypoint: npm
-    command: 'run start:docker:dev -- --datadir /data'
+    command: 'run start:docker:dev'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
@@ -21,7 +21,7 @@ services:
 
   website_owner:
     entrypoint: npm
-    command: 'run start:docker:dev -- --datadir /data'
+    command: 'run watch:sites:and:start:docker:dev'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
@@ -39,7 +39,7 @@ services:
 
   website_visitor:
     entrypoint: npm
-    command: 'run start:docker:dev -- --datadir /data'
+    command: 'run start:docker:dev'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
