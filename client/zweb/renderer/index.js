@@ -155,8 +155,8 @@ class Renderer {
                 }
                 throw new Error('You are not the recipient of this message')
             });
-            Twig.exports.extendFunction("load_wallet", async(id, passcode) => {
-                return await this.ctx.wallet.loadWalletFromKeystore(id, passcode);
+            Twig.exports.extendFunction("default_wallet_address", async(id, passcode) => {
+                return this.ctx.config.client.wallet.account;
             });
             Twig.exports.extendFunction("is_authenticated", async(auth) => {
                 return auth.walletid != undefined

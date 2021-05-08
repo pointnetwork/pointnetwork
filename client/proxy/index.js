@@ -86,20 +86,6 @@ class ZProxy {
                 } catch(e) {
                     return this.abortError(response, e);
                 }
-            }
-              else if (_.startsWith(parsedUrl.pathname, '/_auth/')) {
-                try {
-                    rendered = await this.auth(host, request);
-                } catch(e) {
-                    return this.abortError(response, e);
-                }
-            }
-              else if (_.startsWith(parsedUrl.pathname, '/_signout/')) {
-                try {
-                    rendered = await this.signOut(host, request);
-                } catch(e) {
-                    return this.abortError(response, e);
-                }
             } else if (_.startsWith(parsedUrl.pathname, '/_encrypt_send/')) {
                 try {
                     rendered = await this.encryptSendEmail(host, request);
@@ -120,10 +106,7 @@ class ZProxy {
                 let renderer = new Renderer(ctx);
                 let request_params = {};
                 for(let k of parsedUrl.searchParams.entries()) request_params[ k[0] ] = k[1];
-                // add session auth data to the reqest params for apps that need it
-                let authData = request.session.get('_session_auth');
                 let composeEmailData = request.session.get('_compose_data');
-                request_params['_session_auth'] = authData == undefined ? {} : authData
                 request_params['_compose_data'] = composeEmailData == undefined ? {} : composeEmailData
                 rendered = await renderer.render(template_file_contents, host, request_params); // todo: sanitize
             }
@@ -219,59 +202,6 @@ class ZProxy {
                 const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
                 resolve(redirectHtml);
             });
-            request.on('error', (e) => {
-                reject('Error:', e);
-            });
-        });
-    }
-
-    auth(host, request, response) {
-        return new Promise(async(resolve, reject) => {
-            let body = '';
-            request.on('data', (chunk) => {
-                body += chunk;
-            });
-            request.on('end', async() => {
-                if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
-
-                let entries = new URL('http://localhost/?'+body).searchParams.entries();
-                let authData = {};
-                for(let entry of entries){
-                    authData[ entry[0] ] = entry[1];
-                }
-
-                // try to load the wallet using the id / passcode
-                let wallet
-                try{
-                    wallet = await this.ctx.wallet.loadWalletFromKeystore(authData['walletid'], authData['passcode'])
-                } catch(e) {
-                    console.error(`Error loading wallet from keystore ${e}`)
-                }
-
-                if(wallet != undefined){
-                    request.session.put('_session_auth', authData)
-                    console.log(`Loaded Wallet with address: ${wallet.address}`)
-                    console.log('Redirecting to site root (default behaviour for now)...');
-                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Authentication Successful. Redirecting...</html>';
-                    resolve(redirectHtml);
-                } else {
-                    reject('Unable to load wallet. Do try again!');
-                }
-
-            });
-            request.on('error', (e) => {
-                reject('Error:', e);
-            });
-        });
-    }
-
-    signOut(host, request, response) {
-        return new Promise(async(resolve, reject) => {
-            if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
-
-            request.session.forget('_session_auth')
-            const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url=/" /></head><body><b>Successfully Signed Out! Redirecting...</html>';
-            resolve(redirectHtml);
             request.on('error', (e) => {
                 reject('Error:', e);
             });

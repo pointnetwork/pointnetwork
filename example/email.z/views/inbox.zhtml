@@ -2,19 +2,17 @@
 
 {% block contents %}
 
-  {% if(is_authenticated(_session_auth)) %}
-    {% set emails = retrieve_mail(wallet.address, host, 'Email', 'SendEmail') %}
+  {% set emails = retrieve_mail(wallet_address, host, 'Email', 'SendEmail') %}
 
-    <h2>Inbox for {{ wallet.address }}</h2>
+  <h2>Inbox for {{ wallet_address }}</h2>
 
-    {% for email in emails %}
-      <div class="formback">
-        <p>
-          <b>From</b>:{{ email.from }}
-          <a href='/show?messageid={{ email.messageid }}'>{{ email.messageid }}</a>
-        </p>
-      </div>
-    {% endfor %}
-  {% endif %}
+  {% for email in emails %}
+    <div class="formback">
+      <p>
+        <b>From</b>:{{ email.from }}
+        <a href='/show?messageid={{ email.messageid }}'>{{ email.messageid }}</a>
+      </p>
+    </div>
+  {% endfor %}
 
 {% endblock %}
