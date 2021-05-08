@@ -2,7 +2,7 @@
   <head>
     <meta charset="utf-8">
     <title>Point Network Store Example App</title>
-    <link type="text/css" rel="stylesheet" href="index.css"/>
+    <link type="text/css" rel="stylesheet" href="/styles/index.css"/>
   </head>
   <body>
     <header>
@@ -19,6 +19,7 @@
         <p><a class="button" href='/'>Home</a></p>
 
         <p><b>Point Network Store Example App</b>.</p>
+        <p><i>TODO: List all the available stores below</i></p>
       </div>
 
       {% block contents %}
