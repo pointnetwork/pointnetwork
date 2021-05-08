@@ -5,7 +5,7 @@ function addEmailNotificationElement(to, messageId) {
   // For now build a simple link that navigates to the show page.
   // <div>New Email for 0xf99022.. with Id: <a href='/show?messageid=123456'>123456</a></div>
   const emailNotificationDiv = document.createElement("div");
-  emailNotificationDiv.setAttribute("class", "emailNotification formback");
+  emailNotificationDiv.setAttribute("class", "notification formback");
   const emailNotificationContent = document.createTextNode(`New Email for ${to.substr(0,8)}... with Id: `);
   emailNotificationDiv.appendChild(emailNotificationContent)
   const emailMessageId = document.createTextNode(messageId);
