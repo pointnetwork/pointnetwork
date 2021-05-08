@@ -117,15 +117,15 @@ All sites should respond with a 200 status code. If not there is something wrong
     ./point --datadir ~/.point/test3 -v
     ```
 
-1. Tell the second node to deploy the `example.z` website:
+1. Tell the second node to deploy the `blog.z` website:
 
     ```
-    ./point deploy example/example.z --datadir ~/.point/test2 -v
+    ./point deploy example/blog.z --datadir ~/.point/test2 -v
     ```
 
 1. Now you can stop the second node (Ctrl+C).
 1. Run the [Point Browser](https://github.com/pointnetwork/pointbrowser)
-1. Navigate to `http://example.z` and it will open the home page of the Example Blog.
+1. Navigate to `http://blog.z` and it will open the home page of the Example Blog.
 
 ### Troubleshooting the demo
 

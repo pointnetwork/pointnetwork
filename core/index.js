@@ -40,7 +40,7 @@ class Core {
         await this.ctx.wallet.saveDefaultWalletToKeystore()
 
         setTimeout(async() => {
-            // register example.z
+            // register blog.z
             // const at = this.ctx.config.network.identity_contract_address;
             // const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/Identity.json');
             // const abiFile = JSON.parse(fs.readFileSync(abiFileName));
@@ -60,7 +60,7 @@ class Core {
             // }
 
             // let fl = fs.readFileSync('/Users/s/.point/test2/deployer_cache/e5252f3d40baf38bd208632ff495f7ce9da8ff36');
-            // let fl = fs.readFileSync('./example/example.z/views/star-icon.png');
+            // let fl = fs.readFileSync('./example/blog.z/views/star-icon.png');
             //
             // var chunks = require('buffer-chunks');
             // var list = chunks(fl, 64);
