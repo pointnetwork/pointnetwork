@@ -1,6 +1,7 @@
 {
   "version": 1,
   "target": "store.z",
+  "react": true,
   "keyvalue": {},
   "contracts": [
     "Store"
