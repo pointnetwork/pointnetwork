@@ -4,6 +4,15 @@
 
   {% set storeContractAddress = identity_ikv_get('store', 'zweb/contracts/address/Store') %}
   {% set storeContractAbi = storage_get_by_ikv('store', 'zweb/contracts/abi/Store') %}
+  {% set stores = contract_get(host, 'Store', 'getStores', []) %}
+
+    {% for store in stores %}
+        <div class="store">
+            <h3 class="name">{{ store.name }}</h2>
+            <i class="description">{{ store.description }}</i>
+            <div id='storelogo' style="background-image: url('{{ store.logo }}');"></div>
+        </div>
+    {% endfor %}
 
   <p><b>Store notifications will appear below<b></p>
 
@@ -20,3 +29,4 @@
   <script language="JavaScript" src="js/store.js"></script>
 
 {% endblock %}
+
