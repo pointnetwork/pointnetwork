@@ -1,7 +1,28 @@
 {
   "version": 1,
   "target": "store.z",
-  "keyvalue": {},
+  "keyvalue": {
+    "store0": {
+      "contract_send": "Store.registerStore(storeId,name,description,logo)",
+      "storeId": "0",
+      "name": "Walmart",
+      "description": "A store for Point Network",
+      "storage[logo]": {
+        "file": "images/store0.jpg",
+        "type": "image/jpeg"
+      }
+    },
+    "store1": {
+      "contract_send": "Store.registerStore(storeId,name,description,logo)",
+      "storeId": "1",
+      "name": "Sears",
+      "description": "A NEW store!!",
+      "storage[logo]": {
+        "file": "images/store1.png",
+        "type": "image/png"
+      }
+    }
+  },
   "contracts": [
     "Store"
   ]

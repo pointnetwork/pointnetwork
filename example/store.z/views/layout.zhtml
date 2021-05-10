@@ -19,7 +19,6 @@
         <p><a class="button" href='/'>Home</a></p>
 
         <p><b>Point Network Store Example App</b>.</p>
-        <p><i>TODO: List all the available stores below</i></p>
       </div>
 
       {% block contents %}
