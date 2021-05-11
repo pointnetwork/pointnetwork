@@ -209,7 +209,7 @@ class Deployer {
         contract.setProvider(this.ctx.web3.currentProvider);
 
         let gasPrice = await this.ctx.web3.eth.getGasPrice();
-        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: 700000 }); // todo: magic number
+        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: 1400000 }); // todo: magic number
         let address = deployedContractInstance.address;
 
         console.log('Deployed Contract Instance of '+contractName, address);
