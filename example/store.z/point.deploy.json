@@ -8,7 +8,7 @@
       "name": "Walmart",
       "description": "A store for Point Network",
       "storage[logo]": {
-        "file": "images/store0.jpg",
+        "file": "images/store-logo-0.jpg",
         "type": "image/jpeg"
       }
     },
@@ -16,11 +16,35 @@
       "contract_send": "Store.registerStore(storeId,name,description,logo)",
       "storeId": "1",
       "name": "Sears",
-      "description": "A NEW store!!",
+      "description": "Aother store!!",
       "storage[logo]": {
-        "file": "images/store1.png",
+        "file": "images/store-logo-1.png",
         "type": "image/png"
       }
+    },
+    "product1": {
+      "contract_send": "Store.addProductToStore(storeId,productId,name,description,price)",
+      "storeId": "0",
+      "productId": "0",
+      "name": "Toothbrush",
+      "description": "A tooth cleaner",
+      "price": 1
+    },
+    "product2": {
+      "contract_send": "Store.addProductToStore(storeId,productId,name,description,price)",
+      "storeId": "0",
+      "productId": "1",
+      "name": "Book",
+      "description": "A page turner",
+      "price": 2
+    },
+    "product3": {
+      "contract_send": "Store.addProductToStore(storeId,productId,name,description,price)",
+      "storeId": "1",
+      "productId": "2",
+      "name": "MacBook Pro",
+      "description": "A new computer",
+      "price": 12
     }
   },
   "contracts": [

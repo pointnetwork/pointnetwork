@@ -1,3 +1,4 @@
 {
-  "/": "index.zhtml"
+  "/": "index.zhtml",
+  "/products": "products.zhtml"
 }
