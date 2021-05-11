@@ -9,8 +9,10 @@
     {% for store in stores %}
         <div class="store">
             <h3 class="name">{{ store.name }}</h2>
+            <div id="storelogo" style="background-image: url({{ store.logo }}); background-repeat: no-repeat;"></div>
             <i class="description">{{ store.description }}</i>
-            <div id='storelogo' style="background-image: url('{{ store.logo }}');"></div>
+            <p><a href="/products?storeId={{ store.id }}">View {{ store.name }} Products</a></p>
+            <hr />
         </div>
     {% endfor %}
 
