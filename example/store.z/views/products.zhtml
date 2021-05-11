@@ -2,12 +2,12 @@
 
 {% block contents %}
 
-  {% set products = contract_get(host, 'Store', 'getProductsByStoreId', ['0']) %}
+  {% set products = contract_get(host, 'Store', 'getProductsByStoreId', [storeId]) %}
 
     {% for product in products %}
         <div class="store">
             <h3 class="name">{{ product.name }}</h2>
-            <i class="description">{{ product.description }}</i>
+            <p><i class="description">{{ product.description }}</i></p>
             <b class="price">{{ product.price }}</b>
         </div>
     {% endfor %}

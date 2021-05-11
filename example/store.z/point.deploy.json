@@ -6,7 +6,7 @@
       "contract_send": "Store.registerStore(storeId,name,description,logo)",
       "storeId": "0",
       "name": "Walmart",
-      "description": "A store for Point Network",
+      "description": "Walmart: Save Money. Live Better.",
       "storage[logo]": {
         "file": "images/store-logo-0.jpg",
         "type": "image/jpeg"
@@ -16,7 +16,7 @@
       "contract_send": "Store.registerStore(storeId,name,description,logo)",
       "storeId": "1",
       "name": "Sears",
-      "description": "Aother store!!",
+      "description": "Sears: Making Moments Matter.",
       "storage[logo]": {
         "file": "images/store-logo-1.png",
         "type": "image/png"
