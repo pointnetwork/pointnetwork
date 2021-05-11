@@ -209,7 +209,7 @@ class Deployer {
         contract.setProvider(this.ctx.web3.currentProvider);
 
         let gasPrice = await this.ctx.web3.eth.getGasPrice();
-        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: 700000 }); // todo: magic number
+        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: 1400000 }); // todo: magic number
         let address = deployedContractInstance.address;
 
         console.log('Deployed Contract Instance of '+contractName, address);
@@ -300,15 +300,28 @@ class Deployer {
             return result
         }
 
-        values = await replaceContentsWithCids (values)
+        values = await replaceContentsWithCids(values)
 
         // console.log ({ 'processed_values': values })
 
-        for (let [key, value] of Object.entries (values)) {
-            if (value && (Array.isArray (value) || typeof value === 'object')) {
-                value = JSON.stringify (value)
+        for (let [key, value] of Object.entries(values)) {
+            if (value && (Array.isArray(value) || typeof value === 'object')) {
+                // if there is a contract_send in the value then send data to the specified contract
+                if('contract_send' in value) {
+                    let [contractName, methodNameAndParams] = value.contract_send.split('.')
+                    let [methodName, paramsTogether] = methodNameAndParams.split('(')
+                    paramsTogether = paramsTogether.replace(')', '')
+                    let paramNames = paramsTogether.split(',')
+                    let params = [];
+                    for(let paramName of paramNames) {
+                        params.push(value[paramName]);
+                    }
+                    await this.ctx.web3bridge.sendContract(target, contractName, methodName, params );
+                } else {
+                    value = JSON.stringify(value)
+                    await this.ctx.web3bridge.putKeyValue(target, key, String(value))
+                }
             }
-            await this.ctx.web3bridge.putKeyValue (target, key, String (value))
         }
     }
 }
