@@ -16,7 +16,7 @@ const { execSync } = require ('child_process');
 
 try {
     execSync (`npm version ${ version }`).toString ()
-    execSync (`sed -i '' 's/${ varName }=v\\([0-9]\\{1,\\}\\.*\\)\\{3\\}/${ varName }=v${ version }/' ${ envPath }`).toString ()
+    execSync (`sed -i '' 's/${ varName }=.*$/${ varName }=v${ version }/' ${ envPath }`).toString ()
 
     if (execSync ('git diff --name-only').toString ().includes (envFile)) {
         execSync (`git add ${ envPath } && git commit -m 'updated image version'`).toString ()
