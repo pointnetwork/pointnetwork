@@ -20,7 +20,7 @@ class Deployer {
     }
 
     // todo: beware of infinite recursion!
-    async processTemplate(fileName, deployPath) {
+    async processTemplate(fileName, deployPath, deployConfig) {
         if (fileName in this.cache_uploaded) return this.cache_uploaded[ fileName ];
 
         this.ctx.client.deployerProgress.update(fileName, 0, 'processing_template')
@@ -31,12 +31,12 @@ class Deployer {
 
         if (fileName.split('.').slice(-1)[0] !== "zhtml") {
             // don't parse
-            template = fs.readFileSync(fileName, { encoding: null });
+            template = fs.readFileSync(fileName);
 
             console.log('skipping template parser for', fileName, 'hash', this.ctx.utils.hashFnHex(template));
 
             tmpTemplate = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(template));
-            fs.writeFileSync(tmpTemplate, template, { encoding: null });
+            fs.writeFileSync(tmpTemplate, template);
 
         } else {
             console.log('parsing template', fileName);
@@ -57,7 +57,7 @@ class Deployer {
                         console.error('Warning: Mentioned file '+result[1]+' ('+fl+') not found!');
                     }//throw new Error('Warning: Mentioned file '+result[1]+' ('+fl+') not found!'); // todo: +stack etc. // todo: make it a warning?
 
-                    const hash = await this.processTemplate(fl, deployPath); // todo: parallelize
+                    const hash = await this.processTemplate(fl, deployPath, deployConfig); // todo: parallelize
                     template = template.replace(result[1], hash); // todo: replace using outer stuff as well
                 }
             }
@@ -79,7 +79,7 @@ class Deployer {
 
                     let ext = /(?:\.([^.]+))?$/.exec(result[1])[1];
 
-                    const hash = await this.processTemplate(fl, deployPath); // todo: parallelize
+                    const hash = await this.processTemplate(fl, deployPath, deployConfig); // todo: parallelize
                     template = template.replace(result[1], '/_storage/'+hash+'.'+ext); // todo: replace using outer stuff as well
                 }
             }
@@ -98,52 +98,101 @@ class Deployer {
     }
 
     async deploy(deployPath) {
+        try {
+            // todo: error handling, as usual
+            let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
+            let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
+            let deployConfig = JSON.parse(deployConfigFile);
 
-        // todo: error handling, as usual
-        let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
-        let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
-        let deployConfig = JSON.parse(deployConfigFile);
+            // assert(deployConfig.version === 1); // todo: msg
 
-        // assert(deployConfig.version === 1); // todo: msg
+            let target = deployConfig.target;
 
-        let target = deployConfig.target;
-
-        // Deploy contracts
-        let contractNames = deployConfig.contracts;
-        if (!contractNames) contractNames = [];
-        for(let contractName of contractNames) {
-            let fileName = path.join(deployPath, 'contracts', contractName+'.sol');
-            await this.deployContract(target, contractName, fileName);
-        }
-
-        let routesFilePath = path.join(deployPath, 'routes.json');
-        let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
-        let routes = JSON.parse(routesFile);
-
-        //let uploadFiles
-        //let parseFiles = // todo: should be queue
-
-        for (let k in routes) {
-            if (routes.hasOwnProperty(k)) {
-                let v = routes[k];
-
-                let templateFileName = path.join(deployPath, 'views', v);
-                const hash = await this.processTemplate(templateFileName, deployPath);
-                routes[k] = hash;
+            // Deploy contracts
+            let contractNames = deployConfig.contracts;
+            if (!contractNames) contractNames = [];
+            for(let contractName of contractNames) {
+                let fileName = path.join(deployPath, 'contracts', contractName+'.sol');
+                await this.deployContract(target, contractName, fileName);
             }
+
+            let routesFilePath = path.join(deployPath, 'routes.json');
+            let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
+            let routes = JSON.parse(routesFile);
+
+            //let uploadFiles
+            //let parseFiles = // todo: should be queue
+            if (deployConfig.react === true) {
+                const routesByFile = {}
+
+                for (const route in routes) {
+                    const filename = routes[route]
+                    if (!routesByFile[filename]) {
+                        routesByFile[filename] = []
+                    }
+                    routesByFile[filename].push(route)
+                }
+
+                const fileTree = [{dirs: []}]
+
+                while (fileTree.length) {
+                    const {dirs} = fileTree.pop()
+                    const files = fs.readdirSync(path.join(deployPath, 'views', ...dirs))
+
+                    for (const fileName of files) {
+                        const fileExt = path.extname(fileName)
+                        const relativePath = dirs.concat(fileName)
+                        const absolutePath = path.join(deployPath, 'views', ...relativePath)
+
+                        if (fs.lstatSync(absolutePath).isDirectory()) {
+                            fileTree.push({dirs: relativePath})
+                            continue
+                        }
+
+                        const blob = fs.readFileSync(absolutePath)
+                        const cacheFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(blob))
+
+                        fs.writeFileSync(cacheFilePath, blob)
+
+                        const uploaded = await this.ctx.client.storage.putFile(cacheFilePath)
+
+                        this.cache_uploaded[cacheFilePath] = uploaded.id;
+                        this.ctx.client.deployerProgress.update(cacheFilePath, 100, `uploaded::${uploaded.id}`)
+
+                        const contentPath = `/${relativePath.join('/')}`
+                        const routePaths = routesByFile[contentPath] || [contentPath]
+                        for (const routePath of routePaths) {
+                            routes[routePath] = `${uploaded.id}${fileExt}`
+                        }
+                    }
+                }
+            } else {
+                for (let k in routes) {
+                    if (routes.hasOwnProperty(k)) {
+                        let v = routes[k];
+
+                        let templateFileName = path.join(deployPath, 'views', v);
+                        const hash = await this.processTemplate(templateFileName, deployPath, deployConfig);
+                        routes[k] = hash;
+                    }
+                }
+            }
+
+            console.log('uploading route file...', {routes});
+            const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
+            fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
+            this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading')
+            let routeFileUploaded = await this.ctx.client.storage.putFile(tmpRoutesFilePath); // todo: and more options
+            this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploaded.id}`)
+            await this.updateZDNS(target, routeFileUploaded.id);
+            await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployConfig);
+
+            console.log('Deploy finished');
+
+        } catch (e) {
+            console.error('Deploy error:', e)
+            throw e
         }
-
-        console.log('uploading route file...');
-        const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
-        fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
-        this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading')
-        let routeFileUploaded = await this.ctx.client.storage.putFile(tmpRoutesFilePath); // todo: and more options
-        this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploaded.id}`)
-        await this.updateZDNS(target, routeFileUploaded.id);
-
-        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath);
-
-        console.log('Deploy finished');
     }
 
     async deployContract(target, contractName, fileName) {
@@ -237,7 +286,7 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
     }
 
-    async updateKeyValue (target, values, deployPath) {
+    async updateKeyValue (target, values, deployPath, deployConfig) {
 
         const replaceContentsWithCids = async obj => {
 
@@ -270,7 +319,7 @@ class Deployer {
                         }
 
                         const ext = value.file.replace (/.*\.([a-zA-Z0-9]+)$/, '$1')
-                        const cid = await this.processTemplate (file, deployPath)
+                        const cid = await this.processTemplate (file, deployPath, deployConfig)
 
                         value = '/_storage/' + cid + '.' + ext
 
