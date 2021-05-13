@@ -393,8 +393,14 @@ class Deployer {
                     paramsTogether = paramsTogether.replace(')', '')
                     let paramNames = paramsTogether.split(',')
                     let params = [];
-                    for(let paramName of paramNames) {
-                        params.push(value[paramName]);
+                    if (value.metadata){
+                        for(let paramName of paramNames) {
+                            params.push(value.metadata[paramName]);
+                        }
+                    }else{
+                        for(let paramName of paramNames) {
+                            params.push(value[paramName]);
+                        }
                     }
                     await this.ctx.web3bridge.sendContract(target, contractName, methodName, params );
                 }
