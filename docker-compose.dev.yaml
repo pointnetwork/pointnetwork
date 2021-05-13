@@ -32,8 +32,7 @@ services:
       - ${PWD}/db:/app/db:ro
       - ${PWD}/example:/app/example:ro
       - ${PWD}/network:/app/network:ro
-      - ${PWD}/provider:/app/provider:ro
-      - ${PWD}/scripts:/app/scripts:ro
+      - ${PWD}/provigpts:/app/scripts:ro
       - ${PWD}/threads:/app/threads:ro
       - ${PWD}/wallet:/app/wallet:ro
       - ${PWD}/point:/app/point:ro
