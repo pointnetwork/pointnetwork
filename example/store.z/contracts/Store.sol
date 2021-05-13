@@ -3,7 +3,7 @@
 pragma solidity >=0.6.0 <=0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC1155/ERC1155.sol";
+import './openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol';
 
 
 contract Store is ERC1155 {
