@@ -159,8 +159,8 @@ class Deployer {
                         this.cache_uploaded[cacheFilePath] = uploaded.id;
                         this.ctx.client.deployerProgress.update(cacheFilePath, 100, `uploaded::${uploaded.id}`)
 
-                        const contentPath = `/${relativePath.join('/')}`
-                        const routePaths = routesByFile[contentPath] || [contentPath]
+                        const contentPath = relativePath.join('/')
+                        const routePaths = routesByFile[contentPath] || [`/${contentPath}`]
                         for (const routePath of routePaths) {
                             routes[routePath] = `${uploaded.id}${fileExt}`
                         }

@@ -4,10 +4,10 @@
   "description": "store example app",
   "main": "index.js",
   "scripts": {
-    "clear": "rm -rf ../views .cache .parcel-cache",
+    "clear": "rm -rf ../views/* .cache .parcel-cache",
     "start": "parcel src/index.zhtml",
-    "build": "npm run clear && parcel build src/index.html -d ../views --out-file ../views/index.zhtml --no-source-maps",
-    "watch": "npm run clear && parcel watch src/index.html -d ../views --out-file ../views/index.zhtml",
+    "build": "npm run clear && cp -R src/images ../views/. && parcel build src/index.html -d ../views --out-file ../views/index.zhtml --no-source-maps",
+    "watch": "npm run clear && cp -R src/images ../views/. && parcel watch src/index.html -d ../views --out-file ../views/index.zhtml",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Point Network",
