@@ -14,17 +14,6 @@
         }
       }
     },
-    "store1": {
-      "contract_send": "Store.registerStore(name,description,logo)",
-      "metadata": {
-        "name": "Sears",
-        "description": "Sears: Making Moments Matter.",
-        "storage[logo]": {
-          "file": "images/store-logo-1.png",
-          "type": "image/png"
-        }
-      }
-    },
     "product1": {
       "contract_send": "Store.addProductToStore(name,price,metadataHash)",
       "metadata": {

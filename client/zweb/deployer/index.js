@@ -258,7 +258,6 @@ class Deployer {
 
         let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), { import: getImports }));
         this.ctx.client.deployerProgress.update(fileName, 20, 'compiled')
-
         if (!compiledSources) {
             throw new Error(">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\nNO OUTPUT");
         } else if (compiledSources.errors) {
@@ -284,7 +283,6 @@ class Deployer {
                 artifacts = compiledSources.contracts[contractFileName][_contractName];
             }
         }
-
         const truffleContract = require('@truffle/contract');
         const contract = truffleContract(artifacts);
         contract.setProvider(this.ctx.web3.currentProvider);
@@ -317,6 +315,15 @@ class Deployer {
         let target = host.replace('.z', '');
         console.log('Updating ZDNS', {target, id});
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
+    }
+
+    async storagePut(content) {
+        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(content));
+        fs.writeFileSync(tmpPostDataFilePath, content);
+        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+        return uploaded.id;
     }
 
     async updateKeyValue (target, values, deployPath, deployConfig) {
@@ -394,10 +401,12 @@ class Deployer {
                     let paramNames = paramsTogether.split(',')
                     let params = [];
                     if (value.metadata){
+                        const metadataHash = await this.storagePut(JSON.stringify(value.metadata))
+                        value.metadata['metadataHash'] = metadataHash
                         for(let paramName of paramNames) {
                             params.push(value.metadata[paramName]);
                         }
-                    }else{
+                    } else {
                         for(let paramName of paramNames) {
                             params.push(value[paramName]);
                         }
