@@ -1,34 +1,48 @@
 import React from 'react'
 import assets from '../assets'
+import { useAppContext, ProvideAppContext, Store } from './Context'
 
 import './index.css'
 
 const Header = () => {
+    const { walletAddress } = useAppContext()
+
     return (
         <header>
             <h1>Decentralized Store</h1>
-            {/* {% set wallet_address = default_wallet_address() %} */}
-            {/* <h4>Wallet Address: {{ wallet_address }}</h4> */}
-            <h4>Wallet Address: { 'placeholder' }</h4>
+            <h4>Wallet Address: { walletAddress || 'Loading...' }</h4>
         </header>
     )
+}
+
+const StoreItem = ({ id, name, logo, description }: Store) => {
+    return (
+        <div className='store'>
+            <h3 className='name'>{ name }</h3>
+            <div id='storelogo' style={{ backgroundImage: `url(${ logo })`, backgroundRepeat: 'no-repeat' }}></div>
+            <i className="description">{ description }</i>
+            <p><a href={ `/products?storeId=${ id }` }>View { name } Products</a></p>
+            <hr />
+        </div>
+    )
+}
+
+const StoreList = () => {
+    const { storeList } = useAppContext()
+
+    if (!storeList.length) {
+        return <p>Loading...</p>
+    }
+
+    return <>{ storeList.map(item => <StoreItem key={ item.id } {...item}/>) }</>
 }
 
 const Index = () => {
     return (
         <>
-            {/* {% set storeContractAddress = identity_ikv_get('store', 'zweb/contracts/address/Store') %}
-            {% set storeContractAbi = storage_get_by_ikv('store', 'zweb/contracts/abi/Store') %} */}
+            <StoreList/>
             <p><b>Store notifications will appear below</b></p>
             <section id="notifications"></section>
-            {/* <script language="JavaScript">
-                // set local javascript variables from twig variables
-                let storeContractAddress = "{{ storeContractAddress }}"
-                let storeContractAbi = "{{ storeContractAbi }}"
-                let walletAddress = "{{ wallet_address }}"
-            </script>
-            <script src="js/web3.min.js"></script>
-            <script language="JavaScript" src="js/store.js"></script> */}
         </>
     )
 }
@@ -40,7 +54,6 @@ const Main = () => {
                 <img alt='Point Network Store' src={ assets['store-logo'] } width='400' height='122'></img>
                 <p><a className='button' href='/'>Home</a></p>
                 <p><b>Point Network Store Example App</b>.</p>
-                <p><i>TODO: List all the available stores below</i></p>
                 <Index/>
             </div>
         </main>
@@ -48,8 +61,8 @@ const Main = () => {
 }
 
 export const App = () => (
-    <>
+    <ProvideAppContext>
         <Header/>
         <Main/>
-    </>
+    </ProvideAppContext>
 )
