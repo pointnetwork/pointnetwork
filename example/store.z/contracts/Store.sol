@@ -22,13 +22,12 @@ contract Store is ERC1155 {
         bytes32 id;
         string name;
         uint price;
-        uint storeId;
         string metadataHash;
     }
     
-    
+    StoreFront[] allStores;
     mapping(address => StoreFront) public Stores;
-    mapping (address => Product[]) public Products;
+    mapping (uint => Product[]) public Products;
     
     uint internal storeIdIncrementor;
     uint internal _tokenId;
@@ -45,15 +44,16 @@ contract Store is ERC1155 {
         uint storeId = storeIdIncrementor++;
         StoreFront memory _store = StoreFront(storeId, name, description, logo, true);
         Stores[msg.sender] = _store;
+        allStores.push(_store);
     }
 
       function addProductToStore(string memory name, uint price, string memory metadataHash ) public returns (uint256) {
         uint newProductId = _tokenId++;
         bytes32 productId = keccak256(abi.encodePacked(name, price, metadataHash));
-        Product memory _product = Product(productId, name, price, Stores[msg.sender].id, metadataHash);
+        Product memory _product = Product(productId, name, price, metadataHash);
         bytes memory metadata = bytes(metadataHash);
         _mint(msg.sender, newProductId, 1, metadata);
-        Products[msg.sender].push(_product);
+        Products[Stores[msg.sender].id].push(_product);
         return newProductId;
       }
     
@@ -61,5 +61,19 @@ contract Store is ERC1155 {
         StoreFront memory store = Stores[msg.sender];
         return (store.id, store.name, store.description, store.logo);
       }
-      
+
+      function getStores() public view returns(StoreFront[] memory) {
+        return allStores;
+      }
+
+      function getProductsByStoreId(uint storeId) public view  returns(Product[] memory) {
+        return Products[storeId];
+      }
+
+      function isStoreRegistered() public view  returns(bool) {
+        if (Stores[msg.sender].exists) {
+          return true;
+        }
+        return false;
+      }
 }
