@@ -1,7 +1,32 @@
 import React from 'react'
+import { ProvideProductsContext, useProductsContext, Product } from './Context'
 
-export const Products = () => {
-    return (
-        <h2>Products:...</h2>
-    )
+const Product = ({ storeId, productId, name, description, price }: Product) => {
+  return (
+    <div className="store">
+        <h3 className="name">{ name }</h3>
+        <p><i className="description">{ description }</i></p>
+        <b className="price">{ price }</b>
+    </div>
+  )
 }
+
+const ProductList = () => {
+  const { store, productList } = useProductsContext()
+
+  if (!store) {
+    return (
+      <p>Loading...</p>
+    )
+  }
+
+  if (!productList.length) {
+    return (
+      <p>No products yet...</p>
+    )
+  }
+
+  return <>{ productList.map((p)=> <Product key={ p.productId } {...p}/>)}</>
+}
+
+export const Products = () => <ProvideProductsContext><ProductList/></ProvideProductsContext>

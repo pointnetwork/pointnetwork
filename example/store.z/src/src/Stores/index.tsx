@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'wouter'
-import { Store, useAppContext } from '~/App/Context'
+import { Store, useStoreContext, ProvideStoreContext } from './Context'
 
 const StoreItem = ({ id, name, logo, description }: Store) => {
     return (
@@ -15,7 +15,7 @@ const StoreItem = ({ id, name, logo, description }: Store) => {
 }
 
 const StoreList = () => {
-    const { storeList } = useAppContext()
+    const { storeList } = useStoreContext()
 
     if (!storeList.length) {
         return <p>Loading...</p>
@@ -26,10 +26,10 @@ const StoreList = () => {
 
 export const Stores = () => {
     return (
-        <>
+        <ProvideStoreContext>
             <StoreList/>
             <p><b>Store notifications will appear below</b></p>
             <section id="notifications"></section>
-        </>
+        </ProvideStoreContext>
     )
 }
