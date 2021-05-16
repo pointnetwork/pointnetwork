@@ -1,6 +1,9 @@
 import React from 'react'
-import assets from '../assets'
-import { useAppContext, ProvideAppContext, Store } from './Context'
+import assets from '~/assets'
+import { Route } from 'wouter'
+import { useAppContext, ProvideAppContext } from './Context'
+import { Stores } from '~/Stores'
+import { Products } from '~/Products'
 
 import './index.css'
 
@@ -15,38 +18,6 @@ const Header = () => {
     )
 }
 
-const StoreItem = ({ id, name, logo, description }: Store) => {
-    return (
-        <div className='store'>
-            <h3 className='name'>{ name }</h3>
-            <div id='storelogo' style={{ backgroundImage: `url(${ logo })`, backgroundRepeat: 'no-repeat' }}></div>
-            <i className="description">{ description }</i>
-            <p><a href={ `/products?storeId=${ id }` }>View { name } Products</a></p>
-            <hr />
-        </div>
-    )
-}
-
-const StoreList = () => {
-    const { storeList } = useAppContext()
-
-    if (!storeList.length) {
-        return <p>Loading...</p>
-    }
-
-    return <>{ storeList.map(item => <StoreItem key={ item.id } {...item}/>) }</>
-}
-
-const Index = () => {
-    return (
-        <>
-            <StoreList/>
-            <p><b>Store notifications will appear below</b></p>
-            <section id="notifications"></section>
-        </>
-    )
-}
-
 const Main = () => {
     return (
         <main>
@@ -54,15 +25,11 @@ const Main = () => {
                 <img alt='Point Network Store' src={ assets['store-logo'] } width='400' height='122'></img>
                 <p><a className='button' href='/'>Home</a></p>
                 <p><b>Point Network Store Example App</b>.</p>
-                <Index/>
+                <Route path='/'><Stores/></Route>
+                <Route path='/products/:store'><Products/></Route>
             </div>
         </main>
     )
 }
 
-export const App = () => (
-    <ProvideAppContext>
-        <Header/>
-        <Main/>
-    </ProvideAppContext>
-)
+export const App = () => <ProvideAppContext><Header/><Main/></ProvideAppContext>
