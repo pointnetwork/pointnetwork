@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "~*": ["./src/*"],
+            "Common": ["./src/Common"],
+            "Common/*": ["./src/Common/*"]
+        },
+        "jsx": "react",
+        "allowSyntheticDefaultImports": true,
+        "allowJs": false,
+        "strictNullChecks": true,
+        "noUncheckedIndexedAccess": true,
+        "downlevelIteration": true,
+        "noImplicitAny": true,
+        "strict": true,
+        "typeRoots": [ "./src/@types", "./node_modules/@types"]
+    },
+    "include": ["src/**/*"]
+}

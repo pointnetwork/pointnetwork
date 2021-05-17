@@ -2,7 +2,8 @@ version: '3'
 
 services:
   storage_provider:
-    # command: 'run start:docker:dev -- --datadir /data'
+    # entrypoint: npm
+    # command: 'run start:docker:dev'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
@@ -19,7 +20,10 @@ services:
       - ${PWD}/package.json:/app/package.json:ro
 
   website_owner:
-    command: 'run start:docker:dev -- --datadir /data'
+    entrypoint: npm
+    command: 'run watch:site:and:start:docker:dev'
+    environment:
+      - SITE=example/store.z
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
@@ -28,7 +32,6 @@ services:
       - ${PWD}/db:/app/db:ro
       - ${PWD}/example:/app/example:ro
       - ${PWD}/network:/app/network:ro
-      - ${PWD}/provider:/app/provider:ro
       - ${PWD}/scripts:/app/scripts:ro
       - ${PWD}/threads:/app/threads:ro
       - ${PWD}/wallet:/app/wallet:ro
@@ -36,7 +39,8 @@ services:
       - ${PWD}/package.json:/app/package.json:ro
 
   website_visitor:
-    command: 'run start:docker:dev -- --datadir /data'
+    # entrypoint: npm
+    # command: 'run start:docker:dev'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro

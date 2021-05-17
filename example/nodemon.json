@@ -1,0 +1,8 @@
+{
+    "exec": "echo Waiting for file changes in: $SITE",
+    "ext": "html,zhtml,js,css,json",
+    "ignore": ["src"],
+    "events": {
+        "restart": "./point deploy $SITE --datadir $DATADIR -v"
+    }
+}

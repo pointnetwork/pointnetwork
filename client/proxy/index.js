@@ -46,24 +46,19 @@ class ZProxy {
         this.session = new NodeSession({secret: '24tL7rQrHcXPxNevZdFyvNi8RyLGE3jf'})
         this.session.startSession(request, response, () => {})
 
-        // console.log(request);
-        // console.log(request.headers);
         let host = request.headers.host;
-        // console.log(host);
         if (! _.endsWith(host, '.z')) return this.abort404(response);
 
         try {
             let rendered;
-
             let parsedUrl;
-            // console.log(request);
+
             try {
                 parsedUrl = new URL(request.url, `http://${request.headers.host}`);
             } catch(e) {
                 parsedUrl = { pathname: '/error' }; // todo
             }
 
-            console.debug(parsedUrl); // todo: remove
             let contentType = 'text/html';
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
                 let hash = parsedUrl.pathname.replace('/_storage/', '');
@@ -100,20 +95,30 @@ class ZProxy {
                 if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
 
                 let template_id = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
+                let template_ext = undefined;
+                if (template_id.includes('.')) {
+                    [template_id, template_ext] = template_id.split('.')
+                }
+                if (template_ext) {
+                    contentType = this.getContentTypeFromExt(template_ext);
+                }
                 if (!template_id) return this.abort404(response, 'route not found'); // todo: write a better msg
-                let template_file_contents = await this.ctx.client.storage.readFile(template_id, 'utf-8');
+                let template_file_contents = await this.ctx.client.storage.readFile(template_id);
 
-                let renderer = new Renderer(ctx);
-                let request_params = {};
-                for(let k of parsedUrl.searchParams.entries()) request_params[ k[0] ] = k[1];
-                let composeEmailData = request.session.get('_compose_data');
-                request_params['_compose_data'] = composeEmailData == undefined ? {} : composeEmailData
-                rendered = await renderer.render(template_file_contents, host, request_params); // todo: sanitize
+                rendered = template_file_contents;
+
+                if (template_ext === 'zhtml' || template_ext === 'html' || contentType === 'text/html') {
+                    let renderer = new Renderer(ctx);
+                    let request_params = {};
+                    for(let k of parsedUrl.searchParams.entries()) request_params[ k[0] ] = k[1];
+                    let composeEmailData = request.session.get('_compose_data');
+                    request_params['_compose_data'] = composeEmailData == undefined ? {} : composeEmailData
+                    rendered = await renderer.render(template_file_contents.toString(), host, request_params); // todo: sanitize
+                }
             }
 
             let sanitized;
             if (contentType === 'text/html' && this.config.sanitize_html) {
-                console.log('Sanitizing...' + contentType + this.config.sanitize_html + rendered);
                 sanitized = this.sanitize(rendered);
             } else {
                 // todo: potential security vulnerability here, e.g. if browser still thinks it's to be interpreted as html,
@@ -148,6 +153,9 @@ class ZProxy {
 
     getContentTypeFromExt(ext) {
         // Note: just "css" won't work, so we prepend a dot
+        if (ext === 'zhtml') {
+            ext = 'html'
+        }
         return mime.lookup('.'+ext) || 'application/octet-stream';
     }
 
