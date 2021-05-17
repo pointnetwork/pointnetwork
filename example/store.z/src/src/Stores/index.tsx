@@ -6,7 +6,7 @@ const StoreItem = ({ id, name, logo, description }: Store) => {
     return (
         <div className='store'>
             <h3 className='name'>{ name }</h3>
-            <div id='storelogo' style={{ backgroundImage: `url(${ logo })`, backgroundRepeat: 'no-repeat' }}></div>
+            <div className='storelogo' style={{ backgroundImage: `url(${ logo })`, backgroundRepeat: 'no-repeat' }}></div>
             <i className="description">{ description }</i>
             <p><Link href={ `/products/${ id }` }>View { name } Products</Link></p>
             <hr />
