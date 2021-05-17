@@ -69,3 +69,8 @@ main {
 textarea {
   width: 100%;
 }
+
+.storelogo {
+  width: 300px;
+  height: 300px;
+}

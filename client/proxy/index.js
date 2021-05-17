@@ -107,7 +107,7 @@ class ZProxy {
 
                 rendered = template_file_contents;
 
-                if (template_ext === 'zhtml' || template_ext === 'html') {
+                if (template_ext === 'zhtml' || template_ext === 'html' || contentType === 'text/html') {
                     let renderer = new Renderer(ctx);
                     let request_params = {};
                     for(let k of parsedUrl.searchParams.entries()) request_params[ k[0] ] = k[1];
