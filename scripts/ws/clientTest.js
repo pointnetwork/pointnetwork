@@ -11,11 +11,11 @@ Now run a deployment. You should see the stream update as the files are deployed
 const WebSocket = require('ws');
 const readline = require('readline');
 
-const node1Config = require('../../resources/defaultConfig.json')
+// const node1Config = require('../../resources/defaultConfig.json')
 const node2Config = require('../../resources/demo/config.test2.json')
-const node3Config = require('../../resources/demo/config.test3.json')
+// const node3Config = require('../../resources/demo/config.test3.json')
 
-const ws = new WebSocket(`ws://localhost:${node2Config.api.port}/ws/deploy/progress`);
+const ws = new WebSocket(`ws://localhost:${node2Config.api.port}/ws/node`);
 
 const path = require('path')
 
@@ -34,7 +34,7 @@ ws.on('open', () => {
 
 ws.on('message', (data) => {
   console.log(JSON.parse(data))
-  // console.log("%O", data)
+  console.log("%O", data)
   _console.prompt();
 });
 
@@ -45,6 +45,12 @@ function createWsConsole() {
   console.log('Call any API route via this interface:')
   console.log(`${PROMPT} ping`)
   console.log('{"data":{"ping":"pong"}')
+  console.log()
+  console.log('Example: Deploy a site via the API')
+  console.log('deploy?deploy_path=/your/path/to/pointnetwork/example/hello.z')
+  console.log()
+  console.log('Example: Wallet transactions are streamed via this socket')
+  console.log()
   console.log('***********************************************')
   console.log()
   _console = readline.createInterface({
