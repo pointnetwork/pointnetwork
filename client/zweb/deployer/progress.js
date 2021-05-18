@@ -11,7 +11,7 @@ class DeployerProgress {
     this.progressEventEmitter = new events.EventEmitter()
     this._initEventHandlerFunction()
     this.progress = {
-      type: 'request_deployment-progress',
+      type: 'api_deploy',
       data: []
     }
   }
