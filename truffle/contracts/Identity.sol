@@ -107,7 +107,8 @@ contract Identity {
     }
 
     modifier onlyIdentityOwner(string memory identity) {
-        if (msg.sender != identityToOwner[identity]) revert('You are not the owner of this identity'); // todo: identityToOwner[identity] == address(0) ?
+        require(msg.sender == identityToOwner[identity], 'You are not the owner of this identity');
+        // todo: identityToOwner[identity] == address(0) ?
         _;
     }
 
