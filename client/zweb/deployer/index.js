@@ -211,7 +211,7 @@ class Deployer {
 
         let gasPrice = await this.ctx.web3.eth.getGasPrice();
         let estimateGas = Math.floor(await contract.new.estimateGas() * 1.1);
-        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: estimateGas }); // todo: magic number
+        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: estimateGas });
         let address = deployedContractInstance.address;
 
         console.log('Deployed Contract Instance of '+contractName, address);
