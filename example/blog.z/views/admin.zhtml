@@ -4,7 +4,7 @@
 
     <h1>New Article</h1>
 
-    <form method="post" action="/_contract_send/Blog.createArticle(title, contents)" class="new-article-form">
+    <form method="post" action="/_contract_send/Blog.createArticle(title,contents)" class="new-article-form">
         <table>
             <tr>
                 <th>Title:</th>
