@@ -177,6 +177,9 @@ process.on('uncaughtException', (err) => {
 });
 process.on('unhandledRejection', (err, second) => {
     npid.remove(pidFilePath);
+
+    if (err.message && err.message.includes && err.message.includes('Invalid JSON RPC response')) ctx.log.debug('>>> Are you sure you have a web3 connection? Such as Ganache, Ethereum etc. <<<');
+
     ctx.log.debug(err, second);
     ctx.log.error('Unhandled Rejection: ' + err.message);
     ctx.log.debug(err.stack);
