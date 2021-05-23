@@ -52,6 +52,14 @@ ctx.datadir = ctx.datapath = program.datadir;
 ctx.configPath = program.config;
 ctx.basepath = __dirname;
 
+// --------------- Dump Demo Configs ----------------- //
+
+// Must be placed before we're checking for existence of any configs!
+if (program.demo) {
+    require('./resources/demo');
+    return;
+}
+
 // ------------------- Init Config ----------------- //
 
 if (! fs.existsSync(ctx.datadir)) mkdirp.sync(ctx.datadir);
@@ -97,13 +105,6 @@ if (program.attach) {
     const Console = require('./console');
     const console = new Console();
     console.start();
-    return;
-}
-
-// --------------- Dump Demo Configs ----------------- //
-
-if (program.demo) {
-    require('./resources/demo');
     return;
 }
 
