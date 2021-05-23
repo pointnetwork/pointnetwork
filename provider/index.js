@@ -201,7 +201,7 @@ class Provider {
         if (!chunk) return next(new Error('ECHUNKNOTFOUND: Decrypted chunk with id '+chunk_real_id+' is not found'));
 
         if (! chunk.hasDecryptedData()) {
-            chunk.getData(); // We're calling this so that if the chunk file doesn't exist, it gets reassembled from the chunks
+            chunk.getData(); // We're calling this so that if the chunk file doesn't exist, it gets reassembled from the segments
             await this.decryptChunkAsync(chunk);
         }
 
