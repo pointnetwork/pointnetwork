@@ -119,7 +119,6 @@ contract Store is ERC1155 {
             Products[Stores[Bids[productId].bidder].id].push(Products[storeId][i]);
             Products[storeId][i] = Products[storeId][Products[storeId].length - 1];
             delete Products[storeId][Products[storeId].length - 1];
-            // Products[storeId].length--;
             return true;
           }
         }
