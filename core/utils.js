@@ -51,6 +51,8 @@ class Utils {
     static pointSign(message, privateKey, chainId) {
         const fullMessage = this.pointConstructFullMessageToSign(message);
 
+        if (!privateKey) throw Error('no private key passed to pointSign');
+
         const signature = ethUtil.ecsign(
             this.sha256(Buffer.from(fullMessage, 'utf-8')),
             privateKey,
