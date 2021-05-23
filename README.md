@@ -152,7 +152,7 @@ Now when you run the installation, the script will not attempt to download TOR b
 
 ```
 ...
-> @deadcanaries/granax@3.2.5 postinstall ~/pointnetwork/node_modules/@deadcanaries/granax
+> @pointnetwork/granax@3.2.5 postinstall ~/pointnetwork/node_modules/@pointnetwork/granax
 > node script/download-tbb.js
 
 Skipping automatic Tor installation...

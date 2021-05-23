@@ -1,5 +1,5 @@
-const kadence = require('@deadcanaries/kadence');
-const kadenceConstants = require('@deadcanaries/kadence/lib/constants');
+const kadence = require('@pointnetwork/kadence');
+const kadenceConstants = require('@pointnetwork/kadence/lib/constants');
 const path = require('path');
 const fs = require('fs');
 const _async = require('async');
@@ -7,10 +7,10 @@ const ethUtil = require('ethereumjs-util');
 const AuthenticatePlugin = require('./plugin-authenticate');
 const StorageProviderPlugin = require('./plugin-storage-provider');
 const StorageClientPlugin = require('./plugin-storage-client');
-const kadenceUtils = require('@deadcanaries/kadence/lib/utils');
+const kadenceUtils = require('@pointnetwork/kadence/lib/utils');
 const pino = require('pino');
 const SerializerBSON = require('./serializer-bson');
-const Messenger = require('@deadcanaries/kadence/lib/messenger');
+const Messenger = require('@pointnetwork/kadence/lib/messenger');
 const { log } = require('console');
 
 class Kademlia {
