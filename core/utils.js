@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const mkdirp = require('mkdirp');
 const ethUtil = require('ethereumjs-util');
-const kadUtils = require('@deadcanaries/kadence').utils;
+const kadUtils = require('@pointnetwork/kadence').utils;
 
 class Utils {
     static makeSurePathExists(path) {

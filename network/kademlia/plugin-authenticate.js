@@ -1,6 +1,6 @@
 const assert = require('assert');
 const secp256k1 = require('secp256k1');
-const utils = require('@deadcanaries/kadence/lib/utils');
+const utils = require('@pointnetwork/kadence/lib/utils');
 const bsonrpc = require('./bson-rpc');
 const BSON = require('./good-bson');
 const { Transform } = require('stream');
