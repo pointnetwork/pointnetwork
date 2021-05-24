@@ -194,6 +194,7 @@ class Deployer {
                 found = true;
                 msg += e.formattedMessage + "\n"
             }
+
             msg = ">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\n" + msg;
             if (found) throw new Error(msg);
         }
@@ -209,7 +210,8 @@ class Deployer {
         contract.setProvider(this.ctx.web3.currentProvider);
 
         let gasPrice = await this.ctx.web3.eth.getGasPrice();
-        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: 700000 }); // todo: magic number
+        let estimateGas = Math.floor(await contract.new.estimateGas() * 1.1);
+        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: estimateGas });
         let address = deployedContractInstance.address;
 
         console.log('Deployed Contract Instance of '+contractName, address);
