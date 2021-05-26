@@ -4,7 +4,7 @@
   "description": "Point Network;",
   "main": "point",
   "dependencies": {
-    "@deadcanaries/kadence": "^6.1.11",
+    "@pointnetwork/kadence": "^6.1.11",
     "@openzeppelin/contracts": "^3.4.0",
     "@truffle/contract": "^4.2.1",
     "async": "^3.2.0",

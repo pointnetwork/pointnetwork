@@ -30,11 +30,12 @@ class Socket {
   async responseFor(cmdstr) {
     let [cmd, params] = this._parseCmd(cmdstr)
     let response = await this.console.cmd_api(cmd, ...params)
-    return this._formatResponse(response)
+    return this._formatResponse(cmd, response)
   }
 
-  _formatResponse(response) {
-    let payload = {data: response}
+  _formatResponse(cmd, response) {
+    let api_cmd = `api_${cmd.replace('/', '_')}`
+    let payload = {type: api_cmd, data: response}
     return payload
   }
 

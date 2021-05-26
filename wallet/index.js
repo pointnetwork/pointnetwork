@@ -38,6 +38,7 @@ class Wallet {
         this.transactionEventEmitter.on(this.TRANSACTION_EVENT, (transactionHash, from, to, value) => {
             if (this.wsserver) {
                 let payload = {
+                    type: 'api_wallet_tx',
                     data: {
                         transactionHash: transactionHash,
                         from,
