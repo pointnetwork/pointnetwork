@@ -88,7 +88,7 @@ class ApiServer {
         }
 
         /*
-         * Example: ['GET', '/ws/deploy/progress', 'DeployProgressSocket'],
+         * Example: ['GET', '/ws/node', 'NodeSocket'],
          */
         const ws_routes = require('./ws_routes');
 
