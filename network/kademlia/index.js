@@ -29,6 +29,7 @@ class Kademlia {
         const networkPublicKey = ethUtil.privateToPublic(networkPrivateKey); // todo: different source than networkPrivateKeyHex, cross validate them!
         const address = ethUtil.privateToAddress(networkPrivateKey);
         const identity = address;
+
         this.ctx.log.info('Starting kadence DHT network...');
 
         // Initialize public contact data

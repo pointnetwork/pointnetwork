@@ -121,7 +121,9 @@ class Chunk extends Model {
         // todo todo todo
 
         // Otherwise consider it live
-        // await this.changeULStatus(Chunk.UPLOADING_STATUS_UPLOADED);
+        // await this.changeDLStatus(Chunk.DOWNLOADING_STATUS_DOWNLOADED);
+
+        // todo: at least prefix it with IF chunk.dl_status === Chunk.DOWNLOADING_STATUS_DOWNLOADED then reconsider
 
         if (cascade) {
             for(let f of await this.getFiles()) {
@@ -129,7 +131,7 @@ class Chunk extends Model {
             }
         }
 
-        // todo: immediately start uploading here? trigger the tick()?
+        // todo: immediately start downloading here? trigger the tick()?
     }
 
     async getFiles() {
