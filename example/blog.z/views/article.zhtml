@@ -20,6 +20,31 @@
 
         <hr>
 
+        <div class="comments">
+            <h4>Comments:</h4>
+
+            {% set comments = contract_get(host, 'Blog', 'getCommentsByArticle', [id]) %}
+
+            {% for comment in comments %}
+
+                <div class="comment">
+                    <div><strong>From:</strong> <em>{{ comment.author }}</em></div>
+                    <div><strong>Time:</strong> <em>{{ comment.timestamp | date('F j, Y, g:i a') }}</em></div>
+
+                    {% set comment_text = storage_get(comment.contents) %}
+                    <div class="comment-body">
+                        {{ comment_text | nl2br }}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <form method="post" action="/_contract_send/Blog.createCommentByArticle(articleId,contents)" class="comments-form">
+                <textarea name="storage[contents]" required rows=5 cols=40></textarea>
+                <input type="submit" value="Add" />
+                <input type="hidden" value="{{article.id}}" name="articleId" />
+            </form>
+        </div>
+
     {% endif %}
 
 {% endblock %}

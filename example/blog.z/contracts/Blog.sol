@@ -13,7 +13,7 @@ contract Blog {
 
   struct Comment {
     address author;
-    string content;
+    string contents;
     uint timestamp;
   }
 
