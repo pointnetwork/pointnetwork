@@ -85,7 +85,7 @@ class Storage {
                 } else {
                     waitUntilUpload(resolve, reject);
                 }
-            }, 100); // todo: change interval?
+            }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
 
         setTimeout(() => {
@@ -116,11 +116,15 @@ class Storage {
             setTimeout(async() => {
                 let file = await File.find(id);
                 if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED || file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
+                    setTimeout(() => {
+                        this.tick('downloading');
+                    }, 0);
+
                     resolve(file);
                 } else {
                     waitUntilRetrieval(resolve, reject);
                 }
-            }, 100); // todo: change interval?
+            }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
 
         setTimeout(() => {

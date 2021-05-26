@@ -90,22 +90,22 @@ class Core {
     }
 
     async initNetwork() {
-        this.ctx.network = new Network(ctx);
+        this.ctx.network = new Network(this.ctx);
         await this.ctx.network.start();
     }
 
     async initClient() {
-        this.ctx.client = new Client(ctx);
+        this.ctx.client = new Client(this.ctx);
         await this.ctx.client.start();
     }
 
     async initWallet() { // todo: rename to keychain?
-        this.ctx.wallet = new Wallet(ctx);
+        this.ctx.wallet = new Wallet(this.ctx);
         await this.ctx.wallet.start();
     }
 
     async initProvider() {
-        this.ctx.provider = new Provider(ctx);
+        this.ctx.provider = new Provider(this.ctx);
         await this.ctx.provider.start();
     }
 
