@@ -14,7 +14,7 @@
         "type": "text/plain"
       }
     },
-    "articles1comment1s": {
+    "articles1comments1": {
       "contract_send": "Blog.createCommentByArticle(articleId,contents)",
       "articleId": 1,
       "storage[contents]": {
