@@ -62,11 +62,11 @@ contract StorageProviderRegistry {
 //        return data[key];
 //    }
 
-    function readCheapestProvider() public view returns (address result) {
+    function getCheapestProvider() public view returns (address result) {
         return cheapest_provider;
     }
 
-    function readAllProviders() public view returns (address[] memory){
+    function getAllProviderIds() public view returns (address[] memory){
         return providerIds;
     }
 
