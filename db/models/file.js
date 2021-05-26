@@ -187,8 +187,11 @@ class File extends Model {
             await chunkinfo_chunk.save();
             await chunkinfo_chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_DOWNLOADING);
             await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO);
+            setImmediate(async() => {
+                await this.ctx.client.storage.chunkDownloadingTick(chunkinfo_chunk);
+            });
             return;
-        }
+        } // else chunk info downloaded
 
         if (! this.chunkIds) {
             this.setChunkInfo(chunkinfo_chunk.getData().toString('utf-8'));
@@ -211,6 +214,10 @@ class File extends Model {
                 chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
                 await chunk.save();
                 await chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_DOWNLOADING);
+
+                setImmediate(async() => {
+                    await this.ctx.client.storage.chunkDownloadingTick(chunk);
+                });
             }
         }));
 

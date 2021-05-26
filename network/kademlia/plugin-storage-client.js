@@ -1,3 +1,5 @@
+// TODO: if there is no case when a client needs to respond, like server, to incoming requests (from providers, presumably), then nuke this file
+
 const ethUtil = require('ethereumjs-util');
 const kadUtils = require('@pointnetwork/kadence/lib/utils');
 const StorageProviderPlugin = require('./plugin-storage-provider');
