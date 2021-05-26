@@ -1,5 +1,5 @@
 const ethUtil = require('ethereumjs-util');
-const kadUtils = require('@deadcanaries/kadence/lib/utils');
+const kadUtils = require('@pointnetwork/kadence/lib/utils');
 const StorageProviderPlugin = require('./plugin-storage-provider');
 const Chunk = require('../../db/models/chunk');
 const StorageLink = require('../../db/models/storage_link');
