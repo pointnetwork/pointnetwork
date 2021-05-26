@@ -9,6 +9,7 @@ const pino = require('pino');
 const multistream = require('pino-multi-stream').multistream;
 const npid = require('npid');
 const mkdirp = require('mkdirp');
+const DB = require('./db');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1'
@@ -22,7 +23,7 @@ program.description(`
     https://pointnetwork.io/
 
     Licensed under MIT license
-`); // todo: MIT? // todo: more description, --help is ugly
+`);
 // todo: add alpha version disclaimer like in raiden
 
 // NOTE: After changing parameters here, update the documentation
@@ -32,6 +33,7 @@ program.option('--datadir <path>', 'path to the data directory', path.join(homed
 program.option('-v, --verbose', 'force the logger to show debug level messages', false);
 program.command('attach').description('attach to the running point process').action(() => program.attach = true);
 program.command('demo').description('dump demo configs to ~/.point').action(() => program.demo = true);
+program.command('debug-destroy-everything').description('destroys everything in datadir: database and files. dangerous!').action(() => program.debug_destroy_everything = true);
 program.command('deploy <path>').description('deploy a website').action(path => program.deploy = path);
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
@@ -51,6 +53,14 @@ ctx = {};
 ctx.datadir = ctx.datapath = program.datadir;
 ctx.configPath = program.config;
 ctx.basepath = __dirname;
+
+// --------------- Dump Demo Configs ----------------- //
+
+// Must be placed before we're checking for existence of any configs!
+if (program.demo) {
+    require('./resources/demo');
+    return;
+}
 
 // ------------------- Init Config ----------------- //
 
@@ -100,13 +110,6 @@ if (program.attach) {
     return;
 }
 
-// --------------- Dump Demo Configs ----------------- //
-
-if (program.demo) {
-    require('./resources/demo');
-    return;
-}
-
 // -------------------- Deployer --------------------- //
 
 if (program.deploy) {
@@ -114,6 +117,13 @@ if (program.deploy) {
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
     deploy.deploy(program.deploy);
+    return;
+}
+
+// ------------------ Remove Everything ------------ //
+if (program.debug_destroy_everything) {
+    // todo: remove in prod, dangerous
+    DB.__debugClearCompletely(ctx);
     return;
 }
 
@@ -176,6 +186,9 @@ process.on('uncaughtException', (err) => {
 });
 process.on('unhandledRejection', (err, second) => {
     npid.remove(pidFilePath);
+
+    if (err.message && err.message.includes && err.message.includes('Invalid JSON RPC response')) ctx.log.debug('>>> Are you sure you have a web3 connection? Such as Ganache, Ethereum etc. <<<');
+
     ctx.log.debug(err, second);
     ctx.log.error('Unhandled Rejection: ' + err.message);
     ctx.log.debug(err.stack);
