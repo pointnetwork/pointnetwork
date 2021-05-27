@@ -1,17 +1,8 @@
 {% extends 'layout.zhtml' %}
 
 {% block contents %}
-    {% set articles = keyvalue_list(host, 'articles') %}
 
-    {% set article = null %}
-
-    {% for article_json in articles %}
-        {% set _article = article_json | unjson %}
-
-        {% if _article.id == id %}
-            {% set article = _article %}
-        {% endif %}
-    {% endfor %}
+    {% set article = contract_get(host, 'Blog', 'getArticle', [id]) %}
 
     {% if article is null %}
         404 Not Found
@@ -32,13 +23,13 @@
         <div class="comments">
             <h4>Comments:</h4>
 
-            {% set comments = keyvalue_list(host, 'article_' ~ id ~ '_comments') %}
-            {% for comment_json in comments %}
-                {% set comment = comment_json | unjson %}
+            {% set comments = contract_get(host, 'Blog', 'getCommentsByArticle', [id]) %}
+
+            {% for comment in comments %}
 
                 <div class="comment">
-                    <div><strong>From:</strong> <em>{{ comment.__from }}</em></div>
-                    <div><strong>Time:</strong> <em>{{ comment.__time | date('F j, Y, g:i a') }}</em></div>
+                    <div><strong>From:</strong> <em>{{ comment.author }}</em></div>
+                    <div><strong>Time:</strong> <em>{{ comment.timestamp | date('F j, Y, g:i a') }}</em></div>
 
                     {% set comment_text = storage_get(comment.contents) %}
                     <div class="comment-body">
@@ -47,9 +38,10 @@
                 </div>
             {% endfor %}
 
-            <form method="post" action="/_keyvalue_append/article_{{ id }}_comments" class="comments-form">
+            <form method="post" action="/_contract_send/Blog.createCommentByArticle(articleId,contents)" class="comments-form">
                 <textarea name="storage[contents]" required rows=5 cols=40></textarea>
                 <input type="submit" value="Add" />
+                <input type="hidden" value="{{article.id}}" name="articleId" />
             </form>
         </div>
 
