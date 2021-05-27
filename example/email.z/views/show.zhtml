@@ -2,16 +2,23 @@
 
 {% block contents %}
 
-  {% set encryptedData = contract_get(host, 'Email', 'getByMessageHash', [messageid]) %}
-  {% set content = decrypt_email(host, wallet_address, encryptedData) %}
+  {% set email = contract_get(host, 'Email', 'getByMessageHash', [messageid]) %}
+  {% set from = email['0'] %}
+  {% set encryptedMessageHash = email['2']  %}
+  {% set encryptedSymmetricKey = email['3'] %}
+  {% set timestamp = email['4'] %}
+  {% set encryptedMessage = storage_get(encryptedMessageHash) %}
+  {% set message = decrypt_data(host, encryptedMessage, encryptedSymmetricKey) %}
 
   <div class="formback">
     <b>Message Id</b><br>
     <p>{{ messageid }}</p>
+    <b>Timestamp</b><br>
+    <p>{{ timestamp }}</p>
     <b>Message From</b><br>
-    <p>{{ content.from }}</p>
+    <p>{{ from }}</p>
     <b>Body</b><br>
-    <p>{{ content.message }}</p>
+    <p>{{ message }}</p>
   </div>
 
 {% endblock %}
