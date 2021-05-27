@@ -13,7 +13,7 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  [ -d $SITE/contracts ] && sleep 10
+  [ -d $SITE/contracts ]
   ./point deploy $SITE --datadir $DATADIR -v
 
   echo
