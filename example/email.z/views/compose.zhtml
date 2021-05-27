@@ -7,12 +7,12 @@
   {% set node3EmailAddress = email_identity_by_owner('0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8') %}
 
   <div class="formback">
-    <form method="post" action="/_encrypt_send/">
+    <form method="get" action="/encrypt_send">
       <label><b>From</b></label><br>
       <span>{{ wallet_address }}</span><br><br>
 
       <label><b>To</b></label><br>
-      <select name="to" id="to">
+      <select name="recipient" id="recipient">
         <option value="0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301">Storage Provider, {{ node1EmailAddress }}</option>
         <option value="0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB">Website Owner, {{ node2EmailAddress }}</option>
         <option value="0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8">Website Viewer, {{ node3EmailAddress }}</option>
@@ -25,7 +25,5 @@
       <input type="submit" value="Encrypt & Send Email"/>
     </form>
   </div>
-  <script src="js/web3.min.js"></script>
-  <script language="JavaScript" src="js/email.js"></script>
 
 {% endblock %}

@@ -103,9 +103,6 @@ class Renderer {
                 let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                 return uploaded.id;
             });
-            Twig.exports.extendFunction("request_get", async(key, formData) => {
-                return formData[key];
-            });
             Twig.exports.extendFunction("encrypt_message", async(host, recipient, message) => {
                 let publicKey = await this.ctx.web3bridge.getKeyValue(recipient, 'public_key')
                 const encryptionResult = await encryptPlainTextAndKey(host, message, publicKey);
