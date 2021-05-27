@@ -4,7 +4,13 @@
 # Run this script from within the project root folder like so:
 # ./scripts/deploy-sites.sh
 
-EXAMPLE_SITES="./example/*"
+if [ $# -eq 0 ]; then
+    # No arguments supplied
+    export EXAMPLE_SITES="./example/*"
+else
+    export EXAMPLE_SITES="./example/${1}*"
+fi
+
 DATADIR=${1:-~/.point/test2}
 
 for SITE in $EXAMPLE_SITES;
@@ -13,7 +19,7 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  [ -d $SITE/contracts ] && sleep 10
+#  [ -d $SITE/contracts ] && sleep 10
   ./point deploy $SITE --datadir $DATADIR -v
 
   echo
