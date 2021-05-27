@@ -111,6 +111,7 @@ contract Identity {
         _;
     }
 
+
     // In the prototype, we don't check who owns the domain
     function ikvPut(string memory identity, string memory key, string memory value) public onlyIdentityOwner(identity) {
         ikv[identity][key] = value;
@@ -233,7 +234,7 @@ contract Identity {
         return string(bLower);
     }
 
-    function _isEmptyString(string memory str) public pure returns (bool result) {
+    function _isEmptyString(string memory str) internal pure returns (bool result) {
         return (bytes(str).length == 0);
     }
 }
