@@ -18,7 +18,7 @@ contract Email {
         mails.push(_mail);
         emit SendEmail(msg.sender, to, encryptedMessageHash, encryptedSymmetricKey, block.timestamp);
   }
-  function getByMessageHash(string memory encryptedMessageHash) public returns (address, address, string memory, string memory, uint) {
+  function getByMessageHash(string memory encryptedMessageHash) public view returns (address, address, string memory, string memory, uint) {
     for (uint i = 0; i < mails.length; i++) {
       if (keccak256(abi.encodePacked(mails[i].encryptedMessageHash)) == keccak256(abi.encodePacked(encryptedMessageHash))) {
        return (mails[i].from, mails[i].to, mails[i].encryptedMessageHash, mails[i].encryptedSymmetricKey, mails[i].timestamp);
