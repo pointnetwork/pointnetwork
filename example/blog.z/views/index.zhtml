@@ -5,7 +5,8 @@
 
     <p><em>The list of articles below is not in any html file, but is dynamically compiled from the live blockchain data.</em></p>
 
-    {% set articles = keyvalue_list(host, 'articles') %}
+    {# % set articles = keyvalue_list(host, 'articles') %} #}
+    {% set articles = contract_list(host, 'Blog', 'getArticle') %}
 
     {% for article_json in articles %}
         {% set article = article_json | unjson %}

@@ -1,7 +1,8 @@
 {% extends 'layout.zhtml' %}
 
 {% block contents %}
-    {% set articles = keyvalue_list(host, 'articles') %}
+{#    {% set articles = contract_list(host, 'articles') %}#}
+    {% set articles = contract_list(host, 'Blog', 'getArticle') %}
 
     {% set article = null %}
 
@@ -47,7 +48,8 @@
                 </div>
             {% endfor %}
 
-            <form method="post" action="/_keyvalue_append/article_{{ id }}_comments" class="comments-form">
+            <form method="post" action="/_contract_send/Blog.postComment(articleIdx, contents)" class="comments-form">
+                <input name="hidden" name="articleIdx" value="" />
                 <textarea name="storage[contents]" required rows=5 cols=40></textarea>
                 <input type="submit" value="Add" />
             </form>
