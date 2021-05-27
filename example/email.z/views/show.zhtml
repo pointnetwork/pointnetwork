@@ -3,7 +3,7 @@
 {% block contents %}
 
   {% set encryptedData = contract_get(host, 'Email', 'getByMessageHash', [messageid]) %}
-  {% set content = decrypt_one_mail(host, wallet_address, encryptedData) %}
+  {% set content = decrypt_email(host, wallet_address, encryptedData) %}
 
   <div class="formback">
     <b>Message Id</b><br>
