@@ -103,9 +103,9 @@ class Renderer {
                 let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                 return uploaded.id;
             });
-            Twig.exports.extendFunction("encrypt_message", async(host, recipient, message) => {
+            Twig.exports.extendFunction("encrypt_data", async(host, recipient, data) => {
                 let publicKey = await this.ctx.web3bridge.getKeyValue(recipient, 'public_key')
-                const encryptionResult = await encryptPlainTextAndKey(host, message, publicKey);
+                const encryptionResult = await encryptPlainTextAndKey(host, data, publicKey);
                 return encryptionResult
             });
             Twig.exports.extendFunction("identity_by_owner", async(owner) => {
@@ -128,7 +128,7 @@ class Renderer {
                 const events = await this.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, 0, 'latest');
                 const emails = await Promise.all(events.map(async (event)=> {
                     if (owner === event.returnValues.to) {
-                        return await this.decryptEmail(
+                        return await this.decryptData(
                             host,
                             event.returnValues.from,
                             privateKey,
@@ -139,18 +139,17 @@ class Renderer {
                 }))
                 return emails;
             });
-            Twig.exports.extendFunction("decrypt_one_mail", async(host, owner, encryptedData) => {
+            Twig.exports.extendFunction("decrypt_email", async(host, owner, encryptedData) => {
                 const { privateKey } = this.ctx.wallet.config;
-                if (owner === encryptedData['1']) {
-                    return await this.decryptEmail(
-                        host,
-                        encryptedData['0'],
-                        privateKey,
-                        encryptedData['3'],
-                        encryptedData['2']
-                    )
+                const recipient = encryptedData['1']
+                const from = encryptedData['0']
+                const messageid = encryptedData['2']
+                const encryptedSymmetricKey = encryptedData['3']
+
+                if (owner === recipient) {
+                    let message = await this.decryptData(host,privateKey,encryptedSymmetricKey,messageid)
+                    return { messageid, from, message }
                 }
-                throw new Error('You are not the recipient of this message')
             });
             Twig.exports.extendFunction("default_wallet_address", async(id, passcode) => {
                 return this.ctx.config.client.wallet.account;
@@ -223,19 +222,15 @@ class Renderer {
         return await this.ctx.client.storage.readFile(hash, 'utf-8');
     }
 
-    async decryptEmail(host, from, privateKey, unparsedEncryptedSymmetricKey, encryptedMessageHash) {
+    async decryptData(host, privateKey, unparsedEncryptedSymmetricKey, cid) {
         const encryptedSymmetricKey = JSON.parse(unparsedEncryptedSymmetricKey)
         const encryptedSymmetricObj = {}
         for (const k in encryptedSymmetricKey) {
             encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
         }
-        const encryptedMessage = await this.ctx.client.storage.readFile(encryptedMessageHash, 'utf-8')
-        const decryptedResult = await decryptCipherTextAndKey(host, Buffer.from(encryptedMessage, 'hex'), encryptedSymmetricObj, privateKey)
-        return {
-            messageid: encryptedMessageHash,
-            from,
-            message: decryptedResult.plaintext.toString(),
-        }
+        const encryptedData = await this.ctx.client.storage.readFile(cid, 'utf-8')
+        const decryptedData = await decryptCipherTextAndKey(host, Buffer.from(encryptedData, 'hex'), encryptedSymmetricObj, privateKey)
+        return decryptedData.plaintext.toString()
     }
 }
 
