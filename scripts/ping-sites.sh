@@ -17,13 +17,16 @@ do
   DOMAIN="${SITE/.\/example\//}" # replace './example/'
   DOMAIN="${DOMAIN///}" # replace the trailing '/'
 
-  echo "REQUESTING: ${DOMAIN}"
-  echo
+  for PORT in "8666" "65500" "65501"
+  do
+    echo "REQUESTING: ${DOMAIN} ON PORT ${PORT}"
+    echo
+    curl -s -o /dev/null -w "%{http_code}" -H "Host: ${DOMAIN}" http://localhost:${PORT}
+    echo
+    echo
+    echo "FINISHED: ${DOMAIN} ON PORT ${PORT}"
+    echo
+  done
 
-  curl -s -o /dev/null -w "%{http_code}" -H "Host: ${DOMAIN}" http://localhost:65501
 
-  echo
-  echo
-  echo "FINISHED: ${DOMAIN}"
-  echo
 done
