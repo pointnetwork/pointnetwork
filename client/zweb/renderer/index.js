@@ -123,21 +123,14 @@ class Renderer {
             Twig.exports.extendFunction("contract_call", async(host, contractName, methodName, params) => {
                 return await this.ctx.web3bridge.sendContract(host.replace('.z', ''), contractName, methodName, params);
             });
-            Twig.exports.extendFunction("retrieve_mail", async(owner, host, contractName, event) => {
-                const { privateKey } = this.ctx.wallet.config;
-                const events = await this.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, 0, 'latest');
-                const emails = await Promise.all(events.map(async (event)=> {
-                    if (owner === event.returnValues.to) {
-                        return await this.decryptData(
-                            host,
-                            event.returnValues.from,
-                            privateKey,
-                            event.returnValues.encryptedSymmetricKey,
-                            event.returnValues.encryptedMessageHash
-                        )
-                    }
-                }))
-                return emails;
+            Twig.exports.extendFunction("contract_events", async(host, contractName, event, filter = {}) => {
+                const options = { filter,
+                                  fromBlock: 0,
+                                  toBlock: 'latest'}
+                const events =  await this.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
+                const eventData = events.map((event) =>
+                (({ returnValues }) => ({ data: returnValues }))(event))
+                return eventData
             });
             Twig.exports.extendFunction("decrypt_data", async(host, encryptedData, encryptedSymmetricKey) => {
                 const { privateKey } = this.ctx.wallet.config;
