@@ -22,7 +22,7 @@ class Utils {
 
     // todo: make sure you're actually using the same function solidity does: https://ethereum.stackexchange.com/a/48846
     static hashFn(value) {
-        return Buffer.from(ethUtil.keccak256(value), 'hex').slice(-20);
+        return Buffer.from(ethUtil.keccak256(value), 'hex'); //.slice(-20);
     }
     static hashFnHex(value) {
         return this.hashFn(value).toString('hex');
