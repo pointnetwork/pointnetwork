@@ -139,17 +139,9 @@ class Renderer {
                 }))
                 return emails;
             });
-            Twig.exports.extendFunction("decrypt_email", async(host, owner, encryptedData) => {
+            Twig.exports.extendFunction("decrypt_data", async(host, encryptedData, encryptedSymmetricKey) => {
                 const { privateKey } = this.ctx.wallet.config;
-                const recipient = encryptedData['1']
-                const from = encryptedData['0']
-                const messageid = encryptedData['2']
-                const encryptedSymmetricKey = encryptedData['3']
-
-                if (owner === recipient) {
-                    let message = await this.decryptData(host,privateKey,encryptedSymmetricKey,messageid)
-                    return { messageid, from, message }
-                }
+                return await this.decryptData(host,privateKey,encryptedSymmetricKey,encryptedData)
             });
             Twig.exports.extendFunction("default_wallet_address", async(id, passcode) => {
                 return this.ctx.config.client.wallet.account;
@@ -222,13 +214,12 @@ class Renderer {
         return await this.ctx.client.storage.readFile(hash, 'utf-8');
     }
 
-    async decryptData(host, privateKey, unparsedEncryptedSymmetricKey, cid) {
+    async decryptData(host, privateKey, unparsedEncryptedSymmetricKey, encryptedData) {
         const encryptedSymmetricKey = JSON.parse(unparsedEncryptedSymmetricKey)
         const encryptedSymmetricObj = {}
         for (const k in encryptedSymmetricKey) {
             encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
         }
-        const encryptedData = await this.ctx.client.storage.readFile(cid, 'utf-8')
         const decryptedData = await decryptCipherTextAndKey(host, Buffer.from(encryptedData, 'hex'), encryptedSymmetricObj, privateKey)
         return decryptedData.plaintext.toString()
     }
