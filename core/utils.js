@@ -117,6 +117,11 @@ class Utils {
     }
 
     static async nullAsyncFn() {} // todo: can you replace it with just await null?
+
+    static htmlspecialchars(dangerousString) {
+        const encode = require('html-entities').encode;
+        return encode(dangerousString);
+    }
 }
 
 Utils.merkle = require('./merkle-utils');

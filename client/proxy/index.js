@@ -85,8 +85,8 @@ class ZProxy {
 
         const redirectToHttpsHandler = function(request, response) {
             // Redirect to https
-            const url = request.url;
-            const httpsUrl = url.replace(/^(http\:\/\/)/,"https://");
+            const reqUrl = request.url;
+            const httpsUrl = reqUrl.replace(/^(http\:\/\/)/,"https://");
             response.writeHead(301, {'Location': httpsUrl});
             response.end();
         };
@@ -245,7 +245,12 @@ class ZProxy {
             request.on('end', async() => {
                 if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
 
-                let parsedUrl = new URL(request.url);
+                let parsedUrl;
+                try {
+                    parsedUrl = new URL(request.url, `http://${request.headers.host}`);
+                } catch(e) {
+                    parsedUrl = { pathname: '/error' }; // todo
+                }
                 let key = parsedUrl.pathname.split('/_keyvalue_append/')[1];
                 let currentList = await this.ctx.keyvalue.list(host, key);
                 let newIdx = currentList.length;
@@ -326,14 +331,20 @@ class ZProxy {
                 body += chunk;
             });
             request.on('end', async() => {
-                if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
+                if (request.method.toUpperCase() !== 'POST') return reject('Error: Must be POST');
 
-                let parsedUrl = new URL(request.url);
+                let parsedUrl;
+                try {
+                    parsedUrl = new URL(request.url, `http://${request.headers.host}`);
+                } catch(e) {
+                    parsedUrl = { pathname: '/error' }; // todo
+                }
                 let contractAndMethod = parsedUrl.pathname.split('/_contract_send/')[1];
                 let [contractName, methodNameAndParams] = contractAndMethod.split('.');
                 let [methodName, paramsTogether] = methodNameAndParams.split('(');
+                paramsTogether = decodeURI(paramsTogether);
                 paramsTogether = paramsTogether.replace(')', '');
-                let paramNames = paramsTogether.split(',');
+                let paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
 
                 let entries = new URL('http://localhost/?'+body).searchParams.entries();
                 let postData = {};
@@ -342,6 +353,7 @@ class ZProxy {
                 }
 
                 let redirect = request.headers.referer;
+
                 for(let k in postData) {
                     let v = postData[k];
                     if (k === '__redirect') {
@@ -363,7 +375,11 @@ class ZProxy {
 
                 let params = [];
                 for(let paramName of paramNames) {
-                    params.push(postData[paramName]);
+                    if (paramName in postData) {
+                        params.push(postData[paramName]);
+                    } else {
+                        return reject('Error: no '+this.ctx.utils.htmlspecialchars(paramName)+' param in the data, but exists as an argument to the contract call.');
+                    }
                 }
 
                 try {

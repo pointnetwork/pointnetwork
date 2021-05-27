@@ -113,7 +113,12 @@ class Deployer {
         if (!contractNames) contractNames = [];
         for(let contractName of contractNames) {
             let fileName = path.join(deployPath, 'contracts', contractName+'.sol');
-            await this.deployContract(target, contractName, fileName);
+            try {
+                await this.deployContract(target, contractName, fileName);
+            } catch(e) {
+                this.ctx.log.error(e);
+                throw e;
+            }
         }
 
         let routesFilePath = path.join(deployPath, 'routes.json');

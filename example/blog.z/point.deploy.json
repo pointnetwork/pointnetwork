@@ -14,5 +14,8 @@
                 "type": "text/plain"
             }
         }
-    }
+    },
+    "contracts": [
+        "Blog"
+    ]
 }

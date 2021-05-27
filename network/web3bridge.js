@@ -86,13 +86,17 @@ class Web3Bridge {
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
         const abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
         const contract = new this.web3.eth.Contract(abi.abi, at);
-        return await contract.getPastEvents( event,  {fromBlock, toBlock } );;
+        return await contract.getPastEvents( event,  {fromBlock, toBlock } );
     }
 
     async sendContract(target, contractName, methodName, params) { // todo: multiple arguments, but check existing usage
         const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
-        const abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+        try {
+            const abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+        } catch(e) {
+            throw Error('Could not read abi of the contract '+this.ctx.utils.htmlspecialchars(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
+        }
         const contract = new this.web3.eth.Contract(abi.abi, at);
         const method = contract.methods[ methodName ](...params);
         console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number

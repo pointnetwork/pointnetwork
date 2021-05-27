@@ -19,6 +19,7 @@
     "fastify-nextjs": "^5.2.0",
     "fastify-websocket": "^3.1.0",
     "fs-extra": "^9.0.0",
+    "html-entities": "^2.3.2",
     "http2-proxy": "^5.0.53",
     "level": "^6.0.1",
     "level-auto-index": "^2.0.0",
