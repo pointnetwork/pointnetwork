@@ -304,8 +304,6 @@ class Deployer {
 
         values = await replaceContentsWithCids(values)
 
-        // console.log ({ 'processed_values': values })
-
         for (let [key, value] of Object.entries(values)) {
             if (value && (Array.isArray(value) || typeof value === 'object')) {
                 // if there is a contract_send in the value then send data to the specified contract
@@ -319,11 +317,10 @@ class Deployer {
                         params.push(value[paramName]);
                     }
                     await this.ctx.web3bridge.sendContract(target, contractName, methodName, params );
-                } else {
-                    value = JSON.stringify(value)
-                    await this.ctx.web3bridge.putKeyValue(target, key, String(value))
                 }
+                value = JSON.stringify(value)
             }
+            await this.ctx.web3bridge.putKeyValue(target, key, String(value))
         }
     }
 }
