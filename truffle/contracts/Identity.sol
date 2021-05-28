@@ -40,6 +40,9 @@ contract Identity {
         ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'twitter';
         ownerToIdentity[0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8] = 'node3';
 
+        // Address 0xC0101 ... is for test node 1
+        ikv['0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301']['public_key'] = '0xb192de79890d7dd86de3eb3343e16b873f7acff3cf9c49c4587337f06b744b416a34054dd05f0e6ffd720bf61e3aa1858bff9e1e95df22469f6b693fc9725376';
+
         // Address 0x4f587 ... is for test node 2
         ikv['0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB']['public_key'] = '0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a228cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56';
 
