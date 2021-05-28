@@ -114,7 +114,7 @@ class Deployer {
         for(let contractName of contractNames) {
             let fileName = path.join(deployPath, 'contracts', contractName+'.sol');
             try {
-                await this.deployContract(target, contractName, fileName);
+                await this.deployContract(target, contractName, fileName, deployPath);
             } catch(e) {
                 this.ctx.log.error(e);
                 throw e;
@@ -151,17 +151,35 @@ class Deployer {
         console.log('Deploy finished');
     }
 
-    async deployContract(target, contractName, fileName) {
-        this.ctx.client.deployerProgress.update(fileName, 0, 'compiling')
+    static async getPragmaVersion(fileName){
+        const source = require('readline').createInterface({
+            input: fs.createReadStream(fileName),
+            crlfDelay: Infinity
+        });
+        let version = false;
+        for await (const line of source) {
+            if (line.startsWith('pragma')) {
+                version = true;
+                const regex = /^pragma solidity [\^\~\>\<]?=?(?<version>[0-9\.]*);/;
+                const found = line.match(regex).groups;
+                return found.version;
+            }
+        };
+        if (!version) throw new Error('Contract has no compiler version')
+    }
 
-        let SOLC_MAJOR_VERSION = 0
-        let SOLC_MINOR_VERSION = 6 // TODO Change this based on the solidity pragma statement
+    async deployContract(target, contractName, fileName, deployPath) {
+        this.ctx.client.deployerProgress.update(fileName, 0, 'compiling')
+        const version = await this.constructor.getPragmaVersion(fileName);
+        const versionArray = version.split('.');
+
+        let SOLC_MAJOR_VERSION = versionArray[0]
+        let SOLC_MINOR_VERSION = versionArray[1] // TODO Change this based on the solidity pragma statement
         let SOLC_FULL_VERSION = `solc${SOLC_MAJOR_VERSION}_${SOLC_MINOR_VERSION}`
 
         const path = require('path');
         const solc = require(SOLC_FULL_VERSION);
         const fs = require('fs-extra');
-
         const compileConfig = {
             language: 'Solidity',
             sources: {
@@ -179,11 +197,14 @@ class Deployer {
         };
 
         let getImports = function(dependency) {
-            switch (dependency) {
-                case contractName+'.sol':
-                    return {contents: fs.readFileSync(fileName, 'utf8')};
-                default:
-                    return {error: 'File not found'}
+            const dependencyLocalPath = path.join(deployPath, 'contracts', dependency)
+            const dependencyNodeModulesPath = path.join(deployPath, 'src/node_modules/', dependency)
+            if (fs.existsSync(dependencyLocalPath)) {
+                return {contents: fs.readFileSync(dependencyLocalPath, 'utf8')};
+            } else if (fs.existsSync(dependencyNodeModulesPath)){
+                return {contents: fs.readFileSync(dependencyNodeModulesPath, 'utf8')};
+            } else {
+                throw new Error('Could not find contract dependency, have you tried npm install?')
             }
         };
 
@@ -209,8 +230,11 @@ class Deployer {
 
         let artifacts;
         for (let contractFileName in compiledSources.contracts) {
-            const _contractName = contractFileName.replace('.sol', '');
-            artifacts = compiledSources.contracts[contractFileName][_contractName];
+            const fileName = contractFileName.split('\\').pop().split('/').pop()
+            const _contractName = fileName.replace('.sol', '');
+            if (contractName === _contractName) {
+                artifacts = compiledSources.contracts[contractFileName][_contractName];
+            }
         }
 
         const truffleContract = require('@truffle/contract');
