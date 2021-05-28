@@ -154,8 +154,12 @@ class Deployer {
     async deployContract(target, contractName, fileName) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling')
 
+        let SOLC_MAJOR_VERSION = 0
+        let SOLC_MINOR_VERSION = 6 // TODO Change this based on the solidity pragma statement
+        let SOLC_FULL_VERSION = `solc${SOLC_MAJOR_VERSION}_${SOLC_MINOR_VERSION}`
+
         const path = require('path');
-        const solc = require('solc');
+        const solc = require(SOLC_FULL_VERSION);
         const fs = require('fs-extra');
 
         const compileConfig = {
