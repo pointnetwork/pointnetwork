@@ -19,84 +19,6 @@ class Deployer {
         return cache_dir;
     }
 
-    // todo: beware of infinite recursion!
-    async processTemplate(fileName, deployPath) {
-        if (fileName in this.cache_uploaded) return this.cache_uploaded[ fileName ];
-
-        this.ctx.client.deployerProgress.update(fileName, 0, 'processing_template')
-
-        console.log('uploading '+fileName+'...');
-
-        let tmpTemplate, template;
-
-        if (fileName.split('.').slice(-1)[0] !== "zhtml") {
-            // don't parse
-            template = fs.readFileSync(fileName, { encoding: null });
-
-            console.log('skipping template parser for', fileName, 'hash', this.ctx.utils.hashFnHex(template));
-
-            tmpTemplate = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(template));
-            fs.writeFileSync(tmpTemplate, template, { encoding: null });
-
-        } else {
-            console.log('parsing template', fileName);
-
-            // do parse
-            template = fs.readFileSync(fileName, 'utf-8');
-
-            /////
-
-            const reg = /{% extends ['"](.*?)['"] %}/g;
-            let result;
-            while((result = reg.exec(template)) !== null) { // todo: what if it's already a hash? // todo: what if it's https:// or something? // todo: what if it's /_storage/<hash>?
-                if (result[1].startsWith('http://') || result[1].startsWith('https://')) {
-                    template = template;
-                } else {
-                    const fl = path.join(deployPath, 'views', result[1]);
-                    if (!fs.existsSync(fl)) {
-                        console.error('Warning: Mentioned file '+result[1]+' ('+fl+') not found!');
-                    }//throw new Error('Warning: Mentioned file '+result[1]+' ('+fl+') not found!'); // todo: +stack etc. // todo: make it a warning?
-
-                    const hash = await this.processTemplate(fl, deployPath); // todo: parallelize
-                    template = template.replace(result[1], hash); // todo: replace using outer stuff as well
-                }
-            }
-            ///
-
-            // todo: dont parse html with regex!1 you'll go to hell for that! or worse, Turbo Pascal coding bootcamp!
-            const regs = [
-                /\<link[^\>]*?href=['"](.*?)['"]/g,
-                /\<script[^\>]*?src=['"](.*?)['"]/g,
-                /\<img[^\>]*?src=['"](.*?)['"]/g,
-                /\<body[^\>]*?background=['"](.*?)['"]/g,
-                /\<table[^\>]*?background=['"](.*?)['"]/g,
-            ];
-            for(let reg of regs) {
-                while((result = reg.exec(template)) !== null) { // todo: what if it's already a hash? // todo: what if it's https:// or something? // todo: what if it's /_storage/<hash>?
-                    if (result[1].startsWith('https://')) { continue }
-                    const fl = path.join(deployPath, 'views', result[1]);
-                    if (!fs.existsSync(fl)) throw new Error('Mentioned file '+result[1]+' ('+fl+') not found!'); // todo: +stack etc. // todo: make it a warning?
-
-                    let ext = /(?:\.([^.]+))?$/.exec(result[1])[1];
-
-                    const hash = await this.processTemplate(fl, deployPath); // todo: parallelize
-                    template = template.replace(result[1], '/_storage/'+hash+'.'+ext); // todo: replace using outer stuff as well
-                }
-            }
-
-            tmpTemplate = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(template));
-            fs.writeFileSync(tmpTemplate, template, 'utf-8');
-        }
-
-        const uploaded = await this.ctx.client.storage.putFile(tmpTemplate); // todo: and more options
-
-        this.cache_uploaded[ fileName ] = uploaded.id;
-
-        this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${uploaded.id}`)
-
-        return uploaded.id;
-    }
-
     async deploy(deployPath) {
 
         // todo: error handling, as usual
@@ -121,22 +43,19 @@ class Deployer {
             }
         }
 
+
+        // Upload views - root dir
+        // todo: change to public
+        console.log('uploading root directory...');
+        let viewsDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'views')); // todo: and more options
+        let viewsDirId = viewsDirectory.id;
+        await this.updateKeyValue(target, {'::rootDir': viewsDirId}, deployPath);
+
+
+        // Upload routes
         let routesFilePath = path.join(deployPath, 'routes.json');
         let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         let routes = JSON.parse(routesFile);
-
-        //let uploadFiles
-        //let parseFiles = // todo: should be queue
-
-        for (let k in routes) {
-            if (routes.hasOwnProperty(k)) {
-                let v = routes[k];
-
-                let templateFileName = path.join(deployPath, 'views', v);
-                const hash = await this.processTemplate(templateFileName, deployPath);
-                routes[k] = hash;
-            }
-        }
 
         console.log('uploading route file...');
         const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
@@ -276,7 +195,7 @@ class Deployer {
                         }
 
                         const ext = value.file.replace (/.*\.([a-zA-Z0-9]+)$/, '$1')
-                        const cid = await this.processTemplate (file, deployPath)
+                        const cid = (await this.ctx.client.storage.putFile (file)).id;
 
                         value = '/_storage/' + cid + '.' + ext
 

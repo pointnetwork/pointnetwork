@@ -59,14 +59,14 @@ class File extends Model {
             chunkInfo = chunkInfo.toString();
         }
 
-        let {type, hash, chunks, filesize, merkle} = JSON.parse(chunkInfo);
+        let {type, hash, chunks, filesize, merkle} = JSON.parse(chunkInfo); // todo: rename hash to hash-algo or something, confusing
 
         if (type !== 'file') {
             throw Error('main chunk is not of type "file"');
             // todo: error? ignore?
         }
 
-        if (hash !== 'keccak256-20') {
+        if (hash !== 'keccak256') {
             // todo: error? ignore?
         }
         let merkleReassembled = this.ctx.utils.merkle.merkle(chunks.map(x => Buffer.from(x, 'hex')), this.ctx.utils.hashFn).map(x => x.toString('hex'));
@@ -308,7 +308,7 @@ class File extends Model {
                             let mainChunkContents = JSON.stringify({
                                 type: 'file',
                                 chunks: chunks,
-                                hash: 'keccak256-20',
+                                hash: 'keccak256',
                                 filesize: this.getFileSize(),
                                 merkle: merkleTree.map(x => x.toString('hex')),
                             });

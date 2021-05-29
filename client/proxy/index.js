@@ -14,6 +14,7 @@ const eccrypto = require("eccrypto");
 const io = require('socket.io');
 const url = require('url');
 const certificates = require('./certificates');
+const Directory = require('../../db/models/directory');
 
 class ZProxy {
     constructor(ctx) {
@@ -109,14 +110,18 @@ class ZProxy {
     }
 
     abort404(response, message = 'domain not found') {
-        const headers = {};
+        const headers = {
+            'Content-Type': 'text/html;charset=UTF-8',
+        };
         response.writeHead(404, headers);
         response.write('404 '+message); // todo: come on, write a better msg
         response.end();
     }
 
     abortError(response, err) {
-        const headers = {};
+        const headers = {
+            'Content-Type': 'text/html;charset=UTF-8',
+        };
         response.writeHead(500, headers);
         response.write('500: '+err); // todo: come on, write a better msg
         response.end();
@@ -160,21 +165,37 @@ class ZProxy {
                     return this.abortError(response, e);
                 }
             } else {
+                // Download info about root dir
+                let rootDir = await this.getRootDirectoryForDomain(host);
+                rootDir.setCtx(ctx);
+
+                // First try route file
                 let zroute_id = await this.getZRouteIdFromDomain(host);
                 if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
 
                 let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
                 if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
 
-                let template_id = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
-                if (!template_id) return this.abort404(response, 'route not found'); // todo: write a better msg
-                let template_file_contents = await this.ctx.client.storage.readFile(template_id, 'utf-8');
+                let template_filename = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
+                if (template_filename) {
+                    let template_file_contents = await rootDir.readFileByPath(template_filename, 'utf-8');
 
-                let renderer = new Renderer(ctx);
-                let request_params = {};
-                for(let k of parsedUrl.searchParams.entries()) request_params[ k[0] ] = k[1];
+                    let renderer = new Renderer(ctx);
+                    let request_params = {};
+                    for (let k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
 
-                rendered = await renderer.render(template_file_contents, host, request_params); // todo: sanitize
+                    rendered = await renderer.render(template_file_contents, host, request_params, rootDir); // todo: sanitize
+                } else {
+                    // If not, try root dir
+                    // in parsedUrl.pathname will be something like "/index.css"
+
+                    rendered = await rootDir.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
+
+                    contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
+                    if (contentType.includes('html')) contentType = 'text/html'; // just in case
+
+                    // return this.abort404(response, 'route not found'); // todo: write a better msg // todo: remove, it's automatic
+                }
             }
 
             let sanitized;
@@ -193,11 +214,12 @@ class ZProxy {
                 'Content-Type': contentType
             };
             response.writeHead(200, headers);
-            response.write(sanitized/*, 'utf-8'*/);
+            response.write(sanitized, {encoding: null}/*, 'utf-8'*/);
             response.end();
 
         } catch(e) {
             // throw 'ZProxy Error: '+e; // todo: remove
+            console.log('ZProxy Error:', e); // todo: this one can be important for debugging, but maybe use ctx.log not console
             return this.abortError(response, 'ZProxy Error: '+e);
         }
 
@@ -215,6 +237,11 @@ class ZProxy {
     getContentTypeFromExt(ext) {
         // Note: just "css" won't work, so we prepend a dot
         return mime.lookup('.'+ext) || 'application/octet-stream';
+    }
+
+    getExtFromFilename(filename) {
+        var re = /(?:\.([^.]+))?$/;
+        return re.exec(filename)[1];
     }
 
     keyValueAppend(host, request, response) {
@@ -352,6 +379,18 @@ class ZProxy {
                 reject('Error: ' + e);
             });
         });
+    }
+
+    async getRootDirectoryForDomain(host) {
+        const key = '::rootDir';
+        const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
+        if (!rootDirId) throw Error('getRootDirectoryForDomain failed: key '+key+' returned empty: '+rootDirId);
+        console.log('rootDirId for host '+host+' found: '+rootDirId); // todo: delete
+        const dirJsonString = await this.ctx.client.storage.readFile(rootDirId, 'utf-8');
+        let directory = new Directory();
+        directory.unserialize(dirJsonString);
+        directory.id = rootDirId;
+        return directory;
     }
 
     async getZRouteIdFromDomain(host) {
