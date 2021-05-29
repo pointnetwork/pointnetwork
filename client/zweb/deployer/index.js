@@ -214,8 +214,7 @@ class Deployer {
         contract.setProvider(this.ctx.web3.currentProvider);
 
         let gasPrice = await this.ctx.web3.eth.getGasPrice();
-        const truffleEstimateGas = await contract.new.estimateGas()
-        let estimateGas = Math.floor(truffleEstimateGas * 1.1);
+        let estimateGas = Math.floor(await contract.new.estimateGas() * 1.1);
         let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: estimateGas });
         let address = deployedContractInstance.address;
 

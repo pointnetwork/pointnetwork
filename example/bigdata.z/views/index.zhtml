@@ -1,0 +1,28 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+    <h1>Welcome!</h1>
+
+    <img src="/img/big_jpeg.jpeg"/>
+
+    <p><em>The list of articles below is not in any html file, but is dynamically compiled from the live blockchain data.</em></p>
+
+    {% set articles = contract_get(host, 'Blog', 'getArticles', []) %}
+
+    {% if articles.length > 0 %}
+
+        <ul>
+            {% for article in articles %}
+                <li>
+                    <a href="/article?id={{ article.id }}">{{ article.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+
+    {% else %}
+
+        <div>No articles yet. Why not create one?</div>
+
+    {% endif %}
+
+{% endblock %}

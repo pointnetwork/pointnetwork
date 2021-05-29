@@ -1,0 +1,6 @@
+{
+  "/": "index.zhtml",
+  "/welcome": "welcome.zhtml",
+  "/article": "article.zhtml",
+  "/admin": "admin.zhtml"
+}
