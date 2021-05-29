@@ -2,7 +2,6 @@ const net = require('net');
 const http = require('http');
 const https = require('https');
 const tls = require('tls');
-const NodeSession = require('node-session')
 const _ = require('lodash');
 const fs = require('fs');
 const Renderer = require('../zweb/renderer');
