@@ -11,7 +11,8 @@ else
     export EXAMPLE_SITES="./example/${1}*"
 fi
 
-DATADIR=${1:-~/.point/test2}
+#DATADIR=${1:-~/.point/test2}
+DATADIR=~/.point/test2
 
 for SITE in $EXAMPLE_SITES;
 do
@@ -20,6 +21,7 @@ do
   echo
 
 #  [ -d $SITE/contracts ] && sleep 10
+  echo "./point deploy $SITE --datadir $DATADIR -v"
   ./point deploy $SITE --datadir $DATADIR -v
 
   echo
