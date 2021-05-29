@@ -2,6 +2,7 @@ const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
 const ethereumUtils = require('ethereumjs-util');
+const _ = require('loadsh');
 
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 
@@ -108,7 +109,7 @@ class Web3Bridge {
                         let param_value = params[paramIdx];
                         if (typeof param_value === "string" && param_value.replace('0x','').length === 32*2) { // 256 bit
                             // Turns out, you only need to add 0x
-                            params[paramIdx] = '0x'+param_value;
+                            if (!_.startsWith(param_value, '0x')) params[paramIdx] = '0x'+param_value;
                         }
                     }
                     paramIdx++;
