@@ -169,7 +169,7 @@ class Renderer {
             Twig.Templates.registerLoader('fs', async(location, params, callback, error_callback/*todo*/) => {
                 // console.log({location, params});
                 // ... load the template ...
-                const src = await this.fetchTemplateByHash(params.path);
+                const src = await this.fetchTemplateByPath(params.path);
                 params.data = src;
                 // todo: params.id?
                 params.allowInlineIncludes = true;
@@ -184,7 +184,9 @@ class Renderer {
         });
     }
 
-    async render(template_contents, host, request_params = {}) {
+    async render(template_contents, host, request_params = {}, rootDir) {
+        this.rootDir = rootDir;
+
         let template = Twig.twig({
             // id // todo
             allowInlineIncludes: true,
@@ -205,6 +207,11 @@ class Renderer {
     async fetchTemplateByHash(hash) {
         console.log('fetching '+hash);
         return await this.ctx.client.storage.readFile(hash, 'utf-8');
+    }
+
+    async fetchTemplateByPath(templatePath) {
+        console.log('fetching '+templatePath);
+        return await this.rootDir.readFileByPath(templatePath, 'utf-8');
     }
 
     async decryptData(host, privateKey, unparsedEncryptedSymmetricKey, encryptedData) {
