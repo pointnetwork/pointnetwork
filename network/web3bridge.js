@@ -90,10 +90,31 @@ class Web3Bridge {
         let abi;
         try {
             abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+            // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
         } catch(e) {
             throw Error('Could not read abi of the contract '+this.ctx.utils.htmlspecialchars(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
         }
         const contract = new this.web3.eth.Contract(abi.abi, at);
+
+        // storage id: convert string -> bytes32
+        for(let abi_method of abi.abi) {
+            if (abi_method.name === methodName) {
+                let paramIdx = 0;
+                for(let abi_input of abi_method.inputs) {
+                    // [ { internalType: 'string', name: 'title', type: 'string' },
+                    // { internalType: 'bytes32', name: 'contents', type: 'bytes32' } ]
+                    if (abi_input.internalType === 'bytes32') {
+                        // Potential candidate for conversion
+                        let param_value = params[paramIdx];
+                        if (typeof param_value === "string" && param_value.replace('0x','').length === 32*2) { // 256 bit
+                            // Turns out, you only need to add 0x
+                            params[paramIdx] = '0x'+param_value;
+                        }
+                    }
+                    paramIdx++;
+                }
+            }
+        }
         const method = contract.methods[ methodName ](...params);
         console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
     }

@@ -12,7 +12,7 @@ contract Twitter {
 
     Tweet[] tweets;
 
-    function tweet(string memory contents) public {
+    function tweet(bytes32 memory contents) public {
         Tweet memory _tweet = Tweet(msg.sender, contents, block.timestamp, 0);
         tweets.push(_tweet);
     }
