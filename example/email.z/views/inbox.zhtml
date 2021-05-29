@@ -2,17 +2,24 @@
 
 {% block contents %}
 
-  {% set emails = retrieve_mail(wallet_address, host, 'Email', 'SendEmail') %}
-
   <h2>Inbox for {{ wallet_address }}</h2>
 
-  {% for email in emails %}
+  {% set emailEvents = contract_events(host, 'Email', 'SendEmail', {to: wallet_address}) %}
+
+  {% for email in emailEvents %}
+
+    {% set from = email.data.from %}
+    {% set encryptedMessageHash = email.data.encryptedMessageHash %}
+    {% set timestamp = email.data.timestamp %}
+
     <div class="formback">
       <p>
-        <b>From</b>:{{ email.from }}
-        <a href='/show?messageid={{ email.messageid }}'>{{ email.messageid }}</a>
+        <b>Timestampsss</b>:{{ timestamp }}
+        <b>From</b>:{{ from }}
+        <a href='/show?messageid={{ encryptedMessageHash }}'>{{ encryptedMessageHash }}</a>
       </p>
     </div>
+
   {% endfor %}
 
 {% endblock %}

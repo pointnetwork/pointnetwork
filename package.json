@@ -4,8 +4,8 @@
   "description": "Point Network;",
   "main": "point",
   "dependencies": {
-    "@openzeppelin/contracts": "^3.4.0",
     "@pointnetwork/kadence": "^6.1.11",
+    "@openzeppelin/contracts": "^3.4.0",
     "@truffle/contract": "^4.2.1",
     "async": "^3.2.0",
     "axios": "^0.21.1",
@@ -30,7 +30,6 @@
     "moment": "^2.24.0",
     "next": "^10.0.8",
     "node-forge": "^0.10.0",
-    "node-session": "^1.2.1",
     "pino": "^6.2.0",
     "pino-multi-stream": "^5.0.0",
     "pino-pretty": "^4.0.0",
