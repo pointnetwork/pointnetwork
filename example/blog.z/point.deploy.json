@@ -1,21 +1,29 @@
 {
-    "version": 1,
-    "target": "blog.z",
-    "upload": {
-        "redundancy": 10,
-        "timeperiod": 10000
+  "version": 1,
+  "target": "blog.z",
+  "upload": {
+    "redundancy": 10,
+    "timeperiod": 10000
+  },
+  "keyvalue": {
+    "articles1": {
+      "contract_send": "Blog.createArticle(title,contents)",
+      "title": "Introduction to Point Network",
+      "storage[contents]": {
+        "blob": "Point Network aspires to do for cryptocurrency space what Apple did for personal computing devices.\n\nTor, Bittorrent, Bitcoin, Ethereum - all these projects were stepping stones on the way to the Holy Grail — decentralized internet, also known as web 3.0. Open for everyone, censorship-resistant, permissionless, privacy-oriented internet with programmable money known as cryptocurrency as its built-in payment system.\n\nPoint Network is a proposed implementation of this vision. In addition to the set of protocols serving as its foundation, it aims to provide a harmonious ecosystem for decentralized applications (dApps) and a consistent and straight-forward User Interface experience to expedite global adoption.",
+        "type": "text/plain"
+      }
     },
-    "keyvalue": {
-        "articles0": {
-            "id": "first-article",
-            "title": "First Article",
-            "storage[contents]": {
-                "blob": "Omnia licet, quae umquam ingenia fulserunt, in hoc unum consentiant, numquam satis hanc humanarum mentium caliginem mirabuntur. Praedia sua occupari a nullo patiuntur et, si exigua contentio est de modo finium, ad lapides et arma discurrunt; in vitam suam incedere alios sinunt, immo vero ipsi etiam possessores eius futuros inducunt. Nemo invenitur, qui pecuniam suam dividere velit; vitam unusquisque quam multis distribuit ! Adstricti sunt in continendo patrimonio, simul ad iacturam temporis ventum est, profusissimi in eo, cuius unius honesta avaritia est. Libet itaque ex seniorum turba comprendere aliquem:\n\nPervenisse te ad ultimum aetatis humanae videmus, centesimus tibi vel supra premitur annus ; agedum, ad computationem aetatem tuam revoca. Duc, quantum ex isto tempore creditor, quantum amica, quantum rex, quantum cliens abstuleris quantum lis uxoria, quantum servorum coercitio, quantum officiosa per urbem discursatio. Adice morbos, quos manu fecimus, adice et quod sine usu iacuit; videbis te pauciores annos habere quam numeras.",
-                "type": "text/plain"
-            }
-        }
-    },
-    "contracts": [
-        "Blog"
-    ]
+    "articles1comments1": {
+      "contract_send": "Blog.createCommentByArticle(articleId,contents)",
+      "articleId": 1,
+      "storage[contents]": {
+        "blob": "Nice post! I'll try it out!",
+        "type": "text/plain"
+      }
+    }
+  },
+  "contracts": [
+    "Blog"
+  ]
 }

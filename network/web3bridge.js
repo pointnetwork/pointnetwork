@@ -22,11 +22,6 @@ class Web3Bridge {
     }
 
     async start() {
-        const { account, privateKey } = this.ctx.wallet.config;
-        const publicKeyBuffer = ethereumUtils.privateToPublic(ethereumUtils.addHexPrefix(privateKey))
-        const publicKey = ethereumUtils.bufferToHex(publicKeyBuffer)
-        const identity = await this.identityByOwner(account);
-        await this.putKeyValue(identity,'public_key', publicKey)
     }
 
     async loadContract(contractName, at) {
@@ -158,11 +153,11 @@ class Web3Bridge {
     }
     async getCheapestStorageProvider() {
         const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.readCheapestProvider().call();
+        return contract.methods.getCheapestProvider().call();
     }
     async getAllStorageProvider() {
         const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.readAllProviders().call(); // todo: cache response and return cache if exists
+        return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
     }
     async getSingleProvider(address) {
         const contract = await this.loadStorageProviderRegistryContract();
