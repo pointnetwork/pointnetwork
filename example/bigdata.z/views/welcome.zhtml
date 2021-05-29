@@ -1,0 +1,5 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+    <h1> Welcome! </h1>
+{% endblock %}
