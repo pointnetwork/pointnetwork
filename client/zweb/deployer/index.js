@@ -44,12 +44,11 @@ class Deployer {
         }
 
 
-        // Upload views - root dir
-        // todo: change to public
+        // Upload public - root dir
         console.log('uploading root directory...');
-        let viewsDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'views')); // todo: and more options
-        let viewsDirId = viewsDirectory.id;
-        await this.updateKeyValue(target, {'::rootDir': viewsDirId}, deployPath);
+        let publicDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'public')); // todo: and more options
+        let publicDirId = publicDirectory.id;
+        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath);
 
 
         // Upload routes
@@ -188,7 +187,7 @@ class Deployer {
 
                     } else if ('file' in value) {
 
-                        const file = path.join (deployPath, 'views', value.file)
+                        const file = path.join (deployPath, 'public', value.file)
 
                         if (!fs.existsSync (file)) {
                             throw new Error ('File not found: ' + file)
