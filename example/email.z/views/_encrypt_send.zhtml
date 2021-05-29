@@ -1,6 +1,4 @@
-{% set recipient = request_get('to',_compose_data) %}
-{% set message = request_get('message',_compose_data) %}
-{% set encrypted_results = encrypt_message(host, recipient, message) %}
+{% set encrypted_results = encrypt_data(host, recipient, message) %}
 {% set stored_encrypted_message = storage_put(encrypted_results.encryptedMessage) %}
 {% set result = contract_call(host, 'Email', 'send', [ recipient, stored_encrypted_message, encrypted_results.encryptedSymmetricKey ]) %}
 
