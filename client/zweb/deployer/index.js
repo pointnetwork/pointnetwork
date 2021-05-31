@@ -151,40 +151,38 @@ class Deployer {
         console.log('Deploy finished');
     }
 
-    static async getPragmaVersion(fileName){
-        const source = require('readline').createInterface({
-            input: fs.createReadStream(fileName),
-            crlfDelay: Infinity
-        });
-        let version = false;
-        for await (const line of source) {
-            if (line.startsWith('pragma')) {
-                version = true;
-                const regex = /^pragma solidity [\^\~\>\<]?=?(?<version>[0-9\.]*);/;
-                const found = line.match(regex).groups;
-                return found.version;
-            }
-        };
-        if (!version) throw new Error('Contract has no compiler version')
+    static async getPragmaVersion(source){
+        let regex = /pragma solidity [\^\~\>\<]?=?(?<version>[0-9\.]*);/;
+        let found = null
+        if (found = source.match(regex)) {
+            return found.groups.version
+        } else {
+            throw new Error('Contract has no compiler version')
+        }
     }
+
 
     async deployContract(target, contractName, fileName, deployPath) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling')
-        const version = await this.constructor.getPragmaVersion(fileName);
-        const versionArray = version.split('.');
+        const fs = require('fs-extra');
 
+        const contractSource = fs.readFileSync(fileName, 'utf8');
+
+        const version = await this.constructor.getPragmaVersion(contractSource);
+        const versionArray = version.split('.');
         let SOLC_MAJOR_VERSION = versionArray[0]
-        let SOLC_MINOR_VERSION = versionArray[1] // TODO Change this based on the solidity pragma statement
+        let SOLC_MINOR_VERSION = versionArray[1]
         let SOLC_FULL_VERSION = `solc${SOLC_MAJOR_VERSION}_${SOLC_MINOR_VERSION}`
 
         const path = require('path');
         const solc = require(SOLC_FULL_VERSION);
-        const fs = require('fs-extra');
+
+        
         const compileConfig = {
             language: 'Solidity',
             sources: {
                 [contractName+'.sol']: {
-                    content: fs.readFileSync(fileName, 'utf8')
+                    content: contractSource
                 },
             },
             settings: {
