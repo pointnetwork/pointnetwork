@@ -5,14 +5,14 @@ pragma experimental ABIEncoderV2;
 contract Twitter {
     struct Tweet {
         address from;
-        string contents;
+        bytes32 contents;
         uint timestamp;
         uint likes;
     }
 
     Tweet[] tweets;
 
-    function tweet(bytes32 memory contents) public {
+    function tweet(bytes32 contents) public {
         Tweet memory _tweet = Tweet(msg.sender, contents, block.timestamp, 0);
         tweets.push(_tweet);
     }
