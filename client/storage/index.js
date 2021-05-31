@@ -180,7 +180,7 @@ class Storage {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
-        let file = await File.find(id);
+        let file = await File.findOrCreate(id);
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
