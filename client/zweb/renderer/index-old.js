@@ -1,4 +1,4 @@
-let TwigLib = require('twig');
+let Twig = require('twig');
 let moment = require('moment');
 const fs = require('fs');
 const path = require('path');
@@ -12,19 +12,14 @@ class Renderer {
         this.ctx = ctx;
         this.config = ctx.config.client.zproxy;
         this.rootDir = rootDir;
-        this.twigs = {};
-    }
 
-    getTwigForHost(host) {
-        // Look in cache first
-        if (this.twigs[host]) {
-            return this.twigs[host];
-        }
+        // Reset Twig cache
+        // Twig.Templates.registry = {};
 
-        // Spawning a new Twig object
-        const Twig = TwigLib.factory();
-
+        console.log(Twig.extend.toString());
         Twig.extend((Twig) => {
+            console.log(Twig.Templates);
+            
             Twig.exports.extendTag({
                     /**
                      * Block logic tokens.
@@ -45,6 +40,7 @@ class Renderer {
                         return token;
                     },
                     parse: function (token, context, chain) {
+                        console.log({token, context, chain});
                         var template,
                             that = this;
 
@@ -186,56 +182,43 @@ class Renderer {
                 // ... load the template ...
                 const src = await this.fetchTemplateByPath(params.path);
                 params.data = src;
+                console.log('---------------------------------')
+                console.log({location, params, callback});
+                params.id = 's'+Math.random() + '';
                 params.allowInlineIncludes = true;
                 // create and return the template
                 var template = new Twig.Template(params);
                 if (typeof callback === 'function') {
                     callback(template);
                 }
+                console.log({template});
                 return template;
             });
         });
-
-        // Save to our cache
-        this.twigs[host] = Twig;
-
-        return Twig;
     }
 
     async render(template_id, template_contents, host, request_params = {}) {
-        try {
-            const Twig = this.getTwigForHost(host);
+        console.log(Twig.cache);
+        Twig.cache(false);
+        // Twig.cache = false;
+        let template = Twig.twig({
+            id: host + '/' + template_id,
+            allowInlineIncludes: true,
+            autoescape: true,
+            strict_variables: true,
+            data: template_contents,
+            async: true, // todo
+        });
+        console.log(template);
 
-            let template = Twig.twig({
-                id: host + '/' + template_id,
-                allowInlineIncludes: true,
-                autoescape: true,
-                strict_variables: true,
-                data: template_contents,
-                async: true, // todo
-            });
+        // Here we can specify global variables to pass into twig
+        let variables = {
+            host
+        };
+        variables = Object.assign({}, variables, request_params);
 
-            // Here we can specify global variables to pass into twig
-            let variables = {
-                host
-            };
-            variables = Object.assign({}, variables, request_params);
-
-            let result = await template.renderAsync(variables);
-
-            // Okay, we shouldn't be nuking our Twig cache each time, but I figured it's better if we suffer on performance a bit,
-            // than have a memory leak with thousands of Twig objects in memory waiting
-            this.removeTwigForHost(host);
-
-            return result.toString();
-        } catch(e) {
-            this.removeTwigForHost(host);
-            throw e;
-        }
-    }
-
-    removeTwigForHost(host) {
-        delete this.twigs[host];
+        let result = await template.renderAsync(variables);
+        return result.toString();
     }
 
     async fetchTemplateByHash(hash) {
@@ -245,7 +228,18 @@ class Renderer {
 
     async fetchTemplateByPath(templatePath) {
         console.log('fetching '+templatePath); // todo: remove
-        return await this.rootDir.readFileByPath(templatePath, 'utf-8');
+
+        // example: https://blog.z/layout.zhtml
+        if (templatePath.includes('..')) throw Error('template path cannot contain invalid fragments'); // to not allow to go higher than the domain scope
+
+        // make sure it's the same directory
+        // if (!this.rootDir.host) throw Error('fetchTemplateByPath failed: no host set for rootDir');
+        // if (! (_.startsWith(templatePath, `${this.rootDir.host}/`))) throw Error('fetchTemplateByPath failed: template host doesnt match root dir host');
+        //
+        // const templatePathWithoutHost = templatePath.replace(`${this.rootDir.host}/`, '');
+        const templatePathWithoutHost = templatePath;
+
+        return await this.rootDir.readFileByPath(templatePathWithoutHost, 'utf-8');
     }
 
     async decryptData(host, privateKey, unparsedEncryptedSymmetricKey, encryptedData) {
