@@ -14,14 +14,18 @@ class Directory {
         this.ctx = ctx;
     }
 
-    async readFileByPath(filePath, encoding = 'utf-8') {
+    setHost(host) {
+        this.host = host;
+    }
+
+    async getFileIdByPath(filePath) {
         let fragments = filePath.split('/');
         if (fragments[0] === '') fragments.shift();
         let firstFragment = fragments.shift();
         for(let f of this.files) {
             if (f.name === firstFragment) {
                 if (f.type === 'file') {
-                    return await this.ctx.client.storage.readFile(f.id, encoding);
+                    return f.id
                 } else if (f.type === 'directory') {
                     if (! f.downloaded) {
                         let subdir = new Directory();
@@ -31,11 +35,16 @@ class Directory {
                         f.dirObj.setCtx(this.ctx);
                     }
                     // fragments here are without the first item due to shift in the beginning
-                    return f.dirObj.readFileByPath(fragments.join('/'), encoding);
+                    return f.dirObj.getFileIdByPath(fragments.join('/'));
                 } // todo: else
             }
         }
-        throw Error('readFileByPath failed: Path for '+filePath+' not found');
+        throw Error('getFileIdByPath failed: Path for '+filePath+' not found');
+    }
+
+    async readFileByPath(filePath, encoding = 'utf-8') {
+        let id = await this.getFileIdByPath(filePath);
+        return await this.ctx.client.storage.readFile(id, encoding);
     }
 
     setLocalPath(localPath) {

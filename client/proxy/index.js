@@ -168,6 +168,7 @@ class ZProxy {
                 // Download info about root dir
                 let rootDir = await this.getRootDirectoryForDomain(host);
                 rootDir.setCtx(ctx);
+                rootDir.setHost(host);
 
                 // First try route file
                 let zroute_id = await this.getZRouteIdFromDomain(host);
@@ -178,13 +179,14 @@ class ZProxy {
 
                 let template_filename = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
                 if (template_filename) {
-                    let template_file_contents = await rootDir.readFileByPath(template_filename, 'utf-8');
+                    let template_file_id = await rootDir.getFileIdByPath(template_filename);
+                    let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
 
-                    let renderer = new Renderer(ctx);
+                    let renderer = new Renderer(ctx, rootDir);
                     let request_params = {};
                     for (let k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
 
-                    rendered = await renderer.render(template_file_contents, host, request_params, rootDir); // todo: sanitize
+                    rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
                 } else {
                     // If not, try root dir
                     // in parsedUrl.pathname will be something like "/index.css"
@@ -387,7 +389,7 @@ class ZProxy {
         if (!rootDirId) throw Error('getRootDirectoryForDomain failed: key '+key+' returned empty: '+rootDirId);
         console.log('rootDirId for host '+host+' found: '+rootDirId); // todo: delete
         const dirJsonString = await this.ctx.client.storage.readFile(rootDirId, 'utf-8');
-        let directory = new Directory();
+        let directory = new Directory(); // todo: cache it, don't download/recreate each time?
         directory.unserialize(dirJsonString);
         directory.id = rootDirId;
         return directory;
