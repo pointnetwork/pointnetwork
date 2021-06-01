@@ -91,7 +91,12 @@ class Provider {
         // Assemble, decrypt and verify
         let real_id = chunk.real_id;
         if (! chunk.hasDecryptedData()) {
-            chunk.getData(); // We're calling this so that if the file with the encrypted chunk itself doesn't exist, it gets reassembled from the segments
+            try {
+                chunk.getData(); // We're calling this so that if the file with the encrypted chunk itself doesn't exist, it gets reassembled from the segments
+            } catch(e) {
+                console.debug(e); // todo
+                return next(new Error('ECHUNKGETDATAERROR: Cannot get data'));
+            }
             await this.decryptChunkAsync(chunk);
         }
 
