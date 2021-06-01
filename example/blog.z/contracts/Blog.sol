@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 contract Blog {
@@ -7,13 +7,13 @@ contract Blog {
     uint id;
     address author;
     string title;
-    string contents;
+    bytes32 contents;
     uint timestamp;
   }
 
   struct Comment {
     address author;
-    string contents;
+    bytes32 contents;
     uint timestamp;
   }
 
@@ -21,7 +21,7 @@ contract Blog {
   mapping(uint=>Comment[]) commentsByArticleId;
 
   // Article Functions
-  function createArticle(string memory title, string memory contents) public {
+  function createArticle(string memory title, bytes32 contents) public {
     uint _id = articles.length + 1;
     Article memory _article = Article(_id, msg.sender, title, contents, block.timestamp);
     articles.push(_article);
@@ -36,7 +36,7 @@ contract Blog {
   }
 
   // Comment Functions
-  function createCommentByArticle(uint articleId, string memory contents) public {
+  function createCommentByArticle(uint articleId, bytes32 contents) public {
     Comment memory _comment = Comment(msg.sender, contents, block.timestamp);
     commentsByArticleId[articleId].push(_comment);
   }

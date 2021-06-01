@@ -1,4 +1,7 @@
+const net = require('net');
 const http = require('http');
+const https = require('https');
+const tls = require('tls');
 const _ = require('lodash');
 const fs = require('fs');
 const Renderer = require('../zweb/renderer');
@@ -8,6 +11,9 @@ const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
 const crypto = require('crypto')
 const eccrypto = require("eccrypto");
+const io = require('socket.io');
+const url = require('url');
+const certificates = require('./certificates');
 
 class ZProxy {
     constructor(ctx) {
@@ -18,9 +24,88 @@ class ZProxy {
     }
 
     async start() {
-        this.server = http.createServer(this.request.bind(this));
-        this.server.listen(this.port, this.host);
-        this.ctx.log.info(`ZProxy server listening on ${ this.host }:${ this.port }`);
+        let server = this.httpx();
+        let ws = io(server.http);
+        let wss = io(server.https);
+        server.listen(this.port, () => console.log(`ZProxy server listening on localhost:${ this.port }`));
+    }
+
+    httpx() {
+        const credentials = {
+            // A function that will be called if the client supports SNI TLS extension.
+            SNICallback: (servername, cb) => {
+                const certData = certificates.getCertificate(servername);
+                const ctx = tls.createSecureContext(certData);
+
+                if (!ctx) this.ctx.log.debug(`Not found SSL certificate for host: ${servername}`);
+                else this.ctx.log.debug(`SSL certificate has been found and assigned to ${servername}`);
+
+                if (cb) cb(null, ctx);
+                else return ctx;
+            },
+        };
+
+        this.doubleServer = net.createServer(socket => {
+            socket.once('data', buffer => {
+                // Pause the socket
+                socket.pause();
+
+                // Determine if this is an HTTP(s) request
+                let byte = buffer[0];
+
+                let protocol;
+                if (byte === 22) {
+                    protocol = 'https';
+                } else if (32 < byte && byte < 127) {
+                    protocol = 'http';
+                } else {
+                    console.error('Access Runtime Error! Protocol: not http, not https!');
+                    protocol = 'error'; // todo: !
+                }
+
+                let proxy = this.doubleServer[protocol];
+                if (proxy) {
+                    // Push the buffer back onto the front of the data stream
+                    socket.unshift(buffer);
+
+                    // Emit the socket to the HTTP(s) server
+                    proxy.emit('connection', socket);
+                }
+
+                // As of NodeJS 10.x the socket must be
+                // resumed asynchronously or the socket
+                // connection hangs, potentially crashing
+                // the process. Prior to NodeJS 10.x
+                // the socket may be resumed synchronously.
+                process.nextTick(() => socket.resume());
+            });
+        });
+
+        const redirectToHttpsHandler = function(request, response) {
+            // Redirect to https
+            const reqUrl = request.url;
+            const httpsUrl = reqUrl.replace(/^(http\:\/\/)/,"https://");
+            response.writeHead(301, {'Location': httpsUrl});
+            response.end();
+        };
+        this.doubleServer.http = http.createServer((this.config.redirect_to_https) ? redirectToHttpsHandler : this.request.bind(this));
+        this.doubleServer.http.on('error', (err) => this.ctx.log.error(err));
+        this.doubleServer.http.on('connect', (req, cltSocket, head) => {
+            // connect to an origin server
+            const srvUrl = url.parse(`https://${req.url}`);
+            // const srvSocket = net.connect(srvUrl.port, srvUrl.hostname, () => {
+            const srvSocket = net.connect(this.port, 'localhost', () => {
+                cltSocket.write('HTTP/1.1 200 Connection Established\r\n' +
+                    'Proxy-agent: Node.js-Proxy\r\n' +
+                    '\r\n');
+                srvSocket.write(head);
+                srvSocket.pipe(cltSocket);
+                cltSocket.pipe(srvSocket);
+            });
+        });
+        this.doubleServer.https = https.createServer(credentials, this.request.bind(this));
+        this.doubleServer.https.on('error', (err) => this.ctx.log.error(err));
+        return this.doubleServer;
     }
 
     abort404(response, message = 'domain not found') {
@@ -151,7 +236,12 @@ class ZProxy {
             request.on('end', async() => {
                 if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
 
-                let parsedUrl = new URL(request.url);
+                let parsedUrl;
+                try {
+                    parsedUrl = new URL(request.url, `http://${request.headers.host}`);
+                } catch(e) {
+                    parsedUrl = { pathname: '/error' }; // todo
+                }
                 let key = parsedUrl.pathname.split('/_keyvalue_append/')[1];
                 let currentList = await this.ctx.keyvalue.list(host, key);
                 let newIdx = currentList.length;
@@ -177,6 +267,7 @@ class ZProxy {
                         fs.writeFileSync(tmpPostDataFilePath, v);
                         let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                         let uploaded_id = uploaded.id;
+                        console.debug('Found storage[x], uploading file '+uploaded_id);
 
                         delete postData[k];
                         postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
@@ -206,14 +297,20 @@ class ZProxy {
                 body += chunk;
             });
             request.on('end', async() => {
-                if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
+                if (request.method.toUpperCase() !== 'POST') return reject('Error: Must be POST');
 
-                let parsedUrl = new URL(request.url);
+                let parsedUrl;
+                try {
+                    parsedUrl = new URL(request.url, `http://${request.headers.host}`);
+                } catch(e) {
+                    parsedUrl = { pathname: '/error' }; // todo
+                }
                 let contractAndMethod = parsedUrl.pathname.split('/_contract_send/')[1];
                 let [contractName, methodNameAndParams] = contractAndMethod.split('.');
                 let [methodName, paramsTogether] = methodNameAndParams.split('(');
+                paramsTogether = decodeURI(paramsTogether);
                 paramsTogether = paramsTogether.replace(')', '');
-                let paramNames = paramsTogether.split(',');
+                let paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
 
                 let entries = new URL('http://localhost/?'+body).searchParams.entries();
                 let postData = {};
@@ -222,6 +319,7 @@ class ZProxy {
                 }
 
                 let redirect = request.headers.referer;
+
                 for(let k in postData) {
                     let v = postData[k];
                     if (k === '__redirect') {
@@ -243,17 +341,25 @@ class ZProxy {
 
                 let params = [];
                 for(let paramName of paramNames) {
-                    params.push(postData[paramName]);
+                    if (paramName in postData) {
+                        params.push(postData[paramName]);
+                    } else {
+                        return reject('Error: no '+this.ctx.utils.htmlspecialchars(paramName)+' param in the data, but exists as an argument to the contract call.');
+                    }
                 }
 
-                await this.ctx.web3bridge.sendContract(host, contractName, methodName, params);
+                try {
+                    await this.ctx.web3bridge.sendContract(host, contractName, methodName, params);
+                } catch(e) {
+                    reject('Error: ' + e);
+                }
 
                 console.log('Redirecting to '+redirect+'...');
                 const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
                 resolve(redirectHtml); // todo: sanitize! don't trust it
             });
             request.on('error', (e) => {
-                reject('Error:', e);
+                reject('Error: ' + e);
             });
         });
     }

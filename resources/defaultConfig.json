@@ -38,7 +38,8 @@
       "port": 8666,
       "host": "127.0.0.1",
       "sanitize_html": false,
-      "cache_path": "data/zproxy_cache"
+      "cache_path": "data/zproxy_cache",
+      "redirect_to_https": false
     },
     "wallet": {
       "__do not remove this section__": null,

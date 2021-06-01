@@ -52,7 +52,7 @@ class ProviderChunk extends Model {
             let data = Buffer.alloc(0);
             for(let segment_hash of this.segment_hashes) {
                 const segment_path = ProviderChunk.getSegmentStoragePath(segment_hash, this.id);
-                let buffer = fs.readFileSync(segment_path, { encoding: null }); // todo: what if doesn't exist?
+                let buffer = fs.readFileSync(segment_path, { encoding: null }); // todo: what if doesn't exist? then we have an error: Error: ENOENT: no such file or directory, open '/Users/username/.point/test1/data/provider_storage_cache/provider_chunk_segment_a9bf0cd755c9058...
                 data = Buffer.concat([data, buffer]);
                 const segment_real_hash = this.ctx.utils.hashFnHex(buffer);
                 if (segment_hash !== segment_real_hash) throw new Error('EINVALIDHASH: Segment read from disk doesn\'t match its ID'); // todo: intercept?
