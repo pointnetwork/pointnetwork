@@ -24,9 +24,9 @@ class Directory {
         let firstFragment = fragments.shift();
         for(let f of this.files) {
             if (f.name === firstFragment) {
-                if (f.type === 'file') {
+                if (f.type === 'fileptr') {
                     return f.id
-                } else if (f.type === 'directory') {
+                } else if (f.type === 'dirptr') {
                     if (! f.downloaded) {
                         let subdir = new Directory();
                         subdir.unserialize(await this.ctx.client.storage.readFile(f.id, 'utf-8')); // dir spec is always in utf-8
@@ -73,7 +73,7 @@ class Directory {
             subdir.addFilesFromLocalPath();
             size = subdir.size;
             this.files.push({
-                type: 'directory',
+                type: 'dirptr',
                 name: name,
                 dirObj: subdir,
                 localPath: filePath,
@@ -82,7 +82,7 @@ class Directory {
         } else {
             size = fs.statSync(filePath).size;
             this.files.push({
-                type: 'file',
+                type: 'fileptr',
                 name: name,
                 localPath: filePath,
                 size
@@ -93,48 +93,46 @@ class Directory {
 
     serialize() {
         let result = {
-            type: 'directory',
+            type: 'dir',
             files: []
         };
         for(let f of this.files) {
-            if (f.type === 'file') {
+            if (f.type === 'fileptr') {
                 result.files.push({
-                    type: 'file-pointer',
+                    type: 'fileptr',
                     name: f.name,
                     size: f.size,
                     id: f.id
                 });
-            } else if (f.type === 'directory') {
+            } else if (f.type === 'dirptr') {
                 result.files.push({
-                    type: 'directory-pointer',
+                    type: 'dirptr',
                     name: f.name,
                     size: f.size,
                     id: f.id
                 });
-            } else throw Error('invalid file/dir type: '+f.type);
+            } else throw Error('invalid file/dir type: '+f.type); // todo: sanitize
         }
-
-        console.log(result);
 
         return JSON.stringify(result);
     }
 
     unserialize(jsonString) {
         let obj = JSON.parse(jsonString);
-        if (obj.type !== 'directory') throw Error('directory unserialize fail: type is not a directory')
+        if (obj.type !== 'dir') throw Error('directory unserialize fail: type is not a directory')
         this.size = 0;
         for(let f of obj.files) {
-            if (f.type === 'file-pointer') {
+            if (f.type === 'fileptr') {
                 this.files.push({
-                    type: 'file',
+                    type: 'fileptr',
                     name: f.name,
                     size: f.size,
                     id: f.id,
                     downloaded: false,
                 });
-            } else if (f.type === 'directory-pointer') {
+            } else if (f.type === 'dirptr') {
                 this.files.push({
-                    type: 'directory',
+                    type: 'dirptr',
                     name: f.name,
                     size: f.size,
                     id: f.id,
