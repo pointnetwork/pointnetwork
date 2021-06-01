@@ -16,6 +16,11 @@ DATADIR=~/.point/test2
 
 for SITE in $EXAMPLE_SITES;
 do
+  if [ "${SITE}" == "./example/nodemon.json" ]
+  then
+    echo "SKIPPING ${SITE}"
+    continue
+  fi
   echo
   echo "DEPLOYING: ${SITE}"
   echo
