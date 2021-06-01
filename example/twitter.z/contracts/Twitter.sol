@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 contract Twitter {
     struct Tweet {
         address from;
-        string contents;
+        bytes32 contents;
         uint timestamp;
         uint likes;
     }

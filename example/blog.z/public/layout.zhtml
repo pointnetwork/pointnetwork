@@ -7,7 +7,7 @@
 <body>
     <header>
         <h1>
-            <!--img src="/img/star_icon.png" class="logo-star" alt="Logo" /-->
+            <img src="/img/star_icon.png" class="logo-star" alt="Logo" />
             <a href="/">Example Blog</a>
         </h1>
         <em>Gives you a little glimpse into what it will feel like</em>
