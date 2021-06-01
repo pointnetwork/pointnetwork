@@ -82,10 +82,10 @@ class Storage {
 
         // Now process every item
         for(let f of directory.files) {
-            if (f.type === 'file') {
+            if (f.type === 'fileptr') {
                 let uploaded = await this.putFile(f.localPath, redundancy, expires, autorenew);
                 f.id = uploaded.id;
-            } else if (f.type === 'directory') {
+            } else if (f.type === 'dirptr') {
                 let uploaded = await this.putDirectory(f.localPath, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else {
