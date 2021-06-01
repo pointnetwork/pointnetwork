@@ -13,7 +13,7 @@ export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
-      setWalletAddress(await point.wallet.getWalletAddress())
+      setWalletAddress(await window.point.wallet.getAddress())
     })()
   }, [])
 
