@@ -4,7 +4,19 @@
   </head>
   <body>
     <div>
-      <p>Hello World Example for testing Storage Layer features</p>
+      <p>Hello World Example for testing Storage Layer features and the Point Browser SDK.</p>
+      <p id="pointSDKDemo"></p>
     </div>
+    <script>
+      (async () => {
+        let address = await window.point.wallet.getAddress()
+        let balance = (await window.point.wallet.getBalance()).token
+        let contractCall = await window.point.contract.call()
+        let p1 = `<p>Wallet Address: ${address}</p>`
+        let p2 = `<p>Wallet Balance: ${balance}</p>`
+        let p3 = `<p>Contract Call: ${JSON.stringify(contractCall)}</p>`
+        document.getElementById("pointSDKDemo").innerHTML = `<div>${p1}${p2}${p3}</div>`
+      })()
+    </script>
   </body>
 </html>
