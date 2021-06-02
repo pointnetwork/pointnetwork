@@ -3,7 +3,7 @@ let moment = require('moment');
 const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
-let { encryptPlainTextAndKey, decryptCipherTextAndKey } = require('../../encryptUtils');
+let { encryptData, decryptData } = require('../../encryptIdentityUtils');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -24,7 +24,10 @@ class Renderer {
         // Spawning a new Twig object
         const Twig = TwigLib.factory();
 
+        Twig.host = host;
         Twig.extend((Twig) => {
+            Twig.host = host;
+
             Twig.exports.extendTag({
                     /**
                      * Block logic tokens.
@@ -118,16 +121,31 @@ class Renderer {
                 let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                 return uploaded.id;
             });
-            Twig.exports.extendFunction("encrypt_data", async(host, recipient, data) => {
-                let publicKey = await this.ctx.web3bridge.getKeyValue(recipient, 'public_key')
-                const encryptionResult = await encryptPlainTextAndKey(host, data, publicKey);
-                return encryptionResult
+            Twig.exports.extendFunction("encrypt_data", async(publicKey, data) => {
+                let host = Twig.host;
+                return await encryptData(host, data, publicKey); // todo: make sure you're not encrypting on something stupid like 0x0 public key
+            });
+            Twig.exports.extendFunction("decrypt_data", async(encryptedData, unparsedEncryptedSymmetricObjJSON) => {
+                let host = Twig.host;
+                const { privateKey } = this.ctx.wallet.config;
+
+                console.log({encryptedData, unparsedEncryptedSymmetricObjJSON});
+                const encryptedSymmetricObjJS = JSON.parse(unparsedEncryptedSymmetricObjJSON);
+                const encryptedSymmetricObj = {}
+                for (const k in encryptedSymmetricObjJS) {
+                    encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricObjJS[k], 'hex');
+                }
+                const decryptedData = await decryptData(host, Buffer.from(encryptedData, 'hex'), encryptedSymmetricObj, privateKey);
+                return decryptedData.plaintext.toString();
             });
             Twig.exports.extendFunction("identity_by_owner", async(owner) => {
                 return await this.ctx.web3bridge.identityByOwner(owner);
             });
-            Twig.exports.extendFunction("email_identity_by_owner", async(owner) => {
-                return await this.ctx.web3bridge.emailIdentityByOwner(owner);
+            Twig.exports.extendFunction("owner_by_identity", async(identity) => {
+                return await this.ctx.web3bridge.ownerByIdentity(identity);
+            });
+            Twig.exports.extendFunction("public_key_by_identity", async(identity) => {
+                return await this.ctx.web3bridge.commPublicKeyByIdentity(identity);
             });
             Twig.exports.extendFunction("identity_ikv_get", async(identity, key) => {
                 return await this.ctx.web3bridge.getKeyValue(identity, key);
@@ -143,13 +161,12 @@ class Renderer {
                                   fromBlock: 0,
                                   toBlock: 'latest'}
                 const events =  await this.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
+                console.log({events});
+                for(let ev of events) console.log(ev, ev.raw)
+
                 const eventData = events.map((event) =>
                 (({ returnValues }) => ({ data: returnValues }))(event))
                 return eventData
-            });
-            Twig.exports.extendFunction("decrypt_data", async(host, encryptedData, encryptedSymmetricKey) => {
-                const { privateKey } = this.ctx.wallet.config;
-                return await this.decryptData(host,privateKey,encryptedSymmetricKey,encryptedData)
             });
             Twig.exports.extendFunction("default_wallet_address", async(id, passcode) => {
                 return this.ctx.config.client.wallet.account;
@@ -213,13 +230,14 @@ class Renderer {
                 strict_variables: true,
                 data: template_contents,
                 async: true, // todo
+                rethrow: true, // makes twig stop and dump full message to us, and from us into the browser instead of just logging it into the console
             });
 
             // Here we can specify global variables to pass into twig
             let variables = {
                 host
             };
-            variables = Object.assign({}, variables, request_params);
+            variables = Object.assign({}, variables, {request: request_params});
 
             let result = await template.renderAsync(variables);
 
@@ -238,24 +256,9 @@ class Renderer {
         delete this.twigs[host];
     }
 
-    async fetchTemplateByHash(hash) {
-        console.log('fetching '+hash);
-        return await this.ctx.client.storage.readFile(hash, 'utf-8');
-    }
-
     async fetchTemplateByPath(templatePath) {
         console.log('fetching '+templatePath); // todo: remove
         return await this.rootDir.readFileByPath(templatePath, 'utf-8');
-    }
-
-    async decryptData(host, privateKey, unparsedEncryptedSymmetricKey, encryptedData) {
-        const encryptedSymmetricKey = JSON.parse(unparsedEncryptedSymmetricKey)
-        const encryptedSymmetricObj = {}
-        for (const k in encryptedSymmetricKey) {
-            encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricKey[k], 'hex')
-        }
-        const decryptedData = await decryptCipherTextAndKey(host, Buffer.from(encryptedData, 'hex'), encryptedSymmetricObj, privateKey)
-        return decryptedData.plaintext.toString()
     }
 }
 

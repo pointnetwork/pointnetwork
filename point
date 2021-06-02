@@ -34,7 +34,10 @@ program.option('-v, --verbose', 'force the logger to show debug level messages',
 program.command('attach').description('attach to the running point process').action(() => program.attach = true);
 program.command('demo').description('dump demo configs to ~/.point').action(() => program.demo = true);
 program.command('debug-destroy-everything').description('destroys everything in datadir: database and files. dangerous!').action(() => program.debug_destroy_everything = true);
-program.command('deploy <path>').description('deploy a website').action(path => program.deploy = path);
+program.command('deploy <path>')
+    .description('deploy a website')
+    .action((path, cmd) => { program.deploy = path; program.deploy_contracts = !!cmd.contracts; })
+    .option('--contracts', '(re)deploy contracts too', false);
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
 // program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
@@ -116,7 +119,7 @@ if (program.deploy) {
     if (program.deploy.length === 0) return this.ctx.die('error: missing path');
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
-    deploy.deploy(program.deploy);
+    deploy.deploy(program.deploy, program.deploy_contracts);
     return;
 }
 

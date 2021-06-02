@@ -9,12 +9,13 @@
       <h1>Decentralized Email</h1>
       {% set wallet_address = default_wallet_address() %}
       <h4>Wallet Address: {{ wallet_address }}</h4>
+      <h4>Identity Attached: {{ identity_by_owner(wallet_address) }}</h4>
     </header>
 
     <main>
 
       <div>
-        <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"></img>
+          <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"/>
 
           <p><a class="button" href='/'>Home</a></p>
           <p><a class="button" href='/inbox'>Inbox</a></p>
