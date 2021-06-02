@@ -8,12 +8,13 @@ import { Products } from '~/Products'
 import './index.css'
 
 const Header = () => {
-    const { walletAddress } = useAppContext()
+    const { walletAddress, walletBalance } = useAppContext()
 
     return (
         <header>
             <h1>Decentralized Store</h1>
             <h4>Wallet Address: { walletAddress || 'Loading...' }</h4>
+            <h4>Wallet Balance: { walletBalance || 'Loading...' } POINT (Wei)</h4>
         </header>
     )
 }

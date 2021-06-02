@@ -238,6 +238,15 @@ npx nodemon ./point --datadir ~/.point/test2
 
 That way, changes in the applications code are detected by nodemon and the Point Network node is then automatically restarted.
 
+### Note on Store.z example site
+
+This is a React JS app. So you will need to install dependencies for it and run a build watcher if you want to develop it further.
+
+1. CD into the [./example/store.z/src/](./example/store.z/src/) directory.
+1. Run `npm i` to install the sites dependencies
+1. Run `npm run watch` to have *parcel* watch the site and build it on any detected changes
+1. Run `./point deploy example/store.z --datadir ~/.point/test2` (from the node root folder) to deploy the sites `views` directory that was built using parcel.
+
 ### Developing the Point Network Web App Utility
 
 For details on [Developing the Point Network Web App Utility](../api/web/README.md) please refer to this separate [README]((../api/web/README.md)).
