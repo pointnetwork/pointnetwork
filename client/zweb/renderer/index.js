@@ -154,7 +154,7 @@ class Renderer {
                 return await this.ctx.web3bridge.callContract(target, contractName, method, params);
             });
             Twig.exports.extendFunction("contract_call", async(host, contractName, methodName, params) => {
-                return await this.ctx.web3bridge.sendContract(host.replace('.z', ''), contractName, methodName, params);
+                return await this.ctx.web3bridge.sendToContract(host.replace('.z', ''), contractName, methodName, params);
             });
             Twig.exports.extendFunction("contract_events", async(host, contractName, event, filter = {}) => {
                 const options = { filter,

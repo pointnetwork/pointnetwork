@@ -12,7 +12,7 @@ contract Email {
     }
     EmailMessage[] messages;
     int256 lastMessageIdx = -1;
-    event SendEmail(EmailMessage);
+    event SendEmail(address indexed to, EmailMessage emailMessage);
     mapping(bytes32 => uint) messageIdToIdx;
 
     function send(address to, bytes32 encryptedMessageId, string memory encryptedSymmetricObj) public {
@@ -21,7 +21,7 @@ contract Email {
         messages.push(_msg);
         messageIdToIdx[encryptedMessageId] = uint256(idx);
         lastMessageIdx++;
-        emit SendEmail(_msg);
+        emit SendEmail(to, _msg);
     }
 
     function getMessageById(bytes32 encryptedMessageId) public view returns (EmailMessage memory _msg) {

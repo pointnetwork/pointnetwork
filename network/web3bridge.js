@@ -51,11 +51,11 @@ class Web3Bridge {
         try {
             abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
             // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
+
+            return new this.web3.eth.Contract(abi.abi, at);
         } catch(e) {
             throw Error('Could not read abi of the contract '+this.ctx.utils.htmlspecialchars(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
         }
-        const contract = new this.web3.eth.Contract(abi.abi, at);
-        return contract;
     }
 
     async web3send(method, gasLimit = null, amountEth = '0') {
@@ -82,7 +82,7 @@ class Web3Bridge {
          */
     }
 
-    async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage
+    async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
         if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
         let result = await contract.methods[ method ]( ...params ).call();
@@ -94,17 +94,16 @@ class Web3Bridge {
         return await contract.getPastEvents( event,  options );
     }
 
-    async sendContract(target, contractName, methodName, params) { // todo: multiple arguments, but check existing usage
+    async sendToContract(target, contractName, methodName, params) { // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
 
         // storage id: convert string -> bytes32
-        for(let abi_method of abi.abi) {
-            if (abi_method.name === methodName) {
+        for(let k in contract.methods) {
+            if (k.split('(')[0] === methodName && k.includes('(')) { // example of k: send(address,bytes32,string)
                 let paramIdx = 0;
-                for(let abi_input of abi_method.inputs) {
-                    // [ { internalType: 'string', name: 'title', type: 'string' },
-                    // { internalType: 'bytes32', name: 'contents', type: 'bytes32' } ]
-                    if (abi_input.internalType === 'bytes32') {
+                let kArgTypes = k.split('(')[1].replace(')','').split(',');
+                for(let kArgType of kArgTypes) {
+                    if (kArgType === 'bytes32') {
                         // Potential candidate for conversion
                         let param_value = params[paramIdx];
                         if (typeof param_value === "string" && param_value.replace('0x','').length === 32*2) { // 256 bit
@@ -116,6 +115,8 @@ class Web3Bridge {
                 }
             }
         }
+
+        // Now call the method
         const method = contract.methods[ methodName ](...params);
         console.log(await this.web3send(method)); // todo: remove console.log
     }

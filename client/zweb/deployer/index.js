@@ -239,7 +239,7 @@ class Deployer {
                     for(let paramName of paramNames) {
                         params.push(value[paramName]);
                     }
-                    await this.ctx.web3bridge.sendContract(target, contractName, methodName, params );
+                    await this.ctx.web3bridge.sendToContract(target, contractName, methodName, params );
                 }
                 value = JSON.stringify(value)
             }

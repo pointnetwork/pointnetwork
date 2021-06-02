@@ -1,33 +1,32 @@
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Point Network Email Example App</title>
     <link type="text/css" rel="stylesheet" href="index.css"/>
-  </head>
-  <body>
-    <header>
-      <h1>Decentralized Email</h1>
-      {% set wallet_address = default_wallet_address() %}
-      <h4>Wallet Address: {{ wallet_address }}</h4>
-      <h4>Identity Attached: {{ identity_by_owner(wallet_address) }}</h4>
-    </header>
+</head>
+<body>
+<header>
+    <h1>Decentralized Email</h1>
+    {% set wallet_address = default_wallet_address() %}
+    <h4>Wallet Address: {{ wallet_address }}</h4>
+    <h4>Identity Attached: {{ identity_by_owner(wallet_address) }}</h4>
+</header>
 
-    <main>
+<main>
 
-      <div>
-          <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"/>
+    <div>
+        <img alt="Point Network Email" src="images/email-logo.png" width="200" height="200"/>
 
-          <p><a class="button" href='/'>Home</a></p>
-          <p><a class="button" href='/inbox'>Inbox</a></p>
-          <p><a class="button" href='/compose'>Compose</a></p>
-          <p><a class="button" href='/signout'>Sign Out</a></p>
+        <p><a class="button" href='/'>Home</a></p>
+        <p><a class="button" href='/inbox'>Inbox</a></p>
+        <p><a class="button" href='/compose'>Compose</a></p>
 
         <p><b>Point Network Email Example App</b>. Demos the powers of ZHTML + Solidity + DHT!!</p>
-      </div>
+    </div>
 
-      {% block contents %}
-      {% endblock %}
+    {% block contents %}
+    {% endblock %}
 
-    </main>
-  </body>
+</main>
+</body>
 </html>

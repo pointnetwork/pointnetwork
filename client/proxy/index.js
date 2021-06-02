@@ -257,7 +257,12 @@ class ZProxy {
                     let bodyParsed = qs.parse(body);
                     for (const k in bodyParsed) request_params[k] = bodyParsed[k];
 
-                    let rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
+                    let rendered;
+                    try {
+                        rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
+                    } catch(e) {
+                        return reject(e);
+                    }
 
                     response._contentType = 'text/html';
 
@@ -408,7 +413,7 @@ class ZProxy {
                 }
 
                 try {
-                    await this.ctx.web3bridge.sendContract(host, contractName, methodName, params);
+                    await this.ctx.web3bridge.sendToContract(host, contractName, methodName, params);
                 } catch(e) {
                     reject('Error: ' + e);
                 }
