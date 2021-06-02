@@ -1,7 +1,6 @@
 {
   "version": 1,
   "target": "store.z",
-  "react": true,
   "keyvalue": {
     "store0": {
       "contract_send": "Store.registerStore(name,description,logo)",
