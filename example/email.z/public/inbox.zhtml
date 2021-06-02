@@ -11,14 +11,14 @@
 
   {% for email in emailEvents %}
 
-    {% set data = email.data[0] %}
+    {% set data = email.data.emailMessage %}
     {% set from = data.from %}
     {% set to = data.to %}
     {% set encryptedMessageId = data.encryptedMessageId %}
     {% set timestamp = data.timestamp %}
 
     <div class="formback">
-      <b>Timestamp</b>:{{ timestamp }}
+      <b>Timestamp</b>:{{ timestamp | date('Y-m-d H:i:s') }}
       <b>From</b>:{{ from }}
       <b>To</b>:{{ to }}
       {% if to != wallet_address %}

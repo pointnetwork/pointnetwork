@@ -15,7 +15,7 @@
     <b>Message Id</b><br>
     <p>{{ request.messageid }}</p>
     <b>Timestamp</b><br>
-    <p>{{ timestamp }}</p>
+    <p>{{ timestamp | date('Y-m-d H:i:s') }}</p>
     <b>Message From</b><br>
     <p>{{ from }}</p>
     <b>Message To</b><br>
