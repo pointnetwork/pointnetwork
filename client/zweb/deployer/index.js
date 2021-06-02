@@ -47,77 +47,6 @@ class Deployer {
             let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
             let routes = JSON.parse(routesFile);
 
-            //let uploadFiles
-            //let parseFiles = // todo: should be queue
-            if (deployConfig.react === true) {
-                const routesByFile = {}
-
-                for (const route in routes) {
-                    const filename = routes[route]
-                    if (!routesByFile[filename]) {
-                        routesByFile[filename] = []
-                    }
-                    routesByFile[filename].push(route)
-                }
-
-                const fileTree = [{dirs: []}]
-
-                while (fileTree.length) {
-                    const {dirs} = fileTree.pop()
-                    const files = fs.readdirSync(path.join(deployPath, 'views', ...dirs))
-
-                    for (const fileName of files) {
-                        const fileExt = path.extname(fileName)
-                        const relativePath = dirs.concat(fileName)
-                        const absolutePath = path.join(deployPath, 'views', ...relativePath)
-
-                        if (fs.lstatSync(absolutePath).isDirectory()) {
-                            fileTree.push({dirs: relativePath})
-                            continue
-                        }
-
-
-                        const blob = fs.readFileSync(absolutePath)
-                        const cacheFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(blob))
-
-                        fs.writeFileSync(cacheFilePath, blob)
-
-                        const uploaded = await this.ctx.client.storage.putFile(cacheFilePath)
-
-                        this.cache_uploaded[cacheFilePath] = uploaded.id;
-                        this.ctx.client.deployerProgress.update(cacheFilePath, 100, `uploaded::${uploaded.id}`)
-
-                        const contentPath = relativePath.join('/')
-                        const routePaths = routesByFile[contentPath] || [`/${contentPath}`]
-                        for (const routePath of routePaths) {
-                            routes[routePath] = `${uploaded.id}${fileExt}`
-                        }
-                    }
-                }
-            } else {
-                for (let k in routes) {
-                    if (routes.hasOwnProperty(k)) {
-                        let v = routes[k];
-
-                        let templateFileName = path.join(deployPath, 'views', v);
-                        const hash = await this.processTemplate(templateFileName, deployPath, deployConfig);
-                        routes[k] = hash;
-                    }
-                }
-            }
-
-        // Upload public - root dir
-        console.log('uploading root directory...');
-        let publicDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'public')); // todo: and more options
-        let publicDirId = publicDirectory.id;
-        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath);
-
-
-        // Upload routes
-        let routesFilePath = path.join(deployPath, 'routes.json');
-        let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
-        let routes = JSON.parse(routesFile);
-
             console.log('uploading route file...', {routes});
             const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
             fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
@@ -126,6 +55,12 @@ class Deployer {
             this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploaded.id}`)
             await this.updateZDNS(target, routeFileUploaded.id);
             await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployConfig);
+
+            // Upload public - root dir
+            console.log('uploading root directory...');
+            let publicDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'public')); // todo: and more options
+            let publicDirId = publicDirectory.id;
+            await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath);
 
             console.log('Deploy finished');
 
@@ -137,14 +72,13 @@ class Deployer {
 
     static async getPragmaVersion(source){
         let regex = /pragma solidity [\^\~\>\<]?=?(?<version>[0-9\.]*);/;
-        let found = null
-        if (found = source.match(regex)) {
+        let found = source.match(regex)
+        if (found) {
             return found.groups.version
         } else {
             throw new Error('Contract has no compiler version')
         }
     }
-
 
     async deployContract(target, contractName, fileName, deployPath) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling')
@@ -152,7 +86,7 @@ class Deployer {
 
         const contractSource = fs.readFileSync(fileName, 'utf8');
 
-        const version = await this.constructor.getPragmaVersion(contractSource);
+        const version = await Deployer.getPragmaVersion(contractSource);
         const versionArray = version.split('.');
         let SOLC_MAJOR_VERSION = versionArray[0]
         let SOLC_MINOR_VERSION = versionArray[1]
@@ -160,7 +94,6 @@ class Deployer {
 
         const path = require('path');
         const solc = require(SOLC_FULL_VERSION);
-
 
         const compileConfig = {
             language: 'Solidity',
