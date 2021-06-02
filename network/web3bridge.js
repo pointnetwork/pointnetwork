@@ -25,7 +25,7 @@ class Web3Bridge {
     async start() {
     }
 
-    async loadContract(contractName, at) {
+    async loadPointContract(contractName, at) {
         const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/'+contractName+'.json');
         const abiFile = JSON.parse(fs.readFileSync(abiFileName));
         const abi = abiFile.abi;
@@ -36,15 +36,29 @@ class Web3Bridge {
 
     async loadStorageProviderRegistryContract() {
         const at = this.ctx.config.network.storage_provider_registry_contract_address;
-        return await this.loadContract('StorageProviderRegistry', at);
+        return await this.loadPointContract('StorageProviderRegistry', at);
     }
 
     async loadIdentityContract() {
         const at = this.ctx.config.network.identity_contract_address;
-        return await this.loadContract('Identity', at);
+        return await this.loadPointContract('Identity', at);
     }
 
-    async web3send(method, gasLimit, amountEth = '0') {
+    async loadWebsiteContract(target, contractName) {
+        const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
+        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
+        let abi;
+        try {
+            abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+            // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
+        } catch(e) {
+            throw Error('Could not read abi of the contract '+this.ctx.utils.htmlspecialchars(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
+        }
+        const contract = new this.web3.eth.Contract(abi.abi, at);
+        return contract;
+    }
+
+    async web3send(method, gasLimit = null, amountEth = '0') {
         let account, gasPrice
         try {
             account = this.web3.eth.defaultAccount;
@@ -69,33 +83,19 @@ class Web3Bridge {
     }
 
     async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage
-        const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
-        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
-        const abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
-        const contract = new this.web3.eth.Contract(abi.abi, at);
+        const contract = await this.loadWebsiteContract(target, contractName);
+        if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
         let result = await contract.methods[ method ]( ...params ).call();
         return result;
     }
 
     async getPastEvents(target, contractName, event, options={fromBlock: 0, toBlock: 'latest'}) {
-        const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
-        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
-        const abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
-        const contract = new this.web3.eth.Contract(abi.abi, at);
+        const contract = await this.loadWebsiteContract(target, contractName);
         return await contract.getPastEvents( event,  options );
     }
 
     async sendContract(target, contractName, methodName, params) { // todo: multiple arguments, but check existing usage
-        const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
-        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
-        let abi;
-        try {
-            abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
-            // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
-        } catch(e) {
-            throw Error('Could not read abi of the contract '+this.ctx.utils.htmlspecialchars(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
-        }
-        const contract = new this.web3.eth.Contract(abi.abi, at);
+        const contract = await this.loadWebsiteContract(target, contractName);
 
         // storage id: convert string -> bytes32
         for(let abi_method of abi.abi) {
@@ -117,7 +117,7 @@ class Web3Bridge {
             }
         }
         const method = contract.methods[ methodName ](...params);
-        console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
+        console.log(await this.web3send(method)); // todo: remove console.log
     }
 
     async identityByOwner(owner) {
@@ -126,10 +126,18 @@ class Web3Bridge {
         return await method.call();
     }
 
-    async emailIdentityByOwner(owner) {
+    async ownerByIdentity(identity) {
         const identityContract = await this.loadIdentityContract();
-        const method = identityContract.methods.getEmailIdentityByOwner(owner);
+        const method = identityContract.methods.getOwnerByIdentity(identity);
         return await method.call();
+    }
+
+    async commPublicKeyByIdentity(identity) {
+        const identityContract = await this.loadIdentityContract();
+        const method = identityContract.methods.getCommPublicKeyByIdentity(identity);
+        const parts = await method.call();
+        return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
+        // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
     }
 
     async getZRecord(domain) {
@@ -154,7 +162,7 @@ class Web3Bridge {
         identity = identity.replace('.z', ''); // todo: rtrim instead
         const contract = await this.loadIdentityContract();
         const method = contract.methods.ikvPut(identity, key, value);
-        console.log(await this.web3send(method, 2000000)); // todo: remove console.log // todo: magic number
+        console.log(await this.web3send(method)); // todo: remove console.log
     }
     async toChecksumAddress(address) {
         const checksumAddress = await this.web3.utils.toChecksumAddress(address)

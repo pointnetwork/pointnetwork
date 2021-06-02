@@ -19,7 +19,7 @@ class Deployer {
         return cache_dir;
     }
 
-    async deploy(deployPath) {
+    async deploy(deployPath, deployContracts = false) {
 
         // todo: error handling, as usual
         let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
@@ -31,18 +31,19 @@ class Deployer {
         let target = deployConfig.target;
 
         // Deploy contracts
-        let contractNames = deployConfig.contracts;
-        if (!contractNames) contractNames = [];
-        for(let contractName of contractNames) {
-            let fileName = path.join(deployPath, 'contracts', contractName+'.sol');
-            try {
-                await this.deployContract(target, contractName, fileName);
-            } catch(e) {
-                this.ctx.log.error(e);
-                throw e;
+        if (deployContracts) {
+            let contractNames = deployConfig.contracts;
+            if (!contractNames) contractNames = [];
+            for(let contractName of contractNames) {
+                let fileName = path.join(deployPath, 'contracts', contractName+'.sol');
+                try {
+                    await this.deployContract(target, contractName, fileName);
+                } catch(e) {
+                    this.ctx.log.error(e);
+                    throw e;
+                }
             }
         }
-
 
         // Upload public - root dir
         console.log('uploading root directory...');

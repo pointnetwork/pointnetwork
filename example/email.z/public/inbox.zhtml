@@ -4,20 +4,27 @@
 
   <h2>Inbox for {{ wallet_address }}</h2>
 
-  {% set emailEvents = contract_events(host, 'Email', 'SendEmail', {to: wallet_address}) %}
+  {% set emailEvents = contract_events(host, 'Email', 'SendEmail', [{"to": wallet_address}]) %}
+
+  {% set count = emailEvents|length %}
+  <p>Event count: {{ count }}</p>
 
   {% for email in emailEvents %}
 
-    {% set from = email.data.from %}
-    {% set encryptedMessageHash = email.data.encryptedMessageHash %}
-    {% set timestamp = email.data.timestamp %}
+    {% set data = email.data[0] %}
+    {% set from = data.from %}
+    {% set to = data.to %}
+    {% set encryptedMessageId = data.encryptedMessageId %}
+    {% set timestamp = data.timestamp %}
 
     <div class="formback">
-      <p>
-        <b>Timestampsss</b>:{{ timestamp }}
-        <b>From</b>:{{ from }}
-        <a href='/show?messageid={{ encryptedMessageHash }}'>{{ encryptedMessageHash }}</a>
-      </p>
+      <b>Timestamp</b>:{{ timestamp }}
+      <b>From</b>:{{ from }}
+      <b>To</b>:{{ to }}
+      {% if to != wallet_address %}
+        <div style="background-color: red;">This message is not for you!</div>
+      {% endif %}
+      <a href='/show?messageid={{ encryptedMessageId }}'>{{ encryptedMessageId }}</a>
     </div>
 
   {% endfor %}
