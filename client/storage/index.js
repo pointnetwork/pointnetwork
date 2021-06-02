@@ -1,6 +1,7 @@
 const Chunk = require('../../db/models/chunk');
 const File = require('../../db/models/file');
 const Redkey = require('../../db/models/redkey');
+const Directory = require('../../db/models/directory');
 const StorageLink = require('../../db/models/storage_link');
 const DB = require('../../db');
 const path = require('path');
@@ -41,14 +42,14 @@ class Storage {
     }
 
     async enqueueFileForUpload(
-        path,
+        filePath,
         redundancy = this.ctx.config.client.storage.default_redundancy,
         expires = (new Date).getTime() + this.ctx.config.client.storage.default_expires_period_seconds,
         autorenew = this.ctx.config.client.storage.default_autorenew
     ) {
         // Create at first to be able to chunkify and get the file id (hash), later we'll try to load it if it already exists
         let file = File.new();
-        file.localPath = path; // todo: should we rename it to lastLocalPath or something? or store somewhere // todo: validate it exists
+        file.localPath = filePath; // todo: should we rename it to lastlocalPath or something? or store somewhere // todo: validate it exists
         await file.chunkify(); // to receive an id (hash)
 
         const existingFile = File.find(file.id);
@@ -69,14 +70,80 @@ class Storage {
         return file.id;
     }
 
-    // todo: make sure the network is properly initialized etc.
-    async putFile(
-        path,
+    async enqueueDirectoryForUpload(
+        dirPath,
+        redundancy = this.ctx.config.client.storage.default_redundancy,
+        expires = (new Date).getTime() + this.ctx.config.client.storage.default_expires_period_seconds,
+        autorenew = this.ctx.config.client.storage.default_autorenew
+    ) {
+        let directory = new Directory();
+        directory.setLocalPath(dirPath);
+        directory.addFilesFromLocalPath();
+
+        // Now process every item
+        for(let f of directory.files) {
+            if (f.type === 'fileptr') {
+                let uploaded = await this.putFile(f.localPath, redundancy, expires, autorenew);
+                f.id = uploaded.id;
+            } else if (f.type === 'dirptr') {
+                let uploaded = await this.putDirectory(f.localPath, redundancy, expires, autorenew);
+                f.id = uploaded.id;
+            } else {
+                throw Error('invalid type: '+f.type);
+            }
+        }
+
+        // Get an id here:
+
+        const tmpFilePath = path.join(this.getCacheDir(), 'dir-tmp-'+this.ctx.utils.hashFnHex(dirPath));
+        directory.serializeToFile(tmpFilePath);
+
+        let uploadedDirSpec = await this.putFile(tmpFilePath, redundancy, expires, autorenew);
+        let uploadedDirSpecId = uploadedDirSpec.id;
+
+        // We don't wait for the dir to be uploaded, we just return the dir id, using which we can query its upload status
+
+        // todo: when do we update expires and save again?
+
+        return uploadedDirSpecId;
+    }
+
+    async putDirectory(
+        dirPath,
         redundancy = this.config.default_redundancy,
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
-        const file_id = await this.enqueueFileForUpload(path, redundancy, expires, autorenew);
+        if (!fs.existsSync(dirPath)) throw Error('Directory '+this.ctx.utils.htmlspecialchars(dirPath)+' does not exist');
+        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+this.ctx.utils.htmlspecialchars(dirPath)+' is not a directory');
+
+        const directory_id = await this.enqueueDirectoryForUpload(dirPath, redundancy, expires, autorenew);
+        let waitUntilUpload = (resolve, reject) => {
+            setTimeout(async() => {
+                let file = await File.find(directory_id);
+                if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
+                    resolve(file);
+                } else {
+                    waitUntilUpload(resolve, reject);
+                }
+            }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
+        };
+
+        setTimeout(() => {
+            this.tick('uploading');
+        }, 0);
+
+        return new Promise(waitUntilUpload);
+    }
+
+    // todo: make sure the network is properly initialized etc.
+    async putFile(
+        filePath,
+        redundancy = this.config.default_redundancy,
+        expires = (new Date).getTime() + this.config.default_expires_period_seconds,
+        autorenew = this.config.default_autorenew)
+    {
+        const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(async() => {
                 let file = await File.find(file_id);
@@ -111,7 +178,15 @@ class Storage {
 
     async getFile(id, localPath) {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
+
+        // already downloaded?
+        let file = await File.findOrCreate(id);
+        if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
+            return file;
+        }
+
         await this.enqueueFileForDownload(id, localPath);
+
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
                 let file = await File.find(id);
@@ -550,6 +625,12 @@ class Storage {
         }
 
         // todo: multiple?
+    }
+
+    getCacheDir() {
+        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        return cache_dir;
     }
 }
 
