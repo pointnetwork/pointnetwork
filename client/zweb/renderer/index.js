@@ -1,15 +1,28 @@
-let Twig = require('twig');
+let TwigLib = require('twig');
 let moment = require('moment');
 const fs = require('fs');
 const path = require('path');
+const _ = require('lodash');
 let { encryptPlainTextAndKey, decryptCipherTextAndKey } = require('../../encryptUtils');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
 class Renderer {
-    constructor(ctx) {
+    constructor(ctx, rootDir) {
         this.ctx = ctx;
         this.config = ctx.config.client.zproxy;
+        this.rootDir = rootDir;
+        this.twigs = {};
+    }
+
+    getTwigForHost(host) {
+        // Look in cache first
+        if (this.twigs[host]) {
+            return this.twigs[host];
+        }
+
+        // Spawning a new Twig object
+        const Twig = TwigLib.factory();
 
         Twig.extend((Twig) => {
             Twig.exports.extendTag({
@@ -34,6 +47,8 @@ class Renderer {
                     parse: function (token, context, chain) {
                         var template,
                             that = this;
+
+                        var host = context.host;
 
                         //innerContext = Twig.ChildContext(context);
                         // Twig.lib.copy = function (src) {
@@ -172,42 +187,68 @@ class Renderer {
             Twig.Templates.registerLoader('fs', async(location, params, callback, error_callback/*todo*/) => {
                 // console.log({location, params});
                 // ... load the template ...
-                const src = await this.fetchTemplateByHash(params.path);
+                const src = await this.fetchTemplateByPath(params.path);
                 params.data = src;
-                // todo: params.id?
                 params.allowInlineIncludes = true;
                 // create and return the template
                 var template = new Twig.Template(params);
                 if (typeof callback === 'function') {
                     callback(template);
                 }
-                // console.log(template);
                 return template;
             });
         });
+
+        // Save to our cache
+        this.twigs[host] = Twig;
+
+        return Twig;
     }
 
-    async render(template_contents, host, request_params = {}) {
-        let template = Twig.twig({
-            // id // todo
-            allowInlineIncludes: true,
-            autoescape: true,
-            strict_variables: true,
-            data: template_contents,
-            async: true, // todo
-        });
-        let variables = {
-            host
-        };
-        variables = Object.assign({}, variables, request_params);
+    async render(template_id, template_contents, host, request_params = {}) {
+        try {
+            const Twig = this.getTwigForHost(host);
 
-        let result = await template.renderAsync(variables);
-        return result.toString();
+            let template = Twig.twig({
+                id: host + '/' + template_id,
+                allowInlineIncludes: true,
+                autoescape: true,
+                strict_variables: true,
+                data: template_contents,
+                async: true, // todo
+            });
+
+            // Here we can specify global variables to pass into twig
+            let variables = {
+                host
+            };
+            variables = Object.assign({}, variables, request_params);
+
+            let result = await template.renderAsync(variables);
+
+            // Okay, we shouldn't be nuking our Twig cache each time, but I figured it's better if we suffer on performance a bit,
+            // than have a memory leak with thousands of Twig objects in memory waiting
+            this.removeTwigForHost(host);
+
+            return result.toString();
+        } catch(e) {
+            this.removeTwigForHost(host);
+            throw e;
+        }
+    }
+
+    removeTwigForHost(host) {
+        delete this.twigs[host];
     }
 
     async fetchTemplateByHash(hash) {
         console.log('fetching '+hash);
         return await this.ctx.client.storage.readFile(hash, 'utf-8');
+    }
+
+    async fetchTemplateByPath(templatePath) {
+        console.log('fetching '+templatePath); // todo: remove
+        return await this.rootDir.readFileByPath(templatePath, 'utf-8');
     }
 
     async decryptData(host, privateKey, unparsedEncryptedSymmetricKey, encryptedData) {
