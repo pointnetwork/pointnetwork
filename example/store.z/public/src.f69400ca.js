@@ -30542,12 +30542,10 @@ var ProvideStoreContext = function ProvideStoreContext(_a) {
             case 0:
               return [4
               /*yield*/
-              , window.point.contract.call()];
-            // todo update point sdk in point browser to enable passing query params for the contract call
+              , window.point.contract.call('store', 'Store', 'getStores()', '')];
 
             case 1:
-              data = _a.sent() // todo update point sdk in point browser to enable passing query params for the contract call
-              ;
+              data = _a.sent();
               stores = [];
               storesData = data;
               storesData.forEach(function (storeData) {
