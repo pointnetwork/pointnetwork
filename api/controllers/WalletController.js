@@ -1,9 +1,10 @@
+const PointController = require('./PointController')
 let fs = require('fs')
 let ethereumjs = require('ethereumjs-util')
 
-class WalletController {
+class WalletController extends PointController {
   constructor(ctx, req, reply) {
-    this.ctx = ctx;
+    super(ctx)
     this.web3 = this.ctx.network.web3;
     this.keystorePath = this.ctx.wallet.keystore_path;
     this.walletToken = req.headers['wallet-token'];
@@ -110,13 +111,6 @@ class WalletController {
       // if wallet is null then reply with 404 not found and return false
       this.reply.callNotFound()
       return false
-    }
-  }
-
-  _response(payload) {
-    return {
-      status: 200,
-      data: payload
     }
   }
 }
