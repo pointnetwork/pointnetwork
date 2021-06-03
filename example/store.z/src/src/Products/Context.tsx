@@ -38,7 +38,7 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
 
     (async () => {
       // window.point.contract.call(host, contractName, method, params)
-      let productsData = await window.point.contract.call('store', 'Store', 'getProductsByStoreId', '0') // TODO: submit actual store id in function call
+      let productsData = await window.point.contract.call('store', 'Store', 'getProductsByStoreId', store)
       let products:any = []
 
       productsData.forEach((productData:any) => {
