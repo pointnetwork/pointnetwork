@@ -5,10 +5,10 @@
     "store0": {
       "contract_send": "Store.registerStore(name,description,logo)",
       "metadata": {
-        "name": "Walmart",
-        "description": "Walmart: Save Money. Live Better.",
+        "name": "My Store",
+        "description": "My Store: Is Your Store Too!",
         "storage[logo]": {
-          "file": "images/store-logo-0.jpg",
+          "file": "images/store-logo-0.png",
           "type": "image/jpeg"
         }
       }
