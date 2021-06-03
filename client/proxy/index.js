@@ -227,64 +227,52 @@ class ZProxy {
                 body += chunk;
             });
             request.on('end', async() => {
-                // Download info about root dir
-                let rootDir = await this.getRootDirectoryForDomain(host);
-                rootDir.setCtx(ctx);
-                rootDir.setHost(host);
+                try {
+                    // Download info about root dir
+                    let rootDir = await this.getRootDirectoryForDomain(host);
+                    rootDir.setCtx(ctx);
+                    rootDir.setHost(host);
 
-                // First try route file
-                let zroute_id = await this.getZRouteIdFromDomain(host);
-                if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
+                    // First try route file
+                    let zroute_id = await this.getZRouteIdFromDomain(host);
+                    if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
 
-                let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
-                if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
+                    let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
+                    if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
 
-                let template_filename = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
-                if (template_filename) {
-                    let template_file_id, template_file_contents;
-                    try {
-                        template_file_id = await rootDir.getFileIdByPath(template_filename);
-                        template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
-                    } catch(e) {
-                        return reject(e); // todo: sanitize
+                    let template_filename = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
+                    if (template_filename) {
+                        let template_file_id = await rootDir.getFileIdByPath(template_filename);
+                        let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
+
+                        let renderer = new Renderer(ctx, rootDir);
+                        let request_params = {};
+                        // GET
+                        for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
+                        // POST takes priority, rewrites if needed
+                        let bodyParsed = qs.parse(body);
+                        for (const k in bodyParsed) request_params[k] = bodyParsed[k];
+
+                        let rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
+
+                        response._contentType = 'text/html';
+
+                        resolve(rendered);
+                    } else {
+                        // If not, try root dir
+                        // in parsedUrl.pathname will be something like "/index.css"
+
+                        let rendered = await rootDir.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
+
+                        response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
+                        if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
+
+                        resolve(rendered);
+
+                        // return this.abort404(response, 'route not found'); // todo: write a better msg // todo: remove, it's automatic
                     }
-
-                    let renderer = new Renderer(ctx, rootDir);
-                    let request_params = {};
-                    // GET
-                    for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
-                    // POST takes priority, rewrites if needed
-                    let bodyParsed = qs.parse(body);
-                    for (const k in bodyParsed) request_params[k] = bodyParsed[k];
-
-                    let rendered;
-                    try {
-                        rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
-                    } catch(e) {
-                        return reject(e);
-                    }
-
-                    response._contentType = 'text/html';
-
-                    resolve(rendered);
-                } else {
-                    // If not, try root dir
-                    // in parsedUrl.pathname will be something like "/index.css"
-
-                    let rendered;
-
-                    try {
-                        rendered = await rootDir.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
-                    } catch(e) {
-                        return reject(e);
-                    }
-
-                    response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
-                    if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
-
-                    resolve(rendered);
-
-                    // return this.abort404(response, 'route not found'); // todo: write a better msg // todo: remove, it's automatic
+                } catch(e) {
+                    reject(e); // todo: sanitize?
                 }
             });
         });
