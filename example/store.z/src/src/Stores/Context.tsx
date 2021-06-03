@@ -20,11 +20,22 @@ export const ProvideStoreContext = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
-      setStoreList(JSON.parse(await point.contract.get({
-        host: 'store',
-        contractName: 'Store',
-        method: 'getStores'
-      })) as Store[]) // TODO: error handling
+      let data = await window.point.contract.call() // todo update point sdk in point browser to enable passing query params for the contract call
+      let stores:any = []
+      let storesData = data
+
+      storesData.forEach((storeData:any) => {
+        let store = {
+          id: storeData[0],
+          name: storeData[1],
+          description: storeData[2],
+          logo: storeData[3]
+        }
+
+        stores.push(store)
+      })
+
+      setStoreList(stores as Store[]) // TODO: error handling
     })()
   }, [])
 

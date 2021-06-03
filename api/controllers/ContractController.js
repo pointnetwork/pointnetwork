@@ -7,10 +7,14 @@ class ContractController extends PointController {
   }
 
   async call() {
-    const host = this.request.query.host;
-    const contractName = this.request.query.contractName;
-    const method = this.request.query.method;
-    const params = this.request.query.params;
+    // const host = this.request.query.host;
+    // const contractName = this.request.query.contractName;
+    // const method = this.request.query.method;
+    // const params = this.request.query.params;
+    const host = 'store'
+    const contractName = 'Store'
+    const method = 'getStores()'
+    const params = ''
 
     let data = await this.ctx.web3bridge.callContract(host, contractName, method, params);
 
