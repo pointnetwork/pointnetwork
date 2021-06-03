@@ -20,7 +20,8 @@ export const ProvideStoreContext = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
-      let data = await window.point.contract.call() // todo update point sdk in point browser to enable passing query params for the contract call
+      // window.point.contract.call(host, contractName, method, params)
+      let data = await window.point.contract.call('store', 'Store', 'getStores()','')
       let stores:any = []
       let storesData = data
 
