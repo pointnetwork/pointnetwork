@@ -16,7 +16,5 @@
     let emailContractAbi = "{{ emailContractAbi }}"
     let walletAddress = "{{ wallet_address }}"
   </script>
-  <script src="js/web3.min.js"></script>
-  <script language="JavaScript" src="js/email.js"></script>
 
 {% endblock %}
