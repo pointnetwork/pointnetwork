@@ -1,5 +1,8 @@
 {
   "version": 1,
   "target": "hello.z",
-  "keyvalue": {}
+  "keyvalue": {},
+  "contracts": [
+    "Hello"
+  ]
 }
