@@ -120,7 +120,7 @@ All sites should respond with a 200 status code. If not there is something wrong
 1. Tell the second node to deploy the `blog.z` website:
 
     ```
-    ./point deploy example/blog.z --datadir ~/.point/test2 -v
+    ./scripts/deploy-sites.sh blog --contracts
     ```
 
 1. Now you can stop the second node (Ctrl+C).
@@ -245,7 +245,14 @@ This is a React JS app. So you will need to install dependencies for it and run 
 1. CD into the [./example/store.z/src/](./example/store.z/src/) directory.
 1. Run `npm i` to install the sites dependencies
 1. Run `npm run watch` to have *parcel* watch the site and build it on any detected changes
-1. Run `./point deploy example/store.z --datadir ~/.point/test2` (from the node root folder) to deploy the sites `views` directory that was built using parcel.
+1. Run `./scripts/deploy-sites.sh store --contracts` (from the node root folder) to deploy the sites `views` directory that was built using parcel.
+
+### Coding style
+
+Following coding style applies:
+
+* Always use semicolons otherwise [dragons may bite you](https://www.freecodecamp.org/news/codebyte-why-are-explicit-semicolons-important-in-javascript-49550bea0b82/)!
+* Use 4 spaces as a default indent for all files and set this in your IDE.
 
 ### Developing the Point Network Web App Utility
 

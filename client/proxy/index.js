@@ -15,6 +15,7 @@ const io = require('socket.io');
 const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
+const qs = require('query-string');
 
 class ZProxy {
     constructor(ctx) {
@@ -163,38 +164,11 @@ class ZProxy {
                     return this.abortError(response, e);
                 }
             } else {
-                // Download info about root dir
-                let rootDir = await this.getRootDirectoryForDomain(host);
-                rootDir.setCtx(ctx);
-                rootDir.setHost(host);
-
-                // First try route file
-                let zroute_id = await this.getZRouteIdFromDomain(host);
-                if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
-
-                let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
-                if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
-
-                let template_filename = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
-                if (template_filename) {
-                    let template_file_id = await rootDir.getFileIdByPath(template_filename);
-                    let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
-
-                    let renderer = new Renderer(ctx, rootDir);
-                    let request_params = {};
-                    for (let k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
-
-                    rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
-                } else {
-                    // If not, try root dir
-                    // in parsedUrl.pathname will be something like "/index.css"
-
-                    rendered = await rootDir.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
-
-                    contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
-                    if (contentType.includes('html')) contentType = 'text/html'; // just in case
-
-                    // return this.abort404(response, 'route not found'); // todo: write a better msg // todo: remove, it's automatic
+                try {
+                    rendered = await this.processRequest(host, request, response, parsedUrl);
+                    contentType = response._contentType;
+                } catch(e) {
+                    return this.abortError(response, e);
                 }
             }
 
@@ -246,7 +220,66 @@ class ZProxy {
         return re.exec(filename)[1];
     }
 
-    keyValueAppend(host, request, response) {
+    processRequest(host, request, response, parsedUrl) {
+        return new Promise(async(resolve, reject) => {
+            let body = '';
+            request.on('data', (chunk) => {
+                body += chunk;
+            });
+            request.on('end', async() => {
+                try {
+                    // Download info about root dir
+                    let rootDir = await this.getRootDirectoryForDomain(host);
+                    rootDir.setCtx(ctx);
+                    rootDir.setHost(host);
+
+                    // First try route file
+                    let zroute_id = await this.getZRouteIdFromDomain(host);
+                    if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
+
+                    let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
+                    if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
+
+                    let template_filename = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
+                    if (template_filename) {
+                        let template_file_id = await rootDir.getFileIdByPath(template_filename);
+                        let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
+
+                        let renderer = new Renderer(ctx, rootDir);
+                        let request_params = {};
+                        // GET
+                        for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
+                        // POST takes priority, rewrites if needed
+                        let bodyParsed = qs.parse(body);
+                        for (const k in bodyParsed) request_params[k] = bodyParsed[k];
+
+                        let rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
+
+                        response._contentType = 'text/html';
+
+                        resolve(rendered);
+                    } else {
+                        // If not, try root dir
+                        // in parsedUrl.pathname will be something like "/index.css"
+
+                        let rendered = await rootDir.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
+
+                        response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
+                        if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
+
+                        resolve(rendered);
+
+                        // return this.abort404(response, 'route not found'); // todo: write a better msg // todo: remove, it's automatic
+                    }
+                } catch(e) {
+                    reject(e); // todo: sanitize?
+                }
+            });
+        });
+    }
+
+
+    keyValueAppend(host, request) {
         return new Promise(async(resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
@@ -309,7 +342,7 @@ class ZProxy {
         });
     }
 
-    contractSend(host, request, response) {
+    contractSend(host, request) {
         return new Promise(async(resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
@@ -368,7 +401,7 @@ class ZProxy {
                 }
 
                 try {
-                    await this.ctx.web3bridge.sendContract(host, contractName, methodName, params);
+                    await this.ctx.web3bridge.sendToContract(host, contractName, methodName, params);
                 } catch(e) {
                     reject('Error: ' + e);
                 }
@@ -386,6 +419,7 @@ class ZProxy {
     async getRootDirectoryForDomain(host) {
         const key = '::rootDir';
         const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
+        console.log({rootDirId});
         if (!rootDirId) throw Error('getRootDirectoryForDomain failed: key '+key+' returned empty: '+rootDirId);
         console.log('rootDirId for host '+host+' found: '+rootDirId); // todo: delete
         const dirJsonString = await this.ctx.client.storage.readFile(rootDirId, 'utf-8');
