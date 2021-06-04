@@ -11,7 +11,8 @@
       (async () => {
         let address = await window.point.wallet.getAddress()
         let balance = (await window.point.wallet.getBalance()).token
-        let contractCall = await window.point.contract.call()
+        // let storesData = await window.point.contract.call('store', 'Store', 'getStores()','')
+        let contractCall = await window.point.contract.call('hello', 'Hello', 'value()', '')
         let p1 = `<p>Wallet Address: ${address}</p>`
         let p2 = `<p>Wallet Balance: ${balance}</p>`
         let p3 = `<p>Contract Call: ${JSON.stringify(contractCall)}</p>`
