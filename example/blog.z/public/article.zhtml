@@ -2,7 +2,7 @@
 
 {% block contents %}
 
-    {% set article = contract_get(host, 'Blog', 'getArticle', [id]) %}
+    {% set article = contract_get(host, 'Blog', 'getArticle', request.id) %}
 
     {% if article is null %}
         404 Not Found
@@ -23,7 +23,7 @@
         <div class="comments">
             <h4>Comments:</h4>
 
-            {% set comments = contract_get(host, 'Blog', 'getCommentsByArticle', [id]) %}
+            {% set comments = contract_get(host, 'Blog', 'getCommentsByArticle', request.id) %}
 
             {% for comment in comments %}
 
