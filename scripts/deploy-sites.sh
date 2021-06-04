@@ -6,9 +6,15 @@
 
 if [ $# -eq 0 ]; then
     # No arguments supplied
-    export EXAMPLE_SITES="./example/*"
+    EXAMPLE_SITES="./example/*"
 else
-    export EXAMPLE_SITES="./example/${1}*"
+    EXAMPLE_SITES="./example/${1}*"
+fi
+
+if [ "$2" == "--contracts" ]; then
+    DEPLOY_CONTRACTS="--contracts"
+else
+    DEPLOY_CONTRACTS=""
 fi
 
 #DATADIR=${1:-~/.point/test2}
@@ -26,8 +32,8 @@ do
   echo
 
 #  [ -d $SITE/contracts ] && sleep 10
-  echo "./point deploy $SITE --datadir $DATADIR -v"
-  ./point deploy $SITE --datadir $DATADIR -v
+  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v"
+  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v
 
   echo
   echo "FINISHED: ${SITE}"

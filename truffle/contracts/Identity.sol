@@ -1,63 +1,47 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
+pragma abicoder v2;
 
 contract Identity {
+    struct PubKey64 {
+        bytes32 part1;
+        bytes32 part2;
+    }
+
     mapping(string => address) identityToOwner;
     mapping(address => string) ownerToIdentity;
-    mapping(string => address) emailIdentityToOwner;
-    mapping(address => string) ownerToEmailIdentity;
     mapping(string => mapping(string => string)) ikv;
     // At the same time this mapping is used to see if the identity is registered at all
     mapping(string => string) lowercaseToCanonicalIdentities;
-    mapping(string => string) lowercaseToCanonicalEmailIdentities;
+    mapping(string => PubKey64) identityToCommPublicKey;
 
     uint public MAX_HANDLE_LENGTH = 16;
-    uint public MAX_EMAIL_LENGTH = 32;
 
-    event IdentityRegistered(string handle, address identityOwner);
-    event EmailIdentityRegistered(string emailIdentity, address identityOwner);
+    event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
     event IKVSet(string identity, string key, string value);
 
-    constructor() public {
-        // Some initial domains for the demos, you can add your own, or better yet, register through normal means
-        identityToOwner['storage_provider'] = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
-        ownerToIdentity[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = 'storage_provider';
+    constructor() {
+        _selfReg('storage_provider', 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301, PubKey64({part1: 0xb192de79890d7dd86de3eb3343e16b873f7acff3cf9c49c4587337f06b744b41, part2: 0x6a34054dd05f0e6ffd720bf61e3aa1858bff9e1e95df22469f6b693fc9725376}));
+        // 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB is node2, deployer
+        _selfReg('demo', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('email', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('blog', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('hello', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('profile', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('twitter', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('store', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
 
-        identityToOwner['demo'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        identityToOwner['email'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        identityToOwner['blog'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        identityToOwner['hello'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        identityToOwner['profile'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        identityToOwner['store'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        identityToOwner['twitter'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        identityToOwner['node3'] = 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8;
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'demo';
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'email';
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'blog';
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'hello';
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'profile';
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'store';
-        ownerToIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'twitter';
-        ownerToIdentity[0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8] = 'node3';
-
-        // Address 0xC0101 ... is for test node 1
-        ikv['0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301']['public_key'] = '0xb192de79890d7dd86de3eb3343e16b873f7acff3cf9c49c4587337f06b744b416a34054dd05f0e6ffd720bf61e3aa1858bff9e1e95df22469f6b693fc9725376';
-
-        // Address 0x4f587 ... is for test node 2
-        ikv['0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB']['public_key'] = '0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a228cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56';
-
-        // Address 0xf990A ... is for test node 3
-        ikv['0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8']['public_key'] = '0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2aeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34';
-
-        ownerToEmailIdentity[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = 'storage_provider@email.z';
-        ownerToEmailIdentity[0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB] = 'website_owner@email.z';
-        ownerToEmailIdentity[0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8] = 'website_visitor@email.z';
-        emailIdentityToOwner['storage_provider@email.z'] = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
-        emailIdentityToOwner['website_owner@email.z'] = 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB;
-        emailIdentityToOwner['website_visitor@email.z'] = 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8;
+        _selfReg('node3', 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8, PubKey64({part1: 0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2, part2: 0xaeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34}));
     }
 
-    function register(string memory handle, address identityOwner) public {
+    function _selfReg(string memory handle, address owner, PubKey64 memory commPublicKey) internal {
+        identityToOwner[handle] = owner;
+        ownerToIdentity[owner] = handle;
+        identityToCommPublicKey[handle] = commPublicKey;
+        lowercaseToCanonicalIdentities[_toLower(handle)] = handle;
+    }
+
+    function register(string memory handle, address identityOwner, PubKey64 memory commPublicKey) public {
         if (!_isValidHandle(handle)) revert('Only alphanumeric characters and an underscore allowed');
 
         // Check if the identity is already registered
@@ -71,54 +55,38 @@ contract Identity {
         identityToOwner[handle] = identityOwner;
         ownerToIdentity[identityOwner] = handle;
 
+        // Attach public key for communication
+        identityToCommPublicKey[handle] = commPublicKey;
+
         // Add canonical version
         lowercaseToCanonicalIdentities[lowercase] = handle;
 
-        emit IdentityRegistered(handle, identityOwner);
+        emit IdentityRegistered(handle, identityOwner, commPublicKey);
     }
 
-    function registerEmailIdentity(string memory emailIdentity, address identityOwner) public {
-        if (!_isValidEmail(emailIdentity)) {
-            revert('Email address is not valid');
-        }
-
-        // Check if the email address is already registered
-        string memory lowercase = _toLower(emailIdentity);
-        if (!_isEmptyString(lowercaseToCanonicalEmailIdentities[lowercase])) {
-            revert('This email address has already been registered');
-        }
-
-        // Check if this owner already has an email address attached
-        if (!_isEmptyString(ownerToEmailIdentity[identityOwner])) {
-            revert('This owner already has an email address attached');
-        }
-
-        // Attach this email address to the owner address
-        emailIdentityToOwner[emailIdentity] = identityOwner;
-        ownerToEmailIdentity[identityOwner] = emailIdentity;
-
-        // Add a canonical version
-        lowercaseToCanonicalEmailIdentities[lowercase] = emailIdentity;
-
-        emit EmailIdentityRegistered(emailIdentity, identityOwner);
+    function canonical(string memory anyCase) public view returns (string memory canonicalCase) {
+        string memory lowercase = _toLower(anyCase);
+        return lowercaseToCanonicalIdentities[lowercase];
     }
 
     function getIdentityByOwner(address owner) public view returns (string memory identity) {
         return ownerToIdentity[owner];
     }
 
-    function getEmailIdentityByOwner(address owner) public view returns (string memory emailIdentity) {
-        return ownerToEmailIdentity[owner];
+    function getOwnerByIdentity(string memory identity) public view returns (address owner) {
+        return identityToOwner[canonical(identity)];
+    }
+
+    function getCommPublicKeyByIdentity(string memory identity) public view returns (PubKey64 memory commPublicKey) {
+        return identityToCommPublicKey[canonical(identity)];
     }
 
     modifier onlyIdentityOwner(string memory identity) {
-        require(msg.sender == identityToOwner[identity], 'You are not the owner of this identity');
+        require(msg.sender == getOwnerByIdentity(identity), 'You are not the owner of this identity');
         // todo: identityToOwner[identity] == address(0) ?
         _;
     }
 
-
-    // In the prototype, we don't check who owns the domain
     function ikvPut(string memory identity, string memory key, string memory value) public onlyIdentityOwner(identity) {
         ikv[identity][key] = value;
 
@@ -130,76 +98,6 @@ contract Identity {
     }
 
     //*** Internal functions ***//
-
-    function _isValidEmail(string memory str) internal view returns (bool) {
-        // https://en.wikipedia.org/wiki/Email_address#Syntax
-        bytes memory bstr = bytes(str);
-
-        if((bstr.length > MAX_EMAIL_LENGTH) || (bstr[0] == bytes1(uint8(0x2E)))) { // '.'
-            return false;
-        }
-
-        bool localPartComplete = false;
-        bool domainComplete = false; // currently sub-domains are not supported
-        bool topLevelDomainComplete = false;
-
-        uint8 localPartLength = 0;
-        uint8 domainLength = 0;
-        uint8 topLevelDomainLength = 0;
-
-        for (uint i = 0; i < bstr.length; i++) {
-            bytes1 char = bstr[i];
-
-            if (localPartComplete) {
-                if (domainComplete) {
-                    if (char == bytes1(uint8(0x5A)) || char == bytes1(uint8(0x7A))) { // 'z' or 'Z'
-                        topLevelDomainComplete = true;
-                    }
-                    if (topLevelDomainLength > 0) {
-                        return false;
-                    }
-                    topLevelDomainLength++;
-                } else if (char == bytes1(uint8(0x2E))) { // '.'
-                    domainComplete = true;
-                } else if (
-                    !_isAlphaNumeric(char) &&
-                    !(char == bytes1(uint8(0x5f))) && // '_'
-                    !(char == bytes1(uint8(0x2D)))    // '-'
-                ) {
-                    return false;
-                } else {
-                    domainLength++;
-                }
-            } else if (char == bytes1(uint8(0x40))) { // '@'
-                if ((i == 0) || (bstr[i - 1] == bytes1(uint8(0x2E)))) { // '.'
-                    return false;
-                }
-                localPartComplete = true;
-            } else if (
-                !_isAlphaNumeric(char) &&
-                !(char == bytes1(uint8(0x2E))) && // '.'
-                !(char == bytes1(uint8(0x2B))) && // '+'
-                !(char == bytes1(uint8(0x5f))) && // '_'
-                !(char == bytes1(uint8(0x2D)))    // '-'
-            ) {
-                return false;
-            } else if (
-                (i > 0) &&
-                (char == bytes1(uint8(0x2E))) &&     // '.'
-                (bstr[i - 1] == bytes1(uint8(0x2E))) // '.'
-            ) {
-                return false;
-            } else {
-                localPartLength++;
-            }
-        }
-
-        return (
-            localPartComplete && localPartLength > 0 &&
-            domainComplete && domainLength > 0 &&
-            topLevelDomainComplete && topLevelDomainLength == 1
-        );
-    }
 
     function _isAlphaNumeric(bytes1 char) internal pure returns (bool) {
         return (

@@ -19,18 +19,19 @@ class Deployer {
         return cache_dir;
     }
 
-    async deploy(deployPath) {
-        try {
-            // todo: error handling, as usual
-            let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
-            let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
-            let deployConfig = JSON.parse(deployConfigFile);
+    async deploy(deployPath, deployContracts = false) {
 
-            // assert(deployConfig.version === 1); // todo: msg
+        // todo: error handling, as usual
+        let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
+        let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
+        let deployConfig = JSON.parse(deployConfigFile);
 
-            let target = deployConfig.target;
+        // assert(deployConfig.version === 1); // todo: msg
 
-            // Deploy contracts
+        let target = deployConfig.target;
+
+        // Deploy contracts
+        if (deployContracts) {
             let contractNames = deployConfig.contracts;
             if (!contractNames) contractNames = [];
             for(let contractName of contractNames) {
@@ -42,32 +43,30 @@ class Deployer {
                     throw e;
                 }
             }
-
-            let routesFilePath = path.join(deployPath, 'routes.json');
-            let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
-            let routes = JSON.parse(routesFile);
-
-            console.log('uploading route file...', {routes});
-            const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
-            fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
-            this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading')
-            let routeFileUploaded = await this.ctx.client.storage.putFile(tmpRoutesFilePath); // todo: and more options
-            this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploaded.id}`)
-            await this.updateZDNS(target, routeFileUploaded.id);
-            await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployConfig);
-
-            // Upload public - root dir
-            console.log('uploading root directory...');
-            let publicDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'public')); // todo: and more options
-            let publicDirId = publicDirectory.id;
-            await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath);
-
-            console.log('Deploy finished');
-
-        } catch (e) {
-            console.error('Deploy error:', e)
-            throw e
         }
+
+        // Upload public - root dir
+        console.log('uploading root directory...');
+        let publicDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'public')); // todo: and more options
+        let publicDirId = publicDirectory.id;
+        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath);
+
+        // Upload routes
+        let routesFilePath = path.join(deployPath, 'routes.json');
+        let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
+        let routes = JSON.parse(routesFile);
+
+        console.log('uploading route file...', {routes});
+        const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
+        fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
+        this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading')
+        let routeFileUploaded = await this.ctx.client.storage.putFile(tmpRoutesFilePath); // todo: and more options
+        this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploaded.id}`)
+        await this.updateZDNS(target, routeFileUploaded.id);
+
+        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployConfig);
+
+        console.log('Deploy finished');
     }
 
     static async getPragmaVersion(source){
@@ -278,7 +277,7 @@ class Deployer {
                             params.push(value[paramName]);
                         }
                     }
-                    await this.ctx.web3bridge.sendContract(target, contractName, methodName, params );
+                    await this.ctx.web3bridge.sendToContract(target, contractName, methodName, params );
                 }
                 value = JSON.stringify(value)
             }
