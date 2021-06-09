@@ -6,6 +6,7 @@ module.exports = [
     ['GET', '/api/storage/files/:id', 'StorageController@fileById'],
     ['GET', '/api/storage/chunks', 'StorageController@chunks'],
     ['GET', '/api/storage/chunks/:id', 'StorageController@chunkById'],
+    ['GET', '/api/storage/get/:id', 'StorageController@get'],
     ['GET', '/api/wallet/generate', 'WalletController@generate'],
     ['GET', '/api/wallet/publicKey', 'WalletController@publicKey'],
     ['GET', '/api/wallet/balance', 'WalletController@balance'],

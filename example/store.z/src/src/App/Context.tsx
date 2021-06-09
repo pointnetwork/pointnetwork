@@ -16,7 +16,7 @@ export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     (async () => {
       setWalletAddress(await window.point.wallet.getAddress())
-      setWalletBalance((await window.point.wallet.getBalance()).token)
+      setWalletBalance((await window.point.wallet.getBalance()).token
     })()
   }, [])
 
