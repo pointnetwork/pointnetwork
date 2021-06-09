@@ -6,9 +6,9 @@ import '@openzeppelin/contracts/token/ERC1155/ERC1155.sol';
 
 
 contract Store is ERC1155 {
-    
-    constructor() public ERC1155("{id}") {}
-    
+
+    constructor() ERC1155("{id}") {}
+
     struct StoreFront {
         uint id;
         string name;
@@ -16,7 +16,7 @@ contract Store is ERC1155 {
         string logo;
         bool exists;
     }
-    
+
     struct Product {
         bytes32 id;
         uint tokenId;
@@ -33,7 +33,7 @@ contract Store is ERC1155 {
         bool exists;
         bool isSold;
     }
-    
+
     StoreFront[] allStores;
     mapping(address => StoreFront) public Stores;
     mapping (uint => Product[]) public Products;
@@ -41,17 +41,17 @@ contract Store is ERC1155 {
 
     uint internal storeIdIncrementor;
     uint internal _tokenId;
-    
+
     // events
     event NewStoreEvent(uint id, string name, string description);
     event NewProductEvent(bytes32 id, uint tokenId, string name, uint price, string metadata, address owner);
     event ProductSoldEvent(address from, address to, bytes32 productId, string metadata);
-    
+
     modifier storeExist() {
         if (Stores[msg.sender].exists) revert('You already have an existing store');
         _;
     }
-    
+
     modifier noStoreExist() {
         if (!Stores[msg.sender].exists) revert('Please register a store');
         _;
@@ -75,7 +75,7 @@ contract Store is ERC1155 {
         emit NewProductEvent(productId, newProductId, name, price, metadata, msg.sender);
         return productId;
       }
-    
+
       function getStore() public view returns(uint, string memory, string memory, string memory) {
         StoreFront memory store = Stores[msg.sender];
         return (store.id, store.name, store.description, store.logo);
@@ -95,7 +95,7 @@ contract Store is ERC1155 {
         }
         return false;
       }
-      
+
     function buyProduct (uint storeId, bytes32 productId) public noStoreExist payable returns(bool) {
         require(!Bids[productId].exists);
         for (uint i = 0; i < Products[storeId].length; i++) {
@@ -108,7 +108,7 @@ contract Store is ERC1155 {
         }
         return false;
     }
-    
+
     function sellProduct(uint storeId, bytes32 productId) public noStoreExist payable returns(bool) {
         require(Bids[productId].exists && !Bids[productId].isSold);
         for (uint i = 0; i < Products[storeId].length; i++) {

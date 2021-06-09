@@ -1,6 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react'
 import { useRoute } from 'wouter'
-import point from '~/point'
 
 export type Product = {
   storeId: string,
@@ -38,18 +37,13 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
 
     (async () => {
       // window.point.contract.call(host, contractName, method, params)
-      let productsData = await window.point.contract.call('store', 'Store', 'getProductsByStoreId', store)
-      let products:any = []
+      let productsData = await window.point.contract.call('store', 'Store', 'getProductsByStoreId', store);
+      let products:any = [];
 
-      productsData.forEach((productData:any) => {
-        let product = {
-          name: productData[2],
-          price: productData[3],
-          description: productData[4]
-        }
-
-        products.push(product)
-      })
+      for(let i=0; i<productsData.length; i++) {
+        let product = JSON.parse(await window.point.storage.getById(productsData[i][4]));
+        products.push(product);
+      }
 
       setProductList(products as Product[]) // TODO: error handling
     })()

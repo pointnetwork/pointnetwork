@@ -30907,25 +30907,42 @@ var ProvideProductsContext = function ProvideProductsContext(_a) {
 
     (function () {
       return __awaiter(void 0, void 0, void 0, function () {
-        var productsData, products;
-        return __generator(this, function (_a) {
-          switch (_a.label) {
+        var productsData, products, i, product, _a, _b;
+
+        return __generator(this, function (_c) {
+          switch (_c.label) {
             case 0:
               return [4
               /*yield*/
               , window.point.contract.call('store', 'Store', 'getProductsByStoreId', store)];
 
             case 1:
-              productsData = _a.sent();
+              productsData = _c.sent();
               products = [];
-              productsData.forEach(function (productData) {
-                var product = {
-                  name: productData[2],
-                  price: productData[3],
-                  description: productData[4]
-                };
-                products.push(product);
-              });
+              i = 0;
+              _c.label = 2;
+
+            case 2:
+              if (!(i < productsData.length)) return [3
+              /*break*/
+              , 5];
+              _b = (_a = JSON).parse;
+              return [4
+              /*yield*/
+              , window.point.storage.getById(productsData[i][4])];
+
+            case 3:
+              product = _b.apply(_a, [_c.sent()]);
+              products.push(product);
+              _c.label = 4;
+
+            case 4:
+              i++;
+              return [3
+              /*break*/
+              , 2];
+
+            case 5:
               setProductList(products); // TODO: error handling
 
               return [2
@@ -31200,7 +31217,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55078" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61448" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
