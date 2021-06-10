@@ -2,7 +2,6 @@ version: '3'
 
 services:
   storage_provider:
-    # command: 'run start:docker:dev -- --datadir /data'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
@@ -36,7 +35,6 @@ services:
       - ${PWD}/package.json:/app/package.json:ro
 
   website_visitor:
-    command: 'run start:docker:dev -- --datadir /data'
     volumes:
       - ${PWD}/api:/app/api:ro
       - ${PWD}/client:/app/client:ro
