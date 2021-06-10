@@ -1,20 +1,28 @@
 import React from 'react'
 import { ProvideProductsContext, useProductsContext, Product } from './Context'
 
-const Product = ({ storeId, productId, name, description, price }: Product) => {
+const Product = ({ storeId, productId, name, description, price, owner }: Product) => {
+  const renderBuyButton = (owner:string) => {
+    if(owner=='0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB'){
+      return <b>YOU OWN THIS!</b>
+    } else{
+      return <button onClick={(e) => buyProduct(productId, price)}>Buy</button>
+    }
+  }
   return (
     <div className="store">
         <h3 className="name">{ name }</h3>
         <p><i className="description">{ description }</i></p>
         <p className="price">Price: { price }</p>
-        <button onClick={(e) => buyProduct(productId)}>Buy</button>
+        {renderBuyButton(owner)}
         <hr/>
     </div>
   )
 }
 
-const buyProduct = (productId:string) => {
-  console.log('Bought product with id: ', productId)
+const buyProduct = async (productId:string, price:string) => {
+  console.log(`Selected to purchase product tokenId: ${productId} with price: ${price}`)
+  await window.point.contract.send('store', 'Store', 'buyProductSimple', productId, price);
 }
 
 const ProductList = () => {

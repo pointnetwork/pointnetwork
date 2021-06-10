@@ -36,11 +36,14 @@ contract Store is ERC1155 {
 
     StoreFront[] allStores;
     mapping(address => StoreFront) public Stores;
-    mapping (uint => Product[]) public Products;
+    mapping (uint => Product[]) public StoreProducts;
     mapping (bytes32 => ProductBid) public Bids;
 
-    // A simple mapping of token id (uint) -> Product (struct)
-    mapping(uint => Product) public ProductsSimple;
+    // A simple direct mapping of token id (uint) -> Product (struct)
+    mapping(uint => Product) public Products;
+    uint[] public productList;
+    // A mapping of store id to product token ids
+    // mapping (uint => uint[]) public StoreProductsSimple;
 
     uint internal storeIdIncrementor;
     uint internal _tokenId;
@@ -68,28 +71,34 @@ contract Store is ERC1155 {
         emit NewStoreEvent(storeId, name, description);
     }
 
-    function addProductToStore(string memory name, uint price, string memory metadata ) public returns (bytes32) {
+    function addProductToStore(string memory name, uint price, string memory metadata) public returns (bytes32) {
         uint newProductId = _tokenId++;
         bytes32 productId = keccak256(abi.encodePacked(name, price, metadata));
         bytes memory metadataHash = bytes(metadata);
         Product memory _product = Product(productId, newProductId, name, price, metadata, metadataHash, msg.sender);
         _mint(msg.sender, newProductId, 1, metadataHash);
-        Products[Stores[msg.sender].id].push(_product);
-        ProductsSimple[newProductId] = _product;
+        StoreProducts[Stores[msg.sender].id].push(_product);
+        Products[newProductId] = _product;
+        productList.push(newProductId);
         emit NewProductEvent(productId, newProductId, name, price, metadata, msg.sender);
         return productId;
     }
 
     // A simple buy product example function for demo purpose only
     function buyProductSimple(uint tokenId) public payable {
-        Product memory _product = ProductsSimple[tokenId];
+        Product memory _product = Products[tokenId];
         require(msg.value >= _product.price, 'You need to send more Ether');
-        // TODO Revert if already owner!
+        require(_product.owner != msg.sender, 'You already own this Product');
+
         address owner = _product.owner;
         payable(owner).transfer(_product.price);
         _product.owner = msg.sender;
-        ProductsSimple[tokenId] = _product;
+        Products[tokenId] = _product;
         emit ProductSoldEvent(owner, msg.sender, _product.id, _product.metadata);
+    }
+
+    function getProductsByStoreIdSimple(uint storeId) public view returns(Product[2] memory) {
+        return [Products[0], Products[1], Products[2]];
     }
 
     function getStore() public view returns(uint, string memory, string memory, string memory) {
@@ -101,8 +110,8 @@ contract Store is ERC1155 {
         return allStores;
     }
 
-    function getProductsByStoreId(uint storeId) public view  returns(Product[] memory) {
-        return Products[storeId];
+    function getProductsByStoreId(uint storeId) public view returns(Product[] memory) {
+        return StoreProducts[storeId];
     }
 
     function isStoreRegistered() public view  returns(bool) {
@@ -112,31 +121,31 @@ contract Store is ERC1155 {
         return false;
     }
 
-    function buyProduct (uint storeId, bytes32 productId) public noStoreExist payable returns(bool) {
-        require(!Bids[productId].exists);
-        for (uint i = 0; i < Products[storeId].length; i++) {
-          if (Products[storeId][i].id == productId) {
-            require (msg.value >= Products[storeId][i].price);
-            ProductBid memory _bids = ProductBid(msg.sender, msg.value, true, false);
-            Bids[productId] = _bids;
-            return true;
-          }
-        }
-        return false;
-    }
+    // function buyProduct (uint storeId, bytes32 productId) public noStoreExist payable returns(bool) {
+    //     require(!Bids[productId].exists);
+    //     for (uint i = 0; i < StoreProducts[storeId].length; i++) {
+    //       if (StoreProducts[storeId][i].id == productId) {
+    //         require (msg.value >= StoreProducts[storeId][i].price);
+    //         ProductBid memory _bids = ProductBid(msg.sender, msg.value, true, false);
+    //         Bids[productId] = _bids;
+    //         return true;
+    //       }
+    //     }
+    //     return false;
+    // }
 
-    function sellProduct(uint storeId, bytes32 productId) public noStoreExist payable returns(bool) {
-        require(Bids[productId].exists && !Bids[productId].isSold);
-        for (uint i = 0; i < Products[storeId].length; i++) {
-          if (Products[storeId][i].id == productId) {
+    // function sellProduct(uint storeId, bytes32 productId) public noStoreExist payable returns(bool) {
+    //     require(Bids[productId].exists && !Bids[productId].isSold);
+    //     for (uint i = 0; i < StoreProducts[storeId].length; i++) {
+    //       if (StoreProducts[storeId][i].id == productId) {
 
-            safeTransferFrom(msg.sender, Bids[productId].bidder, Products[storeId][i].tokenId, 1, Products[storeId][i].metadataHash);
-            Products[Stores[Bids[productId].bidder].id].push(Products[storeId][i]);
-            Products[storeId][i] = Products[storeId][Products[storeId].length - 1];
-            delete Products[storeId][Products[storeId].length - 1];
-            return true;
-          }
-        }
-        return false;
-    }
+    //         safeTransferFrom(msg.sender, Bids[productId].bidder, StoreProducts[storeId][i].tokenId, 1, StoreProducts[storeId][i].metadataHash);
+    //         StoreProducts[Stores[Bids[productId].bidder].id].push(StoreProducts[storeId][i]);
+    //         StoreProducts[storeId][i] = StoreProducts[storeId][StoreProducts[storeId].length - 1];
+    //         delete StoreProducts[storeId][StoreProducts[storeId].length - 1];
+    //         return true;
+    //       }
+    //     }
+    //     return false;
+    // }
 }

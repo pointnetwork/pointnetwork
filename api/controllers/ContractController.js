@@ -1,17 +1,18 @@
 const PointController = require('./PointController')
 
 class ContractController extends PointController {
-    constructor(ctx, request, reply) {
-        super(ctx)
-        this.request = request
+    constructor(ctx, req, reply) {
+        super(ctx);
+        this.req = req;
+        this.payload = req.body;
         this.reply = reply;
     }
 
     async call() {
-        const host = this.request.query.host;
-        const contractName = this.request.query.contractName;
-        const method = this.request.query.method;
-        const params = this.request.query.params;
+        const host = this.req.query.host;
+        const contractName = this.req.query.contractName;
+        const method = this.req.query.method;
+        const params = this.req.query.params;
 
         let data = await this.ctx.web3bridge.callContract(host, contractName, method, params);
 
@@ -19,15 +20,15 @@ class ContractController extends PointController {
      }
 
      async send() {
-        this.walletToken = this.request.headers['wallet-token'];
+        this.walletToken = this.req.headers['wallet-token'];
 
         if(this._loadWallet()) {
-            const host = this.request.query.host;
-            const contractName = this.request.query.contractName;
-            const method = this.request.query.method;
-            const params = this.request.query.params;
-            const gasLimit = this.request.query.gasLimit === undefined ? null : this.request.query.gasLimit;
-            const amountInWei = this.request.query.amountInWei;
+            const host = this.payload.host;
+            const contractName = this.payload.contractName;
+            const method = this.payload.method;
+            const params = this.payload.params;
+            const gasLimit = this.payload.gasLimit;
+            const amountInWei = this.payload.amountInWei;
 
             let data = await this.ctx.web3bridge.sendToContract(host, contractName, method, params, amountInWei, gasLimit);
 
@@ -36,6 +37,7 @@ class ContractController extends PointController {
      }
 
      /* Private Functions */
+
     _validateWalletToken() {
         if(this.walletToken === undefined) {
             throw new Error('Missing wallet-token header.')

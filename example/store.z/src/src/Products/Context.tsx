@@ -6,7 +6,8 @@ export type Product = {
   productId: string,
   name: string,
   description: string,
-  price: number,
+  price: string,
+  owner: string
 }
 
 export type ProductsRouteParams = {
@@ -37,12 +38,13 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
 
     (async () => {
       // window.point.contract.call(host, contractName, method, params)
-      let productsData = await window.point.contract.call('store', 'Store', 'getProductsByStoreId', store);
+      let productsData = await window.point.contract.call('store', 'Store', 'getProductsByStoreIdSimple', store);
       let products:any = [];
 
       for(let i=0; i<productsData.length; i++) {
         let product = JSON.parse(await window.point.storage.getById(productsData[i][4]));
-        product.productId = productsData[i][0];
+        product.productId = productsData[i][1]; // product 'tokenId'
+        product.owner = productsData[i][6]; // product.owner
         products.push(product);
       }
 
