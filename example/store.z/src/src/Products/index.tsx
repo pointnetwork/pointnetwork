@@ -6,9 +6,15 @@ const Product = ({ storeId, productId, name, description, price }: Product) => {
     <div className="store">
         <h3 className="name">{ name }</h3>
         <p><i className="description">{ description }</i></p>
-        <b className="price">{ price }</b>
+        <p className="price">Price: { price }</p>
+        <button onClick={(e) => buyProduct(productId)}>Buy</button>
+        <hr/>
     </div>
   )
+}
+
+const buyProduct = (productId:string) => {
+  console.log('Bought product with id: ', productId)
 }
 
 const ProductList = () => {

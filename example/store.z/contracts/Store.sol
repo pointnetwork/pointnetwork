@@ -39,6 +39,9 @@ contract Store is ERC1155 {
     mapping (uint => Product[]) public Products;
     mapping (bytes32 => ProductBid) public Bids;
 
+    // A simple mapping of token id (uint) -> Product (struct)
+    mapping(uint => Product) public ProductsSimple;
+
     uint internal storeIdIncrementor;
     uint internal _tokenId;
 
@@ -65,36 +68,48 @@ contract Store is ERC1155 {
         emit NewStoreEvent(storeId, name, description);
     }
 
-      function addProductToStore(string memory name, uint price, string memory metadata ) public returns (bytes32) {
+    function addProductToStore(string memory name, uint price, string memory metadata ) public returns (bytes32) {
         uint newProductId = _tokenId++;
         bytes32 productId = keccak256(abi.encodePacked(name, price, metadata));
         bytes memory metadataHash = bytes(metadata);
         Product memory _product = Product(productId, newProductId, name, price, metadata, metadataHash, msg.sender);
         _mint(msg.sender, newProductId, 1, metadataHash);
         Products[Stores[msg.sender].id].push(_product);
+        ProductsSimple[newProductId] = _product;
         emit NewProductEvent(productId, newProductId, name, price, metadata, msg.sender);
         return productId;
-      }
+    }
 
-      function getStore() public view returns(uint, string memory, string memory, string memory) {
+    // A simple buy product example function for demo purpose only
+    function buyProductSimple(uint tokenId) public payable {
+        Product memory _product = ProductsSimple[tokenId];
+        require(msg.value >= _product.price, 'You need to send more Ether');
+        address owner = _product.owner;
+        payable(owner).transfer(_product.price);
+        _product.owner = msg.sender;
+        ProductsSimple[tokenId] = _product;
+        emit ProductSoldEvent(owner, msg.sender, _product.id, _product.metadata);
+    }
+
+    function getStore() public view returns(uint, string memory, string memory, string memory) {
         StoreFront memory store = Stores[msg.sender];
         return (store.id, store.name, store.description, store.logo);
-      }
+    }
 
-      function getStores() public view returns(StoreFront[] memory) {
+    function getStores() public view returns(StoreFront[] memory) {
         return allStores;
-      }
+    }
 
-      function getProductsByStoreId(uint storeId) public view  returns(Product[] memory) {
+    function getProductsByStoreId(uint storeId) public view  returns(Product[] memory) {
         return Products[storeId];
-      }
+    }
 
-      function isStoreRegistered() public view  returns(bool) {
+    function isStoreRegistered() public view  returns(bool) {
         if (Stores[msg.sender].exists) {
           return true;
         }
         return false;
-      }
+    }
 
     function buyProduct (uint storeId, bytes32 productId) public noStoreExist payable returns(bool) {
         require(!Bids[productId].exists);
