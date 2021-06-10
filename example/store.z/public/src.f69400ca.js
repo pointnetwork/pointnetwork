@@ -30933,6 +30933,7 @@ var ProvideProductsContext = function ProvideProductsContext(_a) {
 
             case 3:
               product = _b.apply(_a, [_c.sent()]);
+              product.productId = productsData[i][0];
               products.push(product);
               _c.label = 4;
 
@@ -31009,9 +31010,17 @@ var Product = function Product(_a) {
     className: "name"
   }, name), react_1.default.createElement("p", null, react_1.default.createElement("i", {
     className: "description"
-  }, description)), react_1.default.createElement("b", {
+  }, description)), react_1.default.createElement("p", {
     className: "price"
-  }, price));
+  }, "Price: ", price), react_1.default.createElement("button", {
+    onClick: function onClick(e) {
+      return buyProduct(productId);
+    }
+  }, "Buy"), react_1.default.createElement("hr", null));
+};
+
+var buyProduct = function buyProduct(productId) {
+  console.log('Bought product with id: ', productId);
 };
 
 var ProductList = function ProductList() {
@@ -31217,7 +31226,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61448" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55341" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

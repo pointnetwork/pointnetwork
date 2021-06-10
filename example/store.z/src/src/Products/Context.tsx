@@ -42,6 +42,7 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
 
       for(let i=0; i<productsData.length; i++) {
         let product = JSON.parse(await window.point.storage.getById(productsData[i][4]));
+        product.productId = productsData[i][0];
         products.push(product);
       }
 
