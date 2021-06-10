@@ -18,7 +18,7 @@
       "metadata": {
         "name": "Toothbrush",
         "description": "A tooth cleaner",
-        "price": 1
+        "price": 1000000000000000000
       }
     },
     "product2": {
@@ -26,7 +26,7 @@
       "metadata": {
         "name": "Book",
         "description": "A page turner",
-        "price": 2
+        "price": 2000000000000000000
       }
     },
     "product3": {
@@ -34,7 +34,7 @@
       "metadata": {
         "name": "MacBook Pro",
         "description": "A new computer",
-        "price": 12
+        "price": 12000000000000000000
       }
     }
   },

@@ -84,6 +84,7 @@ contract Store is ERC1155 {
     function buyProductSimple(uint tokenId) public payable {
         Product memory _product = ProductsSimple[tokenId];
         require(msg.value >= _product.price, 'You need to send more Ether');
+        // TODO Revert if already owner!
         address owner = _product.owner;
         payable(owner).transfer(_product.price);
         _product.owner = msg.sender;
