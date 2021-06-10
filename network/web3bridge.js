@@ -58,15 +58,15 @@ class Web3Bridge {
         }
     }
 
-    async web3send(method, gasLimit = null, amountEth = '0') {
+    async web3send(method, amountInWei = '0', gasLimit = null) {
         let account, gasPrice
         try {
             account = this.web3.eth.defaultAccount;
             gasPrice = await this.web3.eth.getGasPrice();
-            if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
-            return await method.send({ from: account, gasPrice, gas: gasLimit, value: this.web3.utils.toWei(amountEth, "ether") });
+            if (!gasLimit) gasLimit = await method.estimateGas({ from: account, value: amountInWei });
+            return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
         } catch (e) {
-            console.info({ method, account, gasPrice, gasLimit, amountEth })
+            console.info({ method, account, gasPrice, gasLimit, amountInWei })
             console.error('web3send error:', e)
             throw e
         }
@@ -94,7 +94,7 @@ class Web3Bridge {
         return await contract.getPastEvents( event,  options );
     }
 
-    async sendToContract(target, contractName, methodName, params) { // todo: multiple arguments, but check existing usage // huh?
+    async sendToContract(target, contractName, methodName, params, amountInWei = '0', gasLimit = null) { // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
 
         // storage id: convert string -> bytes32
@@ -118,7 +118,7 @@ class Web3Bridge {
 
         // Now call the method
         const method = contract.methods[ methodName ](...params);
-        console.log(await this.web3send(method)); // todo: remove console.log
+        console.log(await this.web3send(method, amountInWei, gasLimit)); // todo: remove console.log
     }
 
     async identityByOwner(owner) {
