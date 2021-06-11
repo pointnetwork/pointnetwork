@@ -97,7 +97,7 @@ contract Store is ERC1155 {
         emit ProductSoldEvent(owner, msg.sender, _product.id, _product.metadata);
     }
 
-    function getProductsByStoreIdSimple(uint storeId) public view returns(Product[2] memory) {
+    function getProductsByStoreIdSimple(uint storeId) public view returns(Product[3] memory) {
         return [Products[0], Products[1], Products[2]];
     }
 
