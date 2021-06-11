@@ -9,9 +9,11 @@ class ContractController extends PointController {
         this.payload = req.body;
         this.reply = reply;
 
-        // load wallet
-        const wallet = helpers.initWallet(ctx, req.headers['wallet-token'])
-        wallet ? this.wallet = wallet : this.reply.callNotFound()
+        // if the wallet is required for the current request
+        if(this._walletRequired(req)) {
+            const wallet = helpers.initWallet(ctx, req.headers['wallet-token'])
+            wallet ? this.wallet = wallet : this.reply.callNotFound()
+        }
     }
 
     async call() {
@@ -39,6 +41,12 @@ class ContractController extends PointController {
             return this._response(data);
         }
      }
+
+     /* Private Functions */
+    _walletRequired(req) {
+        let fn = req.url.slice(req.url.lastIndexOf('/') + 1, req.url.indexOf('?'))
+        return fn != 'call'
+    }
 }
 
 module.exports = ContractController;
