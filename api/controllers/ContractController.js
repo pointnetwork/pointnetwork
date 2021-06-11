@@ -20,7 +20,11 @@ class ContractController extends PointController {
         const host = this.req.query.host;
         const contractName = this.req.query.contractName;
         const method = this.req.query.method;
-        const params = this.req.query.params;
+        // Note params must be in a valid array format for parsing
+        // since this is passed via url params the type will be string
+        // params=["String Param", 999, true, "Another string"] etc...
+        // TODO: Error handing!
+        const params = this.req.query.params ? JSON.parse(this.req.query.params) : [];
 
         let data = await this.ctx.web3bridge.callContract(host, contractName, method, params);
 
