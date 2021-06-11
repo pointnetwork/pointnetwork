@@ -11,7 +11,6 @@ class WalletController extends PointController {
     this.payload = req.body;
     this.reply = reply;
     this.wallet;
-
     // if the wallet is required for the current request
     if(this._walletRequired(req)) {
       const wallet = helpers.initWallet(ctx, req.headers['wallet-token'])
