@@ -1,14 +1,14 @@
 class PointController {
-  constructor(ctx) {
-    this.ctx = ctx;
-  }
+    constructor(ctx) {
+      this.ctx = ctx;
+    }
 
-  _response(payload) {
-    return {
-      status: 200,
-      data: payload
+    _response(payload) {
+      return {
+        status: 200,
+        data: payload
+      }
     }
   }
-}
 
-module.exports = PointController;
+  module.exports = PointController;

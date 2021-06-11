@@ -1,30 +1,35 @@
 const PointController = require('./PointController')
-let fs = require('fs')
-let ethereumjs = require('ethereumjs-util')
+const fs = require('fs')
+const ethereumjs = require('ethereumjs-util')
+const helpers = require('./helpers/WalletHelpers')
 
 class WalletController extends PointController {
   constructor(ctx, req, reply) {
     super(ctx)
     this.web3 = this.ctx.network.web3;
     this.keystorePath = this.ctx.wallet.keystore_path;
-    this.walletToken = req.headers['wallet-token'];
     this.payload = req.body;
     this.reply = reply;
     this.wallet;
+
+    // if the wallet is required for the current request
+    if(this._walletRequired(req)) {
+      const wallet = helpers.initWallet(ctx, req.headers['wallet-token'])
+      wallet ? this.wallet = wallet : this.reply.callNotFound()
+    }
   }
 
   generate() {
-    let passcode = this.web3.utils.randomHex(32) // todo: improve entropy
-    let keystoreId = this.ctx.wallet.generate(passcode)
+      let passcode = this.web3.utils.randomHex(32) // todo: improve entropy
+      let keystoreId = this.ctx.wallet.generate(passcode)
 
-    return this._response({
-      walletId: keystoreId,
-      passcode
-    })
+      return this._response({
+        walletId: keystoreId,
+        passcode
+      })
   }
 
   async tx() {
-    if(this._loadWallet()) {
       let from = this.wallet.address
       let to = this.payload.to
       let value = this.payload.value
@@ -35,11 +40,9 @@ class WalletController extends PointController {
       return this._response({
         transactionHash
       })
-    }
   }
 
   publicKey() {
-    if(this._loadWallet()) {
       let publicKeyBuffer = ethereumjs.privateToPublic(this.wallet.privateKey)
       let publicKey = ethereumjs.bufferToHex(publicKeyBuffer)
 
@@ -47,33 +50,27 @@ class WalletController extends PointController {
       return this._response({
         publicKey
       })
-    }
   }
 
   address() {
-    if(this._loadWallet()) {
       let address = this.wallet.address;
 
       // return the public key
       return this._response({
         address
       })
-    }
   }
 
   async balance() {
-    if(this._loadWallet()) {
       let balance = (await this.web3.eth.getBalance(this.wallet.address)).toString()
 
       // return the wallet balance
       return this._response({
-        balance
+         balance
       })
-    }
   }
 
   hash() {
-    if(this._loadWallet()) {
       let partialPK = this.wallet.privateKey.substr(0, 33)
       let hashBuffer = ethereumjs.sha256(Buffer.from(partialPK))
       let hash = ethereumjs.bufferToHex(hashBuffer)
@@ -81,37 +78,11 @@ class WalletController extends PointController {
       return this._response({
         hash
       })
-    }
   }
 
   /* Private Functions */
-
-  _validateWalletToken() {
-    if(this.walletToken === undefined) {
-      throw new Error('Missing wallet-token header.')
-    }
-    if(this.walletToken.length < 69) {
-      throw new Error('wallet-token invalid.')
-    }
-  }
-
-  _parseWalletToken() {
-    this._validateWalletToken();
-    this.walletId = this.walletToken.slice(0,36)
-    this.passcode = this.walletToken.slice(37, 103)
-  }
-
-  _loadWallet() {
-    this._parseWalletToken()
-    // load the wallet from the keystore file
-    this.wallet = this.ctx.wallet.loadWalletFromKeystore(this.walletId, this.passcode)
-    if(this.wallet) {
-      return true
-    } else {
-      // if wallet is null then reply with 404 not found and return false
-      this.reply.callNotFound()
-      return false
-    }
+  _walletRequired(req) {
+    return req.url != '/api/wallet/generate'
   }
 }
 
