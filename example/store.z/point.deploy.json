@@ -8,7 +8,7 @@
         "name": "My Store",
         "description": "My Store: Is Your Store Too!",
         "storage[logo]": {
-          "file": "images/store-logo-0.png",
+          "file": "images/store-logo-0.jpg",
           "type": "image/jpeg"
         }
       }
