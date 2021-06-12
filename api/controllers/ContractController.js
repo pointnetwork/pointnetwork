@@ -22,7 +22,7 @@ class ContractController extends PointSDKController {
     }
 
     async call() {
-        const contractName = this.payload.contractName;
+        const contract = this.payload.contract;
         const method = this.payload.method;
         // Note params must be in a valid array format for parsing
         // since this is passed via url params the type will be string
@@ -30,20 +30,20 @@ class ContractController extends PointSDKController {
         // TODO: Error handing!
         const params = this.payload.params ? this.payload.params : [];
 
-        let data = await this.ctx.web3bridge.callContract(this.host, contractName, method, params);
+        let data = await this.ctx.web3bridge.callContract(this.host, contract, method, params);
 
         return this._response(data);
      }
 
      async send() {
         if(this.wallet) {
-            const contractName = this.payload.contractName;
+            const contract = this.payload.contract;
             const method = this.payload.method;
             const params = this.payload.params;
             const gasLimit = this.payload.gasLimit;
             const amountInWei = this.payload.amountInWei;
 
-            let data = await this.ctx.web3bridge.sendToContract(this.host, contractName, method, params, amountInWei, gasLimit);
+            let data = await this.ctx.web3bridge.sendToContract(this.host, contract, method, params, amountInWei, gasLimit);
 
             return this._response(data);
         }
