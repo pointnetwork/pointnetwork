@@ -1,9 +1,12 @@
-const PointController = require('./PointController')
+const PointSDKController = require('./PointSDKController')
 const helpers = require('./helpers/WalletHelpers')
 
-class ContractController extends PointController {
+class ContractController extends PointSDKController {
     constructor(ctx, req, reply) {
         super(ctx);
+        this.host = this.req.headers.host;
+        if (! _.endsWith(this.host, '.z')) return reply.callNotFound()
+
         this.req = req;
         this.walletToken = this.req.headers['wallet-token'];
         this.payload = req.body;
@@ -17,7 +20,6 @@ class ContractController extends PointController {
     }
 
     async call() {
-        const host = this.req.query.host;
         const contractName = this.req.query.contractName;
         const method = this.req.query.method;
         // Note params must be in a valid array format for parsing
@@ -26,21 +28,20 @@ class ContractController extends PointController {
         // TODO: Error handing!
         const params = this.req.query.params ? JSON.parse(this.req.query.params) : [];
 
-        let data = await this.ctx.web3bridge.callContract(host, contractName, method, params);
+        let data = await this.ctx.web3bridge.callContract(this.host, contractName, method, params);
 
         return this._response(data);
      }
 
      async send() {
         if(this.wallet) {
-            const host = this.payload.host;
             const contractName = this.payload.contractName;
             const method = this.payload.method;
             const params = this.payload.params;
             const gasLimit = this.payload.gasLimit;
             const amountInWei = this.payload.amountInWei;
 
-            let data = await this.ctx.web3bridge.sendToContract(host, contractName, method, params, amountInWei, gasLimit);
+            let data = await this.ctx.web3bridge.sendToContract(this.host, contractName, method, params, amountInWei, gasLimit);
 
             return this._response(data);
         }
