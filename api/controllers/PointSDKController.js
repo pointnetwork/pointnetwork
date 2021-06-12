@@ -1,5 +1,3 @@
-const _ = require('lodash');
-
 class PointSDKController {
     constructor(ctx) {
       this.ctx = ctx;
