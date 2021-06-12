@@ -21,15 +21,15 @@ contract Hello {
 
   // Getter functions for testing contract read only call interactions
 
-  function echo(string memory _ping) public view returns(string memory) {
+  function echo(string memory _ping) public pure returns(string memory) {
     return _ping;
   }
 
-  function square(int num) public view returns (int) {
+  function square(int num) public pure returns (int) {
     return num * num;
   }
 
-  function add(int num1, int num2) public view returns (int) {
+  function add(int num1, int num2) public pure returns (int) {
     return num1 + num2;
   }
 }

@@ -1,11 +1,11 @@
-const PointController = require('./PointController')
+const PointSDKController = require('./PointSDKController')
 const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
 
-class StorageController extends PointController {
-  constructor(ctx, request) {
+class StorageController extends PointSDKController {
+  constructor(ctx, req) {
     super(ctx)
-    this.request = request
+    this.req = req
   }
 
   // Returns all file metadata stored in the nodes leveldb
@@ -23,7 +23,7 @@ class StorageController extends PointController {
 
   // Returns a single file metadata stored in the nodes leveldb
   async fileById() {
-    const id = this.request.params.id;
+    const id = this.req.params.id;
     const file = await File.find(id);
     return this._response(file);
   }
@@ -43,14 +43,14 @@ class StorageController extends PointController {
 
   // Returns a single chunk metadata stored in the nodes leveldb
   async chunkById() {
-    const id = this.request.params.id
+    const id = this.req.params.id
     const chunk = await Chunk.find(id)
     return this._response(chunk)
   }
 
   // similar to `storage_get` Twig function - gets a files contents from storage by its CID
   async get() {
-    const cid = this.request.params.id
+    const cid = this.req.params.id
     const contents = await this.ctx.client.storage.readFile(cid, 'utf-8');
     return this._response(contents)
   }

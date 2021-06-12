@@ -1,9 +1,9 @@
-const PointController = require('./PointController')
+const PointSDKController = require('./PointSDKController')
 const fs = require('fs')
 const ethereumjs = require('ethereumjs-util')
 const helpers = require('./helpers/WalletHelpers')
 
-class WalletController extends PointController {
+class WalletController extends PointSDKController {
   constructor(ctx, req, reply) {
     super(ctx)
     this.web3 = this.ctx.network.web3;
