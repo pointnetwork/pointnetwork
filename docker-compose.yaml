@@ -34,10 +34,8 @@ services:
       restart_policy:
         condition: none
     volumes:
-      - ${PWD}/truffle/truffle-config.js:/truffle/truffle-config.js:ro
       - ${PWD}/truffle/migrations:/truffle/migrations:ro
       - ${PWD}/truffle/contracts:/truffle/contracts:ro
-      - ${PWD}/scripts/deploy-contracts-docker.js:/truffle/run.js:ro
       - shared_contracts:/build:rw
     entrypoint: /truffle/run.js
     environment:
