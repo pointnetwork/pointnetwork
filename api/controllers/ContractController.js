@@ -1,13 +1,15 @@
 const PointSDKController = require('./PointSDKController')
 const helpers = require('./helpers/WalletHelpers')
+const _ = require('lodash');
 
 class ContractController extends PointSDKController {
     constructor(ctx, req, reply) {
         super(ctx);
+        this.req = req;
         this.host = this.req.headers.host;
+        // TODO: also verify the domain is registered in the Identity contract
         if (! _.endsWith(this.host, '.z')) return reply.callNotFound()
 
-        this.req = req;
         this.walletToken = this.req.headers['wallet-token'];
         this.payload = req.body;
         this.reply = reply;
@@ -20,13 +22,13 @@ class ContractController extends PointSDKController {
     }
 
     async call() {
-        const contractName = this.req.query.contractName;
-        const method = this.req.query.method;
+        const contractName = this.payload.contractName;
+        const method = this.payload.method;
         // Note params must be in a valid array format for parsing
         // since this is passed via url params the type will be string
         // params=["String Param", 999, true, "Another string"] etc...
         // TODO: Error handing!
-        const params = this.req.query.params ? JSON.parse(this.req.query.params) : [];
+        const params = this.payload.params ? this.payload.params : [];
 
         let data = await this.ctx.web3bridge.callContract(this.host, contractName, method, params);
 
@@ -49,7 +51,7 @@ class ContractController extends PointSDKController {
 
      /* Private Functions */
     _walletRequired(req) {
-        let fn = req.url.slice(req.url.lastIndexOf('/') + 1, req.url.indexOf('?'))
+        let fn = req.url.slice(req.url.lastIndexOf('/') + 1, req.url.length)
         return fn != 'call'
     }
 }
