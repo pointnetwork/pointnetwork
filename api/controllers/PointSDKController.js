@@ -1,4 +1,4 @@
-class PointController {
+class PointSDKController {
   constructor(ctx) {
     this.ctx = ctx;
   }
@@ -11,4 +11,4 @@ class PointController {
   }
 }
 
-module.exports = PointController;
+module.exports = PointSDKController;

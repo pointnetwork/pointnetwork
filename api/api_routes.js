@@ -12,5 +12,6 @@ module.exports = [
     ['GET', '/api/wallet/hash', 'WalletController@hash'],
     ['GET', '/api/wallet/address', 'WalletController@address'],
     ['POST', '/api/wallet/tx', 'WalletController@tx'],
-    ['GET', '/api/contract/call', 'ContractController@call']
+    ['POST', '/api/contract/call', 'ContractController@call'],
+    ['POST', '/api/contract/send', 'ContractController@send']
 ];
