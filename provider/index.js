@@ -62,7 +62,15 @@ class Provider {
         let collateralSizeEth = "5"; // todo: magic number
         let cost_per_kb = "1"; // todo: magic numbers
 
-        return await this.ctx.web3bridge.announceStorageProvider(this.getConnectionString(), collateralSizeEth, cost_per_kb);
+        try {
+            return await this.ctx.web3bridge.announceStorageProvider(this.getConnectionString(), collateralSizeEth, cost_per_kb);
+        } catch(e) {
+            this.ctx.log.error(e);
+            console.log('\x07'); // bell
+
+            // try again in 20 seconds
+            setTimeout(this.announce.bind(this), 20000);
+        }
     }
 
     connectNode(node) {
