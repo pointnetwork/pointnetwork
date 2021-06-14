@@ -1,4 +1,4 @@
-version: '3'
+version: '3.9'
 
 services:
   blockchain_node:
@@ -34,10 +34,8 @@ services:
       restart_policy:
         condition: none
     volumes:
-      - ${PWD}/truffle/truffle-config.js:/truffle/truffle-config.js:ro
-      - ${PWD}/truffle/migrations:/truffle/migrations:ro
-      - ${PWD}/truffle/contracts:/truffle/contracts:ro
-      - ${PWD}/scripts/deploy-contracts-docker.js:/truffle/run.js:ro
+      - ./truffle/migrations:/truffle/migrations:ro
+      - ./truffle/contracts:/truffle/contracts:ro
       - shared_contracts:/build:rw
     entrypoint: /truffle/run.js
     environment:
@@ -57,7 +55,7 @@ services:
     volumes:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
     ports:
       - '12345:9685'
       - '65500:8666'
@@ -81,8 +79,8 @@ services:
     volumes:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo-docker/config.test2.json:/nodeConfig.json:ro
-      - ${PWD}/example:/app/example:ro
+      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ./example:/app/example:ro
     environment:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
@@ -102,7 +100,7 @@ services:
     volumes:
       - website_visitor_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
-      - ${PWD}/resources/demo-docker/config.test3.json:/nodeConfig.json:ro
+      - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
     environment:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT

@@ -1,5 +1,5 @@
 const ZProxy = require('../../client/proxy');
-let { encryptPlainTextAndKey, decryptCipherTextAndKey } = require('../../client/encryptUtils');
+let { encryptPlainTextAndKey, decryptCipherTextAndKey } = require('../../client/encryptIdentityUtils');
 
 describe("Client/ZProxy", () => {
     test("it should correctly sanitize the text/html inputs", () => {
