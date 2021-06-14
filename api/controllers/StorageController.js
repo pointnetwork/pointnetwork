@@ -1,6 +1,7 @@
 const PointSDKController = require('./PointSDKController')
 const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
+const DEFAULT_ENCODING = 'utf-8'
 
 class StorageController extends PointSDKController {
   constructor(ctx, req) {
@@ -50,8 +51,10 @@ class StorageController extends PointSDKController {
 
   // similar to `storage_get` Twig function - gets a files contents from storage by its CID
   async get() {
-    const cid = this.req.params.id
-    const contents = await this.ctx.client.storage.readFile(cid, 'utf-8');
+    const cid = this.req.params.id;
+    const encoding = this.req.query.encoding ? this.req.query.encoding : DEFAULT_ENCODING;
+
+    const contents = await this.ctx.client.storage.readFile(cid, encoding);
     return this._response(contents)
   }
 }
