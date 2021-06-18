@@ -1,51 +1,52 @@
-version: '3'
+version: '3.9'
 
 services:
   storage_provider:
     volumes:
-      - ${PWD}/api:/app/api:ro
-      - ${PWD}/client:/app/client:ro
-      - ${PWD}/console:/app/console:ro
-      - ${PWD}/core:/app/core:ro
-      - ${PWD}/db:/app/db:ro
-      - ${PWD}/example:/app/example:ro
-      - ${PWD}/network:/app/network:ro
-      - ${PWD}/provider:/app/provider:ro
-      - ${PWD}/scripts:/app/scripts:ro
-      - ${PWD}/threads:/app/threads:ro
-      - ${PWD}/wallet:/app/wallet:ro
-      - ${PWD}/point:/app/point:ro
-      - ${PWD}/package.json:/app/package.json:ro
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./scripts:/app/scripts:ro
+      - ./threads:/app/threads:ro
+      - ./wallet:/app/wallet:ro
+      - ./point:/app/point:ro
+      - ./package.json:/app/package.json:ro
 
   website_owner:
-    command: 'run start:docker:dev -- --datadir /data'
+    command: 'run watch:sites:and:start:docker'
     volumes:
-      - ${PWD}/api:/app/api:ro
-      - ${PWD}/client:/app/client:ro
-      - ${PWD}/console:/app/console:ro
-      - ${PWD}/core:/app/core:ro
-      - ${PWD}/db:/app/db:ro
-      - ${PWD}/example:/app/example:ro
-      - ${PWD}/network:/app/network:ro
-      - ${PWD}/provider:/app/provider:ro
-      - ${PWD}/scripts:/app/scripts:ro
-      - ${PWD}/threads:/app/threads:ro
-      - ${PWD}/wallet:/app/wallet:ro
-      - ${PWD}/point:/app/point:ro
-      - ${PWD}/package.json:/app/package.json:ro
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./scripts:/app/scripts:ro
+      - ./threads:/app/threads:ro
+      - ./wallet:/app/wallet:ro
+      - ./point:/app/point:ro
+      - ./package.json:/app/package.json:ro
 
   website_visitor:
+    command: 'run start:docker:dev'
     volumes:
-      - ${PWD}/api:/app/api:ro
-      - ${PWD}/client:/app/client:ro
-      - ${PWD}/console:/app/console:ro
-      - ${PWD}/core:/app/core:ro
-      - ${PWD}/db:/app/db:ro
-      - ${PWD}/example:/app/example:ro
-      - ${PWD}/network:/app/network:ro
-      - ${PWD}/provider:/app/provider:ro
-      - ${PWD}/scripts:/app/scripts:ro
-      - ${PWD}/threads:/app/threads:ro
-      - ${PWD}/wallet:/app/wallet:ro
-      - ${PWD}/point:/app/point:ro
-      - ${PWD}/package.json:/app/package.json:ro
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./scripts:/app/scripts:ro
+      - ./threads:/app/threads:ro
+      - ./wallet:/app/wallet:ro
+      - ./point:/app/point:ro
+      - ./package.json:/app/package.json:ro
