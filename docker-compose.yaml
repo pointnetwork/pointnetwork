@@ -51,7 +51,7 @@ services:
     depends_on:
       - blockchain_node
     entrypoint: 'npm'
-    command: 'run start:docker -- --datadir /data -v'
+    command: 'run start:docker'
     volumes:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
@@ -61,6 +61,7 @@ services:
       - '65500:8666'
       - '24680:2468'
     environment:
+      - DATADIR=/data
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
@@ -75,13 +76,14 @@ services:
       - '65501:8666'
       - '24681:2468'
     entrypoint: 'npm'
-    command: 'run start:docker -- --datadir /data -v'
+    command: 'run start:docker'
     volumes:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
       - ./example:/app/example:ro
     environment:
+      - DATADIR=/data
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
@@ -96,12 +98,13 @@ services:
       - '65502:8666'
       - '24682:2468'
     entrypoint: 'npm'
-    command: 'run start:docker -- --datadir /data -v'
+    command: 'run start:docker'
     volumes:
       - website_visitor_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
     environment:
+      - DATADIR=/data
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID

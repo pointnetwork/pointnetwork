@@ -35,6 +35,7 @@ services:
       - ./package.json:/app/package.json:ro
 
   website_visitor:
+    command: 'run start:docker:dev'
     volumes:
       - ./api:/app/api:ro
       - ./client:/app/client:ro

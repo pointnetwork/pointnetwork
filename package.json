@@ -54,10 +54,22 @@
   },
   "scripts": {
     "test": "jest",
-    "start:": "./point",
-    "start:dev": "npx nodemon ./point",
-    "start:docker": "./scripts/await-contracts-docker.js && ./point",
-    "start:docker:dev": "./scripts/await-contracts-docker.js && npx nodemon ./point"
+    "start": "./point --datadir $DATADIR -v",
+    "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
+    "start:docker": "./scripts/await-contracts-docker.js && npm start",
+    "start:docker:dev": "./scripts/await-contracts-docker.js && npm run start:dev",
+    "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
+    "watch:sites": "ls -d example/*/ | xargs -I {} echo \"SITE={} npm run watch:site\" | sed \"s/.*/\\\\'&\\\\'/\" | xargs npx concurrently",
+    "watch:sites:and:start": "npm run watch:sites -- 'npm run start' -n \"Pointnetwork,$(ls -d example/*/ | tr '\n' ',')\"",
+    "watch:sites:and:start:dev": "npm run watch:sites -- 'npm run start:dev' -n \"Pointnetwork,$(ls -d example/*/ | tr '\n' ',')\"",
+    "watch:sites:and:start:docker": "./scripts/await-contracts-docker.js && npm run watch:sites:and:start",
+    "watch:sites:and:start:docker:dev": "./scripts/await-contracts-docker.js && npm run watch:sites:and:start:dev",
+    "watch:site:and:start:docker:dev": "./scripts/await-contracts-docker.js && npx concurrently -n \"pointnetwork,$SITE\" 'npm run start:dev' 'npm run watch:site'"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "example/*"
+    ]
   },
   "repository": {
     "type": "git",
