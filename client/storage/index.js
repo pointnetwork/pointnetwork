@@ -13,7 +13,7 @@ const {
     checkExistingChannel,
     createChannel,
     makePayment,
-  } = require('./payments')
+} = require('./payments');
 
 class Storage {
     constructor(ctx) {
@@ -255,10 +255,10 @@ class Storage {
     }
 
     async chooseProviderCandidate() {
-        const storageProviders = await this.ctx.web3bridge.getAllStorageProvider()
-        const randomProvider = storageProviders[storageProviders.length * Math.random() | 0]
-        const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider)
-        const id = getProviderDetails['0']
+        const storageProviders = await this.ctx.web3bridge.getAllStorageProvider();
+        const randomProvider = storageProviders[storageProviders.length * Math.random() | 0];
+        const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider);
+        const id = getProviderDetails['0'];
         return await this.ctx.db.provider.findOrCreateAndSave(id);
         // todo: remove blacklist from options
         // todo: remove those already in progress or failed in this chunk
@@ -309,7 +309,7 @@ class Storage {
         return new Promise((resolve, reject) => {
             this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
                 await link.refresh();
-                (!err) ? resolve(true) : reject(err) // machine will move to next state
+                (!err) ? resolve(true) : reject(err); // machine will move to next state
             });
         });
     }
@@ -320,33 +320,33 @@ class Storage {
 
         return new Promise(async(resolve, reject) => {
             try{
-                const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${link.provider_id.split('#')[1]}`)
-                const channelExists = await checkExistingChannel(checksumAddress)
+                const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${link.provider_id.split('#')[1]}`);
+                const channelExists = await checkExistingChannel(checksumAddress);
 
                 if (channelExists === undefined) {
-                    let currentProvider = await link.provider_id
+                    let currentProvider = await link.provider_id;
                     const storage_provider_cache = path.join(this.ctx.datadir, this.config.storage_provider_cache);
                     let sent_providers = '[]';
                     if (fs.existsSync(storage_provider_cache)) {
-                        sent_providers = fs.readFileSync(storage_provider_cache)
+                        sent_providers = fs.readFileSync(storage_provider_cache);
                     }
-                    const parsed_sent_providers = JSON.parse(sent_providers)
+                    const parsed_sent_providers = JSON.parse(sent_providers);
                     fs.writeFileSync(storage_provider_cache, JSON.stringify([...new Set([...parsed_sent_providers, currentProvider])]));
                     if (!previousProviders.includes(currentProvider) && !parsed_sent_providers.includes(currentProvider)) {
-                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`)
-                        await createChannel(checksumAddress, 1000)  // todo:wvxshhvcsxhbcvhcsmjhjhsbc make channel deposit amount dynamic
+                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`);
+                        await createChannel(checksumAddress, 1000);  // todo:wvxshhvcsxhbcvhcsmjhjhsbc make channel deposit amount dynamic
                     }
-                    previousProviders.push(currentProvider)
+                    previousProviders.push(currentProvider);
                 }
 
                 // channel exists
                 resolve(true);
             } catch (e) {
-                console.log(`CREATE_PAYMENT_CHANNEL ERROR: ${e}`)
+                console.log(`CREATE_PAYMENT_CHANNEL ERROR: ${e}`);
                 // error creating channel so reject
-                reject(e)
+                reject(e);
             }
-        })
+        });
     }
 
     async ENCRYPT_CHUNK(chunk, link) {
@@ -424,7 +424,7 @@ class Storage {
         return new Promise(async(resolve, reject) => {
             this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
                 await link.refresh();
-                (!err) ? resolve(true) : reject(err) // machine will move to next state
+                (!err) ? resolve(true) : reject(err); // machine will move to next state
             });
         });
     }
@@ -433,7 +433,7 @@ class Storage {
         return new Promise((resolve, reject) => {
             this.send('STORE_CHUNK_DATA', data, link.provider_id, async (err, result) => {
                 await link.refresh();
-                let idx = data[1]
+                let idx = data[1];
                 const totalSegments = link.segment_hashes.length;
                 if (!err) {
                     // todo: use the clues server gives you about which segments it already received (helps in case of duplication?)
@@ -446,7 +446,7 @@ class Storage {
                         // Then we are done
                         resolve(true);
                     }
-                    resolve(false) // not done yet
+                    resolve(false); // not done yet
                 } else {
                     reject(err);
                 }
@@ -478,9 +478,9 @@ class Storage {
                     };
                     link.validatePledge();
                     if (this.ctx.config.payments.enabled) {
-                        const provider = await link.provider
-                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`)
-                        await makePayment(checksumAddress, 10) // todo: calculate amount using cost per kb for service provider
+                        const provider = await link.provider;
+                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`);
+                        await makePayment(checksumAddress, 10); // todo: calculate amount using cost per kb for service provider
                     }
                     // const chunk = await link.getChunk();
                     // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
@@ -522,9 +522,9 @@ class Storage {
             link.provider = provider;
             link.redkeyId = await this.getRedkeyId(provider);
             link.chunk_id = chunk.id;
-            link.initStateMachine(chunk)
+            link.initStateMachine(chunk);
             // use storage link state machine to sent CREATE event
-            link.machine.send('CREATE')
+            link.machine.send('CREATE');
         }
 
         for(let link of all) {
