@@ -1,10 +1,14 @@
-class PingController {
+const PointSDKController = require('./PointSDKController')
+
+class PingController extends PointSDKController {
     constructor(ctx) {
-        this.ctx = ctx;
+        super(ctx);
     }
 
     ping() {
-        return {'ping': 'pong'}
+        return this._response(
+            {'ping': 'pong'}
+        );
     }
 }
 

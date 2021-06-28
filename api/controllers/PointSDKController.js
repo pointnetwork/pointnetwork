@@ -5,10 +5,10 @@ class PointSDKController {
 
     _response(payload) {
       return {
-        status: 200,
-        data: payload
+          status: 200,
+          data: payload
       }
     }
-  }
+}
 
-  module.exports = PointSDKController;
+module.exports = PointSDKController;
