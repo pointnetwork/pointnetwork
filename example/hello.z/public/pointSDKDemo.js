@@ -9,11 +9,11 @@ pointSDKDemo = {
         }
     },
     wallet: {
-        getAddress: async () => {
+        address: async () => {
             let address = await fetch('/api/wallet/address')
             return await address.json()
         },
-        getBalance: async () => {
+        balance: async () => {
             let balance = await fetch('/api/wallet/balance')
             return await balance.json()
         },

@@ -217,7 +217,10 @@ class ZProxy {
     }
 
     async apiResponseFor(cmdstr, request) {
-        let [cmd, params] = this._parseApiCmd(cmdstr.replace('/api/', ''))
+        cmdstr = cmdstr.replace('/api/', '');
+        cmdstr = cmdstr.replace(/\/$/, "");
+
+        let [cmd, params] = this._parseApiCmd(cmdstr)
         let response = {}
         let body = '';
         if (request.method.toUpperCase() == 'POST') {
