@@ -71,6 +71,24 @@ class Console {
             return {error: `Error fetching ${api_cmd} : ${e.message}`}
         }
     }
+
+    async cmd_api_post(host, api_cmd, body) {
+        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/api/';
+        try {
+            const url = api_base_url + api_cmd ;
+            console.log('Posting to:'+url);
+            console.log('Posting with biody:', body);
+            const response = await axios.post(url, body, {
+                headers: {
+                  'host': host,
+                  'Content-Type': 'application/json'
+                }
+            })
+            return response.data
+        } catch (e) {
+            return {error: `Error posting ${api_cmd} : ${e.message}`}
+        }
+    }
 }
 
 module.exports = Console;

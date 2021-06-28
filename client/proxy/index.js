@@ -16,6 +16,7 @@ const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
 const qs = require('query-string');
+const Console = require('../../console');
 
 class ZProxy {
     constructor(ctx) {
@@ -23,6 +24,8 @@ class ZProxy {
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
+        // for forwarding on api requests when required
+        this.console = new Console(this.ctx);
     }
 
     async start() {
@@ -165,6 +168,13 @@ class ZProxy {
                 } catch(e) {
                     return this.abortError(response, e);
                 }
+            } else if (_.startsWith(parsedUrl.pathname, '/api/')) {
+                try {
+                    contentType = 'application/json';
+                    rendered = await this.apiResponseFor(parsedUrl.pathname, request);
+                } catch(e) {
+                    return this.abortError(response, e);
+                }
             } else {
                 try {
                     rendered = await this.processRequest(host, request, response, parsedUrl);
@@ -204,6 +214,34 @@ class ZProxy {
         // console.log(request.port);
         // console.log(request.method);
         // console.log(request.url);
+    }
+
+    async apiResponseFor(cmdstr, request) {
+        let [cmd, params] = this._parseApiCmd(cmdstr.replace('/api/', ''))
+        let response = {}
+        let body = '';
+        if (request.method.toUpperCase() == 'POST') {
+            let apiPromise = new Promise(async(resolve, reject) => {
+                request.on('data', (chunk) => {
+                    body += chunk;
+                });
+                request.on('end', async () => {
+                    response = await this.console.cmd_api_post(request.headers.host, cmd, body);
+                    resolve(response)
+                })
+            })
+
+            response = await apiPromise;
+        } else {
+            response = await this.console.cmd_api(cmd, ...params);
+        }
+        return JSON.stringify(response)
+    }
+
+    _parseApiCmd(cmdstr) {
+        let [cmd, params] = cmdstr.split('?')
+        params ? params = params.split('&') : params = ''
+        return [cmd, params]
     }
 
     sanitize(html) {

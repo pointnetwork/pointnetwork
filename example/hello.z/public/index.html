@@ -1,6 +1,9 @@
 <html>
   <head>
     <title>Hello World from Point Network!</title>
+    <!-- Use pointSDKDemo.js if the Point SDK browser extention is not available  (For DEMO purpose ONLY) -->
+    <!-- The pointSDKDemo.js makes actual calls to the Node ZProxy and can be used to assist development of Node APIs -->
+    <script type="text/javascript" src="pointSDKDemo.js"></script>
   </head>
   <body>
     <div>
@@ -8,14 +11,17 @@
       <p id="pointSDKDemo"></p>
     </div>
     <script>
+      console.log(`Hello... `, window.point.status.hello());
       (async () => {
+        let ping = await window.point.status.ping();
         let address = await window.point.wallet.getAddress()
-        let balance = (await window.point.wallet.getBalance()).token
-        let contractCall = await window.point.contract.call()
-        let p1 = `<p>Wallet Address: ${address}</p>`
-        let p2 = `<p>Wallet Balance: ${balance}</p>`
-        let p3 = `<p>Contract Call: ${JSON.stringify(contractCall)}</p>`
-        document.getElementById("pointSDKDemo").innerHTML = `<div>${p1}${p2}${p3}</div>`
+        let balance = await window.point.wallet.getBalance()
+        let call = await window.point.contract.call({contract: 'Hello', method: 'value'});
+        let p0 = `<p>Ping Test: ${ping.data.ping}</p>`
+        let p1 = `<p>Wallet Address: ${address.data.address}</p>`
+        let p2 = `<p>Wallet Balance: ${balance.data.balance}</p>`
+        let p3 = `<p>Contract Call: ${call.data}</p>`
+        document.getElementById("pointSDKDemo").innerHTML = `<div>${p0}${p1}${p2}${p3}</div>`
       })()
     </script>
   </body>
