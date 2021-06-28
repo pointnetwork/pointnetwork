@@ -1,8 +1,5 @@
 pointSDKDemo = {
     status: {
-        hello: () => {
-            return "world";
-        },
         ping: async () => {
             let response = await fetch('/api/ping')
             return await response.json()
@@ -16,6 +13,10 @@ pointSDKDemo = {
         balance: async () => {
             let balance = await fetch('/api/wallet/balance')
             return await balance.json()
+        },
+        hash: async () => {
+            let hash = await fetch('/api/wallet/hash')
+            return await hash.json()
         },
     },
     contract: {

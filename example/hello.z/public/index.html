@@ -11,18 +11,19 @@
       <p id="pointSDKDemo"></p>
     </div>
     <script>
-      // console.log(`Hello... `, window.point.status.hello());
       (async () => {
-        // let ping = await window.point.status.ping();
+        let ping = await window.point.status.ping();
         let address = await window.point.wallet.address();
-        let balance = await window.point.wallet.balance()
+        let balance = await window.point.wallet.balance();
+        let hash = await window.point.wallet.hash();
         let call = await window.point.contract.call({contract: 'Hello', method: 'value'});
-        // let p0 = `<p>Ping Test: ${ping.data.ping}</p>`
+        let p0 = `<p>Ping Test: ${ping.data.ping}</p>`
         let p1 = `<p>Wallet Address: ${address.data.address}</p>`
         let p2 = `<p>Wallet Balance: ${balance.data.balance}</p>`
-        let p3 = `<p>Contract Call: ${call.data}</p>`
-        document.getElementById("pointSDKDemo").innerHTML = `<div>${p0}${p1}${p2}${p3}</div>`
-        // document.getElementById("pointSDKDemo").innerHTML = `<div>$${p1}</div>`
+        let p3 = `<p>Wallet Hash: ${hash.data.hash}</p>`
+        let p4 = `<p>Contract Call: ${call.data}</p>`
+        document.getElementById("pointSDKDemo").innerHTML = `<div>${p0}${p1}${p2}${p3}${p4}</div>`
+        // document.getElementById("pointSDKDemo").innerHTML = `<div>${p3}</div>`
       })()
     </script>
   </body>
