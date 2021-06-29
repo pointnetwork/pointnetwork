@@ -183,6 +183,15 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
     }
 
+    async storagePut(content) {
+        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(content));
+        fs.writeFileSync(tmpPostDataFilePath, content);
+        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+        return uploaded.id;
+    }
+
     async updateKeyValue (target, values, deployPath, deployContracts = false) {
         const replaceContentsWithCids = async obj => {
 
@@ -256,8 +265,16 @@ class Deployer {
                     paramsTogether = paramsTogether.replace(')', '')
                     let paramNames = paramsTogether.split(',')
                     let params = [];
-                    for(let paramName of paramNames) {
-                        params.push(value[paramName]);
+                    if (value.metadata){
+                        const metadataHash = await this.storagePut(JSON.stringify(value.metadata))
+                        value.metadata['metadataHash'] = metadataHash
+                        for(let paramName of paramNames) {
+                            params.push(value.metadata[paramName]);
+                        }
+                    } else {
+                        for(let paramName of paramNames) {
+                            params.push(value[paramName]);
+                        }
                     }
                     await this.ctx.web3bridge.sendToContract(target, contractName, methodName, params );
                 }
