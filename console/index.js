@@ -43,7 +43,7 @@ class Console {
     }
 
     async cmd_api(...args) {
-        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/api/';
+        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/v1/api/';
         const api_cmd = args.shift();
         try {
             // Note: args must be "="-delimited strings, or just strings, e.g. ["a=b", "c=d"] or ["b", "d"]
@@ -73,7 +73,7 @@ class Console {
     }
 
     async cmd_api_post(host, api_cmd, body) {
-        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/api/';
+        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/v1/api/';
         try {
             const url = api_base_url + api_cmd ;
             console.log('Posting to:'+url);

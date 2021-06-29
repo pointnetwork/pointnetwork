@@ -1,29 +1,31 @@
 <html>
   <head>
     <title>Hello World from Point Network!</title>
-    <!-- Use pointSDKDemo.js if the Point SDK browser extention is not available  (For DEMO purpose ONLY) -->
-    <!-- The pointSDKDemo.js makes actual calls to the Node ZProxy and can be used to assist development of Node APIs -->
+    <!-- Use the script below to load pointSDKDemo.js if the Point SDK browser extention is not available
+    The pointSDKDemo.js makes calls to the Node ZProxy and can be used to assist development of Node APIs
+    Comment out the script tag below that loads pointSDKDemo.js if you want to test using the PointSDK extention-->
     <script type="text/javascript" src="pointSDKDemo.js"></script>
   </head>
   <body>
     <div>
-      <p>Hello World Example for testing Storage Layer features and the Point Browser SDK.</p>
-      <p id="pointSDKDemo"></p>
+      <p>Hello World Example for testing Storage Layer features and the Point Browser SDK</p>
+      <p id="results"></p>
     </div>
     <script>
       (async () => {
+        // let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
         let address = await window.point.wallet.address();
-        let balance = await window.point.wallet.balance();
         let hash = await window.point.wallet.hash();
         let call = await window.point.contract.call({contract: 'Hello', method: 'value'});
-        let p0 = `<p>Ping Test: ${ping.data.ping}</p>`
-        let p1 = `<p>Wallet Address: ${address.data.address}</p>`
-        let p2 = `<p>Wallet Balance: ${balance.data.balance}</p>`
-        let p3 = `<p>Wallet Hash: ${hash.data.hash}</p>`
-        let p4 = `<p>Contract Call: ${call.data}</p>`
-        document.getElementById("pointSDKDemo").innerHTML = `<div>${p0}${p1}${p2}${p3}${p4}</div>`
-        // document.getElementById("pointSDKDemo").innerHTML = `<div>${p3}</div>`
+        let elements = []
+        // elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
+        elements.push(`<p>Ping Test: ${ping.data.ping}</p>`)
+        elements.push(`<p>Wallet Address: ${address.data.address}</p>`)
+        elements.push(`<p>Wallet Hash: ${hash.data.hash}</p>`)
+        elements.push(`<p>Contract Call: ${call.data}</p>`)
+        let elementsStr = elements.join('')
+        document.getElementById("results").innerHTML = `<div>${elementsStr}</div>`
       })()
     </script>
   </body>

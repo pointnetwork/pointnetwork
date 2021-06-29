@@ -168,7 +168,7 @@ class ZProxy {
                 } catch(e) {
                     return this.abortError(response, e);
                 }
-            } else if (_.startsWith(parsedUrl.pathname, '/api/')) {
+            } else if (_.startsWith(parsedUrl.pathname, '/v1/api/')) {
                 try {
                     contentType = 'application/json';
                     rendered = await this.apiResponseFor(parsedUrl.pathname, request);
@@ -217,7 +217,7 @@ class ZProxy {
     }
 
     async apiResponseFor(cmdstr, request) {
-        cmdstr = cmdstr.replace('/api/', '');
+        cmdstr = cmdstr.replace('/v1/api/', '');
         cmdstr = cmdstr.replace(/\/$/, "");
 
         let [cmd, params] = this._parseApiCmd(cmdstr)
