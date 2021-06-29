@@ -49,7 +49,7 @@ class Deployer {
         console.log('uploading root directory...');
         let publicDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'public')); // todo: and more options
         let publicDirId = publicDirectory.id;
-        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath);
+        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
 
         // Upload routes
         let routesFilePath = path.join(deployPath, 'routes.json');
@@ -64,7 +64,7 @@ class Deployer {
         this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploaded.id}`)
         await this.updateZDNS(target, routeFileUploaded.id);
 
-        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployConfig);
+        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts);
 
         console.log('Deploy finished');
     }
@@ -183,17 +183,7 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
     }
 
-    async storagePut(content) {
-        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
-        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(content));
-        fs.writeFileSync(tmpPostDataFilePath, content);
-        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-        return uploaded.id;
-    }
-
-    async updateKeyValue (target, values, deployPath, deployConfig) {
-
+    async updateKeyValue (target, values, deployPath, deployContracts = false) {
         const replaceContentsWithCids = async obj => {
 
             const result = {}
@@ -259,8 +249,8 @@ class Deployer {
 
         for (let [key, value] of Object.entries(values)) {
             if (value && (Array.isArray(value) || typeof value === 'object')) {
-                // if there is a contract_send in the value then send data to the specified contract
-                if('contract_send' in value) {
+		// if there is a contract_send in the value then send data to the specified contract
+                if('contract_send' in value && deployContracts) {
                     let [contractName, methodNameAndParams] = value.contract_send.split('.')
                     let [methodName, paramsTogether] = methodNameAndParams.split('(')
                     paramsTogether = paramsTogether.replace(')', '')
