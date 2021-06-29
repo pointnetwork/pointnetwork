@@ -37,16 +37,16 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
     }
 
     (async () => {
-      // window.point.contract.call(host, contractName, method, params)
-      let productsData = await window.point.contract.call('store', 'Store', 'getProductsByStoreIdSimple', store);
+      let productsData = await window.point.contract.call(({contract: 'Store', method: 'getProductsByStoreIdSimple', params: [0]}));
       let products:any = [];
 
-      for(let i=0; i<productsData.length; i++) {
-        let product = JSON.parse(await window.point.storage.getById(productsData[i][4]));
-        product.productId = productsData[i][1]; // product 'tokenId'
-        product.owner = productsData[i][6]; // product.owner
-        products.push(product);
-      }
+      // TODO: fix storage get call
+      // for(let i=0; i<productsData.length; i++) {
+      //   let product = JSON.parse(await window.point.storage.get(productsData[i][4]));
+        // product.productId = productsData[i][1]; // product 'tokenId'
+        // product.owner = productsData[i][6]; // product.owner
+      //   products.push(product);
+      // }
 
       setProductList(products as Product[]) // TODO: error handling
     })()

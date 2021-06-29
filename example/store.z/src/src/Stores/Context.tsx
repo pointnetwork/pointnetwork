@@ -20,11 +20,12 @@ export const ProvideStoreContext = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
-      // window.point.contract.call(host, contractName, method, params)
-      let storesData = await window.point.contract.call('store', 'Store', 'getStores()','')
+      let storesData = await window.point.contract.call({contract: 'Store', method: 'getStores'})
+
       let stores:any = []
 
-      storesData.forEach((storeData:any) => {
+      storesData.data.forEach((storeData:any) => {
+        console.log('Store Name: ', storeData[1]) // this outputs the store name in the console
         let store = {
           id: storeData[0],
           name: storeData[1],

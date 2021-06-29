@@ -1,5 +1,4 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react'
-import point from '../point'
 
 const defaultContext = {
   walletAddress: undefined as string | undefined,
@@ -15,8 +14,8 @@ export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
-      setWalletAddress(await window.point.wallet.getAddress())
-      setWalletBalance((await window.point.wallet.getBalance()).token
+      setWalletAddress(await window.point.wallet.address())
+      setWalletBalance('0') // set to 0 for now
     })()
   }, [])
 
