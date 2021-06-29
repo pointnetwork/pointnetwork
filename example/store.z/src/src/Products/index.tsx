@@ -22,7 +22,7 @@ const Product = ({ storeId, productId, name, description, price, owner }: Produc
 
 const buyProduct = async (productId:string, price:string) => {
   console.log(`Selected to purchase product tokenId: ${productId} with price: ${price}`)
-  await window.point.contract.send('store', 'Store', 'buyProductSimple', productId, price);
+  // await window.point.contract.send('store', 'Store', 'buyProductSimple', productId, price);
 }
 
 const ProductList = () => {

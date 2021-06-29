@@ -51,15 +51,10 @@ class StorageController extends PointSDKController {
 
   // similar to `storage_get` Twig function - gets a files contents from storage by its CID
   async get() {
-<<<<<<< HEAD
-    const cid = this.req.params.id
-    const contents = await this.ctx.client.storage.readFile(cid, 'utf-8');
-=======
     const cid = this.req.params.id;
     const encoding = this.req.query.encoding ? this.req.query.encoding : DEFAULT_ENCODING;
 
     const contents = await this.ctx.client.storage.readFile(cid, encoding);
->>>>>>> ff8fc051923402e5f5d4f66e2ebefc2485c0ffaa
     return this._response(contents)
   }
 }
