@@ -22,27 +22,29 @@ export const ProvideStoreContext = ({ children }: { children: ReactNode }) => {
     (async () => {
       try {
         // @ts-ignore
-        let storesData = await window.point.contract.call({
+        let {data: storesData} = await window.point.contract.call({
           contract: 'Store',
           method: 'getStores',
         });
 
-        let stores:any = []
+        let stores: Store[] = []
 
         console.log({ storesData })
 
-        storesData.forEach((storeData:any) => {
-          let store = {
-            id: storeData[0],
-            name: storeData[1],
-            description: storeData[2],
-            logo: storeData[3]
-          }
+        if (Array.isArray(storesData)) {
+          storesData.forEach((storeData:any) => {
+            let store = {
+              id: storeData[0],
+              name: storeData[1],
+              description: storeData[2],
+              logo: storeData[3]
+            }
 
-          stores.push(store)
-        })
+            stores.push(store)
+          })
 
-        setStoreList(stores as Store[]) // TODO: error handling
+          setStoreList(stores as Store[]) // TODO: error handling
+        }
       } catch (e) {
         console.error('Contract call error:', e)
       }

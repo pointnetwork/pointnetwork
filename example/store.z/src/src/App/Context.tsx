@@ -14,15 +14,13 @@ export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     (async () => {
       // @ts-ignore
-      console.log({'window.point.wallet.address': window.point.wallet.address});
+      const {data: {address}} = await window.point.wallet.address();
       // @ts-ignore
-      console.info('wallet address:', await window.point.wallet.address());
-      // @ts-ignore
-      console.info('wallet balance:', await window.point.wallet.hash());
-      // @ts-ignore
-      setWalletAddress(await window.point.wallet.address());
-      // @ts-ignore
-      setWalletBalance(await window.point.wallet.hash());
+      const {data: {hash}} = await window.point.wallet.hash();
+
+      console.log({address, hash});
+      setWalletAddress(address);
+      setWalletBalance(hash);
     })()
   }, [])
 
