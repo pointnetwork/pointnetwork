@@ -128,6 +128,8 @@ class ZProxy {
         };
         response.writeHead(500, headers);
         response.write('500: '+err); // todo: come on, write a better msg
+        this.ctx.log.error(`ZProxy 500 Error: ${err}`); // write out to ctx.log
+        console.error(err); // for stack trace
         response.end();
     }
 
