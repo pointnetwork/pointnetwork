@@ -149,6 +149,7 @@ class ZProxy {
 
             // console.debug(parsedUrl);
             let contentType = 'text/html';
+            let status = 200;
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
                 let hash = parsedUrl.pathname.replace('/_storage/', '');
                 let hashWithoutExt = hash.split('.').slice(0, -1).join('.');
@@ -172,8 +173,10 @@ class ZProxy {
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/v1/api/')) {
                 try {
+                    let apiResponse = await this.apiResponseFor(parsedUrl.pathname, request);
+                    status = apiResponse.status ? apiResponse.status : status;
                     contentType = 'application/json';
-                    rendered = await this.apiResponseFor(parsedUrl.pathname, request);
+                    rendered = JSON.stringify(apiResponse);
                 } catch(e) {
                     return this.abortError(response, e);
                 }
@@ -201,14 +204,14 @@ class ZProxy {
             const headers = {
                 'Content-Type': contentType
             };
-            response.writeHead(200, headers);
+            response.writeHead(status, headers);
             response.write(sanitized, {encoding: null}/*, 'utf-8'*/);
             response.end();
 
         } catch(e) {
             // throw 'ZProxy Error: '+e; // todo: remove
             console.log('ZProxy Error:', e); // todo: this one can be important for debugging, but maybe use ctx.log not console
-            return this.abortError(response, 'ZProxy Error: '+e);
+            return this.abortError(response, 'ZProxy: '+e);
         }
 
         // todo:?
@@ -240,7 +243,7 @@ class ZProxy {
         } else {
             response = await this.console.cmd_api(cmd, ...params);
         }
-        return JSON.stringify(response)
+        return response;
     }
 
     _parseApiCmd(cmdstr) {
