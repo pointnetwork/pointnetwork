@@ -22,13 +22,11 @@ const Header = () => {
 const Main = () => {
     return (
         <main>
-            <div>
-                <img alt='Point Network Store' src={ assets['store-logo'] } width='400' height='122'></img>
-                <p><a className='button' href='/'>Home</a></p>
-                <p><b>Point Network Store Example App</b>.</p>
-                <Route path='/'><Stores/></Route>
-                <Route path='/products/:storeId'><Products/></Route>
-            </div>
+            <img alt='Point Network Store' src={ assets['store-logo'] } width='400' height='122'></img>
+            <p><a className='button' href='/'>Home</a></p>
+            <p><b>Point Network Store Example App</b>.</p>
+            <Route path='/'><Stores/></Route>
+            <Route path='/products/:storeId'><Products/></Route>
         </main>
     )
 }
