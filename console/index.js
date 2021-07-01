@@ -65,10 +65,11 @@ class Console {
             const url = api_base_url + api_cmd + '?' + params;
             console.log('Querying '+url);
             const response = await axios.get(url);
-            console.log(response.data);
             return response.data
         } catch (e) {
-            return {error: `Error fetching ${api_cmd} : ${e.message}`}
+            return {error: `Error fetching ${api_cmd} : ${e.message}`,
+                    status: e.response.status,
+                    statusText: e.response.statusText}
         }
     }
 
@@ -86,7 +87,9 @@ class Console {
             })
             return response.data
         } catch (e) {
-            return {error: `Error posting ${api_cmd} : ${e.message}`}
+            return {error: `Error posting ${api_cmd} : ${e.message}`,
+                    status: e.response.status,
+                    statusText: e.response.statusText}
         }
     }
 }

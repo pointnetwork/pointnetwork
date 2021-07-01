@@ -30,6 +30,17 @@ pointSDKDemo = {
                 body: JSON.stringify(meta)
             })
             return await response.json()
+        },
+        send: async (meta) => {
+            let response = await fetch('/v1/api/contract/send', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(meta)
+            })
+            return await response.json()
         }
     }
 }
