@@ -13,17 +13,32 @@
     </div>
     <script>
       (async () => {
-        // let balance = await window.point.wallet.balance();
+        let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
         let address = await window.point.wallet.address();
         let hash = await window.point.wallet.hash();
-        let call = await window.point.contract.call({contract: 'Hello', method: 'value'});
+        let callValue = await window.point.contract.call({contract: 'Hello', method: 'value'});
+        let callCounter = await window.point.contract.call({contract: 'Hello', method: 'counter'});
+        let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??']});
+        let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2]});
+        let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
+        let sendSetValue = await window.point.contract.send({contract: 'Hello', method: 'setValue', params: ['A new value']});
+        let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
+        // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
+        // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
+        // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert
         let elements = []
-        // elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
+        elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
         elements.push(`<p>Ping Test: ${ping.data.ping}</p>`)
         elements.push(`<p>Wallet Address: ${address.data.address}</p>`)
         elements.push(`<p>Wallet Hash: ${hash.data.hash}</p>`)
-        elements.push(`<p>Contract Call: ${call.data}</p>`)
+        elements.push(`<p>Contract Call Value: ${callValue.data}</p>`)
+        elements.push(`<p>Contract Call Counter: ${callCounter.data}</p>`)
+        elements.push(`<p>Contract Call Echo: ${callEcho.data}</p>`)
+        elements.push(`<p>Contract Call Square: ${callSquare.data}</p>`)
+        elements.push(`<p>Contract Call Add: ${callAdd.data}</p>`)
+        elements.push(`<p>Contract Send Increment Counter: ${sendIncrementCounter.data}</p>`)
+        elements.push(`<p>Contract Send Set Value: ${sendSetValue.data}</p>`)
         let elementsStr = elements.join('')
         document.getElementById("results").innerHTML = `<div>${elementsStr}</div>`
       })()

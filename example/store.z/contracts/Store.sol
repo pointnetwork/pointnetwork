@@ -4,7 +4,6 @@ pragma experimental ABIEncoderV2;
 
 import '@openzeppelin/contracts/token/ERC1155/ERC1155.sol';
 
-
 contract Store is ERC1155 {
 
     constructor() ERC1155("{id}") {}
@@ -39,6 +38,9 @@ contract Store is ERC1155 {
     mapping (uint => Product[]) public StoreProducts;
     mapping (bytes32 => ProductBid) public Bids;
 
+    mapping(address => uint[]) public ownerToStoreIds;
+    mapping(uint => StoreFront) public storeIdToStoreFront;
+
     // A simple direct mapping of token id (uint) -> Product (struct)
     mapping(uint => Product) public Products;
     uint[] public productList;
@@ -53,31 +55,28 @@ contract Store is ERC1155 {
     event NewProductEvent(bytes32 id, uint tokenId, string name, uint price, string metadata, address owner);
     event ProductSoldEvent(address from, address to, bytes32 productId, string metadata);
 
-    modifier storeExist() {
-        if (Stores[msg.sender].exists) revert('You already have an existing store');
-        _;
-    }
-
     modifier noStoreExist() {
         if (!Stores[msg.sender].exists) revert('Please register a store');
         _;
     }
 
-    function registerStore(string memory name, string memory description, string memory logo) public storeExist {
+    function registerStore(string memory name, string memory description, string memory logo) public  {
         uint storeId = storeIdIncrementor++;
         StoreFront memory _store = StoreFront(storeId, name, description, logo, true);
         Stores[msg.sender] = _store;
+        ownerToStoreIds[msg.sender].push(storeId);
+        storeIdToStoreFront[storeId] = _store;
         allStores.push(_store);
         emit NewStoreEvent(storeId, name, description);
     }
 
-    function addProductToStore(string memory name, uint price, string memory metadata) public returns (bytes32) {
+    function addProductToStore(uint storeId, string memory name, uint price, string memory metadata) public returns (bytes32) {
         uint newProductId = _tokenId++;
         bytes32 productId = keccak256(abi.encodePacked(name, price, metadata));
         bytes memory metadataHash = bytes(metadata);
         Product memory _product = Product(productId, newProductId, name, price, metadata, metadataHash, msg.sender);
         _mint(msg.sender, newProductId, 1, metadataHash);
-        StoreProducts[Stores[msg.sender].id].push(_product);
+        StoreProducts[storeId].push(_product);
         Products[newProductId] = _product;
         productList.push(newProductId);
         emit NewProductEvent(productId, newProductId, name, price, metadata, msg.sender);
@@ -97,8 +96,8 @@ contract Store is ERC1155 {
         emit ProductSoldEvent(owner, msg.sender, _product.id, _product.metadata);
     }
 
-    function getProductsByStoreIdSimple(uint storeId) public view returns(Product[3] memory) {
-        return [Products[0], Products[1], Products[2]];
+    function getProductsByStoreIdSimple(uint storeId) public view returns(Product[] memory) {
+        return StoreProducts[storeId];
     }
 
     function getStore() public view returns(uint, string memory, string memory, string memory) {

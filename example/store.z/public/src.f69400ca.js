@@ -30262,21 +30262,28 @@ var ProvideAppContext = function ProvideAppContext(_a) {
   react_1.useEffect(function () {
     (function () {
       return __awaiter(void 0, void 0, void 0, function () {
-        var _a;
-
-        return __generator(this, function (_b) {
-          switch (_b.label) {
+        var address, hash;
+        return __generator(this, function (_a) {
+          switch (_a.label) {
             case 0:
-              _a = setWalletAddress;
               return [4
               /*yield*/
               , window.point.wallet.address()];
 
             case 1:
-              _a.apply(void 0, [_b.sent()]);
+              address = _a.sent().data.address;
+              return [4
+              /*yield*/
+              , window.point.wallet.hash()];
 
-              setWalletBalance('0'); // set to 0 for now
-
+            case 2:
+              hash = _a.sent().data.hash;
+              console.log({
+                address: address,
+                hash: hash
+              });
+              setWalletAddress(address);
+              setWalletBalance(hash);
               return [2
               /*return*/
               ];
@@ -30530,10 +30537,12 @@ var ProvideStoreContext = function ProvideStoreContext(_a) {
   react_1.useEffect(function () {
     (function () {
       return __awaiter(void 0, void 0, void 0, function () {
-        var storesData, stores;
+        var storesData, stores_1, e_1;
         return __generator(this, function (_a) {
           switch (_a.label) {
             case 0:
+              _a.trys.push([0, 2,, 3]);
+
               return [4
               /*yield*/
               , window.point.contract.call({
@@ -30542,21 +30551,37 @@ var ProvideStoreContext = function ProvideStoreContext(_a) {
               })];
 
             case 1:
-              storesData = _a.sent();
-              stores = [];
-              storesData.data.forEach(function (storeData) {
-                console.log('Store Name: ', storeData[1]); // this outputs the store name in the console
-
-                var store = {
-                  id: storeData[0],
-                  name: storeData[1],
-                  description: storeData[2],
-                  logo: storeData[3]
-                };
-                stores.push(store);
+              storesData = _a.sent().data;
+              stores_1 = [];
+              console.log({
+                storesData: storesData
               });
-              setStoreList(stores); // TODO: error handling
 
+              if (Array.isArray(storesData)) {
+                storesData.forEach(function (storeData) {
+                  var store = {
+                    id: storeData[0],
+                    name: storeData[1],
+                    description: storeData[2],
+                    logo: storeData[3]
+                  };
+                  stores_1.push(store);
+                });
+                setStoreList(stores_1); // TODO: error handling
+              }
+
+              return [3
+              /*break*/
+              , 3];
+
+            case 2:
+              e_1 = _a.sent();
+              console.error('Contract call error:', e_1);
+              return [3
+              /*break*/
+              , 3];
+
+            case 3:
               return [2
               /*return*/
               ];
@@ -30906,7 +30931,7 @@ var ProvideProductsContext = function ProvideProductsContext(_a) {
 
     (function () {
       return __awaiter(void 0, void 0, void 0, function () {
-        var productsData, products;
+        var productsData, products, i, product;
         return __generator(this, function (_a) {
           switch (_a.label) {
             case 0:
@@ -30915,18 +30940,31 @@ var ProvideProductsContext = function ProvideProductsContext(_a) {
               , window.point.contract.call({
                 contract: 'Store',
                 method: 'getProductsByStoreIdSimple',
-                params: [0]
+                params: [store]
               })];
 
             case 1:
-              productsData = _a.sent();
-              products = []; // TODO: fix storage get call
-              // for(let i=0; i<productsData.length; i++) {
-              //   let product = JSON.parse(await window.point.storage.get(productsData[i][4]));
-              // product.productId = productsData[i][1]; // product 'tokenId'
-              // product.owner = productsData[i][6]; // product.owner
-              //   products.push(product);
-              // }
+              productsData = _a.sent().data;
+              products = [];
+
+              for (i = 0; i < productsData.length; i++) {
+                product = {};
+                console.info({
+                  item: productsData[i]
+                });
+                product.productId = productsData[i][1]; // product 'tokenId'
+
+                product.owner = productsData[i][6]; // product.owner
+
+                product.name = productsData[i][2]; // product 'name'
+
+                product.price = productsData[i][3]; // product 'price'
+
+                products.push(product);
+                console.log({
+                  product: product
+                });
+              }
 
               setProductList(products); // TODO: error handling
 
@@ -31370,7 +31408,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57093" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62700" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
