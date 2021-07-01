@@ -10,13 +10,13 @@ const Product = ({ storeId, productId, name, description, price, owner }: Produc
     }
   }
   return (
-    <div className="store">
+    <li className="store">
         <h3 className="name">{ name }</h3>
         <p><i className="description">{ description }</i></p>
         <p className="price">Price: { price }</p>
         {renderBuyButton(owner)}
         <hr/>
-    </div>
+    </li>
   )
 }
 
@@ -26,21 +26,23 @@ const buyProduct = async (productId:string, price:string) => {
 }
 
 const ProductList = () => {
-  const { store, productList } = useProductsContext()
+  const { storeId, productList, productListError } = useProductsContext()
 
-  if (!store) {
-    return (
-      <p>Loading...</p>
-    )
+  console.log({productList});
+
+  if (productListError) {
+      return <span className='error'>{ productListError.message }</span>
+  }
+
+  if (!storeId || !productList) {
+    return <span>Loading...</span>
   }
 
   if (!productList.length) {
-    return (
-      <p>No products yet...</p>
-    )
+    return <span>No products yet...</span>
   }
 
-  return <>{ productList.map((p)=> <Product key={ p.productId } {...p}/>)}</>
+  return <ul>{ productList.map((p)=> <Product key={ p.productId } {...p}/>)}</ul>
 }
 
 export const Products = () => <ProvideProductsContext><ProductList/></ProvideProductsContext>

@@ -8,66 +8,71 @@ export type Product = {
   description: string,
   price: string,
   owner: string
-}
+};
 
 export type ProductsRouteParams = {
-  store: string
-}
+  storeId: string
+};
 
 const defaultContext = {
-  store: undefined as string | undefined,
-  productList: [] as Array<Product>
-}
+  storeId: undefined as string | undefined,
+  productList: undefined as Product[] | undefined,
+  productListError: undefined as Error | undefined
+};
 
 const ProductsContext = createContext(defaultContext)
 
 export const useProductsContext = () => useContext(ProductsContext)
 export const ProvideProductsContext = ({ children }: { children: ReactNode }) => {
-  const [store, setStore] = useState<string>()
-  const [productList, setProductList] = useState<Array<Product>>([])
-  const [, params] = useRoute<ProductsRouteParams>('/products/:store')
+  const [storeId, setStoreId] = useState<string>();
+  const [productList, setProductList] = useState<Product[] | undefined>();
+  const [productListError, setProductListError] = useState<Error | undefined>();
+  const [, params] = useRoute<ProductsRouteParams>('/products/:store');
 
-  if (params?.store && params.store !== store) {
-    setStore(params.store)
+  if (params?.storeId && params.storeId !== storeId) {
+    setStoreId(params.storeId)
   }
 
   useEffect(() => {
-    if (!store) {
+    console.info({storeId});
+    if (!storeId) {
       return
     }
 
     (async () => {
-      // @ts-ignore
-      const productsData = await window.point.contract.call({
+      try {
+        // @ts-ignore
+        const response = await window.point.contract.call({
           contract: 'Store',
           method: 'getProductsByStoreIdSimple',
-          params: [store]
-      });
+          params: [parseInt(storeId)]
+        });
+        const {data: products} = response;
 
-      console.log({productsData});
+        console.info({products})
 
-      const products:Product[] = [];
+        if (!Array.isArray(products)) {
+          console.error('Incorrect getProductsByStoreIdSimple response:', response);
+          throw new Error('Incorrect products data');
+        }
 
-      for(let i = 0; i < productsData.length; i++) {
-        // @ts-ignore
-        const product = JSON.parse(await window.point.storage.getById(productsData[i][4]));
+        setProductList(products.map(([_id, productId, name, price, _metadata, metadataHash, owner]: string[]) => {
+          // @ts-ignore
+          // TODO: fetch product data first:
+          // const productData = JSON.parse(await window.point.storage.getById(metadata));
 
-        console.info({item: productsData[i]})
-
-        product.productId = productsData[i][1]; // product 'tokenId'
-        product.owner = productsData[i][6]; // product.owner
-        products.push(product);
-
-        console.log({product});
+          return { storeId, productId, name, description: metadataHash, price, owner };
+        }) as Product[]);
+      } catch (e) {
+        setProductListError(e);
       }
-
-      setProductList(products as Product[]) // TODO: error handling
     })()
-  }, [store])
+  }, [storeId])
 
   const context = {
-    store,
+    storeId,
     productList,
+    productListError,
   }
 
   return <ProductsContext.Provider value={ context }>{ children }</ProductsContext.Provider>
