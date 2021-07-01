@@ -30931,10 +30931,9 @@ var ProvideProductsContext = function ProvideProductsContext(_a) {
 
     (function () {
       return __awaiter(void 0, void 0, void 0, function () {
-        var productsData, products, i, product, _a, _b;
-
-        return __generator(this, function (_c) {
-          switch (_c.label) {
+        var productsData, products, i, product;
+        return __generator(this, function (_a) {
+          switch (_a.label) {
             case 0:
               return [4
               /*yield*/
@@ -30945,42 +30944,28 @@ var ProvideProductsContext = function ProvideProductsContext(_a) {
               })];
 
             case 1:
-              productsData = _c.sent();
+              productsData = _a.sent().data;
               products = [];
-              i = 0;
-              _c.label = 2;
 
-            case 2:
-              if (!(i < productsData.length)) return [3
-              /*break*/
-              , 5];
-              _b = (_a = JSON).parse;
-              return [4
-              /*yield*/
-              , window.point.storage.getById(productsData[i][4])];
+              for (i = 0; i < productsData.length; i++) {
+                product = {};
+                console.info({
+                  item: productsData[i]
+                });
+                product.productId = productsData[i][1]; // product 'tokenId'
 
-            case 3:
-              product = _b.apply(_a, [_c.sent()]);
-              console.info({
-                item: productsData[i]
-              });
-              product.productId = productsData[i][1]; // product 'tokenId'
+                product.owner = productsData[i][6]; // product.owner
 
-              product.owner = productsData[i][6]; // product.owner
+                product.name = productsData[i][2]; // product 'name'
 
-              products.push(product);
-              console.log({
-                product: product
-              });
-              _c.label = 4;
+                product.price = productsData[i][3]; // product 'price'
 
-            case 4:
-              i++;
-              return [3
-              /*break*/
-              , 2];
+                products.push(product);
+                console.log({
+                  product: product
+                });
+              }
 
-            case 5:
               setProductList(products); // TODO: error handling
 
               return [2

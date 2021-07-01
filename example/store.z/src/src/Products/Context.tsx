@@ -38,7 +38,7 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
 
     (async () => {
       // @ts-ignore
-      const productsData = await window.point.contract.call({
+      const {data: productsData} = await window.point.contract.call({
           contract: 'Store',
           method: 'getProductsByStoreIdSimple',
           params: [store]
@@ -47,12 +47,16 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
 
       for(let i = 0; i < productsData.length; i++) {
         // @ts-ignore
-        const product = JSON.parse(await window.point.storage.getById(productsData[i][4]));
+        // TODO: update to use PointSDK to fetch product metadata from Node Storage layer
+        // const product = JSON.parse(await window.point.storage.getById(productsData[i][4]));
+        const product = {};
 
         console.info({item: productsData[i]})
 
         product.productId = productsData[i][1]; // product 'tokenId'
         product.owner = productsData[i][6]; // product.owner
+        product.name = productsData[i][2]; // product 'name'
+        product.price = productsData[i][3]; // product 'price'
         products.push(product);
 
         console.log({product});
