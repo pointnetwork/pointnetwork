@@ -1,5 +1,4 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react'
-import point from '../point'
 
 export type Store = {
   id: string,
@@ -9,50 +8,41 @@ export type Store = {
 }
 
 const defaultContext = {
-  storeList: [] as Array<Store>
+  storeList: undefined as Store[] | undefined,
+  storeListError: undefined as Error | undefined
 }
 
 const StoreContext = createContext(defaultContext)
 
 export const useStoreContext = () => useContext(StoreContext)
 export const ProvideStoreContext = ({ children }: { children: ReactNode }) => {
-  const [storeList, setStoreList] = useState<Array<Store>>([])
+  const [storeList, setStoreList] = useState<Store[] | undefined>();
+  const [storeListError, setStoreListError] = useState<Error | undefined>();
 
   useEffect(() => {
     (async () => {
       try {
         // @ts-ignore
-        let {data: storesData} = await window.point.contract.call({
-          contract: 'Store',
-          method: 'getStores',
-        });
+        const response = await window.point.contract.call({contract: 'Store', method: 'getStores'});
+        const {data: stores} = response;
 
-        let stores: Store[] = []
-
-        console.log({ storesData })
-
-        if (Array.isArray(storesData)) {
-          storesData.forEach((storeData:any) => {
-            let store = {
-              id: storeData[0],
-              name: storeData[1],
-              description: storeData[2],
-              logo: storeData[3]
-            }
-
-            stores.push(store)
-          })
-
-          setStoreList(stores as Store[]) // TODO: error handling
+        if (!Array.isArray(stores)) {
+          console.error('Incorrect getStores response:', response);
+          throw new Error('Incorrect stores data');
         }
+
+        setStoreList(
+          stores.map(([id, name, description, logo]) => ({id, name, description, logo})) as Store[]
+        );
       } catch (e) {
-        console.error('Contract call error:', e)
+        setStoreListError(e);
       }
     })()
   }, [])
 
   const context = {
     storeList,
+    storeListError
   }
 
   return <StoreContext.Provider value={ context }>{ children }</StoreContext.Provider>

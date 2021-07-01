@@ -43,6 +43,9 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
           method: 'getProductsByStoreIdSimple',
           params: [store]
       });
+
+      console.log({productsData});
+
       const products:Product[] = [];
 
       for(let i = 0; i < productsData.length; i++) {

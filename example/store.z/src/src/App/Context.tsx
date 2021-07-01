@@ -18,7 +18,6 @@ export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
       // @ts-ignore
       const {data: {hash}} = await window.point.wallet.hash();
 
-      console.log({address, hash});
       setWalletAddress(address);
       setWalletBalance(hash);
     })()

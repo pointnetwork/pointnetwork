@@ -1,27 +1,36 @@
 import React from 'react'
 import { Link } from 'wouter'
 import { Store, useStoreContext, ProvideStoreContext } from './Context'
+import './index.css'
 
 const StoreItem = ({ id, name, logo, description }: Store) => {
     return (
-        <div className='store'>
-            <h3 className='name'>{ name }</h3>
-            <div className='storelogo' style={{ backgroundImage: `url(${ logo })`, backgroundRepeat: 'no-repeat' }}></div>
-            <i className="description">{ description }</i>
-            <p><Link href={ `/products/${ id }` }>View { name } Products</Link></p>
-            <hr />
-        </div>
+        <li className='store'>
+            <Link href={ `/products/${ id }` }>
+                <h3 className='name'>{ name }</h3>
+                <div className='storelogo' style={{ backgroundImage: `url(${ logo })`, backgroundRepeat: 'no-repeat' }}></div>
+                <span className="description">{ description }</span>
+            </Link>
+        </li>
     )
 }
 
 const StoreList = () => {
-    const { storeList } = useStoreContext()
+    const { storeList, storeListError } = useStoreContext()
 
-    if (!storeList.length) {
-        return <p>Loading...</p>
+    if (storeListError) {
+        return <span className='error'>{ storeListError.message }</span>
     }
 
-    return <>{ storeList.map(item => <StoreItem key={ item.id } {...item}/>) }</>
+    if (!storeList) {
+        return <span>Loading...</span>
+    }
+
+    if (!storeList.length) {
+        return <span>No stores yet...</span>
+    }
+
+    return <ul>{ storeList.map(item => <StoreItem key={ item.id } {...item}/>) }</ul>
 }
 
 export const Stores = () => {

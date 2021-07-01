@@ -17,6 +17,17 @@ h1 {
   padding-top: 12px;
 }
 
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
 .formback {
   width: 382px;
   overflow: hidden;
