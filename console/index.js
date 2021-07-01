@@ -87,7 +87,9 @@ class Console {
             })
             return response.data
         } catch (e) {
-            return {error: `Error posting ${api_cmd} : ${e.message}`}
+            return {error: `Error posting ${api_cmd} : ${e.message}`,
+                    status: e.response.status,
+                    statusText: e.response.statusText}
         }
     }
 }
