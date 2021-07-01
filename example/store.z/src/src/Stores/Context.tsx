@@ -20,23 +20,34 @@ export const ProvideStoreContext = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     (async () => {
-      let storesData = await window.point.contract.call({contract: 'Store', method: 'getStores'})
+      try {
+        // @ts-ignore
+        let {data: storesData} = await window.point.contract.call({
+          contract: 'Store',
+          method: 'getStores',
+        });
 
-      let stores:any = []
+        let stores: Store[] = []
 
-      storesData.data.forEach((storeData:any) => {
-        console.log('Store Name: ', storeData[1]) // this outputs the store name in the console
-        let store = {
-          id: storeData[0],
-          name: storeData[1],
-          description: storeData[2],
-          logo: storeData[3]
+        console.log({ storesData })
+
+        if (Array.isArray(storesData)) {
+          storesData.forEach((storeData:any) => {
+            let store = {
+              id: storeData[0],
+              name: storeData[1],
+              description: storeData[2],
+              logo: storeData[3]
+            }
+
+            stores.push(store)
+          })
+
+          setStoreList(stores as Store[]) // TODO: error handling
         }
-
-        stores.push(store)
-      })
-
-      setStoreList(stores as Store[]) // TODO: error handling
+      } catch (e) {
+        console.error('Contract call error:', e)
+      }
     })()
   }, [])
 

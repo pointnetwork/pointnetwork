@@ -11,11 +11,16 @@ export const useAppContext = () => useContext(AppContext)
 export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
   const [walletAddress, setWalletAddress] = useState<string>()
   const [walletBalance, setWalletBalance] = useState<string>()
-
   useEffect(() => {
     (async () => {
-      setWalletAddress(await window.point.wallet.address())
-      setWalletBalance('0') // set to 0 for now
+      // @ts-ignore
+      const {data: {address}} = await window.point.wallet.address();
+      // @ts-ignore
+      const {data: {hash}} = await window.point.wallet.hash();
+
+      console.log({address, hash});
+      setWalletAddress(address);
+      setWalletBalance(hash);
     })()
   }, [])
 

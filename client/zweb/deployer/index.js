@@ -258,7 +258,7 @@ class Deployer {
 
         for (let [key, value] of Object.entries(values)) {
             if (value && (Array.isArray(value) || typeof value === 'object')) {
-		// if there is a contract_send in the value then send data to the specified contract
+                // if there is a contract_send in the value then send data to the specified contract
                 if('contract_send' in value && deployContracts) {
                     let [contractName, methodNameAndParams] = value.contract_send.split('.')
                     let [methodName, paramsTogether] = methodNameAndParams.split('(')
