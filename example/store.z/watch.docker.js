@@ -4,7 +4,7 @@ const Bundler = require('parcel');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const outDir = path.join(__dirname, '..', 'public');
+const outDir = path.join(__dirname, 'public');
 const srcDir = path.join(__dirname, 'src');
 const target = path.join(srcDir, 'index.html');
 const options = {
@@ -28,7 +28,7 @@ const website = '/app/example/store.z';
 
     bundler.on('buildStart', () => {
         console.info(execSync(
-            `clear` // && rm -rf ${ outDir }/* && cp -R ${ srcDir }/images ${ outDir }/.`
+            `clear && cp -R ${ srcDir }/images ${ outDir }/.` // && rm -rf ${ outDir }/* && cp -R ${ srcDir }/images ${ outDir }/.`
         ).toString());
     });
 
