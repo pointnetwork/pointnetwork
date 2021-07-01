@@ -23,21 +23,19 @@ const options = {
 const container = 'pointnetwork_website_owner';
 const website = '/app/example/store.z';
 
-(async function() {
-    const bundler = new Bundler(target, options);
+const bundler = new Bundler(target, options);
 
-    bundler.on('buildStart', () => {
-        console.info(execSync(
-            `clear && cp -R ${ srcDir }/images ${ outDir }/.` // && rm -rf ${ outDir }/* && cp -R ${ srcDir }/images ${ outDir }/.`
-        ).toString());
-    });
+bundler.on('buildStart', () => {
+    console.info(execSync(
+        `clear && cp -R ${ srcDir }/images ${ outDir }/.`
+    ).toString());
+});
 
-    bundler.on('buildEnd', () => {
-        console.info(`\nDeploying to Point Network ${ container } node...\n`);
-        console.info(execSync(
-            `docker exec ${ container } /bin/bash -c '/app/point deploy "${ website }" --datadir "$DATADIR" -v'`
-        ).toString());
-    });
+bundler.on('buildEnd', () => {
+    console.info(`\nDeploying to Point Network ${ container } node...\n`);
+    console.info(execSync(
+        `docker exec ${ container } /bin/bash -c '/app/point deploy "${ website }" --datadir "$DATADIR" -v'`
+    ).toString());
+});
 
-    await bundler.serve();
-})();
+bundler.serve();
