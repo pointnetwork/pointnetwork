@@ -27,7 +27,7 @@ const Main = () => {
                 <p><a className='button' href='/'>Home</a></p>
                 <p><b>Point Network Store Example App</b>.</p>
                 <Route path='/'><Stores/></Route>
-                <Route path='/products/:store'><Products/></Route>
+                <Route path='/products/:storeId'><Products/></Route>
             </div>
         </main>
     )

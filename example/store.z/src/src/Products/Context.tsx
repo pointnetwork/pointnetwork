@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react'
+import React, { createContext, ReactNode, useContext, useState, useEffect, useCallback } from 'react'
 import { useRoute } from 'wouter'
 
 export type Product = {
@@ -7,7 +7,7 @@ export type Product = {
   name: string,
   description: string,
   price: string,
-  owner: string
+  owner: string,
 };
 
 export type ProductsRouteParams = {
@@ -17,7 +17,8 @@ export type ProductsRouteParams = {
 const defaultContext = {
   storeId: undefined as string | undefined,
   productList: undefined as Product[] | undefined,
-  productListError: undefined as Error | undefined
+  productListError: undefined as Error | undefined,
+  buyProduct: (productId:string, price:string) => {},
 };
 
 const ProductsContext = createContext(defaultContext)
@@ -27,14 +28,28 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
   const [storeId, setStoreId] = useState<string>();
   const [productList, setProductList] = useState<Product[] | undefined>();
   const [productListError, setProductListError] = useState<Error | undefined>();
-  const [, params] = useRoute<ProductsRouteParams>('/products/:store');
+  const [, params] = useRoute<ProductsRouteParams>('/products/:storeId');
 
   if (params?.storeId && params.storeId !== storeId) {
     setStoreId(params.storeId)
   }
 
+  const buyProduct = useCallback(async (productId:string, price:string) => {
+    console.info(`Selected to purchase product tokenId: ${productId} with price: ${price}`)
+    try {
+      // @ts-ignore
+      await window.point.contract.send({
+        contract: 'Store',
+        method: 'buyProductSimple',
+        params: [productId, price]
+      });
+    } catch (e) {
+      console.error('Failed to buy product', productId, e);
+      // TODO: handle error
+    }
+  }, []);
+
   useEffect(() => {
-    console.info({storeId});
     if (!storeId) {
       return
     }
@@ -47,22 +62,32 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
           method: 'getProductsByStoreIdSimple',
           params: [parseInt(storeId)]
         });
-        const {data: products} = response;
 
-        console.info({products})
+        const { data: products } = response;
 
         if (!Array.isArray(products)) {
           console.error('Incorrect getProductsByStoreIdSimple response:', response);
           throw new Error('Incorrect products data');
         }
 
-        setProductList(products.map(([_id, productId, name, price, _metadata, metadataHash, owner]: string[]) => {
-          // @ts-ignore
-          // TODO: fetch product data first:
-          // const productData = JSON.parse(await window.point.storage.getById(metadata));
+        setProductList(
+          await Promise.all(
+            products.map(async ([id, productId, _name, _price, metadata, metadataHash, owner]: string[]) => {
+              // @ts-ignore
+              const productResponse = await window.point.storage.get({ id: metadata, encoding: 'utf-8' });
+              const { data: productData } = productResponse;
 
-          return { storeId, productId, name, description: metadataHash, price, owner };
-        }) as Product[]);
+              if (!productData) {
+                console.error('Incorrect product response:', response, {id, productId, _name, _price, metadata, metadataHash, owner});
+                throw new Error(`Incorrect product data for product id: ${ id }`);
+              }
+
+              const { name, description, price } = JSON.parse(productData);
+
+              return { storeId, productId, name, description, price, owner };
+            })
+          ) as Product[]
+        );
       } catch (e) {
         setProductListError(e);
       }
@@ -73,6 +98,7 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
     storeId,
     productList,
     productListError,
+    buyProduct,
   }
 
   return <ProductsContext.Provider value={ context }>{ children }</ProductsContext.Provider>

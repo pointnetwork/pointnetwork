@@ -1,34 +1,28 @@
 import React from 'react'
+import { useAppContext } from '~App/Context';
 import { ProvideProductsContext, useProductsContext, Product } from './Context'
 
 const Product = ({ storeId, productId, name, description, price, owner }: Product) => {
-  const renderBuyButton = (owner:string) => {
-    if(owner=='0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB'){
-      return <b>YOU OWN THIS!</b>
-    } else{
-      return <button onClick={(e) => buyProduct(productId, price)}>Buy</button>
-    }
-  }
+  const { buyProduct } = useProductsContext();
+  const { walletAddress } = useAppContext();
+  const owned = owner === walletAddress;
+
   return (
     <li className="store">
-        <h3 className="name">{ name }</h3>
-        <p><i className="description">{ description }</i></p>
-        <p className="price">Price: { price }</p>
-        {renderBuyButton(owner)}
-        <hr/>
+      <h3 className="name">{ name }</h3>
+      <p className="description">{ description }</p>
+      <span className="price">Price: { price }</span>
+      {
+        owned ? <span className='owner'>You own this!</span> : (
+          <button onClick={ () => buyProduct(productId, price) }>Buy</button>
+        )
+      }
     </li>
   )
 }
 
-const buyProduct = async (productId:string, price:string) => {
-  console.log(`Selected to purchase product tokenId: ${productId} with price: ${price}`)
-  // await window.point.contract.send('store', 'Store', 'buyProductSimple', productId, price);
-}
-
 const ProductList = () => {
   const { storeId, productList, productListError } = useProductsContext()
-
-  console.log({productList});
 
   if (productListError) {
       return <span className='error'>{ productListError.message }</span>
