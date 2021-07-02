@@ -1,4 +1,4 @@
-#!/usr/local/bin/node
+#!/usr/bin/env node
 
 const Bundler = require('parcel');
 const path = require('path');
