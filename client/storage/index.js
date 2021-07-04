@@ -49,7 +49,7 @@ class Storage {
     ) {
         // Create at first to be able to chunkify and get the file id (hash), later we'll try to load it if it already exists
         let file = File.new();
-        file.localPath = filePath; // todo: should we rename it to lastlocalPath or something? or store somewhere // todo: validate it exists
+        file.originalPath = filePath; // todo: should we rename it to lastoriginalPath or something? or store somewhere // todo: validate it exists
         await file.chunkify(); // to receive an id (hash)
 
         const existingFile = File.find(file.id);
@@ -57,9 +57,9 @@ class Storage {
             file = existingFile;
         }
 
-        // Setting `localPath` to the `chunkify`ed version of `file`,
+        // Setting `originalPath` to the `chunkify`ed version of `file`,
         // instead of the path where we find the original file source.
-        file.localPath = path.join(this.getCacheDir(), 'chunk_'+file.id);
+        file.originalPath = path.join(this.getCacheDir(), 'chunk_'+file.id);
 
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
         file.expires = Math.max(parseInt(file.expires)||0, parseInt(expires)||0);
@@ -81,16 +81,16 @@ class Storage {
         autorenew = this.ctx.config.client.storage.default_autorenew
     ) {
         let directory = new Directory();
-        directory.setLocalPath(dirPath);
-        directory.addFilesFromLocalPath();
+        directory.setOriginalPath(dirPath);
+        directory.addFilesFromOriginalPath();
 
         // Now process every item
         for(let f of directory.files) {
             if (f.type === 'fileptr') {
-                let uploaded = await this.putFile(f.localPath, redundancy, expires, autorenew);
+                let uploaded = await this.putFile(f.originalPath, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else if (f.type === 'dirptr') {
-                let uploaded = await this.putDirectory(f.localPath, redundancy, expires, autorenew);
+                let uploaded = await this.putDirectory(f.originalPath, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else {
                 throw Error('invalid type: '+f.type);
@@ -166,11 +166,11 @@ class Storage {
         return new Promise(waitUntilUpload);
     }
 
-    async enqueueFileForDownload(id, localPath) {
+    async enqueueFileForDownload(id, originalPath) {
         if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
         let file = await File.findOrCreate(id);
-        // if (! file.localPath) file.localPath = '/tmp/'+id; // todo: put inside file? use cache folder?
-        if (! file.localPath) file.localPath = localPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
+        // if (! file.originalPath) file.originalPath = '/tmp/'+id; // todo: put inside file? use cache folder?
+        if (! file.originalPath) file.originalPath = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
         if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
             file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
             await file.save();
@@ -180,7 +180,7 @@ class Storage {
         return file.id;
     }
 
-    async getFile(id, localPath) {
+    async getFile(id, originalPath) {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
@@ -189,7 +189,7 @@ class Storage {
             return file;
         }
 
-        await this.enqueueFileForDownload(id, localPath);
+        await this.enqueueFileForDownload(id, originalPath);
 
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
