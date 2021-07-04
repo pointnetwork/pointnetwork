@@ -65,7 +65,7 @@ contract Store is ERC1155 {
         return productId;
     }
 
-    function buyProductSimple(uint tokenId) public payable {
+    function buyProduct(uint tokenId) public payable {
         Product memory _product = productIdToProduct[tokenId];
         require(msg.value >= _product.price, 'You need to send more Ether');
         require(_product.owner != msg.sender, 'You already own this Product');
@@ -77,7 +77,7 @@ contract Store is ERC1155 {
         emit ProductSoldEvent(owner, msg.sender, _product.id, _product.metadata);
     }
 
-    function getProductsByStoreIdSimple(uint storeId) public view returns(Product[] memory) {
+    function getProductsByStoreId(uint storeId) public view returns(Product[] memory) {
         return storeIdToProducts[storeId];
     }
 

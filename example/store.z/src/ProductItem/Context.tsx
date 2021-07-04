@@ -61,8 +61,9 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
             // @ts-ignore
             await window.point.contract.send({
                 contract: 'Store',
-                method: 'buyProductSimple',
-                params: [productId, price]
+                method: 'buyProduct',
+                amountInWei: price,
+                params: [productId]
             });
 
             // TODO: handle purchase

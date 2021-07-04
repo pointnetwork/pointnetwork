@@ -35,14 +35,14 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
                 // @ts-ignore
                 const response = await window.point.contract.call({
                     contract: 'Store',
-                    method: 'getProductsByStoreIdSimple',
+                    method: 'getProductsByStoreId',
                     params: [parseInt(storeId)]
                 });
 
                 const { data: products } = response;
 
                 if (!Array.isArray(products)) {
-                    console.error('Incorrect getProductsByStoreIdSimple response:', response);
+                    console.error('Incorrect getProductsByStoreId response:', response);
                     throw new Error('Incorrect products data');
                 }
 
