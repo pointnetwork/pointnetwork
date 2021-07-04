@@ -58,7 +58,7 @@ To follow the logs of *all* the containers simply run `docker-compose logs -f` i
 
 If you want to deploy a single example site then you can do the following:
 
-* Enter the website owner container like this: `docker exec -it pointnetowk_website_owner /bin/bash`,
+* Enter the website owner container like this: `docker exec -it pointnetwork_website_owner /bin/bash`,
 * Now inside the container terminal: `cd /app/example/store.z`.
 * Run the deploy command: `./point deploy ./example/store.z --datadir $DATADIR -v --contracts`
 
@@ -385,7 +385,7 @@ This is a React JS app. So you will need to install dependencies for it and run 
 
 1. CD into the [./example/store.z/src/](./example/store.z/src/) directory.
 1. Run `npm i` to install the sites dependencies
-1. Run `npm run watch` to have *parcel* watch the site and build it on any detected changes
+1. Run `npm run watch` (or `npm run watch:docker` if you are running the Node using Docker) to have *parcel* watch the site and build it on any detected changes
 1. Run `./scripts/deploy-sites.sh store --contracts` (from the node root folder) to deploy the sites `views` directory that was built using parcel.
 
 ### Coding style
