@@ -4,9 +4,21 @@
 
 The demo setup consists of three Point Network nodes running in a separate containers, a dev blockchain node running a test network (currently the `ganache-cli` is used), and a Point Network contract deployment script running in a dedicated container. Each Point Network node assigned to its own role in the demo. The node roles are:
 
-* Storage Provider, z-proxy port `65500`
-* Website Owner, z-proxy port `65501`
-* Website Viewer, z-proxy port `65502`
+* Storage Provider
+  * Service Name: `storage_provider`
+  * Container Name: `pointnetwork_storage_provider`
+  * ZProxy port `65500`
+  * API port: `24680`
+* Website Owner
+  * Service Name: `website_owner`
+  * Container Name: `pointnetwork_website_owner`
+  * ZProxy port `65501`
+  * API port: `24681`
+* Website Visitor
+  * Service Name: `website_visitor`
+  * Container Name: `pointnetwork_website_visitor`
+  * ZProxy port `65502`
+  * API port: `24682`
 
 To run the demo, one should firstly [install `docker`](https://docs.docker.com/get-docker/) and [`docker-compose`](https://docs.docker.com/compose/install/) on their host system. To start the demo, run:
 
@@ -20,7 +32,7 @@ Once the compose is up, the Point Network contracts deployment will start. Unles
 ./scripts/deploy-sites-docker.sh
 ```
 
-Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `z-proxy` ports. The sites will be available at their regular addresses.
+Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `ZProxy` ports. The sites will be available at their regular addresses.
 
 ### Develop using the docker compose
 
@@ -38,8 +50,19 @@ If you make changes to the code while the compose is already running, you can re
 docker-compose restart storage_provider # to restart a specified container
 docker-compose restart # to restart the whole compose
 ```
+**Docker Compose Logs**
 
-### Install Dependencies
+To follow the logs of *all* the containers simply run `docker-compose logs -f` in the terminal. If you want to follow the logs of a specific container, hten specify the service name as well like so: `docker-compose logs -f storage_provider` (to follow the logs of `storage_provider`)
+
+**Docker Compose Single Site Deployment**
+
+If you want to deploy a single example site then you can do the following:
+
+* Enter the website owner container like this: `docker exec -it pointnetowk_website_owner /bin/bash`,
+* Now inside the container terminal: `cd /app/example/store.z`.
+* Run the deploy command: `./point deploy ./example/store.z --datadir $DATADIR -v --contracts`
+
+### Install Dependencies (Local Machine Setup)
 
 Install all global and project dependencies. Run the following under the project root folder:
 
