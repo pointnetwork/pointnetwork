@@ -62,6 +62,10 @@ If you want to deploy a single example site then you can do the following:
 * Now inside the container terminal: `cd /app/example/store.z`.
 * Run the deploy command: `./point deploy ./example/store.z --datadir $DATADIR -v --contracts`
 
+**Docker Compose and Truffle Console**
+
+Since the `blockchain_node` service is exposed via `http://localhost:7545` its therefore possible to use truffle console without any modification. So you can run `truffle console` and it will connect to the running Ganache blockchain in the Docker `blockchain_node` service.
+
 ### Install Dependencies (Local Machine Setup)
 
 Install all global and project dependencies. Run the following under the project root folder:
