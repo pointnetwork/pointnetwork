@@ -47,14 +47,12 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
                 }
 
                 setProductList(
-                    products.map(([id, productId, name, price, metadata, metadataHash, owner]: string[]) => ({
+                    products.map(([productId, name, price, metadata, owner]: string[]) => ({
                         storeId,
-                        id,
                         productId,
                         name,
                         price,
                         metadata,
-                        metadataHash,
                         owner,
                     } as ProductData)
                 ));

@@ -2,83 +2,95 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import '@openzeppelin/contracts/token/ERC1155/ERC1155.sol';
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract Store is ERC1155 {
-    constructor() ERC1155("{id}") {}
+contract Store is ERC721 {
+    constructor() ERC721("Store", "STOZ") {}
+
+    using Counters for Counters.Counter;
+    Counters.Counter internal _storeIds;
+    Counters.Counter internal _tokenIds;
 
     struct StoreFront {
-        uint id;
+        uint256 id;
         string name;
         string description;
         string logo;
-        bool exists;
     }
 
     struct Product {
-        bytes32 id;
-        uint tokenId;
+        uint256 tokenId;
         string name;
-        uint price;
+        uint256 price;
         string metadata;
-        bytes metadataHash;
         address owner;
     }
 
-    // Store Arrays and Mappings
+    // StoreFront Array
     StoreFront[] stores;
-    mapping(address => StoreFront) public ownerToStoreFront;
-    mapping(uint => StoreFront) public storeIdToStoreFront;
-    mapping(address => uint[]) public ownerToStoreIds;
 
     // Product Arrays and Mappings
-    mapping (uint => Product[]) public storeIdToProducts;
-    mapping(uint => Product) public productIdToProduct;
-
-    uint internal _storeCounter;
-    uint internal _tokenCounter;
+    mapping(uint256 => uint256[]) public storeIdToTokenIds;
+    mapping(uint256 => Product) public tokenIdToProduct;
 
     // Events
-    event NewStoreEvent(uint id, string name, string description);
-    event NewProductEvent(bytes32 id, uint tokenId, string name, uint price, string metadata, address owner);
-    event ProductSoldEvent(address from, address to, bytes32 productId, string metadata);
+    event NewStoreEvent(uint id, string name, uint256 timestamp);
+    event NewProductEvent(uint tokenId, string name, uint256 timestamp);
+    event ProductSoldEvent(uint tokenId, address from, address to, uint256);
 
-    function registerStore(string memory name, string memory description, string memory logo) public  {
-        uint storeId = _storeCounter++;
-        StoreFront memory _store = StoreFront(storeId, name, description, logo, true);
-        ownerToStoreFront[msg.sender] = _store;
-        ownerToStoreIds[msg.sender].push(storeId);
-        storeIdToStoreFront[storeId] = _store;
+    function registerStore(string memory name,
+                           string memory description,
+                           string memory logo) public {
+        _storeIds.increment();
+        uint256 newStoreId = _storeIds.current();
+        StoreFront memory _store = StoreFront(newStoreId, name, description, logo);
         stores.push(_store);
-        emit NewStoreEvent(storeId, name, description);
+        emit NewStoreEvent(newStoreId, name, block.timestamp);
     }
 
-    function addProductToStore(uint storeId, string memory name, uint price, string memory metadata) public returns (bytes32) {
-        uint newProductId = _tokenCounter++;
-        bytes32 productId = keccak256(abi.encodePacked(name, price, metadata));
-        bytes memory metadataHash = bytes(metadata);
-        Product memory _product = Product(productId, newProductId, name, price, metadata, metadataHash, msg.sender);
-        _mint(msg.sender, newProductId, 1, metadataHash);
-        storeIdToProducts[storeId].push(_product);
-        productIdToProduct[newProductId] = _product;
-        emit NewProductEvent(productId, newProductId, name, price, metadata, msg.sender);
-        return productId;
+    function addProductToStore(uint storeId,
+                               string memory name,
+                               uint price,
+                               string memory metadata) public {
+        _tokenIds.increment();
+        uint256 newTokenId = _tokenIds.current();
+        // Mint new NFT using the sender as the owner and the token id
+        _mint(msg.sender, newTokenId);
+        // Add product to the store
+        Product memory _product = Product(newTokenId, name, price, metadata, msg.sender);
+        storeIdToTokenIds[storeId].push(newTokenId);
+        // Add the product by its tokenId
+        tokenIdToProduct[newTokenId] = _product;
+        emit NewProductEvent(newTokenId, name, block.timestamp);
     }
 
-    function buyProduct(uint tokenId) public payable {
-        Product memory _product = productIdToProduct[tokenId];
-        require(msg.value >= _product.price, 'You need to send more Ether');
-        require(_product.owner != msg.sender, 'You already own this Product');
-
-        address owner = _product.owner;
-        payable(owner).transfer(_product.price);
-        _product.owner = msg.sender;
-        productIdToProduct[tokenId] = _product;
-        emit ProductSoldEvent(owner, msg.sender, _product.id, _product.metadata);
+    function buyProduct(uint _tokenId) public payable {
+        Product memory product = tokenIdToProduct[_tokenId];
+        uint256 productPrice = product.price;
+        address ownerAddress = ownerOf(_tokenId);
+        require(msg.value >= productPrice, 'You need to send more Ether');
+        require(ownerAddress != msg.sender, 'You already own this Product');
+        _transfer(ownerAddress, msg.sender, _tokenId);
+        payable(ownerAddress).transfer(productPrice);
+        product.owner = msg.sender;
+        tokenIdToProduct[_tokenId] = product;
+        if(msg.value > productPrice) {
+            payable(msg.sender).transfer(msg.value - productPrice);
+        }
+        emit ProductSoldEvent(_tokenId, ownerAddress, msg.sender, block.timestamp);
     }
 
     function getProductsByStoreId(uint storeId) public view returns(Product[] memory) {
-        return storeIdToProducts[storeId];
+        uint256[] memory storeTokenIds = storeIdToTokenIds[storeId];
+        uint256 tokenCount = storeTokenIds.length;
+        Product[] memory _storeProducts = new Product[](tokenCount);
+        for (uint i = 0; i < tokenCount; i++) {
+            uint256 tokenId = storeTokenIds[i];
+            Product memory product = tokenIdToProduct[tokenId];
+            _storeProducts[i] = product;
+        }
+        return _storeProducts;
     }
 
     function getStores() public view returns(StoreFront[] memory) {

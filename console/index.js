@@ -77,8 +77,8 @@ class Console {
         const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/v1/api/';
         try {
             const url = api_base_url + api_cmd ;
-            console.log('Posting to:'+url);
-            console.log('Posting with biody:', body);
+            console.log('Post to:'+url);
+            console.log('Post body:', body);
             const response = await axios.post(url, body, {
                 headers: {
                   'host': host,

@@ -8,11 +8,9 @@ export type Product = {
 
 export type ProductData = {
     storeId: string,
-    id: string,
     productId: string,
     name: string,
     price: string,
     metadata: string,
-    metadataHash: string,
     owner: string,
 };

@@ -2,7 +2,7 @@
   "version": 1,
   "target": "store.z",
   "keyvalue": {
-    "store0": {
+    "store1": {
       "contract_send": "Store.registerStore(name,description,logo)",
       "metadata": {
         "name": "My Store",
@@ -13,7 +13,7 @@
         }
       }
     },
-    "store1": {
+    "store2": {
       "contract_send": "Store.registerStore(name,description,logo)",
       "metadata": {
         "name": "A.N. Other Ltd",
@@ -24,37 +24,37 @@
         }
       }
     },
-    "store0_product0": {
+    "store1_product0": {
       "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
       "metadata": {
-        "storeId": 0,
+        "storeId": 1,
         "name": "Toothbrush",
         "description": "A tooth cleaner",
         "price": "1000000000000000000"
-      }
-    },
-    "store0_product1": {
-      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
-      "metadata": {
-        "storeId": 0,
-        "name": "Book",
-        "description": "A page turner",
-        "price": "2000000000000000000"
-      }
-    },
-    "store0_product2": {
-      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
-      "metadata": {
-        "storeId": 0,
-        "name": "MacBook Pro",
-        "description": "A new computer",
-        "price": "12000000000000000000"
       }
     },
     "store1_product1": {
       "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
       "metadata": {
         "storeId": 1,
+        "name": "Book",
+        "description": "A page turner",
+        "price": "2000000000000000000"
+      }
+    },
+    "store1_product2": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 1,
+        "name": "MacBook Pro",
+        "description": "A new computer",
+        "price": "12000000000000000000"
+      }
+    },
+    "store2_product1": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 2,
         "name": "Official A.N. Other T-Shirt",
         "description": "Gonna be worth a lot!",
         "price": "1000000000000000000"
