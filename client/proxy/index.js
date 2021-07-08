@@ -16,6 +16,7 @@ const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
 const qs = require('query-string');
+const Console = require('../../console');
 
 class ZProxy {
     constructor(ctx) {
@@ -23,6 +24,8 @@ class ZProxy {
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
+        // for forwarding on api requests when required
+        this.console = new Console(this.ctx);
     }
 
     async start() {
@@ -125,6 +128,8 @@ class ZProxy {
         };
         response.writeHead(500, headers);
         response.write('500: '+err); // todo: come on, write a better msg
+        this.ctx.log.error(`ZProxy 500 Error: ${err}`); // write out to ctx.log
+        console.error(err); // for stack trace
         response.end();
     }
 
@@ -144,6 +149,7 @@ class ZProxy {
 
             // console.debug(parsedUrl);
             let contentType = 'text/html';
+            let status = 200;
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
                 let hash = parsedUrl.pathname.replace('/_storage/', '');
                 let hashWithoutExt = hash.split('.').slice(0, -1).join('.');
@@ -162,6 +168,15 @@ class ZProxy {
             } else if (_.startsWith(parsedUrl.pathname, '/_contract_send/')) {
                 try {
                     rendered = await this.contractSend(host, request);
+                } catch(e) {
+                    return this.abortError(response, e);
+                }
+            } else if (_.startsWith(parsedUrl.pathname, '/v1/api/')) {
+                try {
+                    let apiResponse = await this.apiResponseFor(parsedUrl.pathname, request);
+                    status = apiResponse.status ? apiResponse.status : status;
+                    contentType = 'application/json';
+                    rendered = JSON.stringify(apiResponse);
                 } catch(e) {
                     return this.abortError(response, e);
                 }
@@ -189,14 +204,14 @@ class ZProxy {
             const headers = {
                 'Content-Type': contentType
             };
-            response.writeHead(200, headers);
+            response.writeHead(status, headers);
             response.write(sanitized, {encoding: null}/*, 'utf-8'*/);
             response.end();
 
         } catch(e) {
             // throw 'ZProxy Error: '+e; // todo: remove
             console.log('ZProxy Error:', e); // todo: this one can be important for debugging, but maybe use ctx.log not console
-            return this.abortError(response, 'ZProxy Error: '+e);
+            return this.abortError(response, 'ZProxy: '+e);
         }
 
         // todo:?
@@ -204,6 +219,37 @@ class ZProxy {
         // console.log(request.port);
         // console.log(request.method);
         // console.log(request.url);
+    }
+
+    async apiResponseFor(cmdstr, request) {
+        cmdstr = cmdstr.replace('/v1/api/', '');
+        cmdstr = cmdstr.replace(/\/$/, "");
+
+        let [cmd, params] = this._parseApiCmd(cmdstr)
+        let response = {}
+        let body = '';
+        if (request.method.toUpperCase() == 'POST') {
+            let apiPromise = new Promise(async(resolve, reject) => {
+                request.on('data', (chunk) => {
+                    body += chunk;
+                });
+                request.on('end', async () => {
+                    response = await this.console.cmd_api_post(request.headers.host, cmd, body);
+                    resolve(response)
+                })
+            })
+
+            response = await apiPromise;
+        } else {
+            response = await this.console.cmd_api(cmd, ...params);
+        }
+        return response;
+    }
+
+    _parseApiCmd(cmdstr) {
+        let [cmd, params] = cmdstr.split('?')
+        params ? params = params.split('&') : params = ''
+        return [cmd, params]
     }
 
     sanitize(html) {

@@ -1,9 +1,9 @@
-const PointController = require('./PointController')
+const PointSDKController = require('./PointSDKController')
 const fs = require('fs')
 const ethereumjs = require('ethereumjs-util')
 const helpers = require('./helpers/WalletHelpers')
 
-class WalletController extends PointController {
+class WalletController extends PointSDKController {
   constructor(ctx, req, reply) {
     super(ctx)
     this.web3 = this.ctx.network.web3;
@@ -11,7 +11,6 @@ class WalletController extends PointController {
     this.payload = req.body;
     this.reply = reply;
     this.wallet;
-
     // if the wallet is required for the current request
     if(this._walletRequired(req)) {
       const wallet = helpers.initWallet(ctx, req.headers['wallet-token'])

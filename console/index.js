@@ -43,7 +43,7 @@ class Console {
     }
 
     async cmd_api(...args) {
-        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/api/';
+        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/v1/api/';
         const api_cmd = args.shift();
         try {
             // Note: args must be "="-delimited strings, or just strings, e.g. ["a=b", "c=d"] or ["b", "d"]
@@ -65,10 +65,31 @@ class Console {
             const url = api_base_url + api_cmd + '?' + params;
             console.log('Querying '+url);
             const response = await axios.get(url);
-            console.log(response.data);
             return response.data
         } catch (e) {
-            return {error: `Error fetching ${api_cmd} : ${e.message}`}
+            return {error: `Error fetching ${api_cmd} : ${e.message}`,
+                    status: e.response.status,
+                    statusText: e.response.statusText}
+        }
+    }
+
+    async cmd_api_post(host, api_cmd, body) {
+        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/v1/api/';
+        try {
+            const url = api_base_url + api_cmd ;
+            console.log('Posting to:'+url);
+            console.log('Posting with biody:', body);
+            const response = await axios.post(url, body, {
+                headers: {
+                  'host': host,
+                  'Content-Type': 'application/json'
+                }
+            })
+            return response.data
+        } catch (e) {
+            return {error: `Error posting ${api_cmd} : ${e.message}`,
+                    status: e.response.status,
+                    statusText: e.response.statusText}
         }
     }
 }

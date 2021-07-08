@@ -2,15 +2,18 @@ const packageJson = require('../../package.json');
 const File = require('../../db/models/file');
 const api_routes = require('../api_routes');
 const ws_routes = require('../ws_routes');
+const PointSDKController = require('./PointSDKController');
 
-class StatusController {
+class StatusController extends PointSDKController {
   constructor(ctx) {
-    this.ctx = ctx;
+    super(ctx)
   }
 
-  async status() {
+  async meta() {
     let status = await this._nodeStatus();
-    return {status}
+    return this._response(
+      status
+    )
   }
 
   async _nodeStatus() {
