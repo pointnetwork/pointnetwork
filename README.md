@@ -246,7 +246,7 @@ Should return the following result:
 ```json
 {
    "file": {
-       "localPath": "/Users/developer/.point/test1/data/client_storage_cache/file_45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2",
+       "originalPath": "/Users/developer/.point/test1/data/client_storage_cache/file_45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2",
        "dl_status": "ds99",
        "id": "45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2",
        "chunkIds": [

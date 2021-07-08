@@ -17,7 +17,7 @@ class StorageController extends PointSDKController {
     var allFiles = [...new Set([...allUploadedFiles, ...allDownloadedFiles])];
     // return a subset of the attributes to the client
     const files = allFiles.map((file) =>
-      (({ id, localPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, localPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
+      (({ id, originalPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, originalPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
 
     return this._response(files);
   }

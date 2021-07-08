@@ -5,7 +5,7 @@ class Directory {
     constructor() {
         this.name = '';
         this.files = [];
-        this.localPath = null;
+        this.originalPath = null;
         this.size = 0;
         // todo: include 'version' and 'compat' fields
     }
@@ -47,12 +47,12 @@ class Directory {
         return await this.ctx.client.storage.readFile(id, encoding);
     }
 
-    setLocalPath(localPath) {
-        this.localPath = localPath;
+    setOriginalPath(originalPath) {
+        this.originalPath = originalPath;
     }
 
-    addFilesFromLocalPath() {
-        this.addFilesFromPath(this.localPath);
+    addFilesFromOriginalPath() {
+        this.addFilesFromPath(this.originalPath);
     }
 
     addFilesFromPath(dirPath) {
@@ -69,14 +69,14 @@ class Directory {
         let size;
         if (fs.statSync(filePath).isDirectory()) {
             let subdir = new Directory();
-            subdir.setLocalPath(filePath);
-            subdir.addFilesFromLocalPath();
+            subdir.setOriginalPath(filePath);
+            subdir.addFilesFromOriginalPath();
             size = subdir.size;
             this.files.push({
                 type: 'dirptr',
                 name: name,
                 dirObj: subdir,
-                localPath: filePath,
+                originalPath: filePath,
                 size,
             });
         } else {
@@ -84,7 +84,7 @@ class Directory {
             this.files.push({
                 type: 'fileptr',
                 name: name,
-                localPath: filePath,
+                originalPath: filePath,
                 size
             });
         }
