@@ -111,10 +111,10 @@ class Deployer {
         };
 
         let getImports = function(dependency) {
-            const dependencyLocalPath = path.join(deployPath, 'contracts', dependency)
-            const dependencyNodeModulesPath = path.join(deployPath, 'node_modules', dependency)
-            if (fs.existsSync(dependencyLocalPath)) {
-                return {contents: fs.readFileSync(dependencyLocalPath, 'utf8')};
+            const dependencyOriginalPath = path.join(deployPath, 'contracts', dependency)
+            const dependencyNodeModulesPath = path.join(deployPath, 'node_modules/', dependency)
+            if (fs.existsSync(dependencyOriginalPath)) {
+                return {contents: fs.readFileSync(dependencyOriginalPath, 'utf8')};
             } else if (fs.existsSync(dependencyNodeModulesPath)){
                 return {contents: fs.readFileSync(dependencyNodeModulesPath, 'utf8')};
             } else {

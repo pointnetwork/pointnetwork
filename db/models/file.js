@@ -122,7 +122,7 @@ class File extends Model {
         }
 
         // todo: check full file integrity
-        fs.copyFileSync(temporaryFile, this.localPath);
+        fs.copyFileSync(temporaryFile, this.originalPath);
         fs.unlinkSync(temporaryFile);
     }
 
@@ -149,7 +149,7 @@ class File extends Model {
 
     getFileSize() {
         if (typeof this.size === 'undefined') {
-            this.size = fs.statSync(this.localPath).size;
+            this.size = fs.statSync(this.originalPath).size;
         }
         return this.size;
     }
@@ -171,7 +171,7 @@ class File extends Model {
         }));
 
         // let percentage = chunks_uploading / chunks.length;
-        // console.log("file: "+this.localPath+": "+"█".repeat(percentage)+".".repeat(100-percentage));
+        // console.log("file: "+this.originalPath+": "+"█".repeat(percentage)+".".repeat(100-percentage));
 
         await this.changeULStatus((chunks_uploading > 0) ? File.UPLOADING_STATUS_UPLOADING : File.UPLOADING_STATUS_UPLOADED);
     }
@@ -257,7 +257,7 @@ class File extends Model {
             return undefined;
         }
         if (this.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) throw new Error('EFILESTATUSNOTDONE: File has not yet been downloaded');
-        return fs.readFileSync(this.localPath, encoding);
+        return fs.readFileSync(this.originalPath, encoding);
     }
 
     async chunkify() {
@@ -272,7 +272,7 @@ class File extends Model {
                 let currentChunkLength = 0;
                 let chunkId = null;
 
-                fs.createReadStream(this.localPath)
+                fs.createReadStream(this.originalPath)
                     .on('data', (buf) => {
                         let bufCopied = 0;
 
