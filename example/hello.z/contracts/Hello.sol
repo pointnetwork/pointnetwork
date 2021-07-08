@@ -6,6 +6,8 @@ contract Hello {
   string public value = 'Hello Contract Default Value';
   int public counter = 0;
 
+  event HelloWorld(string message);
+
   // Setter functions for testing contract write send interactions
   function incrementCounter() public {
     counter++;
@@ -17,6 +19,10 @@ contract Hello {
   function setValueAndCounter(string memory _value, int _counter) public {
     value = _value;
     counter = _counter;
+  }
+
+  function emitHelloWorldEvent(string memory _message) public {
+      emit HelloWorld(_message);
   }
 
   // Getter functions for testing contract read only call interactions

@@ -56,6 +56,10 @@ class ContractController extends PointSDKController {
         }
      }
 
+     async getPastEvents() {
+         // TODO call getPastEvents for the desired contract / event
+     }
+
      /* Private Functions */
     _walletRequired(req) {
         let fn = req.url.slice(req.url.lastIndexOf('/') + 1, req.url.length)

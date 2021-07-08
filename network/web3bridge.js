@@ -13,7 +13,9 @@ class Web3Bridge {
         this.network_id = this.ctx.config.network.web3_network_id;
         this.chain_id = this.ctx.config.network.web3_chain_id;
 
-        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(this.connectionString); // todo: maybe you should hide it behind this abstraction, no?
+        // use WebsocketProvider to support subscriptions
+        const localProvider = new Web3.providers.WebsocketProvider(this.connectionString)
+        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(localProvider); // todo: maybe you should hide it behind this abstraction, no?
         this.ctx.web3bridge = this;
 
         this.address = this.ctx.config.client.wallet.account;
@@ -93,6 +95,11 @@ class Web3Bridge {
     async getPastEvents(target, contractName, event, options={fromBlock: 0, toBlock: 'latest'}) {
         const contract = await this.loadWebsiteContract(target, contractName);
         return await contract.getPastEvents( event,  options );
+    }
+
+    async subscribeEvent(target, contractName, event, callback, options={}) {
+        const contract = await this.loadWebsiteContract(target, contractName);
+        contract.events[event](options).on('data', callback );
     }
 
     async sendToContract(target, contractName, methodName, params, options={}) { // todo: multiple arguments, but check existing usage // huh?

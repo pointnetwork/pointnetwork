@@ -15,7 +15,8 @@ const readline = require('readline');
 const node2Config = require('../../resources/demo/config.test2.json')
 // const node3Config = require('../../resources/demo/config.test3.json')
 
-const ws = new WebSocket(`ws://localhost:${node2Config.api.port}/ws/node`);
+// const ws = new WebSocket(`ws://localhost:${node2Config.api.port}/ws/node`);
+const ws = new WebSocket(`ws://localhost:${node2Config.api.port}/ws/pointSDK`);
 
 const path = require('path')
 
@@ -25,8 +26,8 @@ const PROMPT = 'ws> ';
 deploy_example='example/hello.z'
 
 ws.on('open', () => {
-  ws.send('status');
-  ws.send('ping');
+  ws.send('status/ping');
+  ws.send('status/meta');
   _console.prompt();
   // uncomment the below 'deploy' command and the node will deploy the example site!
   // ws.send(`deploy?deploy_path=${path.resolve(deploy_example)}`);
