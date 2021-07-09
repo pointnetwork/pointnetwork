@@ -71,6 +71,12 @@ function createWsConsole() {
   console.log('Example: Wallet transactions are streamed via this socket')
   console.log(`${PROMPT} {"type":"internal","params":{"service":"wallet"}}`)
   console.log()
+  console.log('Example: Deployer progress can be streamed via this socket')
+  console.log(`${PROMPT} {"type":"internal","params":{"service":"deployer"}}`)
+  console.log()
+  console.log('Example: Subscribe to Smart Contract Events')
+  console.log(`${PROMPT} {"type":"subscribeContractEvent","params":{"target":"hello.z","contract":"Hello","event":"HelloWorld"}}`)
+  console.log()
   console.log('***********************************************')
   console.log()
   process.stdin.setEncoding('utf8');

@@ -1,8 +1,7 @@
 const WebSocket = require('ws');
 const Console = require('../../console');
 
-// TODO change to SocketController
-class Socket {
+class SocketController {
   constructor(ctx, conn, wss) {
     this.ctx = ctx
     this.conn = conn
@@ -11,48 +10,41 @@ class Socket {
     this.init()
   }
 
-  /*
-  Refactor Socket to work with cmd objects of a specific structure to call API endpoints
-
-  * If type == 'subscribeContractEvent' then subscribe to the contracts events
-  * If type == 'api' then make API Request via contoller
-  * If type == 'internal' then set the via the wss endpoint of internal streamss like deployer / wallet
-
-  */
   init() {
     this.console = new Console(this.ctx);
      // expect the message to contain an object detailing the
     this.ws.on('message', async (msg) => {
       // TODO extract to handleRequesst function
-      console.log('received msg: ', msg)
-      // contract and the contract event to subscribe to
       const cmd = JSON.parse(msg)
-      console.log('received cmd: ', cmd)
-      // TODO remove hardcoded target
-      const target = 'hello.z'
-      const options = {}
-      // TODO improve this process and fix multiple subscritons
-      // TODO unsubscribe?
-      // TODO ensure only one subscription?
+      // TODO handle unsubscribe?
+      // TODO ensure only one subscription per client?
       if(cmd.type == 'subscribeContractEvent') {
-          console.log('Subscribing to: ', cmd.params.contract)
-          this.ctx.web3bridge.subscribeEvent(target, cmd.params.contract, cmd.params.event, this.callback.bind(this), options);
+          const {target, contract, event, ...options} = cmd.params;
+          this.ctx.web3bridge.subscribeEvent(target,
+                                             contract,
+                                             event,
+                                             this.callback.bind(this),
+                                             options);
           this.publishToClients(`successfully subscribed to ${cmd.params.contract} contract ${cmd.params.event} events`);
       }
-      //{"type":"api","params":{"path":"status/ping"}}
       if(cmd.type == 'api') {
           this.publishToClients(await this.apiResponseFor(cmd.params.path))
       }
-      // {"type":"internal","params":{"service":"wallet"}}
       if(cmd.type == 'internal') {
-          this.ctx.wallet.wss = this
-          this.publishToClients(`successfully subscribed to all internal wallet transactions`);
-          // this.ctx.client.deployerProgress.wss = this
+          if(cmd.params.service == 'wallet') {
+            this.ctx.wallet.wss = this
+            this.publishToClients(`successfully subscribed to all internal wallet transactions`);
+          }
+          if(cmd.params.service == 'deployer') {
+            this.ctx.client.deployerProgress.wss = this
+            this.publishToClients(`successfully subscribed to all internal deployer progress updates`);
+          }
       }
     })
   }
 
   callback(event) {
+    // TODO callback should be generic and not know about the object passed in
     this.publishToClients(event.returnValues);
   }
 
@@ -85,4 +77,4 @@ class Socket {
   }
 }
 
-module.exports = Socket;
+module.exports = SocketController;

@@ -56,6 +56,19 @@ class ContractController extends PointSDKController {
         }
      }
 
+     async load() {
+        const contractName = this.req.params.contract;
+
+        let contract = await this.ctx.web3bridge.loadWebsiteContract(this.host, contractName);
+
+        let data = {
+           address: contract._address,
+           abi: contract._jsonInterface
+        }
+
+        return this._response(data);
+     }
+
      async getPastEvents() {
          // TODO call getPastEvents for the desired contract / event
      }
