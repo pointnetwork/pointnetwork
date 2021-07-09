@@ -99,7 +99,8 @@ class Web3Bridge {
 
     async subscribeEvent(target, contractName, event, callback, options={}) {
         const contract = await this.loadWebsiteContract(target, contractName);
-        contract.events[event](options).on('data', callback );
+        const subscription = contract.events[event](options).on('data', callback );
+        return subscription;
     }
 
     async sendToContract(target, contractName, methodName, params, options={}) { // todo: multiple arguments, but check existing usage // huh?
