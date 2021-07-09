@@ -24,10 +24,15 @@ let _console;
 const PROMPT = 'ws> ';
 
 deploy_example='example/hello.z'
+contractSubscriptionExample={
+  contract: 'Hello',
+  event: 'HelloWorld'
+}
 
 ws.on('open', () => {
-  ws.send('status/ping');
-  ws.send('status/meta');
+  // ws.send('status/ping');
+  // ws.send('status/meta');
+  ws.send(JSON.stringify(contractSubscriptionExample))
   _console.prompt();
   // uncomment the below 'deploy' command and the node will deploy the example site!
   // ws.send(`deploy?deploy_path=${path.resolve(deploy_example)}`);
