@@ -37,6 +37,7 @@ const deployExample={
 const contractSubscriptionExample={
   type: 'subscribeContractEvent',
   params: {
+    target: 'hello.z',
     contract: 'Hello',
     event: 'HelloWorld'
   }

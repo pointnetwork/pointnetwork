@@ -1,4 +1,15 @@
+let ws;
+
 pointSDKDemo = {
+    websocket: {
+        open: (callback) => {
+            if (!ws) {
+                // TODO route via ZProxy
+                ws = new WebSocket('ws://localhost:2469/ws/node')
+                ws.onmessage = (msg) => callback(msg.data);
+            }
+        }
+    },
     status: {
         ping: async () => {
             let response = await fetch('/v1/api/status/ping')
@@ -41,6 +52,23 @@ pointSDKDemo = {
                 body: JSON.stringify(meta)
             })
             return await response.json()
+        },
+        // load: async(contractName) => {
+        //     ///v1/api/contract/load/Hello
+        //     console.log(window.location)
+        //     let contract = await fetch(`${window.location}v1/api/contract/load/${contractName}`, {
+        //         headers: {
+        //             Host: window.location
+        //         }
+        //     })
+        //     return await contract.json()
+        // },
+        subscribe: async(meta) => {
+            let payload = {
+                type: 'subscribeContractEvent',
+                params: meta
+            }
+            ws.send(JSON.stringify(payload))
         }
     }
 }

@@ -9,14 +9,29 @@
   <body>
     <div>
       <p>Hello World Example for testing Storage Layer features and the Point Browser SDK</p>
+      <b>API Responses</b>
       <p id="results"></p>
+      <b>WebSocket Events</b>
+      <ul id="wsevents"></ul>
     </div>
     <script>
+      // example of a callback function that can be used to handle data from a websocket
+      function websocketMessageHandler(data) {
+        let li = document.createElement("li");
+        let wsmsg = document.createTextNode(data);
+        li.appendChild(wsmsg);
+        document.getElementById("wsevents").appendChild(li);
+      }
       (async () => {
+        // initialize websocket connect to point network node via PointSDK
+        // the idea here is to initalize websockets for the app only if needed
+        // and to specify the callback that will handle the incomming websocket messages
+        window.point.websocket.open(websocketMessageHandler);
         let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
         let address = await window.point.wallet.address();
         let hash = await window.point.wallet.hash();
+        // let contract = await window.point.contract.load('Hello');
         let callValue = await window.point.contract.call({contract: 'Hello', method: 'value'});
         let callCounter = await window.point.contract.call({contract: 'Hello', method: 'counter'});
         let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??']});
@@ -24,13 +39,16 @@
         let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
         let sendSetValue = await window.point.contract.send({contract: 'Hello', method: 'setValue', params: ['A new value']});
         let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
+        // TODO route via ZProxy and remove target
+        let subscription = await window.point.contract.subscribe({target: 'hello.z', contract: 'Hello', event: 'HelloWorld'});
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert
         let elements = []
-        elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
+        // elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
         elements.push(`<p>Ping Test: ${ping.data.ping}</p>`)
         elements.push(`<p>Wallet Address: ${address.data.address}</p>`)
+        // elements.push(`<p>Contract Address: ${contract.data.address}</p>`)
         elements.push(`<p>Wallet Hash: ${hash.data.hash}</p>`)
         elements.push(`<p>Contract Call Value: ${callValue.data}</p>`)
         elements.push(`<p>Contract Call Counter: ${callCounter.data}</p>`)
