@@ -43,30 +43,17 @@ class Console {
     }
 
     async cmd_api(...args) {
-        const api_base_url = this.buildApiBaseUrl()
-        const api_cmd = args.shift();
-        try {
-            let params = this.buildURLParams(args);
-            const url = api_base_url + api_cmd + '?' + params;
-            console.log('Querying '+url);
-            const response = await axios.get(url);
-            return response.data
-        } catch (e) {
-            return {error: `Error fetching ${api_cmd} : ${e.message}`,
-                    status: e.response.status,
-                    statusText: e.response.statusText}
-        }
+        return await this.cmd_api_get('localhost', args.shift(), ...args);
     }
 
-    async cmd_api_get(host, cmd, ...args) {
+    async cmd_api_get(_host, cmd, ...args) {
+        _host = (_host === 'localhost') ? this.host : _host
         try {
             const params = this.buildURLParams(args);
-            console.log('PARAMS: ', params)
-            console.log('ARGS: ', args)
             const url = this.buildApiBaseUrl() + cmd + '?' + params;
             const response = await axios.get(url, {
                 headers: {
-                  'host': host,
+                  'host': _host,
                   'Content-Type': 'application/json'
                 }
             })
@@ -78,13 +65,14 @@ class Console {
         }
     }
 
-    async cmd_api_post(host, cmd, body) {
+    async cmd_api_post(_host, cmd, body) {
+        _host = (_host === 'localhost') ? this.host : _host
         const api_base_url = this.buildApiBaseUrl();
         try {
             const url = api_base_url + cmd;
             const response = await axios.post(url, body, {
                 headers: {
-                  'host': host,
+                  'host': _host,
                   'Content-Type': 'application/json'
                 }
             })
@@ -118,8 +106,16 @@ class Console {
         return params;
     }
 
+    get host() {
+        return `http://localhost:${parseInt(ctx.config.api.port)}`;
+    }
+
+    get path() {
+        return '/v1/api/';
+    }
+
     buildApiBaseUrl() {
-        return 'http://localhost:'+parseInt(ctx.config.api.port)+'/v1/api/';
+        return `${this.host}${this.path}`;
     }
 }
 
