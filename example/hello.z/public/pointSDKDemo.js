@@ -53,16 +53,10 @@ pointSDKDemo = {
             })
             return await response.json()
         },
-        // load: async(contractName) => {
-        //     ///v1/api/contract/load/Hello
-        //     console.log(window.location)
-        //     let contract = await fetch(`${window.location}v1/api/contract/load/${contractName}`, {
-        //         headers: {
-        //             Host: window.location
-        //         }
-        //     })
-        //     return await contract.json()
-        // },
+        load: async(contractName) => {
+            let contract = await fetch(`/v1/api/contract/load/${contractName}`)
+            return await contract.json()
+        },
         subscribe: async(meta) => {
             let payload = {
                 type: 'subscribeContractEvent',

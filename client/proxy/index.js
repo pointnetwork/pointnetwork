@@ -228,20 +228,21 @@ class ZProxy {
         let [cmd, params] = this._parseApiCmd(cmdstr)
         let response = {}
         let body = '';
+        let host = request.headers.host;
         if (request.method.toUpperCase() == 'POST') {
             let apiPromise = new Promise(async(resolve, reject) => {
                 request.on('data', (chunk) => {
                     body += chunk;
                 });
                 request.on('end', async () => {
-                    response = await this.console.cmd_api_post(request.headers.host, cmd, body);
+                    response = await this.console.cmd_api_post(host, cmd, body);
                     resolve(response)
                 })
             })
 
             response = await apiPromise;
         } else {
-            response = await this.console.cmd_api(cmd, ...params);
+            response = await this.console.cmd_api_get(host, cmd, ...params);
         }
         return response;
     }

@@ -39,8 +39,8 @@ class SocketController {
             this.ctx.client.deployerProgress.wss = this
             this.publishToClients(`successfully subscribed to all internal deployer progress updates`);
           }
-      }
-    })
+        }
+      })
   }
 
   callback(event) {

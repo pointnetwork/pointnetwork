@@ -27,11 +27,11 @@
         // the idea here is to initalize websockets for the app only if needed
         // and to specify the callback that will handle the incomming websocket messages
         window.point.websocket.open(websocketMessageHandler);
-        let balance = await window.point.wallet.balance();
+        // let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
         let address = await window.point.wallet.address();
         let hash = await window.point.wallet.hash();
-        // let contract = await window.point.contract.load('Hello');
+        let contract = await window.point.contract.load('Hello');
         let callValue = await window.point.contract.call({contract: 'Hello', method: 'value'});
         let callCounter = await window.point.contract.call({contract: 'Hello', method: 'counter'});
         let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??']});
@@ -48,7 +48,7 @@
         // elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
         elements.push(`<p>Ping Test: ${ping.data.ping}</p>`)
         elements.push(`<p>Wallet Address: ${address.data.address}</p>`)
-        // elements.push(`<p>Contract Address: ${contract.data.address}</p>`)
+        elements.push(`<p>Hello Smart Contract Address: ${contract.data.address}</p>`)
         elements.push(`<p>Wallet Hash: ${hash.data.hash}</p>`)
         elements.push(`<p>Contract Call Value: ${callValue.data}</p>`)
         elements.push(`<p>Contract Call Counter: ${callCounter.data}</p>`)
