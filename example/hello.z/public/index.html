@@ -29,7 +29,6 @@
         socket = window.point.websocket.open(websocketMessageHandler);
         socket.onopen = function() {
             console.log('WebSocket Client Connected');
-            socket.send('Hi this is web client.');
             // TODO route via ZProxy and remove target
             window.point.contract.subscribe({target: 'hello.z', contract: 'Hello', event: 'HelloWorld'});
         };

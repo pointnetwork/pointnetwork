@@ -25,6 +25,7 @@ class ZProxy {
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
+        this.socket;
         // for forwarding on api requests when required
         this.console = new Console(this.ctx);
     }
@@ -36,14 +37,23 @@ class ZProxy {
             httpServer: server
         });
 
-        wsServer.on('request', function(request) {
-            const socket = request.accept(null, request.origin);
-            socket.on('message', function(message) {
-                let responseMsg = `Server Received Message: ${message.utf8Data}`
-                console.log(responseMsg);
-                socket.send(responseMsg);
+        wsServer.on('request', (request) => {
+            this.socket = request.accept(null, request.origin);
+            this.socket.on('message', (msg) => {
+                const cmd = JSON.parse(msg.utf8Data)
+                // TODO handle unsubscribe?
+                // TODO ensure only one subscription per client?
+                if(cmd.type == 'subscribeContractEvent') {
+                    const {target, contract, event, ...options} = cmd.params;
+                    this.ctx.web3bridge.subscribeEvent(target,
+                                                        contract,
+                                                        event,
+                                                        this.callback.bind(this),
+                                                        options);
+                    this.socket.send(`successfully subscribed to ${cmd.params.contract} contract ${cmd.params.event} events`)
+                }
             });
-            socket.on('close', function(reasonCode, description) {
+            this.socket.on('close', (reasonCode, description) => {
                 console.log('Client has disconnected.');
             });
         });
@@ -55,6 +65,12 @@ class ZProxy {
                 wsServer.emit('connection', ws, request);
             });
         });
+    }
+
+    // TODO callback should be generic and not know about the object passed in
+    // TODO move websockets to specific controller
+    callback(event) {
+        this.socket.send(JSON.stringify(event.returnValues));
     }
 
     httpx() {
