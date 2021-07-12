@@ -274,17 +274,17 @@ class ZProxy {
             });
             request.on('end', async() => {
                 try {
-                    // Download info about root dir
-                    let rootDir = await this.getRootDirectoryForDomain(host);
-                    rootDir.setCtx(ctx);
-                    rootDir.setHost(host);
-
-                    // First try route file
+                    // First try route file (and check if this domain even exists)
                     let zroute_id = await this.getZRouteIdFromDomain(host);
                     if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
 
                     let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
                     if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
+
+                    // Download info about root dir
+                    let rootDir = await this.getRootDirectoryForDomain(host);
+                    rootDir.setCtx(ctx);
+                    rootDir.setHost(host);
 
                     let template_filename = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
                     if (template_filename) {
