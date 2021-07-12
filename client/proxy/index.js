@@ -12,6 +12,7 @@ const sanitizingConfig = require('./sanitizing-config');
 const crypto = require('crypto')
 const eccrypto = require("eccrypto");
 const io = require('socket.io');
+const WebSocketServer = require('websocket').server;
 const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
@@ -30,9 +31,30 @@ class ZProxy {
 
     async start() {
         let server = this.httpx();
-        let ws = io(server.http);
-        let wss = io(server.https);
+
+        const wsServer = new WebSocketServer({
+            httpServer: server
+        });
+
+        wsServer.on('request', function(request) {
+            const socket = request.accept(null, request.origin);
+            socket.on('message', function(message) {
+                let responseMsg = `Server Received Message: ${message.utf8Data}`
+                console.log(responseMsg);
+                socket.send(responseMsg);
+            });
+            socket.on('close', function(reasonCode, description) {
+                console.log('Client has disconnected.');
+            });
+        });
+
         server.listen(this.port, () => console.log(`ZProxy server listening on localhost:${ this.port }`));
+
+        server.http.on('upgrade', (request, socket, head) => {
+            wsServer.handleUpgrade(request, socket, head, (ws) => {
+                wsServer.emit('connection', ws, request);
+            });
+        });
     }
 
     httpx() {

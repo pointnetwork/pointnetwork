@@ -26,7 +26,13 @@
         // initialize websocket connect to point network node via PointSDK
         // the idea here is to initalize websockets for the app only if needed
         // and to specify the callback that will handle the incomming websocket messages
-        window.point.websocket.open(websocketMessageHandler);
+        socket = window.point.websocket.open(websocketMessageHandler);
+        socket.onopen = function() {
+            console.log('WebSocket Client Connected');
+            socket.send('Hi this is web client.');
+            // TODO route via ZProxy and remove target
+            window.point.contract.subscribe({target: 'hello.z', contract: 'Hello', event: 'HelloWorld'});
+        };
         // let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
         let address = await window.point.wallet.address();
@@ -39,8 +45,6 @@
         let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
         let sendSetValue = await window.point.contract.send({contract: 'Hello', method: 'setValue', params: ['A new value']});
         let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
-        // TODO route via ZProxy and remove target
-        let subscription = await window.point.contract.subscribe({target: 'hello.z', contract: 'Hello', event: 'HelloWorld'});
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert

@@ -1,12 +1,14 @@
-let ws;
+let socket;
 
 pointSDKDemo = {
     websocket: {
         open: (callback) => {
-            if (!ws) {
-                // TODO route via ZProxy
-                ws = new WebSocket('ws://localhost:2469/ws/node')
-                ws.onmessage = (msg) => callback(msg.data);
+            if (!socket) {
+                socket = new WebSocket('ws://hello.z');
+                socket.onmessage = (e) => {
+                    callback(`Received: '${e.data}'`);
+                };
+                return socket;
             }
         }
     },
@@ -62,7 +64,7 @@ pointSDKDemo = {
                 type: 'subscribeContractEvent',
                 params: meta
             }
-            ws.send(JSON.stringify(payload))
+            socket.send(JSON.stringify(payload))
         }
     }
 }
