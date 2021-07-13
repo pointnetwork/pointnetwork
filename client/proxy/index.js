@@ -13,6 +13,7 @@ const crypto = require('crypto')
 const eccrypto = require("eccrypto");
 const io = require('socket.io');
 const WebSocketServer = require('websocket').server;
+const SocketController = require('../../api/sockets/SocketController');
 const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
@@ -25,52 +26,39 @@ class ZProxy {
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
-        this.socket;
         // for forwarding on api requests when required
         this.console = new Console(this.ctx);
     }
 
     async start() {
         let server = this.httpx();
+        let ws = this.wsServer(server);
+        server.listen(this.port, () => console.log(`ZProxy server listening on localhost:${ this.port }`));
+    }
 
-        const wsServer = new WebSocketServer({
+    wsServer(server) {
+        const wss = new WebSocketServer({
             httpServer: server
         });
 
-        wsServer.on('request', (request) => {
-            this.socket = request.accept(null, request.origin);
-            this.socket.on('message', (msg) => {
-                const cmd = JSON.parse(msg.utf8Data)
-                // TODO handle unsubscribe?
-                // TODO ensure only one subscription per client?
-                if(cmd.type == 'subscribeContractEvent') {
-                    const {target, contract, event, ...options} = cmd.params;
-                    this.ctx.web3bridge.subscribeEvent(target,
-                                                        contract,
-                                                        event,
-                                                        this.callback.bind(this),
-                                                        options);
-                    this.socket.send(`successfully subscribed to ${cmd.params.contract} contract ${cmd.params.event} events`)
-                }
-            });
-            this.socket.on('close', (reasonCode, description) => {
-                console.log('Client has disconnected.');
+        wss.on('request', (request) => {
+            let socket = request.accept(null, request.origin);
+            let parsedUrl = new URL(request.origin);
+
+            new SocketController(this.ctx, socket, wss, parsedUrl.host);
+
+            socket.on('close', () => {
+                console.log('WS Client disconnected.');
             });
         });
-
-        server.listen(this.port, () => console.log(`ZProxy server listening on localhost:${ this.port }`));
 
         server.http.on('upgrade', (request, socket, head) => {
-            wsServer.handleUpgrade(request, socket, head, (ws) => {
-                wsServer.emit('connection', ws, request);
+            wss.handleUpgrade(request, socket, head, (ws) => {
+                wss.emit('connection', ws, request);
             });
         });
-    }
 
-    // TODO callback should be generic and not know about the object passed in
-    // TODO move websockets to specific controller
-    callback(event) {
-        this.socket.send(JSON.stringify(event.returnValues));
+        return wss;
     }
 
     httpx() {

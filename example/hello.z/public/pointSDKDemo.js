@@ -5,9 +5,7 @@ pointSDKDemo = {
         open: (callback) => {
             if (!socket) {
                 socket = new WebSocket('ws://hello.z');
-                socket.onmessage = (e) => {
-                    callback(`Received: '${e.data}'`);
-                };
+                socket.onmessage = (e) => callback(e.data);
                 return socket;
             }
         }

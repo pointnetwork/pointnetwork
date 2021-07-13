@@ -103,7 +103,7 @@ class ApiServer {
                     return undefined // needed otherwise 'handler not defined error' is thrown by fastify
                 },
                 wsHandler: async (conn, req) => {
-                    return new (require('./sockets/'+socketName))(this.ctx, conn, this.server.websocketServer);
+                    return new (require('./sockets/'+socketName))(this.ctx, conn.socket, this.server.websocketServer);
                 }
             });
         }

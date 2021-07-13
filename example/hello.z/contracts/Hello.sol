@@ -7,13 +7,16 @@ contract Hello {
   int public counter = 0;
 
   event HelloWorld(string message);
+  event UpdatedValue(string oldValue, string newValue);
 
   // Setter functions for testing contract write send interactions
   function incrementCounter() public {
     counter++;
   }
-  function setValue(string memory _value) public {
-    value = _value;
+  function setValue(string memory _newValue) public {
+    string memory _oldValue = value;
+    value = _newValue;
+    emit UpdatedValue(_oldValue, _newValue);
   }
 
   function setValueAndCounter(string memory _value, int _counter) public {

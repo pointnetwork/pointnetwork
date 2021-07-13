@@ -7,7 +7,6 @@ class DeployController {
     async deploy() {
         const deploy_path = this.request.query.deploy_path;
         const deploy_contracts = (this.request.query.deploy_contracts==='true' || this.request.query.deploy_contracts==='1');
-        console.log(this.request);
         if (deploy_path.length === 0) throw new Error('error: deploy path not specified');
 
         try {

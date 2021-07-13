@@ -8,20 +8,17 @@
   </head>
   <body>
     <div>
-      <p>Hello World Example for testing Storage Layer features and the Point Browser SDK</p>
+      <h4>Hello World Example : Demo Storage Layer features and the Point Browser SDK</h4>
+      <button id="btnTestSmartContractEvent" onclick="testSmartContractEvent()">Test Smart Contact Event</button>
+      <input type="text" id="txtTestSmartContractSetValue" value="Change Me!" ></input>
+      <br/>
+      <br/>
       <b>API Responses</b>
       <p id="results"></p>
       <b>WebSocket Events</b>
       <ul id="wsevents"></ul>
     </div>
     <script>
-      // example of a callback function that can be used to handle data from a websocket
-      function websocketMessageHandler(data) {
-        let li = document.createElement("li");
-        let wsmsg = document.createTextNode(data);
-        li.appendChild(wsmsg);
-        document.getElementById("wsevents").appendChild(li);
-      }
       (async () => {
         // initialize websocket connect to point network node via PointSDK
         // the idea here is to initalize websockets for the app only if needed
@@ -29,8 +26,8 @@
         socket = window.point.websocket.open(websocketMessageHandler);
         socket.onopen = function() {
             console.log('WebSocket Client Connected');
-            // TODO route via ZProxy and remove target
-            window.point.contract.subscribe({target: 'hello.z', contract: 'Hello', event: 'HelloWorld'});
+            window.point.contract.subscribe({contract: 'Hello', event: 'HelloWorld'});
+            window.point.contract.subscribe({contract: 'Hello', event: 'UpdatedValue'});
         };
         // let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
@@ -42,7 +39,6 @@
         let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??']});
         let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2]});
         let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
-        let sendSetValue = await window.point.contract.send({contract: 'Hello', method: 'setValue', params: ['A new value']});
         let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
@@ -59,10 +55,23 @@
         elements.push(`<p>Contract Call Square: ${callSquare.data}</p>`)
         elements.push(`<p>Contract Call Add: ${callAdd.data}</p>`)
         elements.push(`<p>Contract Send Increment Counter: ${sendIncrementCounter.data}</p>`)
-        elements.push(`<p>Contract Send Set Value: ${sendSetValue.data}</p>`)
         let elementsStr = elements.join('')
         document.getElementById("results").innerHTML = `<div>${elementsStr}</div>`
       })()
+      // example of a callback function that can be used to handle data from a websocket
+      function websocketMessageHandler(data) {
+        let li = document.createElement("li");
+        let wsmsg = document.createTextNode(data);
+        li.appendChild(wsmsg);
+        document.getElementById("wsevents").appendChild(li);
+      }
+      async function testSmartContractEvent() {
+        document.getElementById('btnTestSmartContractEvent').innerText = 'Processing';
+        let newValue = document.getElementById('txtTestSmartContractSetValue').value;
+        // NOTE this contract send will also trigger the UpdatedValue event from the Smart Contract
+        await window.point.contract.send({contract: 'Hello', method: 'setValue', params: [newValue]});
+        document.getElementById('btnTestSmartContractEvent').innerText = 'DONE. Click Button to try again!';
+      }
     </script>
   </body>
 </html>
