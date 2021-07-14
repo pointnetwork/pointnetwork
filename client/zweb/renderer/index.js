@@ -141,6 +141,11 @@ class Renderer {
                 const decryptedData = await decryptData(host, Buffer.from(encryptedData, 'hex'), encryptedSymmetricObj, privateKey);
                 return decryptedData.plaintext.toString();
             });
+            Twig.exports.extendFunction("isHash", async(str) => {
+                const s = (_.startsWith(str, '0x')) ? str.substr(2) : str;
+                if (s.length !== 64) return false;
+                return ((new RegExp("^[0-9a-fA-F]+$")).test(s));
+            });
             Twig.exports.extendFunction("identity_by_owner", async(owner) => {
                 return await this.ctx.web3bridge.identityByOwner(owner);
             });
@@ -177,12 +182,12 @@ class Renderer {
             Twig.exports.extendFunction("is_authenticated", async(auth) => {
                 return auth.walletid != undefined
             });
-            Twig.exports.extendFunction("contract_list", async(target, contractName, method) => {
+            Twig.exports.extendFunction("contract_list", async(target, contractName, method, params = []) => {
                 let i = 0;
                 let results = [];
                 while(true) {
                     try {
-                        results.push(await this.ctx.web3bridge.callContract(target, contractName, method, [i]));
+                        results.push(await this.ctx.web3bridge.callContract(target, contractName, method, params.concat([i])));
                     } catch(e) {
                         // todo: only if the error is related to the array bound? how can we standardize this?
                         break;

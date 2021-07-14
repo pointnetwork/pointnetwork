@@ -11,9 +11,11 @@ contract Identity {
     mapping(string => address) identityToOwner;
     mapping(address => string) ownerToIdentity;
     mapping(string => mapping(string => string)) ikv;
+    mapping(string => string[]) public ikvList;
     // At the same time this mapping is used to see if the identity is registered at all
     mapping(string => string) lowercaseToCanonicalIdentities;
     mapping(string => PubKey64) identityToCommPublicKey;
+    string[] public identityList;
 
     uint public MAX_HANDLE_LENGTH = 16;
 
@@ -30,6 +32,7 @@ contract Identity {
         _selfReg('profile', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
         _selfReg('twitter', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
         _selfReg('store', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('explorer', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
 
         _selfReg('node3', 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8, PubKey64({part1: 0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2, part2: 0xaeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34}));
     }
@@ -39,6 +42,7 @@ contract Identity {
         ownerToIdentity[owner] = handle;
         identityToCommPublicKey[handle] = commPublicKey;
         lowercaseToCanonicalIdentities[_toLower(handle)] = handle;
+        identityList.push(handle);
     }
 
     function register(string memory handle, address identityOwner, PubKey64 memory commPublicKey) public {
@@ -60,6 +64,9 @@ contract Identity {
 
         // Add canonical version
         lowercaseToCanonicalIdentities[lowercase] = handle;
+
+        // Add the handle to identity list so that it can be iterated over
+        identityList.push(handle);
 
         emit IdentityRegistered(handle, identityOwner, commPublicKey);
     }
@@ -87,7 +94,12 @@ contract Identity {
         _;
     }
 
+    // todo: put or set? decide
     function ikvPut(string memory identity, string memory key, string memory value) public onlyIdentityOwner(identity) {
+        if (bytes(ikv[identity][key]).length == 0) {
+            ikvList[identity].push(key);
+        }
+
         ikv[identity][key] = value;
 
         emit IKVSet(identity, key, value);
