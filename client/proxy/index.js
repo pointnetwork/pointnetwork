@@ -496,10 +496,12 @@ class ZProxy {
     }
 
     _errorMsgHtml(message, code = 500) {
-        return "<div style='text-align:center; margin-top: 20%;'>" +
+        return "<html><body style='background-color: #222233'>" +
+            "<div style='text-align:center; margin-top: 20%;'>" +
             "<h1 style='font-size: 300px; color: #ccc; margin: 0; padding: 0;'>"+code+"</h1>" +
-            "<div style='padding: 0 20%; color: #777; margin-top: 10px;'><strong>Error: </strong>"+this.ctx.utils.htmlspecialchars(message)+
-            "</div></div>";
+            "<div style='padding: 0 20%; color: #e8e8e8; margin-top: 10px;'><strong>Error: </strong>"+this.ctx.utils.htmlspecialchars(message)+
+            "</div></div>" +
+            "</body></html>";
     }
 }
 
