@@ -118,7 +118,7 @@ class ZProxy {
             'Content-Type': 'text/html;charset=UTF-8',
         };
         response.writeHead(404, headers);
-        response.write('404 '+message); // todo: come on, write a better msg
+        response.write(this._errorMsgHtml(message, 404));
         response.end();
     }
 
@@ -127,7 +127,7 @@ class ZProxy {
             'Content-Type': 'text/html;charset=UTF-8',
         };
         response.writeHead(500, headers);
-        response.write('500: '+err); // todo: come on, write a better msg
+        response.write(this._errorMsgHtml(err, 500)); // better code
         this.ctx.log.error(`ZProxy 500 Error: ${err}`); // write out to ctx.log
         console.error(err); // for stack trace
         response.end();
@@ -256,7 +256,7 @@ class ZProxy {
     getContentTypeFromExt(ext) {
         // Note: just "css" won't work, so we prepend a dot
         if (ext === 'zhtml') {
-            ext = 'html'
+            ext = 'html';
         }
         return mime.lookup('.'+ext) || 'application/octet-stream';
     }
@@ -276,7 +276,7 @@ class ZProxy {
                 try {
                     // First try route file (and check if this domain even exists)
                     let zroute_id = await this.getZRouteIdFromDomain(host);
-                    if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'route file not specified for this domain'); // todo: replace with is_valid_id
+                    if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'Domain not found (Route file not specified for this domain)'); // todo: replace with is_valid_id
 
                     let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
                     if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
@@ -490,6 +490,15 @@ class ZProxy {
         // }
         //
         // return null;
+    }
+
+    _errorMsgHtml(message, code = 500) {
+        return "<html><body style='background-color: #222233'>" +
+            "<div style='text-align:center; margin-top: 20%;'>" +
+            "<h1 style='font-size: 300px; color: #ccc; margin: 0; padding: 0;'>"+code+"</h1>" +
+            "<div style='padding: 0 20%; color: #e8e8e8; margin-top: 10px;'><strong>Error: </strong>"+this.ctx.utils.htmlspecialchars(message)+
+            "</div></div>" +
+            "</body></html>";
     }
 }
 
