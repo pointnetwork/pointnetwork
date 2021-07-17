@@ -31,7 +31,10 @@ class NodeSocketController {
                 this.publishToClients(`successfully subscribed to all internal wallet transactions`);
                 break;
             case 'deployerSubscription':
-                this.ctx.client.deployerProgress.wss = this
+                // this.ctx.client.deployerProgress.wss = this
+                this.ctx.client.deployerProgress.progressEventEmitter.on(this.PROGRESS_UPDATED, (data) => {
+                    this.publishToClients(this._formatResponse(cmd, data));
+                });
                 this.publishToClients(`successfully subscribed to all internal deployer progress updates`);
                 break;
             }

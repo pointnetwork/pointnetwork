@@ -2,37 +2,16 @@ let events = require('events')
 let path = require('path')
 
 class DeployerProgress {
+  static get PROGRESS_UPDATED() { return 'PROGRESS_UPDATED' }
+
   constructor(ctx) {
     this.ctx = ctx
-    this.PROGRESS_UPDATED = 'PROGRESS_UPDATED'
-  }
-
-  init() {
     this.progressEventEmitter = new events.EventEmitter()
-    this._initEventHandlerFunction()
-    this.progress = {
-      type: 'api_deploy',
-      data: []
-    }
   }
 
-  // this is set by the DeployProgressSocket once a connection is established with a client
-  set wss(_wss) {
-    this.wsserver = _wss
-  }
-
-  update(_filename, _progress = 0, _status = 'UNKNOWN') {
+  update(filename, progress = 0, status = 'UNKNOWN') {
     // forward this onto the event handler function
-    this.progressEventEmitter.emit(this.PROGRESS_UPDATED, _filename, _progress, _status)
-  }
-
-  _initEventHandlerFunction() {
-    this.progressEventEmitter.on(this.PROGRESS_UPDATED, (filename, progress, status) => {
-      if (this.wsserver) {
-        this._updateProgress(filename, progress, status)
-        this.wsserver.publishToClients(this.progress)
-      }
-    })
+    this.progressEventEmitter.emit(DeployerProgress.PROGRESS_UPDATED, {filename, progress, status})
   }
 
   // private functions

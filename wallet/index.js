@@ -30,9 +30,9 @@ class Wallet {
         return this.ctx.network.web3
     }
 
-    get transactionEvents() {
-        return this.transactionEventEmitter;
-    }
+    // get transactionEvents() {
+    //     return this.transactionEventEmitter;
+    // }
 
     saveDefaultWalletToKeystore() {
         // use the hard coded wallet id, passcode, address and private key to save to the nodes keystore
