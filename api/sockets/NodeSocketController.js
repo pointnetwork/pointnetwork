@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
-const Wallet = require('../../wallet/index')
+const Wallet = require('../../wallet/index');
+const DeployerProgress = require('../../client/zweb/deployer/progress');
 const Console = require('../../console');
 
 /*
@@ -28,14 +29,14 @@ class NodeSocketController {
                 this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, (data) => {
                     this.publishToClients(this._formatResponse(cmd, data));
                 })
-                this.publishToClients(`successfully subscribed to all internal wallet transactions`);
+                this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to Wallet.TRANSACTION_EVENT'}, 'SUBSCRIBED_EVENT'));
                 break;
             case 'deployerSubscription':
-                // this.ctx.client.deployerProgress.wss = this
-                this.ctx.client.deployerProgress.progressEventEmitter.on(this.PROGRESS_UPDATED, (data) => {
+                // subscribe to the deployerProgress PROGRESS_UPDATED via the wallet progressEventEmitter
+                this.ctx.client.deployerProgress.progressEventEmitter.on(DeployerProgress.PROGRESS_UPDATED, (data) => {
                     this.publishToClients(this._formatResponse(cmd, data));
                 });
-                this.publishToClients(`successfully subscribed to all internal deployer progress updates`);
+                this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to DeployerProgress.PROGRESS_UPDATED'}, 'SUBSCRIBED_EVENT'));
                 break;
             }
         })
@@ -57,8 +58,8 @@ class NodeSocketController {
         return this._formatResponse(cmdObj, response)
     }
 
-    _formatResponse(cmd, response) {
-        let payload = {...cmd, data: response}
+    _formatResponse(cmd, response, event='DATA_EVENT') {
+        let payload = {...cmd, data: response, event}
         return payload
     }
 
