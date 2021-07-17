@@ -9,11 +9,8 @@ const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
-const crypto = require('crypto')
-const eccrypto = require("eccrypto");
-const io = require('socket.io');
 const WebSocketServer = require('websocket').server;
-const SocketController = require('../../api/sockets/SocketController');
+const ZProxySocketController = require('../../api/sockets/ZProxySocketController');
 const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
@@ -45,7 +42,7 @@ class ZProxy {
             let socket = request.accept(null, request.origin);
             let parsedUrl = new URL(request.origin);
 
-            new SocketController(this.ctx, socket, wss, parsedUrl.host);
+            new ZProxySocketController(this.ctx, socket, wss, parsedUrl.host);
 
             socket.on('close', () => {
                 console.log('WS Client disconnected.');

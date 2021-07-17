@@ -1,3 +1,3 @@
 module.exports = [
-  ['GET', '/ws/node', 'SocketController']
+  ['GET', '/ws/node', 'NodeSocketController']
 ]
