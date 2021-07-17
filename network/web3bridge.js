@@ -100,7 +100,7 @@ class Web3Bridge {
     async subscribeEvent(target, contractName, event, callback, options={}) {
         const contract = await this.loadWebsiteContract(target, contractName);
         const subscription = contract.events[event](options)
-            .on('data', event => callback(event.returnValues))
+            .on('data', event => callback(event))
             .on('connected', subscriptionId => console.log(subscriptionId));
         return subscription;
     }

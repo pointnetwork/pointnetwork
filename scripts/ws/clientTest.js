@@ -34,17 +34,20 @@ const deployExample={
   }
 }
 
-const contractSubscriptionExample={
-  type: 'subscribeContractEvent',
-  params: {
-    target: 'hello.z',
-    contract: 'Hello',
-    event: 'HelloWorld'
-  }
+const walletSubscriptionExample={
+  type: 'walletSubscription',
+  params: {}
+}
+
+const deployerSubscriptionExample={
+  type: 'deployerSubscription',
+  params: {}
 }
 
 ws.on('open', () => {
   ws.send(JSON.stringify(pingExample))
+  ws.send(JSON.stringify(walletSubscriptionExample))
+  ws.send(JSON.stringify(deployerSubscriptionExample))
   _console.prompt();
   // uncomment the below examples to try them out!
   // or just enter the json commands directly into the console as shown below
@@ -70,13 +73,10 @@ function createWsConsole() {
   console.log(`${PROMPT} {"type":"api","params":{"path":"deploy?deploy_path=./example/hello.zy"}}`)
   console.log()
   console.log('Example: Wallet transactions are streamed via this socket')
-  console.log(`${PROMPT} {"type":"internal","params":{"service":"wallet"}}`)
+  console.log(`${PROMPT} {"type":"walletSubscription","params":{}}`)
   console.log()
   console.log('Example: Deployer progress can be streamed via this socket')
-  console.log(`${PROMPT} {"type":"internal","params":{"service":"deployer"}}`)
-  console.log()
-  console.log('Example: Subscribe to Smart Contract Events')
-  console.log(`${PROMPT} {"type":"subscribeContractEvent","params":{"target":"hello.z","contract":"Hello","event":"HelloWorld"}}`)
+  console.log(`${PROMPT} {"type":"deployerSubscription","params":{}}`)
   console.log()
   console.log('***********************************************')
   console.log()

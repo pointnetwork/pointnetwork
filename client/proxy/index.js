@@ -9,11 +9,8 @@ const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
-const crypto = require('crypto')
-const eccrypto = require("eccrypto");
-const io = require('socket.io');
 const WebSocketServer = require('websocket').server;
-const SocketController = require('../../api/sockets/SocketController');
+const ZProxySocketController = require('../../api/sockets/ZProxySocketController');
 const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
@@ -45,7 +42,7 @@ class ZProxy {
             let socket = request.accept(null, request.origin);
             let parsedUrl = new URL(request.origin);
 
-            new SocketController(this.ctx, socket, wss, parsedUrl.host);
+            new ZProxySocketController(this.ctx, socket, wss, parsedUrl.host);
 
             socket.on('close', () => {
                 console.log('WS Client disconnected.');
@@ -520,10 +517,12 @@ class ZProxy {
     }
 
     _errorMsgHtml(message, code = 500) {
-        return "<div style='text-align:center; margin-top: 20%;'>" +
+        return "<html><body style='background-color: #222233'>" +
+            "<div style='text-align:center; margin-top: 20%;'>" +
             "<h1 style='font-size: 300px; color: #ccc; margin: 0; padding: 0;'>"+code+"</h1>" +
-            "<div style='padding: 0 20%; color: #777; margin-top: 10px;'><strong>Error: </strong>"+this.ctx.utils.htmlspecialchars(message)+
-            "</div></div>";
+            "<div style='padding: 0 20%; color: #e8e8e8; margin-top: 10px;'><strong>Error: </strong>"+this.ctx.utils.htmlspecialchars(message)+
+            "</div></div>" +
+            "</body></html>";
     }
 }
 
