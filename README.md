@@ -127,7 +127,11 @@ All sites should respond with a 200 status code. If not there is something wrong
 1. Run the [Point Browser](https://github.com/pointnetwork/pointbrowser)
 1. Navigate to `http://blog.z` and it will open the home page of the Example Blog.
 
-### Troubleshooting the demo
+## WebSockets
+
+Please refer to the [WebSockets README](./api/sockets/)
+
+## Troubleshooting
 
 To completely reset the nodes, clear all the cache data and redeploy your config files simply run the following script from the project root folder:
 
@@ -328,14 +332,6 @@ Then in the playground you can load any of the `db/models` and interact with the
 require('./init')
 const File = require('../../db/models/file');
 ... use the File model ...
-```
-
-### Using the WebSocket Test client
-
-You can start the `WebSocket Test client` using the following at the terminal:
-
-```
-node scripts/ws/clientTest.js
 ```
 
 ### Testing all example sites deployment
