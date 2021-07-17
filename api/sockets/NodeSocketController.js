@@ -1,8 +1,9 @@
 const WebSocket = require('ws');
+const Wallet = require('../../wallet/index')
 const Console = require('../../console');
 
 /*
-The  NodeSocketController is for handling internal node websocket connections via the internal node api port and is currently used by the Fastify Websocket connection (see ws_routes.js).
+The NodeSocketController is for handling internal node websocket connections via the internal node api port and is currently used by the Fastify Websocket connection (see ws_routes.js).
 */
 class NodeSocketController {
     constructor(_ctx, _ws, _wss) {
@@ -20,10 +21,13 @@ class NodeSocketController {
         const cmd = JSON.parse(msg);
         switch (cmd.type) {
             case 'api':
-                this.publishToClients(await this.apiResponseFor(cmd.params.path));
+                this.publishToClients(await this.apiResponseFor(cmd));
                 break;
             case 'walletSubscription':
-                this.ctx.wallet.wss = this
+                // subscribe to the wallets TRANSACTION_EVENT via the wallet transactionEventEmitter
+                this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, (data) => {
+                    this.publishToClients(this._formatResponse(cmd, data));
+                })
                 this.publishToClients(`successfully subscribed to all internal wallet transactions`);
                 break;
             case 'deployerSubscription':
@@ -44,15 +48,14 @@ class NodeSocketController {
         }
     }
 
-    async apiResponseFor(cmdstr) {
-        let [cmd, params] = this._parseCmd(cmdstr)
+    async apiResponseFor(cmdObj) {
+        let [cmd, params] = this._parseCmd(cmdObj.params.path)
         let response = await this.console.cmd_api(cmd, ...params)
-        return this._formatResponse(cmd, response)
+        return this._formatResponse(cmdObj, response)
     }
 
     _formatResponse(cmd, response) {
-        let api_cmd = `api_${cmd.replace('/', '_')}`
-        let payload = {type: api_cmd, data: response}
+        let payload = {...cmd, data: response}
         return payload
     }
 

@@ -46,6 +46,7 @@ const deployerSubscriptionExample={
 
 ws.on('open', () => {
   ws.send(JSON.stringify(pingExample))
+  ws.send(JSON.stringify(walletSubscriptionExample))
   _console.prompt();
   // uncomment the below examples to try them out!
   // or just enter the json commands directly into the console as shown below

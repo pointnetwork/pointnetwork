@@ -5,15 +5,16 @@ const events = require('events')
 let ethereumjs = require('ethereumjs-util')
 
 class Wallet {
+    static get TRANSACTION_EVENT() { return 'TRANSACTION_EVENT' }
+
     constructor(ctx) {
         this.ctx = ctx;
         this.config = ctx.config.client.wallet;
         this.network_account = this.config.account;
 
         // Events
-        this.TRANSACTION_EVENT = 'TRANSACTION_EVENT'
+        // transactionEventEmitter emits the TRANSACTION_EVENT type
         this.transactionEventEmitter = new events.EventEmitter()
-        this._initEventHandlerFunction()
     }
 
     async start() {
@@ -29,26 +30,8 @@ class Wallet {
         return this.ctx.network.web3
     }
 
-    // this is set by the WalletConnectSocket once a connection is established with a client
-    set wss(_wss) {
-        this.wsserver = _wss
-    }
-
-    _initEventHandlerFunction() {
-        this.transactionEventEmitter.on(this.TRANSACTION_EVENT, (transactionHash, from, to, value) => {
-            if (this.wsserver) {
-                let payload = {
-                    type: 'api_wallet_tx',
-                    data: {
-                        transactionHash: transactionHash,
-                        from,
-                        to,
-                        value
-                    }
-                }
-                this.wsserver.publishToClients(payload)
-            }
-        })
+    get transactionEvents() {
+        return this.transactionEventEmitter;
     }
 
     saveDefaultWalletToKeystore() {
@@ -62,7 +45,7 @@ class Wallet {
 
     async sendTransaction(from, to, value) {
         let receipt = await this.web3.eth.sendTransaction({from: from, to: to, value: value, gas: 21000})
-        this.transactionEventEmitter.emit(this.TRANSACTION_EVENT, receipt.transactionHash, from, to, value)
+        this.transactionEventEmitter.emit(Wallet.TRANSACTION_EVENT, {transactionHash: receipt.transactionHash, from, to, value})
         return receipt
     }
 
