@@ -59,9 +59,28 @@
         document.getElementById("results").innerHTML = `<div>${elementsStr}</div>`
       })()
       // example of a callback function that can be used to handle data from a websocket
-      function websocketMessageHandler(data) {
+      function websocketMessageHandler(_data) {
+        let display = '';
+        let data = JSON.parse(_data);
+        switch(data.event) {
+          case 'UpdatedValue':
+            // returnValues will contain an object with oldValue and newValue key
+            // as defined by the Hello Smart Contract UpdatedValue event
+            const {oldValue, newValue} = data.returnValues;
+            display = `The old value: ${oldValue} was changed to ${newValue}`;
+            break;
+          case 'HelloWorld':
+            // returnValues will contain an object with just a message key
+            // as defined by the Hello Smart Contract HelloWorld event
+            const {message} = data.returnValues;
+            display = `Contract says hello: ${message}`
+            break;
+          default:
+            display = data;
+            break;
+        }
         let li = document.createElement("li");
-        let wsmsg = document.createTextNode(data);
+        let wsmsg = document.createTextNode(display);
         li.appendChild(wsmsg);
         document.getElementById("wsevents").appendChild(li);
       }
