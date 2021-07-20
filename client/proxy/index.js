@@ -153,8 +153,9 @@ class ZProxy {
                 let hashWithoutExt = (hash.split('.').length > 1) ? hash.split('.').slice(0, -1).join('.') : hash;
                 let ext = hash.split('.').slice(-1)[0];
 
-                if (!ext) contentType = 'text/plain'; // just in case
-                if (ext !== hashWithoutExt) {
+                let noExt = (ext === hashWithoutExt) || (hash.split('.').length === 1);
+                if (noExt) contentType = 'text/plain'; // just in case
+                if (!noExt) {
                     contentType = this.getContentTypeFromExt(ext);
                     if (contentType.includes('html')) contentType = 'text/html'; // just in case
                 } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
@@ -162,7 +163,7 @@ class ZProxy {
 
                 rendered = await this.ctx.client.storage.readFile(hashWithoutExt); // todo: what if doesn't exist?
 
-                if (this._isThisDirectoryJson(rendered)) {
+                if (this._isThisDirectoryJson(rendered) && noExt) {
                     rendered = this._renderDirectory(hash, rendered);
                     contentType = 'text/html';
                 }
@@ -577,7 +578,7 @@ class ZProxy {
             formattedMsg = this.ctx.utils.htmlspecialchars(message.name+": "+message.message)
                 + "<br><br>"
                 + "<div style='text-align: left; opacity: 70%; font-size: 80%;'>"
-                + this.ctx.utils.nl2br(this.ctx.utils.htmlspecialchars(message.stack))
+                + this.ctx.utils.nl2br(this.ctx.utils.htmlspecialchars(message.stack)) // todo: careful, stack might give some info about the username and folders etc. to the ajax app. maybe better remove it and only leave in dev mode
                 + "</div>";
         } else {
             formattedMsg = JSON.stringify(message);
