@@ -1,16 +1,27 @@
 <html>
 <head>
     <title>Twitter</title>
-    <link type="text/css" rel="stylesheet" href="index.css"/>
+    <link type="text/css" rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="/css/index.css"/>
 </head>
 <body>
 <header>
     <h1>Decentralized Twitter</h1>
 </header>
 
-<main>
-    {% block contents %}
-    {% endblock %}
-</main>
+<div class="container">
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4">
+            {% block contents %}
+            {% endblock %}
+        </div>
+        <div class="col-4">
+            {% block sidebar %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

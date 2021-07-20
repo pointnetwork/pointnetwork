@@ -4,27 +4,10 @@
     {% set tweets = contract_list(host, 'Twitter', 'getTweet') %}
 
     {% for tweet in tweets %}
-        <div class="tweet">
-            <div class="identity">@{{ identity_by_owner(tweet.from) }}</div>
-            <div class="from">{{ tweet.from }}</div>
-
-            {% set contents = storage_get(tweet.contents) %}
-
-            <div class="contents">
-                {{ contents|length <= 280 ? contents : 'N/A' }}
-            </div>
-            <div class="time">{{ tweet.timestamp | date('Y-m-d H:i:s') }}</div>
-            <form method="post" action="/_contract_send/Twitter.like(tweet_id)">
-                <input type="hidden" name="tweet_id" value="{{ loop.index0 }}" />
-                <input type="submit" value="{{ tweet.likes }} likes" />
-            </form>
-        </div>
+        {% include 'tweet.zhtml' %}
     {% else %}
         <b>No tweets here. Let's post something!</b>
     {% endfor %}
 
-    <form method="post" action="/_contract_send/Twitter.tweet(contents)">
-        <textarea name="storage[contents]" required maxlength="280"></textarea>
-        <input type="submit"/>
-    </form>
+    {% include 'create.zhtml' %}
 {% endblock %}

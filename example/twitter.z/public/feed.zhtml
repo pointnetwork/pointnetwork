@@ -1,0 +1,19 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+    {% set username = request.username %}
+    {% set owner = owner_by_identity( request.username ) %}
+    {% set tweets = contract_list(host, 'Twitter', 'getTweetByOwner', [owner]) %}
+
+    {% for tweet in tweets %}
+        {% include 'tweet.zhtml' %}
+    {% else %}
+        <b>No tweets.</b>
+    {% endfor %}
+
+    {% include 'create.zhtml' %}
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'userbox.zhtml' %}
+{% endblock %}

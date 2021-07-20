@@ -1,0 +1,4 @@
+<form method="post" action="/_contract_send/Twitter.tweet(contents)">
+    <textarea name="storage[contents]" required maxlength="280"></textarea>
+    <input type="submit"/>
+</form>
