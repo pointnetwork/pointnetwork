@@ -399,10 +399,10 @@ class Storage {
             });
             // todo: two error listeners?
             chunk_encryptor.addListener("error", async (data) => { // todo
-                reject('Chunk encryption FAILED:' + link.error);
+                reject('Chunk encryption FAILED:' + link.error); // todo: not data, link.error???
             });
             chunk_encryptor.on("error", async (data) => { // todo
-                reject('Chunk encryption FAILED:' + link.error);
+                reject('Chunk encryption FAILED:' + link.error); // todo: not data, link.error???
             });
             chunk_encryptor.on("exit", async (code) => {
                 if (code === 0 || code === null) {
