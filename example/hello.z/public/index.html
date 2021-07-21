@@ -72,7 +72,7 @@
             // since this is type: 'subscribeContractEvent'
             // we know the params will contain the same keys we used to subscribe to the event
             // which is 'contract' and 'event' so therefore we can check the evnet key
-            switch(params.event) {
+            switch(data.event) {
               case 'UpdatedValue':
                 // returnValues will contain an object with oldValue and newValue key
                 // as defined by the Hello Smart Contract UpdatedValue event
