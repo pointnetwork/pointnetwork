@@ -8,29 +8,46 @@
   </head>
   <body>
     <div>
-      <p>Hello World Example for testing Storage Layer features and the Point Browser SDK</p>
+      <h4>Hello World Example : Demo Storage Layer features and the Point Browser SDK</h4>
+      <button id="btnTestSmartContractEvent" onclick="testSmartContractEvent()">Test Smart Contact Event</button>
+      <input type="text" id="txtTestSmartContractSetValue" value="Change Me!" ></input>
+      <br/>
+      <br/>
+      <b>API Responses</b>
       <p id="results"></p>
+      <b>WebSocket Events</b>
+      <ul id="wsevents"></ul>
     </div>
     <script>
       (async () => {
-        let balance = await window.point.wallet.balance();
+        // initialize websocket connect to point network node via PointSDK
+        // the idea here is to initalize websockets for the app only if needed
+        // and to specify the callback that will handle the incomming websocket messages
+        socket = window.point.websocket.open(websocketMessageHandler);
+        socket.onopen = function() {
+            console.log('WebSocket Client Connected');
+            window.point.contract.subscribe({contract: 'Hello', event: 'UpdatedValue'});
+            window.point.contract.subscribe({contract: 'Hello', event: 'HelloWorld'});
+        };
+        // let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
         let address = await window.point.wallet.address();
         let hash = await window.point.wallet.hash();
+        let contract = await window.point.contract.load('Hello');
         let callValue = await window.point.contract.call({contract: 'Hello', method: 'value'});
         let callCounter = await window.point.contract.call({contract: 'Hello', method: 'counter'});
         let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??']});
         let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2]});
         let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
-        let sendSetValue = await window.point.contract.send({contract: 'Hello', method: 'setValue', params: ['A new value']});
         let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
         // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert
         let elements = []
-        elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
+        // elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
         elements.push(`<p>Ping Test: ${ping.data.ping}</p>`)
         elements.push(`<p>Wallet Address: ${address.data.address}</p>`)
+        elements.push(`<p>Hello Smart Contract Address: ${contract.data.address}</p>`)
         elements.push(`<p>Wallet Hash: ${hash.data.hash}</p>`)
         elements.push(`<p>Contract Call Value: ${callValue.data}</p>`)
         elements.push(`<p>Contract Call Counter: ${callCounter.data}</p>`)
@@ -38,10 +55,60 @@
         elements.push(`<p>Contract Call Square: ${callSquare.data}</p>`)
         elements.push(`<p>Contract Call Add: ${callAdd.data}</p>`)
         elements.push(`<p>Contract Send Increment Counter: ${sendIncrementCounter.data}</p>`)
-        elements.push(`<p>Contract Send Set Value: ${sendSetValue.data}</p>`)
         let elementsStr = elements.join('')
         document.getElementById("results").innerHTML = `<div>${elementsStr}</div>`
       })()
+      // example of a callback function that can be used to handle data from a websocket
+      function websocketMessageHandler(_payload) {
+        let display = '';
+        let payload = JSON.parse(_payload);
+        let { type, params, hostname, data, event } = payload;
+        console.log('Received Payload: ', payload);
+        // check this message is for us by checking the hostname
+        if(hostname === 'hello.z') {
+          // if this is a SUBSCRIBED_EVENT then just set the display to the message
+          if(event === 'SUBSCRIBED_EVENT') {
+              display = data.message;
+          }
+          // if this is a DATA_EVENT then check the type of the event and switch on that
+          if(event === 'DATA_EVENT') {
+            // if this is a subscribeContractEvent ...
+            if (type === 'subscribeContractEvent') {
+              // since this is type: 'subscribeContractEvent'
+              // we know the params will contain the same keys we used to subscribe to the event
+              // which is 'contract' and 'event' so therefore we can check the evnet key
+              switch(params.event) {
+                case 'UpdatedValue':
+                  // returnValues will contain an object with oldValue and newValue key
+                  // as defined by the Hello Smart Contract UpdatedValue event
+                  const {oldValue, newValue} = data.returnValues;
+                  display = `The old value: ${oldValue} was changed to ${newValue}`;
+                  break;
+                case 'HelloWorld':
+                  // returnValues will contain an object with just a message key
+                  // as defined by the Hello Smart Contract HelloWorld event
+                  const {message} = data.returnValues;
+                  display = `Contract says hello: ${message}`
+                  break;
+                default:
+                  display = data.message;
+                  break;
+              }
+            }
+          }
+          let li = document.createElement("li");
+          let wsmsg = document.createTextNode(display);
+          li.appendChild(wsmsg);
+          document.getElementById("wsevents").appendChild(li);
+        }
+      }
+      async function testSmartContractEvent() {
+        document.getElementById('btnTestSmartContractEvent').innerText = 'Processing';
+        let newValue = document.getElementById('txtTestSmartContractSetValue').value;
+        // NOTE this contract send will also trigger the UpdatedValue event from the Smart Contract
+        await window.point.contract.send({contract: 'Hello', method: 'setValue', params: [newValue]});
+        document.getElementById('btnTestSmartContractEvent').innerText = 'DONE. Click Button to try again!';
+      }
     </script>
   </body>
 </html>

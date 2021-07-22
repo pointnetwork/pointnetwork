@@ -9,9 +9,8 @@ const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
-const crypto = require('crypto')
-const eccrypto = require("eccrypto");
-const io = require('socket.io');
+const WebSocketServer = require('websocket').server;
+const ZProxySocketController = require('../../api/sockets/ZProxySocketController');
 const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
@@ -30,9 +29,33 @@ class ZProxy {
 
     async start() {
         let server = this.httpx();
-        let ws = io(server.http);
-        let wss = io(server.https);
+        let ws = this.wsServer(server);
         server.listen(this.port, () => console.log(`ZProxy server listening on localhost:${ this.port }`));
+    }
+
+    wsServer(server) {
+        const wss = new WebSocketServer({
+            httpServer: server.https
+        });
+
+        wss.on('request', (request) => {
+            let socket = request.accept(null, request.origin);
+            let parsedUrl = new URL(request.origin);
+
+            new ZProxySocketController(this.ctx, socket, wss, parsedUrl.host);
+
+            socket.on('close', () => {
+                console.log('WS Client disconnected.');
+            });
+        });
+
+        server.http.on('upgrade', (request, socket, head) => {
+            wss.handleUpgrade(request, socket, head, (ws) => {
+                wss.emit('connection', ws, request);
+            });
+        });
+
+        return wss;
     }
 
     httpx() {
@@ -255,20 +278,21 @@ class ZProxy {
         let [cmd, params] = this._parseApiCmd(cmdstr)
         let response = {}
         let body = '';
+        let host = request.headers.host;
         if (request.method.toUpperCase() == 'POST') {
             let apiPromise = new Promise(async(resolve, reject) => {
                 request.on('data', (chunk) => {
                     body += chunk;
                 });
                 request.on('end', async () => {
-                    response = await this.console.cmd_api_post(request.headers.host, cmd, body);
+                    response = await this.console.cmd_api_post(host, cmd, body);
                     resolve(response)
                 })
             })
 
             response = await apiPromise;
         } else {
-            response = await this.console.cmd_api(cmd, ...params);
+            response = await this.console.cmd_api_get(host, cmd, ...params);
         }
         return response;
     }

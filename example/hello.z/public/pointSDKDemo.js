@@ -1,4 +1,15 @@
+let socket;
+
 pointSDKDemo = {
+    websocket: {
+        open: (callback) => {
+            if (!socket) {
+                socket = new WebSocket(`wss://${window.location.hostname}`);
+                socket.onmessage = (e) => callback(e.data);
+                return socket;
+            }
+        }
+    },
     status: {
         ping: async () => {
             let response = await fetch('/v1/api/status/ping')
@@ -41,6 +52,17 @@ pointSDKDemo = {
                 body: JSON.stringify(meta)
             })
             return await response.json()
+        },
+        load: async(contractName) => {
+            let contract = await fetch(`/v1/api/contract/load/${contractName}`)
+            return await contract.json()
+        },
+        subscribe: async(meta) => {
+            let payload = {
+                type: 'subscribeContractEvent',
+                params: meta
+            }
+            socket.send(JSON.stringify(payload))
         }
     }
 }

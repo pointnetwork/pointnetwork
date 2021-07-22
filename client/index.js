@@ -29,7 +29,6 @@ class Client {
         this.proxy.start();
 
         this.deployerProgress = new DeployerProgress(ctx);
-        this.deployerProgress.init();
 
         // start other services
     }

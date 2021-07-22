@@ -34,6 +34,19 @@ class ContractController extends PointSDKController {
         return this._response(data);
      }
 
+     async load() {
+        const contractName = this.req.params.contract;
+
+        let contract = await this.ctx.web3bridge.loadWebsiteContract(this.host, contractName);
+
+        let data = {
+           address: contract._address,
+           abi: contract._jsonInterface
+        }
+
+        return this._response(data);
+     }
+
      async send() {
         if(this.wallet) {
             const contract = this.payload.contract;
@@ -54,6 +67,10 @@ class ContractController extends PointSDKController {
 
             return this._response(data);
         }
+     }
+
+     async getPastEvents() {
+         // TODO call getPastEvents for the desired contract / event
      }
 
      /* Private Functions */
