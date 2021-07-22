@@ -28,7 +28,11 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
             return;
         }
 
-        const { productId, owner, metadata } = data;
+        const { productId, metadata, owner } = data;
+
+        setPurchaseError(undefined);
+        setProductError(undefined);
+        setProduct(undefined);
 
         try {
             // @ts-ignore
@@ -59,7 +63,7 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
 
         try {
             // @ts-ignore
-            await window.point.contract.send({
+            const result = await window.point.contract.send({
                 contract: 'Store',
                 method: 'buyProduct',
                 amountInWei: price,

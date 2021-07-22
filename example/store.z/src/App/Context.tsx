@@ -2,25 +2,33 @@ import React, { createContext, ReactNode, useContext, useState, useEffect } from
 
 const defaultContext = {
   walletAddress: undefined as string | undefined,
-  walletBalance: undefined as string | undefined
+  walletError: undefined as Error | undefined,
 }
 
 const AppContext = createContext(defaultContext)
 
 export const useAppContext = () => useContext(AppContext)
 export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
-  const [walletAddress, setWalletAddress] = useState<string>()
+  const [walletAddress, setWalletAddress] = useState<string>();
+  const [walletError, setWallerError] = useState<Error>();
+
   useEffect(() => {
     (async () => {
-      // @ts-ignore
-      const {data: {address}} = await window.point.wallet.address();
+      try {
+        // @ts-ignore
+        const {data: {address}} = await window.point.wallet.address();
 
-      setWalletAddress(address);
+        setWalletAddress(address);
+
+      } catch (e) {
+        setWallerError(e);
+      }
     })()
   }, [])
 
   const context = {
-    walletAddress
+    walletAddress,
+    walletError,
   }
 
   return <AppContext.Provider value={ context }>{ children }</AppContext.Provider>

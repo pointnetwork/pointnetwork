@@ -25,6 +25,26 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
         setStoreId(params.storeId)
     }
 
+    const subscribeToProductPurchases = useCallback(async () => {
+        // @ts-ignore
+        const nextProductPurchase = await window.point.contract.subscribe({
+            contract: 'Store',
+            event: 'ProductSoldEvent',
+        });
+
+        while (true) {
+            try {
+                const {returnValues: {tokenId, to}} = await nextProductPurchase();
+
+                setProductList((productList) => productList?.map((productData: ProductData) => (
+                    productData.productId === tokenId ? { ...productData, owner: to } : productData
+                )));
+            } catch (e) {
+                console.error('Subscription error:', e);
+            }
+        }
+    }, []);
+
     useEffect(() => {
         if (!storeId) {
             return
@@ -56,6 +76,8 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
                         owner,
                     } as ProductData)
                 ));
+
+                await subscribeToProductPurchases();
             } catch (e) {
                 setProductListError(e);
             }
