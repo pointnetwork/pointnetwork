@@ -1,10 +1,12 @@
 let socket;
+let httpProtocol = window.location.protocol;
+let wsProtocol = (httpProtocol === 'https:') ? 'wss:' : 'ws:';
 
 pointSDKDemo = {
     websocket: {
         open: (callback) => {
             if (!socket) {
-                socket = new WebSocket(`wss://${window.location.hostname}`);
+                socket = new WebSocket(`${wsProtocol}//${window.location.hostname}`);
                 socket.onmessage = (e) => callback(e.data);
                 return socket;
             }
