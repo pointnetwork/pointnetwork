@@ -4,7 +4,7 @@ pointSDKDemo = {
     websocket: {
         open: (callback) => {
             if (!socket) {
-                socket = new WebSocket('ws://hello.z');
+                socket = new WebSocket(`wss://${window.location.hostname}`);
                 socket.onmessage = (e) => callback(e.data);
                 return socket;
             }
