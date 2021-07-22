@@ -16,14 +16,14 @@ class Core {
     }
 
     async start() {
-        this.ctx.exit = () => { process.exit(1) };
-        this.ctx.die = (err) => { this.ctx.log.fatal(err); this.ctx.exit(); };
+        this.ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit in point. and why 1?
+        this.ctx.die = (err) => { this.ctx.log.fatal(err); this.ctx.exit(1); };
 
         this.ctx.utils = utils;
 
         // todo: remove in prod
         // if (this.ctx.config.client.wallet.account !== '0x989695771D51dE19e9ccb943d32E58F872267fcC') {
-            // DB.__debugClearCompletely(this.ctx);
+        // DB.__debugClearCompletely(this.ctx);
         // }
 
         await this.initDatabase();
