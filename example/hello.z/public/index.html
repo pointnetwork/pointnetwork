@@ -26,8 +26,8 @@
         socket = window.point.websocket.open(websocketMessageHandler);
         socket.onopen = function() {
             console.log('WebSocket Client Connected');
-            window.point.contract.subscribe({contract: 'Hello', event: 'HelloWorld'});
             window.point.contract.subscribe({contract: 'Hello', event: 'UpdatedValue'});
+            window.point.contract.subscribe({contract: 'Hello', event: 'HelloWorld'});
         };
         // let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
@@ -62,40 +62,45 @@
       function websocketMessageHandler(_payload) {
         let display = '';
         let payload = JSON.parse(_payload);
-        let { type, params, data, event } = payload;
-        console.log('Received Data: ', payload);
-        if(event === 'SUBSCRIBED_EVENT') {
-            display = data.message;
-        }
-        if(event === 'DATA_EVENT') {
-          if (type === 'subscribeContractEvent') {
-            // since this is type: 'subscribeContractEvent'
-            // we know the params will contain the same keys we used to subscribe to the event
-            // which is 'contract' and 'event' so therefore we can check the evnet key
-            switch(params.event) {
-              case 'UpdatedValue':
-                // returnValues will contain an object with oldValue and newValue key
-                // as defined by the Hello Smart Contract UpdatedValue event
-                const {oldValue, newValue} = data.returnValues;
-                display = `The old value: ${oldValue} was changed to ${newValue}`;
-                break;
-              case 'HelloWorld':
-                // returnValues will contain an object with just a message key
-                // as defined by the Hello Smart Contract HelloWorld event
-                const {message} = data.returnValues;
-                display = `Contract says hello: ${message}`
-                break;
-              default:
-                display = data.message;
-                break;
+        let { type, params, hostname, data, event } = payload;
+        console.log('Received Payload: ', payload);
+        // check this message is for us by checking the hostname
+        if(hostname === 'hello.z') {
+          // if this is a SUBSCRIBED_EVENT then just set the display to the message
+          if(event === 'SUBSCRIBED_EVENT') {
+              display = data.message;
+          }
+          // if this is a DATA_EVENT then check the type of the event and switch on that
+          if(event === 'DATA_EVENT') {
+            // if this is a subscribeContractEvent ...
+            if (type === 'subscribeContractEvent') {
+              // since this is type: 'subscribeContractEvent'
+              // we know the params will contain the same keys we used to subscribe to the event
+              // which is 'contract' and 'event' so therefore we can check the evnet key
+              switch(params.event) {
+                case 'UpdatedValue':
+                  // returnValues will contain an object with oldValue and newValue key
+                  // as defined by the Hello Smart Contract UpdatedValue event
+                  const {oldValue, newValue} = data.returnValues;
+                  display = `The old value: ${oldValue} was changed to ${newValue}`;
+                  break;
+                case 'HelloWorld':
+                  // returnValues will contain an object with just a message key
+                  // as defined by the Hello Smart Contract HelloWorld event
+                  const {message} = data.returnValues;
+                  display = `Contract says hello: ${message}`
+                  break;
+                default:
+                  display = data.message;
+                  break;
+              }
             }
           }
+          let li = document.createElement("li");
+          let wsmsg = document.createTextNode(display);
+          li.appendChild(wsmsg);
+          document.getElementById("wsevents").appendChild(li);
         }
-
-        let li = document.createElement("li");
-        let wsmsg = document.createTextNode(display);
-        li.appendChild(wsmsg);
-        document.getElementById("wsevents").appendChild(li);
       }
       async function testSmartContractEvent() {
         document.getElementById('btnTestSmartContractEvent').innerText = 'Processing';
