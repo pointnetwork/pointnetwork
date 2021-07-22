@@ -66,7 +66,7 @@ class Web3Bridge {
         try {
             account = this.web3.eth.defaultAccount;
             gasPrice = await this.web3.eth.getGasPrice();
-            if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
+            if (!gasLimit) gasLimit = await method.estimateGas({ from: account, value: amountInWei });
             return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
         } catch (e) {
             console.info({ method, account, gasPrice, gasLimit, amountInWei })

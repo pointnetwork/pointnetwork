@@ -113,6 +113,9 @@ class Renderer {
             Twig.exports.extendFunction("storage_get", async(key) => {
                 return await this.ctx.client.storage.readFile(key, 'utf-8');
             });
+            Twig.exports.extendFunction("storage_get_parsed", async(key) => {
+                return await this.ctx.client.storage.readJSON(key, 'utf-8');
+            });
             Twig.exports.extendFunction("storage_put", async(content) => {
                 const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
                 this.ctx.utils.makeSurePathExists(cache_dir);

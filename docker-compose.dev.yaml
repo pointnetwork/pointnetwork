@@ -18,7 +18,7 @@ services:
       - ./package.json:/app/package.json:ro
 
   website_owner:
-    command: 'run watch:sites:and:start:docker:dev'
+    command: 'run start:docker:dev'
     volumes:
       - ./api:/app/api:ro
       - ./client:/app/client:ro

@@ -4,9 +4,21 @@
 
 The demo setup consists of three Point Network nodes running in a separate containers, a dev blockchain node running a test network (currently the `ganache-cli` is used), and a Point Network contract deployment script running in a dedicated container. Each Point Network node assigned to its own role in the demo. The node roles are:
 
-* Storage Provider, z-proxy port `65500`
-* Website Owner, z-proxy port `65501`
-* Website Viewer, z-proxy port `65502`
+* Storage Provider
+  * Service Name: `storage_provider`
+  * Container Name: `pointnetwork_storage_provider`
+  * ZProxy port `65500`
+  * API port: `24680`
+* Website Owner
+  * Service Name: `website_owner`
+  * Container Name: `pointnetwork_website_owner`
+  * ZProxy port `65501`
+  * API port: `24681`
+* Website Visitor
+  * Service Name: `website_visitor`
+  * Container Name: `pointnetwork_website_visitor`
+  * ZProxy port `65502`
+  * API port: `24682`
 
 To run the demo, one should firstly [install `docker`](https://docs.docker.com/get-docker/) and [`docker-compose`](https://docs.docker.com/compose/install/) on their host system. To start the demo, run:
 
@@ -20,7 +32,7 @@ Once the compose is up, the Point Network contracts deployment will start. Unles
 ./scripts/deploy-sites-docker.sh
 ```
 
-Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `z-proxy` ports. The sites will be available at their regular addresses.
+Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `ZProxy` ports. The sites will be available at their regular addresses.
 
 ### Develop using the docker compose
 
@@ -38,8 +50,23 @@ If you make changes to the code while the compose is already running, you can re
 docker-compose restart storage_provider # to restart a specified container
 docker-compose restart # to restart the whole compose
 ```
+**Docker Compose Logs**
 
-### Install Dependencies
+To follow the logs of *all* the containers simply run `docker-compose logs -f` in the terminal. If you want to follow the logs of a specific container, hten specify the service name as well like so: `docker-compose logs -f storage_provider` (to follow the logs of `storage_provider`)
+
+**Docker Compose Single Site Deployment**
+
+If you want to deploy a single example site then you can do the following:
+
+* Enter the website owner container like this: `docker exec -it pointnetwork_website_owner /bin/bash`,
+* Now inside the container terminal: `cd /app/example/store.z`.
+* Run the deploy command: `./point deploy ./example/store.z --datadir $DATADIR -v --contracts`
+
+**Docker Compose and Truffle Console**
+
+Since the `blockchain_node` service is exposed via `http://localhost:7545` its therefore possible to use truffle console without any modification. So you can run `truffle console` and it will connect to the running Ganache blockchain in the Docker `blockchain_node` service.
+
+### Install Dependencies (Local Machine Setup)
 
 Install all global and project dependencies. Run the following under the project root folder:
 
@@ -120,7 +147,7 @@ All sites should respond with a 200 status code. If not there is something wrong
 1. Tell the second node to deploy the `blog.z` website:
 
     ```
-    ./point deploy example/blog.z --datadir ~/.point/test2 -v
+    ./scripts/deploy-sites.sh blog --contracts
     ```
 
 1. Now you can stop the second node (Ctrl+C).
@@ -351,6 +378,22 @@ npx nodemon ./point --datadir ~/.point/test2
 ```
 
 That way, changes in the applications code are detected by nodemon and the Point Network node is then automatically restarted.
+
+### Note on Store.z example site
+
+This is a React JS app. So you will need to install dependencies for it and run a build watcher if you want to develop it further.
+
+1. CD into the [./example/store.z/src/](./example/store.z/src/) directory.
+1. Run `npm i` to install the sites dependencies
+1. Run `npm run watch` (or `npm run watch:docker` if you are running the Node using Docker) to have *parcel* watch the site and build it on any detected changes
+1. Run `./scripts/deploy-sites.sh store --contracts` (from the node root folder) to deploy the sites `views` directory that was built using parcel.
+
+### Coding style
+
+Following coding style applies:
+
+* Always use semicolons otherwise [dragons may bite you](https://www.freecodecamp.org/news/codebyte-why-are-explicit-semicolons-important-in-javascript-49550bea0b82/)!
+* Use 4 spaces as a default indent for all files and set this in your IDE.
 
 ### Developing the Point Network Web App Utility
 

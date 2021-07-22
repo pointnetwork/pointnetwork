@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "react": true,
   "target": "demo.z",
   "keyvalue": {}
 }

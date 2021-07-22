@@ -162,7 +162,6 @@ class ZProxy {
 
         try {
             let rendered;
-
             let parsedUrl;
             try {
                 parsedUrl = new URL(request.url, `http://${request.headers.host}`);
@@ -170,7 +169,6 @@ class ZProxy {
                 parsedUrl = { pathname: '/error' }; // todo
             }
 
-            // console.debug(parsedUrl);
             let contentType = 'text/html';
             let status = 200;
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
@@ -214,7 +212,6 @@ class ZProxy {
 
             let sanitized;
             if (contentType === 'text/html' && this.config.sanitize_html) {
-                console.log('Sanitizing...' + contentType + this.config.sanitize_html + rendered);
                 sanitized = this.sanitize(rendered);
             } else {
                 // todo: potential security vulnerability here, e.g. if browser still thinks it's to be interpreted as html,

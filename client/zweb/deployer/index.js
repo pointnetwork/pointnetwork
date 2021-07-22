@@ -51,13 +51,12 @@ class Deployer {
         let publicDirId = publicDirectory.id;
         await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
 
-
         // Upload routes
         let routesFilePath = path.join(deployPath, 'routes.json');
         let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         let routes = JSON.parse(routesFile);
 
-        console.log('uploading route file...');
+        console.log('uploading route file...', {routes});
         const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnHex(JSON.stringify(routes)));
         fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading')
@@ -72,14 +71,13 @@ class Deployer {
 
     static async getPragmaVersion(source){
         let regex = /pragma solidity [\^\~\>\<]?=?(?<version>[0-9\.]*);/;
-        let found = null
-        if (found = source.match(regex)) {
+        let found = source.match(regex)
+        if (found) {
             return found.groups.version
         } else {
             throw new Error('Contract has no compiler version')
         }
     }
-
 
     async deployContract(target, contractName, fileName, deployPath) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling')
@@ -87,7 +85,7 @@ class Deployer {
 
         const contractSource = fs.readFileSync(fileName, 'utf8');
 
-        const version = await this.constructor.getPragmaVersion(contractSource);
+        const version = await Deployer.getPragmaVersion(contractSource);
         const versionArray = version.split('.');
         let SOLC_MAJOR_VERSION = versionArray[0]
         let SOLC_MINOR_VERSION = versionArray[1]
@@ -95,7 +93,6 @@ class Deployer {
 
         const path = require('path');
         const solc = require(SOLC_FULL_VERSION);
-
 
         const compileConfig = {
             language: 'Solidity',
@@ -115,7 +112,7 @@ class Deployer {
 
         let getImports = function(dependency) {
             const dependencyOriginalPath = path.join(deployPath, 'contracts', dependency)
-            const dependencyNodeModulesPath = path.join(deployPath, 'src/node_modules/', dependency)
+            const dependencyNodeModulesPath = path.join(deployPath, 'node_modules/', dependency)
             if (fs.existsSync(dependencyOriginalPath)) {
                 return {contents: fs.readFileSync(dependencyOriginalPath, 'utf8')};
             } else if (fs.existsSync(dependencyNodeModulesPath)){
@@ -127,7 +124,6 @@ class Deployer {
 
         let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), { import: getImports }));
         this.ctx.client.deployerProgress.update(fileName, 20, 'compiled')
-
         if (!compiledSources) {
             throw new Error(">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\nNO OUTPUT");
         } else if (compiledSources.errors) {
@@ -153,7 +149,6 @@ class Deployer {
                 artifacts = compiledSources.contracts[contractFileName][_contractName];
             }
         }
-
         const truffleContract = require('@truffle/contract');
         const contract = truffleContract(artifacts);
         contract.setProvider(this.ctx.web3.currentProvider);
@@ -186,6 +181,15 @@ class Deployer {
         let target = host.replace('.z', '');
         console.log('Updating ZDNS', {target, id});
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
+    }
+
+    async storagePut(content) {
+        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+        this.ctx.utils.makeSurePathExists(cache_dir);
+        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(content));
+        fs.writeFileSync(tmpPostDataFilePath, content);
+        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+        return uploaded.id;
     }
 
     async updateKeyValue (target, values, deployPath, deployContracts = false) {
@@ -254,15 +258,23 @@ class Deployer {
 
         for (let [key, value] of Object.entries(values)) {
             if (value && (Array.isArray(value) || typeof value === 'object')) {
-		// if there is a contract_send in the value then send data to the specified contract
+                // if there is a contract_send in the value then send data to the specified contract
                 if('contract_send' in value && deployContracts) {
                     let [contractName, methodNameAndParams] = value.contract_send.split('.')
                     let [methodName, paramsTogether] = methodNameAndParams.split('(')
                     paramsTogether = paramsTogether.replace(')', '')
                     let paramNames = paramsTogether.split(',')
                     let params = [];
-                    for(let paramName of paramNames) {
-                        params.push(value[paramName]);
+                    if (value.metadata){
+                        const metadataHash = await this.storagePut(JSON.stringify(value.metadata))
+                        value.metadata['metadataHash'] = metadataHash
+                        for(let paramName of paramNames) {
+                            params.push(value.metadata[paramName]);
+                        }
+                    } else {
+                        for(let paramName of paramNames) {
+                            params.push(value[paramName]);
+                        }
                     }
                     await this.ctx.web3bridge.sendToContract(target, contractName, methodName, params );
                 }
