@@ -1,15 +1,15 @@
 {% set identity_owner = owner_by_identity(request.recipient) %}
-<p>Identity owner: {{ identity_owner }}
+{#<p>Identity owner: {{ identity_owner }}#}
 {% set identity_comm_public_key = public_key_by_identity(request.recipient) %}
-<p>Identity comm public key: {{ identity_comm_public_key }}
+{#<p>Identity comm public key: {{ identity_comm_public_key }}#}
 {% set encrypted_results = encrypt_data(identity_comm_public_key, request.message) %}
-<p>Encrypted_results: {{ encrypted_results }}
+{#<p>Encrypted_results: {{ encrypted_results }}#}
 {% set stored_encrypted_message_id = storage_put(encrypted_results.encryptedMessage) %}
-<p>Stored encrypted message: {{ stored_encrypted_message_id }}
+{#<p>Stored encrypted message: {{ stored_encrypted_message_id }}#}
 {% set result = contract_call(host, 'Email', 'send', [ identity_owner, stored_encrypted_message_id, encrypted_results.encryptedSymmetricObjJSON ]) %}
 
-{#<html>#}
-{#  <body>#}
-{#    <script>location.href='/'</script>#}
-{#  </body>#}
-{#</html>#}
+<html>
+  <body>
+    <script>location.href='/'</script>
+  </body>
+</html>

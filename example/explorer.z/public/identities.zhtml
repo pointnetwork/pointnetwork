@@ -1,0 +1,30 @@
+{% extends 'layout.zhtml' %}
+
+{% block head %}
+    {% set active_section = 'identities' %}
+{% endblock %}
+
+{% block contents %}
+
+<h1>Identities</h1>
+
+{% set identity_handles = contract_list('@', 'Identity', 'identityList') %}
+
+Total: {{ identity_handles|length }}
+
+<hr>
+
+<table class="table table-bordered table-striped table-hover table-responsive table-primary">
+    <tr>
+        <th>Handle</th>
+        <th>Owner</th>
+    </tr>
+    {% for identity_handle in identity_handles %}
+        <tr>
+            <td><a href="/identities/{{ identity_handle }}" target="_blank">@{{ identity_handle }}</a></td>
+            <td class="mono">{{ owner_by_identity(identity_handle) }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

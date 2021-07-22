@@ -29,76 +29,213 @@ class Renderer {
             Twig.host = host;
 
             Twig.exports.extendTag({
-                    /**
-                     * Block logic tokens.
-                     *
-                     *  Format: {% extends "template.twig" %}
-                     */
-                    type: Twig.logic.type.extends_,
-                    regex: /^extends\s+(.+)$/,
-                    next: [ ],
-                    open: true,
-                    compile: function (token) {
-                        var expression = token.match[1].trim();
-                        delete token.match;
-                        token.stack = Twig.expression.compile.call(this, {
-                            type:  Twig.expression.type.expression,
-                            value: expression
-                        }).stack;
-                        return token;
-                    },
-                    parse: function (token, context, chain) {
-                        var template,
-                            that = this;
+                /**
+                 * Block logic tokens.
+                 *
+                 *  Format: {% extends "template.twig" %}
+                 */
+                type: Twig.logic.type.extends_,
+                regex: /^extends\s+(.+)$/,
+                next: [ ],
+                open: true,
+                compile: function (token) {
+                    var expression = token.match[1].trim();
+                    delete token.match;
+                    token.stack = Twig.expression.compile.call(this, {
+                        type:  Twig.expression.type.expression,
+                        value: expression
+                    }).stack;
+                    return token;
+                },
+                parse: function (token, context, chain) {
+                    var template,
+                        that = this;
 
-                        var host = context.host;
+                    var host = context.host;
 
-                        //innerContext = Twig.ChildContext(context);
-                        // Twig.lib.copy = function (src) {
-                        var innerContext = {};
-                        let _key;
-                        for (_key in context) {
-                            if (Object.hasOwnProperty.call(context, _key)) {
-                                innerContext[_key] = context[_key];
-                            }
+                    //innerContext = Twig.ChildContext(context);
+                    // Twig.lib.copy = function (src) {
+                    var innerContext = {};
+                    let _key;
+                    for (_key in context) {
+                        if (Object.hasOwnProperty.call(context, _key)) {
+                            innerContext[_key] = context[_key];
                         }
+                    }
 
-                        // Resolve filename
-                        return Twig.expression.parseAsync.call(that, token.stack, context)
-                            .then(function(file) {
-                                if (file instanceof Twig.Template) {
-                                    template = file;
-                                } else {
-                                    // Import file
-                                    template = that.template.importFile(file);
-                                }
+                    // Resolve filename
+                    return Twig.expression.parseAsync.call(that, token.stack, context)
+                        .then(function(file) {
+                            if (file instanceof Twig.Template) {
+                                template = file;
+                            } else {
+                                // Import file
+                                template = that.template.importFile(file);
+                            }
 
-                                // Set parent template
-                                that.template.parentTemplate = file;
+                            // Set parent template
+                            that.template.parentTemplate = file;
 
-                                // Render the template in case it puts anything in its context
-                                return template;
-                            })
-                            .then(function(template) {
-                                return template.renderAsync(innerContext);
-                            })
-                            .then(function(renderedTemplate) {
+                            // Render the template in case it puts anything in its context
+                            return template;
+                        })
+                        .then(function(template) {
+                            return template.renderAsync(innerContext);
+                        })
+                        .then(function(renderedTemplate) {
 
-                                // Extend the parent context with the extended context
-                                context = {
-                                    ...context,
-                                    // override with anything in innerContext
-                                    ...innerContext
-                                };
+                            // Extend the parent context with the extended context
+                            context = {
+                                ...context,
+                                // override with anything in innerContext
+                                ...innerContext
+                            };
 
-                                return {
-                                    chain: chain,
-                                    output: ''
+                            return {
+                                chain: chain,
+                                output: ''
+                            };
+                        });
+                }
+            });
+
+            Twig.exports.extendTag(        {
+                /**
+                 * Block logic tokens.
+                 *
+                 *  Format: {% includes "template.twig" [with {some: 'values'} only] %}
+                 */
+                type: Twig.logic.type.include,
+                regex: /^include\s+(.+?)(?:\s|$)(ignore missing(?:\s|$))?(?:with\s+([\S\s]+?))?(?:\s|$)(only)?$/,
+                next: [],
+                open: true,
+                compile(token) {
+                    const {match} = token;
+                    const expression = match[1].trim();
+                    const ignoreMissing = match[2] !== undefined;
+                    const withContext = match[3];
+                    const only = ((match[4] !== undefined) && match[4].length);
+
+                    delete token.match;
+
+                    token.only = only;
+                    token.ignoreMissing = ignoreMissing;
+
+                    token.stack = Twig.expression.compile.call(this, {
+                        type: Twig.expression.type.expression,
+                        value: expression
+                    }).stack;
+
+                    if (withContext !== undefined) {
+                        token.withStack = Twig.expression.compile.call(this, {
+                            type: Twig.expression.type.expression,
+                            value: withContext.trim()
+                        }).stack;
+                    }
+
+                    return token;
+                },
+                parse(token, context, chain) {
+                    // Resolve filename
+                    let innerContext = token.only ? {} : {...context};
+                    const {ignoreMissing} = token;
+                    const state = this;
+                    let promise = null;
+                    const result = {chain, output: ''};
+
+                    if (typeof token.withStack === 'undefined') {
+                        promise = Twig.Promise.resolve();
+                    } else {
+                        promise = Twig.expression.parseAsync.call(state, token.withStack, context)
+                            .then(withContext => {
+                                innerContext = {
+                                    ...innerContext,
+                                    ...withContext
                                 };
                             });
                     }
-                },
-            );
+
+                    return promise
+                        .then(() => {
+                            return Twig.expression.parseAsync.call(state, token.stack, context);
+                        })
+                        .then(file => {
+                            let files;
+                            if (Array.isArray(file)) {
+                                files = file;
+                            } else {
+                                files = [file];
+                            }
+                            return files;
+                        })
+                        .then(files => {
+                            return files.reduce(async(previousPromise, file) => {
+                                let acc = await previousPromise;
+
+                                let tryToRender = async(file) => {
+                                    if (acc.render === null) {
+                                        if (file instanceof Twig.Template) {
+                                            const res = {
+                                                render: await file.renderAsync(
+                                                    innerContext,
+                                                    {
+                                                        isInclude: true
+                                                    }
+                                                ),
+                                                lastError: null
+                                            };
+                                            return res;
+                                        }
+
+                                        try {
+                                            const res = {
+                                                render: await (await state.template.importFile(file)).renderAsync(
+                                                    innerContext,
+                                                    {
+                                                        isInclude: true
+                                                    }
+                                                ),
+                                                lastError: null
+                                            };
+                                            return res;
+                                        } catch (error) {
+                                            return {
+                                                render: null,
+                                                lastError: error
+                                            };
+                                        }
+                                    }
+
+                                    return acc;
+                                };
+
+                                return await tryToRender(file);
+
+                            }, {render: null, lastError: null});
+                        })
+                        .then(finalResultReduce => {
+
+                            if (finalResultReduce.render !== null) {
+                                return finalResultReduce.render;
+                            }
+
+                            if (finalResultReduce.render === null && ignoreMissing) {
+                                return '';
+                            }
+
+                            throw finalResultReduce.lastError;
+                        })
+                        .then(output => {
+                            if (output !== '') {
+                                result.output = output;
+                            }
+
+                            return result;
+                        });
+                }
+            });
+
+            // - Functions
 
             Twig.exports.extendFunction("keyvalue_list", async(host, key) => {
                 return await this.ctx.keyvalue.list(host, key);
@@ -141,6 +278,11 @@ class Renderer {
                 const decryptedData = await decryptData(host, Buffer.from(encryptedData, 'hex'), encryptedSymmetricObj, privateKey);
                 return decryptedData.plaintext.toString();
             });
+            Twig.exports.extendFunction("isHash", async(str) => {
+                const s = (_.startsWith(str, '0x')) ? str.substr(2) : str;
+                if (s.length !== 64) return false;
+                return ((new RegExp("^[0-9a-fA-F]+$")).test(s));
+            });
             Twig.exports.extendFunction("identity_by_owner", async(owner) => {
                 return await this.ctx.web3bridge.identityByOwner(owner);
             });
@@ -161,10 +303,9 @@ class Renderer {
             });
             Twig.exports.extendFunction("contract_events", async(host, contractName, event, filter = {}) => {
                 const options = { filter,
-                                  fromBlock: 0,
-                                  toBlock: 'latest'}
+                                  fromBlock: 1,
+                                  toBlock: 'latest' };
                 const events =  await this.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
-                console.log({events});
                 for(let ev of events) console.log(ev, ev.raw)
 
                 const eventData = events.map((event) =>
@@ -177,12 +318,12 @@ class Renderer {
             Twig.exports.extendFunction("is_authenticated", async(auth) => {
                 return auth.walletid != undefined
             });
-            Twig.exports.extendFunction("contract_list", async(target, contractName, method) => {
+            Twig.exports.extendFunction("contract_list", async(target, contractName, method, params = []) => {
                 let i = 0;
                 let results = [];
                 while(true) {
                     try {
-                        results.push(await this.ctx.web3bridge.callContract(target, contractName, method, [i]));
+                        results.push(await this.ctx.web3bridge.callContract(target, contractName, method, params.concat([i])));
                     } catch(e) {
                         // todo: only if the error is related to the array bound? how can we standardize this?
                         break;
@@ -197,9 +338,13 @@ class Renderer {
                 return results;
             });
 
+            // - Filters
+
             Twig.exports.extendFilter('unjson', function(value) {
                 return JSON.parse(value);
             });
+
+            // -
 
             Twig.Templates.registerLoader('fs', async(location, params, callback, error_callback/*todo*/) => {
                 // console.log({location, params});

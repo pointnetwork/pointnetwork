@@ -11,10 +11,12 @@ contract Twitter {
     }
 
     Tweet[] tweets;
+    mapping(address => Tweet[]) tweetsByOwner;
 
     function tweet(bytes32 contents) public {
         Tweet memory _tweet = Tweet(msg.sender, contents, block.timestamp, 0);
         tweets.push(_tweet);
+        tweetsByOwner[msg.sender].push(_tweet);
     }
 
     function like(uint tweet_id) public {
@@ -23,5 +25,9 @@ contract Twitter {
 
     function getTweet(uint tweet_id) view public returns(Tweet memory t) {
         return tweets[tweet_id];
+    }
+
+    function getTweetByOwner(address owner, uint tweet_id) view public returns(Tweet memory t) {
+        return tweetsByOwner[owner][tweet_id];
     }
 }

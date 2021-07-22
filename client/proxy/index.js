@@ -173,13 +173,23 @@ class ZProxy {
             let status = 200;
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
                 let hash = parsedUrl.pathname.replace('/_storage/', '');
-                let hashWithoutExt = hash.split('.').slice(0, -1).join('.');
-                let ext = hash.split('.').slice(-1);
-                if (ext !== hashWithoutExt) {
+                let hashWithoutExt = (hash.split('.').length > 1) ? hash.split('.').slice(0, -1).join('.') : hash;
+                let ext = hash.split('.').slice(-1)[0];
+
+                let noExt = (ext === hashWithoutExt) || (hash.split('.').length === 1);
+                if (noExt) contentType = 'text/plain'; // just in case
+                if (!noExt) {
                     contentType = this.getContentTypeFromExt(ext);
                     if (contentType.includes('html')) contentType = 'text/html'; // just in case
-                }
+                } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
+                if (ext === 'zhtml') contentType = 'text/plain';
+
                 rendered = await this.ctx.client.storage.readFile(hashWithoutExt); // todo: what if doesn't exist?
+
+                if (this._isThisDirectoryJson(rendered) && noExt) {
+                    rendered = this._renderDirectory(hash, rendered);
+                    contentType = 'text/html';
+                }
             } else if (_.startsWith(parsedUrl.pathname, '/_keyvalue_append/')) {
                 try {
                     rendered = await this.keyValueAppend(host, request);
@@ -239,6 +249,27 @@ class ZProxy {
         // console.log(request.port);
         // console.log(request.method);
         // console.log(request.url);
+    }
+
+    _isThisDirectoryJson(text) {
+        try {
+            const obj = JSON.parse(text);
+            if (obj.type && obj.type === 'dir') {
+                return true;
+            } else {
+                return false;
+            }
+        } catch(e) {
+            return false;
+        }
+    }
+
+    _renderDirectory(id, text) {
+        if (!this._isThisDirectoryJson(text)) throw Error('_renderDirectory: not a directory');
+
+        const obj = JSON.parse(text);
+        const files = obj.files;
+        return this._directoryHtml(id, files);
     }
 
     async apiResponseFor(cmdstr, request) {
@@ -310,7 +341,17 @@ class ZProxy {
                     rootDir.setCtx(ctx);
                     rootDir.setHost(host);
 
-                    let template_filename = routes[ parsedUrl.pathname ]; // todo: what if route doens't exist?
+                    let route_params = {};
+                    let template_filename = null;
+                    const { match } = require('node-match-path');
+                    for(const k in routes) {
+                        const matched = match(k, parsedUrl.pathname);
+                        if (matched.matches) {
+                            route_params = matched.params;
+                            template_filename = routes[ k ];
+                            break;
+                        }
+                    }
                     if (template_filename) {
                         let template_file_id = await rootDir.getFileIdByPath(template_filename);
                         let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
@@ -322,6 +363,9 @@ class ZProxy {
                         // POST takes priority, rewrites if needed
                         let bodyParsed = qs.parse(body);
                         for (const k in bodyParsed) request_params[k] = bodyParsed[k];
+
+                        // Add params from route matching
+                        request_params = Object.assign({}, request_params, route_params);
 
                         let rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
 
@@ -516,11 +560,58 @@ class ZProxy {
         // return null;
     }
 
+    _directoryHtml(id, files) {
+        let html = "<html><body style='background-color: #fafaff; padding: 20px;'>";
+        html += "<style>th {text-align: left;}</style>";
+        html += "<h1>Index of "+this.ctx.utils.htmlspecialchars(id)+"</h1>";
+        html += "<hr><table style='width: 100%;'>";
+        html += "<tr><th>File</th><th style='text-align: right;'>Size</th><th style='text-align: right;'>Hash</th></tr>";
+        for(let f of files) {
+            let icon = "";
+            switch(f.type) {
+            case 'fileptr':
+                icon += "&#128196; "; break; // https://www.compart.com/en/unicode/U+1F4C4
+            case 'dirptr':
+                icon += "&#128193; "; break; // https://www.compart.com/en/unicode/U+1F4C1
+            default:
+                icon += "&#10067; "; // https://www.compart.com/en/unicode/U+2753 - question mark
+            }
+
+            const name = f.name;
+            const ext = this.ctx.utils.htmlspecialchars( name.split('.').slice(-1) );
+            let link = '/_storage/' + f.id + ((f.type == 'fileptr') ? ('.'+ext) : '');
+
+            html += "<tr><td>"+icon+" <a href='"+link+"' target='_blank'>";
+            html += this.ctx.utils.htmlspecialchars(f.name);
+            html += "</a></td>";
+
+            html += "<td style='text-align: right;'>"+f.size+"</td>";
+            html += "<td style='text-align: right;'><em>"+f.id+"</em></td>";
+
+            html += "</tr>";
+        }
+        html += "</table></body></html>";
+        return html;
+    }
+
     _errorMsgHtml(message, code = 500) {
-        return "<html><body style='background-color: #222233'>" +
+        let formattedMsg;
+        if (typeof message==='string') {
+            formattedMsg = this.ctx.utils.htmlspecialchars(message);
+        } else if (message instanceof Error) {
+            formattedMsg = this.ctx.utils.htmlspecialchars(message.name+": "+message.message)
+                + "<br><br>"
+                + "<div style='text-align: left; opacity: 70%; font-size: 80%;'>"
+                + this.ctx.utils.nl2br(this.ctx.utils.htmlspecialchars(message.stack)) // todo: careful, stack might give some info about the username and folders etc. to the ajax app. maybe better remove it and only leave in dev mode
+                + "</div>";
+        } else {
+            formattedMsg = JSON.stringify(message);
+        }
+
+        return "<html><body style='background-color: #222233;'>" +
             "<div style='text-align:center; margin-top: 20%;'>" +
             "<h1 style='font-size: 300px; color: #ccc; margin: 0; padding: 0;'>"+code+"</h1>" +
-            "<div style='padding: 0 20%; color: #e8e8e8; margin-top: 10px;'><strong>Error: </strong>"+this.ctx.utils.htmlspecialchars(message)+
+            "<div style='padding: 0 20%; color: #e8e8e8; margin-top: 10px; font-family: sans-serif;'><strong>Error: </strong>"+formattedMsg+
             "</div></div>" +
             "</body></html>";
     }

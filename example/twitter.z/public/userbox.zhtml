@@ -1,0 +1,10 @@
+{% set username = request.username %}
+{% set owner = owner_by_identity( request.username ) %}
+
+<div class="card" style="width: 18rem;">
+    <div class="card-body">
+        <h5 class="card-title">@{{ username }}</h5>
+        <p class="card-text">{{ owner }}</p>
+        <a href="#" class="btn btn-primary">See more</a>
+    </div>
+</div>

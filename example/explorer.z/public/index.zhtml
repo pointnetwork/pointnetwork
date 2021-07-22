@@ -1,0 +1,9 @@
+{% extends 'layout.zhtml' %}
+
+{% set active_section = 'dashboard' %}
+
+{% block contents %}
+
+    <p>Pick an option above.</p>
+
+{% endblock %}
