@@ -62,10 +62,10 @@
       function websocketMessageHandler(_payload) {
         let display = '';
         let payload = JSON.parse(_payload);
-        let { type, params, data, event } = payload;
-        console.log('Received Params: ', params);
-        // check this message is for us by checking the target
-        if(params.target === 'hello.z') {
+        let { type, params, hostname, data, event } = payload;
+        console.log('Received Payload: ', payload);
+        // check this message is for us by checking the hostname
+        if(hostname === 'hello.z') {
           // if this is a SUBSCRIBED_EVENT then just set the display to the message
           if(event === 'SUBSCRIBED_EVENT') {
               display = data.message;

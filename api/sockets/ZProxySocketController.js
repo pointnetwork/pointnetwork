@@ -14,7 +14,8 @@ class ZProxySocketController {
     init() {
         this.ws.on('message', async (msg) => {
             const cmd = JSON.parse(msg.utf8Data);
-            cmd.params.target = this.target;
+            // add the target to the cmd object to be echoed back via the callback closure
+            cmd.hostname = this.target;
             function callback(data) {
                 this.publishToClients(this._formatResponse(cmd, data));
             }
