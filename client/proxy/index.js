@@ -35,7 +35,7 @@ class ZProxy {
 
     wsServer(server) {
         const wss = new WebSocketServer({
-            httpServer: server
+            httpServer: server.https
         });
 
         wss.on('request', (request) => {

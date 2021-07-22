@@ -21,7 +21,7 @@ Check out the terminal for details.
 
 ### Connecting to the ZProxySocketController
 
-This is exposed on the ZProxy API port. The connection is made via the ZApp domain root. For example, if the ZApp domain is `example.z` then the WebSocket connection can be made at `ws://example.z`. See the [hello.z](./example/hello.z) demo app for examples.
+This is exposed on the ZProxy API port. The connection is made via the ZApp domain root. For example, if the ZApp domain is `example.z` then the WebSocket connection can be made at `wss://example.z`. See the [hello.z](./example/hello.z) demo app for examples.
 
 ### WebSocket Request Messages
 
@@ -41,7 +41,7 @@ For example, to subscribe to a Smart Contract event via the `ZProxySocketControl
 
 Where `subscribeContractEvent` is the command type for subscribing to Smart Contract events and the `params` contains an object with the keys `contract` that specifies the contract name and `event` that specifies the name of the event to subscribe to.
 
-For example, to subscribe to the `ProductSoldEvent` in the `Store` Smart Contract of the `store.z` app, you would issue the following command to the already connected websocket (via `ws://store.z`):
+For example, to subscribe to the `ProductSoldEvent` in the `Store` Smart Contract of the `store.z` app, you would issue the following command to the already connected websocket (via `wss://store.z`):
 
 ```
 { type: 'subscribeContractEvent',
@@ -53,7 +53,7 @@ For example, to subscribe to the `ProductSoldEvent` in the `Store` Smart Contrac
 
 ### WebSocket Response Messages
 
-Messages sent from the Node socket to the client will always echo the original command object that was used to initiate the call or the subscripton. The payload will also contain two other keys: `data` (containing the acutal response data from the call or subscription) and `event` (denotes if this is data from the call or a message from the socket related to the command).
+Messages sent from the Node socket to the client will always echo the original command object (containing the `type` and `params` keys) that was used to initiate the call or the subscripton. The payload will also contain three other keys: `data` (containing the acutal response data from the call or subscription), `event` (denotes if this is data from the call or a message from the socket related to the command) and `hostname` (the hostname / domain of the app that requested this message).
 
 Essentially there will be two event types of response message to handle:
 
@@ -68,6 +68,7 @@ For example, the response from subsribing to the `ProductSoldEvent` on the `Stor
 
 ```
 {
+  "hostname": "store.z",
   "type": "subscribeContractEvent",
   "params": {
     "contract": "Store",
@@ -80,9 +81,9 @@ For example, the response from subsribing to the `ProductSoldEvent` on the `Stor
 }
 ```
 
-Note that the original command payload is echod back (`type` and `params`) and that the `data` key contains an object with a single `message` key. The `event` is set to `SUBSCRIBED_EVENT`.
+Note that the original command payload is echod back (`type` and `params`), the `hostname` is set to that of the caller app domain (store.z) and that the `data` key contains an object with a single `message` key. The `event` is set to `SUBSCRIBED_EVENT`.
 
-The client app can filter for this type of event to react accordingly when the subscription is successfully established.
+The client app can filter for its own hostname and for this type of event to react accordingly when the subscription is successfully established.
 
 ### DATA_EVENT payload
 
@@ -92,6 +93,7 @@ For example, in the `Hello.z` example app, the client subscribes to the `Updated
 
 ```
 {
+  "hostname": 'hello.z',
   "type": "subscribeContractEvent",
   "params": {
     "contract": "Hello",
@@ -126,6 +128,6 @@ For example, in the `Hello.z` example app, the client subscribes to the `Updated
 }
 ```
 
-Note that the original command payload is echod back (`type` and `params`) and that the `data` key contains an object with the full smart contract event payload so that the client can use any of this available data. Mostly, in this case, the client will be interestedin the `returnValues` key which contains the keys of the event as defined in the smart contract (in this case `oldValue` and `newValue`). Finally, the `event` key is set to `DATA_EVENT` to denote that this message contains actual data from the subscriotion or call that was made via the WebSocket.
+Note that the original command payload is echod back (`type` and `params`), the `hostname` is set to that of the caller app domain (hello.z) and that the `data` key contains an object with the full smart contract event payload so that the client can use any of this available data. Mostly, in this case, the client will be interestedin the `returnValues` key which contains the keys of the event as defined in the smart contract (in this case `oldValue` and `newValue`). Finally, the `event` key is set to `DATA_EVENT` to denote that this message contains actual data from the subscriotion or call that was made via the WebSocket.
 
 The client app can filter for this type of event to react accordingly when the subscription or call returns data that the client is interested in. See the `hello.z` demo application for examples of this.

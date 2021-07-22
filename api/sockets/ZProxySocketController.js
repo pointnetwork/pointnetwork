@@ -14,24 +14,24 @@ class ZProxySocketController {
     init() {
         this.ws.on('message', async (msg) => {
             const cmd = JSON.parse(msg.utf8Data);
+            // add the target to the cmd object to be echoed back via the callback closure
+            cmd.hostname = this.target;
+            function callback(data) {
+                this.publishToClients(this._formatResponse(cmd, data));
+            }
             switch (cmd.type) {
                 case 'subscribeContractEvent':
-                    this.cmd = cmd;
                     const {contract, event, ...options} = cmd.params;
                     this.ctx.web3bridge.subscribeEvent(this.target,
                                                         contract,
                                                         event,
-                                                        this.callback.bind(this),
+                                                        callback.bind(this),
                                                         options);
                     // Notify the clients that we are subscribed to this contract event
                     this.publishToClients(this._formatResponse(cmd, {message: `Subscribed to ${cmd.params.contract} contract ${cmd.params.event} events`}, 'SUBSCRIBED_EVENT'));
                     break;
             }
         })
-    }
-
-    callback(data) {
-        this.publishToClients(this._formatResponse(this.cmd, data));
     }
 
     publishToClients(msg) {
