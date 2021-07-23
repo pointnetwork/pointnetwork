@@ -43,33 +43,79 @@ class Console {
     }
 
     async cmd_api(...args) {
-        const api_base_url = 'http://localhost:'+parseInt(ctx.config.api.port)+'/api/';
-        const api_cmd = args.shift();
+        return await this.cmd_api_get('localhost', args.shift(), ...args);
+    }
+
+    async cmd_api_get(_host, cmd, ...args) {
+        _host = (_host === 'localhost') ? this.host : _host
         try {
-            // Note: args must be "="-delimited strings, or just strings, e.g. ["a=b", "c=d"] or ["b", "d"]
-            // Don't send an array or object! Use function arguments
-            let params = "";
-
-            for(let p of args) {
-                if ((typeof p) !== 'string') {
-                    throw Error('Invalid type of parameter sent to cmd_api: '+typeof p);
+            const params = this.buildURLParams(args);
+            const url = this.buildApiBaseUrl() + cmd + '?' + params;
+            const response = await axios.get(url, {
+                headers: {
+                  'host': _host,
+                  'Content-Type': 'application/json'
                 }
-                if (p.split('=').length === 2) {
-                    params += p;
-                } else {
-                    params += 'p0=' + p;
-                }
-                params += '&';
-            }
-
-            const url = api_base_url + api_cmd + '?' + params;
-            console.log('Querying '+url);
-            const response = await axios.get(url);
-            console.log(response.data);
+            })
             return response.data
         } catch (e) {
-            return {error: `Error fetching ${api_cmd} : ${e.message}`}
+            return {error: `Error fetching ${cmd} : ${e.message}`,
+                    status: e.response.status,
+                    statusText: e.response.statusText}
         }
+    }
+
+    async cmd_api_post(_host, cmd, body) {
+        _host = (_host === 'localhost') ? this.host : _host
+        const api_base_url = this.buildApiBaseUrl();
+        try {
+            const url = api_base_url + cmd;
+            const response = await axios.post(url, body, {
+                headers: {
+                  'host': _host,
+                  'Content-Type': 'application/json'
+                }
+            })
+            return response.data
+        } catch (e) {
+            return {error: `Error posting ${cmd} : ${e.message}`,
+                    status: e.response.status,
+                    statusText: e.response.statusText}
+        }
+    }
+
+    // Private helpers
+
+    buildURLParams(args) {
+        // Note: args must be "="-delimited strings, or just strings, e.g. ["a=b", "c=d"] or ["b", "d"]
+        // Don't send an array or object! Use function arguments
+        let params = "";
+
+        for(let p of args) {
+            if ((typeof p) !== 'string') {
+                throw Error('Invalid type of parameter sent to cmd_api: '+typeof p);
+            }
+            if (p.split('=').length === 2) {
+                params += p;
+            } else {
+                params += 'p0=' + p;
+            }
+            params += '&';
+        }
+
+        return params;
+    }
+
+    get host() {
+        return `http://localhost:${parseInt(ctx.config.api.port)}`;
+    }
+
+    get path() {
+        return '/v1/api/';
+    }
+
+    buildApiBaseUrl() {
+        return `${this.host}${this.path}`;
     }
 }
 

@@ -20,7 +20,7 @@ const ProviderChunk = require('../../db/models/provider_chunk');
   var allFiles = [...new Set([...allUploadedFiles, ...allDownloadedFiles])];
 
   const files = allFiles.map((file) =>
-    (({ id, localPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, localPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
+    (({ id, originalPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, originalPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
 
   console.log(files)
 

@@ -162,7 +162,7 @@ class Chunk extends Model {
             if (b[0] === file.id && b[1] === offset) return;
         }
 
-        this._attributes.belongsToFiles.push([ file.id, offset, file.localPath ]);
+        this._attributes.belongsToFiles.push([ file.id, offset, file.originalPath ]);
     }
 
     getStorageLinks() {

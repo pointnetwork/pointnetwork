@@ -122,6 +122,10 @@ class Utils {
         const encode = require('html-entities').encode;
         return encode(dangerousString);
     }
+
+    static nl2br(text) {
+        return text.replace(/\n/g, '<br>');
+    }
 }
 
 Utils.merkle = require('./merkle-utils');

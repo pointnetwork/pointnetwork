@@ -2,34 +2,48 @@
 
 Start up all Point Network nodes
 Run this file at the terminal `node scripts/ws/clientTest.js`
-You should see output like so:
 
-{"data":{"ping":"pong"}}
+This will connect to the PN Node internal Web Socket endpoint as defined in ws_routes.js.
 
-Now run a deployment. You should see the stream update as the files are deployed!
+On startup it will run the pingExample, walletSubscriptionExample and deployerSubscriptionExample as defined below.
+
+* pingExample: simply calls the status/ping api and returns the response payload in the console
+* walletSubscriptionExample: subscribes to all wallet transactions and emits them in the console
+* deployerSubscriptionExample: subscribes to all deployment progress and emits them in the console
 */
 const WebSocket = require('ws');
 const readline = require('readline');
 
-// const node1Config = require('../../resources/defaultConfig.json')
-const node2Config = require('../../resources/demo/config.test2.json')
-// const node3Config = require('../../resources/demo/config.test3.json')
+const configPath = '../../resources/demo/config.test2.json' // change the file to connect to a different node
+const config = require(configPath)
 
-const ws = new WebSocket(`ws://localhost:${node2Config.api.port}/ws/node`);
-
-const path = require('path')
+const ws = new WebSocket(`ws://localhost:${config.api.port}/`);
 
 let _console;
 const PROMPT = 'ws> ';
 
-deploy_example='example/hello.z'
+const pingExample={
+  type: 'api',
+  params: {
+    path: 'status/ping'
+  }
+}
+
+const walletSubscriptionExample={
+  type: 'walletSubscription',
+  params: {}
+}
+
+const deployerSubscriptionExample={
+  type: 'deployerSubscription',
+  params: {}
+}
 
 ws.on('open', () => {
-  ws.send('status');
-  ws.send('ping');
+  ws.send(JSON.stringify(pingExample))
+  ws.send(JSON.stringify(walletSubscriptionExample))
+  ws.send(JSON.stringify(deployerSubscriptionExample))
   _console.prompt();
-  // uncomment the below 'deploy' command and the node will deploy the example site!
-  // ws.send(`deploy?deploy_path=${path.resolve(deploy_example)}`);
 });
 
 ws.on('message', (data) => {
@@ -43,16 +57,21 @@ function createWsConsole() {
   console.log('Welcome to the Point Network WebSocket Console!')
   console.log()
   console.log('Call any API route via this interface:')
-  console.log(`${PROMPT} ping`)
-  console.log('{"data":{"ping":"pong"}')
+  console.log('Example: Call the status/ping API endpoint')
+  console.log(`${PROMPT} {"type":"api","params":{"path":"status/ping"}}`)
   console.log()
   console.log('Example: Deploy a site via the API')
-  console.log('deploy?deploy_path=/your/path/to/pointnetwork/example/hello.z')
+  console.log(`${PROMPT} {"type":"api","params":{"path":"deploy?deploy_path=./example/hello.z"}}`)
   console.log()
   console.log('Example: Wallet transactions are streamed via this socket')
+  console.log(`${PROMPT} {"type":"walletSubscription","params":{}}`)
+  console.log()
+  console.log('Example: Deployer progress can be streamed via this socket')
+  console.log(`${PROMPT} {"type":"deployerSubscription","params":{}}`)
   console.log()
   console.log('***********************************************')
   console.log()
+  process.stdin.setEncoding('utf8');
   _console = readline.createInterface({
     input: process.stdin,
     output: process.stdout,

@@ -4,9 +4,21 @@
 
 The demo setup consists of three Point Network nodes running in a separate containers, a dev blockchain node running a test network (currently the `ganache-cli` is used), and a Point Network contract deployment script running in a dedicated container. Each Point Network node assigned to its own role in the demo. The node roles are:
 
-* Storage Provider, z-proxy port `65500`
-* Website Owner, z-proxy port `65501`
-* Website Viewer, z-proxy port `65502`
+* Storage Provider
+  * Service Name: `storage_provider`
+  * Container Name: `pointnetwork_storage_provider`
+  * ZProxy port `65500`
+  * API port: `24680`
+* Website Owner
+  * Service Name: `website_owner`
+  * Container Name: `pointnetwork_website_owner`
+  * ZProxy port `65501`
+  * API port: `24681`
+* Website Visitor
+  * Service Name: `website_visitor`
+  * Container Name: `pointnetwork_website_visitor`
+  * ZProxy port `65502`
+  * API port: `24682`
 
 To run the demo, one should firstly [install `docker`](https://docs.docker.com/get-docker/) and [`docker-compose`](https://docs.docker.com/compose/install/) on their host system. To start the demo, run:
 
@@ -20,7 +32,7 @@ Once the compose is up, the Point Network contracts deployment will start. Unles
 ./scripts/deploy-sites-docker.sh
 ```
 
-Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `z-proxy` ports. The sites will be available at their regular addresses.
+Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `ZProxy` ports. The sites will be available at their regular addresses.
 
 ### Develop using the docker compose
 
@@ -38,8 +50,23 @@ If you make changes to the code while the compose is already running, you can re
 docker-compose restart storage_provider # to restart a specified container
 docker-compose restart # to restart the whole compose
 ```
+**Docker Compose Logs**
 
-### Install Dependencies
+To follow the logs of *all* the containers simply run `docker-compose logs -f` in the terminal. If you want to follow the logs of a specific container, hten specify the service name as well like so: `docker-compose logs -f storage_provider` (to follow the logs of `storage_provider`)
+
+**Docker Compose Single Site Deployment**
+
+If you want to deploy a single example site then you can do the following:
+
+* Enter the website owner container like this: `docker exec -it pointnetwork_website_owner /bin/bash`,
+* Now inside the container terminal: `cd /app/example/store.z`.
+* Run the deploy command: `./point deploy ./example/store.z --datadir $DATADIR -v --contracts`
+
+**Docker Compose and Truffle Console**
+
+Since the `blockchain_node` service is exposed via `http://localhost:7545` its therefore possible to use truffle console without any modification. So you can run `truffle console` and it will connect to the running Ganache blockchain in the Docker `blockchain_node` service.
+
+### Install Dependencies (Local Machine Setup)
 
 Install all global and project dependencies. Run the following under the project root folder:
 
@@ -120,14 +147,18 @@ All sites should respond with a 200 status code. If not there is something wrong
 1. Tell the second node to deploy the `blog.z` website:
 
     ```
-    ./point deploy example/blog.z --datadir ~/.point/test2 -v
+    ./scripts/deploy-sites.sh blog --contracts
     ```
 
 1. Now you can stop the second node (Ctrl+C).
 1. Run the [Point Browser](https://github.com/pointnetwork/pointbrowser)
 1. Navigate to `http://blog.z` and it will open the home page of the Example Blog.
 
-### Troubleshooting the demo
+## WebSockets
+
+Please refer to the [WebSockets README](./api/sockets/)
+
+## Troubleshooting
 
 To completely reset the nodes, clear all the cache data and redeploy your config files simply run the following script from the project root folder:
 
@@ -138,6 +169,124 @@ To completely reset the nodes, clear all the cache data and redeploy your config
 If the nodes do not appear to cache all the data then ensure that `client.storage.default_redundancy` setting is set to the number of nodes you have running (3).
 
 If the expected node is not responding with the data requests then ensure that `service_provider.enabled` is set to `false` for that node. Typically for the demo we want to have `Node 1` set to true and the others set to false.
+
+### Troubleshooting examining the files / chunks cache in the node disk
+
+Let’s assume that you have deployed the hello.z website from Node 2 (the site owner node) to Node 1. Then when you open a browser and load the site from either Node 1 or Node 2 you will see the page load in the browser window and you will see the same log output in the Node console window. In particular you will see this in the Node console:
+
+```
+rootDirId for host hello.z found: b9e32bc06a0b33ba9d3b75bdac7fd1c5ec13381d5fe815f97f3d2028b3593c31
+```
+
+What you can do is take the `rootDirId` and use that to output the file contents on either Node 1 or Node 2 using the `cat` command like so (note `test1` in the path is the folder of Node 1):
+
+```
+cat ~/.point/test1/data/client_storage_cache/chunk_b9e32bc06a0b33ba9d3b75bdac7fd1c5ec13381d5fe815f97f3d2028b3593c31 | json_pp
+```
+
+You should see this output on all nodes:
+
+```json
+{
+   "type" : "file",
+   "merkle" : [
+      "8f3a18043933176bd71c8987a227eee8cf6afdcc8110f1adf875827d815c1576",
+      "33b489e12fa57c29348b11199076491eaab321bee1f7d88638dae2ee97839752"
+   ],
+   "filesize" : 146,
+   "chunks" : [
+      "8f3a18043933176bd71c8987a227eee8cf6afdcc8110f1adf875827d815c1576"
+   ],
+   "hash" : "keccak256"
+}
+```
+
+Now take the first chunk id (`8f3a18043933176bd71c8987a227eee8cf6afdcc8110f1adf875827d815c1576`) and run the `cat` command again for both nodes:
+
+```
+cat ~/.point/test1/data/client_storage_cache/chunk_8f3a18043933176bd71c8987a227eee8cf6afdcc8110f1adf875827d815c1576 | json_pp
+```
+
+You should see this output on all nodes. Notice this is of type `dir` and contains the file list within.
+
+```json
+{
+   "type" : "dir",
+   "files" : [
+      {
+         "name" : "index.html",
+         "id" : "45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2",
+         "type" : "fileptr",
+         "size" : 192
+      }
+   ]
+}
+```
+
+Now take the id of the `fileptr` from the last output and use `cat` command to load the file from the storage layer. This should yield the hello.z index.zhtml template.
+
+```
+cat ~/.point/test1/data/client_storage_cache/file_45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2
+```
+
+Retuns:
+
+```
+<html>
+  <head>
+    <title>Hello World from Point Network!</title>
+  </head>
+  <body>
+    <div>
+      <p>Hello World Example for testing Storage Layer features NODE111</p>
+    </div>
+  </body>
+</html>
+```
+
+### Troubleshooting view File / Chunk meta data from nodes Level DB via the Node API
+
+Its possible to view all File / Chunk metadata on a nodes Level DB store by using the Node Storege API.
+
+The Node has endpoints for both Files and Chunks as follows:
+
+* `/api/storage/files` - Returns all Files metadata from nodes Level DB
+* `/api/storage/file/:id` - Returns a single File by :id metadata from nodes Level DB
+* `/api/storage/chunks` - Returns all Chunks metadata from nodes Level DB
+* `/api/storage/chunk/:id`  - Returns a single Chunk by :id metadata from nodes Level DB
+
+You can any client to access these APIs. The easiest way to get data from these APIs is to use `curl` command line tool like so (**NOTE** examples below pipe to the `json_pp` command to pretty print the response JSON )
+
+```
+curl http://localhost:2468/api/storage/files | json_pp
+curl http://localhost:2468/api/storage/files/45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2 | json_pp
+curl http://localhost:2468/api/storage/chunks | json_pp
+curl http://localhost:2468/api/storage/chunks/0f1a97888f3c63318bceedd0461c8efe2778a3e1a49934045ee8314d94e335be | json_pp
+```
+
+If you take the `fileptr` id of the hello.z index.zhtml site (as shown in the above example this id is `45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2`) and plug that into the /api/files/:id API endpoint, you will see the file meta data for this file id loaded from the Nodes level DB.
+
+So for example (using `curl` piped to `json_pp`):
+
+```
+curl http://localhost:2468/api/storage/files/45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2 | json_pp
+```
+
+Should return the following result:
+
+```json
+{
+   "file": {
+       "originalPath": "/Users/developer/.point/test1/data/client_storage_cache/file_45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2",
+       "dl_status": "ds99",
+       "id": "45c1cc29130796f083425310aad7c10ed9c2a4cf7031e69dd40cd8551af65af2",
+       "chunkIds": [
+           "e939b8d3da28653ef9ce0713641173f999d1f3489905e6a07f694e603e781f99"
+       ],
+       "size": 192
+   }
+}
+```
 
 ### Troubleshooting installing TOR browser during NPM install
 
@@ -212,14 +361,6 @@ const File = require('../../db/models/file');
 ... use the File model ...
 ```
 
-### Using the WebSocket Test client
-
-You can start the `WebSocket Test client` using the following at the terminal:
-
-```
-node scripts/ws/clientTest.js
-```
-
 ### Testing all example sites deployment
 
 There is a convenience script that will deploy all the example sites (found in the [./example](./example) folder). This is useful as a check to make sure the nodes can still run a sucessful deployment of all the example sites. The script to run is:
@@ -237,6 +378,22 @@ npx nodemon ./point --datadir ~/.point/test2
 ```
 
 That way, changes in the applications code are detected by nodemon and the Point Network node is then automatically restarted.
+
+### Note on Store.z example site
+
+This is a React JS app. So you will need to install dependencies for it and run a build watcher if you want to develop it further.
+
+1. CD into the [./example/store.z/src/](./example/store.z/src/) directory.
+1. Run `npm i` to install the sites dependencies
+1. Run `npm run watch` (or `npm run watch:docker` if you are running the Node using Docker) to have *parcel* watch the site and build it on any detected changes
+1. Run `./scripts/deploy-sites.sh store --contracts` (from the node root folder) to deploy the sites `views` directory that was built using parcel.
+
+### Coding style
+
+Following coding style applies:
+
+* Always use semicolons otherwise [dragons may bite you](https://www.freecodecamp.org/news/codebyte-why-are-explicit-semicolons-important-in-javascript-49550bea0b82/)!
+* Use 4 spaces as a default indent for all files and set this in your IDE.
 
 ### Developing the Point Network Web App Utility
 

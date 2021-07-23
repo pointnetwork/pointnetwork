@@ -1,0 +1,5 @@
+{
+  "/": "index.zhtml",
+  "/identities/:handle": "identity.zhtml",
+  "/identities": "identities.zhtml"
+}

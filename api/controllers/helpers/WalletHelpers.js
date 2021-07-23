@@ -1,6 +1,13 @@
   /* Wallet Helper Functions */
 
+  function useWalletTokenFromConfig() {
+    return `${ctx.config.client.wallet.id}-${ctx.config.client.wallet.passcode}`
+  }
+
   function initWallet(ctx, walletToken) {
+    // For prototype / demo version use the wallet token from the config
+    // TODO remove and replace with real auth / security
+    walletToken = useWalletTokenFromConfig()
     this.validateWalletToken(walletToken)
     const {walletId, passcode} = this.parseWalletToken(walletToken)
     return this.loadWallet(ctx, walletId, passcode)

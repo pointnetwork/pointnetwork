@@ -27,7 +27,7 @@ h1 {
   border-radius: 15px ;
 }
 
-.emailNotification {
+.notification {
   color: #f10909;
 }
 
@@ -69,20 +69,3 @@ main {
 textarea {
   width: 100%;
 }
-
-#walletid {
-  width: 300px;
-  height: 30px;
-  border: none;
-  border-radius: 3px;
-  padding-left: 8px;
-}
-
-#passcode {
-  width: 300px;
-  height: 30px;
-  border: none;
-  border-radius: 3px;
-  padding-left: 8px;
-}
-

@@ -13,7 +13,9 @@ class Web3Bridge {
         this.network_id = this.ctx.config.network.web3_network_id;
         this.chain_id = this.ctx.config.network.web3_chain_id;
 
-        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(this.connectionString); // todo: maybe you should hide it behind this abstraction, no?
+        // use WebsocketProvider to support subscriptions
+        const localProvider = new Web3.providers.WebsocketProvider(this.connectionString)
+        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(localProvider); // todo: maybe you should hide it behind this abstraction, no?
         this.ctx.web3bridge = this;
 
         this.address = this.ctx.config.client.wallet.account;
@@ -45,6 +47,12 @@ class Web3Bridge {
     }
 
     async loadWebsiteContract(target, contractName) {
+        // todo: make it nicer, extend to all potential contracts, and add to docs
+        // @ means internal contract for Point Network (truffle/contracts)
+        if (target === '@' && contractName === 'Identity') {
+            return this.loadIdentityContract();
+        }
+
         const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
         let abi;
@@ -58,15 +66,16 @@ class Web3Bridge {
         }
     }
 
-    async web3send(method, gasLimit = null, amountEth = '0') {
-        let account, gasPrice
+    async web3send(method, optons={}) {
+        let account, gasPrice;
+        let { gasLimit, amountInWei } = optons;
         try {
             account = this.web3.eth.defaultAccount;
             gasPrice = await this.web3.eth.getGasPrice();
-            if (!gasLimit) gasLimit = await method.estimateGas({ from: account });
-            return await method.send({ from: account, gasPrice, gas: gasLimit, value: this.web3.utils.toWei(amountEth, "ether") });
+            if (!gasLimit) gasLimit = await method.estimateGas({ from: account, value: amountInWei });
+            return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
         } catch (e) {
-            console.info({ method, account, gasPrice, gasLimit, amountEth })
+            console.info({ method, account, gasPrice, gasLimit, amountInWei })
             console.error('web3send error:', e)
             throw e
         }
@@ -84,6 +93,7 @@ class Web3Bridge {
 
     async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
+        if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
         if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
         let result = await contract.methods[ method ]( ...params ).call();
         return result;
@@ -94,8 +104,18 @@ class Web3Bridge {
         return await contract.getPastEvents( event,  options );
     }
 
-    async sendToContract(target, contractName, methodName, params) { // todo: multiple arguments, but check existing usage // huh?
+    async subscribeEvent(target, contractName, event, callback, options={}) {
         const contract = await this.loadWebsiteContract(target, contractName);
+        const subscription = contract.events[event](options)
+            .on('data', event => callback(event))
+            .on('connected', subscriptionId => console.log(subscriptionId));
+        return subscription;
+    }
+
+    async sendToContract(target, contractName, methodName, params, options={}) { // todo: multiple arguments, but check existing usage // huh?
+        const contract = await this.loadWebsiteContract(target, contractName);
+
+        if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
 
         // storage id: convert string -> bytes32
         for(let k in contract.methods) {
@@ -118,7 +138,7 @@ class Web3Bridge {
 
         // Now call the method
         const method = contract.methods[ methodName ](...params);
-        console.log(await this.web3send(method)); // todo: remove console.log
+        console.log(await this.web3send(method, options)); // todo: remove console.log
     }
 
     async identityByOwner(owner) {
@@ -153,6 +173,8 @@ class Web3Bridge {
     }
 
     async getKeyValue(identity, key) {
+        if (typeof identity !== 'string') throw Error('web3bridge.getKeyValue(): identity must be a string');
+        if (typeof key !== 'string') throw Error('web3bridge.getKeyValue(): key must be a string');
         identity = identity.replace('.z', ''); // todo: rtrim instead
         const contract = await this.loadIdentityContract();
         let result = await contract.methods.ikvGet(identity, key).call();
