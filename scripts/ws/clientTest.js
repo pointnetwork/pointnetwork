@@ -2,20 +2,22 @@
 
 Start up all Point Network nodes
 Run this file at the terminal `node scripts/ws/clientTest.js`
-You should see output like so:
 
-{"data":{"ping":"pong"}}
+This will connect to the PN Node internal Web Socket endpoint as defined in ws_routes.js.
 
-Now run a deployment. You should see the stream update as the files are deployed!
+On startup it will run the pingExample, walletSubscriptionExample and deployerSubscriptionExample as defined below.
+
+* pingExample: simply calls the status/ping api and returns the response payload in the console
+* walletSubscriptionExample: subscribes to all wallet transactions and emits them in the console
+* deployerSubscriptionExample: subscribes to all deployment progress and emits them in the console
 */
 const WebSocket = require('ws');
 const readline = require('readline');
 
-// const node1Config = require('../../resources/defaultConfig.json')
-const node2Config = require('../../resources/demo/config.test2.json')
-// const node3Config = require('../../resources/demo/config.test3.json')
+const configPath = '../../resources/demo/config.test2.json' // change the file to connect to a different node
+const config = require(configPath)
 
-const ws = new WebSocket(`ws://localhost:${node2Config.api.port}/ws/node`);
+const ws = new WebSocket(`ws://localhost:${config.api.port}/`);
 
 let _console;
 const PROMPT = 'ws> ';
@@ -24,13 +26,6 @@ const pingExample={
   type: 'api',
   params: {
     path: 'status/ping'
-  }
-}
-
-const deployExample={
-  type: 'api',
-  params: {
-    path: 'deploy?deploy_path=./example/hello.z'
   }
 }
 
@@ -49,10 +44,6 @@ ws.on('open', () => {
   ws.send(JSON.stringify(walletSubscriptionExample))
   ws.send(JSON.stringify(deployerSubscriptionExample))
   _console.prompt();
-  // uncomment the below examples to try them out!
-  // or just enter the json commands directly into the console as shown below
-  // ws.send(JSON.stringify(contractSubscriptionExample))
-  // ws.send(JSON.stringify(deployExample))
 });
 
 ws.on('message', (data) => {
@@ -66,11 +57,11 @@ function createWsConsole() {
   console.log('Welcome to the Point Network WebSocket Console!')
   console.log()
   console.log('Call any API route via this interface:')
+  console.log('Example: Call the status/ping API endpoint')
   console.log(`${PROMPT} {"type":"api","params":{"path":"status/ping"}}`)
-  console.log('{"data":{"ping":"pong"}')
   console.log()
   console.log('Example: Deploy a site via the API')
-  console.log(`${PROMPT} {"type":"api","params":{"path":"deploy?deploy_path=./example/hello.zy"}}`)
+  console.log(`${PROMPT} {"type":"api","params":{"path":"deploy?deploy_path=./example/hello.z"}}`)
   console.log()
   console.log('Example: Wallet transactions are streamed via this socket')
   console.log(`${PROMPT} {"type":"walletSubscription","params":{}}`)

@@ -18,27 +18,26 @@ class NodeSocketController {
         this.console = new Console(this.ctx);
         // expect the message to contain an object detailing the
         this.ws.on('message', async (msg) => {
-        // TODO extract to handleRequesst function
-        const cmd = JSON.parse(msg);
-        switch (cmd.type) {
-            case 'api':
-                this.publishToClients(await this.apiResponseFor(cmd));
-                break;
-            case 'walletSubscription':
-                // subscribe to the wallets TRANSACTION_EVENT via the wallet transactionEventEmitter
-                this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, (data) => {
-                    this.publishToClients(this._formatResponse(cmd, data));
-                })
-                this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to Wallet.TRANSACTION_EVENT'}, 'SUBSCRIBED_EVENT'));
-                break;
-            case 'deployerSubscription':
-                // subscribe to the deployerProgress PROGRESS_UPDATED via the wallet progressEventEmitter
-                this.ctx.client.deployerProgress.progressEventEmitter.on(DeployerProgress.PROGRESS_UPDATED, (data) => {
-                    this.publishToClients(this._formatResponse(cmd, data));
-                });
-                this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to DeployerProgress.PROGRESS_UPDATED'}, 'SUBSCRIBED_EVENT'));
-                break;
-            }
+            const cmd = JSON.parse(msg);
+            switch (cmd.type) {
+                case 'api':
+                    this.publishToClients(await this.apiResponseFor(cmd));
+                    break;
+                case 'walletSubscription':
+                    // subscribe to the wallets TRANSACTION_EVENT via the wallet transactionEventEmitter
+                    this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, (data) => {
+                        this.publishToClients(this._formatResponse(cmd, data));
+                    })
+                    this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to Wallet.TRANSACTION_EVENT'}, 'SUBSCRIBED_EVENT'));
+                    break;
+                case 'deployerSubscription':
+                    // subscribe to the deployerProgress PROGRESS_UPDATED via the wallet progressEventEmitter
+                    this.ctx.client.deployerProgress.progressEventEmitter.on(DeployerProgress.PROGRESS_UPDATED, (data) => {
+                        this.publishToClients(this._formatResponse(cmd, data));
+                    });
+                    this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to DeployerProgress.PROGRESS_UPDATED'}, 'SUBSCRIBED_EVENT'));
+                    break;
+                }
         })
     }
 
