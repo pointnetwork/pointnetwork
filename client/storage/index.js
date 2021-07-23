@@ -59,7 +59,7 @@ class Storage {
 
         // Setting `originalPath` to the `chunkify`ed version of `file`,
         // instead of the path where we find the original file source.
-        // file.originalPath = path.join(this.getCacheDir(), 'chunk_'+file.id);
+        file.originalPath = path.join(this.getCacheDir(), 'chunk_'+file.id);
 
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
         file.expires = Math.max(parseInt(file.expires)||0, parseInt(expires)||0);
