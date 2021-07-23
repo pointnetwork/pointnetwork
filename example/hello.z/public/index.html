@@ -13,6 +13,9 @@
       <input type="text" id="txtTestSmartContractSetValue" value="Change Me!" ></input>
       <br/>
       <br/>
+      <button id="btnUnsubscribeTo" onclick="unsubscribeTo()">Unsubscribe To Event</button>
+      <br/>
+      <br/>
       <b>API Responses</b>
       <p id="results"></p>
       <b>WebSocket Events</b>
@@ -20,6 +23,7 @@
     </div>
     <script>
       (async () => {
+        let subscriptionId;
         // initialize websocket connect to point network node via PointSDK
         // the idea here is to initalize websockets for the app only if needed
         // and to specify the callback that will handle the incomming websocket messages
@@ -27,7 +31,7 @@
         socket.onopen = function() {
             console.log('WebSocket Client Connected');
             window.point.contract.subscribe({contract: 'Hello', event: 'UpdatedValue'});
-            window.point.contract.subscribe({contract: 'Hello', event: 'HelloWorld'});
+            // window.point.contract.subscribe({contract: 'Hello', event: 'HelloWorld'});
         };
         // let balance = await window.point.wallet.balance();
         let ping = await window.point.status.ping();
@@ -69,6 +73,7 @@
           // if this is a SUBSCRIBED_EVENT then just set the display to the message
           if(event === 'SUBSCRIBED_EVENT') {
               display = data.message;
+              this.subscriptionId = data.subscriptionId;
           }
           // if this is a DATA_EVENT then check the type of the event and switch on that
           if(event === 'DATA_EVENT') {
@@ -102,6 +107,11 @@
           document.getElementById("wsevents").appendChild(li);
         }
       }
+
+      async function unsubscribeTo() {
+        window.point.contract.unsubscribe({subscriptionId: this.subscriptionId});
+      }
+
       async function testSmartContractEvent() {
         document.getElementById('btnTestSmartContractEvent').innerText = 'Processing';
         let newValue = document.getElementById('txtTestSmartContractSetValue').value;

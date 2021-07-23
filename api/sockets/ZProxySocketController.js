@@ -16,20 +16,27 @@ class ZProxySocketController {
             const cmd = JSON.parse(msg.utf8Data);
             // add the target to the cmd object to be echoed back via the callback closure
             cmd.hostname = this.target;
-            function callback(data) {
+            function callbackData(data) {
                 this.publishToClients(this._formatResponse(cmd, data));
+            }
+            function callbackSubscribed(subscriptionId) {
+                let payload = { subscriptionId,
+                                message: `Subscribed to ${cmd.params.contract} contract ${cmd.params.event} events with subscription id ${subscriptionId}`}
+                this.publishToClients(this._formatResponse(cmd, payload, 'SUBSCRIBED_EVENT'));
             }
             switch (cmd.type) {
                 case 'subscribeContractEvent':
                     const {contract, event, ...options} = cmd.params;
-                    this.ctx.web3bridge.subscribeEvent(this.target,
+                    const subscription = await this.ctx.web3bridge.subscribeEvent(this.target,
                                                         contract,
                                                         event,
-                                                        callback.bind(this),
+                                                        callbackData.bind(this),
+                                                        callbackSubscribed.bind(this),
                                                         options);
-                    // Notify the clients that we are subscribed to this contract event
-                    this.publishToClients(this._formatResponse(cmd, {message: `Subscribed to ${cmd.params.contract} contract ${cmd.params.event} events`}, 'SUBSCRIBED_EVENT'));
                     break;
+                case 'unsubscribeContractEvent':
+                    const { subscriptionId } = cmd.params;
+                    this.ctx.web3bridge.unsubscribeEvent(subscriptionId);
             }
         })
     }

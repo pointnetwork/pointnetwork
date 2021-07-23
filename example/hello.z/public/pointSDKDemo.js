@@ -65,6 +65,14 @@ pointSDKDemo = {
                 params: meta
             }
             socket.send(JSON.stringify(payload))
+        },
+        unsubscribe: async(meta) => {
+            let payload = {
+                type: 'unsubscribeContractEvent',
+                params: meta
+            }
+            socket.send(JSON.stringify(payload))
+            console.log('Unscubscribing to event: ', meta.subscriptionId)
         }
     }
 }

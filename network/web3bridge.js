@@ -104,12 +104,16 @@ class Web3Bridge {
         return await contract.getPastEvents( event,  options );
     }
 
-    async subscribeEvent(target, contractName, event, callback, options={}) {
+    async subscribeEvent(target, contractName, event, callbackData, callbackSubscribed, options={}) {
         const contract = await this.loadWebsiteContract(target, contractName);
-        const subscription = contract.events[event](options)
-            .on('data', event => callback(event))
-            .on('connected', subscriptionId => console.log(subscriptionId));
+        const subscription = await contract.events[event](options)
+            .on('data', event => callbackData(event))
+            .on('connected', subscriptionId => callbackSubscribed(subscriptionId));
         return subscription;
+    }
+
+    async unsubscribeEvent(id) {
+        this.web3.eth.removeSubscriptionById(id);
     }
 
     async sendToContract(target, contractName, methodName, params, options={}) { // todo: multiple arguments, but check existing usage // huh?
