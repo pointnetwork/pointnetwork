@@ -3,7 +3,7 @@ import { useRoute } from 'wouter'
 import { ProductData } from '~/@types';
 
 export type ProductsRouteParams = {
-     storeId: string
+    storeId: string
 };
 
 const defaultContext = {
@@ -41,6 +41,7 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
                 )));
             } catch (e) {
                 console.error('Subscription error:', e);
+                break;
             }
         }
     }, []);
