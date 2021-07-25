@@ -20,8 +20,11 @@ class ZProxySocketController {
                 this.publishToClients(this._formatResponse(cmd, data));
             }
             function callbackSubscribed(subscriptionId) {
-                let payload = { subscriptionId,
-                                message: `Subscribed to ${cmd.params.contract} contract ${cmd.params.event} events with subscription id ${subscriptionId}`}
+                const { contract, event } = cmd.params;
+                const payload = {
+                    subscriptionId,
+                    message: `Subscribed to ${contract} contract ${event} events with subscription id ${subscriptionId}`
+                }
                 this.publishToClients(this._formatResponse(cmd, payload, 'SUBSCRIBED_EVENT'));
             }
             switch (cmd.type) {
@@ -35,9 +38,12 @@ class ZProxySocketController {
                                                         options);
                     break;
                 case 'removeSubscriptionById':
-                    const { subscriptionId } = cmd.params;
+                    const { contract, event, subscriptionId } = cmd.params;
+                    const payload = {
+                        message: `Unsubscribed from ${contract} contract ${event} events using subscription id ${subscriptionId}`
+                    }
                     await this.ctx.web3bridge.removeSubscriptionById(subscriptionId);
-                    this.publishToClients(this._formatResponse(cmd, {}, 'UNSUBSCRIBED_EVENT'));
+                    this.publishToClients(this._formatResponse(cmd, payload, 'UNSUBSCRIBED_EVENT'));
             }
         })
     }
