@@ -26,7 +26,7 @@ class ApiServer {
             // https://github.com/fastify/fastify-websocket - for websocket support
             this.server.register(require('fastify-websocket'), {
                 options: { clientTracking: true }
-            })
+            });
             this.connectRoutes();
 
             this.server.setErrorHandler(function (error, request, reply) {
@@ -44,14 +44,14 @@ class ApiServer {
 
             this.server.addHook('preValidation', (request, reply, next) => {
                 // some code // todo
-                next()
+                next();
             });
 
             this.server.decorate('notFound', (request, reply) => {
-                reply.code(404).type('text/html').send('Not Found')
-            })
+                reply.code(404).type('text/html').send('Not Found');
+            });
 
-            this.server.setNotFoundHandler(this.server.notFound)
+            this.server.setNotFoundHandler(this.server.notFound);
 
             await this.server.listen(parseInt(this.config.port), this.config.address, async (err, address) => {
                 if (err) throw err;
@@ -100,7 +100,7 @@ class ApiServer {
                 url: wsRoute[1],
 
                 handler: async (request, reply) => {
-                    return undefined // needed otherwise 'handler not defined error' is thrown by fastify
+                    return undefined; // needed otherwise 'handler not defined error' is thrown by fastify
                 },
                 wsHandler: async (conn, req) => {
                     return new (require('./sockets/'+socketName))(this.ctx, conn.socket, this.server.websocketServer);
