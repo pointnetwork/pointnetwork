@@ -16,6 +16,7 @@ class ZProxySocketController {
             const cmd = JSON.parse(msg.utf8Data);
             // add the target to the cmd object to be echoed back via the callback closure
             cmd.hostname = this.target;
+            const {contract, event, ...options} = cmd.params;
             function callbackData(data) {
                 this.publishToClients(this._formatResponse(cmd, data));
             }
@@ -29,8 +30,7 @@ class ZProxySocketController {
             }
             switch (cmd.type) {
                 case 'subscribeContractEvent':
-                    const {contract, event, ...options} = cmd.params;
-                    const subscription = await this.ctx.web3bridge.subscribeContractEvent(this.target,
+                    await this.ctx.web3bridge.subscribeContractEvent(this.target,
                                                         contract,
                                                         event,
                                                         callbackData.bind(this),
@@ -38,7 +38,7 @@ class ZProxySocketController {
                                                         options);
                     break;
                 case 'removeSubscriptionById':
-                    const { contract, event, subscriptionId } = cmd.params;
+                    const { subscriptionId } = options;
                     const payload = {
                         message: `Unsubscribed from ${contract} contract ${event} events using subscription id ${subscriptionId}`
                     }
