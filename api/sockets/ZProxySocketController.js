@@ -27,16 +27,17 @@ class ZProxySocketController {
             switch (cmd.type) {
                 case 'subscribeContractEvent':
                     const {contract, event, ...options} = cmd.params;
-                    const subscription = await this.ctx.web3bridge.subscribeEvent(this.target,
+                    const subscription = await this.ctx.web3bridge.subscribeContractEvent(this.target,
                                                         contract,
                                                         event,
                                                         callbackData.bind(this),
                                                         callbackSubscribed.bind(this),
                                                         options);
                     break;
-                case 'unsubscribeContractEvent':
+                case 'removeSubscriptionById':
                     const { subscriptionId } = cmd.params;
-                    this.ctx.web3bridge.unsubscribeEvent(subscriptionId);
+                    await this.ctx.web3bridge.removeSubscriptionById(subscriptionId);
+                    this.publishToClients(this._formatResponse(cmd, {}, 'UNSUBSCRIBED_EVENT'));
             }
         })
     }

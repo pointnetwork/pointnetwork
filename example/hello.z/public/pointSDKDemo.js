@@ -32,6 +32,15 @@ pointSDKDemo = {
             return await hash.json()
         },
     },
+    subscriptions: {
+        removeSubscriptionById: async(meta) => {
+            let payload = {
+                type: 'removeSubscriptionById',
+                params: meta
+            }
+            socket.send(JSON.stringify(payload))
+        }
+    },
     contract: {
         call: async (meta) => {
             let response = await fetch('/v1/api/contract/call', {
@@ -65,14 +74,6 @@ pointSDKDemo = {
                 params: meta
             }
             socket.send(JSON.stringify(payload))
-        },
-        unsubscribe: async(meta) => {
-            let payload = {
-                type: 'unsubscribeContractEvent',
-                params: meta
-            }
-            socket.send(JSON.stringify(payload))
-            console.log('Unscubscribing to event: ', meta.subscriptionId)
         }
     }
 }
