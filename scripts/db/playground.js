@@ -13,30 +13,36 @@ const Chunk = require('../../db/models/chunk');
 const ProviderChunk = require('../../db/models/provider_chunk');
 
 (async() => {
-  // Some examples below to try:
-  const allUploadedFiles = await File.allBy('ul_status', File.UPLOADING_STATUS_UPLOADED)
-  const allDownloadedFiles = await File.allBy('dl_status', File.DOWNLOADING_STATUS_DOWNLOADED)
+    // Some examples below to try:
+    const allUploadedFiles = await File.allBy('ul_status', File.UPLOADING_STATUS_UPLOADED)
+    const allDownloadedFiles = await File.allBy('dl_status', File.DOWNLOADING_STATUS_DOWNLOADED)
 
-  var allFiles = [...new Set([...allUploadedFiles, ...allDownloadedFiles])];
+    var allFiles = [...new Set([...allUploadedFiles, ...allDownloadedFiles])];
 
-  const files = allFiles.map((file) =>
+    const files = allFiles.map((file) =>
     (({ id, originalPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, originalPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
 
-  console.log(files)
+    // output all files data to console
+    console.log(files)
+    // Example of calling a function on an instance of a File:
+    File.find(files[0].id).then(f => console.log(f.getFileSize()))
 
-  // const allChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
-  const allUploadedChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
-  const allDownloadedChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADED)
-  // union all uploaded and downloaded chunks to a unique list
-  var allChunks = [...new Set([...allUploadedChunks, ...allDownloadedChunks])];
-  chunks = allChunks.map((chunk) => chunk._attributes)
+    // const allChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
+    const allUploadedChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
+    const allDownloadedChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADED)
+    // union all uploaded and downloaded chunks to a unique list
+    var allChunks = [...new Set([...allUploadedChunks, ...allDownloadedChunks])];
+    chunks = allChunks.map((chunk) => chunk._attributes)
 
-  console.log(chunks)
+    // output all chunks data to console
+    console.log(chunks)
 
-  const fileKeys = await File.allKeys();
-  console.log(`FileCount: ${fileKeys.length}`);
+    const fileKeys = await File.allKeys();
+    console.log(`FileCount: ${fileKeys.length}`);
 
-  const allProviderChunks = await ProviderChunk.allBy('status', ProviderChunk.STATUS_CREATED)
-  pchunks = allProviderChunks.map((chunk) => chunk._attributes)
-  console.log(pchunks)
+    const allProviderChunks = await ProviderChunk.allBy('status', ProviderChunk.STATUS_CREATED)
+    pchunks = allProviderChunks.map((chunk) => chunk._attributes)
+
+    // output all provider chunks data to console
+    console.log(pchunks)
 })()

@@ -18,6 +18,7 @@ ctx.config = _.merge(defaultConfig, config)
 process.on('uncaughtException', (err) => {
   ctx.log.error(err.message);
   ctx.log.debug(err.stack);
+  console.log('Is the node still running? It must be stopped for this script to run!')
   process.exit(1);
 });
 
