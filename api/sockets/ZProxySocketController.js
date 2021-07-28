@@ -80,6 +80,8 @@ class ZProxySocketController {
     }
 
     pushSubscriptionEvent({type, subscriptionId, request, data}) {
+        this.ctx.log.info({type, subscriptionId, request, data}, 'Pushing subscription event');
+
         return this.pushToClients({type, subscriptionId, request, data})
     }
 }

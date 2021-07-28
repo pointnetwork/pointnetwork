@@ -111,7 +111,7 @@ class Web3Bridge {
         const subscription = await contract.events[event](options)
             .on('data', data => onEvent({ subscriptionId, data }))
             .on('connected', id => onStart({
-                subscriptionId: id,
+                subscriptionId: subscriptionId = id,
                 data: {
                     message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`
                 }
