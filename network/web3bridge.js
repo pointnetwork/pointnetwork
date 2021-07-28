@@ -101,19 +101,30 @@ class Web3Bridge {
 
     async getPastEvents(target, contractName, event, options={fromBlock: 0, toBlock: 'latest'}) {
         const contract = await this.loadWebsiteContract(target, contractName);
-        return await contract.getPastEvents( event,  options );
+        return await contract.getPastEvents(event, options);
     }
 
-    async subscribeContractEvent(target, contractName, event, callbackData, callbackSubscribed, options={}) {
+    async subscribeContractEvent(target, contractName, event, onEvent, onStart, options={}) {
         const contract = await this.loadWebsiteContract(target, contractName);
+
+        let subscriptionId;
         const subscription = await contract.events[event](options)
-            .on('data', event => callbackData(event))
-            .on('connected', subscriptionId => callbackSubscribed(subscriptionId));
+            .on('data', data => onEvent({ subscriptionId, data }))
+            .on('connected', id => onStart({
+                subscriptionId: id,
+                data: {
+                    message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`
+                }
+            }));
+
         return subscription;
     }
 
-    async removeSubscriptionById(id) {
-        await this.web3.eth.removeSubscriptionById(id);
+    async removeSubscriptionById(subscriptionId, onRemove) {
+        await this.web3.eth.removeSubscriptionById(subscriptionId);
+        return onRemove({ subscriptionId, data: {
+            message: `Unsubscribed from subscription id: ${subscriptionId}`
+        }});
     }
 
     async sendToContract(target, contractName, methodName, params, options={}) { // todo: multiple arguments, but check existing usage // huh?

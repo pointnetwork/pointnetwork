@@ -2,54 +2,75 @@
 The ZProxySocketController is for handling ZApp websocket connections via the ZProxy API port.
 See client/proxy/index.js for usage details of ZProxy and setup of the WebSocketServer instance.
 */
+
+const SUBSCRIPTION_EVENT_TYPES = {
+    CONFIRMATION: 'subscription_confirmation',
+    CANCELLATION: 'subscription_cancellation',
+    EVENT: 'subscription_event',
+    ERROR: 'subscription_error',
+};
+
+const SUBSCRIPTION_REQUEST_TYPES = {
+    SUBSCRIBE: 'subscribeContractEvent',
+    UNSUBSCRIBE: 'removeSubscriptionById',
+};
+
 class ZProxySocketController {
-    constructor(_ctx, _ws, _wss, _host) {
-        this.ctx = _ctx
+    constructor(_ctx, _ws, _wss, _hostname) {
+        this.ctx = _ctx;
         this.ws = _ws;
         this.wss = _wss;
-        this.target = _host;
+        this.hostname = _hostname;
         this.init();
     }
 
     init() {
-        this.ws.on('message', async (msg) => {
-            const cmd = JSON.parse(msg.utf8Data);
-            // add the target to the cmd object to be echoed back via the callback closure
-            cmd.hostname = this.target;
-            const {contract, event, ...options} = cmd.params;
-            function callbackData(data) {
-                this.publishToClients(this._formatResponse(cmd, data));
-            }
-            function callbackSubscribed(subscriptionId) {
-                const { contract, event } = cmd.params;
-                const payload = {
-                    subscriptionId,
-                    message: `Subscribed to ${contract} contract ${event} events with subscription id ${subscriptionId}`
+        this.ws.on('message', async ({utf8Data}) => {
+            const {hostname} = this;
+            const request = {
+                ...JSON.parse(utf8Data),
+                hostname, // add the hostname to the `request` object to be echoed back via the callback closure
+            };
+
+            switch (request.type) {
+                case SUBSCRIPTION_REQUEST_TYPES.SUBSCRIBE: {
+                    const {contract, event, ...options} = request.params;
+                    const {CONFIRMATION, EVENT} = SUBSCRIPTION_EVENT_TYPES;
+
+                    return this.ctx.web3bridge.subscribeContractEvent(
+                        hostname,
+                        contract,
+                        event,
+                        event => this.pushSubscriptionEvent({...event, request, type: EVENT}),
+                        event => this.pushSubscriptionEvent({...event, request, type: CONFIRMATION}),
+                        options
+                    );
                 }
-                this.publishToClients(this._formatResponse(cmd, payload, 'SUBSCRIBED_EVENT'));
-            }
-            switch (cmd.type) {
-                case 'subscribeContractEvent':
-                    await this.ctx.web3bridge.subscribeContractEvent(this.target,
-                                                        contract,
-                                                        event,
-                                                        callbackData.bind(this),
-                                                        callbackSubscribed.bind(this),
-                                                        options);
-                    break;
-                case 'removeSubscriptionById':
-                    const { subscriptionId } = options;
-                    const payload = {
-                        message: `Unsubscribed from ${contract} contract ${event} events using subscription id ${subscriptionId}`
-                    }
-                    await this.ctx.web3bridge.removeSubscriptionById(subscriptionId);
-                    this.publishToClients(this._formatResponse(cmd, payload, 'UNSUBSCRIBED_EVENT'));
+
+                case SUBSCRIPTION_REQUEST_TYPES.UNSUBSCRIBE: {
+                    const {subscriptionId} = request.params;
+                    const {CANCELLATION} = SUBSCRIPTION_EVENT_TYPES;
+
+                    return this.ctx.web3bridge.removeSubscriptionById(
+                        subscriptionId,
+                        event => this.pushSubscriptionEvent({...event, request, type: CANCELLATION})
+                    );
+                }
+
+                default: {
+                    return this.pushSubscriptionEvent({
+                        request,
+                        subscriptionId: null,
+                        type: SUBSCRIPTION_EVENT_TYPES.ERROR,
+                        data: {message: `Unsupported subscription type "${request.type}"`}
+                    });
+                }
             }
         })
     }
 
-    publishToClients(msg) {
-        if(this.wss) {
+    pushToClients(msg) {
+        if (this.wss) {
             this.wss.connections.forEach((client) => {
                 if (client.state === 'open') {
                     client.send(JSON.stringify(msg));
@@ -58,9 +79,8 @@ class ZProxySocketController {
         }
     }
 
-    _formatResponse(cmd, response, event='DATA_EVENT') {
-        let payload = {...cmd, data: response, event}
-        return payload
+    pushSubscriptionEvent({type, subscriptionId, request, data}) {
+        return this.pushToClients({type, subscriptionId, request, data})
     }
 }
 
