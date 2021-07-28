@@ -22,11 +22,6 @@ const ProviderChunk = require('../../db/models/provider_chunk');
     const files = allFiles.map((file) =>
     (({ id, originalPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, originalPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
 
-    // output all files data to console
-    console.log(files)
-    // Example of calling a function on an instance of a File:
-    File.find(files[0].id).then(f => console.log(f.getFileSize()))
-
     // const allChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
     const allUploadedChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
     const allDownloadedChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADED)
@@ -34,15 +29,32 @@ const ProviderChunk = require('../../db/models/provider_chunk');
     var allChunks = [...new Set([...allUploadedChunks, ...allDownloadedChunks])];
     chunks = allChunks.map((chunk) => chunk._attributes)
 
-    // output all chunks data to console
-    console.log(chunks)
+    const allProviderChunks = await ProviderChunk.allBy('status', ProviderChunk.STATUS_CREATED)
+    pchunks = allProviderChunks.map((chunk) => chunk._attributes)
+
+    const OUTPUT_ALL = true;
+
+    if(OUTPUT_ALL) {
+        // output all files data to console
+        console.log(files);
+        // output all chunks data to console
+        console.log(chunks);
+        // output all provider chunks data to console
+        console.log(pchunks);
+    }
 
     const fileKeys = await File.allKeys();
     console.log(`FileCount: ${fileKeys.length}`);
 
-    const allProviderChunks = await ProviderChunk.allBy('status', ProviderChunk.STATUS_CREATED)
-    pchunks = allProviderChunks.map((chunk) => chunk._attributes)
-
-    // output all provider chunks data to console
-    console.log(pchunks)
+    // Example of calling a function on an instance of a File:
+    file = await File.find(files[0].id);
+    console.log(`Test invoking methods in file object id ${file.id}`)
+    console.log()
+    // test out calling instance methods on the file object:
+    console.log('file.getFileSize()\t', file.getFileSize());
+    console.log('file.getAllChunkIds():\t ', file.getAllChunkIds());
+    console.log('file.getMerkleHash():\t', file.getMerkleHash());
+    console.log('file.getMerkleTree():\t', file.getMerkleTree());
+    console.log('file.toJSON:\t\t', file.toJSON());
+    console.log()
 })()
