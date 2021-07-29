@@ -14,3 +14,7 @@ export type ProductData = {
     metadata: string,
     owner: string,
 };
+
+export type Subscription = (() => Promise<unknown>) & {
+    unsubscribe: () => Promise<undefined>
+};

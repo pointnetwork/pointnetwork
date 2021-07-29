@@ -94,50 +94,67 @@
         console.log('contractEventSubscriptions updated', contractEventSubscriptions)
       }
 
+      const SUBSCRIPTION_EVENT_TYPES = {
+          CONFIRMATION: 'subscription_confirmation',
+          CANCELLATION: 'subscription_cancellation',
+          EVENT: 'subscription_event',
+          ERROR: 'subscription_error',
+      };
+
       // example of a callback function that can be used to handle data from a websocket
       function websocketMessageHandler(_payload) {
-        let msg = '';
-        let payload = JSON.parse(_payload);
-        let { type, params, hostname, data, event } = payload;
+        const payload = JSON.parse(_payload);
         console.log('Received Payload: ', payload);
+
+        const { type, subscriptionId, request, data } = payload;
+        const { hostname, params: { contract, event } = {} } = request;
+        let msg = '';
         // check this message is for us by checking the hostname
         if(hostname === 'hello.z') {
-          // if this is a SUBSCRIBED_EVENT then add this new subscription id to the subscriptions manager
-          if(event === 'SUBSCRIBED_EVENT') {
-              const {contract, event} = params;
-              const {subscriptionId} = data;
+          switch (type) {
+            // if this is a SUBSCRIBED_EVENT then add this new subscription id to the subscriptions manager
+            case SUBSCRIPTION_EVENT_TYPES.CONFIRMATION: {
               msg = `SUBSCRIBED: ${contract} contract ${event} events with subscription id ${subscriptionId}`;
-              addNewContractEventSubscription(contract, event, subscriptionId)
-          }
-          // if this is a UNSUBSCRIBED_EVENT just update the msg for display to the user
-          if(event === 'UNSUBSCRIBED_EVENT') {
-              const {contract, event, subscriptionId} = params;
+              addNewContractEventSubscription(contract, event, subscriptionId);
+              break;
+            }
+            // if this is a UNSUBSCRIBED_EVENT just update the msg for display to the user
+            case SUBSCRIPTION_EVENT_TYPES.CANCELLATION: {
               msg = `UNSUBSCRIBED: ${contract} contract ${event} events using subscription id ${subscriptionId}`;
-          }
-          // if this is a DATA_EVENT then check the type of the event and switch on that
-          if(event === 'DATA_EVENT') {
-            // if this is a subscribeContractEvent ...
-            if (type === 'subscribeContractEvent') {
-              // since this is type: 'subscribeContractEvent'
-              // we know the params will contain the same keys we used to subscribe to the event
-              // which is 'contract' and 'event' so therefore we can check the evnet key
-              switch(params.event) {
-                case 'UpdatedValue':
-                  // returnValues will contain an object with oldValue and newValue key
-                  // as defined by the Hello Smart Contract UpdatedValue event
-                  const {oldValue, newValue} = data.returnValues;
-                  msg = `EMIT: UpdatedValue Event - old value: ${oldValue} was changed to ${newValue}`;
-                  break;
-                case 'HelloWorld':
-                  // returnValues will contain an object with just a message key
-                  // as defined by the Hello Smart Contract HelloWorld event
-                  const {message} = data.returnValues;
-                  msg = `EMIT: HelloWorld Event - Contract says hello: ${message}`
-                  break;
-                default:
-                  msg = data.message;
-                  break;
+              break;
+            }
+            // if this is a DATA_EVENT then check the type of the event and switch on that
+            case SUBSCRIPTION_EVENT_TYPES.EVENT: {
+              // if this is a subscribeContractEvent ...
+              if (request.type === 'subscribeContractEvent') {
+                // since this is type: 'subscribeContractEvent'
+                // we know the params will contain the same keys we used to subscribe to the event
+                // which is 'contract' and 'event' so therefore we can check the evnet key
+                switch(event) {
+                  case 'UpdatedValue':
+                    // returnValues will contain an object with oldValue and newValue key
+                    // as defined by the Hello Smart Contract UpdatedValue event
+                    const {oldValue, newValue} = data.returnValues;
+                    msg = `EMIT: UpdatedValue Event - old value: ${oldValue} was changed to ${newValue}`;
+                    break;
+                  case 'HelloWorld':
+                    // returnValues will contain an object with just a message key
+                    // as defined by the Hello Smart Contract HelloWorld event
+                    const {message} = data.returnValues;
+                    msg = `EMIT: HelloWorld Event - Contract says hello: ${message}`
+                    break;
+                  default:
+                    msg = data.message;
+                    break;
+                }
               }
+              break;
+            }
+
+            case SUBSCRIPTION_EVENT_TYPES.ERROR:
+            default: {
+              msg = `SUBSCRIPTION_ERROR: ${data.message}`;
+              break;
             }
           }
           let li = document.createElement("li");
