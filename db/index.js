@@ -10,7 +10,7 @@ class DB {
         this.ctx = ctx;
         this.config = ctx.config.db;
 
-        this.tableNames = ['chunk', 'storage_link', 'file', 'provider_chunk', 'redkey', 'provider'];
+        this.tableNames = ['chunk', 'storage_link', 'file', 'provider_chunk', 'redkey', 'provider', 'subscription'];
     }
 
     async init() {
