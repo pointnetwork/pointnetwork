@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "target": "notifications.z",
+  "keyvalue": {},
+  "contracts": [
+    "Notifications"
+  ]
+}

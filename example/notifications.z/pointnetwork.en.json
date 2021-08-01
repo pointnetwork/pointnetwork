@@ -1,0 +1,3 @@
+{
+    "TestNotification": "You have a test notification from ${from}"
+}

@@ -1,0 +1,17 @@
+<html>
+<head>
+  <title>Notifications</title>
+  <meta charset="utf-8">
+    <!-- <script type="text/javascript" src="pointSDKDemo.js"></script> -->
+</head>
+<body>
+<header>
+    <h1>Notifications</h1>
+</header>
+
+<main>
+    {% block contents %}
+    {% endblock %}
+</main>
+</body>
+</html>

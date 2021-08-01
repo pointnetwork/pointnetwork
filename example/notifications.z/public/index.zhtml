@@ -1,0 +1,115 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+<div>
+      <h4>Notifications Example : Demo Storage Layer features and the Point Browser SDK</h4>
+      <button id="btnTestSmartContractEvent" onclick="testSmartContractEvent()">Test Smart Contact Event</button>
+      <input type="text" id="txtTestSmartContractSetValue" value="Change Me!" ></input>
+
+      <button id="btnTestNotification" onclick="window.point.contract.send({contract: 'Notifications', method: 'testNotif', params: ['meow']})">Subscribe to Notifications</button>
+      <button id="btnTestNotification" onclick="window.point.contract.send({contract: 'Notifications', method: 'testNotif', params: [document.getElementById('txtTestSmartContractSetValue').value]})">Send Notification</button>
+      <br/>
+      <br/>
+      <b>API Responses</b>
+      <p id="results"></p>
+      <b>WebSocket Events</b>
+      <ul id="wsevents"></ul>
+    </div>
+    <script>
+      function notifyMe() {
+       // Let's check if the browser supports notifications
+	  if (!("Notification" in window)) {
+	 alert("This browser does not support desktop notification");
+       }
+
+       // Let's check whether notification permissions have already been granted
+       else if (Notification.permission === "granted") {
+	 // If it's okay let's create a notification
+	 console.log('granted')
+	 testNotifications('meow')
+	 var notification = new Notification("Hi there!");
+       }
+
+       // Otherwise, we need to ask the user for permission
+       else if (Notification.permission !== "denied") {
+	 Notification.requestPermission().then(function (permission) {
+	   // If the user accepts, let's create a notification
+	   console.log('asking for permission')
+	   if (permission === "granted") {
+	     console.log('granted2')
+             var notification = new Notification("Granted permission!");
+	   }
+	 });
+       }
+
+       // At last, if the user has denied notifications, and you
+       // want to be respectful there is no need to bother them any more.
+     }
+
+
+     (async () => {
+       // notifyMe()
+
+       console.log('omega1', window.point)
+       
+
+       // initialize websocket connect to point network node via PointSDK
+       // the idea here is to initalize websockets for the app only if needed
+       // and to specify the callback that will handle the incomming websocket messages
+       // NOTE: Registers for logging data.
+       // socket = window.point.websocket.open(websocketMessageHandler);
+       // socket.onopen = function() {
+       // console.log('WebSocket Client Connected');
+         /* window.point.contract.subscribe({contract: 'Notifications', event: 'HelloWorld'});
+	  * window.point.contract.subscribe({contract: 'Notifications', event: 'UpdatedValue'}); */
+       // window.point.contract.subscribe({contract: 'Notifications', event: 'TestNotification'});
+     // };
+       // let balance = await window.point.wallet.balance();
+       let ping = await window.point.status.ping();
+       let address = await window.point.wallet.address();
+       let hash = await window.point.wallet.hash();
+       console.log('omega19');
+       // let contract = await window.point.contract.load('Notifications');
+       console.log('omega20');
+       let notif = await point.contract.call({contract: 'Notifications', method: 'notify'})
+       console.log('omega21');
+       // let callEcho = await window.point.contract.call({contract: 'Notifications', method: 'echo', params: ['Hello??']});
+       // let sendIncrementCounter = await window.point.contract.send({contract: 'Notifications', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
+       // let sendIncrementCounter = await window.point.contract.send({contract: 'Notifications', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
+       // let sendIncrementCounter = await window.point.contract.send({contract: 'Notifications', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert
+       // let elements = []
+     })()
+     // example of a callback function that can be used to handle data from a websocket
+     function websocketMessageHandler(data) {
+       console.log('omega100')
+       let li = document.createElement("li");
+       let wsmsg = document.createTextNode(data);
+       li.appendChild(wsmsg);
+       
+       /* let newValue = JSON.parse(wsmsg.textContent).newValue;
+	* console.log('omega14', newValue)
+	* var notification = new Notification(newValue);
+
+	* const notifier = require('node-notifier');
+	* // String
+	* notifier.notify('Message');
+
+	* // Object
+	* notifier.notify({
+	  title: 'My notification',
+	  message: 'Hello, there!'
+	* }); */
+
+       
+       document.getElementById("wsevents").appendChild(li);
+     }
+
+     async function testSmartContractEvent() {
+       document.getElementById('btnTestSmartContractEvent').innerText = 'Processing';
+       let newValue = document.getElementById('txtTestSmartContractSetValue').value;
+       // NOTE this contract send will also trigger the UpdatedValue event from the Smart Contract
+       await window.point.contract.send({contract: 'Notifications', method: 'setValue', params: [newValue]});
+       document.getElementById('btnTestSmartContractEvent').innerText = 'DONE. Click Button to try again!';
+     }
+    </script>
+{% endblock %}
