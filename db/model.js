@@ -23,6 +23,16 @@ class Model extends Indexable {
         }
     }
 
+  static async delete(id) {
+    try {
+      const result = await this.db.delete(id);
+      return result;
+    } catch(err) {
+      if (err.notFound) return null;
+      else throw err;
+    }
+  }
+
     static async findOrCreate(id) {
         let result = await this.find(id);
 

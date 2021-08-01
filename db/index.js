@@ -48,6 +48,9 @@ class DB {
     async put(...args) {
         return await this._db.put(...args);
     }
+    async delete(...args) {
+        return await this._db.delete(...args);
+    }
 
     async shutdown() {
         await this._db.parent.close();
