@@ -17,9 +17,12 @@ class SubscriptionController extends PointSDKController {
     return this._response(allSubsSet);
   }
 
+  async subscriptionByAddress(address) {
+    
+  }
+
   async save() {
     const reqSubs = this.req.body;
-    console.log('omega17', reqSubs);
 
     reqSubs.forEach(reqSub => {
       let sub = Subscription.new();
@@ -28,7 +31,6 @@ class SubscriptionController extends PointSDKController {
       sub.address = reqSub.address;
       sub.name = reqSub.name;
       sub.host = reqSub.host;
-      console.log('omega44', reqSub.options)
       sub.options = reqSub.options;
       sub.save();
     });

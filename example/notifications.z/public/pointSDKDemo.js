@@ -32,7 +32,6 @@ pointSDKDemo = {
     },
     contract: {
         call: async (meta) => {
-	    console.log('omega1000', meta);
             let response = await fetch('/v1/api/contract/call', {
                 method: 'POST',
                 headers: {

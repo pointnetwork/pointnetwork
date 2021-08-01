@@ -50,9 +50,6 @@
      (async () => {
        // notifyMe()
 
-       console.log('omega1', window.point)
-       
-
        // initialize websocket connect to point network node via PointSDK
        // the idea here is to initalize websockets for the app only if needed
        // and to specify the callback that will handle the incomming websocket messages
@@ -68,11 +65,8 @@
        let ping = await window.point.status.ping();
        let address = await window.point.wallet.address();
        let hash = await window.point.wallet.hash();
-       console.log('omega19');
        // let contract = await window.point.contract.load('Notifications');
-       console.log('omega20');
        let notif = await point.contract.call({contract: 'Notifications', method: 'notify'})
-       console.log('omega21');
        // let callEcho = await window.point.contract.call({contract: 'Notifications', method: 'echo', params: ['Hello??']});
        // let sendIncrementCounter = await window.point.contract.send({contract: 'Notifications', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
        // let sendIncrementCounter = await window.point.contract.send({contract: 'Notifications', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
@@ -81,13 +75,11 @@
      })()
      // example of a callback function that can be used to handle data from a websocket
      function websocketMessageHandler(data) {
-       console.log('omega100')
        let li = document.createElement("li");
        let wsmsg = document.createTextNode(data);
        li.appendChild(wsmsg);
        
        /* let newValue = JSON.parse(wsmsg.textContent).newValue;
-	* console.log('omega14', newValue)
 	* var notification = new Notification(newValue);
 
 	* const notifier = require('node-notifier');
