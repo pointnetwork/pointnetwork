@@ -19,4 +19,5 @@ module.exports = [
     ['POST', '/v1/api/contract/send', 'ContractController@send'],
     ['GET', '/v1/api/contract/load/:contract', 'ContractController@load'],
     ['POST', '/v1/api/subscription/save', 'SubscriptionController@save'],
+    ['GET', '/v1/api/subscription/:address', 'SubscriptionController@subscriptionByAddress'],
 ];

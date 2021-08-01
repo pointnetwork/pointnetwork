@@ -17,23 +17,36 @@ class SubscriptionController extends PointSDKController {
     return this._response(allSubsSet);
   }
 
-  async subscriptionByAddress(address) {
-    
+  async subscriptionByAddress() {
+    const address = this.req.params.address;
+    const sub = await Subscription.allBy('address', address)
+    console.log('omega10', sub);
+    return this._response(sub);
   }
 
   async save() {
-    const reqSubs = this.req.body;
+    const reqSub = this.req.body;
+    const zappSubs = await Subscription.allBy('address', reqSub.address);
+    let sub = Subscription.new();
 
-    reqSubs.forEach(reqSub => {
-      let sub = Subscription.new();
-      sub.name = reqSub.name;
-      sub.contract = reqSub.contract;
-      sub.address = reqSub.address;
-      sub.name = reqSub.name;
-      sub.host = reqSub.host;
-      sub.options = reqSub.options;
-      sub.save();
-    });
+    for (let i = 0; i < zappSubs.length; i++) {
+      const zappSub = zappSubs[i]
+      // The user is unsubscribing.
+      if (zappSub.name == reqSub.name && !reqSub.isSub) {
+	// Should we delete the Notification Object?
+	// this.db.delete(zappSub.id);
+	return this._response({});
+      }
+    }
+
+    // The user is subscribing.
+    sub.name = reqSub.name;
+    sub.contract = reqSub.contract;
+    sub.address = reqSub.address;
+    sub.name = reqSub.name;
+    sub.host = reqSub.host;
+    sub.options = reqSub.options;
+    sub.save();
 
     return this._response({});
   }
