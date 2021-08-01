@@ -20,7 +20,6 @@ class SubscriptionController extends PointSDKController {
   async subscriptionByAddress() {
     const address = this.req.params.address;
     const sub = await Subscription.allBy('address', address)
-    console.log('omega10', sub);
     return this._response(sub);
   }
 
