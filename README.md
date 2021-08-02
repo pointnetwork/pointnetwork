@@ -351,9 +351,13 @@ Querying http://localhost:2469/api/deploy?deploy_path=/<ABSOLUTEPATHTO>/pointnet
 
 Under `scripts/db` there is a js file `playground.js` that can be used to test out interacting with the local LevelDB of one of the nodes.
 
-The playground first loads the `scripts/db/init.js` file which initializes the Point Network Database for the test node specified in that file.
+To run this file, first stop the node you want to connect to (since LevelDB has a limitation of allowing only one connection at a time) and then run the script using `node scripts/db/playground.js`.
 
-Then in the playground you can load any of the `db/models` and interact with the LevelDB. For example, to use the `File` model:
+To change which Node LevelDB the script connects to, simply modify the `const nodeid` in the `scripts/db/init.js` and then run the `playground.js` script again.
+
+The intention here is to be able to test out different LevelDB models that are available in the node using this 'playground'. So its possible to load any of the `db/models` and interact with the LevelDB.
+
+For example, to use the `File` model:
 
 ```
 require('./init')
