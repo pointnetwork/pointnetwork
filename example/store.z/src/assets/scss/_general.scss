@@ -1,0 +1,314 @@
+/* ==============
+  General
+===================*/
+*{ box-sizing: border-box;}
+body {
+  background: $bodybg;
+  font-family: $font-primary;
+  color: $brightGray;
+  margin: 0;
+  overflow-x: hidden;
+}
+html {
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100%;
+  background: $bodybg;
+  &.panelOpen{ overflow: hidden;}
+}
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-family: $font-secondary;
+}
+// h1 {
+//   line-height: 43px;
+// }
+
+// h2 {
+//   line-height: 35px;
+// }
+
+// h3 {
+//   line-height: 30px;
+// }
+
+// h4 {
+//   line-height: 22px;
+// }
+// h5 {
+//   font-size: $medium-font;
+// }
+// h6 {
+//   font-size: $basic-font;
+// }
+
+// b, strong {
+//     font-weight: 500; font-family: 'lab_grotesquemedium';
+// }
+
+* {
+  outline: none !important;
+}
+
+a {
+  &:hover {
+    outline: 0;
+    text-decoration: none;
+  }
+  &:active {
+    outline: 0;
+    text-decoration: none;
+  }
+  &:focus {
+    outline: 0;
+    text-decoration: none;
+  }
+  &.underline{ text-decoration-line: underline;
+    &:hover{ text-decoration: none;}
+  }
+}
+
+.dInline{ display: inline-block!important;}
+.dInlineBlock{ display: inline-block!important;}
+.dBlock{ display: block!important;}
+
+// .dropdown-toggle::after{ border: 0px; background: url(../images/svg/new/dropdownArrow.svg) no-repeat ; width: 8px; height: 6px; background-size: 100%; vertical-align: middle;}
+
+.clr:after{ content: ''; clear: both; width: 100%; display: block;}
+
+html, body { height: 100%; }
+#wrapper {
+  height: $height;
+  // overflow: hidden;
+  width: $width;
+}
+
+.m--0{ margin: 0px!important;}
+.mt--0{ margin-top: 0px!important;}
+.ml--0{ margin-left: 0px!important;}
+.mb--0{ margin-bottom: 0px!important;}
+.mr--0{ margin-right: 0px!important;}
+.m--5{ margin: 5px!important;}
+.mt--5{ margin-top: 5px!important;}
+.ml--5{ margin-left: 5px!important;}
+.mb--5{ margin-bottom: 5px!important;}
+.mr--5{ margin-right: 5px!important;}
+.m--10{ margin: 10px!important;}
+.mt--10{ margin-top: 10px!important;}
+.ml--10{ margin-left: 10px!important;}
+.mb--10{ margin-bottom: 10px!important;}
+.mr--10{ margin-right: 10px!important;}
+.m--15{ margin: 15px!important;}
+.mt--15{ margin-top: 15px!important;}
+.ml--15{ margin-left: 15px!important;}
+.mr--15{ margin-right: 15px!important;}
+.mb--15{ margin-bottom: 15px!important;}
+.m--20{ margin: 20px!important;}
+.mt--20{ margin-top: 20px!important;}
+.ml--20{ margin-left: 20px!important;}
+.mr--20{ margin-right: 20px!important;}
+.mb--20{ margin-bottom: 20px!important;}
+.m--25{ margin: 25px!important;}
+.mt--25{ margin-top: 25px!important;}
+.ml--25{ margin-left: 25px!important;}
+.mr--25{ margin-right: 25px!important;}
+.mb--25{ margin-bottom: 25px!important;}
+.m--30{ margin: 30px!important;}
+.mt--30{ margin-top: 30px!important;}
+.mr--30{ margin-right: 30px!important;}
+.mb--30{ margin-bottom: 30px!important;}
+.ml--30{ margin-left: 30px!important;}
+.mb--50{ margin-bottom:50px!important;}
+.mb--60{ margin-bottom: 60px;}
+.mb--100{ margin-bottom:100px!important;}
+.mb--150{ margin-bottom: 150px;}
+
+.p--0{ padding: 0px;}
+.pt--0{ padding-top: 0px;}
+.pr--0{ padding-right: 0px;}
+.pb--0{ padding-bottom: 0px;}
+.pl--0{ padding-left: 0px;}
+.p--5{ padding: 5px!important;}
+.pt--5{ padding-top: 5px!important;}
+.pr--5{ padding-right: 5px!important;}
+.pb--5{ padding-bottom: 5px!important;}
+.pl--5{ padding-left: 5px!important;}
+.p--10{ padding: 10px!important;}
+.pt--10{ padding-top: 10px!important;}
+.pr--10{ padding-right: 10px!important;}
+.pb--10{ padding-bottom: 10px!important;}
+.pl--10{ padding-left: 10px!important;}
+.p--15{ padding: 15px!important;}
+.pt--15{ padding-top: 15px!important;}
+.pr--15{ padding-right: 15px!important;}
+.pb--15{ padding-bottom: 15px!important;}
+.pl--15{ padding-left: 15px!important;}
+.p--20{ padding: 20px!important;}
+.pt--20{ padding-top: 20px!important;}
+.pr--20{ padding-right: 20px!important;}
+.pb--20{ padding-bottom: 20px!important;}
+.pl--20{ padding-left: 20px!important;}
+.p--25{ padding: 25px!important;}
+.pt--25{ padding-top: 25px!important;}
+.pr--25{ padding-right: 25px!important;}
+.pb--25{ padding-bottom: 25px!important;}
+.pl--25{ padding-left: 25px!important;}
+.p--30{ padding: 30px!important;}
+.pt--30{ padding-top: 30px!important;}
+.pr--30{ padding-right: 30px!important;}
+.pb--30{ padding-bottom: 30px!important;}
+.pl--30{ padding-left: 30px!important;}
+.p--35{ padding: 35px!important;}
+.pt--35{ padding-top: 35px!important;}
+.pr--35{ padding-right: 35px!important;}
+.pb--35{ padding-bottom: 35px!important;}
+.pl--35{ padding-left: 35px!important;}
+.p--45{ padding: 45px!important;}
+.pt--45{ padding-top: 45px!important;}
+.pr--45{ padding-right: 45px!important;}
+.pb--45{ padding-bottom: 45px!important;}
+.pl--45{ padding-left: 45px!important;}
+.p--50{ padding: 50px!important;}
+.pt--50{ padding-top: 50px!important;}
+.pr--50{ padding-right: 50px!important;}
+.pb--50{ padding-bottom: 50px!important;}
+.pl--50{ padding-left: 50px!important;}
+.p--100{ padding: 100px!important;}
+.pt--100{ padding-top: 100px!important;}
+.pr--100{ padding-right: 100px!important;}
+.pb--100{ padding-bottom: 100px!important;}
+.pl--100{ padding-left: 100px!important;}
+.pb--150{ padding-bottom: 150px!important;}
+
+
+.p-0{ padding: 0px!important;}
+.pt-0{ padding-top: 0px!important;}
+.pr-0{ padding-right: 0px!important;}
+.pb-0{ padding-bottom: 0px!important;}
+.pl-0{ padding-left: 0px!important;}
+.m-0{ margin: 0px!important;}
+.mt-0{ margin-top: 0!important;}
+.mr-0{ margin-right: 0!important;}
+.mb-0{ margin-bottom: 0!important;}
+.ml-0{ margin-left: 0!important;}
+
+.whtBg{ background-color: $white!important;}
+
+.underline{ text-decoration: underline;
+  &:hover{ text-decoration: none;}
+}
+
+.dropdown-toggle::after {
+  border: 0px;
+  // background: url(../images/svg/dropdownArrow.svg) no-repeat;
+  width: 8px;
+  height: 6px;
+  background-size: 100%;
+  vertical-align: middle;
+}
+
+.disabled{ opacity: .25; cursor: not-allowed;}
+
+.noBorder{ border: 0px!important;}
+
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+html,body{ min-height: 100%;}
+
+.dFlex{ display: flex;}
+
+.flex{ display: flex;}
+
+.dInlineBlock{ display: inline-block;}
+
+.whtBg{ background-color: #fff;}
+
+.clrBlk{ color: $black;}
+
+ul,li{ padding: 0px; margin: 0px; list-style: none;}
+
+.section-title{ font-size: 28px; @extend .bold;
+  &.lg{ font-size: 34px;}
+}
+
+.stores-section{
+  .store{
+    .img{ border-top-left-radius: 10px; border-top-right-radius: 10px;}
+  }
+}
+
+.navbar-toggler{ padding-left: 0px; padding-right: 0px;
+  &:focus{ box-shadow: none;}
+  .navbar-toggler-icon{ background: url(../imgs/svg-icon/menu-icon.svg) no-repeat center center;}
+}
+
+.item-box{ background-color: $white; @extend .block-shadow; }
+
+.link{ background: url(../imgs/svg-icon/link-arrow-icon.svg) no-repeat right center; padding-right: 32px; @extend .basic-font;  @extend .semiBold; line-height: 33.6px; color: $brightGray; }
+
+.section{
+  .top{ @extend .mb--25;
+    a{
+      &:hover{ color: $accentClr;}
+    }
+  }
+}
+
+.products-section{
+  .row{ margin: 0 -10px;}
+  .custom-col{ width: 20%; float: left; padding: 0 10px;}
+  .product{ }
+  .img-holder{ border: 1px solid $brightGray; @include border-radius(3px); padding: 3px; height: 220px; 
+    img{ max-width: 95%; max-height: 95%;}
+  }
+  h5{ width: calc(100% - 60px); padding-right: 10px; @extend .truncate;}
+  .price{ width: 60px; text-align: right;
+    .eth{ line-height: 20.8px;
+      .icon{ position: relative; top: -3px; margin-right: 2.5px; }
+    }
+  }
+}
+
+
+@media only screen and (max-device-width: 767px) and (min-device-width: 320px){
+  .products-section{
+    .custom-col{ width: 50%;}
+    .img-holder{ height: 180px;}
+  }
+}
+@media only screen and (max-device-width: 1024px) and (min-device-width: 768px){
+  .products-section{
+    .custom-col{ width: 25%;}
+    .img-holder{ height: 180px;}
+  }
+}
+
+.categories-section{ margin-bottom: calc(100px - 30px);
+  .item-box{ @include border-radius(10px); color: $brightGray; @extend .mb--30;
+    .img-holder{ width: 144px; float: left;
+      img{ border-top-left-radius: 10px; border-bottom-left-radius: 10px; width: 100%;}
+    }
+    .txt{ width: calc(100% - 144px); padding: 10px; height: 100px; @extend .xlarge-font; @extend .semiBold; @extend .truncate }
+    a{ color: $brightGray;}
+  }
+}
+@media only screen and (max-device-width: 767px) and (min-device-width: 320px){
+
+}
+@media only screen and (max-device-width: 1024px) and (min-device-width: 768px){
+  .categories-section{
+    .item-box{ 
+      .img-holder{ width: 90px; 
+        img{ border-top-left-radius: 10px; border-bottom-left-radius: 10px; width: 100%;}
+      }
+      .txt{ width: calc(100% - 90px); height: 62.5px; font-size: 14px!important; padding: 5px; }
+    }
+  }
+}
+
+.sellNFT-section{
+  .img-holder{ @extend .mb--10;
+    img{ max-height: 88px;}
+  }
+  h5{ font-size: 20px; @extend .mb--15; }
+}

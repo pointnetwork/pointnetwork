@@ -1,0 +1,83 @@
+@import "../css/bootstrap.min.css";
+@import "variables";
+@import "general";
+@import "bootstrap-custom";
+@import "waves";
+
+
+@import "buttons";
+
+@import "form-elements";
+
+@import "responsive";
+
+@import "header";
+@import "footer";
+
+
+/*.table td, .table th{ white-space: nowrap;}*/
+.sm-overflow-x{ overflow-x: auto;}
+.sm-overflow-x .table td, .sm-overflow-x .table th{ white-space: nowrap;}
+
+*{ padding: 0px; margin: 0px;}
+ul{ list-style: none;}
+.clr:after{ content: ''; width: 100%; display: block; clear: both;}
+.float-left{ float: left;}
+.float-right{ float: right;}
+a{ text-decoration: none;}
+a:hover{ text-decoration: underline;}
+a.underline:hover{ text-decoration: none;}
+a.whtClr:hover{ color: #fff;}
+
+
+
+.p-0{ padding: 0px;}
+.pt-0{ padding-top: 0px;;}
+.mr-5{ margin-right: 5px;}
+
+
+
+.dBlock{ display: block;}
+.dInlineBlock{ display: inline-block;}
+
+.underline{ text-decoration: underline;}
+
+body{ font-size: 14px; font-family: $font-primary;}
+
+
+.text-center{ text-align: center;}
+
+.whtClr{ color: #fff;}
+.doveGrayClr{ color: #676767;}
+.blkClr{ color: #000;}
+.dark-bg{ @include gradient(left, $gradientOption1);}
+.success-label{
+    background: #F3FDF8;
+    border:1px solid #C9F5E0;
+    border-radius: 3px;
+    padding:5px 10px;
+    font-size: 14px;
+}
+.un-success-label{
+    background: #FFF4F6;
+    border:1px solid #F5C9D1;
+    border-radius: 3px;
+    padding:5px 10px;
+    font-size: 14px;
+}
+#loading {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    border: 3px solid rgba(149, 66, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #9542FF;
+    animation: spin 1s ease-in-out infinite;
+    -webkit-animation: spin 1s ease-in-out infinite;
+  }
+  @keyframes spin {
+    to { -webkit-transform: rotate(360deg); }
+  }
+  @-webkit-keyframes spin {
+    to { -webkit-transform: rotate(360deg); }
+  }

@@ -1,0 +1,305 @@
+/* ==============
+  Bootstrap-custom
+===================*/
+
+.row {
+  margin-right: -15px;
+  margin-left: -15px;
+}
+
+.col, .col-1, .col-10, .col-11, .col-12, .col-2, .col-3, .col-4, .col-5, .col-6,
+.col-7, .col-8, .col-9, .col-lg, .col-lg-1, .col-lg-10, .col-lg-11, .col-lg-12,
+.col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8,
+.col-lg-9, .col-md, .col-md-1, .col-md-10, .col-md-11, .col-md-12, .col-md-2,
+.col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9,
+.col-sm, .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm-2, .col-sm-3,
+.col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-xl, .col-xl-1,
+.col-xl-10, .col-xl-11, .col-xl-12, .col-xl-2, .col-xl-3, .col-xl-4, .col-xl-5,
+.col-xl-6, .col-xl-7, .col-xl-8, .col-xl-9 {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+// Breacrumb
+.breadcrumb { 
+  padding: 0px; margin-bottom: 0px;
+  background-color: transparent;
+  margin-top: 5px;
+  li{ font-size: $large-font; font-weight: 500; color: $basefontcolor; font-family: 'lab_grotesquemedium';
+    &.active{ color: $basefontcolor}
+    a{
+      font-size: $xlarge-font; color: $basefontcolor;
+    }
+  }
+}
+.breadcrumb-item+.breadcrumb-item::before{ color: $basefontcolor; vertical-align: middle;}
+
+
+//Dropdown
+.dropdown-menu {
+  padding: 4px 0;
+  display: none;
+  font-size: 14px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.05);
+  visibility: hidden;
+  opacity: 0;
+  transition: all 300ms ease;
+  -moz-transition: all 300ms ease;
+  -webkit-transition: all 300ms ease;
+  -o-transition: all 300ms ease;
+  -ms-transition: all 300ms ease;
+  margin-top: 20px;
+}
+
+.show>.dropdown-menu {
+  visibility: visible;
+  opacity: 1;
+  margin-top: 0 !important;
+}
+
+.dropdown-item.active, .dropdown-item:active{
+  color: $dark;
+  text-decoration: none;
+  background-color: $light;
+}
+
+.dropdown-item {
+  padding: 6px 1rem;
+}
+
+.dropdown-menu-lg {
+  width: 270px;
+}
+
+.breadcrumb > li + li:before {
+    padding: 0!important;
+    margin: 0 .5rem;
+    color: $muted;
+    content: "" !important;
+    // background: url(../images/svg/drop-arrow.svg) no-repeat; width: 5px; height: 7px; background-size: 100%;
+}
+
+
+//Background color
+.bg-primary {
+  background-color: $primary !important;
+}
+
+.bg-success {
+  background-color: $success !important;
+}
+
+.bg-info {
+  background-color: $info !important;
+}
+
+.bg-warning {
+  background-color: $warning !important;
+}
+
+.bg-danger {
+  background-color: $danger !important;
+}
+
+.bg-muted {
+  background-color: $muted !important;
+}
+
+.bg-white {
+  background-color: $white !important;
+}
+
+.bg-dark {
+  background-color: $dark !important;
+}
+
+.bg-pink {
+  background-color: $pink;
+}
+
+.bg-purple {
+  background-color: $purple;
+}
+
+.bg-brown {
+  background-color: $brown;
+}
+
+.bg-blue-grey {
+  background-color: $blue-grey;
+}
+
+
+//Text Color
+.text-white {
+  color: $white !important;
+}
+
+.text-danger {
+  color: $danger !important;
+}
+
+.text-muted {
+  color: $muted !important;
+}
+
+.text-primary {
+  color: $primary !important;
+}
+
+.text-warning {
+  color: $warning !important;
+}
+
+.text-success {
+  color: $success !important;
+}
+
+.text-info {
+  color: $info !important;
+}
+
+.text-dark {
+  color: $dark !important;
+}
+
+.text-pink {
+  color: $pink;
+}
+
+.text-purple {
+  color: $purple;
+}
+
+.text-brown {
+  color: $brown;
+}
+
+.text-blue-grey {
+  color: $blue-grey;
+}
+
+
+//Badge
+.badge {
+  font-weight: 500;
+}
+
+.badge-default {
+  background-color: $light;
+  color: $dark;
+}
+
+.badge-primary {
+  background-color: $primary;
+}
+.badge-secondary {
+  background-color: rgba($portage,.25);
+}
+
+.badge-success {
+  background-color: $success;
+}
+
+.badge-info {
+  background-color: $info;
+}
+
+.badge-warning {
+  background-color: rgba($warning,.25);
+  color: $basefontcolor!important;
+}
+
+.badge-danger {
+  background-color: $danger;
+}
+
+.badge-dark {
+  background-color: $dark;
+}
+
+.badge-pink {
+  background-color: $pink;
+  color: $white;
+}
+
+.badge-purple {
+  background-color: $purple;
+  color: $white;
+}
+
+.badge-brown {
+  background-color: $brown;
+  color: $white;
+}
+
+.badge-blue-grey {
+  background-color: $blue-grey;
+  color: $white;
+}
+
+
+/* Navs & Tabs */
+.nav-pills .nav-item.show .nav-link, .nav-pills .nav-link.active {
+  background-color: $primary;
+}
+
+.nav-pills > .active > a > .badge {
+  color: $primary;
+}
+
+/* List Group */
+.list-group-item.active {
+  background-color: $lightgray;
+  border-color: $lightgray;
+  color: $lightdark4;
+  z-index: 2;
+  &:hover {
+    background-color: $lightgray;
+    border-color: $lightgray;
+    color: $lightdark4;
+    z-index: 2;
+    .list-group-item-text {
+      color: $primary;
+    }
+  }
+  &:focus {
+    background-color: $lightgray;
+    border-color: $lightgray;
+    color: $lightdark4;
+    z-index: 2;
+    .list-group-item-text {
+      color: $primary;
+    }
+  }
+  .list-group-item-text {
+    color: $primary;
+  }
+}
+
+.list-group-item {
+  border-radius: 0;
+  padding: 12px 20px;
+  border: 1px solid fade($dark,6%);
+  &:first-child {
+    border-radius: 0;
+    padding: 12px 20px;
+  }
+  &:last-child {
+    border-radius: 0;
+    padding: 12px 20px;
+  }
+}
+
+.list-group-item-heading {
+  font-weight: 300;
+}
+
+.list-group-item.active > .badge {
+  color: $primary;
+}
+
+//list
+dt {
+    font-weight: 500;
+}

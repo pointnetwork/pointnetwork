@@ -1,0 +1,31 @@
+nav.navbar{ padding-top: .75rem; padding-bottom: .75rem;
+    .navbar-brand{
+        img{ height: 28px;}
+    }
+    .nav-item{ padding-left: 15px; padding-right: 15px;}
+    .nav-link{ color: $oxfordBlue;
+        &:hover{ color: $coral;}
+    }
+}
+
+.banner{
+    background: linear-gradient(105.77deg, $lilyWhite 0%, $astra 101.25%); 
+    h1{ font-size: 34px;
+        &.accentClr{ font-size: 24px;}
+    }
+    form{ width: 100%; max-width: 620px; margin: auto; 
+        .search-holder{ background-color: $white; @include border-radius(70px);
+            input{ border: 0px; width: calc( 100% - 70px); float: left; padding: 7.5px 15px; @include border-radius(70px); font-size: 20px;}
+            .submit{ float: left; width: 70px; height: 45px; @include border-radius(56px); background: url(../imgs/svg-icon/search-icon-wht.svg) no-repeat center center $electricViolet; background-size: 26px; text-indent: -100000px; }
+        }
+    }
+}
+
+@media only screen and (max-device-width: 767px) and (min-device-width: 320px){
+    nav.navbar{
+        .nav-item{ padding-left: 0px; padding-right: 0px;}
+    }
+}
+@media only screen and (max-device-width: 1024px) and (min-device-width: 768px){
+
+}

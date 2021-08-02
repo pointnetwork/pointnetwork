@@ -1,0 +1,23 @@
+footer{ 
+  .container{ @extend .pt--15; @extend .pb--15; @extend .pl--0; @extend .pr--0; border-top: 1px solid rgba($black, .1); color: $dustyGray; @extend .small-font;
+    a{ color: $dustyGray; }
+    p{ margin-bottom: 0px;}
+  }
+  .left{ float: left;}
+  .right{ float: right;}
+}
+
+@media only screen and (max-device-width: 767px) and (min-device-width: 320px){
+  footer{
+    .left,.right{ width: 100%; text-align: center;}
+    p{ padding-bottom: 10px;}
+    a{ margin: 0 5px; display: inline-block;}
+  }
+}
+@media only screen and (max-device-width: 1024px) and (min-device-width: 768px){
+  footer{
+    .left,.right{ width: 100%; text-align: center;}
+    p{ padding-bottom: 10px;}
+    a{ margin: 0 10px; display: inline-block;}
+  }
+}

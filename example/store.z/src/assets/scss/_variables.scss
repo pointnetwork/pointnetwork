@@ -1,0 +1,254 @@
+@font-face {
+    font-family: 'Metropolis';
+    src: url('../fonts/Metropolis-Light.woff2') format('woff2'),
+        url('../fonts/Metropolis-Light.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Metropolis';
+    src: url('../fonts/Metropolis-Regular.woff2') format('woff2'),
+        url('../fonts/Metropolis-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Metropolis';
+    src: url('../fonts/Metropolis-Medium.woff2') format('woff2'),
+        url('../fonts/Metropolis-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Metropolis Semi';
+    src: url('../fonts/Metropolis-SemiBold.woff2') format('woff2'),
+        url('../fonts/Metropolis-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Metropolis';
+    src: url('../fonts/Metropolis-Bold.woff2') format('woff2'),
+        url('../fonts/Metropolis-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+
+
+
+
+// Color variables
+$green: #027F00;
+$purpleHeart: #6500D1;
+$meriner: #0700C5;
+$safron: #E8A20D;
+$havelockBlue: #427FDA;
+$alabaster: #F9F9F9;
+$grayNurse: #E3E4E3;
+
+
+$greenHouse: #1F450C;
+$teaGrean: #CFEDC3;
+$sulu: #98F26B;
+$silver: #C4C4C4;
+$mercury: #E8E8E8;
+$atlantis: #66CC33;
+
+$dustyGray: #9B9B9B;
+$brightGray: #35364E;
+$electricViolet: #9542FF;
+$oxfordBlue: #3B3D5F;
+$coral: #FE8747;
+$lilyWhite: #ECF9FF;
+$astra: #FAF3B5;
+$accentClr: #FE8747;
+.accentClr{ color: $coral!important;}
+.accentBg{ background-color: $coral!important;}
+
+.primary{ color: $meriner;}
+
+.purpleHeartClr{ color: $purpleHeart;}
+
+
+$white: #ffffff;
+$pink: #f06292;
+$purple: #8938d5;
+$brown: #8d6e63;
+$blue-grey: #90a4ae;
+$coldPurple: #A68ED8;
+// $heather: #BFCED7;
+$heather: #DAE1F4;
+$valencia: #DB4343;
+$cornflowerBlue: #7859F3;
+
+$mirage: #1B2932;
+$shuttleGray: #536470;
+$firod: #3B5668;
+$casablanca: #F8AA4E;
+$tundora: #444;
+$periwinkle: #D2E1FF;
+$whiteLilac: #F7F8FC;
+
+$pictonBlue: #45A5E2;
+$havelockBlue: #4181CD;
+$nepal: #92A3BF;
+$geyser:#DEE2E6;
+$cadet-blue: #A0B2C0;
+$portage: #A280EC;
+
+
+.whtClr{ color: $white;}
+.whtbg{ background-color: $white;}
+
+
+$basefontcolor: $tundora;
+.basefontcolor{ color:$basefontcolor ;
+    &:focus{ color:$basefontcolor ;}
+    &:hover{ color:$basefontcolor ;}
+}
+$basebgcolor: #26333F;
+$lightnew:#FEF8FD;
+$primarynew: $pictonBlue;
+.primarynew-clr{ color: $primarynew;}
+
+$warningnew:#FFFBEC;
+.warning-bg{ background-color: $warningnew;}
+// $bodybg:$whiteLilac;
+$bodybg:#fff;
+$darknew: #4F4F50;
+$darkernew: #26333F;
+
+$black: #000;
+// $accentClr: $atlantis;
+// .accentClr{ color: $accentClr;}
+$primary: $cornflowerBlue;
+$secondary: $coldPurple;
+$success: $green;
+.successClr{ color: $accentClr; }
+$info: #00bdff;
+$warning: $safron;
+.warningClr{color: $warning;}
+$warningdark: #E08028;
+$danger: #DA5656;
+$dark: $mirage;
+$darkLighter: $shuttleGray;
+.darkLighterBg{ background-color: $shuttleGray; color: $heather};
+$muted: #3B5668;
+$light: #eeeeee;
+$bostonBlue: #3C8AB6;
+.bostonBlue{ color: $bostonBlue;}
+.boston-blue-bg{ background-color: $bostonBlue!important; color: $white!important;}
+$sandy-brown: #F49273;
+.sandy-brown-bg{ background: $sandy-brown;}
+$zircon: #F0F5FF;
+$catskill-white: #E3ECF1;
+
+$lightdark5: #555555;
+$lightgray: #dddddd;
+$light: $nepal;
+.lightClr{ color: $nepal}
+$borderClr: $geyser;
+$lightdark3: #333333;
+$lightdark4: #444444;
+$light5: #f5f5f5;
+$light3: #f3f3f3;
+$light9: #f9f9f9;
+$light-alt: #fafafa;
+$lightdark7: #797979;
+$lightdark-alt: #cccccc;
+
+$bg-body: #E5E5E5;
+
+$borderRadius: 4px;
+.defaultRadius{ border-radius: $borderRadius;}
+
+$font-primary: 'Metropolis';
+$font-secondary: 'Metropolis';
+
+$box-shadow: 3px 8px 5px rgba(29, 30, 58, 0.03);
+$block-shadow: 0px 14px 44px 0px rgba( $black, .12);
+.block-shadow{ box-shadow: $block-shadow;}
+
+$menu-shadow: 0px 10px 30px 15px rgba( $tundora, .6);
+.menu-shadow{ box-shadow: $menu-shadow!important;}
+
+
+// Width variables
+$width: 100%;
+
+.full-width{ width: 100%;}
+.half{ width: 50%;}
+
+
+// Height variables
+$height: 100%;
+
+// Default font size
+$small-font: 12px;
+.small-font{ font-size: 12px;}
+$basic-font: 14px;
+.basic-font{ font-size: $basic-font!important;}
+$medium-font: 16px;
+.medium-font{ font-size: $medium-font!important;}
+$large-font: 18px;
+.large-font{ font-size: $large-font!important;}
+$xlarge-font: 20px;
+.xlarge-font{ font-size: $xlarge-font!important;}
+$xxl-font: 32px;
+.xxl-font{ font-size: $xxl-font!important; line-height: 1.09;}
+
+$box-shadow: 0px 4px 10px 0px rgba(0,0,0,0.1);
+
+$borderRadius: 6px;
+
+.light{ font-weight: 300;}
+.normal{ font-weight: normal;}
+.medium{ font-weight: 500;}
+.semiBold{ font-weight: 600;}
+.bold{ font-weight: bold;}
+.xbold{ }
+
+// .xs-size{ font-size: 12px;}
+// .sm-size{ font-size: 14px;}
+// .basic-size{ font-size: 16px!important;}
+// .md-size{ font-size: 18px;}
+// .lg-size{ font-size: 24px;}
+
+.clrWht{ color: $white;}
+a{
+    &.clrWht{ @extend .clrWht;
+    &:hover{ @extend .clrWht; }
+    }
+}
+
+$black: #000;
+$mineShaft: #222222;
+$gray: #8E8E8E;
+
+$gradientOption1: $black, $mineShaft; 
+
+@mixin gradient($direction, $gradientOption1) { 
+    background: -webkit-linear-gradient($direction, $gradientOption1);
+    background: -moz-linear-gradient($direction, $gradientOption1);
+    background: -o-linear-gradient($direction, $gradientOption1);
+    background: linear-gradient($direction, $gradientOption1);  
+}
+// @include gradient(left, $gradientOption1);
+
+@mixin border-radius($radius) {
+	border-radius: $radius;
+	-webkit-border-radius: $radius;
+	-moz-border-radius: $radius;
+}
+
+// :root {
+//     --gutter: 20px;
+// }
+  
