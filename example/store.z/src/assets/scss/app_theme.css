@@ -2575,7 +2575,7 @@ body {
   font-size: 14px;
 }
 
-#loading {
+.loading {
   display: inline-block;
   width: 25px;
   height: 25px;

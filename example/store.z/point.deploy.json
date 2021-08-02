@@ -5,22 +5,33 @@
     "store1": {
       "contract_send": "Store.registerStore(name,description,logo)",
       "metadata": {
-        "name": "My Store",
-        "description": "My Store: Is Your Store Too!",
+        "name": "宇宙カバ",
+        "description": "Intergalactic Space Hippo Journey",
         "storage[logo]": {
-          "file": "images/store-logo-0.jpg",
-          "type": "image/jpeg"
+          "file": "assets/imgs/stores-img1.png",
+          "type": "image/png"
         }
       }
     },
     "store2": {
       "contract_send": "Store.registerStore(name,description,logo)",
       "metadata": {
-        "name": "A.N. Other Ltd",
-        "description": "A.N. Other: Is like no other!",
+        "name": "Interstellar Overdrive",
+        "description": "Floating down, the sound resounds around the icy waters underground",
         "storage[logo]": {
-          "file": "images/store-logo-1.png",
-          "type": "image/jpeg"
+          "file": "assets/imgs/stores-img2.png",
+          "type": "image/png"
+        }
+      }
+    },
+    "store3": {
+      "contract_send": "Store.registerStore(name,description,logo)",
+      "metadata": {
+        "name": "Astro Boy",
+        "description": "The Robot-Boy with 100,000 horsepower",
+        "storage[logo]": {
+          "file": "assets/imgs/stores-img3.png",
+          "type": "image/png"
         }
       }
     },
@@ -28,8 +39,12 @@
       "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
       "metadata": {
         "storeId": 1,
-        "name": "Toothbrush",
-        "description": "A tooth cleaner",
+        "name": "望ノ社",
+        "description": "Mochinosha",
+        "storage[image]": {
+          "file": "assets/imgs/product-img1.png",
+          "type": "image/png"
+        },
         "price": "1000000000000000000"
       }
     },
@@ -37,8 +52,12 @@
       "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
       "metadata": {
         "storeId": 1,
-        "name": "Book",
-        "description": "A page turner",
+        "name": "Mystical Puppet",
+        "description": "Of shadow puppetry",
+        "storage[image]": {
+          "file": "assets/imgs/product-img2.png",
+          "type": "image/png"
+        },
         "price": "2000000000000000000"
       }
     },
@@ -46,8 +65,12 @@
       "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
       "metadata": {
         "storeId": 1,
-        "name": "MacBook Pro",
-        "description": "A new computer",
+        "name": "Marionette",
+        "description": "Who referred to himself as a puppeteer",
+        "storage[image]": {
+          "file": "assets/imgs/product-img3.png",
+          "type": "image/png"
+        },
         "price": "12000000000000000000"
       }
     },
@@ -55,9 +78,91 @@
       "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
       "metadata": {
         "storeId": 2,
-        "name": "Official A.N. Other T-Shirt",
-        "description": "Gonna be worth a lot!",
+        "name": "Oberon",
+        "description": "A moon of Uranus",
+        "storage[image]": {
+          "file": "assets/imgs/product-img4.png",
+          "type": "image/png"
+        },
         "price": "1000000000000000000"
+      }
+    },
+    "store2_product2": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 2,
+        "name": "Miranda",
+        "description": "One of the smallest closely observed objects in the Solar System that might be in hydrostatic equilibrium",
+        "storage[image]": {
+          "file": "assets/imgs/product-img5.png",
+          "type": "image/png"
+        },
+        "price": "2000000000000000000"
+      }
+    },
+    "store2_product3": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 2,
+        "name": "Titania",
+        "description": "The queen of the fairies",
+        "storage[image]": {
+          "file": "assets/imgs/product-img6.png",
+          "type": "image/png"
+        },
+        "price": "1500000000000000000"
+      }
+    },
+    "store3_product1": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 2,
+        "name": "幽霊製造機",
+        "description": "Ghost Manufacturing Machine",
+        "storage[image]": {
+          "file": "assets/imgs/product-img7.png",
+          "type": "image/png"
+        },
+        "price": "1900000000000000000"
+      }
+    },
+    "store3_product2": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 2,
+        "name": "宇宙ヒョウ",
+        "description": "Space Snow Leopard",
+        "storage[image]": {
+          "file": "assets/imgs/product-img8.png",
+          "type": "image/png"
+        },
+        "price": "2700000000000000000"
+      }
+    },
+    "store3_product3": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 2,
+        "name": "差し迫った危険の滑りやすいナマズ",
+        "description": "Slippery Catfish In Imminent Danger",
+        "storage[image]": {
+          "file": "assets/imgs/product-img9.png",
+          "type": "image/png"
+        },
+        "price": "2000000000000000000"
+      }
+    },
+    "store3_product4": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 2,
+        "name": "ねこのまもり神",
+        "description": "A Feline Guardian Deity",
+        "storage[image]": {
+          "file": "assets/imgs/product-img10.png",
+          "type": "image/png"
+        },
+        "price": "1500000000000000000"
       }
     }
   },

@@ -27,7 +27,7 @@ const bundler = new Bundler(target, options);
 
 bundler.on('buildStart', () => {
     console.info(execSync(
-        `clear && cp -R ${ srcDir }/images ${ outDir }/.`
+        `clear && mkdir -p ${ outDir }/assets/imgs && cp -a ${ srcDir }/assets/imgs/. ${ outDir }/assets/imgs/`
     ).toString());
 });
 

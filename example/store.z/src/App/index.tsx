@@ -3,16 +3,20 @@ import { Route } from 'wouter'
 import { useAppContext, ProvideAppContext } from './Context'
 import { Stores } from '~/Stores'
 import { Products } from '~/Products'
+import { ErrorLabel, Loader } from '~/Common'
+
+import Categories from '~/Categories'
+import HowTo from '~/HowTo'
 
 import logo from '~/assets/imgs/logo.png';
 
 const Header = () => {
-    const { walletAddress } = useAppContext();
+    const { walletAddress, walletError } = useAppContext();
 
     return (
         <nav className='navbar navbar-expand-md '>
             <div className='container-fluid'>
-                <a className='navbar-brand' href='#'>
+                <a className='navbar-brand' href='/'>
                     <img src={ logo } alt='The Store.z Logo'/>
                 </a>
                 <button
@@ -29,7 +33,15 @@ const Header = () => {
                 <div className='navbar-collapse collapse ' id='navbarCollapse'>
                     <ul className='navbar-nav ms-auto mb-2 mb-md-0'>
                         <li className='nav-item'>
-                            <a className='nav-link active' href='#'>{ walletAddress }</a>
+                            {
+                                walletError ? (
+                                    <ErrorLabel>Failed to load wallet address</ErrorLabel>
+                                ) : walletAddress ? (
+                                    <a className='nav-link active' href='#'>{ walletAddress }</a>
+                                ) : (
+                                    <Loader/>
+                                )
+                            }
                         </li>
                     </ul>
                 </div>
@@ -60,6 +72,8 @@ export const App = () => (
         <Header/>
         <Route path='/'><Stores/></Route>
         <Route path='/products/:storeId'><Products/></Route>
+        <Categories/>
+        <HowTo/>
         <Footer/>
     </ProvideAppContext>
 );

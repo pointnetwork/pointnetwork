@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "clear": "mkdir -p ./public && rm -rf ./public/* .cache .parcel-cache",
+    "seed": "mkdir -p ./public/assets/imgs && cp src/assets/imgs/* ./public/assets/imgs/.",
     "start": "parcel src/index.html",
     "watch:docker": "./watch.docker.js",
     "build": "npm run clear && cp -R src/images ./public/. && parcel build src/index.html -d ./public --no-source-maps",

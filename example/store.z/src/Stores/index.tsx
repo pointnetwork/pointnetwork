@@ -1,26 +1,8 @@
-import React from 'react'
-import { Link } from 'wouter'
-import { Store, useStoreContext, ProvideStoreContext } from './Context'
-
-const Banner = () => {
-    return (
-        <div className='banner clr pt--45 pb--45 mb--50'>
-            <div className='container clr flex flex-column align-items-center justify-content-center'>
-                <h1 className='text-center semiBold mb--50'>
-                    <span className='dBlock light accentClr'>Trust in every step</span>
-                    Discover, collect, and sell extraordinary NFTs
-                    <span className='dBlock light large-font pt--5'>on the world's first & largest NFT marketplace</span>
-                </h1>
-                <form action=''>
-                    <div className='search-holder clr p--5 clr whtBg'>
-                        <input type='text' placeholder='Search...'/>
-                        <input type='submit' className='submit'/>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
+import React from 'react';
+import { Link } from 'wouter';
+import { Store, useStoreContext, ProvideStoreContext } from './Context';
+import { Banner } from '~/Banner';
+import { ErrorLabel, Label, Loader } from '~/Common';
 
 const StoreItem = ({ id, name, logo, description }: Store) => {
     return (
@@ -43,34 +25,34 @@ const StoreList = () => {
     const { storeList, storeListError } = useStoreContext();
 
     if (storeListError) {
-        return <span className='error'>{ storeListError.message }</span>;
+        return <ErrorLabel>{ storeListError.message }</ErrorLabel>;
     }
 
     if (!storeList) {
-        return <span>Loading...</span>;
+        return <Loader/>;
     }
 
     if (!storeList.length) {
-        return <span>No stores yet...</span>;
+        return <Label>No stores yet...</Label>;
     }
 
     return (
-        <div className='stores-section clr section'>
-            <div className='container pb--50'>
-                <div className='top clr'>
-                    <h4 className='section-title '>Exclusive Stores</h4>
-                </div>
-                <ul className='row'>
-                    { storeList.map(item => <StoreItem key={ item.id } {...item}/>) }
-                </ul>
-            </div>
-        </div>
+        <ul className='row'>
+            { storeList.map(item => <StoreItem key={ item.id } {...item}/>) }
+        </ul>
     );
 };
 
 export const Stores = () => (
     <ProvideStoreContext>
         <Banner/>
-        <StoreList/>
+        <div className='stores-section clr section'>
+            <div className='container pb--50'>
+                <div className='top clr'>
+                    <h4 className='section-title '>Exclusive Stores</h4>
+                    <StoreList/>
+                </div>
+            </div>
+        </div>
     </ProvideStoreContext>
 );

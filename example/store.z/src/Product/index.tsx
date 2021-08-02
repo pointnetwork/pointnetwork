@@ -1,6 +1,7 @@
 import React from 'react';
 import { ProductData } from '~/@types';
 import { useProductItemContext, ProvideProductItemsContext } from './Context';
+import { ErrorLabel, Label, Loader } from '~/Common';
 
 const Product = () => {
     const {
@@ -15,35 +16,35 @@ const Product = () => {
 
     if (fatalError) {
         return (
-            <li className='store'>
+            <li className='custom-col clr'>
                 <h4 className='error'>Unable to fetch product</h4>
-                <span className='error'>{ fatalError.message }</span>
+                <ErrorLabel>{ fatalError.message }</ErrorLabel>
             </li>
         );
     }
 
     if (productError) {
         return (
-            <li className='store'>
+            <li className='custom-col clr'>
                 <h4 className='error'>Failed to load product</h4>
-                <span className='error'>{ productError.message }</span>
-                <button onClick={ load }>Retry</button>
+                <ErrorLabel>{ productError.message }</ErrorLabel>
+                <button type='button' className='btn sm btn-outline-primary' onClick={ load }>Retry</button>
             </li>
         );
     }
 
     if (purchaseError) {
         return (
-            <li className='store'>
+            <li className='custom-col clr'>
                 <h4 className='error'>Failed to buy product</h4>
-                <span className='error'>{ purchaseError.message }</span>
-                <button onClick={ buy }>Retry</button>
+                <ErrorLabel>{ purchaseError.message }</ErrorLabel>
+                <button type='button' className='btn sm btn-outline-primary' onClick={ buy }>Retry</button>
             </li>
         );
     }
 
     if (!product) {
-        return <li className='store'><h4>Loading...</h4></li>;
+        return <li className='custom-col clr'><Loader/></li>;
     }
 
     const { image, name, description, price } = product;
@@ -70,7 +71,7 @@ const Product = () => {
                 <div className='clr pb--15'></div>
                 {
                     owned ? (
-                        <span className='owner'>You own this!</span>
+                        <Label>You own this!</Label>
                     ) : (
                         <button type='button' className='btn sm btn-outline-primary' onClick={ buy }>Buy</button>
                     )
