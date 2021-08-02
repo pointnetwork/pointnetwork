@@ -44,9 +44,9 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
                 throw new Error(`Incorrect product data for product id: ${ productId }`);
             }
 
-            const { name, description, price } = JSON.parse(product);
+            const { name, description, price, image } = JSON.parse(product);
 
-            setProduct({ productId, name, description, price, owner });
+            setProduct({ productId, image, name, description, price, owner });
         } catch (e) {
             console.error('Failed to load product:', data, e);
             setProductError(e);

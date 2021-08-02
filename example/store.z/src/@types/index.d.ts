@@ -4,6 +4,7 @@ export type Product = {
     description: string,
     price: string,
     owner: string,
+    image: string,
 };
 
 export type ProductData = {
