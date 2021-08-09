@@ -11,6 +11,8 @@ require('./init')
 const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
 const ProviderChunk = require('../../db/models/provider_chunk');
+const RedKey = require('../../db/models/redkey');
+const StorageLink = require('../../db/models/storage_link');
 
 (async() => {
     // Some examples below to try:
@@ -19,8 +21,7 @@ const ProviderChunk = require('../../db/models/provider_chunk');
 
     var allFiles = [...new Set([...allUploadedFiles, ...allDownloadedFiles])];
 
-    const files = allFiles.map((file) =>
-    (({ id, originalPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, originalPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
+    const files = allFiles.map((file) => (({ id, originalPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, originalPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
 
     // const allChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
     const allUploadedChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
@@ -31,6 +32,12 @@ const ProviderChunk = require('../../db/models/provider_chunk');
 
     const allProviderChunks = await ProviderChunk.allBy('status', ProviderChunk.STATUS_CREATED)
     pchunks = allProviderChunks.map((chunk) => chunk._attributes)
+
+    const allRedKeys = await RedKey.all()
+    redkeys = allRedKeys.map((redkey) => redkey._attributes)
+
+    const allStorageLinks = await StorageLink.all()
+    storageLinks = allStorageLinks.map((storageLink) => storageLink._attributes)
 
     const OUTPUT_ALL = true;
 
@@ -56,5 +63,24 @@ const ProviderChunk = require('../../db/models/provider_chunk');
     console.log('file.getMerkleHash():\t', file.getMerkleHash());
     console.log('file.getMerkleTree():\t', file.getMerkleTree());
     console.log('file.toJSON:\t\t', file.toJSON());
+    console.log()
+
+    chunk = await Chunk.find(chunks[0].id)
+    console.log('chunk.toJSON:\t\t', chunk.toJSON());
+    console.log()
+
+    if(pchunks[0]) {
+        // only available if we are connected to a storage provider
+        pcchunk = await ProviderChunk.find(pchunks[0].id)
+        console.log('pcchunk.toJSON:\t\t', pcchunk.toJSON());
+        console.log()
+    }
+
+    redkey = await RedKey.find(redkeys[redkeys.length-1].id)
+    console.log('redkey.toJOSN:\t\t', redkey.toJSON())
+    console.log()
+
+    storageLink = await StorageLink.find(storageLinks[storageLinks.length-1].id)
+    console.log('storageLink.toJOSN:\t\t', storageLink.toJSON())
     console.log()
 })()
