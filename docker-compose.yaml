@@ -109,9 +109,20 @@ services:
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
 
+  pointdb:
+    image: postgres:13.3
+    container_name: pointnetwork_db
+    environment:
+      - POSTGRES_USER=point
+      - POSTGRES_PASSWORD=pointpass
+      - POSTGRES_DB=pointdb
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+
 volumes:
   blockchain_data:
   shared_contracts:
   storage_provider_data:
   website_owner_data:
   website_visitor_data:
+  database-data:
