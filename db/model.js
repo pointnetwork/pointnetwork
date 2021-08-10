@@ -1,6 +1,7 @@
 const _ = require('lodash');
 const DB = require('../db');
 const Indexable = require('./indexable');
+const knex = require('../db/knex');
 
 class Model extends Indexable {
     constructor(_this) {
@@ -141,6 +142,21 @@ class Model extends Indexable {
                 resolve();
             });
         });
+
+        // Temp method to test saving to postgres in parallel to LevelDB
+        this.saveToPostgres()
+    }
+
+    async saveToPostgres() {
+        if(this instanceof require('./models/file')) {
+            const attrs = (({ id, originalPath, size, redundancy, expires, autorenew, chunkCount, ul_status }) => ({ id, original_path: originalPath, size, redundancy, expires, autorenew, chunk_count: chunkCount, ul_status}))(this.toJSON());
+
+            const [file] = await knex('files')
+                .insert(attrs)
+                .onConflict("id")
+                .merge()
+                .returning("*");
+        }
     }
 
     _hydrate(data) {
