@@ -144,7 +144,7 @@ class Model extends Indexable {
         });
 
         // Temp method to test saving to postgres in parallel to LevelDB
-        this.saveToPostgres()
+        this.saveToPostgres();
     }
 
     async saveToPostgres() {

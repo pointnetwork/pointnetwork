@@ -63,7 +63,7 @@ const StorageLink = require('../../db/models/storage_link');
     console.log('file.getMerkleHash():\t', file.getMerkleHash());
     console.log('file.getMerkleTree():\t', file.getMerkleTree());
     console.log('file.toJSON:\t\t', file.toJSON());
-    console.log()
+    console.log();
 
     chunk = await Chunk.find(chunks[0].id);
     console.log('chunk.toJSON:\t\t', chunk.toJSON());

@@ -1,10 +1,10 @@
 exports.up = function(knex) {
     return knex.schema.createTable('chunks', function(table) {
-        table.unique('id')
-        table.string('id')
+        table.unique('id');
+        table.string('id');
         table.integer('length');
         table.integer('redundancy');
-        table.specificType('expires', 'bigint')
+        table.specificType('expires', 'bigint');
         table.boolean('autorenew');
         table.string('dl_status');
         table.string('ul_status');
@@ -12,7 +12,7 @@ exports.up = function(knex) {
         table.timestamp('updated_at').defaultTo(knex.fn.now());
         // FK file_id references files table
         table.string('file_id').references('id').inTable('files');
-    })
+    });
 };
 
 exports.down = function(knex) {
