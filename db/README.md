@@ -2,7 +2,7 @@
 
 To test out Knex and Postgres using Docker:
 
-1. (Optional) Rebuild the image so that it uses the latest packages: `docker build -t "pointnetwork/pointnetwork_node:v1.0.3" .`
+1. (Optional) Rebuild the image so that it uses the latest packages: `docker build -t "pointnetwork/pointnetwork_node:v1.0.3" .` (note the tag is the latest tag currently in `.env` file).
 1. Run pointnetwork docker services in dev mode: `docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d`
 1. Follow the logs of the website_owner container: `docker-compose logs -f website_owner`
 1. Connect a terminal to a psql instance: `docker exec -it pointnetwork_database psql -U pointuser pointdb`

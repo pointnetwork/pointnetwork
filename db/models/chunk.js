@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
+const knex = require('../knex');
 let StorageLink;
 let File;
 
@@ -25,6 +26,22 @@ class Chunk extends Model {
      * ----
      * - known_providers
      */
+
+    async save() {
+        // save to postgres via knex
+        const attrs = (({ id, length, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id, redundancy, length, expires, autorenew, ul_status, dl_status}))(super.toJSON());
+
+        // TODO get file id from belongsToFiles array
+
+        const [chunk] = await knex('chunks')
+            .insert(attrs)
+            .onConflict("id")
+            .merge()
+            .returning("*");
+
+        // save to postgres via knex
+        super.save()
+    }
 
     getData() {
         // todo: read from fs if you have it already or retrieve using storage layer client

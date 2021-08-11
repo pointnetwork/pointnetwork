@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const Model = require('../model');
 const fs = require('fs');
+const knex = require('../knex');
 let Chunk;
 
 class File extends Model {
@@ -17,6 +18,20 @@ class File extends Model {
     static _buildIndices() {
         this._addIndex('ul_status');
         this._addIndex('dl_status');
+    }
+
+    async save() {
+        // save to postgres via knex
+        const attrs = (({ id, originalPath, size, redundancy, expires, autorenew, chunkCount, ul_status }) => ({ id, original_path: originalPath, size, redundancy, expires, autorenew, chunk_count: chunkCount, ul_status}))(super.toJSON());
+
+        const [file] = await knex('files')
+            .insert(attrs)
+            .onConflict("id")
+            .merge()
+            .returning("*");
+
+        // legacy persist to LevelDB
+        super.save()
     }
 
     getAllChunkIds() {
