@@ -6,7 +6,6 @@ exports.up = function(knex) {
         table.integer('size');
         table.integer('redundancy');
         table.specificType('expires', 'bigint');
-        table.integer('chunk_count');
         table.boolean('autorenew');
         table.string('ul_status');
         table.timestamp('created_at').defaultTo(knex.fn.now());

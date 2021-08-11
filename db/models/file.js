@@ -22,7 +22,7 @@ class File extends Model {
 
     async save() {
         // save to postgres via knex
-        const attrs = (({ id, originalPath, size, redundancy, expires, autorenew, chunkCount, ul_status }) => ({ id, original_path: originalPath, size, redundancy, expires, autorenew, chunk_count: chunkCount, ul_status}))(super.toJSON());
+        const attrs = (({ id, originalPath, size, redundancy, expires, autorenew, ul_status }) => ({ id, original_path: originalPath, size, redundancy, expires, autorenew, ul_status}))(super.toJSON());
 
         const [file] = await knex('files')
             .insert(attrs)

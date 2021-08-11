@@ -29,7 +29,7 @@ class Chunk extends Model {
 
     async save() {
         // save to postgres via knex
-        const attrs = (({ id, length, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id, redundancy, length, expires, autorenew, ul_status, dl_status}))(super.toJSON());
+        const attrs = (({ id, length, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id, length: this.getLength(), redundancy, expires, autorenew, ul_status, dl_status}))(super.toJSON());
 
         // TODO get file id from belongsToFiles array
 
