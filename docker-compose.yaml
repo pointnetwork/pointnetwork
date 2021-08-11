@@ -121,6 +121,20 @@ services:
     volumes:
       - pointnetwork_database_data:/var/lib/postgresql/data/
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pointnetwork_pgadmin
+    restart: always
+    depends_on:
+      - database
+    ports:
+      - 5050:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin@pointnetwork.io
+      PGADMIN_DEFAULT_PASSWORD: pgadminpass
+    volumes:
+      - ./pgadmin-servers.json:/pgadmin4/servers.json:ro
+
 volumes:
   blockchain_data:
   shared_contracts:

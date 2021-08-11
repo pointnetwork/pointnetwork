@@ -1,0 +1,13 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "Point Network Database Server",
+            "Group": "Development",
+            "Port": 5432,
+            "Username": "pointuser",
+            "Host": "database",
+            "SSLMode": "prefer",
+            "MaintenanceDB": "postgres"
+        }
+    }
+}
