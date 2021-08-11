@@ -159,7 +159,9 @@ class Model extends Indexable {
         }
 
         if(this instanceof require('./models/chunk')) {
-            const attrs = (({ id, fileId, length, redundancy, expires, autorenew, ul_status }) => ({ id, fileId: length, redundancy, expires, autorenew, ul_status}))(this.toJSON());
+            const attrs = (({ id, length, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id, redundancy, length, expires, autorenew, ul_status, dl_status}))(this.toJSON());
+
+            // TODO get file id from belongsToFiles array
 
             const [chunk] = await knex('chunks')
                 .insert(attrs)
