@@ -1,8 +1,8 @@
 const Model = require('../model');
 const knex = require('../knex');
 const _ = require('lodash');
-class Provider extends Model {
 
+class Provider extends Model {
     constructor(...args) {
         super(...args);
     }
