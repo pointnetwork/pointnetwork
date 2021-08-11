@@ -29,9 +29,13 @@ class Chunk extends Model {
 
     async save() {
         // save to postgres via knex
-        const attrs = (({ id, length, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id, length: this.getLength(), redundancy, expires, autorenew, ul_status, dl_status}))(super.toJSON());
+        let attrs = (({ id, length, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id, length: this.getLength(), redundancy, expires, autorenew, ul_status, dl_status}))(super.toJSON());
 
-        // TODO get file id from belongsToFiles array
+        // get the first file_id where the offset is 0 or more
+        const file_id = this.belongsToFiles.filter(f => f[1] >= 0)[0][0];
+
+        // add the file_id to the db attrs
+        attrs.file_id = file_id;
 
         const [chunk] = await knex('chunks')
             .insert(attrs)
