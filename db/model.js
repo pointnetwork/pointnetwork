@@ -157,6 +157,16 @@ class Model extends Indexable {
                 .merge()
                 .returning("*");
         }
+
+        if(this instanceof require('./models/chunk')) {
+            const attrs = (({ id, fileId, length, redundancy, expires, autorenew, ul_status }) => ({ id, fileId: length, redundancy, expires, autorenew, ul_status}))(this.toJSON());
+
+            const [chunk] = await knex('chunks')
+                .insert(attrs)
+                .onConflict("id")
+                .merge()
+                .returning("*");
+        }
     }
 
     _hydrate(data) {
