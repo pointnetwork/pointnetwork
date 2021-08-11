@@ -31,7 +31,7 @@ class File extends Model {
             .returning("*");
 
         // legacy persist to LevelDB
-        super.save()
+        super.save();
     }
 
     getAllChunkIds() {

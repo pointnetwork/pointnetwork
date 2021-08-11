@@ -29,8 +29,8 @@ In order to clear all the data from both Postgres and LevelDB, you need to do th
     1. Confirm there are no `files` stored in LevelDB using: `curl http://localhost:24681/v1/api/storage/files` (if LevelDB is empty it should respond with `{"status":200,"data":[]}`)
     1. Confirm there are no `chunks` stored in LevelDB using: `curl http://localhost:24681/v1/api/storage/chunks` (if LevelDB is empty it should respond with `{"status":200,"data":[]}`)
 1. Connect a terminal to a psql instance: `docker exec -it pointnetwork_database psql -U pointuser pointdb`
-    1. Delete all data from `files` table: `DELETE FROM files;`
-    1. Delete all data from `chunks` table: `DELETE FROM chunks;`
+    1. Delete all data from `files` table: `DELETE FROM chunks;`
+    1. Delete all data from `chunks` table: `DELETE FROM files;`
     1. Check that `files` table is now empty: `select count(*) from files;` (if its empty it should respond with a `count` column with value `0`)
     1. Check that `chunks` table is now empty: `select count(*) from chunks;` (if its empty it should respond with a `count` column with value `0`)
 1. Now you are ready to test a deployment with an empty database.
