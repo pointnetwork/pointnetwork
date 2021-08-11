@@ -57,6 +57,7 @@
   },
   "scripts": {
     "test": "jest",
+    "test:db:docker": "npx knex migrate:latest && NODE_ENV=development npm run test -- --testPathPattern=tests/models",
     "start": "./point --datadir $DATADIR -v",
     "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
     "start:docker": "./scripts/await-contracts-docker.js && npm start",
