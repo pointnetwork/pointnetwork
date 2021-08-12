@@ -11,21 +11,24 @@ To test out Knex and Postgres using Docker:
     1. Optionally rollback database migrations if you want to clear the database schema: `npx knex migrate:rollback`
     1. Run the database migrations using `npx knex migrate:latest`
     1. Run a simple example deployment: `./point deploy ./example/hello.z --datadir $DATADIR`
-1. Now within the running psql terminal:
+
+## Check data in Postgres
+
+1. Within the running psql terminal:
     1. Check the schemas are migrated: `\d files`
     1. Check the data has been saved in `point_website_owner` db: `select id, size, redundancy, expires, autorenew from files;`
 1. Open the Point Network [PgAdmin Dashboard](http://localhost:5050) and use the credentials as defined in the `docker-compose.yml` file.
-
+1. Navigate to the `Point Network Database Server`, select the database, select the table and from the context menu select 'View/Edit Data -> All Rows'.
 
 ## Check data in LevelDB
 
 1. Check all the files in the `website_owner` (or other) LevelDB instance:
-    1. Stop the `website_owner` node: `docker-compose stop website_owner`. This is because LevelDB on accepts one connection.
-    1. Start the `website_owner` node overriding the `entrypoint`: `docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml run --entrypoint bash website_owner`
+    1. Stop the `website_owner` node: `docker-compose stop website_owner`. This is because LevelDB only accepts one concurrent connection.
+    1. Start the `website_owner` node overriding the **entrypoint**: `docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml run --entrypoint bash website_owner`
     1. Run the LevelDB playground script: `node ./scripts/db/playground.js`
     1. Adjust the script to output the data that you are insterested in.
     1. Exit the container.
-    1. Restart the `website_owner` service: `docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d`
+    1. Restart and reattach to the `website_owner` service (follow the steps at the start of this document).
 
 ## Clear all data from Postgres and LevelDB to run a clean test
 

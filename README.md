@@ -365,6 +365,10 @@ const File = require('../../db/models/file');
 ... use the File model ...
 ```
 
+### Database
+
+For more details on the databases please refer to the [Database README](./db/README.md).
+
 ### Testing all example sites deployment
 
 There is a convenience script that will deploy all the example sites (found in the [./example](./example) folder). This is useful as a check to make sure the nodes can still run a sucessful deployment of all the example sites. The script to run is:
