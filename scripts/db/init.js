@@ -1,18 +1,16 @@
-// const nodeid = 'test3' // change to the node db you want to initialize
-
 const fs = require('fs');
 const os = require("os");
 const _ = require('lodash')
 const pino = require('pino');
 const utils = require('../../core/utils');
-const ctx = {};
-// const nodeConfigPath = `~/.point/${nodeid}/config.json`.replace("~", os.homedir)
-const nodeConfigPath = '/data/config.json'
 const defaultConfig = require('../../resources/defaultConfig.json')
-const config = JSON.parse(fs.readFileSync(nodeConfigPath, 'utf-8'));
 
-// ctx.datadir = ctx.datapath = `~/.point/${nodeid}/`.replace("~", os.homedir)
-ctx.datadir = ctx.datapath = '/data'
+const ctx = {};
+const datadir = process.env.DATADIR ? process.env.DATADIR : `~/.point/test2/`.replace("~", os.homedir)
+const nodeConfigPath = `${datadir}/config.json`
+ctx.datadir = ctx.datapath = datadir
+
+const config = JSON.parse(fs.readFileSync(nodeConfigPath, 'utf-8'));
 ctx.configPath = nodeConfigPath
 ctx.basepath = __dirname;
 ctx.log = pino()
