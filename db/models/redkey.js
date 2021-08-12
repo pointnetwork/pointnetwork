@@ -1,6 +1,7 @@
 const Model = require('../model');
 const _ = require('lodash');
 const crypto = require('crypto');
+const knex = require('../knex');
 
 const defaultConfig = require('../../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits; // todo: make it read from the actual config, not default
@@ -52,12 +53,29 @@ class Redkey extends Model {
 
                 resolve(key);
             });
-        })
+        });
     }
 
     static async allByProvider(provider) {
         return await this.allBy('provider_id', provider.id);
     };
+
+    async save() {
+        const {id, provider_id, public_key, private_key, key_index} = this.toJSON();
+
+        const [redkey] = await knex('redkeys')
+            .insert( {id, provider_id, public_key, private_key, key_index})
+            .onConflict('id')
+            .merge()
+            .returning('*');
+
+        // legacy persist to LevelDB
+        super.save();
+
+        return redkey;
+    }
 }
+
+Redkey.tableName = 'redkey';
 
 module.exports = Redkey;
