@@ -13,7 +13,7 @@ services:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
-      - DATABASE_URL=postgres://pointuser:pointpass@database:5432/pointdb
+      - DATABASE_URL=postgres://pointuser:pointpassword@database:5432/point_test
     volumes:
       - ./db:/app/db:ro
       - ./api:/app/api:ro

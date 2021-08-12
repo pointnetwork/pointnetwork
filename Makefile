@@ -1,6 +1,6 @@
-# Starts up a psql console in the db container
+# Starts up a psql console in the db container (conectes to point_website_owner database by default)
 psql_console:
-	docker exec -it pointnetwork_database psql -U pointuser pointdb
+	docker exec -it pointnetwork_database psql -U pointuser point_website_owner
 
 # Run migrations against the database using the 'website_owner' service
 db_migrate:

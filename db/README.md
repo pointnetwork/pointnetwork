@@ -2,7 +2,7 @@
 
 To test out Knex and Postgres using Docker:
 
-1. (Optional) Rebuild the image so that it uses the latest packages: `docker build -t "pointnetwork/pointnetwork_node:v1.0.3" .` (note the tag is the latest tag currently in `.env` file).
+1. (Optional) Rebuild the image so that it uses the latest packages: `docker build -t "pointnetwork/pointnetwork_node:dev" .` (note the tag is the latest tag currently in `.env` file).
 1. Run pointnetwork docker services in dev mode: `docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d`
 1. Follow the logs of the website_owner container: `docker-compose logs -f website_owner`
 1. Connect a terminal to a psql instance: `docker exec -it pointnetwork_database psql -U pointuser pointdb`
@@ -34,3 +34,10 @@ In order to clear all the data from both Postgres and LevelDB, you need to do th
     1. Check that `files` table is now empty: `select count(*) from files;` (if its empty it should respond with a `count` column with value `0`)
     1. Check that `chunks` table is now empty: `select count(*) from chunks;` (if its empty it should respond with a `count` column with value `0`)
 1. Now you are ready to test a deployment with an empty database.
+
+## Run tests
+
+1. Start the services like so: `docker-compose -f docker-compose.yaml -f docker-compose.test.yaml up -d`
+1. Now you can run the tests using `docker start pointnetwork_tests`
+1. Follow the logs of the container to see the test output: `docker logs -f pointnetwork_tests`
+1. Alternatively use the Docker desktop tool to start the `pointnetwork_tests` container and view the logs directly there.
