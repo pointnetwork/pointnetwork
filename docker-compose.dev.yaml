@@ -33,6 +33,7 @@ services:
       - ./wallet:/app/wallet:ro
       - ./point:/app/point:ro
       - ./package.json:/app/package.json:ro
+      - ./knexfile.js:/app/knexfile.js:ro
 
   website_visitor:
     command: 'run start:docker:dev'
