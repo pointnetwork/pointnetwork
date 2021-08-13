@@ -22,16 +22,19 @@ class File extends Model {
 
     async save() {
         // save to postgres via knex
-        const attrs = (({ id, originalPath, size, redundancy, expires, autorenew, ul_status }) => ({ id, original_path: originalPath, size, redundancy, expires, autorenew, ul_status}))(super.toJSON());
+        const attrs = (({ id, originalPath, size, redundancy, expires, autorenew, ul_status }) => ({ leveldb_id: id, original_path: originalPath, size, redundancy, expires, autorenew, ul_status}))(super.toJSON());
 
         const [file] = await knex('files')
             .insert(attrs)
-            .onConflict("id")
+            .onConflict("leveldb_id")
             .merge()
             .returning("*");
 
         // legacy persist to LevelDB
-        super.save();
+        await super.save();
+
+        // return the file pk
+        return file.id;
     }
 
     getAllChunkIds() {
@@ -330,7 +333,7 @@ class File extends Model {
 
                             let chunk = await Chunk.findOrCreateByData(mainChunkContents);
                             this.id = chunk.id;
-                            await this.save();
+                            this.pk  = await this.save();
                             chunk.setData(mainChunkContents);
                             chunk.addBelongsToFile(this, -1);
                             if (!chunk.ul_status) chunk.ul_status = Chunk.UPLOADING_STATUS_CREATED;

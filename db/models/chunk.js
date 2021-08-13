@@ -29,20 +29,14 @@ class Chunk extends Model {
 
     async save() {
         // save to postgres via knex
-        let attrs = (({ id, length, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id, length: this.getLength(), redundancy, expires, autorenew, ul_status, dl_status}))(super.toJSON());
-
-        // get the first file_id where the offset is 0 or more
-        const first_file = this.belongsToFiles.filter(f => f[1] >= 0)[0];
-        // add the file_id to the db attrs
-        if(first_file) { attrs.file_id = first_file[0]; }
+        let attrs = (({ id, redundancy, expires, autorenew, ul_status, dl_status }) => ({ leveldb_id: id, length: this.getLength(), redundancy, expires, autorenew, ul_status, dl_status, file_id: this.file_id}))(super.toJSON());
 
         const [chunk] = await knex('chunks')
             .insert(attrs)
-            .onConflict("id")
+            .onConflict("leveldb_id")
             .merge()
             .returning("*");
 
-        // save to postgres via knex
         super.save();
     }
 
@@ -173,6 +167,9 @@ class Chunk extends Model {
     }
 
     addBelongsToFile(file, offset) {
+        // update the file_id fk using the file.pk
+        this.file_id = file.pk;
+
         if (! ('belongsToFiles' in this._attributes)) {
             this._attributes.belongsToFiles = [];
         }
