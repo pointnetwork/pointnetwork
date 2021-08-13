@@ -1,6 +1,18 @@
 version: '3.9'
 
 services:
+  database:
+    image: postgres:13.3
+    container_name: pointnetwork_database
+    environment:
+      - POSTGRES_USER=$DB_USERNAME
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+      - POSTGRES_DB=$DB_USERNAME
+      - DATABASE=$DB_TEST
+    volumes:
+      - database_data:/var/lib/postgresql/data/
+      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+
   tests:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_tests
@@ -13,19 +25,11 @@ services:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
-      - DATABASE_URL=postgres://pointuser:pointpassword@database:5432/point_test
+      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_TEST
     volumes:
-      - ./db:/app/db:ro
-      - ./api:/app/api:ro
-      - ./core:/app/core:ro
-      - ./tests:/app/tests:ro
-      - ./client:/app/client:ro
-      - ./wallet:/app/wallet:ro
-      - ./console:/app/console:ro
-      - ./example:/app/example:ro
-      - ./network:/app/network:ro
-      - ./scripts:/app/scripts:ro
-      - ./threads:/app/threads:ro
-      - ./provider:/app/provider:ro
-      - ./package.json:/app/package.json:ro
+      - .:/app:ro
+      - /app/node_modules
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+
+volumes:
+  database_data:

@@ -3,54 +3,20 @@ version: '3.9'
 services:
   storage_provider:
     volumes:
-      - ./api:/app/api:ro
-      - ./client:/app/client:ro
-      - ./console:/app/console:ro
-      - ./core:/app/core:ro
-      - ./db:/app/db:ro
-      - ./example:/app/example:ro
-      - ./network:/app/network:ro
-      - ./provider:/app/provider:ro
-      - ./scripts:/app/scripts:ro
-      - ./threads:/app/threads:ro
-      - ./wallet:/app/wallet:ro
-      - ./point:/app/point:ro
-      - ./package.json:/app/package.json:ro
+      - .:/app:ro
+      - /app/node_modules
 
   website_owner:
     command: 'run start:docker:dev'
     volumes:
-      - ./api:/app/api:ro
-      - ./client:/app/client:ro
-      - ./console:/app/console:ro
-      - ./core:/app/core:ro
-      - ./db:/app/db:ro
-      - ./example:/app/example:ro
-      - ./network:/app/network:ro
-      - ./provider:/app/provider:ro
-      - ./scripts:/app/scripts:ro
-      - ./threads:/app/threads:ro
-      - ./wallet:/app/wallet:ro
-      - ./point:/app/point:ro
-      - ./package.json:/app/package.json:ro
-      - ./knexfile.js:/app/knexfile.js:ro
+      - .:/app:ro
+      - /app/node_modules
 
   website_visitor:
     command: 'run start:docker:dev'
     volumes:
-      - ./api:/app/api:ro
-      - ./client:/app/client:ro
-      - ./console:/app/console:ro
-      - ./core:/app/core:ro
-      - ./db:/app/db:ro
-      - ./example:/app/example:ro
-      - ./network:/app/network:ro
-      - ./provider:/app/provider:ro
-      - ./scripts:/app/scripts:ro
-      - ./threads:/app/threads:ro
-      - ./wallet:/app/wallet:ro
-      - ./point:/app/point:ro
-      - ./package.json:/app/package.json:ro
+      - .:/app:ro
+      - /app/node_modules
 
   pgadmin:
     image: dpage/pgadmin4
