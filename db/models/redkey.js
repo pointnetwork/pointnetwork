@@ -61,18 +61,34 @@ class Redkey extends Model {
     };
 
     async save() {
-        const {id, provider_id, public_key, private_key, key_index} = this.toJSON();
+        const {id: _, ...data} = this.toJSON();
 
-        const [redkey] = await knex('redkeys')
-            .insert( {id, provider_id, public_key, private_key, key_index})
+        if (typeof data.provider_id === 'string' && data.provider_id.includes('#')) {
+            const address = ('0x' + data.provider_id.split('#').pop()).slice(-42);
+            const connection = data.provider_id;
+            const [{id} = {}] = await knex('providers').select('id').where({address, connection});
+
+            if (!id) {
+                throw new Error(`Unable to find provider by id: "${provider_id}"`);
+            }
+
+            data.provider_id = id;
+        }
+
+        if (isFinite(this._id)) {
+            data.id = this._id;
+        }
+
+        const [redKey] = await knex('redkeys')
+            .insert(data)
             .onConflict('id')
             .merge()
             .returning('*');
 
+        this._id = redKey.id;
+
         // legacy persist to LevelDB
         super.save();
-
-        return redkey;
     }
 }
 
