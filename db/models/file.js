@@ -22,7 +22,7 @@ class File extends Model {
 
     async save() {
         // save to postgres via knex
-        const attrs = (({ id, originalPath, size, redundancy, expires, autorenew, ul_status }) => ({ id: this.dbid, filehash: id, original_path: originalPath, size, redundancy, expires, autorenew, ul_status}))(super.toJSON());
+        const attrs = (({ id, originalPath, size, redundancy, expires, autorenew, ul_status }) => ({ id, original_path: originalPath, size, redundancy, expires, autorenew, ul_status}))(super.toJSON());
 
         const [file] = await knex('files')
             .insert(attrs)
@@ -30,11 +30,8 @@ class File extends Model {
             .merge()
             .returning("*");
 
-        // set dbid to the pk in postgres
-        this.dbid = file.id;
-
         // legacy persist to LevelDB
-        await super.save();
+        super.save();
     }
 
     getAllChunkIds() {

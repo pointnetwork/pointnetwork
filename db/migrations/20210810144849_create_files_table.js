@@ -1,8 +1,8 @@
 exports.up = function(knex) {
     return knex.schema.createTable('files', function(table) {
-        table.increments('id').primary().unsigned();
-        table.string('filehash');
-        table.text('original_path').notNullable();
+        table.unique('id');
+        table.string('id');
+        table.string('original_path').notNullable();
         table.integer('size');
         table.integer('redundancy');
         table.specificType('expires', 'bigint');
