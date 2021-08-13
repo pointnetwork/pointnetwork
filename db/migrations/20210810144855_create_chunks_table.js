@@ -2,7 +2,6 @@ exports.up = function(knex) {
     return knex.schema.createTable('chunks', function(table) {
         table.increments('id').primary().unsigned();
         table.string('leveldb_id');
-        table.unique('leveldb_id');
         table.integer('length');
         table.integer('redundancy');
         table.specificType('expires', 'bigint');
