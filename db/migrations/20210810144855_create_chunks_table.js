@@ -1,7 +1,7 @@
 exports.up = function(knex) {
     return knex.schema.createTable('chunks', function(table) {
-        table.unique('id');
-        table.string('id');
+        table.increments('id').primary().unsigned();
+        table.string('leveldb_id');
         table.integer('length');
         table.integer('redundancy');
         table.specificType('expires', 'bigint');
@@ -11,7 +11,7 @@ exports.up = function(knex) {
         table.timestamp('created_at').defaultTo(knex.fn.now());
         table.timestamp('updated_at').defaultTo(knex.fn.now());
         // FK file_id references files table
-        table.string('file_id').references('id').inTable('files');
+        table.integer('file_id').references('id').inTable('files');
     });
 };
 
