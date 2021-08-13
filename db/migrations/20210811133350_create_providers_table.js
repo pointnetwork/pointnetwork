@@ -1,8 +1,6 @@
 exports.up = function(knex) {
     return knex.schema.createTable('providers', function(table) {
-        table.unique('id');
-        table.string('id');
-
+        table.increments('id');
         table.string('connection');
         table.string('address');
     });
