@@ -16,6 +16,15 @@ Model.prototype.db = {
     }))
 };
 
+const generateProvider = async () => {
+    const provider = Provider.new();
+    provider.address = '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415';
+    provider.connection = 'http://localhost:12345/#' + provider.address;
+
+    await provider.save();
+    return provider;
+};
+
 describe('RedKey model', () => {
     afterEach(async () => {
         await knex('redkeys').delete();
@@ -31,14 +40,11 @@ describe('RedKey model', () => {
         let provider;
 
         beforeAll(async () => {
-            provider = Provider.new();
-            provider.id = DB.generateRandomIdForNewRecord();
-
-            await provider.save();
+            provider = await generateProvider();
 
             redKey = RedKey.new();
             redKey.id = DB.generateRandomIdForNewRecord();
-            redKey.provider_id = provider.id;
+            redKey.provider_id = provider._id;
             redKey.private_key = 'foo';
             redKey.public_key = 'bar';
             redKey.key_index = 42;
@@ -54,8 +60,8 @@ describe('RedKey model', () => {
 
             const [savedRedKey] = redKeys;
 
-            expect(savedRedKey).toHaveProperty('id', redKey.id);
-            expect(savedRedKey).toHaveProperty('provider_id', provider.id);
+            expect(savedRedKey).toHaveProperty('id', redKey._id);
+            expect(savedRedKey).toHaveProperty('provider_id', provider._id);
             expect(savedRedKey).toHaveProperty('private_key', redKey.private_key);
             expect(savedRedKey).toHaveProperty('public_key', redKey.public_key);
             expect(savedRedKey).toHaveProperty('key_index', redKey.key_index);
@@ -67,15 +73,12 @@ describe('RedKey model', () => {
         let provider;
 
         beforeAll(async () => {
-            provider = Provider.new();
-            provider.id = DB.generateRandomIdForNewRecord();
-
-            await provider.save();
+            provider = await generateProvider();
 
             redKey = RedKey.new();
 
             redKey.id = DB.generateRandomIdForNewRecord();
-            redKey.provider_id = provider.id;
+            redKey.provider_id = provider._id;
             redKey.private_key = 'foo';
             redKey.public_key = 'bar';
             redKey.key_index = 42;
@@ -89,7 +92,7 @@ describe('RedKey model', () => {
             redKey.key_index = updatedKeyIndex;
             await redKey.save();
 
-            const savedRedKeys = await knex.select().from('redkeys').where('id', redKey.id);
+            const savedRedKeys = await knex.select().from('redkeys').where('id', redKey._id);
 
             expect(savedRedKeys).toBeInstanceOf(Array);
             expect(savedRedKeys).toHaveLength(1);

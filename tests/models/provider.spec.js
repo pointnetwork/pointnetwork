@@ -4,7 +4,20 @@ const Model = require('../../db/model');
 const Provider = require('../../db/models/provider');
 
 Model.prototype.save = jest.fn();
+Model.db = {
+    get: jest.fn(() => {
+        const error = new Error('Not found');
+        error.notFound = true;
+        throw error;
+    })
+};
+
 Model.prototype.db = {
+    get: jest.fn(() => {
+        const error = new Error('Not found');
+        error.notFound = true;
+        throw error;
+    }),
     batch: jest.fn(() => ({
         put: jest.fn(function() {
             return this;
@@ -43,7 +56,7 @@ describe('Provider model', () => {
 
             const [savedProvider] = providers;
 
-            expect(savedProvider).toHaveProperty('id', provider.id);
+            expect(savedProvider).toHaveProperty('id', provider._id);
             expect(savedProvider).toHaveProperty('address', provider.address);
             expect(savedProvider).toHaveProperty('connection', provider.connection);
         });
@@ -54,7 +67,6 @@ describe('Provider model', () => {
 
         beforeAll(async () => {
             provider = Provider.new();
-            provider.id = DB.generateRandomIdForNewRecord();
             provider.address = '0x58ac48d9a9d91742d1E12afFcf3A1f8b3E31A73D';
             provider.connection = 'http://localhost:54321/#' + provider.address;
 
@@ -67,11 +79,38 @@ describe('Provider model', () => {
             provider.connection = updatedConnection;
             await provider.save();
 
-            const savedProviders = await knex.select().from('providers').where('id', provider.id);
+            const savedProviders = await knex.select().from('providers').where('id', provider._id);
 
             expect(savedProviders).toBeInstanceOf(Array);
             expect(savedProviders).toHaveLength(1);
             expect(savedProviders[0]).toHaveProperty('connection', updatedConnection);
+        });
+    });
+
+    describe('find or create and save', () => {
+        const address = '0xc01011611e3501c6b3f6dc4b6d3fe644d21ab301';
+        const connection = 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301';
+
+        beforeAll(() => Provider.findOrCreateAndSave(connection));
+        // { 
+        //     id: 'redkeyhttp---storage_provider-9685--c01011611e3501c6b3f6dc4b6d3fe644d21ab301_0' 
+        //     pub: '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb,,,,\n-----END PUBLIC KEY-----\n',
+        //     priv: '-----BEGIN PRIVATE KEY-----\nMIICdQIBADA.....-----END PRIVATE KEY-----\n',
+        //     provider_id: 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301',
+        //     index: 0,
+        // }
+
+        it('extracts address and connection string from a string id and saves correct provider fields', async () => {
+            const savedProviders = await knex.select().from('providers');
+
+            expect(savedProviders).toBeInstanceOf(Array);
+            expect(savedProviders).toHaveLength(1);
+
+            const [savedProvider] = savedProviders;
+
+            expect(savedProvider).toHaveProperty('id', expect.any(Number));
+            expect(savedProvider).toHaveProperty('connection', connection);
+            expect(savedProvider).toHaveProperty('address', address);
         });
     });
 });
