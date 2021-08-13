@@ -5,6 +5,14 @@ const RedKey = require('../../db/models/redkey');
 const Provider = require('../../db/models/provider');
 
 Model.prototype.save = jest.fn();
+Model.db = {
+    get: jest.fn(() => {
+        const error = new Error('Not found');
+        error.notFound = true;
+        throw error;
+    })
+};
+
 Model.prototype.db = {
     batch: jest.fn(() => ({
         put: jest.fn(function() {
@@ -97,6 +105,34 @@ describe('RedKey model', () => {
             expect(savedRedKeys).toBeInstanceOf(Array);
             expect(savedRedKeys).toHaveLength(1);
             expect(savedRedKeys[0]).toHaveProperty('key_index', updatedKeyIndex);
+        });
+    });
+
+    describe('generate one for provider', () => {
+        let provider;
+        let redkey;
+        const index = 1;
+
+        beforeAll(async () => {
+            const connection = 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301';
+            const providerInstance = await Provider.findOrCreateAndSave(connection);
+
+            [provider] = await knex('providers').select().where({connection});
+            redkey = await RedKey.generateNewForProvider(providerInstance, index);
+        });
+
+        it('creates redkey and sets correct provider id', async () => {
+            const savedRedKeys = await knex('redkeys').select();
+
+            expect(savedRedKeys).toBeInstanceOf(Array);
+            expect(savedRedKeys).toHaveLength(1);
+
+            const [savedRedKey] = savedRedKeys;
+
+            expect(savedRedKey).toHaveProperty('public_key', redkey.pub);
+            expect(savedRedKey).toHaveProperty('private_key', redkey.priv);
+            expect(savedRedKey).toHaveProperty('key_index', index);
+            expect(savedRedKey).toHaveProperty('provider_id', provider.id);
         });
     });
 });

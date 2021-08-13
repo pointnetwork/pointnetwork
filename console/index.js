@@ -53,34 +53,38 @@ class Console {
             const url = this.buildApiBaseUrl() + cmd + '?' + params;
             const response = await axios.get(url, {
                 headers: {
-                  'host': _host,
-                  'Content-Type': 'application/json'
+                    'host': _host,
+                    'Content-Type': 'application/json'
                 }
-            })
-            return response.data
+            });
+            return response.data;
         } catch (e) {
-            return {error: `Error fetching ${cmd} : ${e.message}`,
-                    status: e.response.status,
-                    statusText: e.response.statusText}
+            return {
+                error: `Error fetching ${cmd} : ${e.message}`,
+                status: e.response && e.response.status,
+                statusText: e.response && e.response.statusText
+            };
         }
     }
 
     async cmd_api_post(_host, cmd, body) {
-        _host = (_host === 'localhost') ? this.host : _host
+        _host = (_host === 'localhost') ? this.host : _host;
         const api_base_url = this.buildApiBaseUrl();
         try {
             const url = api_base_url + cmd;
             const response = await axios.post(url, body, {
                 headers: {
-                  'host': _host,
-                  'Content-Type': 'application/json'
+                    'host': _host,
+                    'Content-Type': 'application/json'
                 }
-            })
-            return response.data
+            });
+            return response.data;
         } catch (e) {
-            return {error: `Error posting ${cmd} : ${e.message}`,
-                    status: e.response.status,
-                    statusText: e.response.statusText}
+            return {
+                error: `Error posting ${cmd} : ${e.message}`,
+                status: e.response && e.response.status,
+                statusText: e.response && e.response.statusText
+            };
         }
     }
 

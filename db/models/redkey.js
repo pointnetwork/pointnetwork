@@ -61,7 +61,7 @@ class Redkey extends Model {
     };
 
     async save() {
-        const {id: _, ...data} = this.toJSON();
+        const {id: _, pub, priv, index, ...data} = this.toJSON();
 
         if (typeof data.provider_id === 'string' && data.provider_id.includes('#')) {
             const address = ('0x' + data.provider_id.split('#').pop()).slice(-42);
@@ -78,6 +78,10 @@ class Redkey extends Model {
         if (isFinite(this._id)) {
             data.id = this._id;
         }
+
+        data.public_key = data.public_key || pub;
+        data.private_key = data.private_key || priv;
+        data.key_index = data.key_index || index;
 
         const [redKey] = await knex('redkeys')
             .insert(data)

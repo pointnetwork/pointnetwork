@@ -10,7 +10,7 @@ services:
       - POSTGRES_DB=$DB_USERNAME
       - DATABASE=$DB_TEST
     volumes:
-      - database_data:/var/lib/postgresql/data/
+      - test_database_data:/var/lib/postgresql/data/
       - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
 
   tests:
@@ -32,4 +32,4 @@ services:
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
 
 volumes:
-  database_data:
+  test_database_data:
