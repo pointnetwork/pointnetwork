@@ -29,7 +29,7 @@ class Chunk extends Model {
 
     async save() {
         // save to postgres via knex
-        let attrs = (({ id, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id: this.dbid, leveldb_id: id, length: this.getLength(), redundancy, expires, autorenew, ul_status, dl_status, file_id: this.file_id}))(super.toJSON());
+        let attrs = (({ id, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id: this.dbid, filehash: id, length: this.getLength(), redundancy, expires, autorenew, ul_status, dl_status, file_id: this.file_id}))(super.toJSON());
 
         const [chunk] = await knex('chunks')
             .insert(attrs)

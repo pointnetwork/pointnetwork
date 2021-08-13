@@ -1,7 +1,7 @@
 exports.up = function(knex) {
     return knex.schema.createTable('files', function(table) {
         table.increments('id').primary().unsigned();
-        table.string('leveldb_id');
+        table.string('filehash');
         table.text('original_path').notNullable();
         table.integer('size');
         table.integer('redundancy');
