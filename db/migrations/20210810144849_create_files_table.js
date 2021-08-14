@@ -3,6 +3,9 @@ exports.up = function(knex) {
         table.increments('id').primary().unsigned();
         table.string('leveldb_id');
         table.text('original_path').notNullable();
+        table.text('directory').notNullable();
+        table.enu('type', ['file', 'directory']);
+        table.string('host');
         table.integer('size');
         table.integer('redundancy');
         table.specificType('expires', 'bigint');
