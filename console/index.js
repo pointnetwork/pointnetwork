@@ -59,9 +59,7 @@ class Console {
             })
             return response.data
         } catch (e) {
-            return {error: `Error fetching ${cmd} : ${e.message}`,
-                    status: e.response.status,
-                    statusText: e.response.statusText}
+            return {error: `Error fetching ${cmd} : ${e.message}`}
         }
     }
 
