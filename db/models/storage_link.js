@@ -8,29 +8,29 @@ const { interpret } = require('xstate');
 
 class StorageLink extends Model {
     constructor(...args) {
-      super(...args);
+        super(...args);
     }
 
     initStateMachine(chunk) {
-      // create a state machine using the factory
-      this._stateMachine = storageLinkMachine.createStateMachine(this, chunk)
+        // create a state machine using the factory
+        this._stateMachine = storageLinkMachine.createStateMachine(this, chunk);
 
-      this._storageLinkService = interpret(this._stateMachine)//.onTransition(state => console.log(`Current State: ${state.value}`))
+        this._storageLinkService = interpret(this._stateMachine);//.onTransition(state => console.log(`Current State: ${state.value}`))
 
-      // start the storage link machine service
-      this._storageLinkService.start()
+        // start the storage link machine service
+        this._storageLinkService.start();
     }
 
     get machine() {
-      return this._storageLinkService
+        return this._storageLinkService;
     }
 
     get state() {
-      return this.machine.state.value
+        return this.machine.state.value;
     }
 
     get hasFailed() {
-      return this.machine.state.value == 'failed'
+        return this.machine.state.value == 'failed';
     }
 
     static _buildIndices() {
