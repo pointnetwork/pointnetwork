@@ -1,8 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const knex = require('../knex');
+const uuid = require('uuid');
 
 class Directory {
     constructor() {
+        this.id = uuid();
         this.name = '';
         this.files = [];
         this.originalPath = null;
@@ -16,6 +19,19 @@ class Directory {
 
     setHost(host) {
         this.host = host;
+    }
+
+    async save() {
+        // save to postgres via knex
+        const attrs = (({ id, type, original_path, parent_dir, size, host }) => ({ id, type: 'dir', original_path: this.originalPath, parent_dir: path.join(this.originalPath, '..'), size, host}))(this);
+        
+        // TODO: we're not storing directories on LevelDB. What do we return? Is this okay?
+        // We're returning on file.js, chunk.js, etc. the result of storing stuff on LevelDB.
+        return knex('files')
+            .insert(attrs)
+            .onConflict("id")
+            .merge()
+            .returning("*");
     }
 
     async getFileIdByPath(filePath) {
