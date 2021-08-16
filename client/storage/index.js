@@ -97,6 +97,8 @@ class Storage {
             }
         }
 
+        await directory.save();
+
         // Get an id here:
 
         const tmpFilePath = path.join(this.getCacheDir(), 'dir-tmp-'+this.ctx.utils.hashFnHex(dirPath));
