@@ -8,7 +8,7 @@ import { Products } from '~/Products'
 import './index.css'
 
 const Header = () => {
-    const { walletAddress, walletBalance } = useAppContext()
+    const { walletAddress } = useAppContext()
 
     return (
         <header>
@@ -19,10 +19,11 @@ const Header = () => {
 }
 
 const Main = () => {
+    const { goHome } = useAppContext();
     return (
         <main>
             <img alt='Point Network Store' src={ assets['store-logo'] } width='400' height='122'></img>
-            <p><a className='button' href='/'>Home</a></p>
+            <p><a className='button' onClick={ goHome }>Home</a></p>
             <p><b>Point Network Store Example App</b>.</p>
             <Route path='/'><Stores/></Route>
             <Route path='/products/:storeId'><Products/></Route>

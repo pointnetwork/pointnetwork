@@ -12,7 +12,7 @@ const options = {
     watch: true,
     cache: true,
     contentHash: false, // TODO: should be true
-    minify: true,
+    minify: false,
     logLevel: 3,
     hmr: false,
     sourceMaps: true,
