@@ -5,10 +5,25 @@ const AutoIndex = require('level-auto-index');
 const fs = require('fs');
 const path = require('path');
 const { interpret } = require('xstate');
+const knex = require('../knex');
 
 class StorageLink extends Model {
     constructor(...args) {
         super(...args);
+    }
+
+    async save() {
+        // save to postgres via knex
+        const attrs = (({ id, status, encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id, chunk_id }) => ({ id, status, encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id: this.redkeyId, chunk_id}))(super.toJSON());
+
+        const [storage_link] = await knex('storage_links')
+            .insert(attrs)
+            .onConflict("id")
+            .merge()
+            .returning("*");
+
+        // legacy persist to LevelDB
+        super.save();
     }
 
     initStateMachine(chunk) {
