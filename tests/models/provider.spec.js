@@ -1,5 +1,4 @@
 const knex = require('../../db/knex');
-const DB = require('../../db');
 const Model = require('../../db/model');
 const Provider = require('../../db/models/provider');
 
@@ -92,13 +91,6 @@ describe('Provider model', () => {
         const connection = 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301';
 
         beforeAll(() => Provider.findOrCreateAndSave(connection));
-        // { 
-        //     id: 'redkeyhttp---storage_provider-9685--c01011611e3501c6b3f6dc4b6d3fe644d21ab301_0' 
-        //     pub: '-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb,,,,\n-----END PUBLIC KEY-----\n',
-        //     priv: '-----BEGIN PRIVATE KEY-----\nMIICdQIBADA.....-----END PRIVATE KEY-----\n',
-        //     provider_id: 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301',
-        //     index: 0,
-        // }
 
         it('extracts address and connection string from a string id and saves correct provider fields', async () => {
             const savedProviders = await knex.select().from('providers');

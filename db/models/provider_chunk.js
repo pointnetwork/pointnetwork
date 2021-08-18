@@ -1,4 +1,5 @@
 const Model = require('../model');
+const knex = require('../knex');
 const fs = require('fs');
 const path = require('path');
 const Redkey = require('./redkey');
@@ -152,10 +153,31 @@ class ProviderChunk extends Model {
         fs.writeFileSync(chunk_file_path, rawData, { encoding: null });
     }
 
+    async save() {
+        const {pub_key, ...data} = this.toJSON();
+        const [chunk] = await knex('provider_chunks')
+            .insert({...data, public_key: pub_key})
+            .onConflict('id')
+            .merge()
+            .returning('*');
+
+        this._id = chunk.id;
+
+        // legacy persist to LevelDB
+        super.save();
+    }
 }
 
 ProviderChunk.STATUS_CREATED = 's0';
 ProviderChunk.STATUS_DOWNLOADING = 's1';
 ProviderChunk.STATUS_STORED = 's2';
+
+ProviderChunk.STATUSES = {
+    CREATED: ProviderChunk.STATUS_CREATED,
+    DOWNLOADING: ProviderChunk.STATUS_DOWNLOADING,
+    STORED: ProviderChunk.STATUS_STORED,
+};
+
+ProviderChunk.tableName = 'provider_chunk';
 
 module.exports = ProviderChunk;
