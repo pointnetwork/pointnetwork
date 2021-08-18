@@ -32,7 +32,7 @@ Once the compose is up, the Point Network contracts deployment will start. Unles
 ./scripts/deploy-sites-docker.sh
 ```
 
-Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `ZProxy` ports. The sites will be available at their regular addresses.
+Right after the sites are uploaded, one may start the **Point Browser** using [web-ext](https://github.com/pointnetwork/pointsdk#using-web-ext) and configure it to use one of the above listed `ZProxy` ports. The sites will be available at their regular addresses.
 
 ### Develop using the docker compose
 
@@ -151,7 +151,7 @@ All sites should respond with a 200 status code. If not there is something wrong
     ```
 
 1. Now you can stop the second node (Ctrl+C).
-1. Run the [Point Browser](https://github.com/pointnetwork/pointbrowser)
+1. Start the **Point Browser** using [web-ext](https://github.com/pointnetwork/pointsdk#using-web-ext)
 1. Navigate to `http://blog.z` and it will open the home page of the Example Blog.
 
 ## WebSockets
