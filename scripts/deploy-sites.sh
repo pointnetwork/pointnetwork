@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # NOTE: You need to start up Point Network before running this!
 # Run this script from within the project root folder like so:
