@@ -18,8 +18,10 @@ else
     EXAMPLE_SITES="./example/${1}*"
 fi
 
-#DATADIR=${1:-~/.point/test2}
-DATADIR=~/.point/test2
+# If DATADIR ENV var is not set ...
+if [[ -z "${DATADIR}" ]]; then
+  DATADIR=~/.point/test2
+fi
 
 for SITE in $EXAMPLE_SITES;
 do
@@ -32,7 +34,6 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-#  [ -d $SITE/contracts ] && sleep 10
   echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v"
   ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v
 
