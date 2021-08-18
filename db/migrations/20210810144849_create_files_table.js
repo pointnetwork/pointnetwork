@@ -1,8 +1,11 @@
 exports.up = function(knex) {
     return knex.schema.createTable('files', function(table) {
-        table.increments('id').primary().unsigned();
-        table.string('leveldb_id');
+        table.unique('id');
+        table.string('id');
         table.text('original_path').notNullable();
+        table.text('parent_dir').notNullable();
+        table.enu('type', ['file', 'dir']);
+        table.string('host');
         table.integer('size');
         table.integer('redundancy');
         table.specificType('expires', 'bigint');

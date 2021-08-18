@@ -18,6 +18,10 @@ services:
       - .:/app:ro
       - /app/node_modules
 
+  database:
+    ports:
+      - '5432:5432'
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: pointnetwork_pgadmin
