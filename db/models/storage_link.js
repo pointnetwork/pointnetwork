@@ -5,32 +5,56 @@ const AutoIndex = require('level-auto-index');
 const fs = require('fs');
 const path = require('path');
 const { interpret } = require('xstate');
+const knex = require('../knex');
 
 class StorageLink extends Model {
     constructor(...args) {
-      super(...args);
+        super(...args);
+    }
+
+    async save() {
+        // save to postgres via knex
+        const attrs = (({ id, status, segments_sent, segments_received, encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id, chunk_id }) => ({ id, status, segments_sent: JSON.stringify(segments_sent), segments_received: JSON.stringify(segments_received), encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id: this.redkeyId, chunk_id}))(super.toJSON());
+
+        await knex('storage_links')
+            .insert(attrs)
+            .onConflict("id")
+            .merge()
+            .returning("*");
+
+
+        if (this.pledge !== undefined) {
+            await knex('chunks')
+                .where('id', this.chunk_id)
+                .update({
+                    pledge: this.pledge.signature
+                });
+        }
+
+        // legacy persist to LevelDB
+        await super.save();
     }
 
     initStateMachine(chunk) {
-      // create a state machine using the factory
-      this._stateMachine = storageLinkMachine.createStateMachine(this, chunk)
+        // create a state machine using the factory
+        this._stateMachine = storageLinkMachine.createStateMachine(this, chunk);
 
-      this._storageLinkService = interpret(this._stateMachine)//.onTransition(state => console.log(`Current State: ${state.value}`))
+        this._storageLinkService = interpret(this._stateMachine);//.onTransition(state => console.log(`Current State: ${state.value}`))
 
-      // start the storage link machine service
-      this._storageLinkService.start()
+        // start the storage link machine service
+        this._storageLinkService.start();
     }
 
     get machine() {
-      return this._storageLinkService
+        return this._storageLinkService;
     }
 
     get state() {
-      return this.machine.state.value
+        return this.machine.state.value;
     }
 
     get hasFailed() {
-      return this.machine.state.value == 'failed'
+        return this.machine.state.value == 'failed';
     }
 
     static _buildIndices() {
