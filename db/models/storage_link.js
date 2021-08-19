@@ -22,7 +22,7 @@ class StorageLink extends Model {
             .merge()
             .returning("*");
 
-        
+
         if (this.pledge !== undefined) {
             await knex('chunks')
                 .where('id', this.chunk_id)
@@ -32,7 +32,7 @@ class StorageLink extends Model {
         }
 
         // legacy persist to LevelDB
-        super.save();
+        await super.save();
     }
 
     initStateMachine(chunk) {
