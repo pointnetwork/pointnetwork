@@ -5,7 +5,9 @@ exports.up = function(knex) {
         // table.string('original_path').notNullable();
         table.string('status');
         table.string('encrypted_hash');
-        table.integer('encrypted_length').unsigned();
+        table.text('segments_sent');
+        table.text('segments_received');
+        table.integer('encrypted_length');
         table.specificType('segment_hashes', 'varchar[]');
         table.specificType('merkle_tree', 'varchar[]');
         table.string('merkle_root');

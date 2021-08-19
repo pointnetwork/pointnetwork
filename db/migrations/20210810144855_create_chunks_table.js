@@ -6,6 +6,7 @@ exports.up = function(knex) {
         table.integer('redundancy');
         table.specificType('expires', 'bigint');
         table.boolean('autorenew');
+        table.string('pledge');
         table.string('dl_status');
         table.string('ul_status');
         table.timestamp('created_at').defaultTo(knex.fn.now());
