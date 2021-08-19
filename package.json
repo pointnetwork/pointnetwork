@@ -57,7 +57,7 @@
   },
   "scripts": {
     "test": "jest",
-    "test:db:docker": "printf '\\e[2J\\e[3J\\e[H' && npx knex migrate:latest && NODE_ENV=development npm run test -- --testPathPattern=tests/models",
+    "test:db:docker": "printf '\\e[2J\\e[3J\\e[H' && npm run migrate && NODE_ENV=development npm run test -- --testPathPattern=tests/models",
     "test:restart": "docker-compose -f docker-compose.test.yaml restart tests && docker logs -f pointnetwork_tests",
     "start": "./point --datadir $DATADIR -v",
     "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
@@ -69,7 +69,9 @@
     "watch:sites:and:start:dev": "npm run watch:sites -- 'npm run start:dev' -n \"Pointnetwork,$(ls -d example/*/ | tr '\n' ',')\"",
     "watch:sites:and:start:docker": "./scripts/await-contracts-docker.js && npm run watch:sites:and:start",
     "watch:sites:and:start:docker:dev": "./scripts/await-contracts-docker.js && npm run watch:sites:and:start:dev",
-    "watch:site:and:start:docker:dev": "./scripts/await-contracts-docker.js && npx concurrently -n \"pointnetwork,$SITE\" 'npm run start:dev' 'npm run watch:site'"
+    "watch:site:and:start:docker:dev": "./scripts/await-contracts-docker.js && npx concurrently -n \"pointnetwork,$SITE\" 'npm run start:dev' 'npm run watch:site'",
+    "migrate": "npx knex migrate:latest",
+    "rollback": "npx knex migrate:rollback"
   },
   "nodemonConfig": {
     "ignore": [

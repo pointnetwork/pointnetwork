@@ -28,8 +28,9 @@ services:
       - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_TEST
     volumes:
       - .:/app:ro
-      - /app/node_modules
+      - test_pointnetwork_node_modules:/app/node_modules
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
 
 volumes:
   test_database_data:
+  test_pointnetwork_node_modules:

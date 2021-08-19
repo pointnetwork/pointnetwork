@@ -4,19 +4,19 @@ services:
   storage_provider:
     volumes:
       - .:/app:ro
-      - /app/node_modules
+      - pointnetwork_node_modules:/app/node_modules
 
   website_owner:
     command: 'run start:docker:dev'
     volumes:
       - .:/app:ro
-      - /app/node_modules
+      - pointnetwork_node_modules:/app/node_modules
 
   website_visitor:
     command: 'run start:docker:dev'
     volumes:
       - .:/app:ro
-      - /app/node_modules
+      - pointnetwork_node_modules:/app/node_modules
 
   database:
     ports:
@@ -35,3 +35,6 @@ services:
       PGADMIN_DEFAULT_PASSWORD: pgadminpass
     volumes:
       - ./pgadmin-servers.json:/pgadmin4/servers.json:ro
+
+volumes:
+  pointnetwork_node_modules:
