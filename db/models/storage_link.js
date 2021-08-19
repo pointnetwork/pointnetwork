@@ -16,6 +16,25 @@ class StorageLink extends Model {
         // save to postgres via knex
         const attrs = (({ id, status, segments_sent, segments_received, encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id, chunk_id }) => ({ id, status, segments_sent: JSON.stringify(segments_sent), segments_received: JSON.stringify(segments_received), encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id: this.redkeyId, chunk_id}))(super.toJSON());
 
+        if (typeof attrs.provider_id === 'string' && attrs.provider_id.includes('#')) {
+            const address = ('0x' + attrs.provider_id.split('#').pop()).slice(-42);
+            const connection = attrs.provider_id;
+            const [{id: provider_id} = {}] = await knex('providers').select('id').where({address, connection});
+
+            if (!provider_id) {
+                throw new Error(`Unable to find provider by id: "${provider_id}"`);
+            }
+
+            const [{id: redkey_id} = {}] = await knex('redkeys').select('id').where({provider_id});
+
+            if (!redkey_id) {
+                throw new Error(`Unable to find redkey by provider id: "${provider_id}"`);
+            }
+
+            attrs.provider_id = provider_id;
+            attrs.redkey_id = redkey_id;
+        }
+
         await knex('storage_links')
             .insert(attrs)
             .onConflict("id")

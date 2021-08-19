@@ -13,8 +13,8 @@ exports.up = function(knex) {
         table.string('merkle_root');
 
         // Foreign keys.
-        table.string('provider_id').references('id').inTable('providers');
-        table.string('redkey_id').references('id').inTable('redkeys');
+        table.integer('provider_id').references('id').inTable('providers');
+        table.integer('redkey_id').references('id').inTable('redkeys');
         table.string('chunk_id').references('id').inTable('chunks');
     });
 };
