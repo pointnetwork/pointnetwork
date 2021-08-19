@@ -1,9 +1,10 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect, useCallback } from 'react'
 import { useRoute } from 'wouter'
 import { ProductData } from '~/@types';
+import { useAppContext } from '~/App/Context';
 
 export type ProductsRouteParams = {
-     storeId: string
+    storeId: string
 };
 
 const defaultContext = {
@@ -20,6 +21,7 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
     const [productList, setProductList] = useState<ProductData[] | undefined>();
     const [productListError, setProductListError] = useState<Error | undefined>();
     const [, params] = useRoute<ProductsRouteParams>('/products/:storeId');
+    const { addSubscription } = useAppContext();
 
     if (params?.storeId && params.storeId !== storeId) {
         setStoreId(params.storeId)
@@ -32,15 +34,25 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
             event: 'ProductSoldEvent',
         });
 
+        addSubscription(nextProductPurchase);
+
         while (true) {
             try {
-                const {returnValues: {tokenId, to}} = await nextProductPurchase();
+                const message = await nextProductPurchase();
+                if (!('returnValues' in message)) {
+                    continue;
+                }
 
-                setProductList((productList) => productList?.map((productData: ProductData) => (
-                    productData.productId === tokenId ? { ...productData, owner: to } : productData
-                )));
+                const {returnValues: {tokenId, to}} = message;
+
+                setProductList((productList) => {
+                    return productList?.map((productData: ProductData) => (
+                       productData.productId === tokenId ? { ...productData, owner: to } : productData
+                    ));
+                });
             } catch (e) {
-                console.error('Subscription error:', e);
+                console.error('Subscription error:', e.message, e.stack);
+                break;
             }
         }
     }, []);

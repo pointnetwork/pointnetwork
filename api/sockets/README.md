@@ -55,9 +55,10 @@ For example, to subscribe to the `ProductSoldEvent` in the `Store` Smart Contrac
 
 Messages sent from the Node socket to the client will always echo the original command object (containing the `type` and `params` keys) that was used to initiate the call or the subscripton. The payload will also contain three other keys: `data` (containing the acutal response data from the call or subscription), `event` (denotes if this is data from the call or a message from the socket related to the command) and `hostname` (the hostname / domain of the app that requested this message).
 
-Essentially there will be two event types of response message to handle:
+Essentially there will be three event types of response message to handle:
 
-* `SUBSCRIBED_EVENT` - sent when a subscription command has successfully subscribed
+* `SUBSCRIBED_EVENT` - sent when a subscription command has successfully SUBSCRIBED
+* `UNSUBSCRIBED_EVENT` - sent when a subscription command has successfully UNSUBSCRIBED
 * `DATA_EVENT` - sent when there is an event emitted on the subscribed subscription or a call is returning data
 
 ### SUBSCRIBED_EVENT payload
@@ -75,15 +76,42 @@ For example, the response from subsribing to the `ProductSoldEvent` on the `Stor
     "event": "ProductSoldEvent"
   },
   "data": {
+    "subscriptionId": "0xa",
     "message": "Subscribed to Store contract ProductSoldEvent events"
   },
   "event": "SUBSCRIBED_EVENT"
 }
 ```
 
-Note that the original command payload is echod back (`type` and `params`), the `hostname` is set to that of the caller app domain (store.z) and that the `data` key contains an object with a single `message` key. The `event` is set to `SUBSCRIBED_EVENT`.
+Note that the original command payload is echod back (`type` and `params`), the `hostname` is set to that of the caller app domain (store.z) and that the `data` key contains an object with the actual `subscriptionId` associated with the subscription (keep that for unsubscribing later!) and a `message` key. The `event` is set to `SUBSCRIBED_EVENT`.
 
 The client app can filter for its own hostname and for this type of event to react accordingly when the subscription is successfully established.
+
+### UNSUBSCRIBED_EVENT payload
+
+A `UNSUBSCRIBED_EVENT` occurs when a subscription command has successfully unsubscribed to a specific subscription by id.  When this happens a message is returned to the client of event type `UNSUBSCRIBED_EVENT` so that the client application knows the subscription has been sucessfully removed.
+
+For example, the response from unsubsribing to the `ProductSoldEvent` on the `Store` Smart Contract via the `subscriptionId` = `0xa` would be:
+
+```
+{
+  "hostname": "store.z",
+  "type": "removeSubscriptionById",
+  "params": {
+    "contract": "Store",
+    "event": "ProductSoldEvent",
+    "subscriptionId": "0xa"
+  },
+  "data": {
+    "message": "Unsubscribed from Store contract ProductSoldEvent events using subscription id 0xa"
+  },
+  "event": "UNSUBSCRIBED_EVENT"
+}
+```
+
+Note that the original command payload is echod back (`type` and `params`), the `hostname` is set to that of the caller app domain (store.z) and that the `data` key contains an object with a single `message` key. The `event` is set to `UNSUBSCRIBED_EVENT`.
+
+The client app can filter for its own hostname and for this type of event to react accordingly when the subscription is successfully removed.
 
 ### DATA_EVENT payload
 
