@@ -14,13 +14,22 @@ class StorageLink extends Model {
 
     async save() {
         // save to postgres via knex
-        const attrs = (({ id, status, encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id, chunk_id }) => ({ id, status, encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id: this.redkeyId, chunk_id}))(super.toJSON());
+        const attrs = (({ id, status, segments_sent, segments_received, encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id, chunk_id }) => ({ id, status, segments_sent: JSON.stringify(segments_sent), segments_received: JSON.stringify(segments_received), encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id: this.redkeyId, chunk_id}))(super.toJSON());
 
-        const [storage_link] = await knex('storage_links')
+        await knex('storage_links')
             .insert(attrs)
             .onConflict("id")
             .merge()
             .returning("*");
+
+        
+        if (this.pledge !== undefined) {
+            await knex('chunks')
+                .where('id', this.chunk_id)
+                .update({
+                    pledge: this.pledge.signature
+                });
+        }
 
         // legacy persist to LevelDB
         super.save();
