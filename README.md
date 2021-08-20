@@ -411,3 +411,5 @@ For details on [Developing the Point Network Web App Utility](../api/web/README.
 Please let us know if you hit any obstacles of encounter errors or bugs by opening an issue or emailing info@pointnetwork.io.
 
 Visit our website at [https://pointnetwork.io/](https://pointnetwork.io/)
+
+
