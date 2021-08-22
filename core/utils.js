@@ -27,6 +27,10 @@ class Utils {
     static hashFnHex(value) {
         return this.hashFn(value).toString('hex');
     }
+    static utf8toBuffer(v) {
+        if (Buffer.isBuffer(v)) return v;
+        return Buffer.from(v, 'utf8');
+    }
 
     static xorBuffersInPlace(a, b) {
         var length = Math.min(a.length, b.length);

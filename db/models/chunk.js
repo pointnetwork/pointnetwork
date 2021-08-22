@@ -32,7 +32,7 @@ class Chunk extends Model {
     }
 
     setData(rawData) {
-        let hash = this.ctx.utils.hashFnHex(rawData);
+        let hash = this.ctx.utils.hashFnHex(this.ctx.utils.utf8toBuffer(rawData)); // todo: why is rawdata a utf8 string?
 
         if (this.id) {
             if (this.id !== hash) {
@@ -61,7 +61,7 @@ class Chunk extends Model {
     }
 
     static async findOrCreateByData(rawData) {
-        let id = this.ctx.utils.hashFnHex(rawData);
+        let id = this.ctx.utils.hashFnHex(this.ctx.utils.utf8toBuffer(rawData)); // todo: why is rawdata utf8 string?
         let result = await this.find(id);
         if (result === null) {
             result = this.new();

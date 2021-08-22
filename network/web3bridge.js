@@ -213,7 +213,7 @@ class Web3Bridge {
             method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
             account = this.ctx.config.hardcode_default_provider;
             gasPrice = await this.web3.eth.getGasPrice();
-            return await method.send({ from: account, gasPrice, gas: 2000000, value: 100});
+            return await method.send({ from: account, gasPrice, gas: 2000000, value: 0.000001e18});
         } catch (e) {
             console.info({ method, gasPrice, account, collateral_lock_period, cost_per_kb })
             console.error('announceStorageProvider error:', e)

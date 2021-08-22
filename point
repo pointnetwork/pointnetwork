@@ -14,6 +14,9 @@ const DB = require('./db');
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1'
 
+// TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
+program.storeOptionsAsProperties();
+
 program.version(`
     0.0 alpha
 `); // todo

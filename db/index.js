@@ -1,5 +1,5 @@
 const level = require('level');
-const sublevel = require('sublevel');
+const sublevel = require('level-sublevel');
 const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');

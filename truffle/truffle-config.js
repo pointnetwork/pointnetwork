@@ -28,7 +28,7 @@ const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
 const network_id = process.env.BLOCKCHAIN_NETWORK_ID || '*';
 const build_path = process.env.BUILD_PATH || './build/contracts';
-const compiler_version = process.env.COMPILER_VERSION || '0.7.6';
+const compiler_version = process.env.COMPILER_VERSION || '0.8.7';
 
 module.exports = {
   /**
