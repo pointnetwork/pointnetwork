@@ -1,6 +1,7 @@
 const Model = require('../model');
 const _ = require('lodash');
 const crypto = require('crypto');
+const knex = require('../knex');
 
 const defaultConfig = require('../../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits; // todo: make it read from the actual config, not default
@@ -52,12 +53,49 @@ class Redkey extends Model {
 
                 resolve(key);
             });
-        })
+        });
     }
 
     static async allByProvider(provider) {
         return await this.allBy('provider_id', provider.id);
     };
+
+    async save() {
+        const {id: _, pub, priv, index, ...data} = this.toJSON();
+
+        if (typeof data.provider_id === 'string' && data.provider_id.includes('#')) {
+            const address = ('0x' + data.provider_id.split('#').pop()).slice(-42);
+            const connection = data.provider_id;
+            const [{id} = {}] = await knex('providers').select('id').where({address, connection});
+
+            if (!id) {
+                throw new Error(`Unable to find provider by id: "${provider_id}"`);
+            }
+
+            data.provider_id = id;
+        }
+
+        if (isFinite(this._id)) {
+            data.id = this._id;
+        }
+
+        data.public_key = data.public_key || pub;
+        data.private_key = data.private_key || priv;
+        data.key_index = data.key_index || index;
+
+        const [redKey] = await knex('redkeys')
+            .insert(data)
+            .onConflict('id')
+            .merge()
+            .returning('*');
+
+        this._id = redKey.id;
+
+        // legacy persist to LevelDB
+        super.save();
+    }
 }
+
+Redkey.tableName = 'redkey';
 
 module.exports = Redkey;

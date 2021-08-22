@@ -17,7 +17,7 @@ class StorageController extends PointSDKController {
     var allFiles = [...new Set([...allUploadedFiles, ...allDownloadedFiles])];
     // return a subset of the attributes to the client
     const files = allFiles.map((file) =>
-      (({ id, originalPath, size, redundancy, expires, autorenew, chunkIds }) => ({ id, originalPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length }))(file))
+      (({ id, originalPath, size, redundancy, expires, autorenew, chunkIds, ul_status }) => ({ id, originalPath, size, redundancy, expires, autorenew, chunkCount: chunkIds.length, ul_status }))(file))
 
     return this._response(files);
   }
@@ -32,12 +32,11 @@ class StorageController extends PointSDKController {
   // Returns all chunk metadata stored in the nodes leveldb
   async chunks() {
     const allUploadedChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED)
-    const allDownloadedChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADED)
     // union all uploaded and downloaded chunks to a unique list
-    var allChunks = [...new Set([...allUploadedChunks, ...allDownloadedChunks])];
+    var allChunks = allUploadedChunks
     // return a subset of the attributes to the client
     const chunks = allChunks.map((chunk) =>
-      (({ id, redundancy, expires, autorenew }) => ({ id, redundancy, expires, autorenew }))(chunk))
+      (({ id, redundancy, expires, autorenew, length, ul_status, dl_status }) => ({ id, redundancy, expires, autorenew, length, ul_status, dl_status }))(chunk))
 
     return this._response(chunks)
   }

@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  database:
+    image: postgres:13.3
+    container_name: pointnetwork_database
+    environment:
+      - POSTGRES_USER=$DB_USERNAME
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+      - POSTGRES_DB=$DB_USERNAME
+      - DATABASE=$DB_TEST
+    volumes:
+      - test_database_data:/var/lib/postgresql/data/
+      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+
+  tests:
+    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    container_name: pointnetwork_tests
+    depends_on:
+      - database
+    entrypoint: 'npm'
+    command: 'run test:db:docker'
+    environment:
+      - DATADIR=/data
+      - BLOCKCHAIN_HOST=blockchain_node
+      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_TEST
+    volumes:
+      - .:/app:ro
+      - test_pointnetwork_node_modules:/app/node_modules
+      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+
+volumes:
+  test_database_data:
+  test_pointnetwork_node_modules:

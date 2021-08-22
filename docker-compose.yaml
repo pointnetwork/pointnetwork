@@ -65,12 +65,14 @@ services:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
 
   website_owner:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_website_owner
     depends_on:
       - blockchain_node
+      - database
     ports:
       - '12346:9685'
       - '65501:8666'
@@ -87,6 +89,7 @@ services:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
 
   website_visitor:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
@@ -108,6 +111,19 @@ services:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
+
+  database:
+    image: postgres:13.3
+    container_name: pointnetwork_database
+    environment:
+      - POSTGRES_USER=$DB_USERNAME
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+      - POSTGRES_DB=$DB_USERNAME
+      - DATABASE=$DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
+    volumes:
+      - database_data:/var/lib/postgresql/data/
+      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
 
 volumes:
   blockchain_data:
@@ -115,3 +131,4 @@ volumes:
   storage_provider_data:
   website_owner_data:
   website_visitor_data:
+  database_data:
