@@ -120,7 +120,7 @@ services:
       - POSTGRES_USER=$DB_USERNAME
       - POSTGRES_PASSWORD=$DB_PASSWORD
       - POSTGRES_DB=$DB_USERNAME
-      - DATABASE=$DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR $DB_TEST
+      - DATABASE=$DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
     volumes:
       - database_data:/var/lib/postgresql/data/
       - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
