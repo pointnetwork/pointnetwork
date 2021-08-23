@@ -46,7 +46,8 @@ class StorageLink extends Model {
             await knex('chunks')
                 .where('id', this.chunk_id)
                 .update({
-                    pledge: this.pledge.signature
+                    pledge: this.pledge.signature,
+                    pledge_conditions: JSON.stringify(this.pledge.conditions)
                 });
         }
 
