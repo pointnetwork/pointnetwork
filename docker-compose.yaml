@@ -48,6 +48,12 @@ services:
   storage_provider:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_storage_provider
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       - blockchain_node
     entrypoint: 'npm'
@@ -70,6 +76,12 @@ services:
   website_owner:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_website_owner
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       - blockchain_node
       - database
@@ -94,6 +106,12 @@ services:
   website_visitor:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_website_visitor
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       - blockchain_node
     ports:
