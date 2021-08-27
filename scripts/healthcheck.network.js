@@ -22,7 +22,6 @@ const networkPublicKey = ethUtil.privateToPublic(networkPrivateKey);
 const address = ethUtil.privateToAddress(networkPrivateKey);
 const identity = address;
 const tempPort = 1337;
-const hostname = config.network.communication_external_host;
 const protocol = parseInt(config.network.ssl_enabled) ? 'https:' : 'http:'
 const contact = {hostname: 'localhost', protocol, port: tempPort, agent: kadence.version.protocol};
 const messenger = new Messenger({
@@ -43,15 +42,14 @@ const node = new kadence.KademliaNode({
 
 node.authenticate = node.plugin(AuthenticatePlugin({config, utils, log: console}, networkPublicKey, networkPrivateKey));
 
-const targetUrl = `${protocol}//${hostname}:${config.network.communication_port}/#${
+const targetUrl = `${protocol}//localhost:${config.network.communication_port}/#${
     ethUtil.privateToAddress(Buffer.from(config.client.wallet.privateKey, 'hex')).toString('hex')
 }`;
 
 const target = kadence.utils.parseContactURL(targetUrl);
 const checkHealth = async () => {
     try {
-        // console.info({listen: await new Promise((resolve) => node.listen(tempPort, resolve))});
-        console.info({join: await node.join(target)});
+        console.info({listen: await new Promise((resolve) => node.listen(tempPort, resolve))});
         console.info({ping: await node.ping(target)});
         console.info({close: await node.send('DISCONNECT', [], target)});
         process.exit(0);
