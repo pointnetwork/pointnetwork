@@ -4,6 +4,16 @@ services:
   blockchain_node:
     image: trufflesuite/ganache-cli:v6.12.2
     container_name: pointnetwork_blockchain_node
+    healthcheck:
+      test: |
+        wget -qO- http://localhost:$BLOCKCHAIN_PROVIDER_PORT \
+          --header='Content-Type: application/json' \
+          --header="Accept: application/json" \
+          --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}'
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     ports:
       - '$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT'
     volumes:
@@ -53,7 +63,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 15s
     depends_on:
       - blockchain_node
     entrypoint: 'npm'
@@ -81,7 +91,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 15s
     depends_on:
       - blockchain_node
       - database
@@ -111,7 +121,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 15s
     depends_on:
       - blockchain_node
     ports:
@@ -134,6 +144,12 @@ services:
   database:
     image: postgres:13.3
     container_name: pointnetwork_database
+    healthcheck:
+      test: pg_isready -U $DB_USERNAME
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     environment:
       - POSTGRES_USER=$DB_USERNAME
       - POSTGRES_PASSWORD=$DB_PASSWORD
