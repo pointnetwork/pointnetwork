@@ -16,9 +16,6 @@ class Core {
     }
 
     async start() {
-        this.ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit in point. and why 1?
-        this.ctx.die = (err) => { this.ctx.log.fatal(err); this.ctx.exit(1); };
-
         this.ctx.utils = utils;
 
         // todo: remove in prod
@@ -26,7 +23,6 @@ class Core {
         // DB.__debugClearCompletely(this.ctx);
         // }
 
-        await this.initDatabase();
         await this.initApiServer();
         await this.initWallet();
         await this.initNetwork();
@@ -40,6 +36,7 @@ class Core {
         await this.ctx.wallet.saveDefaultWalletToKeystore()
 
         setTimeout(async() => {
+            // todo: remove this useless junk
             // register blog.z
             // const at = this.ctx.config.network.identity_contract_address;
             // const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/Identity.json');
@@ -107,11 +104,6 @@ class Core {
     async initProvider() {
         this.ctx.provider = new Provider(this.ctx);
         await this.ctx.provider.start();
-    }
-
-    async initDatabase() {
-        this.ctx.db = new DB(this.ctx);
-        await this.ctx.db.init();
     }
 
 }

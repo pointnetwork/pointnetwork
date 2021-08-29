@@ -53,6 +53,10 @@ function encryptFile(filePath, toFile, privKey) {
     }
     fs.closeSync(fd);
     fs.closeSync(fe);
+
+    // console.log({fromFile, toFile, privKey})
+    // console.log(fs.readFileSync(fromFile));
+    // console.log(fs.readFileSync(toFile));
 }
 
 process.on('message', async (message) => {
@@ -66,7 +70,7 @@ process.on('message', async (message) => {
 
         // send response to master process
         // todo: reading the file AGAIN??? can't you hash it while encrypting?
-        process.send({ 'command': 'encrypt', 'success': true, 'chunkId': chunkId, 'linkId': linkId, 'hash': utils.hashFnHex(fs.readFileSync(encryptedPath)) });
+        process.send({ 'command': 'encrypt', 'success': true, 'chunkId': chunkId, 'linkId': linkId, 'hash': utils.hashFnHex(fs.readFileSync(encryptedPath, { encoding: null })) });
     }
 });
 

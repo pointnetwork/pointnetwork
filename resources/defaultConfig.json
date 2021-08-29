@@ -4,7 +4,13 @@
     "port": 2468
   },
   "db": {
-    "path": "data/db"
+    "__look_at_sequelizeConfig.json__": true,
+    "define": {
+      "underscored": true,
+      "timestamps": true,
+      "createdAt": "created_at",
+      "updatedAt": "updated_at"
+    }
   },
   "log": {
     "enabled": true,

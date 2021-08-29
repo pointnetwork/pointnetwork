@@ -3,7 +3,7 @@
 The Point Network node has two WebSocket endpoints defined:
 
 * `NodeSocketController` which is used for internal socket connections and is exposed on the Nodes internal API port.
-* `ZProxySocketController` which is used for for handling ZApp websocket connections via the ZProxy API port.
+* `ZProxySocketController` which is used for handling ZApp websocket connections via the ZProxy API port.
 
 ### Connecting to the NodeSocketController
 

@@ -429,7 +429,7 @@ class ZProxy {
                         // storage
                         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
                         this.ctx.utils.makeSurePathExists(cache_dir);
-                        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(v));
+                        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
                         fs.writeFileSync(tmpPostDataFilePath, v);
                         let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                         let uploaded_id = uploaded.id;
@@ -495,7 +495,7 @@ class ZProxy {
                         // storage
                         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
                         this.ctx.utils.makeSurePathExists(cache_dir);
-                        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(v));
+                        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
                         fs.writeFileSync(tmpPostDataFilePath, v);
                         let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                         let uploaded_id = uploaded.id;

@@ -54,7 +54,7 @@ const StorageLink = require('../../db/models/storage_link');
     console.log(`FileCount: ${fileKeys.length}`);
 
     // Example of calling a function on an instance of a File:
-    file = await File.find(files[0].id);
+    file = await File.findOrFail(files[0].id);
     console.log(`Test invoking methods in file object id ${file.id}`);
     console.log();
     // test out calling instance methods on the file object:
@@ -65,22 +65,22 @@ const StorageLink = require('../../db/models/storage_link');
     console.log('file.toJSON:\t\t', file.toJSON());
     console.log();
 
-    chunk = await Chunk.find(chunks[0].id);
+    chunk = await Chunk.findOrFail(chunks[0].id);
     console.log('chunk.toJSON:\t\t', chunk.toJSON());
     console.log();
 
     if(pchunks[0]) {
         // only available if we are connected to a storage provider
-        pcchunk = await ProviderChunk.find(pchunks[0].id);
+        pcchunk = await ProviderChunk.findOrFail(pchunks[0].id);
         console.log('pcchunk.toJSON:\t\t', pcchunk.toJSON());
         console.log();
     }
 
-    redkey = await RedKey.find(redkeys[redkeys.length-1].id);
+    redkey = await RedKey.findOrFail(redkeys[redkeys.length-1].id);
     console.log('redkey.toJOSN:\t\t', redkey.toJSON());
     console.log();
 
-    storageLink = await StorageLink.find(storageLinks[storageLinks.length-1].id);
+    storageLink = await StorageLink.findOrFail(storageLinks[storageLinks.length-1].id);
     console.log('storageLink.toJOSN:\t\t', storageLink.toJSON());
     console.log();
 })();

@@ -23,7 +23,7 @@ describe("Core/Utils", () => {
 
         for(let input in vectors) {
             let expectedOutput = vectors[input];
-            expect(utils.hashFnHex(input)).toEqual(expectedOutput);
+            expect(utils.hashFnUtf8Hex(input)).toEqual(expectedOutput);
             expect(utils.hashFn(input)).toEqual(Buffer.from(expectedOutput, 'hex'));
         }
     });

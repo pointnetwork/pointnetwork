@@ -12,6 +12,7 @@ const pino = require('pino');
 const SerializerBSON = require('./serializer-bson');
 const Messenger = require('@pointnetwork/kadence/lib/messenger');
 const { log } = require('console');
+const KademliaStorage = require('./kademlia-storage');
 
 class Kademlia {
     constructor(ctx) {
@@ -22,7 +23,7 @@ class Kademlia {
     async start() {
         this.patchKadence();
 
-        const storage = this.ctx.db._db.sublevel('kadence');
+        const storage = new KademliaStorage(this.ctx);
 
         const networkPrivateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
         const networkPrivateKey = Buffer.from(networkPrivateKeyHex, 'hex');

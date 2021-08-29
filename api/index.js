@@ -32,6 +32,9 @@ class ApiServer {
             this.server.setErrorHandler(function (error, request, reply) {
                 request.log.warn(error);
 
+                console.log('aaa');
+                process.exit(1);
+
                 var statusCode = error.statusCode >= 400 ? error.statusCode : 500;
                 reply
                     .code(statusCode)

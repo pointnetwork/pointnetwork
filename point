@@ -1,5 +1,14 @@
 #!/usr/bin/env node
 
+// Check Node.js version
+const m = process.version.match(/(\d+)\.(\d+)\.(\d+)/);
+const [major, minor, patch] = m.slice(1).map(_ => parseInt(_));
+if (major < 14) {
+    console.error('\x1b[41m%s\x1b[0m', "You are not using the latest Node.JS version supported by this application. Execute `nvm use` to switch to the app's version.");
+    process.exit(1);
+}
+
+// Load first dependencies
 const program = require('commander');
 const { homedir } = require('os');
 const path = require('path');
@@ -10,6 +19,7 @@ const multistream = require('pino-multi-stream').multistream;
 const npid = require('npid');
 const mkdirp = require('mkdirp');
 const DB = require('./db');
+const { exec } = require("child_process");
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1'
@@ -35,6 +45,8 @@ program.option('--config <file>', 'path to the configuration file');
 program.option('--datadir <path>', 'path to the data directory', path.join(homedir(), '.point/'));
 program.option('-v, --verbose', 'force the logger to show debug level messages', false);
 program.command('attach').description('attach to the running point process').action(() => program.attach = true);
+program.command('makemigration').description('[dev mode] auto create db migrations from models').action(() => program.makemigration = true);
+program.command('migrate').description('[dev mode] run migrations').action(() => program.migrate = true);
 program.command('demo').description('dump demo configs to ~/.point').action(() => program.demo = true);
 program.command('debug-destroy-everything').description('destroys everything in datadir: database and files. dangerous!').action(() => program.debug_destroy_everything = true);
 program.command('deploy <path>')
@@ -59,9 +71,10 @@ ctx = {};
 ctx.datadir = ctx.datapath = program.datadir;
 ctx.configPath = program.config;
 ctx.basepath = __dirname;
+ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit() function here below. and why 1?
+ctx.die = (err) => { ctx.log.fatal(err); ctx.exit(1); };
 
 // --------------- Dump Demo Configs ----------------- //
-
 // Must be placed before we're checking for existence of any configs!
 if (program.demo) {
     require('./resources/demo');
@@ -75,7 +88,8 @@ if (! fs.existsSync(ctx.configPath)) throw Error('Cannot find configuration file
 
 const config = JSON.parse(fs.readFileSync(ctx.configPath, 'utf-8'));
 const defaultConfig = require(path.resolve(__dirname, 'resources', 'defaultConfig.json'));
-ctx.config = _.merge(defaultConfig, config);
+const dbConfig = { "db": require(path.resolve(__dirname, 'resources', 'sequelizeConfig.json'))['development'] }; // todo: the todo is about 'development' part
+ctx.config = _.merge(defaultConfig, dbConfig, config);
 if (program.verbose) ctx.config.log.level = 'debug';
 
 // ------------------- Init Logger ----------------- //
@@ -119,24 +133,45 @@ if (program.attach) {
 // -------------------- Deployer --------------------- //
 
 if (program.deploy) {
-    if (program.deploy.length === 0) return this.ctx.die('error: missing path');
+    if (program.deploy.length === 0) return ctx.die('error: missing path');
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
     deploy.deploy(program.deploy, program.deploy_contracts);
     return;
 }
 
+// ---------------- Migration Modes ---------------- //
+
+if (program.makemigration) {
+    // A little hack: prepare sequelize-auto-migrations for reading from the current datadir config
+    process.argv = ['./point', 'makemigration', '--models-path', './db/models', '--migrations-path', './db/migrations', '--name', 'automigration'];
+    const SequelizeFactory = require('./db/models');
+    SequelizeFactory.init(ctx);
+
+    require('./node_modules/sequelize-auto-migrations/bin/makemigration.js');
+    return;
+}
+if (program.migrate) {
+    exec(`npx sequelize-cli db:migrate --env ${ctx.config.db.database}`, (error, stdout, stderr) => {
+        if (error) return console.log(`error: ${error.message}`);
+        if (stderr) return console.log(`stderr: ${stderr}`);
+        console.log(`${stdout}`);
+    });
+    return;
+}
+
 // ------------------ Remove Everything ------------ //
 if (program.debug_destroy_everything) {
     // todo: remove in prod, dangerous
-    DB.__debugClearCompletely(ctx);
+    ctx.db = new DB(ctx);
+    DB.__debugClearCompletely(ctx); // async!
     return;
 }
 
 // ------------ Main Cycle After This Block ---------- //
 if (! program.go || program.args.length > 0) {
     program.help();
-    this.ctx.die();
+    ctx.die();
 }
 
 // ---------------------- PID ------------------------ //
@@ -151,19 +186,19 @@ try {
 
 // ------------------ Gracefully exit ---------------- //
 
-this.exiting = false;
+let exiting = false;
 async function _exit(sig) {
-    if (this.exiting) return;
-    this.exiting = true;
+    if (exiting) return;
+    exiting = true;
 
     let errors = [];
 
     ctx.log.info('Received signal '+sig+', shutting down...');
 
     try {
-        await ctx.db.shutdown();
+        if (ctx.db && ctx.db.shutdown) await ctx.db.shutdown();
     } catch(e) {
-        errors.push('Error while shutting down database' + e);
+        errors.push('Error while shutting down database: ' + e);
     }
 
     if (errors.length) {
@@ -200,6 +235,12 @@ process.on('unhandledRejection', (err, second) => {
     ctx.log.debug(err.stack);
     process.exit(1);
 });
+
+// -------------------- Init DB ---------------------- //
+ctx.db = new DB(ctx);
+setImmediate(async() => {
+    await ctx.db.init();
+})
 
 // ------------------- Start Point ------------------- //
 

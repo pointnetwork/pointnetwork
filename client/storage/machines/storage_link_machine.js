@@ -1,4 +1,5 @@
 const { Machine } = require('xstate');
+const StorageLink = require('../../../db/models/storage_link')
 const _ = require('lodash');
 
 exports.createStateMachine = function createStateMachine(link, chunk) {
@@ -13,13 +14,13 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             link.segment_hashes.map(x=>Buffer.from(x, 'hex')),
             link.encrypted_length,
             chunk.id,
-            key.pub,
-            chunk.length,
+            key.public_key,
+            chunk.size,
         ];
     }
 
     async function prepareChunkData() {
-        if (!link.segments_sent) link.segments_sent = {};
+        if (!link.segments_sent) link.segments_sent = [];
         if (!link.segments_received) link.segments_received = [];
 
         const totalSegments = link.segment_hashes.length;
@@ -64,7 +65,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             states: {
                 initialized: {
                     on: {
-                        CREATE: 'created',
+                        CREATE: StorageLink.STATUS_CREATED,
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
@@ -77,14 +78,14 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             return storage.SEND_STORE_CHUNK_REQUEST(chunk, link);
                         },
                         onDone: [{
-                            target: 'creating_payment_channel',
+                            target: 'creating_payment_channel', // todo: Doesn't exist!
                             cond: () => ctx.config.payments.enabled,
                         }, {
-                            target: 'encrypting',
+                            target: StorageLink.STATUS_ENCRYPTING,
                         }],
                         onError: {
                             actions: 'UPDATE_MODEL_ERR',
-                            target: 'failed',
+                            target: StorageLink.STATUS_FAILED,
                         }
                     },
                     exit: 'UPDATE_MODEL_STATUS'
@@ -98,11 +99,11 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             return storage.CREATE_PAYMENT_CHANNEL(link);
                         },
                         onDone: {
-                            target: 'encrypting',
+                            target: StorageLink.STATUS_ENCRYPTING,
                         },
                         onError: {
                             actions: 'UPDATE_MODEL_ERR',
-                            target: 'failed',
+                            target: StorageLink.STATUS_FAILED,
                         }
                     },
                     exit: 'UPDATE_MODEL_STATUS'
@@ -116,10 +117,10 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             return storage.ENCRYPT_CHUNK(chunk, link);
                         },
                         onDone: {
-                            target: 'sending_segment_map'
+                            target: StorageLink.STATUS_SENDING_SEGMENT_MAP
                         },
                         onError: {
-                            target: 'failed'
+                            target: StorageLink.STATUS_FAILED
                         }
                     },
                     exit: 'UPDATE_MODEL_STATUS'
@@ -128,21 +129,23 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     invoke: {
                         id: 'SEND_STORE_CHUNK_SEGMENTS',
                         src: async (context, event) => {
+                            console.log('uuuuuuuuuuuuuuuuuuuuuu')
+                            console.log({link});
                             await link.save();
                             ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 40, link.state);
                             const data = await prepareChunkSegment();
                             return storage.SEND_STORE_CHUNK_SEGMENTS(data, link);
                         },
                         onDone: {
-                            target: 'sending_data',
+                            target: StorageLink.STATUS_SENDING_DATA,
                         },
                         onError: {
                             actions: 'UPDATE_MODEL_ERR',
-                            target: 'failed',
+                            target: StorageLink.STATUS_FAILED,
                         },
-                        onError: {
+                        onError: { // todo: two onErrors?
                             actions: 'UPDATE_MODEL_ERR',
-                            target: 'asking_for_signature',
+                            target: StorageLink.STATUS_ASKING_FOR_SIGNATURE,
                             cond: 'nodeAlreadyStoredData'
                         }
                     },
@@ -154,22 +157,29 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                         src: async (context, event) => {
                             // nasty hack to ensure all chunks are uploaded
                             await link.save();
+
+                            console.log('zzzzzzzzzzzzzzzzzzzz');
+                            console.log({link});
                             ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 60, link.state);
                             done = false;
                             while(!done) {
                                 await link.refresh();
                                 data = await prepareChunkData();
+                                await link.save();
+                                await link.refresh();
+                                console.log({data});
                                 done = await storage.SEND_STORE_CHUNK_DATA(data, link);
+                                console.log({done, newlink:'newlink', link});
                                 await link.save();
                             }
                             Promise.resolve(true);
                         },
                         onDone: {
-                            target: 'asking_for_signature',
+                            target: StorageLink.STATUS_ASKING_FOR_SIGNATURE,
                         },
                         onError: {
                             actions: 'UPDATE_MODEL_ERR',
-                            target: 'failed',
+                            target: StorageLink.STATUS_FAILED,
                         },
                     },
                     exit: 'UPDATE_MODEL_STATUS'
@@ -183,11 +193,11 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             return storage.SEND_STORE_CHUNK_SIGNATURE_REQUEST(link);
                         },
                         onDone: {
-                            target: 'signed',
+                            target: StorageLink.STATUS_SIGNED,
                         },
                         onError: {
                             actions: 'UPDATE_MODEL_ERR',
-                            target: 'failed',
+                            target: StorageLink.STATUS_FAILED,
                         },
                     },
                     exit: 'UPDATE_MODEL_STATUS'
@@ -221,7 +231,8 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                 UPDATE_MODEL_STATUS: async () => {
                     link.status = link.state;
                 },
-                UPDATE_MODEL_ERR: async (context, event) => {
+                UPDATE_MODEL_ERR: async (context, event) => { // todo: how is .errored different from .status = FAILED?
+                    console.error({event, context});
                     console.error(`UPDATE_MODEL_ERR: ${event.data}`);
                     link.errored = true;
                     link.err = event.data;

@@ -3,10 +3,12 @@ const fs = require('fs')
 const ethereumjs = require('ethereumjs-util')
 const helpers = require('./helpers/WalletHelpers')
 
+let web3;
+
 class WalletController extends PointSDKController {
   constructor(ctx, req, reply) {
     super(ctx)
-    this.web3 = this.ctx.network.web3;
+    web3 = this.ctx.network.web3;
     this.keystorePath = this.ctx.wallet.keystore_path;
     this.payload = req.body;
     this.reply = reply;

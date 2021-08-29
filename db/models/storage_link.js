@@ -1,57 +1,13 @@
 const Model = require('../model');
 const _ = require('lodash');
-const sublevel = require('sublevel');
-const AutoIndex = require('level-auto-index');
 const fs = require('fs');
-const path = require('path');
 const { interpret } = require('xstate');
-const knex = require('../knex');
+const Sequelize = require('sequelize');
+let Chunk = require('./chunk'), Provider = require('./provider'), Redkey = require('./redkey');
 
 class StorageLink extends Model {
     constructor(...args) {
         super(...args);
-    }
-
-    async save() {
-        // save to postgres via knex
-        const attrs = (({ id, status, segments_sent, segments_received, encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id, chunk_id }) => ({ id, status, segments_sent: JSON.stringify(segments_sent), segments_received: JSON.stringify(segments_received), encrypted_hash, encrypted_length, segment_hashes, merkle_tree, merkle_root, provider_id, redkey_id: this.redkeyId, chunk_id}))(super.toJSON());
-
-        if (typeof attrs.provider_id === 'string' && attrs.provider_id.includes('#')) {
-            const address = ('0x' + attrs.provider_id.split('#').pop()).slice(-42);
-            const connection = attrs.provider_id;
-            const [{id: provider_id} = {}] = await knex('providers').select('id').where({address, connection});
-
-            if (!provider_id) {
-                throw new Error(`Unable to find provider by id: "${provider_id}"`);
-            }
-
-            const [{id: redkey_id} = {}] = await knex('redkeys').select('id').where({provider_id});
-
-            if (!redkey_id) {
-                throw new Error(`Unable to find redkey by provider id: "${provider_id}"`);
-            }
-
-            attrs.provider_id = provider_id;
-            attrs.redkey_id = redkey_id;
-        }
-
-        await knex('storage_links')
-            .insert(attrs)
-            .onConflict("id")
-            .merge()
-            .returning("*");
-
-
-        if (this.pledge !== undefined) {
-            await knex('chunks')
-                .where('id', this.chunk_id)
-                .update({
-                    pledge: this.pledge.signature
-                });
-        }
-
-        // legacy persist to LevelDB
-        await super.save();
     }
 
     initStateMachine(chunk) {
@@ -68,25 +24,28 @@ class StorageLink extends Model {
         return this._storageLinkService;
     }
 
-    get state() {
+    get state() { // todo: won't you get confused with state/status?
         return this.machine.state.value;
     }
 
     get hasFailed() {
-        return this.machine.state.value == 'failed';
-    }
-
-    static _buildIndices() {
-        const reducer = x => (!!x.chunk_id && !!x.status && x.id) ? x.chunk_id + '_' + x.status + '!' + x.id : void 0;
-        this._addIndex('chunkIdAndStatus', reducer);
+        return this.machine.state.value === StorageLink.STATUS_FAILED;
     }
 
     static async byChunkIdAndStatus(chunk_id, status) {
-        return await this.allBy('chunkIdAndStatus', chunk_id + '_' + status);
+        let where = {
+            chunk_id: chunk_id
+        }
+
+        if (status !== 'all') {
+            where.status = status;
+        }
+
+        return await StorageLink.findAll({ where });
     }
 
     getEncryptedData() {
-        return fs.readFileSync(Chunk.getChunkStoragePath(this.chunk_id)+'.'+this.id+'.enc');
+        return fs.readFileSync(Chunk.getChunkStoragePath(this.chunk_id)+'.'+this.id+'.enc', { encoding: null });
     }
 
     validatePledge() {
@@ -102,25 +61,39 @@ class StorageLink extends Model {
             throw new Error('recovered public key does not match provided one');
         }
     }
-
-    async getChunk() {
-        return await Chunk.find(this.chunk_id);
-    }
-
-    async getRedkey() {
-        if (this.redkeyId === null) throw new Error('No provider redundancy key set for storage_link '+this.id);
-        const key = await Redkey.find(this.redkeyId);
-        if (key === null) throw new Error('Provider redundancy key for storage_link '+this.id+' not found');
-        return key;
-    }
-
-    setProvider(provider) {
-        this._attributes.provider_id = provider.id;
-    }
-    async getProvider() {
-        return await this.ctx.db.provider.find(this._attributes.provider_id);
-    }
 }
+
+StorageLink.init({
+    id: { type: Sequelize.DataTypes.BIGINT, unique: true, primaryKey: true, autoIncrement: true },
+    // chunk_id: { type: Sequelize.DataTypes.STRING, references: { model: 'Chunk', key: 'id' } },
+    // provider_id: { type: Sequelize.DataTypes.BIGINT, references: { model: 'Provider', key: 'id' } },
+    // redkey_id: { type: Sequelize.DataTypes.BIGINT, references: { model: 'Redkey', key: 'id' } },
+    status: { type: Sequelize.DataTypes.STRING },
+    encrypted_length: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
+    segments_sent: { type: Sequelize.DataTypes.JSON, allowNull: true },
+    segments_received: { type: Sequelize.DataTypes.JSON, allowNull: true },
+    segment_hashes: { type: Sequelize.DataTypes.JSON, allowNull: true },
+    merkle_tree: { type: Sequelize.DataTypes.JSON, allowNull: true },
+    merkle_root: { type: Sequelize.DataTypes.STRING, allowNull: true },
+
+    // todo:
+    // table.text('segments_sent');
+    // table.text('segments_received');
+    // table.specificType('segment_hashes', 'varchar[]');
+    // table.specificType('merkle_tree', 'varchar[]');
+    // table.string('merkle_root');
+
+}, {
+    indexes: [
+        { fields: ['status'] },
+        { fields: ['chunk_id', 'status'] },
+        { fields: ['merkle_root'] },
+    ]
+});
+
+StorageLink.belongsTo(Chunk);
+StorageLink.belongsTo(Provider);
+StorageLink.belongsTo(Redkey);
 
 StorageLink.STATUS_ALL = 'all';
 StorageLink.STATUS_CREATED = 'created'; // candidates
@@ -149,5 +122,3 @@ module.exports = StorageLink;
 
 // require statement declared after module.exports to avoid circular dependencies
 const { storageLinkMachine } = require('../../client/storage/machines');
-const Chunk = require('./chunk');
-const Redkey = require('./redkey');

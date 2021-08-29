@@ -1,3 +1,17 @@
+## New!
+
+We're using Sequelize ORM
+
+`id` fields are by default of type Sequelize.DataTypes.BIGINT
+
+By default allowNull is false, put allowNull: true specifically if you want a field to be Nullable 
+
+Make migrations from diff of the models: `./point makemigration --datadir ~/.point/test1`
+
+Migrate: `npm run db:migrate`
+
+-----------
+
 ## Knex / Postgres
 
 To test out Knex and Postgres using Docker:

@@ -1,7 +1,7 @@
 const bsonRPC = require('./bson-rpc');
-const uuid = require('uuid');
 const merge = require('merge');
 const BSON = require('./good-bson');
+const { v4: uuid } = require('uuid');
 
 class SerializerBSON {
     static serializer([object, sender, receiver], callback) {

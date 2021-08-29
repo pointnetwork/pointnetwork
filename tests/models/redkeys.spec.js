@@ -129,8 +129,8 @@ describe('RedKey model', () => {
 
             const [savedRedKey] = savedRedKeys;
 
-            expect(savedRedKey).toHaveProperty('public_key', redkey.pub);
-            expect(savedRedKey).toHaveProperty('private_key', redkey.priv);
+            expect(savedRedKey).toHaveProperty('public_key', redkey.public_key);
+            expect(savedRedKey).toHaveProperty('private_key', redkey.private_key);
             expect(savedRedKey).toHaveProperty('key_index', index);
             expect(savedRedKey).toHaveProperty('provider_id', provider.id);
         });

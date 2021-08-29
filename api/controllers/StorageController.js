@@ -6,6 +6,9 @@ const DEFAULT_ENCODING = 'utf-8'
 class StorageController extends PointSDKController {
   constructor(ctx, req) {
     super(ctx)
+
+    throw Error("StorageController module is out of date! You need to sequelize it!");
+
     this.req = req
   }
 
@@ -25,7 +28,7 @@ class StorageController extends PointSDKController {
   // Returns a single file metadata stored in the nodes leveldb
   async fileById() {
     const id = this.req.params.id;
-    const file = await File.find(id);
+    const file = await File.findOrFail(id);
     return this._response(file);
   }
 
@@ -44,7 +47,7 @@ class StorageController extends PointSDKController {
   // Returns a single chunk metadata stored in the nodes leveldb
   async chunkById() {
     const id = this.req.params.id
-    const chunk = await Chunk.find(id)
+    const chunk = await Chunk.findOrFail(id)
     return this._response(chunk)
   }
 

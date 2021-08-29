@@ -215,16 +215,16 @@ class Web3Bridge {
             gasPrice = await this.web3.eth.getGasPrice();
             return await method.send({ from: account, gasPrice, gas: 2000000, value: 0.000001e18});
         } catch (e) {
-            console.info({ method, gasPrice, account, collateral_lock_period, cost_per_kb })
-            console.error('announceStorageProvider error:', e)
-            throw e
+            console.info({ method, gasPrice, account, collateral_lock_period, cost_per_kb });
+            console.error('announceStorageProvider error:', e);
+            throw e;
         }
     }
     async getCheapestStorageProvider() {
         const contract = await this.loadStorageProviderRegistryContract();
         return contract.methods.getCheapestProvider().call();
     }
-    async getAllStorageProvider() {
+    async getAllStorageProviders() {
         const contract = await this.loadStorageProviderRegistryContract();
         return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
     }

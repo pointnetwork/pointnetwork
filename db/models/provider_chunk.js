@@ -1,8 +1,7 @@
 const Model = require('../model');
-const knex = require('../knex');
 const fs = require('fs');
 const path = require('path');
-const Redkey = require('./redkey');
+const Sequelize = require('sequelize');
 
 // todo: two files? maybe reuse some code at least
 
@@ -10,18 +9,6 @@ class ProviderChunk extends Model {
     constructor(...args) {
         super(...args);
     }
-
-    static _buildIndices() {
-        this._addIndex('status');
-        this._addIndex('real_id');
-    }
-
-    /**
-     * Fields:
-     * - id which is chunk content's hash
-     * ----
-     * - known_providers
-     */
 
     static getChunkStoragePath(id) {
         const cache_dir = path.join(this.ctx.datadir, this.ctx.config.service_provider.storage.cache_path);
@@ -71,8 +58,8 @@ class ProviderChunk extends Model {
 
     async getDecryptedData() {
         const fileName = ProviderChunk.getDecryptedChunkStoragePath(this.id);
-        if (fs.existsSync(fileName)) {
-            return fs.readFileSync(fileName, { encoding: null }).slice(0, this.real_length);
+        if (fs.existsSync(fileName)) { // todo: what if file exists but has just been created and partially filled with decrypted data? (still being decrypted)
+            return fs.readFileSync(fileName, { encoding: null }).slice(0, this.real_size);
         } else {
             throw new Error('Decrypted file for this chunk doesnt exist');
         }
@@ -113,8 +100,8 @@ class ProviderChunk extends Model {
         }
     }
 
-    setSegmentData(data, segment_index) {
-        const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes;
+    setSegmentData(rawData, segment_index) {
+        const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes; // todo: ?
 
         // todo: verify only using proof
 
@@ -126,7 +113,8 @@ class ProviderChunk extends Model {
             console.log(this.toJSON());
             throw e; // todo: process
         }
-        const data_hash = this.ctx.utils.hashFnHex(data);
+        if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setSegmentData: data must be a Buffer!');
+        const data_hash = this.ctx.utils.hashFnHex(rawData);
         if (data_hash !== segment_hash) {
             throw Error('EINVALIDHASH: segment hash and data hash don\'t match: '+segment_hash+' vs '+data_hash);
         }
@@ -134,12 +122,14 @@ class ProviderChunk extends Model {
         const segment_path = ProviderChunk.getSegmentStoragePath(segment_hash, this.id);
 
         // todo: what if already exists? should we overwrite again or just use it? without integrity check?
-        fs.writeFileSync(segment_path, data, { encoding: null });
+        fs.writeFileSync(segment_path, rawData, { encoding: null });
     }
 
     setData(rawData) {
         // todo: future: dont zero out the rest of the chunk if it's the last one, save space
         // todo: check data length? well, hash should be taking care of it already
+
+        if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setData: rawData must be a Buffer!');
 
         const data_hash = this.ctx.utils.hashFnHex(rawData);
 
@@ -153,20 +143,33 @@ class ProviderChunk extends Model {
         fs.writeFileSync(chunk_file_path, rawData, { encoding: null });
     }
 
-    async save() {
-        const {pub_key, ...data} = this.toJSON();
-        const [chunk] = await knex('provider_chunks')
-            .insert({...data, public_key: pub_key})
-            .onConflict('id')
-            .merge()
-            .returning('*');
-
-        this._id = chunk.id;
-
-        // legacy persist to LevelDB
-        super.save();
-    }
 }
+
+ProviderChunk.init({
+    id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
+    size: { type: Sequelize.DataTypes.INTEGER },
+
+    real_id: { type: Sequelize.DataTypes.STRING },
+    real_id_verified: { type: Sequelize.DataTypes.BOOLEAN },
+    real_size: { type: Sequelize.DataTypes.INTEGER },
+
+    status: { type: Sequelize.DataTypes.STRING },
+
+    public_key: { type: Sequelize.DataTypes.TEXT },
+
+    segment_hashes: { type: Sequelize.DataTypes.JSON, allowNull: true },
+
+    // TODO
+    // redundancy: { type: Sequelize.DataTypes.INTEGER },
+    // expires: { type: Sequelize.DataTypes.BIGINT },
+    // autorenew: { type: Sequelize.DataTypes.BOOLEAN },
+
+}, {
+    indexes: [
+        { fields: ['status'] },
+        { fields: ['real_id'] },
+    ]
+});
 
 ProviderChunk.STATUS_CREATED = 's0';
 ProviderChunk.STATUS_DOWNLOADING = 's1';
@@ -177,7 +180,5 @@ ProviderChunk.STATUSES = {
     DOWNLOADING: ProviderChunk.STATUS_DOWNLOADING,
     STORED: ProviderChunk.STATUS_STORED,
 };
-
-ProviderChunk.tableName = 'provider_chunk';
 
 module.exports = ProviderChunk;

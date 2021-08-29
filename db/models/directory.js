@@ -1,14 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const knex = require('../knex');
-const uuid = require('uuid');
 
 class Directory {
     constructor() {
-        this.id = uuid();
         this.name = '';
         this.files = [];
-        this.originalPath = null;
+        this.original_path = null;
         this.size = 0;
         // todo: include 'version' and 'compat' fields
     }
@@ -19,19 +16,6 @@ class Directory {
 
     setHost(host) {
         this.host = host;
-    }
-
-    async save() {
-        // save to postgres via knex
-        const attrs = (({ id, type, original_path, parent_dir, size, host }) => ({ id, type: 'dir', original_path: this.originalPath, parent_dir: path.join(this.originalPath, '..'), size, host}))(this);
-        
-        // TODO: we're not storing directories on LevelDB. What do we return? Is this okay?
-        // We're returning on file.js, chunk.js, etc. the result of storing stuff on LevelDB.
-        return knex('files')
-            .insert(attrs)
-            .onConflict("id")
-            .merge()
-            .returning("*");
     }
 
     async getFileIdByPath(filePath) {
@@ -64,15 +48,15 @@ class Directory {
     }
 
     setOriginalPath(originalPath) {
-        this.originalPath = originalPath;
+        this.original_path = originalPath;
     }
 
     addFilesFromOriginalPath() {
-        this.addFilesFromPath(this.originalPath);
+        this.addFilesFromPath(this.original_path);
     }
 
     addFilesFromPath(dirPath) {
-        if (!fs.existsSync(dirPath)) throw Error('Directory '+this.ctx.utils.htmlspecialchars(dirPath)+' does not exist');
+        if (!fs.existsSync(dirPath)) throw Error('directory.js: Directory '+this.ctx.utils.htmlspecialchars(dirPath)+' does not exist');
         if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+this.ctx.utils.htmlspecialchars(dirPath)+' is not a directory');
 
         fs.readdirSync(dirPath).forEach(fileName => {
@@ -92,7 +76,7 @@ class Directory {
                 type: 'dirptr',
                 name: name,
                 dirObj: subdir,
-                originalPath: filePath,
+                original_path: filePath,
                 size,
             });
         } else {
@@ -100,7 +84,7 @@ class Directory {
             this.files.push({
                 type: 'fileptr',
                 name: name,
-                originalPath: filePath,
+                original_path: filePath,
                 size
             });
         }
@@ -165,5 +149,7 @@ class Directory {
 
 
 }
+
+Directory.__ignoreThisModelForNow = true;
 
 module.exports = Directory;

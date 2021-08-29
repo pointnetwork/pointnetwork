@@ -1,7 +1,8 @@
 const Model = require('../model');
 const _ = require('lodash');
 const crypto = require('crypto');
-const knex = require('../knex');
+const Provider = require('./provider');
+const Sequelize = require('sequelize');
 
 const defaultConfig = require('../../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits; // todo: make it read from the actual config, not default
@@ -10,17 +11,6 @@ const PUBEXP = defaultConfig.storage.redkey_public_exponent; // todo: make it re
 class Redkey extends Model {
     constructor(...args) {
         super(...args);
-    }
-
-    static _buildIndices() {
-        this._addIndex('provider_id');
-    }
-
-    setProvider(provider) {
-        this._attributes.provider_id = provider.id;
-    }
-    async getProvider() {
-        return await this.ctx.db.provider.find(this._attributes.provider_id);
     }
 
     // todo: store keys internally in binary format, not text
@@ -43,15 +33,9 @@ class Redkey extends Model {
             }, async(err, publicKey, privateKey) => {
                 if (err) reject('Error: '+err);
 
-                const key = await Redkey.new();
-                key.pub = publicKey;
-                key.priv = privateKey;
-                key.provider = provider;
-                key.index = keyIndex;
-                key.id = 'redkey' + key.provider_id.replace(/[\:\/#]/g, '-') + '_' + key.index;
-                await key.save();
-
-                resolve(key);
+                resolve({
+                    publicKey, privateKey
+                });
             });
         });
     }
@@ -59,43 +43,20 @@ class Redkey extends Model {
     static async allByProvider(provider) {
         return await this.allBy('provider_id', provider.id);
     };
-
-    async save() {
-        const {id: _, pub, priv, index, ...data} = this.toJSON();
-
-        if (typeof data.provider_id === 'string' && data.provider_id.includes('#')) {
-            const address = ('0x' + data.provider_id.split('#').pop()).slice(-42);
-            const connection = data.provider_id;
-            const [{id} = {}] = await knex('providers').select('id').where({address, connection});
-
-            if (!id) {
-                throw new Error(`Unable to find provider by id: "${provider_id}"`);
-            }
-
-            data.provider_id = id;
-        }
-
-        if (isFinite(this._id)) {
-            data.id = this._id;
-        }
-
-        data.public_key = data.public_key || pub;
-        data.private_key = data.private_key || priv;
-        data.key_index = data.key_index || index;
-
-        const [redKey] = await knex('redkeys')
-            .insert(data)
-            .onConflict('id')
-            .merge()
-            .returning('*');
-
-        this._id = redKey.id;
-
-        // legacy persist to LevelDB
-        super.save();
-    }
 }
 
-Redkey.tableName = 'redkey';
+Redkey.init({
+    id: { type: Sequelize.DataTypes.BIGINT, unique: true, primaryKey: true, autoIncrement: true },
+    // provider_id: { type: Sequelize.DataTypes.BIGINT, references: { model: 'Provider', key: 'id' } },
+    index: { type: Sequelize.DataTypes.INTEGER },
+    private_key: { type: Sequelize.DataTypes.TEXT },
+    public_key: { type: Sequelize.DataTypes.TEXT },
+}, {
+    indexes: [
+        { name: 'provider_id_index_unique', unique: true, fields: ['provider_id', 'index'] },
+    ]
+});
+
+Redkey.belongsTo(Provider);
 
 module.exports = Redkey;

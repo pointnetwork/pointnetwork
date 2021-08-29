@@ -256,7 +256,7 @@ class Renderer {
             Twig.exports.extendFunction("storage_put", async(content) => {
                 const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
                 this.ctx.utils.makeSurePathExists(cache_dir);
-                const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnHex(content));
+                const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnUtf8Hex(content));
                 fs.writeFileSync(tmpPostDataFilePath, content);
                 let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                 return uploaded.id;

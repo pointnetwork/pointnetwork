@@ -3,6 +3,7 @@ const ethUtil = require('ethereumjs-util');
 const utils = require('@pointnetwork/kadence/lib/utils');
 const path = require('path');
 const { fork } = require('child_process');
+const Model = require("../db/model");
 
 class Provider {
     constructor(ctx) {
@@ -110,7 +111,7 @@ class Provider {
 
         let decrypted = await chunk.getDecryptedData();
         if (this.ctx.utils.hashFnHex(decrypted) !== real_id) {
-            // console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
+            console.error({ decryptedToString: decrypted.toString(), chunk_id, real_id, hashFn_of_Decrypted: this.ctx.utils.hashFnHex(decrypted), decryptedLen: decrypted.length }); // todo: delete
             // console.log('INVALID ---------------------');
             return next(new Error('EINVALIDCHUNKREALID: chunk.real_id does not match the decrypted data'));
         } else {
@@ -153,7 +154,7 @@ class Provider {
                 this.ctx.log.debug(e); // todo: remove;
                 return next(new Error('Error while attempting to setData on a chunk. Possible mismatch of the hash and the data.'));
             } else {
-                this.ctx.log.warn('Error while attempting to setData on provider_chunk with id '+chunk_id+': '+e); // todo: remove e-xplanation if not in debug mode
+                this.ctx.log.warn('Error while attempting to setData on provider_chunk with id '+chunk_id+': '+e); // todo: remove explanation if not in debug mode
                 this.ctx.log.debug(e.stack);
                 return next(new Error('Error while attempting to setData on a chunk.'));
             }
@@ -167,32 +168,50 @@ class Provider {
 
     async STORE_CHUNK_SEGMENTS(request, response, next) {
         const chunk_id = request.params[0]; // todo: validate
-        let chunk = await ProviderChunk.findOrCreate(chunk_id);
+
 
         // todo: make sure you agreed to storing it + conditions
 
-        if (chunk.status === ProviderChunk.STATUS_STORED) {
-            // todo: check the integrity of the data before confidently saying you have the chunk
-            return next(new Error('ECHUNKALREADYSTORED'))
+        try {
+            const chunk = await Model.transaction(async(t) => {
+                let chunk = await ProviderChunk.findByPk(chunk_id, {
+                    lock: t.LOCK.UPDATE,
+                    transaction: t,
+                });
+                if (!chunk) {
+                    await ProviderChunk.create({
+                        id: chunk_id,
+                    }, { transaction: t })
+                }
+
+                if (chunk.status === ProviderChunk.STATUS_STORED) {
+                    // todo: check the integrity of the data before confidently saying you have the chunk
+                    throw Error('ECHUNKALREADYSTORED');
+                }
+
+                const segment_hashes = request.params[1].map(x => x.toString('hex')); // todo: validate that it's array of valid buffers etc.
+                const chunk_size = request.params[2]; // todo: validate
+                const chunk_real_id = request.params[3]; // todo: validate
+                const chunk_public_key = request.params[4]; // todo: validate
+                const chunk_real_size = request.params[5]; // todo: validate
+
+                chunk.segment_hashes = segment_hashes;
+                chunk.validateSegmentHashes();
+
+                chunk.public_key = chunk_public_key;
+                chunk.real_id = chunk_real_id;
+                chunk.real_id_verified = false;
+                chunk.size = chunk_size;
+                chunk.real_size = chunk_real_size;
+
+                chunk.status = ProviderChunk.STATUS_STORED; // todo: ? always in this status?
+                await chunk.save({ transaction: t });
+
+                return chunk;
+            });
+        } catch(e) {
+            return next(e);
         }
-
-        const segment_hashes = request.params[1].map(x => x.toString('hex')); // todo: validate that it's array of valid buffers etc.
-        const chunk_length = request.params[2]; // todo: validate
-        const chunk_real_id = request.params[3]; // todo: validate
-        const chunk_pub_key = request.params[4]; // todo: validate
-        const chunk_real_length = request.params[5]; // todo: validate
-
-        chunk.segment_hashes = segment_hashes;
-        chunk.validateSegmentHashes();
-
-        chunk.pub_key = chunk_pub_key;
-        chunk.real_id = chunk_real_id;
-        chunk.real_id_verified = false;
-        chunk.length = chunk_length;
-        chunk.real_length = chunk_real_length;
-
-        chunk.status = ProviderChunk.STATUS_STORED; // todo: ? always in this status?
-        await chunk.save();
 
         response.send([chunk_id]); // success
     }
@@ -293,7 +312,7 @@ class Provider {
                 }
             });
 
-            chunk_decryptor.send({ command: 'decrypt', fileIn: ProviderChunk.getChunkStoragePath(chunk.id), fileOut:  ProviderChunk.getDecryptedChunkStoragePath(chunk.id), pubKey: chunk.pub_key, chunkId: chunk.id });
+            chunk_decryptor.send({ command: 'decrypt', fileIn: ProviderChunk.getChunkStoragePath(chunk.id), fileOut:  ProviderChunk.getDecryptedChunkStoragePath(chunk.id), pubKey: chunk.public_key, chunkId: chunk.id });
         });
     }
 }

@@ -2,9 +2,10 @@ const crypto = require('crypto');
 const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
-const knex = require('../knex');
+const Sequelize = require('sequelize');
 let StorageLink;
 let File;
+let FileMap;
 
 class Chunk extends Model {
     constructor(...args) {
@@ -13,37 +14,7 @@ class Chunk extends Model {
         // This is to avoid circular dependencies:
         File = require('./file');
         StorageLink = require('./storage_link');
-    }
-
-    static _buildIndices() {
-        this._addIndex('ul_status');
-        this._addIndex('dl_status');
-    }
-
-    /**
-     * Fields:
-     * - id which is chunk content's hash
-     * ----
-     * - known_providers
-     */
-
-    async save() {
-        // save to postgres via knex
-        let attrs = (({ id, length, redundancy, expires, autorenew, ul_status, dl_status }) => ({ id, length: this.getLength(), redundancy, expires, autorenew, ul_status, dl_status}))(super.toJSON());
-
-        // get the first file_id where the offset is 0 or more
-        const first_file = this.belongsToFiles.filter(f => f[1] >= 0)[0];
-        // add the file_id to the db attrs
-        if(first_file) { attrs.file_id = first_file[0]; }
-
-        const [chunk] = await knex('chunks')
-            .insert(attrs)
-            .onConflict("id")
-            .merge()
-            .returning("*");
-
-        // save to postgres via knex
-        super.save();
+        FileMap = require('./file_map');
     }
 
     getData() {
@@ -52,7 +23,8 @@ class Chunk extends Model {
     }
 
     setData(rawData) {
-        let hash = this.ctx.utils.hashFnHex(this.ctx.utils.utf8toBuffer(rawData)); // todo: why is rawdata a utf8 string?
+        if (!Buffer.isBuffer(rawData)) throw Error('Chunk.setData: rawData must be a Buffer');
+        let hash = this.ctx.utils.hashFnHex(rawData);
 
         if (this.id) {
             if (this.id !== hash) {
@@ -65,14 +37,14 @@ class Chunk extends Model {
         }
 
         this.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
-        this.length = rawData.length;
+        this.size = rawData.size;
 
         Chunk.forceSaveToDisk(rawData, this.id);
     }
 
-    getLength() {
-        if (typeof this.length !== 'undefined') {
-            return this.length;
+    getSize() {
+        if (typeof this.size !== 'undefined') {
+            return this.size;
         } else {
             const filePath = Chunk.getChunkStoragePath(this.id);
             if (!fs.existsSync(filePath)) return undefined;
@@ -81,10 +53,12 @@ class Chunk extends Model {
     }
 
     static async findOrCreateByData(rawData) {
-        let id = this.ctx.utils.hashFnHex(this.ctx.utils.utf8toBuffer(rawData)); // todo: why is rawdata utf8 string?
+        if (!Buffer.isBuffer(rawData)) throw Error('Chunk.findOrCreateByData: rawData must be a Buffer');
+
+        let id = this.ctx.utils.hashFnHex(rawData);
         let result = await this.find(id);
         if (result === null) {
-            result = this.new();
+            result = this.build();
             this.id = id;
         }
 
@@ -102,7 +76,7 @@ class Chunk extends Model {
 
     async reconsiderUploadingStatus(cascade = true) {
         let fn = async() => {
-            const live_copies = await this.storage_links.signed;
+            const live_copies = await StorageLink.byChunkIdAndStatus(this.id, StorageLink.STATUS_SIGNED);
 
             // 1. Redundancy
             if (live_copies.length < this.redundancy) {
@@ -137,6 +111,10 @@ class Chunk extends Model {
         // todo: maybe immediately start uploading here? trigger the tick()? but be careful with recursion loops
     }
 
+    async getLinksWithStatus(status) {
+        return await StorageLink.byChunkIdAndStatus(this.id, status);
+    }
+
     async reconsiderDownloadingStatus(cascade = true) {
         // todo todo todo
 
@@ -157,7 +135,7 @@ class Chunk extends Model {
     async getFiles() {
         if (! ('belongsToFiles' in this._attributes)) return [];
         const file_ids = this.belongsToFiles.map(x => x[0]);
-        let results = await Promise.all(file_ids.map(async(id) => await File.find(id)));
+        let results = await Promise.all(file_ids.map(async(id) => await File.findOrFail(id)));
         return results;
     }
 
@@ -172,17 +150,13 @@ class Chunk extends Model {
         await this.save();
     }
 
-    addBelongsToFile(file, offset) {
-        if (! ('belongsToFiles' in this._attributes)) {
-            this._attributes.belongsToFiles = [];
-        }
-
-        // Remove duplicates
-        for (let b of this._attributes.belongsToFiles) {
-            if (b[0] === file.id && b[1] === offset) return;
-        }
-
-        this._attributes.belongsToFiles.push([ file.id, offset, file.originalPath ]);
+    // This fn doesn't save!
+    async addBelongsToFile(file, offset) {
+        const filemap = FileMap.build();
+        filemap.file_id = file.id; // todo: make sure file.id is not empty
+        filemap.chunk_id = this.id;
+        filemap.chunk_index = offset;
+        await filemap.save();
     }
 
     getStorageLinks() {
@@ -222,6 +196,8 @@ class Chunk extends Model {
     }
 
     static forceSaveToDisk(data, id = null) {
+        if (!Buffer.isBuffer(data)) throw Error('Chunk.forceSaveToDisk: data must be a Buffer');
+
         if (id === null) id = this.ctx.utils.hashFnHex(data);
 
         // todo: dont zero out the rest of the chunk if it's the last one, save space
@@ -235,10 +211,26 @@ class Chunk extends Model {
         return id;
     }
 
-    getStatus() {
-        throw Error('Dev message: Which status? ul_status or dl_status');
-    }
 }
+
+Chunk.init({
+    id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
+    size: { type: Sequelize.DataTypes.INTEGER },
+
+    ul_status: { type: Sequelize.DataTypes.STRING },
+    dl_status: { type: Sequelize.DataTypes.STRING },
+
+    redundancy: { type: Sequelize.DataTypes.INTEGER },
+    expires: { type: Sequelize.DataTypes.BIGINT },
+    autorenew: { type: Sequelize.DataTypes.BOOLEAN },
+}, {
+    indexes: [
+        { fields: ['ul_status'] },
+        { fields: ['dl_status'] },
+    ]
+});
+
+// Chunk.belongsTo(File, { foreignKey: 'fileId' });
 
 Chunk.UPLOADING_STATUS_CREATED = 'us0';
 Chunk.UPLOADING_STATUS_UPLOADING = 'us1';
@@ -248,5 +240,4 @@ Chunk.DOWNLOADING_STATUS_DOWNLOADING = 'ds1';
 Chunk.DOWNLOADING_STATUS_DOWNLOADED = 'ds99';
 Chunk.DOWNLOADING_STATUS_FAILED = 'ds2';
 
-module.exports = Chunk;
 module.exports = Chunk;

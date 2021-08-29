@@ -21,15 +21,18 @@ class Utils {
     }
 
     // todo: make sure you're actually using the same function solidity does: https://ethereum.stackexchange.com/a/48846
-    static hashFn(value) {
-        return Buffer.from(ethUtil.keccak256(value), 'hex'); //.slice(-20);
+    static hashFn(buf) {
+        return Buffer.from(ethUtil.keccak256(buf), 'hex'); //.slice(-20);
     }
-    static hashFnHex(value) {
-        return this.hashFn(value).toString('hex');
+    static hashFnHex(buf) {
+        return this.hashFn(buf).toString('hex');
     }
     static utf8toBuffer(v) {
         if (Buffer.isBuffer(v)) return v;
         return Buffer.from(v, 'utf8');
+    }
+    static hashFnUtf8Hex(value) {
+        return this.hashFnHex(this.utf8toBuffer(value));
     }
 
     static xorBuffersInPlace(a, b) {

@@ -42,6 +42,10 @@ function decryptFile(fileIn, fileOut, pubKey) {
 
     fs.closeSync(fe);
     fs.closeSync(fd);
+
+    // console.log({fileIn, fileOut, pubKey})
+    // console.log(fs.readFileSync(fileIn));
+    // console.log(fs.readFileSync(fileOut));
 }
 
 process.on('message', async (message) => {
@@ -57,7 +61,7 @@ process.on('message', async (message) => {
 
         // send response to master process
         // todo from encrypt.js: todo: reading the file AGAIN??? can't you hash it while encrypting?
-        process.send({ 'command': 'decrypt', 'success': true, 'chunkId': chunkId, 'hashIn': utils.hashFnHex(fs.readFileSync(fileIn)), 'hashOut': utils.hashFnHex(fs.readFileSync(fileOut)) });
+        process.send({ 'command': 'decrypt', 'success': true, 'chunkId': chunkId, 'hashIn': utils.hashFnHex(fs.readFileSync(fileIn)), 'hashOut': utils.hashFnHex(fs.readFileSync(fileOut, { encoding: null })) });
     }
 });
 
