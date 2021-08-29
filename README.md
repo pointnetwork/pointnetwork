@@ -32,7 +32,7 @@ Once the compose is up, the Point Network contracts deployment will start. Unles
 ./scripts/deploy-sites-docker.sh
 ```
 
-Right after the sites are uploaded, one may start the [Point Browser](https://github.com/pointnetwork/pointbrowser) and configure it to use one of the above listed `ZProxy` ports. The sites will be available at their regular addresses.
+Right after the sites are uploaded, one may start the **Point Browser** using [web-ext](https://github.com/pointnetwork/pointsdk#using-web-ext) and configure it to use one of the above listed `ZProxy` ports. The sites will be available at their regular addresses.
 
 ### Develop using the docker compose
 
@@ -151,7 +151,7 @@ All sites should respond with a 200 status code. If not there is something wrong
     ```
 
 1. Now you can stop the second node (Ctrl+C).
-1. Run the [Point Browser](https://github.com/pointnetwork/pointbrowser)
+1. Start the **Point Browser** using [web-ext](https://github.com/pointnetwork/pointsdk#using-web-ext)
 1. Navigate to `http://blog.z` and it will open the home page of the Example Blog.
 
 ## WebSockets
@@ -391,6 +391,7 @@ This is a React JS app. So you will need to install dependencies for it and run 
 1. Run `npm i` to install the sites dependencies
 1. Run `npm run watch` (or `npm run watch:docker` if you are running the Node using Docker) to have *parcel* watch the site and build it on any detected changes
 1. Run `./scripts/deploy-sites.sh store --contracts` (from the node root folder) to deploy the sites `views` directory that was built using parcel.
+1. From the [Point SDK repo README](https://github.com/pointnetwork/pointsdk#using-web-ext), follow the instructions to start an instance of Firefox with the Point SDK extention already installed using `web-ext` command.
 
 ### Coding style
 

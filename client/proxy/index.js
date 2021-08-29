@@ -276,8 +276,8 @@ class ZProxy {
         cmdstr = cmdstr.replace('/v1/api/', '');
         cmdstr = cmdstr.replace(/\/$/, "");
 
-        let [cmd, params] = this._parseApiCmd(cmdstr)
-        let response = {}
+        let [cmd, params] = this._parseApiCmd(cmdstr);
+        let response = {};
         let body = '';
         let host = request.headers.host;
         if (request.method.toUpperCase() == 'POST') {
@@ -287,9 +287,9 @@ class ZProxy {
                 });
                 request.on('end', async () => {
                     response = await this.console.cmd_api_post(host, cmd, body);
-                    resolve(response)
-                })
-            })
+                    resolve(response);
+                });
+            });
 
             response = await apiPromise;
         } else {
@@ -299,9 +299,9 @@ class ZProxy {
     }
 
     _parseApiCmd(cmdstr) {
-        let [cmd, params] = cmdstr.split('?')
-        params ? params = params.split('&') : params = ''
-        return [cmd, params]
+        let [cmd, params] = cmdstr.split('?');
+        params ? params = params.split('&') : params = '';
+        return [cmd, params];
     }
 
     sanitize(html) {
