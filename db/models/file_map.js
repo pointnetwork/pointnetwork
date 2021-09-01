@@ -10,12 +10,12 @@ class FileMap extends Model {
 
 FileMap.init({
     id: { type: Sequelize.DataTypes.BIGINT, unique: true, primaryKey: true, autoIncrement: true },
-    chunk_index: { type: Sequelize.DataTypes.INTEGER },
+    offset: { type: Sequelize.DataTypes.INTEGER },
 }, {
     indexes: [
         { fields: ['chunk_id'] },
         { fields: ['file_id'] },
-        { fields: ['file_id', 'chunk_id', 'chunk_index'] }, // todo: unique
+        { fields: ['file_id', 'chunk_id', 'offset'] }, // todo: unique
     ]
 });
 

@@ -3,6 +3,7 @@ const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
+const _ = require('lodash');
 let StorageLink;
 let File;
 let FileMap;
@@ -133,10 +134,18 @@ class Chunk extends Model {
     }
 
     async getFiles() {
-        if (! ('belongsToFiles' in this._attributes)) return [];
-        const file_ids = this.belongsToFiles.map(x => x[0]);
-        let results = await Promise.all(file_ids.map(async(id) => await File.findOrFail(id)));
-        return results;
+        const filemaps = await FileMap.findAll({
+            attributes: ['id', 'file_id'],
+            where: { 'chunk_id': this.id }
+        });
+        
+        const fileIds = _.uniq(filemaps.map((element) => element.file_id));
+
+        let files = [];
+        for(let fileId of fileIds) {
+            files.push(await File.findOrFail(fileId));
+        }
+        return files;
     }
 
     async changeULStatus(status) {
@@ -155,7 +164,7 @@ class Chunk extends Model {
         const filemap = FileMap.build();
         filemap.file_id = file.id; // todo: make sure file.id is not empty
         filemap.chunk_id = this.id;
-        filemap.chunk_index = offset;
+        filemap.offset = offset;
         await filemap.save();
     }
 
@@ -203,6 +212,8 @@ class Chunk extends Model {
         // todo: dont zero out the rest of the chunk if it's the last one, save space
 
         // todo: what if already exists? should we overwrite again or just use it? without integrity check?
+        // todo: important question! because there was a bug related to that, the file was saved under the wrong id and until we cleared the file system we didn't know how to debug it
+        // todo: but if we decide to rewrite here and something goes wrong, we might accidentally rewrite the good version. important for providers not to destroy information, just in case
         const chunk_file_path = Chunk.getChunkStoragePath(id);
         if (! fs.existsSync(chunk_file_path)) {
             fs.writeFileSync(chunk_file_path, data, { encoding: null });
@@ -213,16 +224,25 @@ class Chunk extends Model {
 
 }
 
+Chunk.UPLOADING_STATUS_CREATED = 'us0';
+Chunk.UPLOADING_STATUS_UPLOADING = 'us1';
+Chunk.UPLOADING_STATUS_UPLOADED = 'us99';
+Chunk.DOWNLOADING_STATUS_CREATED = 'ds0';
+Chunk.DOWNLOADING_STATUS_DOWNLOADING = 'ds1';
+Chunk.DOWNLOADING_STATUS_DOWNLOADED = 'ds99';
+Chunk.DOWNLOADING_STATUS_FAILED = 'ds2';
+
 Chunk.init({
     id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
     size: { type: Sequelize.DataTypes.INTEGER },
 
-    ul_status: { type: Sequelize.DataTypes.STRING },
-    dl_status: { type: Sequelize.DataTypes.STRING },
+    ul_status: { type: Sequelize.DataTypes.STRING, defaultValue: Chunk.UPLOADING_STATUS_CREATED },
+    dl_status: { type: Sequelize.DataTypes.STRING, defaultValue: Chunk.DOWNLOADING_STATUS_CREATED },
 
-    redundancy: { type: Sequelize.DataTypes.INTEGER },
-    expires: { type: Sequelize.DataTypes.BIGINT },
-    autorenew: { type: Sequelize.DataTypes.BOOLEAN },
+    // allowNull in the next rows because this is only related to uploading and storing, not chunks queued for downloading
+    redundancy: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
+    expires: { type: Sequelize.DataTypes.BIGINT, allowNull: true },
+    autorenew: { type: Sequelize.DataTypes.BOOLEAN, allowNull: true },
 }, {
     indexes: [
         { fields: ['ul_status'] },
@@ -231,13 +251,5 @@ Chunk.init({
 });
 
 // Chunk.belongsTo(File, { foreignKey: 'fileId' });
-
-Chunk.UPLOADING_STATUS_CREATED = 'us0';
-Chunk.UPLOADING_STATUS_UPLOADING = 'us1';
-Chunk.UPLOADING_STATUS_UPLOADED = 'us99';
-Chunk.DOWNLOADING_STATUS_CREATED = 'ds0';
-Chunk.DOWNLOADING_STATUS_DOWNLOADING = 'ds1';
-Chunk.DOWNLOADING_STATUS_DOWNLOADED = 'ds99';
-Chunk.DOWNLOADING_STATUS_FAILED = 'ds2';
 
 module.exports = Chunk;

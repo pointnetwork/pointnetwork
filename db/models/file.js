@@ -263,7 +263,7 @@ class File extends Model {
             const totalChunks = Math.ceil(size / CHUNK_SIZE_BYTES);
 
             return new Promise((resolve, reject) => {
-                let chunks = [];
+                let chunkIds = [];
                 let currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
                 let currentChunkLength = 0;
                 let chunkId = null;
@@ -278,7 +278,7 @@ class File extends Model {
                             bufCopied += copyLength;
                             currentChunkLength += copyLength;
                             chunkId = Chunk.forceSaveToDisk(currentChunk);
-                            chunks.push(chunkId);
+                            chunkIds.push(chunkId);
                             currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
                             currentChunkLength = 0;
                         }
@@ -290,28 +290,28 @@ class File extends Model {
                         if (currentChunkLength !== 0) {
                             currentChunk = currentChunk.slice(0, currentChunkLength);
                             chunkId = Chunk.forceSaveToDisk(currentChunk);
-                            chunks.push(chunkId);
+                            chunkIds.push(chunkId);
                         }
 
-                        if (chunks.length !== totalChunks) {
-                            return reject('Something went wrong, totalChunks '+totalChunks+' didn\'t match chunks.length '+chunks.length);
+                        if (chunkIds.length !== totalChunks) {
+                            return reject('Something went wrong, totalChunks '+totalChunks+' didn\'t match chunks.length '+chunkIds.length);
                         }
 
-                        this.chunkIds = chunks;
+                        this.chunkIds = chunkIds;
 
                         (async() => {
                             let merkleTree = await this.getMerkleTree();
-                            let mainChunkContents = JSON.stringify({
+                            let chunkInfoContents = JSON.stringify({
                                 type: 'file',
-                                chunks: chunks,
+                                chunks: chunkIds,
                                 hash: 'keccak256',
                                 filesize: this.getFileSize(),
                                 merkle: merkleTree.map(x => x.toString('hex')),
                             });
 
-                            let mainChunkContentsBuffer = Buffer.from(mainChunkContents, 'utf-8');  // todo: sure it's utf8? buffer uses utf8 by default anyway when casting. but what about utf16?
-                            let chunk = await Chunk.findOrCreateByData(mainChunkContentsBuffer);
-                            this.id = chunk.id;
+                            let chunkInfoContentsBuffer = Buffer.from(chunkInfoContents, 'utf-8');  // todo: sure it's utf8? buffer uses utf8 by default anyway when casting. but what about utf16?
+                            let chunkInfo = await Chunk.findOrCreateByData(chunkInfoContentsBuffer);
+                            this.id = chunkInfo.id;
                             const alreadyExistingFile = await File.findByPk(this.id);
                             if (alreadyExistingFile) {
                                 // A file with this id already exists! This changes everything
@@ -327,18 +327,17 @@ class File extends Model {
                                 await this.save();
                             }
 
-                            chunk.setData(mainChunkContentsBuffer);
-                            chunk.size = Buffer.byteLength(mainChunkContentsBuffer);
-                            chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
-                            chunk.redundancy = this.redundancy;
-                            chunk.expires = this.expires;
-                            chunk.autorenew = this.autorenew;
-                            chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
-                            await chunk.save();
-                            await chunk.addBelongsToFile(this, -1);
+                            chunkInfo.size = Buffer.byteLength(chunkInfoContentsBuffer);
+                            chunkInfo.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
+                            chunkInfo.redundancy = this.redundancy;
+                            chunkInfo.expires = this.expires;
+                            chunkInfo.autorenew = this.autorenew;
+                            chunkInfo.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
+                            await chunkInfo.save();
+                            await chunkInfo.addBelongsToFile(this, -1);
 
-                            for (let i in chunks) {
-                                let chunkId = chunks[i];
+                            for (let i in chunkIds) {
+                                let chunkId = chunkIds[i];
 
                                 // no await needed, let them be free
                                 (async (i, chunkId) => {
@@ -381,27 +380,6 @@ class File extends Model {
     }
 }
 
-File.init({
-    id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
-    original_path: { type: Sequelize.DataTypes.TEXT },
-    size: { type: Sequelize.DataTypes.INTEGER },
-    chunkIds: { type: Sequelize.DataTypes.JSON, allowNull: true },
-
-    ul_status: { type: Sequelize.DataTypes.STRING },
-    dl_status: { type: Sequelize.DataTypes.STRING },
-
-    redundancy: { type: Sequelize.DataTypes.INTEGER },
-    expires: { type: Sequelize.DataTypes.BIGINT },
-    autorenew: { type: Sequelize.DataTypes.BOOLEAN },
-
-}, {
-    indexes: [
-        { fields: ['ul_status'] },
-        { fields: ['dl_status'] },
-    ]
-});
-
-
 File.UPLOADING_STATUS_CREATED = 'us0';
 File.UPLOADING_STATUS_UPLOADING = 'us1';
 File.UPLOADING_STATUS_UPLOADED = 'us99';
@@ -410,5 +388,26 @@ File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO = 'ds1';
 File.DOWNLOADING_STATUS_DOWNLOADING = 'ds2';
 File.DOWNLOADING_STATUS_DOWNLOADED = 'ds99';
 File.DOWNLOADING_STATUS_FAILED = 'ds3';
+
+File.init({
+    id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
+    original_path: { type: Sequelize.DataTypes.TEXT },
+    size: { type: Sequelize.DataTypes.INTEGER, allowNull: true },  // allowNull:true because on downloading we don't yet know the file size before we have the chunkInfo chunk
+    chunkIds: { type: Sequelize.DataTypes.JSON, allowNull: true },
+
+    ul_status: { type: Sequelize.DataTypes.STRING, defaultValue: File.UPLOADING_STATUS_CREATED },
+    dl_status: { type: Sequelize.DataTypes.STRING, defaultValue: File.DOWNLOADING_STATUS_CREATED },
+
+    // allowNull in the next rows because this is only related to uploading and storing, not files queued for downloading
+    redundancy: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
+    expires: { type: Sequelize.DataTypes.BIGINT, allowNull: true },
+    autorenew: { type: Sequelize.DataTypes.BOOLEAN, allowNull: true },
+
+}, {
+    indexes: [
+        { fields: ['ul_status'] },
+        { fields: ['dl_status'] },
+    ]
+});
 
 module.exports = File;

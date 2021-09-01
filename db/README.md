@@ -10,6 +10,12 @@ Make migrations from diff of the models: `./point makemigration --datadir ~/.poi
 
 Migrate: `npm run db:migrate`
 
+If you're operating on a json field, such as `storage_link.segments_sent`, methods such as `.push` will not work, the model only understands that there has been changes if you trigger the direct assignment, i.e. `storage_link.segments_sent = new_segments_sent`, which will trigger the sequelize getter; Moreover, `new_segments_sent` cannot just be the same array with pushed items, it should be shallow copied (such as through spread operator `[...original]`) in order for sequelize to understand it's a different object;
+
+Use `model.refresh()` to reload latest changes from the database if some other thread could have written into it
+
+Use transactions with locking for update to avoid race conditions.
+
 -----------
 
 ## Knex / Postgres

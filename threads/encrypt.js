@@ -9,7 +9,7 @@ const defaultConfig = require('../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits;
 const STUPID_PADDING = defaultConfig.storage.redkey_stupid_padding;
 
-function encryptFile(filePath, toFile, privKey) {
+function encryptFile(filePath, toFile, privKey) { // chunkId and linkId are only needed for sanity check between threads, just in case
     const fromFile = path.resolve(filePath);
 
     const writeSize = BITS/8;

@@ -6,9 +6,9 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
     let ctx = link.ctx;
     let storage = link.ctx.client.storage;
 
-    async function prepareChunkSegment() {
+    this.prepareChunkSegment = async function() { // todo: rename! it's not a chunk segment, it's the whole segment map
         await link.refresh();
-        const key = await link.getRedkey();
+        const key = await link.getRedkeyOrFail();
         return [
             link.merkle_root,
             link.segment_hashes.map(x=>Buffer.from(x, 'hex')),
@@ -19,7 +19,8 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
         ];
     }
 
-    async function prepareChunkData() {
+    this.prepareChunkData = async function() {
+        await link.refresh();
         if (!link.segments_sent) link.segments_sent = [];
         if (!link.segments_received) link.segments_received = [];
 
@@ -31,7 +32,10 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             }
             // Retransmit timed out segments
             // todo: give up after X attempts to retransmit
-            if (!storage.isProviderQueueFull(link.provider_id)) {
+            if (!storage.isProviderQueueFull(link.provider_id)) { // todo: shouldn't this condition be inside the next one, so that we're waiting for the provider to become freed up
+                // sanity check
+                if (storage.config.retransmit_segments_timeout_seconds < 1) throw Error('storage.config.retransmit_segments_timeout_seconds is configured at value: '+storage.config.retransmit_segments_timeout_seconds);
+
                 if (!link.segments_received.includes(i) && link.segments_sent[i] && link.segments_sent[i] + storage.config.retransmit_segments_timeout_seconds < Math.floor(Date.now()/1000)) {
                     console.log('retransmitting chunk', link.chunk_id, 'segment', i);
                     idx = i;
@@ -43,7 +47,9 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             return;
         }
 
-        link.segments_sent[idx] = Math.floor(Date.now()/1000);
+        let segments_sent = [...link.segments_sent];
+        segments_sent[idx] = Math.floor(Date.now()/1000);
+        link.segments_sent = segments_sent;
         await link.save();
 
         const encryptedData = link.getEncryptedData(); // todo: optimize using fs ranges // todo: use fs async
@@ -63,13 +69,13 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             id: 'storageLink',
             initial: 'initialized',
             states: {
-                initialized: {
+                initialized: { // todo: no such status
                     on: {
                         CREATE: StorageLink.STATUS_CREATED,
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
-                created: {
+                [StorageLink.STATUS_CREATED]: {
                     invoke: {
                         id: 'SEND_STORE_CHUNK_REQUEST',
                         src: async (context, event) => {
@@ -90,7 +96,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
-                creating_payment_channel: {
+                creating_payment_channel: { // todo: no such status
                     invoke: {
                         id: 'SEND_CREATE_PAYMENT_CHANNEL',
                         src: async (context, event) => {
@@ -108,7 +114,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
-                encrypting: {
+                [StorageLink.STATUS_ENCRYPTING]: {
                     invoke: {
                         id: 'ENCRYPT_CHUNK',
                         src: async (context, event) => {
@@ -125,15 +131,13 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
-                sending_segment_map: {
+                [StorageLink.STATUS_SENDING_SEGMENT_MAP]: {
                     invoke: {
                         id: 'SEND_STORE_CHUNK_SEGMENTS',
                         src: async (context, event) => {
-                            console.log('uuuuuuuuuuuuuuuuuuuuuu')
-                            console.log({link});
                             await link.save();
                             ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 40, link.state);
-                            const data = await prepareChunkSegment();
+                            const data = await this.prepareChunkSegment();
                             return storage.SEND_STORE_CHUNK_SEGMENTS(data, link);
                         },
                         onDone: {
@@ -143,7 +147,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             actions: 'UPDATE_MODEL_ERR',
                             target: StorageLink.STATUS_FAILED,
                         },
-                        onError: { // todo: two onErrors?
+                        onError: {
                             actions: 'UPDATE_MODEL_ERR',
                             target: StorageLink.STATUS_ASKING_FOR_SIGNATURE,
                             cond: 'nodeAlreadyStoredData'
@@ -151,26 +155,21 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
-                sending_data: {
+                [StorageLink.STATUS_SENDING_DATA]: {
                     invoke: {
                         id: 'SEND_STORE_CHUNK_DATA',
                         src: async (context, event) => {
                             // nasty hack to ensure all chunks are uploaded
                             await link.save();
 
-                            console.log('zzzzzzzzzzzzzzzzzzzz');
-                            console.log({link});
                             ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 60, link.state);
                             done = false;
                             while(!done) {
                                 await link.refresh();
-                                data = await prepareChunkData();
-                                await link.save();
+                                data = await this.prepareChunkData();
                                 await link.refresh();
-                                console.log({data});
                                 done = await storage.SEND_STORE_CHUNK_DATA(data, link);
-                                console.log({done, newlink:'newlink', link});
-                                await link.save();
+                                await link.refresh();
                             }
                             Promise.resolve(true);
                         },
@@ -184,7 +183,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
-                asking_for_signature: {
+                [StorageLink.STATUS_ASKING_FOR_SIGNATURE]: {
                     invoke: {
                         id: 'SEND_STORE_CHUNK_SIGNATURE_REQUEST',
                         src: async (context, event) => {
@@ -202,7 +201,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
-                signed: {
+                [StorageLink.STATUS_SIGNED]: {
                     invoke: {
                         id: 'SAVE_MODEL_SIGNED',
                         src: async () => {
@@ -214,7 +213,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     },
                     type: 'final'
                 },
-                failed: {
+                [StorageLink.STATUS_FAILED]: {
                     invoke: {
                         id: 'SAVE_MODEL_FAILED',
                         src: async () => {

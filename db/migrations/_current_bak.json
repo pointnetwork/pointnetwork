@@ -17,32 +17,26 @@
                 },
                 "ul_status": {
                     "allowNull": false,
-                    "defaultValue": {
-                        "value": "us0"
-                    },
                     "field": "ul_status",
                     "seqType": "Sequelize.STRING"
                 },
                 "dl_status": {
                     "allowNull": false,
-                    "defaultValue": {
-                        "value": "ds0"
-                    },
                     "field": "dl_status",
                     "seqType": "Sequelize.STRING"
                 },
                 "redundancy": {
-                    "allowNull": true,
+                    "allowNull": false,
                     "field": "redundancy",
                     "seqType": "Sequelize.INTEGER"
                 },
                 "expires": {
-                    "allowNull": true,
+                    "allowNull": false,
                     "field": "expires",
                     "seqType": "Sequelize.BIGINT"
                 },
                 "autorenew": {
-                    "allowNull": true,
+                    "allowNull": false,
                     "field": "autorenew",
                     "seqType": "Sequelize.BOOLEAN"
                 },
@@ -96,7 +90,7 @@
                     "seqType": "Sequelize.TEXT"
                 },
                 "size": {
-                    "allowNull": true,
+                    "allowNull": false,
                     "field": "size",
                     "seqType": "Sequelize.INTEGER"
                 },
@@ -107,32 +101,26 @@
                 },
                 "ul_status": {
                     "allowNull": false,
-                    "defaultValue": {
-                        "value": "us0"
-                    },
                     "field": "ul_status",
                     "seqType": "Sequelize.STRING"
                 },
                 "dl_status": {
                     "allowNull": false,
-                    "defaultValue": {
-                        "value": "ds0"
-                    },
                     "field": "dl_status",
                     "seqType": "Sequelize.STRING"
                 },
                 "redundancy": {
-                    "allowNull": true,
+                    "allowNull": false,
                     "field": "redundancy",
                     "seqType": "Sequelize.INTEGER"
                 },
                 "expires": {
-                    "allowNull": true,
+                    "allowNull": false,
                     "field": "expires",
                     "seqType": "Sequelize.BIGINT"
                 },
                 "autorenew": {
-                    "allowNull": true,
+                    "allowNull": false,
                     "field": "autorenew",
                     "seqType": "Sequelize.BOOLEAN"
                 },
@@ -567,5 +555,5 @@
             }
         }
     },
-    "revision": 3
+    "revision": 2
 }

@@ -37,6 +37,8 @@ class ProviderChunk extends Model {
 
             if (!this.segment_hashes) throw new Error('?: segment hashes not found'); // todo
 
+            console.log('segment_hashes', this.segment_hashes);
+
             let data = Buffer.alloc(0);
             for(let segment_hash of this.segment_hashes) {
                 const segment_path = ProviderChunk.getSegmentStoragePath(segment_hash, this.id);
@@ -125,23 +127,24 @@ class ProviderChunk extends Model {
         fs.writeFileSync(segment_path, rawData, { encoding: null });
     }
 
-    setData(rawData) {
-        // todo: future: dont zero out the rest of the chunk if it's the last one, save space
-        // todo: check data length? well, hash should be taking care of it already
-
-        if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setData: rawData must be a Buffer!');
-
-        const data_hash = this.ctx.utils.hashFnHex(rawData);
-
-        if (this.id !== data_hash) {
-            throw Error('EINVALIDHASH: Provider Chunk ID and data hash don\'t match: '+this.id+' vs '+data_hash);
-        }
-
-        const chunk_file_path = ProviderChunk.getChunkStoragePath(this.id);
-
-        // todo: what if already exists? should we overwrite again or just use it? without integrity check?
-        fs.writeFileSync(chunk_file_path, rawData, { encoding: null });
-    }
+    // todo: remove or reenable because setSegmentData replaced this functionality
+    // setData(rawData) {
+    //     // todo: future: dont zero out the rest of the chunk if it's the last one, save space
+    //     // todo: check data length? well, hash should be taking care of it already
+    //
+    //     if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setData: rawData must be a Buffer!');
+    //
+    //     const data_hash = this.ctx.utils.hashFnHex(rawData);
+    //
+    //     if (this.id !== data_hash) {
+    //         throw Error('EINVALIDHASH: Provider Chunk ID and data hash don\'t match: '+this.id+' vs '+data_hash);
+    //     }
+    //
+    //     const chunk_file_path = ProviderChunk.getChunkStoragePath(this.id);
+    //
+    //     // todo: what if already exists? should we overwrite again or just use it? without integrity check?
+    //     fs.writeFileSync(chunk_file_path, rawData, { encoding: null });
+    // }
 
 }
 

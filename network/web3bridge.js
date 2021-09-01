@@ -92,11 +92,16 @@ class Web3Bridge {
     }
 
     async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage // huh?
-        const contract = await this.loadWebsiteContract(target, contractName);
-        if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
-        if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
-        let result = await contract.methods[ method ]( ...params ).call();
-        return result;
+        try {
+            const contract = await this.loadWebsiteContract(target, contractName);
+            if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
+            if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
+            let result = await contract.methods[ method ]( ...params ).call();
+            return result;
+        } catch(e) {
+            this.ctx.log.error('callContract Error', {target, contractName, method, params});
+            throw e;
+        }
     }
 
     async getPastEvents(target, contractName, event, options={fromBlock: 0, toBlock: 'latest'}) {
@@ -157,23 +162,37 @@ class Web3Bridge {
     }
 
     async identityByOwner(owner) {
-        const identityContract = await this.loadIdentityContract();
-        const method = identityContract.methods.getIdentityByOwner(owner);
-        return await method.call();
+        try {
+            const identityContract = await this.loadIdentityContract();
+            const method = identityContract.methods.getIdentityByOwner(owner);
+            return await method.call();
+        } catch(e) {
+            this.ctx.log.error('Error: identityByOwner', {owner});
+            throw e;
+        }
     }
 
     async ownerByIdentity(identity) {
-        const identityContract = await this.loadIdentityContract();
-        const method = identityContract.methods.getOwnerByIdentity(identity);
-        return await method.call();
+        try {
+            const identityContract = await this.loadIdentityContract();
+            const method = identityContract.methods.getOwnerByIdentity(identity);
+            return await method.call();
+        } catch(e) {
+            this.ctx.log.error('Error: identityByOwner', {identity});
+            throw e;
+        }
     }
 
     async commPublicKeyByIdentity(identity) {
-        const identityContract = await this.loadIdentityContract();
-        const method = identityContract.methods.getCommPublicKeyByIdentity(identity);
-        const parts = await method.call();
-        return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
-        // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
+        try {
+            const identityContract = await this.loadIdentityContract();
+            const method = identityContract.methods.getCommPublicKeyByIdentity(identity);
+            const parts = await method.call();
+            return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
+            // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
+        } catch(e) {
+            this.ctx.log.error('Error: commPublicKeyByIdentity', {identity});
+        }
     }
 
     async getZRecord(domain) {
@@ -188,19 +207,29 @@ class Web3Bridge {
     }
 
     async getKeyValue(identity, key) {
-        if (typeof identity !== 'string') throw Error('web3bridge.getKeyValue(): identity must be a string');
-        if (typeof key !== 'string') throw Error('web3bridge.getKeyValue(): key must be a string');
-        identity = identity.replace('.z', ''); // todo: rtrim instead
-        const contract = await this.loadIdentityContract();
-        let result = await contract.methods.ikvGet(identity, key).call();
-        return result;
+        try {
+            if (typeof identity !== 'string') throw Error('web3bridge.getKeyValue(): identity must be a string');
+            if (typeof key !== 'string') throw Error('web3bridge.getKeyValue(): key must be a string');
+            identity = identity.replace('.z', ''); // todo: rtrim instead
+            const contract = await this.loadIdentityContract();
+            let result = await contract.methods.ikvGet(identity, key).call();
+            return result;
+        } catch(e) {
+            this.ctx.log.error('getKeyValue error', {identity, key});
+            throw e;
+        }
     }
     async putKeyValue(identity, key, value) {
-        // todo: only send transaction if it's different. if it's already the same value, no need
-        identity = identity.replace('.z', ''); // todo: rtrim instead
-        const contract = await this.loadIdentityContract();
-        const method = contract.methods.ikvPut(identity, key, value);
-        console.log(await this.web3send(method)); // todo: remove console.log
+        try {
+            // todo: only send transaction if it's different. if it's already the same value, no need
+            identity = identity.replace('.z', ''); // todo: rtrim instead
+            const contract = await this.loadIdentityContract();
+            const method = contract.methods.ikvPut(identity, key, value);
+            console.log(await this.web3send(method)); // todo: remove console.log
+        } catch(e) {
+            this.ctx.log.error('putKeyValue error', {identity, key, value});
+            throw e;
+        }
     }
     async toChecksumAddress(address) {
         const checksumAddress = await this.web3.utils.toChecksumAddress(address)
@@ -220,17 +249,32 @@ class Web3Bridge {
             throw e;
         }
     }
-    async getCheapestStorageProvider() {
-        const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.getCheapestProvider().call();
+    async getCheapestStorageProvider() { //todo: unused?
+        try {
+            const contract = await this.loadStorageProviderRegistryContract();
+            return contract.methods.getCheapestProvider().call();
+        } catch(e) {
+            this.ctx.log.error('getCheapestStorageProvider error');
+            throw e;
+        }
     }
     async getAllStorageProviders() {
-        const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
+        try {
+            const contract = await this.loadStorageProviderRegistryContract();
+            return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
+        } catch(e) {
+            this.ctx.log.error('getAllStorageProviders error');
+            throw e;
+        }
     }
     async getSingleProvider(address) {
-        const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.getProvider(address).call();
+        try {
+            const contract = await this.loadStorageProviderRegistryContract();
+            return contract.methods.getProvider(address).call();
+        } catch(e) {
+            this.ctx.log.error('getSingleProvider error', {address});
+            throw e;
+        }
     }
 }
 

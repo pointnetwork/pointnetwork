@@ -79,8 +79,8 @@ class Model extends sequelize_lib.Model {
         return await this.findByPk(id);
     }
 
-    static async findOrFail(id) {
-        const result = await this.findByPk(id);
+    static async findOrFail(id, ...args) {
+        const result = await this.findByPk(id, ...args);
         if (!result) throw Error('Row not found: Model '+this.constructor.name+', id #'+id);
         return result;
     }

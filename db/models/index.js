@@ -20,6 +20,7 @@ class SequelizeFactory {
             dialect: this.config.dialect,
             define: this.config.define,
             logQueryParameters: true,
+            logging: false,
             // todo: logging: ...
         }); // todo: validate config
 

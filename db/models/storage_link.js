@@ -61,6 +61,10 @@ class StorageLink extends Model {
             throw new Error('recovered public key does not match provided one');
         }
     }
+
+    async getRedkeyOrFail() {
+        return await Redkey.findOrFail(this.redkey_id);
+    }
 }
 
 StorageLink.init({
