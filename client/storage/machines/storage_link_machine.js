@@ -126,6 +126,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             target: StorageLink.STATUS_SENDING_SEGMENT_MAP
                         },
                         onError: {
+                            actions: 'UPDATE_MODEL_ERR',
                             target: StorageLink.STATUS_FAILED
                         }
                     },
@@ -147,11 +148,12 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             actions: 'UPDATE_MODEL_ERR',
                             target: StorageLink.STATUS_FAILED,
                         },
-                        onError: {
-                            actions: 'UPDATE_MODEL_ERR',
-                            target: StorageLink.STATUS_ASKING_FOR_SIGNATURE,
-                            cond: 'nodeAlreadyStoredData'
-                        }
+                        // TODO: add a conditional error handler here for ECHUNKALREADYSTORED
+                        // onError: {
+                        //     actions: 'UPDATE_MODEL_ERR',
+                        //     target: StorageLink.STATUS_ASKING_FOR_SIGNATURE,
+                        //     cond: 'nodeAlreadyStoredData'
+                        // }
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
