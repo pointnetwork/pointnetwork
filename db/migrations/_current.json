@@ -11,7 +11,7 @@
                     "seqType": "Sequelize.STRING"
                 },
                 "size": {
-                    "allowNull": false,
+                    "allowNull": true,
                     "field": "size",
                     "seqType": "Sequelize.INTEGER"
                 },
@@ -498,7 +498,7 @@
                     "seqType": "Sequelize.STRING"
                 },
                 "size": {
-                    "allowNull": false,
+                    "allowNull": true,
                     "field": "size",
                     "seqType": "Sequelize.INTEGER"
                 },
@@ -567,5 +567,5 @@
             }
         }
     },
-    "revision": 3
+    "revision": 4
 }

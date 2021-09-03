@@ -126,7 +126,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             target: StorageLink.STATUS_SENDING_SEGMENT_MAP
                         },
                         onError: {
-                            // actions: 'UPDATE_MODEL_ERR',
+                            // actions: 'UPDATE_MODEL_ERR', //**
                             target: StorageLink.STATUS_FAILED
                         }
                     },
@@ -151,7 +151,6 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                         },{
                             actions: 'UPDATE_MODEL_ERR',
                             target: StorageLink.STATUS_FAILED,
-                            cond: 'notNodeAlreadyStoredData'
                         }],
                     },
                     exit: 'UPDATE_MODEL_STATUS'
@@ -168,8 +167,9 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             while(!done) {
                                 await link.refresh();
                                 data = await prepareChunkData();
+                                await link.refresh();
                                 done = await storage.SEND_STORE_CHUNK_DATA(data, link);
-                                await link.save();
+                                await link.refresh();
                             }
                             Promise.resolve(true);
                         },
@@ -231,8 +231,10 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     link.status = link.state;
                 },
                 UPDATE_MODEL_ERR: async (context, event) => { // todo: how is .errored different from .status = FAILED?
+                    console.log('*****ERR****')
                     console.error({event, context});
                     console.error(`UPDATE_MODEL_ERR: ${event.data}`);
+                    console.log('*****ERR****')
                     link.errored = true;
                     link.err = event.data;
                 },
@@ -240,9 +242,6 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
             guards: {
                 nodeAlreadyStoredData: (context, event) => {
                     _.startsWith(event.data, 'ECHUNKALREADYSTORED');
-                },
-                notNodeAlreadyStoredData: (context, event) => {
-                    !_.startsWith(event.data, 'ECHUNKALREADYSTORED');
                 }
             }
         }

@@ -138,7 +138,7 @@ class Chunk extends Model {
             attributes: ['id', 'file_id'],
             where: { 'chunk_id': this.id }
         });
-        
+
         const fileIds = _.uniq(filemaps.map((element) => element.file_id));
 
         let files = [];
@@ -234,7 +234,7 @@ Chunk.DOWNLOADING_STATUS_FAILED = 'ds2';
 
 Chunk.init({
     id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
-    size: { type: Sequelize.DataTypes.INTEGER },
+    size: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
 
     ul_status: { type: Sequelize.DataTypes.STRING, defaultValue: Chunk.UPLOADING_STATUS_CREATED },
     dl_status: { type: Sequelize.DataTypes.STRING, defaultValue: Chunk.DOWNLOADING_STATUS_CREATED },

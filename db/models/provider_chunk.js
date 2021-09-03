@@ -150,7 +150,7 @@ class ProviderChunk extends Model {
 
 ProviderChunk.init({
     id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
-    size: { type: Sequelize.DataTypes.INTEGER },
+    size: { type: Sequelize.DataTypes.INTEGER, allowNull: true},
 
     real_id: { type: Sequelize.DataTypes.STRING },
     real_id_verified: { type: Sequelize.DataTypes.BOOLEAN },
