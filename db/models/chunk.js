@@ -44,11 +44,11 @@ class Chunk extends Model {
     }
 
     getSize() {
-        if (typeof this.size !== 'undefined') {
+        if (typeof this.size !== 'undefined' && this.size !== null) {
             return this.size;
         } else {
             const filePath = Chunk.getChunkStoragePath(this.id);
-            if (!fs.existsSync(filePath)) return undefined;
+            if (!fs.existsSync(filePath)) throw new Error('cannot stat file '+filePath); // todo: sanitize
             return fs.statSync(filePath).size;
         }
     }
@@ -57,11 +57,8 @@ class Chunk extends Model {
         if (!Buffer.isBuffer(rawData)) throw Error('Chunk.findOrCreateByData: rawData must be a Buffer');
 
         let id = this.ctx.utils.hashFnHex(rawData);
-        let result = await this.find(id);
-        if (result === null) {
-            result = this.build();
-            this.id = id;
-        }
+        let result = await this.findOrCreate(id);
+        console.log({result});
 
         result.setData(rawData);
 

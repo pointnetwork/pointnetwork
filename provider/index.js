@@ -135,44 +135,41 @@ class Provider {
     }
 
     async STORE_CHUNK_DATA(request, response, next) {
+        // todo: transaction/locking
+
         const chunk_id = request.params[0]; // todo: validate
 
         console.log('STORE_CHUNK_DATA________________', {request});
 
         try {
-            return await Model.transaction(async(t) => {
-                let chunk = await ProviderChunk.findOrFail(chunk_id, {
-                    lock: t.LOCK.UPDATE,
-                    transaction: t,
-                });
+            let chunk = await ProviderChunk.findOrCreate(chunk_id);
 
-                const segment_index = request.params[1]; // todo: validate
-                const segment_data = request.params[2]; // todo: validate
+            const segment_index = request.params[1]; // todo: validate
+            const segment_data = request.params[2]; // todo: validate
 
-                // todo: if the chunk is already there (and findByPk found it) don't change anything maybe?
+            // todo: if the chunk is already there (and findByPk found it) don't change anything maybe?
 
-                if(! Buffer.isBuffer(segment_data) ) {
-                    return next(new Error('Error while loading segment data from params: segment_data should be a buffer'));
+            if(! Buffer.isBuffer(segment_data) ) {
+                return next(new Error('Error while loading segment data from params: segment_data should be a buffer'));
+            }
+
+            try {
+                await chunk.setSegmentData(segment_data, segment_index);
+            } catch(e) {
+                if (/EINVALIDHASH/.test(e)) {
+                    this.ctx.log.debug(e); // todo: remove;
+                    return next(new Error('Error while attempting to setSegmentData on a provider_chunk. Possible mismatch of the hash and the data.'));
+                } else {
+                    this.ctx.log.warn('Error while attempting to setSegmentData on a provider_chunk with id '+chunk_id+': '+e); // todo: remove explanation if not in debug mode
+                    this.ctx.log.debug(e.stack);
+                    return next(new Error('Error while attempting to setSegmentData on a provider_chunk.'));
                 }
+            }
 
-                try {
-                    await chunk.setSegmentData(segment_data, segment_index);
-                } catch(e) {
-                    if (/EINVALIDHASH/.test(e)) {
-                        this.ctx.log.debug(e); // todo: remove;
-                        return next(new Error('Error while attempting to setSegmentData on a provider_chunk. Possible mismatch of the hash and the data.'));
-                    } else {
-                        this.ctx.log.warn('Error while attempting to setSegmentData on a provider_chunk with id '+chunk_id+': '+e); // todo: remove explanation if not in debug mode
-                        this.ctx.log.debug(e.stack);
-                        return next(new Error('Error while attempting to setSegmentData on a provider_chunk.'));
-                    }
-                }
+            chunk.status = ProviderChunk.STATUS_CREATED; // todo: ? always in this status?
+            await chunk.save();
 
-                chunk.status = ProviderChunk.STATUS_CREATED; // todo: ? always in this status?
-                await chunk.save({ transaction: t });
-
-                return response.send([chunk_id]); // success
-            });
+            return response.send([chunk_id]); // success
         } catch(e) {
             return next(e); // todo: in cases like this, it must fail when in development mode
         }
@@ -184,45 +181,37 @@ class Provider {
         // todo: make sure you agreed to storing it + conditions
 
         try {
-            await Model.transaction(async(t) => {
-                let chunk = await ProviderChunk.findByPk(chunk_id, {
-                    lock: t.LOCK.UPDATE,
-                    transaction: t,
-                });
-                if (!chunk) {
-                    chunk = await ProviderChunk.build({}, { transaction: t });
-                    chunk.id = chunk_id;
-                }
+            let chunk = await ProviderChunk.findOrCreate(chunk_id);
 
-                if (chunk.status === ProviderChunk.STATUS_STORED) {
-                    // todo: check the integrity of the data before confidently saying you have the chunk
-                    throw new Error('ECHUNKALREADYSTORED');
-                }
+            if (chunk.status === ProviderChunk.STATUS_STORED) {
+                // todo: check the integrity of the data before confidently saying you have the chunk
+                throw new Error('ECHUNKALREADYSTORED');
+            }
 
-                const segment_hashes = request.params[1].map(x => x.toString('hex')); // todo: validate that it's array of valid buffers etc.
-                const chunk_size = request.params[2]; // todo: validate
-                const chunk_real_id = request.params[3]; // todo: validate
-                const chunk_public_key = request.params[4]; // todo: validate
-                const chunk_real_size = request.params[5]; // todo: validate
+            const segment_hashes = request.params[1].map(x => x.toString('hex')); // todo: validate that it's array of valid buffers etc.
+            const chunk_size = request.params[2]; // todo: validate
+            const chunk_real_id = request.params[3]; // todo: validate
+            const chunk_public_key = request.params[4]; // todo: validate
+            const chunk_real_size = request.params[5]; // todo: validate
 
-                // todo: if the chunk is already there (and findByPk found it) don't change anything maybe?
+            // todo: if the chunk is already there (and findByPk found it) don't change anything maybe?
 
-                chunk.segment_hashes = segment_hashes;
-                chunk.validateSegmentHashes();
+            chunk.segment_hashes = segment_hashes;
+            chunk.validateSegmentHashes();
 
-                chunk.public_key = chunk_public_key;
-                chunk.real_id = chunk_real_id;
-                chunk.real_id_verified = false;
-                chunk.size = chunk_size;
-                chunk.real_size = chunk_real_size;
+            // todo: what if you're rewriting valid information about the chunk?? validate if it's real information
+            chunk.public_key = chunk_public_key;
+            chunk.real_id = chunk_real_id;
+            chunk.real_id_verified = false;
+            chunk.size = chunk_size;
+            chunk.real_size = chunk_real_size;
 
-                chunk.status = ProviderChunk.STATUS_STORED; // todo: ? always in this status?
-                await chunk.save({ transaction: t });
+            chunk.status = ProviderChunk.STATUS_STORED; // todo: ? always in this status?
+            await chunk.save();
 
-                response.send([chunk_id]); // success
-            });
+            response.send([chunk_id]); // success
         } catch(e) {
-            return next(e); // todo: in cases like this, it must fail when in development mode
+            return next(e); // todo: in cases like this, it must fail when in development mode // todo: don't show too much about an error to the client in prod
         }
     }
 
@@ -239,8 +228,12 @@ class Provider {
     }
     async GET_DECRYPTED_CHUNK(request, response, next) {
         const chunk_real_id = request.params[0]; // todo: validate
-        const chunk = await ProviderChunk.findBy('real_id', chunk_real_id);
-        if (!chunk) return next(new Error('ECHUNKNOTFOUND: Decrypted chunk with id '+chunk_real_id+' is not found'));
+        let chunk;
+        try {
+            chunk = await ProviderChunk.findOneByOrFail('real_id', chunk_real_id);
+        } catch(e) {
+            return next(new Error('ECHUNKNOTFOUND'));
+        }
 
         if (! chunk.hasDecryptedData()) {
             chunk.getData(); // We're calling this so that if the chunk file doesn't exist, it gets reassembled from the segments

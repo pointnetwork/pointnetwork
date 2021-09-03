@@ -503,27 +503,30 @@
                     "seqType": "Sequelize.INTEGER"
                 },
                 "real_id": {
-                    "allowNull": false,
+                    "allowNull": true,
                     "field": "real_id",
                     "seqType": "Sequelize.STRING"
                 },
                 "real_id_verified": {
-                    "allowNull": false,
+                    "allowNull": true,
                     "field": "real_id_verified",
                     "seqType": "Sequelize.BOOLEAN"
                 },
                 "real_size": {
-                    "allowNull": false,
+                    "allowNull": true,
                     "field": "real_size",
                     "seqType": "Sequelize.INTEGER"
                 },
                 "status": {
                     "allowNull": false,
+                    "defaultValue": {
+                        "value": "s0"
+                    },
                     "field": "status",
                     "seqType": "Sequelize.STRING"
                 },
                 "public_key": {
-                    "allowNull": false,
+                    "allowNull": true,
                     "field": "public_key",
                     "seqType": "Sequelize.TEXT"
                 },
@@ -567,5 +570,5 @@
             }
         }
     },
-    "revision": 4
+    "revision": 1
 }

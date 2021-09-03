@@ -23,7 +23,7 @@ var Sequelize = require('sequelize');
  * addIndex "storage_links_merkle_root" to table "storage_links"
  * addIndex "file_maps_chunk_id" to table "file_maps"
  * addIndex "file_maps_file_id" to table "file_maps"
- * addIndex "file_maps_file_id_chunk_id_chunk_index" to table "file_maps"
+ * addIndex "file_maps_file_id_chunk_id_offset" to table "file_maps"
  * addIndex "provider_chunks_status" to table "provider_chunks"
  * addIndex "provider_chunks_real_id" to table "provider_chunks"
  *
@@ -32,7 +32,7 @@ var Sequelize = require('sequelize');
 var info = {
     "revision": 1,
     "name": "automigration",
-    "created": "2021-08-29T20:17:44.449Z",
+    "created": "2021-09-03T13:43:43.613Z",
     "comment": ""
 };
 
@@ -52,32 +52,34 @@ var migrationCommands = function(transaction) {
                     "size": {
                         "type": Sequelize.INTEGER,
                         "field": "size",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "ul_status": {
                         "type": Sequelize.STRING,
                         "field": "ul_status",
+                        "defaultValue": "us0",
                         "allowNull": false
                     },
                     "dl_status": {
                         "type": Sequelize.STRING,
                         "field": "dl_status",
+                        "defaultValue": "ds0",
                         "allowNull": false
                     },
                     "redundancy": {
                         "type": Sequelize.INTEGER,
                         "field": "redundancy",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "expires": {
                         "type": Sequelize.BIGINT,
                         "field": "expires",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "autorenew": {
                         "type": Sequelize.BOOLEAN,
                         "field": "autorenew",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "created_at": {
                         "type": Sequelize.DATE,
@@ -115,7 +117,7 @@ var migrationCommands = function(transaction) {
                     "size": {
                         "type": Sequelize.INTEGER,
                         "field": "size",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "chunkIds": {
                         "type": Sequelize.JSON,
@@ -125,27 +127,29 @@ var migrationCommands = function(transaction) {
                     "ul_status": {
                         "type": Sequelize.STRING,
                         "field": "ul_status",
+                        "defaultValue": "us0",
                         "allowNull": false
                     },
                     "dl_status": {
                         "type": Sequelize.STRING,
                         "field": "dl_status",
+                        "defaultValue": "ds0",
                         "allowNull": false
                     },
                     "redundancy": {
                         "type": Sequelize.INTEGER,
                         "field": "redundancy",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "expires": {
                         "type": Sequelize.BIGINT,
                         "field": "expires",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "autorenew": {
                         "type": Sequelize.BOOLEAN,
                         "field": "autorenew",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "created_at": {
                         "type": Sequelize.DATE,
@@ -216,32 +220,33 @@ var migrationCommands = function(transaction) {
                     "size": {
                         "type": Sequelize.INTEGER,
                         "field": "size",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "real_id": {
                         "type": Sequelize.STRING,
                         "field": "real_id",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "real_id_verified": {
                         "type": Sequelize.BOOLEAN,
                         "field": "real_id_verified",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "real_size": {
                         "type": Sequelize.INTEGER,
                         "field": "real_size",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "status": {
                         "type": Sequelize.STRING,
                         "field": "status",
+                        "defaultValue": "s0",
                         "allowNull": false
                     },
                     "public_key": {
                         "type": Sequelize.TEXT,
                         "field": "public_key",
-                        "allowNull": false
+                        "allowNull": true
                     },
                     "segment_hashes": {
                         "type": Sequelize.JSON,
@@ -429,9 +434,9 @@ var migrationCommands = function(transaction) {
                         "unique": true,
                         "allowNull": false
                     },
-                    "chunk_index": {
+                    "offset": {
                         "type": Sequelize.INTEGER,
-                        "field": "chunk_index",
+                        "field": "offset",
                         "allowNull": false
                     },
                     "created_at": {
@@ -610,10 +615,10 @@ var migrationCommands = function(transaction) {
             fn: "addIndex",
             params: [
                 "file_maps",
-                ["file_id", "chunk_id", "chunk_index"],
+                ["file_id", "chunk_id", "offset"],
                 {
-                    "indexName": "file_maps_file_id_chunk_id_chunk_index",
-                    "name": "file_maps_file_id_chunk_id_chunk_index",
+                    "indexName": "file_maps_file_id_chunk_id_offset",
+                    "name": "file_maps_file_id_chunk_id_offset",
                     "transaction": transaction
                 }
             ]

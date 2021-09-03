@@ -48,25 +48,18 @@ class Storage {
         autorenew = this.ctx.config.client.storage.default_autorenew
     ) {
         // Create at first to be able to chunkify and get the file id (hash), later we'll try to load it if it already exists
-        let file = File.build();
-        file.original_path = filePath; // todo: should we rename it to lastoriginalPath or something? or store somewhere // todo: validate it exists
-        // todo: validate redundancy, expires and autorenew fields
-        file.redundancy = redundancy;
-        file.expires = expires;
-        file.autorenew = autorenew;
-        file.ul_status = File.UPLOADING_STATUS_CREATED;
-        file.dl_status = File.DOWNLOADING_STATUS_CREATED;
-        await file.chunkify(); // to receive an id (hash) // Note: this will .save() it!
-
-        const existingFile = File.find(file.id);
-        if (existingFile === null) {
-            file = existingFile;
-        }
+        let throwAwayFile = File.build();
+        throwAwayFile.original_path = filePath; // todo: should we rename it to lastoriginalPath or something? or store somewhere // todo: validate it exists
+        await throwAwayFile.chunkify(); // to receive an id (hash) // Note: this will .save() it!
 
         // Setting `originalPath` to the `chunkify`ed version of `file`,
         // instead of the path where we find the original file source.
-        file.original_path = path.join(this.getCacheDir(), 'chunk_'+file.id);
+        // todo: should we?
+        const original_path = path.join(this.getCacheDir(), 'chunk_'+throwAwayFile.id);
 
+        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } })) [0];
+
+        // todo: validate redundancy, expires and autorenew fields. merge them if they're already there
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
         file.expires = Math.max(parseInt(file.expires)||0, parseInt(expires)||0);
         file.autorenew = (!!file.autorenew) ? !!file.autorenew : !!autorenew;
@@ -174,9 +167,9 @@ class Storage {
 
     async enqueueFileForDownload(id, originalPath) {
         if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
-        let file = await File.findOrCreate(id);
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
         // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
-        if (! file.original_path) file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
+        // if (! file.original_path) file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
         if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
             file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
             await file.save();
@@ -190,7 +183,7 @@ class Storage {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
-        let file = await File.findOrCreate(id);
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
@@ -200,12 +193,14 @@ class Storage {
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
                 let file = await File.findOrFail(id);
-                if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED || file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
+                if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
                     setTimeout(() => {
                         this.tick('downloading');
                     }, 0);
 
                     resolve(file);
+                } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
+                    reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
                 } else {
                     waitUntilRetrieval(resolve, reject);
                 }
@@ -266,6 +261,7 @@ class Storage {
 
     async chooseProviderCandidate(recursive = true) {
         try {
+            // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
             const provider = await Model.transaction(async(t) => {
                 const storageProviders = await this.ctx.web3bridge.getAllStorageProviders();
                 // console.log({storageProviders})
@@ -335,14 +331,15 @@ class Storage {
 
         this.send('GET_DECRYPTED_CHUNK', [chunk.id], provider.id, async(err, result) => { // todo: also send conditions
             if (err) {
-                console.log(err); // todo: for some reason, throw err doesn't display the error
-
-                if (_.startsWith(err, 'Error: ECHUNKNOTFOUND')) {
+                if (err.message && err.message.includes('ECHUNKNOTFOUND')) {
                     chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
                     await chunk.save();
                     await chunk.reconsiderDownloadingStatus(true);
                     return;
-                } else throw err;
+                } else {
+                    console.log({err, result}); // todo: for some reason, throw err doesn't display the error
+                    throw err;
+                } // todo: don't die
             } // todo
 
             const chunk_id = result[0]; // todo: validate
@@ -665,7 +662,7 @@ class Storage {
         // all mixed up when they were actually sent to the service provider, which made for invalid decryption
 
         try {
-            const redkey = await Model.transaction(async(t) => {
+            const redkey = await Model.transaction(async(t) => { // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
                 let existingProviderKeys = await Redkey.findAll({
                     where: { provider_id: provider.id },
                     lock: t.LOCK.UPDATE,

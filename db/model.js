@@ -51,15 +51,10 @@ class Model extends sequelize_lib.Model {
 
     static async findOrCreate(...args) {
         if (args.length === 1 && !(typeof args[0] === 'object' && args[0] !== null && !Array.isArray(args[0]))) {
-            let found = await this.findByPk(args[0]);
-            if (found) return found;
-
-            // Not found! Create
-            let created = this.build();
-            created.id = args[0];
-            return created;
+            const returned = await super.findOrCreate({ where: { id: args[0] }});
+            return returned[0];
         } else {
-            return await super.findOrCreate(args[0]);
+            return await super.findOrCreate(...args);
         }
     }
 
@@ -75,13 +70,29 @@ class Model extends sequelize_lib.Model {
         });
     }
 
+    static async findOneBy(field, value) {
+        const collection = await this.findAll({
+            where: {
+                [field]: value
+            },
+            limit: 1 // Note: we only want one instance
+        });
+        return (collection.length < 1) ? null : collection[0];
+    }
+
+    static async findOneByOrFail(field, value) {
+        const one = await this.findOneBy(field, value);
+        if (one === null) throw Error('Row not found: Model '+this.constructor.name+', '+field+' #'+value); // todo: sanitize!
+        return one;
+    }
+
     static async find(id) {
         return await this.findByPk(id);
     }
 
     static async findOrFail(id, ...args) {
         const result = await this.findByPk(id, ...args);
-        if (!result) throw Error('Row not found: Model '+this.constructor.name+', id #'+id);
+        if (!result) throw Error('Row not found: Model '+this.constructor.name+', id #'+id); // todo: sanitize!
         return result;
     }
 

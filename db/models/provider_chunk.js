@@ -148,17 +148,27 @@ class ProviderChunk extends Model {
 
 }
 
+ProviderChunk.STATUS_CREATED = 's0';
+ProviderChunk.STATUS_DOWNLOADING = 's1';
+ProviderChunk.STATUS_STORED = 's2';
+
+ProviderChunk.STATUSES = {
+    CREATED: ProviderChunk.STATUS_CREATED,
+    DOWNLOADING: ProviderChunk.STATUS_DOWNLOADING,
+    STORED: ProviderChunk.STATUS_STORED,
+};
+
 ProviderChunk.init({
     id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
-    size: { type: Sequelize.DataTypes.INTEGER, allowNull: true},
+    size: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
 
-    real_id: { type: Sequelize.DataTypes.STRING },
-    real_id_verified: { type: Sequelize.DataTypes.BOOLEAN },
-    real_size: { type: Sequelize.DataTypes.INTEGER },
+    real_id: { type: Sequelize.DataTypes.STRING, allowNull: true },
+    real_id_verified: { type: Sequelize.DataTypes.BOOLEAN, allowNull: true },
+    real_size: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
 
-    status: { type: Sequelize.DataTypes.STRING },
+    status: { type: Sequelize.DataTypes.STRING, defaultValue: ProviderChunk.STATUS_CREATED },
 
-    public_key: { type: Sequelize.DataTypes.TEXT },
+    public_key: { type: Sequelize.DataTypes.TEXT, allowNull: true },
 
     segment_hashes: { type: Sequelize.DataTypes.JSON, allowNull: true },
 
@@ -173,15 +183,5 @@ ProviderChunk.init({
         { fields: ['real_id'] },
     ]
 });
-
-ProviderChunk.STATUS_CREATED = 's0';
-ProviderChunk.STATUS_DOWNLOADING = 's1';
-ProviderChunk.STATUS_STORED = 's2';
-
-ProviderChunk.STATUSES = {
-    CREATED: ProviderChunk.STATUS_CREATED,
-    DOWNLOADING: ProviderChunk.STATUS_DOWNLOADING,
-    STORED: ProviderChunk.STATUS_STORED,
-};
 
 module.exports = ProviderChunk;

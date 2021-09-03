@@ -3,6 +3,7 @@ const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
+const _ = require('lodash');
 let Chunk;
 
 class File extends Model {
@@ -20,7 +21,6 @@ class File extends Model {
         if (! this.chunkIds) {
             throw Error('You need to chunkify the file first before calculating a merkle tree');
         }
-        console.log(this.chunkIds);
         return [...this.chunkIds, this.id];
     }
 
@@ -172,8 +172,11 @@ class File extends Model {
         await this.changeULStatus((chunks_uploading > 0) ? File.UPLOADING_STATUS_UPLOADING : File.UPLOADING_STATUS_UPLOADED);
     }
 
-    async reconsiderDownloadingStatus(cascade) {
-        const chunkinfo_chunk = await Chunk.findOrCreate(this.id);
+    async reconsiderDownloadingStatus(cascade) {  // todo: cascade is not used?
+        // todo: wrap everything in a transaction/locking later
+        const chunkinfo_chunk = await Chunk.findOrCreate(this.id); // todo: use with locking
+        // At this point we know for sure that the chunk with this id exists
+
         if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
             await this.changeDLStatus(File.DOWNLOADING_STATUS_FAILED);
             await this.save();
@@ -194,9 +197,13 @@ class File extends Model {
             await this.save();
         }
 
-        const chunks = await this.getAllChunks(); // todo: not important, but consider getting ids at this point, and objs only in the cycle?
+        // ----------------------------------------------
+
+        const chunk_ids = _.uniq( this.getAllChunkIds() );
+
         let needs_downloading = false;
-        await Promise.all(chunks.map(async(chunk, i) => {
+        await Promise.all(chunk_ids.map(async(chunk_id, i) => {
+            let chunk = await Chunk.findOrCreate(chunk_id);
             await chunk.reconsiderDownloadingStatus(false);
             if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
                 await this.changeDLStatus(File.DOWNLOADING_STATUS_FAILED);
@@ -256,6 +263,7 @@ class File extends Model {
         return fs.readFileSync(this.original_path, encoding);
     }
 
+    // todo: make into static, and do as few side-effects as possible
     async chunkify() {
         if (! this.chunkIds) {
             const CHUNK_SIZE_BYTES = this.ctx.config.storage.chunk_size_bytes;
@@ -312,7 +320,7 @@ class File extends Model {
                             let chunkInfoContentsBuffer = Buffer.from(chunkInfoContents, 'utf-8');  // todo: sure it's utf8? buffer uses utf8 by default anyway when casting. but what about utf16?
                             let chunkInfo = await Chunk.findOrCreateByData(chunkInfoContentsBuffer);
                             this.id = chunkInfo.id;
-                            const alreadyExistingFile = await File.findByPk(this.id);
+                            const alreadyExistingFile = await File.findByPk(this.id); // todo: use findOrCreate with locking
                             if (alreadyExistingFile) {
                                 // A file with this id already exists! This changes everything
                                 // TODO: figure out how to merge redundancy, expires, autorenew etc.
@@ -341,7 +349,7 @@ class File extends Model {
 
                                 // no await needed, let them be free
                                 (async (i, chunkId) => {
-                                    let chunk = await Chunk.findOrCreate(chunkId);
+                                    let chunk = await Chunk.findOrCreate(chunkId); // todo: use with locking
                                     let offset = i * CHUNK_SIZE_BYTES;
                                     chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
                                     chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
