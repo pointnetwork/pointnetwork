@@ -139,8 +139,7 @@ class Provider {
         // todo: transaction/locking
 
         const chunk_id = request.params[0]; // todo: validate
-
-
+        
         try {
             let chunk = await ProviderChunk.findOrCreate(chunk_id);
 
