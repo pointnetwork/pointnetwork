@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { existsSync, writeFileSync, unlinkSync } = require ('fs')
+const { existsSync, writeFileSync, unlinkSync, mkdirSync } = require ('fs')
 const Web3 = require('web3')
 
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000
@@ -69,6 +69,14 @@ if (process.env.BLOCKCHAIN_NETWORK_ID) {
 }
 
 writeFileSync (targetConfig, JSON.stringify(config, null, 2))
+
+if (!existsSync ('/data/data')) {
+    mkdirSync('/data/data');
+}
+
+if (!existsSync ('/data/data/dht_peercache.db')) {
+    writeFileSync ('{}', '/data/data/dht_peercache.db');
+}
 
 console.info ('Done.')
 
