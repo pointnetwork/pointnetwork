@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const _ = require('lodash');
+const utils = require('../../core/utils');
 let StorageLink;
 let File;
 let FileMap;
@@ -25,7 +26,7 @@ class Chunk extends Model {
 
     setData(rawData) {
         if (!Buffer.isBuffer(rawData)) throw Error('Chunk.setData: rawData must be a Buffer');
-        let hash = this.ctx.utils.hashFnHex(rawData);
+        let hash = utils.hashFnHex(rawData);
 
         if (this.id) {
             if (this.id !== hash) {
@@ -56,7 +57,7 @@ class Chunk extends Model {
     static async findOrCreateByData(rawData) {
         if (!Buffer.isBuffer(rawData)) throw Error('Chunk.findOrCreateByData: rawData must be a Buffer');
 
-        let id = this.ctx.utils.hashFnHex(rawData);
+        let id = utils.hashFnHex(rawData);
         let result = await this.findOrCreate(id);
         console.log({result});
 
@@ -174,7 +175,7 @@ class Chunk extends Model {
                 if (! allStatuses.includes(status) && status !== 'all') return void 0;
                 if (status === 'all') {
                     let results = await Promise.all(allStatuses.map(async(s) => await this.getStorageLinks()[s]));
-                    return this.ctx.utils.iterableFlat(results);
+                    return utils.iterableFlat(results);
                 }
                 return await StorageLink.byChunkIdAndStatus(this.id, status);
             },
@@ -197,14 +198,14 @@ class Chunk extends Model {
 
     static getChunkStoragePath(id) {
         const cache_dir = path.join(this.ctx.datadir, this.ctx.config.client.storage.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         return path.join(cache_dir, 'chunk_' + id);
     }
 
     static forceSaveToDisk(data, id = null) {
         if (!Buffer.isBuffer(data)) throw Error('Chunk.forceSaveToDisk: data must be a Buffer');
 
-        if (id === null) id = this.ctx.utils.hashFnHex(data);
+        if (id === null) id = utils.hashFnHex(data);
 
         // todo: dont zero out the rest of the chunk if it's the last one, save space
 

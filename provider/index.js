@@ -1,6 +1,7 @@
 const ProviderChunk = require('../db/models/provider_chunk');
 const ethUtil = require('ethereumjs-util');
-const utils = require('@pointnetwork/kadence/lib/utils');
+const kadUtils = require('@pointnetwork/kadence/lib/utils');
+const utils = require('../core/utils');
 const path = require('path');
 const { fork } = require('child_process');
 const Model = require("../db/model");
@@ -110,13 +111,13 @@ class Provider {
         }
 
         let decrypted = await chunk.getDecryptedData();
-        if (this.ctx.utils.hashFnHex(decrypted) !== real_id) {
-            console.error({ decryptedToString: decrypted.toString(), chunk_id, real_id, hashFn_of_Decrypted: this.ctx.utils.hashFnHex(decrypted), decryptedLen: decrypted.length }); // todo: delete
+        if (utils.hashFnHex(decrypted) !== real_id) {
+            console.error({ decryptedToString: decrypted.toString(), chunk_id, real_id, hashFn_of_Decrypted: utils.hashFnHex(decrypted), decryptedLen: decrypted.length }); // todo: delete
             // console.log('INVALID ---------------------');
             return next(new Error('EINVALIDCHUNKREALID: chunk.real_id does not match the decrypted data'));
         } else {
-            // console.log('SUCCESS DECRYPTING BACK: ', decrypted.toString(), decrypted.toString('hex'), {chunk_id, real_id, decrypted_id:this.ctx.utils.hashFnHex(decrypted)});
-            // console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: delete
+            // console.log('SUCCESS DECRYPTING BACK: ', decrypted.toString(), decrypted.toString('hex'), {chunk_id, real_id, decrypted_id:utils.hashFnHex(decrypted)});
+            // console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, utils.hashFnHex(decrypted)); // todo: delete
             // console.log('YEP DECRYPTED FINE ---------------------');
         }
 
@@ -125,13 +126,13 @@ class Provider {
 
         let signature;
         try {
-            signature = this.ctx.utils.pointSign([ 'STORAGE', 'PLEDGE', chunk_id, 'time' ], this.privateKey, this.chainId);
+            signature = utils.pointSign([ 'STORAGE', 'PLEDGE', chunk_id, 'time' ], this.privateKey, this.chainId);
         } catch(e) {
             this.ctx.log.error(e);
             return next(new Error('Error while trying to sign the pledge'));
         }
 
-        response.send([chunk_id, this.ctx.utils.serializeSignature(signature)]); // success
+        response.send([chunk_id, utils.serializeSignature(signature)]); // success
     }
 
     async STORE_CHUNK_DATA(request, response, next) {
@@ -243,8 +244,8 @@ class Provider {
         let decrypted = await chunk.getDecryptedData();
 
         if (this.config.revalidate_decrypted_chunk) {
-            if (this.ctx.utils.hashFnHex(decrypted) !== chunk_real_id) {
-                console.error(decrypted.toString(), decrypted.toString('hex'), chunk_real_id, this.ctx.utils.hashFnHex(decrypted)); // todo: remove
+            if (utils.hashFnHex(decrypted) !== chunk_real_id) {
+                console.error(decrypted.toString(), decrypted.toString('hex'), chunk_real_id, utils.hashFnHex(decrypted)); // todo: remove
                 return next(new Error('ECHUNKLOST: Sorry, can\'t decrypt it for some reason...')); // todo: uhm, maybe don't do that?
             }
         }

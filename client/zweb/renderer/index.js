@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
+const utils = require('../../../core/utils');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -255,8 +256,8 @@ class Renderer {
             });
             Twig.exports.extendFunction("storage_put", async(content) => {
                 const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                this.ctx.utils.makeSurePathExists(cache_dir);
-                const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnUtf8Hex(content));
+                utils.makeSurePathExists(cache_dir);
+                const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(content));
                 fs.writeFileSync(tmpPostDataFilePath, content);
                 let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                 return uploaded.id;

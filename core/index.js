@@ -8,7 +8,6 @@ const Client = require('../client');
 const Provider = require('../provider');
 const Wallet = require('../wallet');
 const DB = require('../db');
-const utils = require('./utils');
 
 class Core {
     constructor(ctx) {
@@ -16,8 +15,6 @@ class Core {
     }
 
     async start() {
-        this.ctx.utils = utils;
-
         // todo: remove in prod
         // if (this.ctx.config.client.wallet.account !== '0x989695771D51dE19e9ccb943d32E58F872267fcC') {
         // DB.__debugClearCompletely(this.ctx);
@@ -71,7 +68,7 @@ class Core {
             //     }
             // }
             //
-            // console.log(this.ctx.utils.hashFnHex(fl));
+            // console.log(utils.hashFnHex(fl));
             // this.ctx.die();
 
             // console.log(await this.ctx.web3bridge.putZRecord('example', '0x05990c8f559f3f16B84595BB46Aa6E7AB3b7a19D'));

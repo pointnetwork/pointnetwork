@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const utils = require('../../core/utils');
 
 class Directory {
     constructor() {
@@ -56,8 +57,8 @@ class Directory {
     }
 
     addFilesFromPath(dirPath) {
-        if (!fs.existsSync(dirPath)) throw Error('directory.js: Directory '+this.ctx.utils.htmlspecialchars(dirPath)+' does not exist');
-        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+this.ctx.utils.htmlspecialchars(dirPath)+' is not a directory');
+        if (!fs.existsSync(dirPath)) throw Error('directory.js: Directory '+utils.escape(dirPath)+' does not exist');
+        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+utils.escape(dirPath)+' is not a directory');
 
         fs.readdirSync(dirPath).forEach(fileName => {
             const combinedFullPath = path.join(dirPath, fileName);

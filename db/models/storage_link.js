@@ -3,6 +3,7 @@ const _ = require('lodash');
 const fs = require('fs');
 const { interpret } = require('xstate');
 const Sequelize = require('sequelize');
+const utils = require('../../core/utils');
 let Chunk = require('./chunk'), Provider = require('./provider'), Redkey = require('./redkey');
 
 class StorageLink extends Model {
@@ -51,13 +52,13 @@ class StorageLink extends Model {
     validatePledge() {
         // todo: make sure this.chunk_id is not null
         // todo: check this.pledge.conditions as well and make sure they're signed off on
-        const contact = this.ctx.utils.urlToContact(this.provider_id);
+        const contact = utils.urlToContact(this.provider_id);
         const publicKey = Buffer.from(contact[0], 'hex');
         const message = [ 'STORAGE', 'PLEDGE', this.pledge.conditions.chunk_id, 'time' ];
 
-        const vrs = this.ctx.utils.deserializeSignature(this.pledge.signature);
+        const vrs = utils.deserializeSignature(this.pledge.signature);
 
-        if (this.ctx.utils.verifyPointSignature(message, vrs, publicKey, this.chainId) !== true) {
+        if (utils.verifyPointSignature(message, vrs, publicKey, this.chainId) !== true) {
             throw new Error('recovered public key does not match provided one');
         }
     }

@@ -2,6 +2,7 @@ const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
+const utils = require('../../core/utils');
 
 // todo: two files? maybe reuse some code at least
 
@@ -12,18 +13,18 @@ class ProviderChunk extends Model {
 
     static getChunkStoragePath(id) {
         const cache_dir = path.join(this.ctx.datadir, this.ctx.config.service_provider.storage.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         return cache_dir + '/' + 'provider_chunk_' + id;
     }
     static getSegmentStoragePath(segment_hash, chunk_id) {
         const cache_dir = path.join(this.ctx.datadir, this.ctx.config.service_provider.storage.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         return cache_dir + '/' + 'provider_chunk_segment_' + segment_hash;
     }
     static getDecryptedChunkStoragePath(id) {
         // todo: can there be a situation where when decrypted, the contents is the same as another decrypted chunk? maybe find a way to store them in one space?
         const cache_dir = path.join(this.ctx.datadir, this.ctx.config.service_provider.storage.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         return cache_dir + '/' + 'provider_chunk_decrypted_' + id;
     }
 
@@ -44,7 +45,7 @@ class ProviderChunk extends Model {
                 const segment_path = ProviderChunk.getSegmentStoragePath(segment_hash, this.id);
                 let buffer = fs.readFileSync(segment_path, { encoding: null }); // todo: what if doesn't exist? then we have an error: Error: ENOENT: no such file or directory, open '/Users/username/.point/test1/data/provider_storage_cache/provider_chunk_segment_a9bf0cd755c9058...
                 data = Buffer.concat([data, buffer]);
-                const segment_real_hash = this.ctx.utils.hashFnHex(buffer);
+                const segment_real_hash = utils.hashFnHex(buffer);
                 if (segment_hash !== segment_real_hash) throw new Error('EINVALIDHASH: Segment read from disk doesn\'t match its ID'); // todo: intercept?
             }
             // Note: Buffer.slice is (start,end) not (start,length)
@@ -79,8 +80,8 @@ class ProviderChunk extends Model {
     //
     //     console.log(decrypted);
     //
-    //     const encrypted_hash = this.ctx.utils.hashFnHex(data);
-    //     const decrypted_hash = this.ctx.utils.hashFnHex(decrypted);
+    //     const encrypted_hash = utils.hashFnHex(data);
+    //     const decrypted_hash = utils.hashFnHex(decrypted);
     //
     //     // todo: something's wrong here. the same chunk with two different keys will be conflicting with itself
     //     if (decrypted_hash !== this.id) {
@@ -96,7 +97,7 @@ class ProviderChunk extends Model {
     // }
 
     validateSegmentHashes() {
-        const merkleTree = this.ctx.utils.merkle.merkle(this.segment_hashes.map(x=>Buffer.from(x, 'hex')), this.ctx.utils.hashFn);
+        const merkleTree = utils.merkle.merkle(this.segment_hashes.map(x=>Buffer.from(x, 'hex')), utils.hashFn);
         if (merkleTree[merkleTree.length-1].toString('hex') !== this.id) {
             throw Error('EINVALIDHASH: Provider Chunk ID and merkle root don\'t match: '+this.id+' vs '+merkleTree[merkleTree.length-1].toString('hex'));
         }
@@ -116,7 +117,7 @@ class ProviderChunk extends Model {
             throw e; // todo: process
         }
         if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setSegmentData: data must be a Buffer!');
-        const data_hash = this.ctx.utils.hashFnHex(rawData);
+        const data_hash = utils.hashFnHex(rawData);
         if (data_hash !== segment_hash) {
             throw Error('EINVALIDHASH: segment hash and data hash don\'t match: '+segment_hash+' vs '+data_hash);
         }
@@ -134,7 +135,7 @@ class ProviderChunk extends Model {
     //
     //     if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setData: rawData must be a Buffer!');
     //
-    //     const data_hash = this.ctx.utils.hashFnHex(rawData);
+    //     const data_hash = utils.hashFnHex(rawData);
     //
     //     if (this.id !== data_hash) {
     //         throw Error('EINVALIDHASH: Provider Chunk ID and data hash don\'t match: '+this.id+' vs '+data_hash);

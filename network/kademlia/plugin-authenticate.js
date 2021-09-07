@@ -1,6 +1,7 @@
 const assert = require('assert');
 const secp256k1 = require('secp256k1');
-const utils = require('@pointnetwork/kadence/lib/utils');
+const kadUtils = require('@pointnetwork/kadence/lib/utils');
+const utils = require('../../core/utils');
 const bsonrpc = require('./bson-rpc');
 const BSON = require('./good-bson');
 const { Transform } = require('stream');
@@ -23,7 +24,7 @@ class AuthenticatePlugin {
 
         this._validatedContacts = new Map();
         this._pendingValidators = new Map();
-        this.identity = utils.toPublicKeyHash(this.publicKey);
+        this.identity = kadUtils.toPublicKeyHash(this.publicKey);
 
         // todo: versioning:
         this.chainId = 7654111; // for internal signatures, we just need it to not coincide with known networks: https://ethereum.stackexchange.com/questions/17051/how-to-select-a-network-id-or-is-there-a-list-of-network-ids
@@ -108,11 +109,11 @@ class AuthenticatePlugin {
         });
         let vrs = ethUtil.ecsign(
             // todo: why not use keccak256 instead for full compatibility?
-            utils._sha256(buffer),
+            kadUtils._sha256(buffer),
             this.privateKey,
             this.chainId
         );
-        let authenticate = bsonrpc.notification('AUTHENTICATE', [ this.ctx.utils.serializeSignature(vrs), this.publicKey.toString('hex') ]);
+        let authenticate = bsonrpc.notification('AUTHENTICATE', [ utils.serializeSignature(vrs), this.publicKey.toString('hex') ]);
 
         payload.push(authenticate);
         callback(null, [
@@ -151,7 +152,7 @@ class AuthenticatePlugin {
         let identity = Buffer.from(identify.params[0], 'hex');
         let [signature, publicKey] = authenticate.params;
 
-        const {v,r,s} = this.ctx.utils.deserializeSignature(signature);
+        const {v,r,s} = utils.deserializeSignature(signature);
 
         let signedPayload = [];
 
@@ -163,11 +164,11 @@ class AuthenticatePlugin {
             }
         }
 
-        signedPayload = utils._sha256(
+        signedPayload = kadUtils._sha256(
             BSON.serialize(signedPayload)
         );
 
-        let publicKeyHash = utils.toPublicKeyHash(Buffer.from(publicKey, 'hex'));
+        let publicKeyHash = kadUtils.toPublicKeyHash(Buffer.from(publicKey, 'hex'));
 
         if (publicKeyHash.compare(identity) !== 0) {
             return callback(new Error('Identity does not match public key'));
