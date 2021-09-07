@@ -538,9 +538,7 @@ class ZProxy {
     async getRootDirectoryForDomain(host) {
         const key = '::rootDir';
         const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
-        console.log({rootDirId});
         if (!rootDirId) throw Error('getRootDirectoryForDomain failed: key '+key+' returned empty: '+rootDirId);
-        console.log('rootDirId for host '+host+' found: '+rootDirId); // todo: delete
         const dirJsonString = await this.ctx.client.storage.readFile(rootDirId, 'utf-8');
         let directory = new Directory(); // todo: cache it, don't download/recreate each time?
         directory.unserialize(dirJsonString);
@@ -550,7 +548,6 @@ class ZProxy {
 
     async getZRouteIdFromDomain(host) {
         const result = await this.ctx.web3bridge.getZRecord(host);
-        console.log('getZRouteIdFromDomain result for '+host, result);
         return result;
 
         // const records = await this.getZDNSRecordsFromDomain(host);

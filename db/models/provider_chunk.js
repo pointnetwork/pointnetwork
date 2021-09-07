@@ -38,8 +38,6 @@ class ProviderChunk extends Model {
 
             if (!this.segment_hashes) throw new Error('?: segment hashes not found'); // todo
 
-            console.log('segment_hashes', this.segment_hashes);
-
             let data = Buffer.alloc(0);
             for(let segment_hash of this.segment_hashes) {
                 const segment_path = ProviderChunk.getSegmentStoragePath(segment_hash, this.id);

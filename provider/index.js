@@ -140,7 +140,6 @@ class Provider {
 
         const chunk_id = request.params[0]; // todo: validate
 
-        console.log('STORE_CHUNK_DATA________________', {request});
 
         try {
             let chunk = await ProviderChunk.findOrCreate(chunk_id);

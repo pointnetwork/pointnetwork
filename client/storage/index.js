@@ -477,11 +477,8 @@ class Storage {
     }
 
     async SEND_STORE_CHUNK_SEGMENTS(data, link) {
-        console.log('1Sending STORE_CHUNK_SEGMENTS_____________', {data, link});
         return new Promise(async(resolve, reject) => {
-            console.log('2Sending STORE_CHUNK_SEGMENTS_____________', {data, link});
             this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
-                console.log('Result for STORE_CHUNK_SEGMENTS', {data, link, err, result})
                 await link.refresh();
                 (!err) ? resolve(true) : reject(err); // machine will move to next state
             });
@@ -490,9 +487,7 @@ class Storage {
 
     async SEND_STORE_CHUNK_DATA(data, link) {
         return new Promise((resolve, reject) => {
-            console.log('Sending STORE_CHUNK_DATA_____________', {data, link});
             this.send('STORE_CHUNK_DATA', data, link.provider_id, async (err, result) => {
-                console.log('result', {err, result});
                 await link.refresh();
                 let idx = data[1];
                 const totalSegments = link.segment_hashes.length;
@@ -513,7 +508,7 @@ class Storage {
                     }
                     return resolve(false); // not done yet
                 } else {
-                    console.log('ERR', err);
+                    console.log('ERR', err); // todo: remove
                     return reject(err);
                 }
             });

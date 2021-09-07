@@ -59,7 +59,6 @@ class Chunk extends Model {
 
         let id = utils.hashFnHex(rawData);
         let result = await this.findOrCreate(id);
-        console.log({result});
 
         result.setData(rawData);
 
