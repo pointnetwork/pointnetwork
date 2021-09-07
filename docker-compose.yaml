@@ -56,6 +56,7 @@ services:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
     ports:
       - '12345:9685'
       - '65500:8666'
@@ -83,6 +84,7 @@ services:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
       - ./example:/app/example:ro
     environment:
       - DATADIR=/data
@@ -106,6 +108,7 @@ services:
       - website_visitor_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
     environment:
       - DATADIR=/data
       - BLOCKCHAIN_HOST=blockchain_node
