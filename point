@@ -47,6 +47,7 @@ program.option('-v, --verbose', 'force the logger to show debug level messages',
 program.command('attach').description('attach to the running point process').action(() => program.attach = true);
 program.command('makemigration').description('[dev mode] auto create db migrations from models').action(() => program.makemigration = true);
 program.command('migrate').description('[dev mode] run migrations').action(() => program.migrate = true);
+program.command('migrate:undo').description('[dev mode] undo migration').action(() => program.migrate = program.migrate_undo = true);
 program.command('demo').description('dump demo configs to ~/.point').action(() => program.demo = true);
 program.command('debug-destroy-everything').description('destroys everything in datadir: database and files. dangerous!').action(() => program.debug_destroy_everything = true);
 program.command('deploy <path>')
@@ -152,7 +153,8 @@ if (program.makemigration) {
     return;
 }
 if (program.migrate) {
-    exec(`npx sequelize-cli db:migrate --env ${ctx.config.db.database}`, (error, stdout, stderr) => {
+    const seq_cmd = (program.migrate_undo) ? 'db:migrate:undo' : 'db:migrate';
+    exec(`npx sequelize-cli ${seq_cmd} --env ${ctx.config.db.database}`, (error, stdout, stderr) => {
         if (error) return console.log(`error: ${error.message}`);
         if (stderr) return console.log(`stderr: ${stderr}`);
         console.log(`${stdout}`);

@@ -18,18 +18,18 @@ Use transactions with locking for update to avoid race conditions.
 
 -----------
 
-## Knex / Postgres
+## Postgres
 
-To test out Knex and Postgres using Docker:
+To test out Sequelize and Postgres using Docker:
 
 1. **Optional** - rebuild the docker image image so that it uses the latest packages: `docker build -t "pointnetwork/pointnetwork_node:dev" .`
 1. Run pointnetwork docker services in dev mode: `docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d`
 1. Follow the logs of the **website_owner** container: `docker-compose logs -f website_owner`
 1. Follow the logs of the **storage_provider** container: `docker-compose logs -f storage_provider`
 1. Connect one terminal to **website_owner** node: `docker exec -it pointnetwork_website_owner bash`
-1. Run the database migrations for the **website_owner** postgres db using `npx knex migrate:latest`
+1. Run the database migrations for the **website_owner** postgres db using `./point migrate`
 1. Connect another terminal to **storage_provider** node: `docker exec -it pointnetwork_storage_provider bash`
-1. Run the database migrations for the **storage_provider** postgres db using `npx knex migrate:latest`
+1. Run the database migrations for the **storage_provider** postgres db using `./point migrate`
 1. Now within the running container terminal for **website_owner** node run a simple example deployment: `./scripts/deploy-sites.sh hello.z --contracts`
 
 ## Check data in Postgres
