@@ -14,6 +14,11 @@ const ProviderChunk = require('../../db/models/provider_chunk');
 const RedKey = require('../../db/models/redkey');
 const StorageLink = require('../../db/models/storage_link');
 
+/***
+ *
+ * PLAYGROUND IS OUTDATED, DON'T USE KNEX FIELD NAMES!
+ */
+
 (async() => {
     // Some examples below to try:
     const allUploadedFiles = await File.allBy('ul_status', File.UPLOADING_STATUS_UPLOADED);
