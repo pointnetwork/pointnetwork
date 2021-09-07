@@ -8,7 +8,7 @@
         "sourceType": "module"
     },
     "rules": {
-        "indent": ["error", 4, {"SwitchCase": {"case": ["error", 4]}}],
+        "indent": ["error", 4, {"SwitchCase": 4}],
         "semi": [2, "always"]
     }
 }
