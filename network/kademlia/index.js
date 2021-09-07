@@ -6,7 +6,6 @@ const _async = require('async');
 const ethUtil = require('ethereumjs-util');
 const AuthenticatePlugin = require('./plugin-authenticate');
 const StorageProviderPlugin = require('./plugin-storage-provider');
-const StorageClientPlugin = require('./plugin-storage-client');
 const kadenceUtils = require('@pointnetwork/kadence/lib/utils');
 const pino = require('pino');
 const SerializerBSON = require('./serializer-bson');
