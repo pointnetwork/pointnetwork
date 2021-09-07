@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
-const utils = require('../../../core/utils');
+const utils = require('#utils');
 
 class Deployer {
     constructor(ctx) {

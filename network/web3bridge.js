@@ -2,7 +2,7 @@ const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
 const ethereumUtils = require('ethereumjs-util');
-const utils = require('../core/utils');
+const utils = require('#utils');;
 const _ = require('lodash');
 
 const ZDNS_ROUTES_KEY = 'zdns/routes';

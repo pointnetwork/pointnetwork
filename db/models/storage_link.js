@@ -3,7 +3,7 @@ const _ = require('lodash');
 const fs = require('fs');
 const { interpret } = require('xstate');
 const Sequelize = require('sequelize');
-const utils = require('../../core/utils');
+const utils = require('#utils');
 let Chunk = require('./chunk'), Provider = require('./provider'), Redkey = require('./redkey');
 
 class StorageLink extends Model {

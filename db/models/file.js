@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const _ = require('lodash');
-const utils = require('../../core/utils');
+const utils = require('#utils');
 let Chunk;
 
 class File extends Model {

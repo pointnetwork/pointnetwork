@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const utils = require('../../core/utils');
+const utils = require('#utils');
 
 class Directory {
     constructor() {

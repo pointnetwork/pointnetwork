@@ -1,7 +1,7 @@
 const ProviderChunk = require('../db/models/provider_chunk');
 const ethUtil = require('ethereumjs-util');
 const kadUtils = require('@pointnetwork/kadence/lib/utils');
-const utils = require('../core/utils');
+const utils = require('#utils');
 const path = require('path');
 const { fork } = require('child_process');
 const Model = require("../db/model");

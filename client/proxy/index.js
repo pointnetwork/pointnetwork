@@ -16,7 +16,7 @@ const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
 const qs = require('query-string');
 const Console = require('../../console');
-const utils = require('../../core/utils');
+const utils = require('#utils');
 
 class ZProxy {
     constructor(ctx) {

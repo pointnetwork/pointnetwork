@@ -75,6 +75,9 @@
     "watch:sites:and:start:docker:dev": "./scripts/await-contracts-docker.js && npm run watch:sites:and:start:dev",
     "watch:site:and:start:docker:dev": "./scripts/await-contracts-docker.js && npx concurrently -n \"pointnetwork,$SITE\" 'npm run start:dev' 'npm run watch:site'"
   },
+  "imports": {
+    "#utils": "./core/utils.js"
+  },
   "nodemonConfig": {
     "ignore": [
       "example/*"

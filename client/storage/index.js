@@ -9,7 +9,7 @@ const path = require('path');
 const { fork } = require('child_process');
 const _ = require('lodash');
 const fs = require('fs');
-const utils = require('../../core/utils');
+const utils = require('#utils');
 const {
     checkExistingChannel,
     createChannel,

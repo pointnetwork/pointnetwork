@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
-const utils = require('../../../core/utils');
+const utils = require('#utils');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
