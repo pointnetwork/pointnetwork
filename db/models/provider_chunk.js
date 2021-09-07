@@ -74,28 +74,6 @@ class ProviderChunk extends Model {
         return fs.existsSync(decryptedFileName);
     }
 
-    // todo:
-    // async setEncryptedData(data, length, pubKey) {
-    //     const decrypted = await Redkey.decryptDataStatic(data, length, pubKey); // todo: what if errors out
-    //
-    //     console.log(decrypted);
-    //
-    //     const encrypted_hash = utils.hashFnHex(data);
-    //     const decrypted_hash = utils.hashFnHex(decrypted);
-    //
-    //     // todo: something's wrong here. the same chunk with two different keys will be conflicting with itself
-    //     if (decrypted_hash !== this.id) {
-    //         throw new Error('Decrypted hash doesn\'t match the provided data');
-    //     }
-    //
-    //     const chunk_file_path = ProviderChunk.getChunkStoragePath(this.id);
-    //
-    //     // todo: check length
-    //
-    //     // todo: what if already exists? should we overwrite again or just use it? without integrity check?
-    //     fs.writeFileSync(chunk_file_path, data, { encoding: null });
-    // }
-
     validateSegmentHashes() {
         const merkleTree = utils.merkle.merkle(this.segment_hashes.map(x=>Buffer.from(x, 'hex')), utils.hashFn);
         if (merkleTree[merkleTree.length-1].toString('hex') !== this.id) {
@@ -127,25 +105,6 @@ class ProviderChunk extends Model {
         // todo: what if already exists? should we overwrite again or just use it? without integrity check?
         fs.writeFileSync(segment_path, rawData, { encoding: null });
     }
-
-    // todo: remove or reenable because setSegmentData replaced this functionality
-    // setData(rawData) {
-    //     // todo: future: dont zero out the rest of the chunk if it's the last one, save space
-    //     // todo: check data length? well, hash should be taking care of it already
-    //
-    //     if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setData: rawData must be a Buffer!');
-    //
-    //     const data_hash = utils.hashFnHex(rawData);
-    //
-    //     if (this.id !== data_hash) {
-    //         throw Error('EINVALIDHASH: Provider Chunk ID and data hash don\'t match: '+this.id+' vs '+data_hash);
-    //     }
-    //
-    //     const chunk_file_path = ProviderChunk.getChunkStoragePath(this.id);
-    //
-    //     // todo: what if already exists? should we overwrite again or just use it? without integrity check?
-    //     fs.writeFileSync(chunk_file_path, rawData, { encoding: null });
-    // }
 
 }
 
