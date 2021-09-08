@@ -272,7 +272,7 @@ class Renderer {
 
                 console.log({encryptedData, unparsedEncryptedSymmetricObjJSON});
                 const encryptedSymmetricObjJS = JSON.parse(unparsedEncryptedSymmetricObjJSON);
-                const encryptedSymmetricObj = {}
+                const encryptedSymmetricObj = {};
                 for (const k in encryptedSymmetricObjJS) {
                     encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricObjJS[k], 'hex');
                 }
@@ -303,21 +303,18 @@ class Renderer {
                 return await this.ctx.web3bridge.sendToContract(host.replace('.z', ''), contractName, methodName, params);
             });
             Twig.exports.extendFunction("contract_events", async(host, contractName, event, filter = {}) => {
-                const options = { filter,
-                                  fromBlock: 1,
-                                  toBlock: 'latest' };
+                const options = { filter, fromBlock: 1, toBlock: 'latest' };
                 const events =  await this.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
-                for(let ev of events) console.log(ev, ev.raw)
+                for(let ev of events) console.log(ev, ev.raw);
 
-                const eventData = events.map((event) =>
-                (({ returnValues }) => ({ data: returnValues }))(event))
-                return eventData
+                const eventData = events.map((event) => (({ returnValues }) => ({ data: returnValues }))(event));
+                return eventData;
             });
             Twig.exports.extendFunction("default_wallet_address", async(id, passcode) => {
                 return this.ctx.config.client.wallet.account;
             });
             Twig.exports.extendFunction("is_authenticated", async(auth) => {
-                return auth.walletid != undefined
+                return auth.walletid !== undefined;
             });
             Twig.exports.extendFunction("contract_list", async(target, contractName, method, params = []) => {
                 let i = 0;
