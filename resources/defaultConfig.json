@@ -45,7 +45,7 @@
       "host": "127.0.0.1",
       "sanitize_html": false,
       "cache_path": "data/zproxy_cache",
-      "redirect_to_https": false
+      "redirect_to_https": true
     },
     "wallet": {
       "__do not remove this section__": null,
