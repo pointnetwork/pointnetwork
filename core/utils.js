@@ -6,9 +6,9 @@ const kadUtils = require('@pointnetwork/kadence').utils;
 utils = {
     makeSurePathExists: function(path) {
         try {
-            mkdirp.sync(path)
+            mkdirp.sync(path);
         } catch (err) {
-            if (err.code !== 'EEXIST') throw err
+            if (err.code !== 'EEXIST') throw err;
         }
     },
 
@@ -133,7 +133,7 @@ utils = {
     nl2br: function(text) {
         return text.replace(/\n/g, '<br>');
     },
-}
+};
 
 utils.merkle = require('./merkle-utils');
 
