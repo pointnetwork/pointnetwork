@@ -13,7 +13,6 @@ services:
       - ./provider:/app/provider:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./seq:/app/seq:ro
       - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
       - ./truffle:/app/truffle:ro
@@ -34,7 +33,6 @@ services:
       - ./provider:/app/provider:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./seq:/app/seq:ro
       - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
       - ./truffle:/app/truffle:ro
@@ -55,7 +53,6 @@ services:
       - ./provider:/app/provider:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./seq:/app/seq:ro
       - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
       - ./truffle:/app/truffle:ro
