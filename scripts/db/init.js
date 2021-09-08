@@ -2,7 +2,6 @@ const fs = require('fs');
 const os = require("os");
 const _ = require('lodash')
 const pino = require('pino');
-const utils = require('../../core/utils');
 const defaultConfig = require('../../resources/defaultConfig.json')
 
 const ctx = {};
@@ -15,7 +14,6 @@ ctx.configPath = nodeConfigPath
 ctx.basepath = __dirname;
 ctx.log = pino()
 ctx.config = _.merge(defaultConfig, config)
-ctx.utils = utils;
 ctx.exit = (code = 1) => { process.exit(code); };
 ctx.die = (err) => { ctx.log.fatal(err); ctx.exit(1); };
 

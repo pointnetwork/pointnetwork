@@ -2,6 +2,7 @@ const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
 const ethereumUtils = require('ethereumjs-util');
+const utils = require('#utils');;
 const _ = require('lodash');
 
 const ZDNS_ROUTES_KEY = 'zdns/routes';
@@ -62,7 +63,7 @@ class Web3Bridge {
 
             return new this.web3.eth.Contract(abi.abi, at);
         } catch(e) {
-            throw Error('Could not read abi of the contract '+this.ctx.utils.htmlspecialchars(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
+            throw Error('Could not read abi of the contract '+utils.escape(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
         }
     }
 

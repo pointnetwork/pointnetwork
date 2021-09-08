@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
+const utils = require('#utils');
 
 class Deployer {
     constructor(ctx) {
@@ -15,7 +16,7 @@ class Deployer {
 
     getCacheDir() {
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         return cache_dir;
     }
 
@@ -57,7 +58,7 @@ class Deployer {
         let routes = JSON.parse(routesFile);
 
         console.log('uploading route file...', {routes});
-        const tmpRoutesFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnUtf8Hex(JSON.stringify(routes)));
+        const tmpRoutesFilePath = path.join(this.getCacheDir(), utils.hashFnUtf8Hex(JSON.stringify(routes)));
         fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
         let routeFileUploaded = await this.ctx.client.storage.putFile(tmpRoutesFilePath); // todo: and more options
@@ -162,7 +163,7 @@ class Deployer {
         this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
         const artifactsJSON = JSON.stringify(artifacts);
-        const tmpFilePath = path.join(this.getCacheDir(), this.ctx.utils.hashFnUtf8Hex(artifactsJSON));
+        const tmpFilePath = path.join(this.getCacheDir(), utils.hashFnUtf8Hex(artifactsJSON));
         fs.writeFileSync(tmpFilePath, artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts');
@@ -185,8 +186,8 @@ class Deployer {
 
     async storagePutUtf8String(content) {
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
-        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnUtf8Hex(content));
+        utils.makeSurePathExists(cache_dir);
+        const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(content));
         fs.writeFileSync(tmpPostDataFilePath, content);
         let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
         return uploaded.id;
@@ -207,7 +208,7 @@ class Deployer {
 
                         const tmpFilePath = path.join (
                             this.getCacheDir (),
-                            this.ctx.utils.hashFnUtf8Hex (value.blob)
+                            utils.hashFnUtf8Hex (value.blob)
                         );
 
                         fs.writeFileSync (tmpFilePath, String (value.blob));

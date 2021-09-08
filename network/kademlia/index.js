@@ -6,13 +6,12 @@ const _async = require('async');
 const ethUtil = require('ethereumjs-util');
 const AuthenticatePlugin = require('./plugin-authenticate');
 const StorageProviderPlugin = require('./plugin-storage-provider');
-const StorageClientPlugin = require('./plugin-storage-client');
 const kadenceUtils = require('@pointnetwork/kadence/lib/utils');
 const pino = require('pino');
 const SerializerBSON = require('./serializer-bson');
 const Messenger = require('@pointnetwork/kadence/lib/messenger');
 const { log } = require('console');
-const KademliaStorage = require('./kademlia-storage');
+const level = require('level');
 
 class Kademlia {
     constructor(ctx) {
@@ -23,7 +22,9 @@ class Kademlia {
     async start() {
         this.patchKadence();
 
-        const storage = new KademliaStorage(this.ctx);
+        const storage_leveldb_path = path.join(this.ctx.datadir, this.config.kadence_storage_leveldb_path);
+        if (!fs.existsSync(storage_leveldb_path)) fs.mkdirSync(storage_leveldb_path);
+        const storage = level(storage_leveldb_path);
 
         const networkPrivateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
         const networkPrivateKey = Buffer.from(networkPrivateKeyHex, 'hex');
@@ -95,9 +96,7 @@ class Kademlia {
         // }));
 
         node.rolodex = node.plugin(kadence.rolodex(path.join(this.ctx.datadir, this.config.peer_cache_file_path)));
-
-        node.storage_client = node.plugin(StorageClientPlugin(ctx, networkPublicKey, networkPrivateKey, {}));
-
+        
         if (this.ctx.config.service_provider.enabled) {
             node.storage_provider = node.plugin(StorageProviderPlugin(ctx, networkPublicKey, networkPrivateKey, {}));
         }

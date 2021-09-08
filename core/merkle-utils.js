@@ -4,9 +4,9 @@
 
 const origMerkle = require('merkle-lib');
 
-class MerkleUtils {
+const merkleUtils = {
     // returns the merkle tree
-    static merkle (values, digestFn) {
+    merkle: function(values, digestFn) {
         if (!Array.isArray(values)) throw TypeError('Expected values Array')
         if (typeof digestFn !== 'function') throw TypeError('Expected digest Function')
 
@@ -22,13 +22,11 @@ class MerkleUtils {
             initial_iteration = false;
         } while (level.length > 1)
 
-        const result = [].concat.apply([], levels);
-
-        return result;
-    }
+        return [].concat.apply([], levels);
+    },
 
     // returns an array of hashes of length: values.length / 2 + (values.length % 2)
-    static _derive (values, digestFn, initial_iteration) {
+    _derive: function (values, digestFn, initial_iteration) {
         var length = values.length
         var results = []
 
@@ -44,4 +42,4 @@ class MerkleUtils {
     }
 }
 
-module.exports = MerkleUtils;
+module.exports = merkleUtils;

@@ -74,6 +74,7 @@
     "communication_external_host": "127.0.0.0",
     "bootstrap_nodes": [],
     "peer_cache_file_path": "data/dht_peercache.db",
+    "kadence_storage_leveldb_path": "data/kad_leveldb",
     "solutions_dir_path": "data/dht_solutions/",
     "ssl_enabled": false,
     "key_child_derivation_index": 0,

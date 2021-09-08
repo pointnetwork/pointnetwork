@@ -16,6 +16,7 @@ const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
 const qs = require('query-string');
 const Console = require('../../console');
+const utils = require('#utils');
 
 class ZProxy {
     constructor(ctx) {
@@ -432,8 +433,8 @@ class ZProxy {
                     } else if (_.startsWith(k, 'storage[')) {
                         // storage
                         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                        this.ctx.utils.makeSurePathExists(cache_dir);
-                        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
+                        utils.makeSurePathExists(cache_dir);
+                        const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
                         fs.writeFileSync(tmpPostDataFilePath, v);
                         let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                         let uploaded_id = uploaded.id;
@@ -498,8 +499,8 @@ class ZProxy {
                     } else if (_.startsWith(k, 'storage[')) {
                         // storage
                         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                        this.ctx.utils.makeSurePathExists(cache_dir);
-                        const tmpPostDataFilePath = path.join(cache_dir, this.ctx.utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
+                        utils.makeSurePathExists(cache_dir);
+                        const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
                         fs.writeFileSync(tmpPostDataFilePath, v);
                         let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                         let uploaded_id = uploaded.id;
@@ -514,7 +515,7 @@ class ZProxy {
                     if (paramName in postData) {
                         params.push(postData[paramName]);
                     } else {
-                        return reject('Error: no '+this.ctx.utils.htmlspecialchars(paramName)+' param in the data, but exists as an argument to the contract call.');
+                        return reject('Error: no '+utils.escape(paramName)+' param in the data, but exists as an argument to the contract call.');
                     }
                 }
 
@@ -537,9 +538,7 @@ class ZProxy {
     async getRootDirectoryForDomain(host) {
         const key = '::rootDir';
         const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
-        console.log({rootDirId});
         if (!rootDirId) throw Error('getRootDirectoryForDomain failed: key '+key+' returned empty: '+rootDirId);
-        console.log('rootDirId for host '+host+' found: '+rootDirId); // todo: delete
         const dirJsonString = await this.ctx.client.storage.readFile(rootDirId, 'utf-8');
         let directory = new Directory(); // todo: cache it, don't download/recreate each time?
         directory.unserialize(dirJsonString);
@@ -549,7 +548,6 @@ class ZProxy {
 
     async getZRouteIdFromDomain(host) {
         const result = await this.ctx.web3bridge.getZRecord(host);
-        console.log('getZRouteIdFromDomain result for '+host, result);
         return result;
 
         // const records = await this.getZDNSRecordsFromDomain(host);
@@ -567,7 +565,7 @@ class ZProxy {
     _directoryHtml(id, files) {
         let html = "<html><body style='background-color: #fafaff; padding: 20px;'>";
         html += "<style>th {text-align: left;}</style>";
-        html += "<h1>Index of "+this.ctx.utils.htmlspecialchars(id)+"</h1>";
+        html += "<h1>Index of "+utils.escape(id)+"</h1>";
         html += "<hr><table style='width: 100%;'>";
         html += "<tr><th>File</th><th style='text-align: right;'>Size</th><th style='text-align: right;'>Hash</th></tr>";
         for(let f of files) {
@@ -582,11 +580,11 @@ class ZProxy {
             }
 
             const name = f.name;
-            const ext = this.ctx.utils.htmlspecialchars( name.split('.').slice(-1) );
+            const ext = utils.escape( name.split('.').slice(-1) );
             let link = '/_storage/' + f.id + ((f.type == 'fileptr') ? ('.'+ext) : '');
 
             html += "<tr><td>"+icon+" <a href='"+link+"' target='_blank'>";
-            html += this.ctx.utils.htmlspecialchars(f.name);
+            html += utils.escape(f.name);
             html += "</a></td>";
 
             html += "<td style='text-align: right;'>"+f.size+"</td>";
@@ -601,12 +599,12 @@ class ZProxy {
     _errorMsgHtml(message, code = 500) {
         let formattedMsg;
         if (typeof message==='string') {
-            formattedMsg = this.ctx.utils.htmlspecialchars(message);
+            formattedMsg = utils.escape(message);
         } else if (message instanceof Error) {
-            formattedMsg = this.ctx.utils.htmlspecialchars(message.name+": "+message.message)
+            formattedMsg = utils.escape(message.name+": "+message.message)
                 + "<br><br>"
                 + "<div style='text-align: left; opacity: 70%; font-size: 80%;'>"
-                + this.ctx.utils.nl2br(this.ctx.utils.htmlspecialchars(message.stack)) // todo: careful, stack might give some info about the username and folders etc. to the ajax app. maybe better remove it and only leave in dev mode
+                + utils.nl2br(utils.escape(message.stack)) // todo: careful, stack might give some info about the username and folders etc. to the ajax app. maybe better remove it and only leave in dev mode
                 + "</div>";
         } else {
             formattedMsg = JSON.stringify(message);

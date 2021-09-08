@@ -1,5 +1,9 @@
 # Point Network
 
+Point Network is an implementation of web3.0 decentralized internet.
+
+This repository is the core of Point Network.
+
 ### Run demo in docker compose
 
 The demo setup consists of three Point Network nodes running in a separate containers, a dev blockchain node running a test network (currently the `ganache-cli` is used), and a Point Network contract deployment script running in a dedicated container. Each Point Network node assigned to its own role in the demo. The node roles are:

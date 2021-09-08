@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const crypto = require('crypto');
-const utils = require('../core/utils');
+const utils = require('#utils');
 const defaultConfig = require('../resources/defaultConfig.json');
 
 const BITS = defaultConfig.storage.redkey_encryption_bits;

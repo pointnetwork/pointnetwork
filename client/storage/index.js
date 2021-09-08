@@ -9,6 +9,7 @@ const path = require('path');
 const { fork } = require('child_process');
 const _ = require('lodash');
 const fs = require('fs');
+const utils = require('#utils');
 const {
     checkExistingChannel,
     createChannel,
@@ -98,7 +99,7 @@ class Storage {
 
         // Get an id here:
 
-        const tmpFilePath = path.join(this.getCacheDir(), 'dir-tmp-'+this.ctx.utils.hashFnUtf8Hex(dirPath));
+        const tmpFilePath = path.join(this.getCacheDir(), 'dir-tmp-'+utils.hashFnUtf8Hex(dirPath));
         directory.serializeToFile(tmpFilePath);
 
         let uploadedDirSpec = await this.putFile(tmpFilePath, redundancy, expires, autorenew);
@@ -117,8 +118,8 @@ class Storage {
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
-        if (!fs.existsSync(dirPath)) throw Error('client/storage/index.js: Directory '+this.ctx.utils.htmlspecialchars(dirPath)+' does not exist');
-        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+this.ctx.utils.htmlspecialchars(dirPath)+' is not a directory');
+        if (!fs.existsSync(dirPath)) throw Error('client/storage/index.js: Directory '+utils.escape(dirPath)+' does not exist');
+        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+utils.escape(dirPath)+' is not a directory');
 
         const directory_id = await this.enqueueDirectoryForUpload(dirPath, redundancy, expires, autorenew);
         let waitUntilUpload = (resolve, reject) => {
@@ -218,7 +219,7 @@ class Storage {
         if (!id) throw new Error('undefined or null id passed to storage.readFile');
         id = id.replace('0x', '').toLowerCase();
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         const tmpFileName = path.join(cache_dir, 'file_' + id);
         const file = await this.getFile(id, tmpFileName);
         return file.getData(encoding);
@@ -318,7 +319,7 @@ class Storage {
         // - you have a financial connection
         // - cycle until you find one
         // return ['989695771d51de19e9ccb943d32e58f872267fcc', {'protocol':'http:', 'hostname':'127.0.0.1', 'port':'12345'}];
-        return this.this.ctx.utils.urlToContact( await this.chooseProviderCandidate() );
+        return this.utils.urlToContact( await this.chooseProviderCandidate() );
         // return 'http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc'; // test1 // TODO!
     }
 
@@ -419,10 +420,10 @@ class Storage {
                     let segment_hashes = [];
                     for (let i = 0; i < Math.ceil(data_length / SEGMENT_SIZE_BYTES); i++) { // todo: separate into encryption section
                         // Note: Buffer.slice is (start, end) not (start, length)
-                        segment_hashes.push(this.ctx.utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, i * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES)));
+                        segment_hashes.push(utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, i * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES)));
                     }
 
-                    const merkleTree = this.ctx.utils.merkle.merkle(segment_hashes, this.ctx.utils.hashFn);
+                    const merkleTree = utils.merkle.merkle(segment_hashes, utils.hashFn);
 
                     await link.refresh();
                     // link.encrypted_hash = message.hash;
@@ -476,11 +477,8 @@ class Storage {
     }
 
     async SEND_STORE_CHUNK_SEGMENTS(data, link) {
-        console.log('1Sending STORE_CHUNK_SEGMENTS_____________', {data, link});
         return new Promise(async(resolve, reject) => {
-            console.log('2Sending STORE_CHUNK_SEGMENTS_____________', {data, link});
             this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
-                console.log('Result for STORE_CHUNK_SEGMENTS', {data, link, err, result})
                 await link.refresh();
                 (!err) ? resolve(true) : reject(err); // machine will move to next state
             });
@@ -489,9 +487,7 @@ class Storage {
 
     async SEND_STORE_CHUNK_DATA(data, link) {
         return new Promise((resolve, reject) => {
-            console.log('Sending STORE_CHUNK_DATA_____________', {data, link});
             this.send('STORE_CHUNK_DATA', data, link.provider_id, async (err, result) => {
-                console.log('result', {err, result});
                 await link.refresh();
                 let idx = data[1];
                 const totalSegments = link.segment_hashes.length;
@@ -512,7 +508,7 @@ class Storage {
                     }
                     return resolve(false); // not done yet
                 } else {
-                    console.log('ERR', err);
+                    console.log('ERR', err); // todo: remove
                     return reject(err);
                 }
             });
@@ -622,7 +618,7 @@ class Storage {
             const req = this.queued_requests[contact].shift();
             if (!this.current_requests[contact]) this.current_requests[contact] = [];
             this.current_requests[contact].push(req);
-            return this.ctx.network.kademlia.node.send(req.cmd, req.data, this.ctx.utils.urlToContact(contact), (err, result) => {
+            return this.ctx.network.kademlia.node.send(req.cmd, req.data, utils.urlToContact(contact), (err, result) => {
                 this.current_requests = _.remove(this.current_requests, function(n) {
                     return n.internal_id === req.internal_id;
                 });
@@ -702,7 +698,7 @@ class Storage {
 
     getCacheDir() {
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         return cache_dir;
     }
 }

@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const _ = require('lodash');
+const utils = require('#utils');
 let Chunk;
 
 class File extends Model {
@@ -43,7 +44,7 @@ class File extends Model {
             }
 
             let chunks = this.chunkIds.map(x => Buffer.from(x, 'hex'));
-            this._merkleTree = this.ctx.utils.merkle.merkle(chunks, this.ctx.utils.hashFn);
+            this._merkleTree = utils.merkle.merkle(chunks, utils.hashFn);
         }
 
         return this._merkleTree;
@@ -67,8 +68,8 @@ class File extends Model {
         if (hash !== 'keccak256') {
             // todo: error? ignore?
         }
-        let merkleReassembled = this.ctx.utils.merkle.merkle(chunks.map(x => Buffer.from(x, 'hex')), this.ctx.utils.hashFn).map(x => x.toString('hex'));
-        if (!this.ctx.utils.areScalarArraysEqual(merkleReassembled, merkle)) {
+        let merkleReassembled = utils.merkle.merkle(chunks.map(x => Buffer.from(x, 'hex')), utils.hashFn).map(x => x.toString('hex'));
+        if (!utils.areScalarArraysEqual(merkleReassembled, merkle)) {
             // todo: error? ignore?
             return console.error('MERKLE INCORRECT!', {merkleReassembled, merkle, hash, chunks});
         }
@@ -93,7 +94,7 @@ class File extends Model {
             // todo: make sure data is Buffer
             let data = chunk.getData();
             if (!Buffer.isBuffer(data)) throw Error('File.dumpToDiskFromChunks: data must be a Buffer');
-            if (this.ctx.utils.hashFnHex(data) !== chunk.id) throw Error('Chunk hash doesn\'t match data'); // todo should we throw error or just ignore and return?
+            if (utils.hashFnHex(data) !== chunk.id) throw Error('Chunk hash doesn\'t match data'); // todo should we throw error or just ignore and return?
 
             if (chunkId === this.chunkIds[this.chunkIds.length-1]) {
                 const CHUNK_SIZE_BYTES = this.ctx.config.storage.chunk_size_bytes;
