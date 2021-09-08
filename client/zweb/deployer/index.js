@@ -1,6 +1,5 @@
 const path = require('path');
 const fs = require('fs');
-const _ = require('lodash');
 const utils = require('#utils');
 
 class Deployer {
@@ -71,7 +70,7 @@ class Deployer {
     }
 
     static async getPragmaVersion(source){
-        let regex = /pragma solidity [\^\~\>\<]?=?(?<version>[0-9\.]*);/;
+        let regex = /pragma solidity [\^~><]?=?(?<version>[0-9.]*);/;
         let found = source.match(regex);
         if (found) {
             return found.groups.version;
@@ -176,7 +175,7 @@ class Deployer {
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`);
 
         console.log(`Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`);
-    };
+    }
 
     async updateZDNS(host, id) {
         let target = host.replace('.z', '');

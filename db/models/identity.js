@@ -1,5 +1,4 @@
 const Model = require('../model');
-const Sequelize = require('sequelize');
 
 class Identity extends Model {
     constructor(...args) {

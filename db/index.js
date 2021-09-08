@@ -15,15 +15,10 @@ class DB {
     }
 
     async init() {
-        try {
-            await this.connection.authenticate();
-            this.ctx.log.debug('Connection with DB established successfully')
+        await this.connection.authenticate();
+        this.ctx.log.debug('Connection with DB established successfully');
 
-            Model.connection = this.connection;
-
-        } catch (error) {
-            throw error;
-        }
+        Model.connection = this.connection;
     }
 
     async shutdown() {
@@ -61,8 +56,6 @@ class DB {
 
         ctx.log.info('__debugClearCompletely executed.');
         ctx.die();
-
-        await this.shutdown();
     }
 }
 

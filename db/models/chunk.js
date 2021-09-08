@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const Model = require('../model');
 const fs = require('fs');
 const path = require('path');

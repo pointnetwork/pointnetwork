@@ -36,7 +36,7 @@ class StorageLink extends Model {
     static async byChunkIdAndStatus(chunk_id, status) {
         let where = {
             chunk_id: chunk_id
-        }
+        };
 
         if (status !== 'all') {
             where.status = status;

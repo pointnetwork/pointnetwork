@@ -2,7 +2,7 @@ const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
 const ethereumUtils = require('ethereumjs-util');
-const utils = require('#utils');;
+const utils = require('#utils');
 const _ = require('lodash');
 
 const ZDNS_ROUTES_KEY = 'zdns/routes';
@@ -15,7 +15,7 @@ class Web3Bridge {
         this.chain_id = this.ctx.config.network.web3_chain_id;
 
         // use WebsocketProvider to support subscriptions
-        const localProvider = new Web3.providers.WebsocketProvider(this.connectionString)
+        const localProvider = new Web3.providers.WebsocketProvider(this.connectionString);
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(localProvider); // todo: maybe you should hide it behind this abstraction, no?
         this.ctx.web3bridge = this;
 
@@ -76,9 +76,9 @@ class Web3Bridge {
             if (!gasLimit) gasLimit = await method.estimateGas({ from: account, value: amountInWei });
             return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
         } catch (e) {
-            console.info({ method, account, gasPrice, gasLimit, amountInWei })
-            console.error('web3send error:', e)
-            throw e
+            console.info({ method, account, gasPrice, gasLimit, amountInWei });
+            console.error('web3send error:', e);
+            throw e;
         }
         /*
         .on('transactionHash', function(hash){
@@ -204,7 +204,7 @@ class Web3Bridge {
     }
     async putZRecord(domain, routesFile) {
         domain = domain.replace('.z', ''); // todo: rtrim instead
-        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile)
+        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile);
     }
 
     async getKeyValue(identity, key) {
@@ -233,11 +233,11 @@ class Web3Bridge {
         }
     }
     async toChecksumAddress(address) {
-        const checksumAddress = await this.web3.utils.toChecksumAddress(address)
-        return checksumAddress
+        const checksumAddress = this.web3.utils.toChecksumAddress(address);
+        return checksumAddress;
     }
     async announceStorageProvider(connection, collateral_lock_period, cost_per_kb) {
-        let contract, method, account, gasPrice
+        let contract, method, account, gasPrice;
         try {
             contract = await this.loadStorageProviderRegistryContract();
             method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);

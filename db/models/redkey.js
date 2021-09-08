@@ -1,5 +1,4 @@
 const Model = require('../model');
-const _ = require('lodash');
 const crypto = require('crypto');
 const Provider = require('./provider');
 const Sequelize = require('sequelize');
@@ -42,7 +41,7 @@ class Redkey extends Model {
 
     static async allByProvider(provider) {
         return await this.allBy('provider_id', provider.id);
-    };
+    }
 }
 
 Redkey.init({

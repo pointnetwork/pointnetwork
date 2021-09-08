@@ -1,7 +1,5 @@
 const readline = require('readline');
-const qs = require('query-string');
 const axios = require('axios');
-const _ = require('lodash');
 
 const PROMPT = '> ';
 
@@ -39,7 +37,7 @@ class Console {
             console.log('console dead, exiting');
             process.exit(1);
             //todo: more, close gracefully
-        })
+        });
     }
 
     async cmd_api(...args) {
@@ -47,7 +45,7 @@ class Console {
     }
 
     async cmd_api_get(_host, cmd, ...args) {
-        _host = (_host === 'localhost') ? this.host : _host
+        _host = (_host === 'localhost') ? this.host : _host;
         try {
             const params = this.buildURLParams(args);
             const url = this.buildApiBaseUrl() + cmd + '?' + params;
@@ -59,7 +57,7 @@ class Console {
             });
             return response.data;
         } catch (e) {
-            return {error: `Error fetching ${cmd} : ${e.message}`}
+            return {error: `Error fetching ${cmd} : ${e.message}`};
         }
     }
 
@@ -107,7 +105,7 @@ class Console {
     }
 
     get host() {
-        return `http://localhost:${parseInt(ctx.config.api.port)}`;
+        return `http://localhost:${parseInt(this.ctx.config.api.port)}`;
     }
 
     get path() {

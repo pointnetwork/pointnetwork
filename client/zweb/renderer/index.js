@@ -1,5 +1,4 @@
 let TwigLib = require('twig');
-let moment = require('moment');
 const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');

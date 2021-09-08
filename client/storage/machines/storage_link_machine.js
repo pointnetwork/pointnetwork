@@ -1,5 +1,5 @@
 const { Machine } = require('xstate');
-const StorageLink = require('../../../db/models/storage_link')
+const StorageLink = require('../../../db/models/storage_link');
 const _ = require('lodash');
 
 exports.createStateMachine = function createStateMachine(link, chunk) {
@@ -164,10 +164,10 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             await link.save();
 
                             ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 60, link.state);
-                            done = false;
+                            let done = false;
                             while(!done) {
                                 await link.refresh();
-                                data = await prepareChunkData();
+                                const data = await prepareChunkData();
                                 done = await storage.SEND_STORE_CHUNK_DATA(data, link);
                                 await link.save();
                             }

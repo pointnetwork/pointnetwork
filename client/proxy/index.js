@@ -113,7 +113,7 @@ class ZProxy {
         const redirectToHttpsHandler = function(request, response) {
             // Redirect to https
             const reqUrl = request.url;
-            const httpsUrl = reqUrl.replace(/^(http\:\/\/)/,"https://");
+            const httpsUrl = reqUrl.replace(/^(http:\/\/)/,"https://");
             response.writeHead(301, {'Location': httpsUrl});
             response.end();
         };
@@ -343,7 +343,7 @@ class ZProxy {
 
                     // Download info about root dir
                     let rootDir = await this.getRootDirectoryForDomain(host);
-                    rootDir.setCtx(ctx);
+                    rootDir.setCtx(this.ctx);
                     rootDir.setHost(host);
 
                     let route_params = {};
@@ -361,7 +361,7 @@ class ZProxy {
                         let template_file_id = await rootDir.getFileIdByPath(template_filename);
                         let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
 
-                        let renderer = new Renderer(ctx, rootDir);
+                        let renderer = new Renderer(this.ctx, rootDir);
                         let request_params = {};
                         // GET
                         for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
@@ -571,12 +571,12 @@ class ZProxy {
         for(let f of files) {
             let icon = "";
             switch(f.type) {
-            case 'fileptr':
-                icon += "&#128196; "; break; // https://www.compart.com/en/unicode/U+1F4C4
-            case 'dirptr':
-                icon += "&#128193; "; break; // https://www.compart.com/en/unicode/U+1F4C1
-            default:
-                icon += "&#10067; "; // https://www.compart.com/en/unicode/U+2753 - question mark
+                case 'fileptr':
+                    icon += "&#128196; "; break; // https://www.compart.com/en/unicode/U+1F4C4
+                case 'dirptr':
+                    icon += "&#128193; "; break; // https://www.compart.com/en/unicode/U+1F4C1
+                default:
+                    icon += "&#10067; "; // https://www.compart.com/en/unicode/U+2753 - question mark
             }
 
             const name = f.name;

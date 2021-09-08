@@ -14,7 +14,7 @@
         }
     },
     "rules": {
-        "indent": ["error", 4, {"SwitchCase": 4}],
+        "indent": ["error", 4, {"SwitchCase": 1}],
         "semi": [2, "always"],
         "no-unused-vars": "warn"
     }

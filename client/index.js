@@ -21,14 +21,14 @@ class Client {
 
     async init() {
         const Storage = require('./storage');
-        this.storage = new Storage(ctx);
+        this.storage = new Storage(this.ctx);
         this.storage.start();
 
         const ZProxy = require('./proxy');
-        this.proxy = new ZProxy(ctx);
+        this.proxy = new ZProxy(this.ctx);
         this.proxy.start();
 
-        this.deployerProgress = new DeployerProgress(ctx);
+        this.deployerProgress = new DeployerProgress(this.ctx);
 
         // start other services
     }

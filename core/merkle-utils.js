@@ -12,9 +12,9 @@ const merkleUtils = {
 
         // if (values.length === 1) return values.concat() // We don't do this because we would mess up format length
 
-        var levels = [values];
-        var level = values;
-        var initial_iteration = true;
+        const levels = [values];
+        let level = values;
+        let initial_iteration = true;
 
         do {
             level = merkleUtils._derive(level, digestFn, initial_iteration);
@@ -27,13 +27,13 @@ const merkleUtils = {
 
     // returns an array of hashes of length: values.length / 2 + (values.length % 2)
     _derive: function (values, digestFn, initial_iteration) {
-        var length = values.length;
-        var results = [];
+        const length = values.length;
+        const results = [];
 
-        for (var i = 0; i < length; i += 2) {
-            var left = values[i];
-            var right = i + 1 === length ? left : values[i + 1];
-            var data = (initial_iteration) ? Buffer.concat([Buffer.from([0x00]), left, right]) : Buffer.concat([left, right]);
+        for (let i = 0; i < length; i += 2) {
+            const left = values[i];
+            const right = i + 1 === length ? left : values[i + 1];
+            const data = (initial_iteration) ? Buffer.concat([Buffer.from([0x00]), left, right]) : Buffer.concat([left, right]);
 
             results.push(digestFn(data));
         }

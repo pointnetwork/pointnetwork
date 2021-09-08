@@ -7,7 +7,7 @@ for(let i in originalBSON) {
 }
 
 BSON.serialize = (a, ...b) => {
-    return originalBSON.serialize({"_":a}, b)
+    return originalBSON.serialize({"_":a}, b);
 };
 
 BSON.deserialize = (...a) => {

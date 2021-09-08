@@ -123,27 +123,6 @@ class File extends Model {
         fs.unlinkSync(temporaryFile);
     }
 
-    // todo: make use of it
-    async getFileHash() {
-        if (this._fileHash === null) {
-            let hash = crypto.createHash('sha256');
-
-            return new Promise((resolve, reject) => {
-                fs.createReadStream(filepath)
-                    .on('data', (chunk) => {
-                        hash.update(chunk);
-                    })
-                    .on('end', () => {
-                        this._fileHash = hash.digest('hex');
-                        resolve(this._fileHash);
-                    })
-                    .on('error', reject);
-            });
-        } else {
-            return this._fileHash;
-        }
-    }
-
     getFileSize() {
         if (typeof this.size === 'undefined') {
             this.size = fs.statSync(this.original_path).size;

@@ -1,5 +1,4 @@
 const Model = require('../model');
-const _ = require('lodash');
 const Sequelize = require('sequelize');
 
 class Provider extends Model {

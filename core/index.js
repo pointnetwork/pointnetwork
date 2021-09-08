@@ -1,13 +1,8 @@
-const _ = require('lodash');
-const path = require('path');
-const fs = require('fs');
-
 const ApiServer = require('../api');
 const Network = require('../network');
 const Client = require('../client');
 const Provider = require('../provider');
 const Wallet = require('../wallet');
-const DB = require('../db');
 
 class Core {
     constructor(ctx) {

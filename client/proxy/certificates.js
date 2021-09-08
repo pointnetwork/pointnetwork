@@ -13,7 +13,7 @@ function getCertificate(servername) {
     }
 
     return certCache[servername];
-};
+}
 
 function generateCertificate(servername) {
     const pki = forge.pki;
@@ -32,7 +32,7 @@ function generateCertificate(servername) {
     cert.validity.notAfter = new Date();
     cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear()+10);
 
-    var attrs = [
+    const attrs = [
         {name:'commonName',value:servername}
         ,{name:'countryName',value:'US'}
         ,{shortName:'ST',value:'Virginia'}
@@ -46,7 +46,7 @@ function generateCertificate(servername) {
     cert.sign(privateCAKey);
 
     // PEM-format keys and cert
-    var pem = {
+    const pem = {
         privateKey: pki.privateKeyToPem(keys.privateKey),
         publicKey: pki.publicKeyToPem(keys.publicKey),
         certificate: pki.certificateToPem(cert)
@@ -58,7 +58,7 @@ function generateCertificate(servername) {
         // ca: appCert.ca ? sslCADecode(
         //     fs.readFileSync(appCert.ca, "utf8"),
         // ) : null,
-    }
+    };
 }
 
 module.exports = { getCertificate };

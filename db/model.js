@@ -37,7 +37,7 @@ class Model extends sequelize_lib.Model {
 
         const defaultAttributeOptions = {
             allowNull: false
-        }
+        };
         for(const fieldName in attributes) {
             let v = attributes[fieldName];
             if (v === null || v.constructor.name !== "Object") {

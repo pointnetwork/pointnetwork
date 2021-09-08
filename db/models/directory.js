@@ -26,7 +26,7 @@ class Directory {
         for(let f of this.files) {
             if (f.name === firstFragment) {
                 if (f.type === 'fileptr') {
-                    return f.id
+                    return f.id;
                 } else if (f.type === 'dirptr') {
                     if (! f.downloaded) {
                         let subdir = new Directory();
@@ -120,7 +120,7 @@ class Directory {
 
     unserialize(jsonString) {
         let obj = JSON.parse(jsonString);
-        if (obj.type !== 'dir') throw Error('directory unserialize fail: type is not a directory')
+        if (obj.type !== 'dir') throw Error('directory unserialize fail: type is not a directory');
         this.size = 0;
         for(let f of obj.files) {
             if (f.type === 'fileptr') {

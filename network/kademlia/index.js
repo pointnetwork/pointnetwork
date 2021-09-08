@@ -10,7 +10,6 @@ const kadenceUtils = require('@pointnetwork/kadence/lib/utils');
 const pino = require('pino');
 const SerializerBSON = require('./serializer-bson');
 const Messenger = require('@pointnetwork/kadence/lib/messenger');
-const { log } = require('console');
 const level = require('level');
 
 class Kademlia {
@@ -98,7 +97,7 @@ class Kademlia {
         node.rolodex = node.plugin(kadence.rolodex(path.join(this.ctx.datadir, this.config.peer_cache_file_path)));
         
         if (this.ctx.config.service_provider.enabled) {
-            node.storage_provider = node.plugin(StorageProviderPlugin(ctx, networkPublicKey, networkPrivateKey, {}));
+            node.storage_provider = node.plugin(StorageProviderPlugin(this.ctx, networkPublicKey, networkPrivateKey, {}));
         }
 
         // todo: all this vvvvvvv
@@ -189,7 +188,7 @@ class Kademlia {
                             node.router.getContactByNodeId(identity)
                         ])
                     ];
-                    joinNetwork(callback)
+                    joinNetwork(callback);
                 });
             }
             this.ctx.log.info(`joining network from ${peers.length} seeds`);
@@ -227,7 +226,7 @@ class Kademlia {
                 this.ctx.log.info(`Connected to Kadence DHT network via ${entry}`);
                 this.ctx.log.info(`Discovered ${node.router.size} peers from seed`);
 
-                this.ctx.network.peersCount = node.router.size
+                this.ctx.network.peersCount = node.router.size;
             });
         });
     }

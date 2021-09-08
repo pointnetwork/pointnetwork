@@ -4,7 +4,7 @@ class StorageProviderPlugin {
      */
     constructor(node, ctx, publicKey, privateKey, options = {}) {
         this.ctx = ctx;
-        this.config = this.ctx.config.service_provider.storage
+        this.config = this.ctx.config.service_provider.storage;
         this.node = node;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
