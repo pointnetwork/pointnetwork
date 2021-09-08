@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 
+// - Leverages `npm version` script which creates a new tag
+// - Updates package.json, adding this new version
+// - And changes the version in .env file
+// - Pushes the tag to the repository
+// A new docker image will be built with Github Actions after that
+
+// todo: Currently, the image rebuilding action is triggered on *any* tag being pushed from any branch
+
 const version = process.argv[2];
 
 if (!/^\d+\.\d+\.\d+$/.test (version)) {
