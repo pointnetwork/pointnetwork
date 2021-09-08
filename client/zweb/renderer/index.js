@@ -406,7 +406,6 @@ class Renderer {
     }
 
     async fetchTemplateByPath(templatePath) {
-        console.log('fetching '+templatePath); // todo: remove
         return await this.rootDir.readFileByPath(templatePath, 'utf-8');
     }
 }
