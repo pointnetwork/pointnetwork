@@ -3,20 +3,65 @@ version: '3.9'
 services:
   storage_provider:
     volumes:
-      - .:/app:ro
-      - /app/node_modules
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./seq:/app/seq:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
 
   website_owner:
     command: 'run start:docker:dev'
     volumes:
-      - .:/app:ro
-      - /app/node_modules
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./seq:/app/seq:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
 
   website_visitor:
     command: 'run start:docker:dev'
     volumes:
-      - .:/app:ro
-      - /app/node_modules
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./seq:/app/seq:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
 
   database:
     ports:
@@ -35,3 +80,6 @@ services:
       PGADMIN_DEFAULT_PASSWORD: pgadminpass
     volumes:
       - ./pgadmin-servers.json:/pgadmin4/servers.json:ro
+
+volumes:
+  test_volume:

@@ -39,11 +39,11 @@ services:
       - shared_contracts:/build:rw
     entrypoint: /truffle/run.js
     environment:
-      - BLOCKCHAIN_HOST=blockchain_node
-      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
-      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
-      - COMPILER_VERSION=native
-      - BUILD_PATH=/build
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      COMPILER_VERSION: native
+      BUILD_PATH: /build
 
   storage_provider:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
@@ -62,11 +62,12 @@ services:
       - '65500:8666'
       - '24680:2468'
     environment:
-      - DATADIR=/data
-      - BLOCKCHAIN_HOST=blockchain_node
-      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
-      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
-      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
+      DATADIR: /data
+      DB_ENV: pointnode1
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
 
   website_owner:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
@@ -87,11 +88,12 @@ services:
       - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
       - ./example:/app/example:ro
     environment:
-      - DATADIR=/data
-      - BLOCKCHAIN_HOST=blockchain_node
-      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
-      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
-      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
+      DATADIR: /data
+      DB_ENV: pointnode2
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
 
   website_visitor:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
@@ -110,20 +112,21 @@ services:
       - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
     environment:
-      - DATADIR=/data
-      - BLOCKCHAIN_HOST=blockchain_node
-      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
-      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
-      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
+      DATADIR: /data
+      DB_ENV: pointnode3
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
 
   database:
-    image: postgres:13.3
+    image: postgres:13.4
     container_name: pointnetwork_database
     environment:
-      - POSTGRES_USER=$DB_USERNAME
-      - POSTGRES_PASSWORD=$DB_PASSWORD
-      - POSTGRES_DB=$DB_USERNAME
-      - DATABASE=$DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
+      POSTGRES_USER: $DB_USERNAME
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_USERNAME
+      DATABASE: $DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
     volumes:
       - database_data:/var/lib/postgresql/data/
       - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh

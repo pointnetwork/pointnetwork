@@ -86,9 +86,11 @@ if (program.demo) {
 if (! fs.existsSync(ctx.datadir)) mkdirp.sync(ctx.datadir);
 if (! fs.existsSync(ctx.configPath)) throw Error('Cannot find configuration file '+ctx.configPath);
 
+const environment = process.env.DB_ENV || 'development';
+
 const config = JSON.parse(fs.readFileSync(ctx.configPath, 'utf-8'));
 const defaultConfig = require(path.resolve(__dirname, 'resources', 'defaultConfig.json'));
-const dbConfig = { "db": require(path.resolve(__dirname, 'resources', 'sequelizeConfig.json'))['development'] }; // todo: the todo is about 'development' part
+const dbConfig = { "db": require(path.resolve(__dirname, 'resources', 'sequelizeConfig.json'))[environment] }; // todo: the todo is about 'development' part
 ctx.config = _.merge(defaultConfig, dbConfig, config);
 if (program.verbose) ctx.config.log.level = 'debug';
 

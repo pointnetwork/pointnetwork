@@ -34,7 +34,7 @@
   "pointnode2": {
     "username": "pointuser",
     "password": "pointpassword",
-    "database": "point_storage_provider",
+    "database": "point_website_owner",
     "host": "pointnetwork_database",
     "port": "5432",
     "dialect": "postgres"
@@ -42,7 +42,7 @@
   "pointnode3": {
     "username": "pointuser",
     "password": "pointpassword",
-    "database": "point_storage_provider",
+    "database": "point_website_visitor",
     "host": "pointnetwork_database",
     "port": "5432",
     "dialect": "postgres"
