@@ -9,12 +9,13 @@ const utils = require('#utils');
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
 class Renderer {
+    #twigs = {};
+    #twigs_use_counter = {};
+
     constructor(ctx, rootDir) {
         this.ctx = ctx;
         this.config = ctx.config.client.zproxy;
         this.rootDir = rootDir;
-        this.twigs = {};
-        this.twigs_use_counter = {};
     }
 
     async render(template_id, template_contents, host, request_params = {}) {
@@ -166,11 +167,11 @@ class Renderer {
 
     #getTwigForHost(host) {
         // Increment use counter
-        this.twigs_use_counter[host] = this.twigs_use_counter[host] + 1 || 0;
+        this.#twigs_use_counter[host] = this.#twigs_use_counter[host] + 1 || 0;
 
         // Look in cache first
-        if (this.twigs[host]) {
-            return this.twigs[host];
+        if (this.#twigs[host]) {
+            return this.#twigs[host];
         }
 
         // Spawning a new Twig object
@@ -196,16 +197,16 @@ class Renderer {
         });
 
         // Save to our cache
-        this.twigs[host] = Twig;
+        this.#twigs[host] = Twig;
 
         return Twig;
     }
 
     #removeTwigForHost(host) {
-        this.twigs_use_counter[host]--;
+        this.#twigs_use_counter[host]--;
 
-        if (this.twigs_use_counter[host] === 0) {
-            delete this.twigs[host];
+        if (this.#twigs_use_counter[host] === 0) {
+            delete this.#twigs[host];
         }
     }
 
