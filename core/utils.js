@@ -79,7 +79,7 @@ const utils = {
             }
             sanitizedMessage = message.join('|');
         } else {
-            throw Error('Unknown')
+            throw Error('Unknown');
         }
 
         return 'POINT|' + sanitizedMessage; // todo: versioning, chainId+ etc
