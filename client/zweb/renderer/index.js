@@ -54,23 +54,23 @@ class Renderer {
     #defineAvailableFunctions() {
         // These functions will be available for zApps to call in ZHTML
         return {
-            keyvalue_list: async(host, key) => {
+            keyvalue_list: async function(host, key) {
                 return await this.renderer.ctx.keyvalue.list(host, key);
             },
-            keyvalue_get: async(host, key) => {
+            keyvalue_get: async function(host, key) {
                 return await this.renderer.ctx.keyvalue.get(host, key);
             },
-            storage_get_by_ikv: async(identity, key) => {
+            storage_get_by_ikv: async function(identity, key) {
                 const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
                 return await this.renderer.ctx.client.storage.readFile(fileKey, 'utf-8');
             },
-            storage_get: async(key) => {
+            storage_get: async function(key) {
                 return await this.renderer.ctx.client.storage.readFile(key, 'utf-8');
             },
-            storage_get_parsed: async(key) => {
+            storage_get_parsed: async function(key) {
                 return await this.renderer.ctx.client.storage.readJSON(key, 'utf-8');
             },
-            storage_put: async(content) => {
+            storage_put: async function(content) {
                 const cache_dir = path.join(this.renderer.ctx.datadir, this.renderer.config.cache_path);
                 utils.makeSurePathExists(cache_dir);
                 const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(content));
@@ -78,11 +78,11 @@ class Renderer {
                 let uploaded = await this.renderer.ctx.client.storage.putFile(tmpPostDataFilePath);
                 return uploaded.id;
             },
-            encrypt_data: async(publicKey, data) => {
+            encrypt_data: async function(publicKey, data) {
                 let host = this.host;
                 return await encryptData(host, data, publicKey); // todo: make sure you're not encrypting on something stupid like 0x0 public key
             },
-            decrypt_data: async(encryptedData, unparsedEncryptedSymmetricObjJSON) => {
+            decrypt_data: async function(encryptedData, unparsedEncryptedSymmetricObjJSON) {
                 let host = this.host;
                 const { privateKey } = this.renderer.ctx.wallet.config;
 
@@ -94,30 +94,30 @@ class Renderer {
                 const decryptedData = await decryptData(host, Buffer.from(encryptedData, 'hex'), encryptedSymmetricObj, privateKey);
                 return decryptedData.plaintext.toString();
             },
-            isHash: async(str) => {
+            isHash: async function(str) {
                 const s = (_.startsWith(str, '0x')) ? str.substr(2) : str;
                 if (s.length !== 64) return false;
                 return ((new RegExp("^[0-9a-fA-F]+$")).test(s));
             },
-            identity_by_owner: async(owner) => {
+            identity_by_owner: async function(owner) {
                 return await this.renderer.ctx.web3bridge.identityByOwner(owner);
             },
-            owner_by_identity: async(identity) => {
+            owner_by_identity: async function(identity) {
                 return await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
             },
-            public_key_by_identity: async(identity) => {
+            public_key_by_identity: async function(identity) {
                 return await this.renderer.ctx.web3bridge.commPublicKeyByIdentity(identity);
             },
-            identity_ikv_get: async(identity, key) => {
+            identity_ikv_get: async function(identity, key) {
                 return await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
             },
-            contract_get: async(target, contractName, method, params) => {
+            contract_get: async function(target, contractName, method, params) {
                 return await this.renderer.ctx.web3bridge.callContract(target, contractName, method, params);
             },
-            contract_call: async(host, contractName, methodName, params) => {
+            contract_call: async function(host, contractName, methodName, params) {
                 return await this.renderer.ctx.web3bridge.sendToContract(host.replace('.z', ''), contractName, methodName, params);
             },
-            contract_events: async(host, contractName, event, filter = {}) => {
+            contract_events: async function(host, contractName, event, filter = {}) {
                 const options = { filter, fromBlock: 1, toBlock: 'latest' };
                 const events =  await this.renderer.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
                 for(let ev of events) console.log(ev, ev.raw);
@@ -125,13 +125,13 @@ class Renderer {
                 const eventData = events.map((event) => (({ returnValues }) => ({ data: returnValues }))(event));
                 return eventData;
             },
-            default_wallet_address: async(id, passcode) => {
+            default_wallet_address: async function(id, passcode) {
                 return this.renderer.ctx.config.client.wallet.account;
             },
-            is_authenticated: async(auth) => {
+            is_authenticated: async function(auth) {
                 return auth.walletid !== undefined;
             },
-            contract_list: async(target, contractName, method, params = []) => {
+            contract_list: async function(target, contractName, method, params = []) {
                 let i = 0;
                 let results = [];
                 while(true) {
