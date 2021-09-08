@@ -3,35 +3,63 @@ version: '3.9'
 services:
   storage_provider:
     volumes:
-      - .:/app:ro
-      - /app/node_modules
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
 
   website_owner:
     command: 'run start:docker:dev'
     volumes:
-      - .:/app:ro
-      - /app/node_modules
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
 
   website_visitor:
     command: 'run start:docker:dev'
     volumes:
-      - .:/app:ro
-      - /app/node_modules
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
 
   database:
     ports:
       - '5432:5432'
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pointnetwork_pgadmin
-    restart: always
-    depends_on:
-      - database
-    ports:
-      - 5050:80
-    environment:
-      PGADMIN_DEFAULT_EMAIL: pgadmin@pointnetwork.io
-      PGADMIN_DEFAULT_PASSWORD: pgadminpass
-    volumes:
-      - ./pgadmin-servers.json:/pgadmin4/servers.json:ro
