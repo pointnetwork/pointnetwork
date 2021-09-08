@@ -17,7 +17,7 @@ const merkleUtils = {
         var initial_iteration = true;
 
         do {
-            level = MerkleUtils._derive(level, digestFn, initial_iteration)
+            level = merkleUtils._derive(level, digestFn, initial_iteration)
             levels.push(level)
             initial_iteration = false;
         } while (level.length > 1)
