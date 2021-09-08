@@ -122,6 +122,12 @@ services:
   database:
     image: postgres:13.4
     container_name: pointnetwork_database
+    healthcheck:
+      test: pg_isready -U $DB_USERNAME
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     environment:
       POSTGRES_USER: $DB_USERNAME
       POSTGRES_PASSWORD: $DB_PASSWORD
