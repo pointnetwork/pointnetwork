@@ -3,7 +3,7 @@ const mkdirp = require('mkdirp');
 const ethUtil = require('ethereumjs-util');
 const kadUtils = require('@pointnetwork/kadence').utils;
 
-utils = {
+const utils = {
     makeSurePathExists: function(path) {
         try {
             mkdirp.sync(path);
