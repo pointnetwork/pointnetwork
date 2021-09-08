@@ -120,7 +120,7 @@ class Renderer {
             contract_events: async function(host, contractName, event, filter = {}) {
                 const options = { filter, fromBlock: 1, toBlock: 'latest' };
                 const events =  await this.renderer.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
-                for(let ev of events) console.log(ev, ev.raw);
+                // for(let ev of events) console.log(ev, ev.raw);
 
                 const eventData = events.map((event) => (({ returnValues }) => ({ data: returnValues }))(event));
                 return eventData;
@@ -178,22 +178,21 @@ class Renderer {
         const Twig = TwigLib.factory();
 
         Twig.host = host;
-        
-        Twig.renderer = this;
 
-        Twig.extend((Twig) => {
-            Twig.host = host;
+        Twig.extend((ExtTwig) => {
+            ExtTwig.host = host;
+            ExtTwig.renderer = this;
 
-            this.#connectExtendsTagToPointStorage(Twig);
-            this.#connectIncludeTagToPointStorage(Twig);
+            this.#connectExtendsTagToPointStorage(ExtTwig);
+            this.#connectIncludeTagToPointStorage(ExtTwig);
             
             for(let [name, fn] of Object.entries( this.#defineAvailableFunctions() ))
-                Twig.exports.extendFunction(name, fn.bind(Twig));
+                ExtTwig.exports.extendFunction(name, fn.bind(ExtTwig));
 
             for(let [name, fn] of Object.entries( this.#defineAvailableFilters() ))
-                Twig.exports.extendFilter(name, fn.bind(Twig));
+                ExtTwig.exports.extendFilter(name, fn.bind(ExtTwig));
 
-            this.#registerPointStorageFsLoader(Twig);
+            this.#registerPointStorageFsLoader(ExtTwig);
         });
 
         // Save to our cache
