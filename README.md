@@ -8,7 +8,7 @@ This repository contains the source code of the core of Point Network. It contai
 
 For more details about the project, including a [Light Paper](https://pointnetwork.io/files/PointNetworkBrochure-c003.pdf) and a [White Paper](https://docs.google.com/document/d/16bcqsnezTKnPyYI7g32gEkrmJE35z8U4Zj0lUUXXQDY/edit) head over to [our official website](https://pointnetwork.io/). Additionally, if you are a developer then please also head over to the [Point Network Wiki](https://pointnetwork.github.io).
 
-If you have found this repo because you want to run your own node then **DO NOT RUN THE NODE DIRECTLY FROM THIS REPO** but instead please follow the steps outlined below under the section [Run a Point Network Node (Testnet)](#Run-a-Point-Network-Node-(Testnet)).
+If you have found this repo because you want to run your own node then **DO NOT RUN THE NODE DIRECTLY FROM THIS REPO** but instead please follow the steps outlined below under the section [Run a Point Network Node (Testnet)](#run-a-point-network-node-testnet).
 
 ## Run a Point Network Node (Testnet)
 
@@ -24,15 +24,15 @@ For details on running the demo version using Docker, please refer to the [devel
 
 ## Troubleshooting
 
-For details on Troubleshooting, please refer to the [troubleshooting](https://pointnetwork.github.io/docs/troubleshooting#troubleshooting) page in our wiki.
+For details on troubleshooting, please refer to the [troubleshooting](https://pointnetwork.github.io/docs/troubleshooting#troubleshooting) page in our wiki.
 
 ## Debugging
 
-For details on Troubleshooting, please refer to the [run a point network node in a vs code debugger](https://pointnetwork.github.io/docs/debugging#run-a-point-network-node-in-a-vs-code-debugger) page in our wiki.
+For details on debugging, please refer to the [run a point network node in a vs code debugger](https://pointnetwork.github.io/docs/debugging#run-a-point-network-node-in-a-vs-code-debugger) page in our wiki.
 
 ## Database
 
-For more details on the databases please refer to the [Database README](./db/README.md).
+For more details on the database setup please refer to the [Database README](./db/README.md).
 
 ## Contact
 
