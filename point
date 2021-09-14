@@ -21,6 +21,7 @@ const npid = require('npid');
 const mkdirp = require('mkdirp');
 const DB = require('./db');
 const program = new Command();
+const disclaimer = require('./resources/disclaimer');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1'
@@ -36,9 +37,10 @@ program.description(`
     Point Network
     https://pointnetwork.io/
 
-    Licensed under MIT license
+    Licensed under MIT license.
 `);
-// todo: add alpha version disclaimer like in raiden
+
+console.log(disclaimer);
 
 // NOTE: After changing parameters here, update the documentation
 program.command('go', { isDefault: true }).description('start the node').action(() => { program.go = true; });
