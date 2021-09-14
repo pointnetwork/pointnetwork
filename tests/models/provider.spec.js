@@ -1,28 +1,6 @@
-const fs = require('fs');
-const os = require("os");
-const _ = require('lodash')
-const defaultConfig = require('../../resources/defaultConfig.json');
-const truncate = require('../_helpers/db/truncate')
-
-const ctx = {};
-const datadir = process.env.DATADIR ? process.env.DATADIR : `~/.point/test2/`.replace("~", os.homedir);
-const nodeConfigPath = `${datadir}/config.json`;
-ctx.datadir = ctx.datapath = datadir;
-
-const config = JSON.parse(fs.readFileSync(nodeConfigPath, 'utf-8'));
-ctx.configPath = nodeConfigPath;
-ctx.basepath = __dirname;
-ctx.config = _.merge(defaultConfig, config);
-
-ctx.config.db.dialect = 'postgres'
-ctx.config.db.database = 'point_test'
-ctx.config.db.username = 'pointuser'
-ctx.config.db.password = 'pointpassword'
-ctx.config.db.host = 'database'
-
-ctx.log = { debug: jest.fn() }
-
 let Provider;
+const ctx = require('../_helpers/db/setup');
+const truncate = require('../_helpers/db/truncate');
 const DB = require('../../db');
 const db = new DB(ctx);
 

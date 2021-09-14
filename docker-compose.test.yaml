@@ -28,6 +28,10 @@ services:
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
+      - DB_TEST=$DB_TEST
+      - DB_USERNAME=$DB_USERNAME
+      - DB_PASSWORD=$DB_PASSWORD
+      - DB_HOST=database
       - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_TEST
     volumes:
       - .:/app:ro
