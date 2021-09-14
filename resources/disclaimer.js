@@ -34,4 +34,9 @@ const wrap_length = terminal_width - 10;
 const indent_h = 4;
 const indent_v = 3;
 
-module.exports = wrap( no_new_lines( disclaimer ), wrap_length, indent_h, indent_v );
+const text = wrap( no_new_lines( disclaimer ), wrap_length, indent_h, indent_v );
+
+module.exports = {
+    text,
+    output: () => console.log(text)
+};

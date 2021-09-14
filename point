@@ -40,7 +40,7 @@ program.description(`
     Licensed under MIT license.
 `);
 
-console.log(disclaimer);
+disclaimer.output();
 
 // NOTE: After changing parameters here, update the documentation
 program.command('go', { isDefault: true }).description('start the node').action(() => { program.go = true; });
