@@ -31,8 +31,9 @@ services:
       - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_TEST
     volumes:
       - .:/app:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
       - test_pointnetwork_node_modules:/app/node_modules
-      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ./resources/demo-docker/config.test2.json:/data/config.json:ro
 
 volumes:
   test_database_data:

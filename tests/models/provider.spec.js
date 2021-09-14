@@ -5,7 +5,7 @@ const defaultConfig = require('../../resources/defaultConfig.json');
 
 const ctx = {};
 const datadir = process.env.DATADIR ? process.env.DATADIR : `~/.point/test2/`.replace("~", os.homedir);
-const nodeConfigPath = `/nodeConfig.json`;
+const nodeConfigPath = `${datadir}/config.json`;
 ctx.datadir = ctx.datapath = datadir;
 
 const config = JSON.parse(fs.readFileSync(nodeConfigPath, 'utf-8'));
