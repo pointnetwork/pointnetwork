@@ -9,8 +9,9 @@ if (major < 14) {
 }
 
 // Load first dependencies
-const program = require('commander');
+const { Command } = require('commander');
 const { homedir } = require('os');
+const { exec } = require("child_process");
 const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
@@ -19,7 +20,7 @@ const multistream = require('pino-multi-stream').multistream;
 const npid = require('npid');
 const mkdirp = require('mkdirp');
 const DB = require('./db');
-const { exec } = require("child_process");
+const program = new Command();
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1'
