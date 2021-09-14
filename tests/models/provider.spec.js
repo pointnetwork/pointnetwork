@@ -2,6 +2,7 @@ const fs = require('fs');
 const os = require("os");
 const _ = require('lodash')
 const defaultConfig = require('../../resources/defaultConfig.json');
+const truncate = require('../_helpers/db/truncate')
 
 const ctx = {};
 const datadir = process.env.DATADIR ? process.env.DATADIR : `~/.point/test2/`.replace("~", os.homedir);
@@ -22,41 +23,36 @@ ctx.config.db.host = 'database'
 ctx.log = { debug: jest.fn() }
 
 let Provider;
+const DB = require('../../db');
+const db = new DB(ctx);
 
 describe('Provider model', () => {
-    const DB = require('../../db');
-    const db = new DB(ctx);
-
     afterEach(async () => {
-        // delete records
+        truncate(Provider);
     });
 
     afterAll(async () => {
-        // delete records
+        db.shutdown();
     });
 
     describe('create', () => {
-        let provider;
+        let newProvider = undefined;
 
         beforeAll(async () => {
             await db.init();
             Provider = require('../../db/models/provider');
-            Provider.destroy({
-                where: {},
-                force: true
-            })
 
             let providerId = 1
             let providerAddress = '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415'
 
-            provider = await Provider.create({
+            newProvider = await Provider.create({
                 id: providerId,
                 address: providerAddress,
                 connection: `http://localhost:12345/#${providerAddress}`
             });
         });
 
-        it.only('creates a record in `providers` table', async () => {
+        it('creates a record in `providers` table', async () => {
             const providers = await Provider.findAll()
 
             expect(providers).toBeInstanceOf(Array);
@@ -64,9 +60,9 @@ describe('Provider model', () => {
 
             const [savedProvider] = providers;
 
-            expect(savedProvider).toHaveProperty('id', provider.id);
-            expect(savedProvider).toHaveProperty('address', provider.address);
-            expect(savedProvider).toHaveProperty('connection', provider.connection);
+            expect(savedProvider).toHaveProperty('id', newProvider.id);
+            expect(savedProvider).toHaveProperty('address', newProvider.address);
+            expect(savedProvider).toHaveProperty('connection', newProvider.connection);
         });
     });
 
