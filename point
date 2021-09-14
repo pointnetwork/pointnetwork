@@ -156,7 +156,7 @@ if (program.makemigration) {
 }
 if (program.migrate) {
     const seq_cmd = (program.migrate_undo) ? 'db:migrate:undo' : 'db:migrate';
-    exec(`npx sequelize-cli ${seq_cmd} --env ${ctx.config.db.database}`, (error, stdout, stderr) => {
+    exec(`npx sequelize-cli ${seq_cmd} --env ${process.env.DB_ENV || ctx.config.db.database}`, (error, stdout, stderr) => {
         if (error) return console.log(`error: ${error.message}`);
         if (stderr) return console.log(`stderr: ${stderr}`);
         console.log(`${stdout}`);
