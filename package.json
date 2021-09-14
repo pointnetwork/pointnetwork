@@ -83,6 +83,12 @@
   "imports": {
     "#utils": "./core/utils.js"
   },
+  "jest": {
+    "verbose": true,
+    "moduleNameMapper": {
+      "#(.*)": "<rootDir>/core/$1"
+    }
+  },
   "nodemonConfig": {
     "ignore": [
       "example/*"
