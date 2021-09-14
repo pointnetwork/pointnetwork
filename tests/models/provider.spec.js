@@ -1,67 +1,76 @@
-const knex = require('../../db/knex');
-const Model = require('../../db/model');
-const Provider = require('../../db/models/provider');
+const fs = require('fs');
+const os = require("os");
+const _ = require('lodash')
+const defaultConfig = require('../../resources/defaultConfig.json');
 
-Model.prototype.save = jest.fn();
-Model.db = {
-    get: jest.fn(() => {
-        const error = new Error('Not found');
-        error.notFound = true;
-        throw error;
-    })
-};
+const ctx = {};
+const datadir = process.env.DATADIR ? process.env.DATADIR : `~/.point/test2/`.replace("~", os.homedir);
+const nodeConfigPath = `/nodeConfig.json`;
+ctx.datadir = ctx.datapath = datadir;
 
-Model.prototype.db = {
-    get: jest.fn(() => {
-        const error = new Error('Not found');
-        error.notFound = true;
-        throw error;
-    }),
-    batch: jest.fn(() => ({
-        put: jest.fn(function() {
-            return this;
-        }),
-        write: jest.fn(function() {
-            return this;
-        })
-    }))
-};
+const config = JSON.parse(fs.readFileSync(nodeConfigPath, 'utf-8'));
+ctx.configPath = nodeConfigPath;
+ctx.basepath = __dirname;
+ctx.config = _.merge(defaultConfig, config);
+
+ctx.config.db.dialect = 'postgres'
+ctx.config.db.database = 'point_test'
+ctx.config.db.username = 'pointuser'
+ctx.config.db.password = 'pointpassword'
+ctx.config.db.host = 'database'
+
+ctx.log = { debug: jest.fn() }
+
+let Provider;
 
 describe('Provider model', () => {
+    const DB = require('../../db');
+    const db = new DB(ctx);
+
     afterEach(async () => {
-        await knex('providers').delete();
+        // delete records
     });
 
     afterAll(async () => {
-        await knex.destroy();
+        // delete records
     });
 
     describe('create', () => {
         let provider;
 
         beforeAll(async () => {
-            provider = Provider.new();
-            provider.address = '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415';
-            provider.connection = 'http://localhost:12345/#' + provider.address;
+            await db.init();
+            Provider = require('../../db/models/provider');
+            Provider.destroy({
+                where: {},
+                force: true
+            })
 
-            await provider.save();
+            let providerId = 1
+            let providerAddress = '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415'
+
+            provider = await Provider.create({
+                id: providerId,
+                address: providerAddress,
+                connection: `http://localhost:12345/#${providerAddress}`
+            });
         });
 
-        it('creates a record in `providers` table', async () => {
-            const providers = await knex('providers').select();
+        it.only('creates a record in `providers` table', async () => {
+            const providers = await Provider.findAll()
 
             expect(providers).toBeInstanceOf(Array);
             expect(providers).toHaveLength(1);
 
             const [savedProvider] = providers;
 
-            expect(savedProvider).toHaveProperty('id', provider._id);
+            expect(savedProvider).toHaveProperty('id', provider.id);
             expect(savedProvider).toHaveProperty('address', provider.address);
             expect(savedProvider).toHaveProperty('connection', provider.connection);
         });
     });
 
-    describe('update', () => {
+    xdescribe('update', () => {
         let provider;
 
         beforeAll(async () => {
@@ -86,7 +95,7 @@ describe('Provider model', () => {
         });
     });
 
-    describe('find or create and save', () => {
+    xdescribe('find or create and save', () => {
         const address = '0xc01011611e3501c6b3f6dc4b6d3fe644d21ab301';
         const connection = 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301';
 

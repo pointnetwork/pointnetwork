@@ -21,6 +21,7 @@ services:
     entrypoint: 'npm'
     command: 'run test:db:docker'
     environment:
+      - DB_ENV=test
       - DATADIR=/data
       - BLOCKCHAIN_HOST=blockchain_node
       - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
