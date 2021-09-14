@@ -19,6 +19,8 @@ let disclaimer = `
 
 `;
 
+// TODO: do we need to force the user to acknowledge the disclaimer by typing yes/no?
+
 // From: https://stackoverflow.com/a/51506718/5380330
 // Dynamic Width (Build Regex)
 const wrap = (s, w, indent_h, indent_v) => ' '.repeat(indent_h) + "\n".repeat(indent_v) + s.replace(
