@@ -72,6 +72,6 @@ Now you are ready to test a deployment with an empty LevelDB and Postgres databa
 ## Run tests from within container
 
 1. Start the test database service like so: `docker-compose -f docker-compose.test.yaml up -d database`
-1. Now run the service overriging the ENTRYPOINT like so: `docker-compose -f docker-compose.test.yaml run --entrypoint bash tests`
-1. In the terminal of the running tests container, run the tests like so: `npx jest --watchALL`
+1. Now run the service overriding the ENTRYPOINT like so: `docker-compose -f docker-compose.test.yaml run --entrypoint bash tests`
+1. In the terminal of the running tests container, run the tests like so: `npx jest --watchAll`
 1. Use the Jest watch menu in the terminal to run tests as required
