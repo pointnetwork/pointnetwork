@@ -1,10 +1,17 @@
-let Provider;
 const ctx = require('../_helpers/db/setup');
 const truncate = require('../_helpers/db/truncate');
 const DB = require('../../db');
 const db = new DB(ctx);
+const { v4: uuid } = require('uuid');
 
 describe('Provider model', () => {
+    let Provider;
+
+    beforeAll(async () => {
+        await db.init();
+        Provider = require('../../db/models/provider');
+    })
+
     afterEach(async () => {
         truncate(Provider);
     });
@@ -14,20 +21,13 @@ describe('Provider model', () => {
     });
 
     describe('create', () => {
-        let newProvider = undefined;
-
+        const providerObj = {
+            id: uuid(),
+            address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
+            connection: `http://localhost:12345/#${this.address}`
+        }
         beforeAll(async () => {
-            await db.init();
-            Provider = require('../../db/models/provider');
-
-            let providerId = 1
-            let providerAddress = '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415'
-
-            newProvider = await Provider.create({
-                id: providerId,
-                address: providerAddress,
-                connection: `http://localhost:12345/#${providerAddress}`
-            });
+            await Provider.create(providerObj);
         });
 
         it('creates a record in `providers` table', async () => {
@@ -38,21 +38,22 @@ describe('Provider model', () => {
 
             const [savedProvider] = providers;
 
-            expect(savedProvider).toHaveProperty('id', newProvider.id);
-            expect(savedProvider).toHaveProperty('address', newProvider.address);
-            expect(savedProvider).toHaveProperty('connection', newProvider.connection);
+            expect(savedProvider).toHaveProperty('id', providerObj.id);
+            expect(savedProvider).toHaveProperty('address', providerObj.address);
+            expect(savedProvider).toHaveProperty('connection', providerObj.connection);
         });
     });
 
-    xdescribe('update', () => {
+    describe('update', () => {
         let provider;
+        const providerObj = {
+            id: uuid(),
+            address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
+            connection: `http://localhost:12345/#${this.address}`
+        }
 
         beforeAll(async () => {
-            provider = Provider.new();
-            provider.address = '0x58ac48d9a9d91742d1E12afFcf3A1f8b3E31A73D';
-            provider.connection = 'http://localhost:54321/#' + provider.address;
-
-            await provider.save();
+            provider = await Provider.create(providerObj);
         });
 
         it('updates a record in `providers` table', async () => {
@@ -61,31 +62,36 @@ describe('Provider model', () => {
             provider.connection = updatedConnection;
             await provider.save();
 
-            const savedProviders = await knex.select().from('providers').where('id', provider._id);
+            savedProvider = await Provider.find(providerObj.id)
 
-            expect(savedProviders).toBeInstanceOf(Array);
-            expect(savedProviders).toHaveLength(1);
-            expect(savedProviders[0]).toHaveProperty('connection', updatedConnection);
+            expect(savedProvider).toBeInstanceOf(Provider);
+            expect(savedProvider).toHaveProperty('connection', updatedConnection);
         });
     });
 
-    xdescribe('find or create and save', () => {
-        const address = '0xc01011611e3501c6b3f6dc4b6d3fe644d21ab301';
-        const connection = 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301';
+    describe('findOrCreate', () => {
+        const providerObj = {
+            id: uuid(),
+            address: '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301',
+            connection: 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301'
+        }
 
-        beforeAll(() => Provider.findOrCreateAndSave(connection));
+        beforeAll(async () => {
+                await Provider.findOrCreate({ where: { id: providerObj.id }, defaults: { ...providerObj } })
+            }
+        );
 
         it('extracts address and connection string from a string id and saves correct provider fields', async () => {
-            const savedProviders = await knex.select().from('providers');
+            const savedProviders = await Provider.findAll();
 
             expect(savedProviders).toBeInstanceOf(Array);
             expect(savedProviders).toHaveLength(1);
 
             const [savedProvider] = savedProviders;
 
-            expect(savedProvider).toHaveProperty('id', expect.any(Number));
-            expect(savedProvider).toHaveProperty('connection', connection);
-            expect(savedProvider).toHaveProperty('address', address);
+            expect(savedProvider).toHaveProperty('id', providerObj.id);
+            expect(savedProvider).toHaveProperty('connection', providerObj.connection);
+            expect(savedProvider).toHaveProperty('address', providerObj.address);
         });
     });
 });
