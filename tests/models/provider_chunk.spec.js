@@ -11,6 +11,15 @@ const randomHash = () => (
 
 describe('ProviderChunk model', () => {
     let ProviderChunk;
+    const providerChunkObj = {
+        id: randomHash(),
+        real_id: randomHash(),
+        public_key: randomHash(),
+        segment_hashes: [randomHash(), randomHash(), randomHash()],
+        real_id_verified: false,
+        size: 256000,
+        real_size: 512000
+    }
 
     beforeAll(async () => {
         await db.init();
@@ -26,16 +35,6 @@ describe('ProviderChunk model', () => {
     });
 
     describe('create', () => {
-        const providerChunkObj = {
-            id: randomHash(),
-            real_id: randomHash(),
-            public_key: randomHash(),
-            segment_hashes: [randomHash(), randomHash(), randomHash()],
-            real_id_verified: false,
-            size: 256000,
-            real_size: 512000
-        }
-
         beforeAll(async () => {
             await ProviderChunk.create(providerChunkObj);
         });
@@ -59,57 +58,34 @@ describe('ProviderChunk model', () => {
         });
     });
 
-    xdescribe('update', () => {
+    describe('update', () => {
         let providerChunk;
 
         beforeAll(async () => {
-            providerChunk = ProviderChunk.new();
-
-            providerChunk.id = randomHash();
-            providerChunk.real_id = randomHash();
-            providerChunk.pub_key = randomHash();
-            providerChunk.segment_hashes = [randomHash(), randomHash(), randomHash()];
-            providerChunk.real_id_verified = false;
-            providerChunk.length = 256000;
-            providerChunk.real_length = 512000;
-
-            await providerChunk.save();
+            providerChunk = await ProviderChunk.create(providerChunkObj);
         });
 
         it('updates a record in `providers` table', async () => {
-            const updatedRealLength = 1024000;
+            const updatedRealSize = 1024000;
 
-            providerChunk.real_length = updatedRealLength;
+            providerChunk.real_size = updatedRealSize;
 
             await providerChunk.save();
 
-            const savedProviderChunks = await knex.select().from('provider_chunks').where('id', providerChunk.id);
+            const savedProviderChunks = await ProviderChunk.find(providerChunkObj.id)
 
-            expect(savedProviderChunks).toBeInstanceOf(Array);
-            expect(savedProviderChunks).toHaveLength(1);
-            expect(savedProviderChunks[0]).toHaveProperty('real_length', updatedRealLength);
+            expect(savedProviderChunks).toBeInstanceOf(ProviderChunk);
+            expect(savedProviderChunks).toHaveProperty('real_size', updatedRealSize);
         });
     });
 
-    xdescribe('find or create and save', () => {
-        const id = randomHash();
-        let providerChunk;
-
+    describe('find or create and save', () => {
         beforeAll(async () => {
-            providerChunk = await ProviderChunk.findOrCreate(id);
-
-            providerChunk.real_id = randomHash();
-            providerChunk.pub_key = randomHash();
-            providerChunk.segment_hashes = [randomHash(), randomHash(), randomHash()];
-            providerChunk.real_id_verified = false;
-            providerChunk.length = 256000;
-            providerChunk.real_length = 512000;
-
-            await providerChunk.save();
+            await ProviderChunk.findOrCreate({ where: { id: providerChunkObj.id }, defaults: { ...providerChunkObj } })
         });
 
         it('creates a new provider chunk on findOrCreate call', async () => {
-            const savedProviderChunks = await knex.select().from('provider_chunks').where('id', providerChunk.id);
+            const savedProviderChunks = await ProviderChunk.findAll();
 
             expect(savedProviderChunks).toBeInstanceOf(Array);
             expect(savedProviderChunks).toHaveLength(1);
