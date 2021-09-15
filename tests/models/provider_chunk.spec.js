@@ -3,7 +3,6 @@ const ctx = require('../_helpers/db/setup');
 const truncate = require('../_helpers/db/truncate');
 const DB = require('../../db');
 const db = new DB(ctx);
-const { v4: uuid } = require('uuid');
 
 const randomHash = () => (
     crypto.createHash('sha1').update(Date.now().toString() + Math.random().toString()).digest('hex')

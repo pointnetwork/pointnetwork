@@ -6,6 +6,11 @@ const { v4: uuid } = require('uuid');
 
 describe('Provider model', () => {
     let Provider;
+    const providerObj = {
+        id: uuid(),
+        address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
+        connection: `http://localhost:12345/#${this.address}`
+    }
 
     beforeAll(async () => {
         await db.init();
@@ -21,11 +26,6 @@ describe('Provider model', () => {
     });
 
     describe('create', () => {
-        const providerObj = {
-            id: uuid(),
-            address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
-            connection: `http://localhost:12345/#${this.address}`
-        }
         beforeAll(async () => {
             await Provider.create(providerObj);
         });
@@ -46,11 +46,6 @@ describe('Provider model', () => {
 
     describe('update', () => {
         let provider;
-        const providerObj = {
-            id: uuid(),
-            address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
-            connection: `http://localhost:12345/#${this.address}`
-        }
 
         beforeAll(async () => {
             provider = await Provider.create(providerObj);
@@ -70,12 +65,6 @@ describe('Provider model', () => {
     });
 
     describe('findOrCreate', () => {
-        const providerObj = {
-            id: uuid(),
-            address: '0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301',
-            connection: 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301'
-        }
-
         beforeAll(async () => {
                 await Provider.findOrCreate({ where: { id: providerObj.id }, defaults: { ...providerObj } })
             }
