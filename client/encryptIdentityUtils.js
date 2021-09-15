@@ -41,7 +41,7 @@ module.exports.encryptData = async(host, plaintext, publicKey) => {
 };
 
 module.exports.decryptData = async (host, cyphertext, encryptedSymmetricObj, privateKey) => {
-    console.log({host, cyphertext, encryptedSymmetricObj, privateKey});
+    // console.log({host, cyphertext, encryptedSymmetricObj, privateKey});
     const decryptHostNameHash = crypto.createHash('sha256');
     decryptHostNameHash.update(host);
     const symmetricObj = await eccrypto.decrypt(Buffer.from(privateKey, 'hex'), encryptedSymmetricObj);
