@@ -1,78 +1,67 @@
-const knex = require('../../db/knex');
+const ctx = require('../_helpers/db/setup');
+const truncate = require('../_helpers/db/truncate');
 const DB = require('../../db');
-const Model = require('../../db/model');
-const RedKey = require('../../db/models/redkey');
-const Provider = require('../../db/models/provider');
+const db = new DB(ctx);
+const { v4: uuid } = require('uuid');
 
-Model.prototype.save = jest.fn();
-Model.db = {
-    get: jest.fn(() => {
-        const error = new Error('Not found');
-        error.notFound = true;
-        throw error;
-    })
-};
-
-Model.prototype.db = {
-    batch: jest.fn(() => ({
-        put: jest.fn(function() {
-            return this;
-        }),
-        write: jest.fn(function() {
-            return this;
-        })
-    }))
-};
+let Provider;
 
 const generateProvider = async () => {
-    const provider = Provider.new();
-    provider.address = '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415';
-    provider.connection = 'http://localhost:12345/#' + provider.address;
-
-    await provider.save();
-    return provider;
+    return await Provider.create({
+        id: uuid(),
+        address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
+        connection: `http://localhost:12345/#${this.address}`
+    });;
 };
 
 describe('RedKey model', () => {
+    let RedKey;
+
+    const redKeyObj = {
+        id: "1",
+        index: 42,
+        provider_id: undefined,
+        private_key: 'foo',
+        public_key: 'bar'
+    }
+
+    beforeAll(async () => {
+        await db.init();
+        RedKey = require('../../db/models/redkey');
+        Provider = require('../../db/models/provider');
+    })
+
     afterEach(async () => {
-        await knex('redkeys').delete();
-        await knex('providers').delete();
+        truncate(RedKey);
+        truncate(Provider);
     });
 
     afterAll(async () => {
-        await knex.destroy();
+        db.shutdown();
     });
 
     describe('create', () => {
-        let redKey;
         let provider;
 
         beforeAll(async () => {
             provider = await generateProvider();
-
-            redKey = RedKey.new();
-            redKey.id = DB.generateRandomIdForNewRecord();
-            redKey.provider_id = provider._id;
-            redKey.private_key = 'foo';
-            redKey.public_key = 'bar';
-            redKey.key_index = 42;
-
-            await redKey.save();
+            redKeyObj.provider_id = provider.id;
+            await RedKey.create(redKeyObj);
         });
 
         it('creates a record in `redkeys` table', async () => {
-            const redKeys = await knex('redkeys').select();
+            const redKeys = await RedKey.findAll()
 
             expect(redKeys).toBeInstanceOf(Array);
             expect(redKeys).toHaveLength(1);
 
             const [savedRedKey] = redKeys;
 
-            expect(savedRedKey).toHaveProperty('id', redKey._id);
-            expect(savedRedKey).toHaveProperty('provider_id', provider._id);
-            expect(savedRedKey).toHaveProperty('private_key', redKey.private_key);
-            expect(savedRedKey).toHaveProperty('public_key', redKey.public_key);
-            expect(savedRedKey).toHaveProperty('key_index', redKey.key_index);
+            expect(savedRedKey).toHaveProperty('id', redKeyObj.id);
+            expect(savedRedKey).toHaveProperty('provider_id', provider.id);
+            expect(savedRedKey).toHaveProperty('private_key', redKeyObj.private_key);
+            expect(savedRedKey).toHaveProperty('public_key', redKeyObj.public_key);
+            expect(savedRedKey).toHaveProperty('index', redKeyObj.index);
         });
     });
 
@@ -82,57 +71,31 @@ describe('RedKey model', () => {
 
         beforeAll(async () => {
             provider = await generateProvider();
-
-            redKey = RedKey.new();
-
-            redKey.id = DB.generateRandomIdForNewRecord();
-            redKey.provider_id = provider._id;
-            redKey.private_key = 'foo';
-            redKey.public_key = 'bar';
-            redKey.key_index = 42;
-
-            await redKey.save();
+            redKeyObj.provider_id = provider.id;
+            redKey = await RedKey.create(redKeyObj);
         });
 
         it('updates a record in `redkeys` table', async () => {
-            const updatedKeyIndex = 1337;
+            const updatedIndex = 1337;
 
-            redKey.key_index = updatedKeyIndex;
+            redKey.index = updatedIndex;
             await redKey.save();
 
-            const savedRedKeys = await knex.select().from('redkeys').where('id', redKey._id);
+            const savedRedKeys = await RedKey.find(redKeyObj.id)
 
-            expect(savedRedKeys).toBeInstanceOf(Array);
-            expect(savedRedKeys).toHaveLength(1);
-            expect(savedRedKeys[0]).toHaveProperty('key_index', updatedKeyIndex);
+            expect(savedRedKeys).toBeInstanceOf(RedKey);
+            expect(savedRedKeys).toHaveProperty('index', updatedIndex);
         });
     });
 
     describe('generate one for provider', () => {
-        let provider;
-        let redkey;
-        const index = 1;
-
         beforeAll(async () => {
-            const connection = 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301';
-            const providerInstance = await Provider.findOrCreateAndSave(connection);
-
-            [provider] = await knex('providers').select().where({connection});
-            redkey = await RedKey.generateNewForProvider(providerInstance, index);
+            generatedRedKeys = await RedKey.generateNewForProvider();
         });
 
         it('creates redkey and sets correct provider id', async () => {
-            const savedRedKeys = await knex('redkeys').select();
-
-            expect(savedRedKeys).toBeInstanceOf(Array);
-            expect(savedRedKeys).toHaveLength(1);
-
-            const [savedRedKey] = savedRedKeys;
-
-            expect(savedRedKey).toHaveProperty('public_key', redkey.public_key);
-            expect(savedRedKey).toHaveProperty('private_key', redkey.private_key);
-            expect(savedRedKey).toHaveProperty('key_index', index);
-            expect(savedRedKey).toHaveProperty('provider_id', provider.id);
+            expect(generatedRedKeys.publicKey).toMatch('-----BEGIN PUBLIC KEY-----')
+            expect(generatedRedKeys.privateKey).toMatch('-----BEGIN PRIVATE KEY-----')
         });
     });
 });

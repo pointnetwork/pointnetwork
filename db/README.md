@@ -4,7 +4,7 @@ We're using Sequelize ORM
 
 `id` fields are by default of type Sequelize.DataTypes.BIGINT
 
-By default allowNull is false, put allowNull: true specifically if you want a field to be Nullable 
+By default allowNull is false, put allowNull: true specifically if you want a field to be Nullable
 
 Make migrations from diff of the models: `./point makemigration --datadir ~/.point/test1`
 
@@ -64,7 +64,14 @@ Now you are ready to test a deployment with an empty LevelDB and Postgres databa
 
 ## Run tests
 
-1. Start the services like so: `docker-compose -f docker-compose.yaml -f docker-compose.test.yaml up -d`
+1. Start the test services like so: `docker-compose -f docker-compose.test.yaml up -d`
 1. Now you can run the tests using `docker start pointnetwork_tests`
 1. Follow the logs of the container to see the test output: `docker logs -f pointnetwork_tests`
 1. Alternatively use the Docker desktop tool to start the `pointnetwork_tests` container and view the logs directly there.
+
+## Run tests from within container
+
+1. Start the test database service like so: `docker-compose -f docker-compose.test.yaml up -d database`
+1. Now run the service overriging the ENTRYPOINT like so: `docker-compose -f docker-compose.test.yaml run --entrypoint bash tests`
+1. In the terminal of the running tests container, run the tests like so: `npx jest --watchALL`
+1. Use the Jest watch menu in the terminal to run tests as required

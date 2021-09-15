@@ -65,7 +65,7 @@
   },
   "scripts": {
     "test": "jest",
-    "test:db:docker": "printf '\\e[2J\\e[3J\\e[H' && npm run migrate && NODE_ENV=development npm run test -- --testPathPattern=tests/models",
+    "test:db:docker": "printf '\\e[2J\\e[3J\\e[H' && npm run migrate && NODE_ENV=development npm run test",
     "test:restart": "docker-compose -f docker-compose.test.yaml restart tests && docker logs -f pointnetwork_tests",
     "start": "./point --datadir $DATADIR -v",
     "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
@@ -82,6 +82,12 @@
   },
   "imports": {
     "#utils": "./core/utils.js"
+  },
+  "jest": {
+    "verbose": true,
+    "moduleNameMapper": {
+      "#(.*)": "<rootDir>/core/$1"
+    }
   },
   "nodemonConfig": {
     "ignore": [
