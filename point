@@ -62,10 +62,6 @@ program.command('deploy <path>')
 // program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
 program.parse(process.argv);
 
-// todo: mix other param arguments into config, like here:
-// let argv;
-// let config = rc('kadence', options(program.datadir), argv);
-
 if (! program.config) {
     program.config = path.join(program.datadir, 'config.json');
 }
