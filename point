@@ -21,7 +21,6 @@ const npid = require('npid');
 const mkdirp = require('mkdirp');
 const DB = require('./db');
 const program = new Command();
-const disclaimer = require('./resources/disclaimer');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1'
@@ -40,7 +39,8 @@ program.description(`
     Licensed under MIT license.
 `);
 
-disclaimer.output();
+// Print disclaimer
+require('./resources/disclaimer').output();
 
 // NOTE: After changing parameters here, update the documentation
 program.command('go', { isDefault: true }).description('start the node').action(() => { program.go = true; });
