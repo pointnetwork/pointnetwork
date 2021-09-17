@@ -11,6 +11,9 @@
 # production
 /build
 
+# pointnetwork deploy folder
+/public
+
 # misc
 .DS_Store
 .env.local
