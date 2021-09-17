@@ -25,7 +25,8 @@ const App = () => {
       {
         id: 2,
         title: 'Even better now :)'
-      }]
+      }
+    ]
 
     return data
   }

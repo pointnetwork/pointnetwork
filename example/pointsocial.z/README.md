@@ -2,14 +2,13 @@
 
 Welcome to the Point Social Example Zapp. This README is a basic guide to getting started with this application.
 
-## Run the Point Social demo app in dev mode (client only)
+This is a React JS app. So you will need to install dependencies for it and run a build watcher if you want to develop it further.
 
-Install dependencies and start the React JS Client:
-
-```
-npm i
-npm run start
-```
+1. CD into the [./example/pointsocial.z](./example/pointsocial.z) directory.
+1. Run `npm i` to install the sites dependencies
+1. Run `npm run watch` (or `npm run watch:docker` if you are running the Node using Docker) to have *parcel* watch the site and build it on any detected changes
+1. Run `./scripts/deploy-sites.sh pointsocial --contracts` (from the node root folder) to deploy the sites `views` directory that was built using parcel.
+1. From the [Point SDK repo README](https://github.com/pointnetwork/pointsdk#using-web-ext), follow the instructions to start an instance of Firefox with the Point SDK extention already installed using `web-ext` command.
 
 ## Getting Started with Create React App (general instructions)
 

@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^5.11.4",
+    "@openzeppelin/contracts": "^4.3.2",
+    "@testing-library/jesom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "react": "^17.0.2",
@@ -12,10 +13,12 @@
     "web-vitals": "^1.0.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "clear": "mkdir -p ./public && rm -rf ./public/* .cache .parcel-cache",
+    "start": "parcel src/index.html",
+    "watch:docker": "./watch.docker.js",
+    "build": "npm run clear && cp -R src/images ./public/. && cp src/*.html ./public/. && cp src/*.css ./public/. && parcel build src/index.js --dist-dir ./public --no-source-maps",
+    "watch": "npm run clear && cp -R src/images ./public/. && cp src/*.html ./public/. && cp src/*.css ./public/. && parcel watch src/index.js --dist-dir ./public",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "eslintConfig": {
     "extends": [
@@ -34,5 +37,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "parcel": "^2.0.0-rc.0"
   }
 }
