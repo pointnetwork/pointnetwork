@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract PointSocial  {
+    using Counters for Counters.Counter;
     Counters.Counter internal _statusIds;
 
     struct Status {
