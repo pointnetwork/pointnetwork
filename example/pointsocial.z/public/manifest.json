@@ -1,0 +1,25 @@
+{
+  "short_name": "Point Social",
+  "name": "Example Point Network Zapp",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "pointlogo.png",
+      "type": "image/png",
+      "sizes": "348x348"
+    },
+    {
+      "src": "pointlogowhite.png",
+      "type": "image/png",
+      "sizes": "70x70s"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
