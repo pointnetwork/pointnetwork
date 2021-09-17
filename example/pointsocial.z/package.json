@@ -14,7 +14,7 @@
   },
   "scripts": {
     "clear": "mkdir -p ./public && rm -rf ./public/* .cache .parcel-cache",
-    "start": "parcel src/index.html",
+    "start": "react-scripts start",
     "watch:docker": "./watch.docker.js",
     "build": "npm run clear && cp -R src/images ./public/. && cp src/*.html ./public/. && cp src/*.css ./public/. && parcel build src/index.js --dist-dir ./public --no-source-maps",
     "watch": "npm run clear && cp -R src/images ./public/. && cp src/*.html ./public/. && cp src/*.css ./public/. && parcel watch src/index.js --dist-dir ./public",

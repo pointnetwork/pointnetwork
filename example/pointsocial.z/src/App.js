@@ -9,26 +9,17 @@ const App = () => {
   useEffect(() => {
     const getStatuses = async () => {
       const statuses = await fetchStatuses()
-      setStatuses(statuses)
+      setStatuses(statuses);
     }
 
     getStatuses()
   }, [])
 
   const fetchStatuses = async () => {
-    // TODO actuall fetch from point node using point sdk
-    const data = [
-      {
-        id: 1,
-        title: 'Feelin good today!'
-      },
-      {
-        id: 2,
-        title: 'Even better now :)'
-      }
-    ]
+    const response = await window.point.contract.call({contract: 'PointSocial', method: 'getStatuses'});
+    const {data: fetchedStatuses} = response;
 
-    return data
+    return fetchedStatuses.map(([id, title]) => ({id, title}))
   }
 
   return (
