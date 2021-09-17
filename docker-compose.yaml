@@ -4,6 +4,16 @@ services:
   blockchain_node:
     image: trufflesuite/ganache-cli:v6.12.2
     container_name: pointnetwork_blockchain_node
+    healthcheck:
+      test: |
+        wget -qO- http://localhost:$BLOCKCHAIN_PROVIDER_PORT \
+          --header='Content-Type: application/json' \
+          --header="Accept: application/json" \
+          --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}'
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     ports:
       - '$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT'
     volumes:
@@ -48,6 +58,12 @@ services:
   storage_provider:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_storage_provider
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     depends_on:
       - blockchain_node
     entrypoint: 'npm'
@@ -72,6 +88,12 @@ services:
   website_owner:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_website_owner
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     depends_on:
       - blockchain_node
       - database
@@ -98,6 +120,12 @@ services:
   website_visitor:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
     container_name: pointnetwork_website_visitor
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     depends_on:
       - blockchain_node
     ports:

@@ -79,6 +79,12 @@ class Kademlia {
         //     difficulty: 8
         // }));
         // node.quasar = node.plugin(kadence.quasar());
+
+        node.use('DISCONNECT', (req, res) => {
+            node.router.removeContactByNodeId(req.contact[0]);
+            res.send(['bye']);
+        });
+
         node.authenticate = node.plugin(AuthenticatePlugin(this.ctx, networkPublicKey, networkPrivateKey, {
             privateKey: networkPrivateKey,
             publicKey: networkPublicKey
