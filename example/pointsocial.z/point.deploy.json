@@ -1,7 +1,22 @@
 {
     "version": 1,
     "target": "pointsocial.z",
-    "keyvalue": {},
+     "keyvalue": {
+        "status0": {
+          "contract_send": "PointSocial.addStatus(contents)",
+          "storage[contents]": {
+            "blob": "Point Social is awesome!",
+            "type": "text/plain"
+          }
+        },
+        "status1": {
+          "contract_send": "PointSocial.addStatus(contents)",
+          "storage[contents]": {
+            "blob": "Another interesting status update",
+            "type": "text/plain"
+          }
+        }
+    },
     "contracts": [
       "PointSocial"
     ]

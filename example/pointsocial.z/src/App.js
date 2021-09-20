@@ -16,10 +16,10 @@ const App = () => {
   }, [])
 
   const fetchStatuses = async () => {
-    const response = await window.point.contract.call({contract: 'PointSocial', method: 'getStatuses'});
+    const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllStatuses'});
     const {data: fetchedStatuses} = response;
 
-    return fetchedStatuses.map(([id, title]) => ({id, title}))
+    return fetchedStatuses.map(([id, from, contents]) => ({id, from, contents}))
   }
 
   return (
