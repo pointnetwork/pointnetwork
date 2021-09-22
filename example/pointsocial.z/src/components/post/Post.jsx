@@ -5,7 +5,6 @@ import { useAppContext } from '../../context/AppContext';
 import { format } from "timeago.js";
 import { Link } from "wouter";
 import likeImg from '../../assets/like.png';
-import heartImg from '../../assets/heart.png';
 import profileImg from '../../assets/profile-pic.jpg';
 import postImg from '../../assets/post-pic.jpg';
 

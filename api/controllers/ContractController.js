@@ -1,11 +1,15 @@
 const PointSDKController = require('./PointSDKController');
 const helpers = require('./helpers/WalletHelpers');
 const _ = require('lodash');
+const utils = require('#utils');
+const path = require('path');
+const fs = require('fs');
 
 class ContractController extends PointSDKController {
     constructor(ctx, req, reply) {
         super(ctx);
         this.req = req;
+        this.config = ctx.config.client.zproxy;
         this.host = this.req.headers.host;
         // TODO: also verify the domain is registered in the Identity contract
         if (! _.endsWith(this.host, '.z')) return reply.callNotFound();
@@ -62,6 +66,21 @@ class ContractController extends PointSDKController {
                 amountInWei,
                 gasLimit
             };
+
+            if(this.payload.storage) {
+                const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+                utils.makeSurePathExists(cache_dir);
+                let storage = this.payload.storage; // todo: validate that this is an array of integers
+
+                for(let i=0; i<storage.length; i++) {
+                    let data = params[storage[i]];
+                    let tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(data));
+                    fs.writeFileSync(tmpPostDataFilePath, data);
+                    let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                    // replace the actual content in the params with the storage id
+                    params[storage[i]] = uploaded.id
+                }
+            }
 
             let data = await this.ctx.web3bridge.sendToContract(this.host, contract, method, params, options);
 

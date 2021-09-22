@@ -1,9 +1,10 @@
 import "./feed.css";
 import { useEffect, useState } from "react";
 import Post from "../post/Post";
+import Share from "../share/Share";
 import { useAppContext } from '../../context/AppContext';
 
-export default function Feed() {
+export default Feed = () =>{
   const [statuses, setStatuses] = useState([])
 
   const { walletAddress } = useAppContext()
@@ -32,6 +33,7 @@ export default function Feed() {
     <div className="feed">
       <div className="feedWrapper">
         <h4>Wallet Address: { walletAddress || 'Loading...' }</h4>
+        <Share />
         {statuses.map((p) => (
           <Post key={p.id} post={p} />
         ))}
