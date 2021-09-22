@@ -1,6 +1,7 @@
 const Model = require('../model');
-const _ = require('lodash');
 const crypto = require('crypto');
+const Provider = require('./provider');
+const Sequelize = require('sequelize');
 
 const defaultConfig = require('../../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits; // todo: make it read from the actual config, not default
@@ -9,17 +10,6 @@ const PUBEXP = defaultConfig.storage.redkey_public_exponent; // todo: make it re
 class Redkey extends Model {
     constructor(...args) {
         super(...args);
-    }
-
-    static _buildIndices() {
-        this._addIndex('provider_id');
-    }
-
-    setProvider(provider) {
-        this._attributes.provider_id = provider.id;
-    }
-    async getProvider() {
-        return await this.ctx.db.provider.find(this._attributes.provider_id);
     }
 
     // todo: store keys internally in binary format, not text
@@ -42,22 +32,30 @@ class Redkey extends Model {
             }, async(err, publicKey, privateKey) => {
                 if (err) reject('Error: '+err);
 
-                const key = await Redkey.new();
-                key.pub = publicKey;
-                key.priv = privateKey;
-                key.provider = provider;
-                key.index = keyIndex;
-                key.id = 'redkey' + key.provider_id.replace(/[\:\/#]/g, '-') + '_' + key.index;
-                await key.save();
-
-                resolve(key);
+                resolve({
+                    publicKey, privateKey
+                });
             });
-        })
+        });
     }
 
     static async allByProvider(provider) {
         return await this.allBy('provider_id', provider.id);
-    };
+    }
 }
+
+Redkey.init({
+    id: { type: Sequelize.DataTypes.BIGINT, unique: true, primaryKey: true, autoIncrement: true },
+    // provider_id: { type: Sequelize.DataTypes.BIGINT, references: { model: 'Provider', key: 'id' } },
+    index: { type: Sequelize.DataTypes.INTEGER },
+    private_key: { type: Sequelize.DataTypes.TEXT },
+    public_key: { type: Sequelize.DataTypes.TEXT },
+}, {
+    indexes: [
+        { name: 'provider_id_index_unique', unique: true, fields: ['provider_id', 'index'] },
+    ]
+});
+
+Redkey.belongsTo(Provider);
 
 module.exports = Redkey;

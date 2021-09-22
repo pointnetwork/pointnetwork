@@ -1,83 +1,104 @@
 const Model = require('../model');
 const _ = require('lodash');
-const sublevel = require('sublevel');
-const AutoIndex = require('level-auto-index');
 const fs = require('fs');
-const path = require('path');
 const { interpret } = require('xstate');
+const Sequelize = require('sequelize');
+const utils = require('#utils');
+let Chunk = require('./chunk'), Provider = require('./provider'), Redkey = require('./redkey');
 
 class StorageLink extends Model {
     constructor(...args) {
-      super(...args);
+        super(...args);
     }
 
     initStateMachine(chunk) {
-      // create a state machine using the factory
-      this._stateMachine = storageLinkMachine.createStateMachine(this, chunk)
+        // create a state machine using the factory
+        this._stateMachine = storageLinkMachine.createStateMachine(this, chunk);
 
-      this._storageLinkService = interpret(this._stateMachine)//.onTransition(state => console.log(`Current State: ${state.value}`))
+        this._storageLinkService = interpret(this._stateMachine);//.onTransition(state => console.log(`Current State: ${state.value}`))
 
-      // start the storage link machine service
-      this._storageLinkService.start()
+        // start the storage link machine service
+        this._storageLinkService.start();
     }
 
     get machine() {
-      return this._storageLinkService
+        return this._storageLinkService;
     }
 
-    get state() {
-      return this.machine.state.value
+    get state() { // todo: won't you get confused with state/status?
+        return this.machine.state.value;
     }
 
     get hasFailed() {
-      return this.machine.state.value == 'failed'
-    }
-
-    static _buildIndices() {
-        const reducer = x => (!!x.chunk_id && !!x.status && x.id) ? x.chunk_id + '_' + x.status + '!' + x.id : void 0;
-        this._addIndex('chunkIdAndStatus', reducer);
+        return this.machine.state.value === StorageLink.STATUS_FAILED;
     }
 
     static async byChunkIdAndStatus(chunk_id, status) {
-        return await this.allBy('chunkIdAndStatus', chunk_id + '_' + status);
+        let where = {
+            chunk_id: chunk_id
+        };
+
+        if (status !== 'all') {
+            where.status = status;
+        }
+
+        return await StorageLink.findAll({ where });
     }
 
     getEncryptedData() {
-        return fs.readFileSync(Chunk.getChunkStoragePath(this.chunk_id)+'.'+this.id+'.enc');
+        return fs.readFileSync(Chunk.getChunkStoragePath(this.chunk_id)+'.'+this.id+'.enc', { encoding: null });
     }
 
     validatePledge() {
         // todo: make sure this.chunk_id is not null
         // todo: check this.pledge.conditions as well and make sure they're signed off on
-        const contact = this.ctx.utils.urlToContact(this.provider_id);
+        const contact = utils.urlToContact(this.provider_id);
         const publicKey = Buffer.from(contact[0], 'hex');
         const message = [ 'STORAGE', 'PLEDGE', this.pledge.conditions.chunk_id, 'time' ];
 
-        const vrs = this.ctx.utils.deserializeSignature(this.pledge.signature);
+        const vrs = utils.deserializeSignature(this.pledge.signature);
 
-        if (this.ctx.utils.verifyPointSignature(message, vrs, publicKey, this.chainId) !== true) {
+        if (utils.verifyPointSignature(message, vrs, publicKey, this.chainId) !== true) {
             throw new Error('recovered public key does not match provided one');
         }
     }
 
-    async getChunk() {
-        return await Chunk.find(this.chunk_id);
-    }
-
-    async getRedkey() {
-        if (this.redkeyId === null) throw new Error('No provider redundancy key set for storage_link '+this.id);
-        const key = await Redkey.find(this.redkeyId);
-        if (key === null) throw new Error('Provider redundancy key for storage_link '+this.id+' not found');
-        return key;
-    }
-
-    setProvider(provider) {
-        this._attributes.provider_id = provider.id;
-    }
-    async getProvider() {
-        return await this.ctx.db.provider.find(this._attributes.provider_id);
+    async getRedkeyOrFail() {
+        return await Redkey.findOrFail(this.redkey_id);
     }
 }
+
+StorageLink.init({
+    id: { type: Sequelize.DataTypes.BIGINT, unique: true, primaryKey: true, autoIncrement: true },
+    // chunk_id: { type: Sequelize.DataTypes.STRING, references: { model: 'Chunk', key: 'id' } },
+    // provider_id: { type: Sequelize.DataTypes.BIGINT, references: { model: 'Provider', key: 'id' } },
+    // redkey_id: { type: Sequelize.DataTypes.BIGINT, references: { model: 'Redkey', key: 'id' } },
+    status: { type: Sequelize.DataTypes.STRING },
+    encrypted_length: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
+    segments_sent: { type: Sequelize.DataTypes.JSON, allowNull: true },
+    segments_received: { type: Sequelize.DataTypes.JSON, allowNull: true },
+    segment_hashes: { type: Sequelize.DataTypes.JSON, allowNull: true },
+    merkle_tree: { type: Sequelize.DataTypes.JSON, allowNull: true },
+    merkle_root: { type: Sequelize.DataTypes.STRING, allowNull: true },
+
+    // todo:
+    // table.text('segments_sent');
+    // table.text('segments_received');
+    // table.specificType('segment_hashes', 'varchar[]');
+    // table.specificType('merkle_tree', 'varchar[]');
+    // table.string('merkle_root');
+
+}, {
+    indexes: [
+        { fields: ['status'] },
+        { fields: ['chunk_id', 'status'] },
+        { fields: ['merkle_root'] },
+    ]
+});
+
+StorageLink.belongsTo(Chunk);
+StorageLink.belongsTo(Provider);
+StorageLink.belongsTo(Redkey);
 
 StorageLink.STATUS_ALL = 'all';
 StorageLink.STATUS_CREATED = 'created'; // candidates
@@ -106,5 +127,3 @@ module.exports = StorageLink;
 
 // require statement declared after module.exports to avoid circular dependencies
 const { storageLinkMachine } = require('../../client/storage/machines');
-const Chunk = require('./chunk');
-const Redkey = require('./redkey');

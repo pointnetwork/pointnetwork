@@ -1,4 +1,4 @@
-FROM node:10.15.3-stretch-slim as builder
+FROM node:14.17.5-stretch-slim as builder
 
 ENV GRANAX_USE_SYSTEM_TOR="1"
 
@@ -8,7 +8,7 @@ COPY . /app/
 RUN apt update && apt install -y python3 tor git build-essential && \
     npm install -g npm && PYTHON=$(which python3) npm i
 
-FROM node:10.15.3-stretch-slim
+FROM node:14.17.5-stretch-slim
 
 WORKDIR /app
 COPY --from=builder /app /app

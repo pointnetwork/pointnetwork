@@ -32,7 +32,7 @@ class ApiServer {
             this.server.setErrorHandler(function (error, request, reply) {
                 request.log.warn(error);
 
-                var statusCode = error.statusCode >= 400 ? error.statusCode : 500;
+                const statusCode = error.statusCode >= 400 ? error.statusCode : 500;
                 reply
                     .code(statusCode)
                     .type('text/plain')

@@ -33,6 +33,6 @@ module.exports = {
     allowProtocolRelative: true
 };
 // todo: enable svg with all additional <g>, <circle> etc.
- // todo: svg can contain xss, see the link!
+//  todo: svg can contain xss, see the link!
 
 // todo: allow link rel=stylesheet etc.

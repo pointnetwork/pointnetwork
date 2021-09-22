@@ -1,6 +1,10 @@
 const crypto = require('crypto');
 const Model = require('../model');
 const fs = require('fs');
+const path = require('path');
+const Sequelize = require('sequelize');
+const _ = require('lodash');
+const utils = require('#utils');
 let Chunk;
 
 class File extends Model {
@@ -12,11 +16,6 @@ class File extends Model {
 
         this._merkleTree = null;
         this._fileHash = null; // todo: remove
-    }
-
-    static _buildIndices() {
-        this._addIndex('ul_status');
-        this._addIndex('dl_status');
     }
 
     getAllChunkIds() {
@@ -45,7 +44,7 @@ class File extends Model {
             }
 
             let chunks = this.chunkIds.map(x => Buffer.from(x, 'hex'));
-            this._merkleTree = this.ctx.utils.merkle.merkle(chunks, this.ctx.utils.hashFn);
+            this._merkleTree = utils.merkle.merkle(chunks, utils.hashFn);
         }
 
         return this._merkleTree;
@@ -69,8 +68,8 @@ class File extends Model {
         if (hash !== 'keccak256') {
             // todo: error? ignore?
         }
-        let merkleReassembled = this.ctx.utils.merkle.merkle(chunks.map(x => Buffer.from(x, 'hex')), this.ctx.utils.hashFn).map(x => x.toString('hex'));
-        if (!this.ctx.utils.areScalarArraysEqual(merkleReassembled, merkle)) {
+        let merkleReassembled = utils.merkle.merkle(chunks.map(x => Buffer.from(x, 'hex')), utils.hashFn).map(x => x.toString('hex'));
+        if (!utils.areScalarArraysEqual(merkleReassembled, merkle)) {
             // todo: error? ignore?
             return console.error('MERKLE INCORRECT!', {merkleReassembled, merkle, hash, chunks});
         }
@@ -89,15 +88,13 @@ class File extends Model {
         let fd = fs.openSync(temporaryFile, 'a');
 
         for(let chunkId of this.chunkIds) {
-            let chunk = await Chunk.find(chunkId);
-            if (! chunk) {
-                throw Error('Chunk '+chunkId+' not found or not downloaded yet'); // todo: do we really need to interrupt with Error?
-            }
+            let chunk = await Chunk.findOrFail(chunkId);
 
             // todo: what if getData() returns empty? maybe hash again, just to be sure?
             // todo: make sure data is Buffer
             let data = chunk.getData();
-            if (this.ctx.utils.hashFnHex(data) !== chunk.id) throw Error('Chunk hash doesn\'t match data'); // todo should we throw error or just ignore and return?
+            if (!Buffer.isBuffer(data)) throw Error('File.dumpToDiskFromChunks: data must be a Buffer');
+            if (utils.hashFnHex(data) !== chunk.id) throw Error('Chunk hash doesn\'t match data'); // todo should we throw error or just ignore and return?
 
             if (chunkId === this.chunkIds[this.chunkIds.length-1]) {
                 const CHUNK_SIZE_BYTES = this.ctx.config.storage.chunk_size_bytes;
@@ -122,34 +119,13 @@ class File extends Model {
         }
 
         // todo: check full file integrity
-        fs.copyFileSync(temporaryFile, this.originalPath);
+        fs.copyFileSync(temporaryFile, this.original_path);
         fs.unlinkSync(temporaryFile);
-    }
-
-    // todo: make use of it
-    async getFileHash() {
-        if (this._fileHash === null) {
-            let hash = crypto.createHash('sha256');
-
-            return new Promise((resolve, reject) => {
-                fs.createReadStream(filepath)
-                    .on('data', (chunk) => {
-                        hash.update(chunk);
-                    })
-                    .on('end', () => {
-                        this._fileHash = hash.digest('hex');
-                        resolve(this._fileHash);
-                    })
-                    .on('error', reject);
-            });
-        } else {
-            return this._fileHash;
-        }
     }
 
     getFileSize() {
         if (typeof this.size === 'undefined') {
-            this.size = fs.statSync(this.originalPath).size;
+            this.size = fs.statSync(this.original_path).size;
         }
         return this.size;
     }
@@ -162,8 +138,8 @@ class File extends Model {
             chunk.redundancy = Math.max(parseInt(chunk.redundancy)||0, this.redundancy);
             chunk.expires = Math.max(parseInt(chunk.expires)||0, this.expires);
             chunk.autorenew = (!!chunk.autorenew) ? !!chunk.autorenew : !!this.autorenew;
-            chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
             await chunk.save();
+            await chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
             await chunk.reconsiderUploadingStatus(false);
             if (chunk.isUploading()) {
                 chunks_uploading++; // todo: replace with needs_uploading and break;
@@ -171,20 +147,23 @@ class File extends Model {
         }));
 
         // let percentage = chunks_uploading / chunks.length;
-        // console.log("file: "+this.originalPath+": "+"█".repeat(percentage)+".".repeat(100-percentage));
+        // console.log("file: "+this.original_path+": "+"█".repeat(percentage)+".".repeat(100-percentage));
 
         await this.changeULStatus((chunks_uploading > 0) ? File.UPLOADING_STATUS_UPLOADING : File.UPLOADING_STATUS_UPLOADED);
     }
 
-    async reconsiderDownloadingStatus(cascade) {
-        const chunkinfo_chunk = await Chunk.findOrCreate(this.id);
+    async reconsiderDownloadingStatus(cascade) {  // todo: cascade is not used?
+        // todo: wrap everything in a transaction/locking later
+        const chunkinfo_chunk = await Chunk.findOrCreate(this.id); // todo: use with locking
+        // At this point we know for sure that the chunk with this id exists
+
         if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
             await this.changeDLStatus(File.DOWNLOADING_STATUS_FAILED);
             await this.save();
             return;
         } else if (chunkinfo_chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADED) {
-            chunkinfo_chunk.addBelongsToFile(this, -1);
             await chunkinfo_chunk.save();
+            await chunkinfo_chunk.addBelongsToFile(this, -1);
             await chunkinfo_chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_DOWNLOADING);
             await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO);
             setImmediate(async() => {
@@ -198,9 +177,13 @@ class File extends Model {
             await this.save();
         }
 
-        const chunks = await this.getAllChunks(); // todo: not important, but consider getting ids at this point, and objs only in the cycle?
+        // ----------------------------------------------
+
+        const chunk_ids = _.uniq( this.getAllChunkIds() );
+
         let needs_downloading = false;
-        await Promise.all(chunks.map(async(chunk, i) => {
+        await Promise.all(chunk_ids.map(async(chunk_id, i) => {
+            let chunk = await Chunk.findOrCreate(chunk_id);
             await chunk.reconsiderDownloadingStatus(false);
             if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
                 await this.changeDLStatus(File.DOWNLOADING_STATUS_FAILED);
@@ -211,8 +194,8 @@ class File extends Model {
                 needs_downloading = true;
 
                 const CHUNK_SIZE_BYTES = this.ctx.config.storage.chunk_size_bytes;
-                chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
                 await chunk.save();
+                await chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
                 await chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_DOWNLOADING);
 
                 setImmediate(async() => {
@@ -257,9 +240,10 @@ class File extends Model {
             return undefined;
         }
         if (this.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) throw new Error('EFILESTATUSNOTDONE: File has not yet been downloaded');
-        return fs.readFileSync(this.originalPath, encoding);
+        return fs.readFileSync(this.original_path, encoding);
     }
 
+    // todo: make into static, and do as few side-effects as possible
     async chunkify() {
         if (! this.chunkIds) {
             const CHUNK_SIZE_BYTES = this.ctx.config.storage.chunk_size_bytes;
@@ -267,12 +251,12 @@ class File extends Model {
             const totalChunks = Math.ceil(size / CHUNK_SIZE_BYTES);
 
             return new Promise((resolve, reject) => {
-                let chunks = [];
+                let chunkIds = [];
                 let currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
                 let currentChunkLength = 0;
                 let chunkId = null;
 
-                fs.createReadStream(this.originalPath)
+                fs.createReadStream(this.original_path)
                     .on('data', (buf) => {
                         let bufCopied = 0;
 
@@ -282,7 +266,7 @@ class File extends Model {
                             bufCopied += copyLength;
                             currentChunkLength += copyLength;
                             chunkId = Chunk.forceSaveToDisk(currentChunk);
-                            chunks.push(chunkId);
+                            chunkIds.push(chunkId);
                             currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
                             currentChunkLength = 0;
                         }
@@ -294,42 +278,68 @@ class File extends Model {
                         if (currentChunkLength !== 0) {
                             currentChunk = currentChunk.slice(0, currentChunkLength);
                             chunkId = Chunk.forceSaveToDisk(currentChunk);
-                            chunks.push(chunkId);
+                            chunkIds.push(chunkId);
                         }
 
-                        if (chunks.length !== totalChunks) {
-                            return reject('Something went wrong, totalChunks '+totalChunks+' didn\'t match chunks.length '+chunks.length);
+                        if (chunkIds.length !== totalChunks) {
+                            return reject('Something went wrong, totalChunks '+totalChunks+' didn\'t match chunks.length '+chunkIds.length);
                         }
 
-                        this.chunkIds = chunks;
+                        this.chunkIds = chunkIds;
 
                         (async() => {
                             let merkleTree = await this.getMerkleTree();
-                            let mainChunkContents = JSON.stringify({
+                            let chunkInfoContents = JSON.stringify({
                                 type: 'file',
-                                chunks: chunks,
+                                chunks: chunkIds,
                                 hash: 'keccak256',
                                 filesize: this.getFileSize(),
                                 merkle: merkleTree.map(x => x.toString('hex')),
                             });
 
-                            let chunk = await Chunk.findOrCreateByData(mainChunkContents);
-                            this.id = chunk.id;
-                            await this.save();
-                            chunk.setData(mainChunkContents);
-                            chunk.addBelongsToFile(this, -1);
-                            if (!chunk.ul_status) chunk.ul_status = Chunk.UPLOADING_STATUS_CREATED;
-                            await chunk.save();
+                            let chunkInfoContentsBuffer = Buffer.from(chunkInfoContents, 'utf-8');  // todo: sure it's utf8? buffer uses utf8 by default anyway when casting. but what about utf16?
+                            let chunkInfo = await Chunk.findOrCreateByData(chunkInfoContentsBuffer);
+                            this.id = chunkInfo.id;
+                            const alreadyExistingFile = await File.findByPk(this.id); // todo: use findOrCreate with locking
+                            if (alreadyExistingFile) {
+                                // A file with this id already exists! This changes everything
+                                // TODO: figure out how to merge redundancy, expires, autorenew etc.
+                                if (alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADING &&
+                                    alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADED)
+                                {
+                                    alreadyExistingFile.ul_status = File.UPLOADING_STATUS_UPLOADING;
+                                    await alreadyExistingFile.changeULStatusOnAllChunks(Chunk.UPLOADING_STATUS_UPLOADING);
+                                    await alreadyExistingFile.save();
+                                }
+                            } else {
+                                await this.save();
+                            }
 
-                            for (let i in chunks) {
-                                let chunkId = chunks[i];
-                                (async(i, chunkId) => {
-                                    let chunk = await Chunk.findOrCreate(chunkId);
+                            chunkInfo.size = Buffer.byteLength(chunkInfoContentsBuffer);
+                            chunkInfo.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
+                            chunkInfo.redundancy = this.redundancy;
+                            chunkInfo.expires = this.expires;
+                            chunkInfo.autorenew = this.autorenew;
+                            chunkInfo.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
+                            await chunkInfo.save();
+                            await chunkInfo.addBelongsToFile(this, -1);
+
+                            for (let i in chunkIds) {
+                                let chunkId = chunkIds[i];
+
+                                // no await needed, let them be free
+                                (async (i, chunkId) => {
+                                    let chunk = await Chunk.findOrCreate(chunkId); // todo: use with locking
                                     let offset = i * CHUNK_SIZE_BYTES;
-                                    chunk.addBelongsToFile(this, offset);
-                                    if (!chunk.ul_status) chunk.ul_status = Chunk.UPLOADING_STATUS_CREATED;
+                                    chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
+                                    chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
+                                    chunk.size = chunk.getSize();
+                                    chunk.redundancy = this.redundancy;
+                                    chunk.expires = this.expires;
+                                    chunk.autorenew = this.autorenew;
                                     await chunk.save();
-                                })(i, chunkId);
+                                    await chunk.addBelongsToFile(this, offset);
+                                })(i, chunkId).then(nothing => {});
                             }
 
                             resolve(this.chunkIds);
@@ -342,6 +352,20 @@ class File extends Model {
         }
     }
 
+    async changeULStatusOnAllChunks() {
+        const chunkIds = this.getAllChunkIds();
+        for (let i in chunkIds) {
+            const chunkId = chunkIds[i];
+            // no await needed, let them be free
+            (async (i, chunkId) => {
+                let chunk = await Chunk.findByPk(chunkId);
+                if (chunk.ul_status !== Chunk.UPLOADING_STATUS_UPLOADING && chunk.ul_status !== Chunk.UPLOADING_STATUS_UPLOADED) {
+                    chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
+                    await chunk.save();
+                }
+            })(i, chunkId).then(nothing => {});
+        }
+    }
 }
 
 File.UPLOADING_STATUS_CREATED = 'us0';
@@ -352,5 +376,26 @@ File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO = 'ds1';
 File.DOWNLOADING_STATUS_DOWNLOADING = 'ds2';
 File.DOWNLOADING_STATUS_DOWNLOADED = 'ds99';
 File.DOWNLOADING_STATUS_FAILED = 'ds3';
+
+File.init({
+    id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
+    original_path: { type: Sequelize.DataTypes.TEXT },
+    size: { type: Sequelize.DataTypes.INTEGER, allowNull: true },  // allowNull:true because on downloading we don't yet know the file size before we have the chunkInfo chunk
+    chunkIds: { type: Sequelize.DataTypes.JSON, allowNull: true },
+
+    ul_status: { type: Sequelize.DataTypes.STRING, defaultValue: File.UPLOADING_STATUS_CREATED },
+    dl_status: { type: Sequelize.DataTypes.STRING, defaultValue: File.DOWNLOADING_STATUS_CREATED },
+
+    // allowNull in the next rows because this is only related to uploading and storing, not files queued for downloading
+    redundancy: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
+    expires: { type: Sequelize.DataTypes.BIGINT, allowNull: true },
+    autorenew: { type: Sequelize.DataTypes.BOOLEAN, allowNull: true },
+
+}, {
+    indexes: [
+        { fields: ['ul_status'] },
+        { fields: ['dl_status'] },
+    ]
+});
 
 module.exports = File;

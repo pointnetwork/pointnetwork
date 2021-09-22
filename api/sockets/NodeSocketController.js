@@ -8,7 +8,7 @@ The NodeSocketController is for handling internal node websocket connections via
 */
 class NodeSocketController {
     constructor(_ctx, _ws, _wss) {
-        this.ctx = _ctx
+        this.ctx = _ctx;
         this.ws = _ws;
         this.wss = _wss;
         this.init();
@@ -27,7 +27,7 @@ class NodeSocketController {
                     // subscribe to the wallets TRANSACTION_EVENT via the wallet transactionEventEmitter
                     this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, (data) => {
                         this.publishToClients(this._formatResponse(cmd, data));
-                    })
+                    });
                     this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to Wallet.TRANSACTION_EVENT'}, 'SUBSCRIBED_EVENT'));
                     break;
                 case 'deployerSubscription':
@@ -37,12 +37,12 @@ class NodeSocketController {
                     });
                     this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to DeployerProgress.PROGRESS_UPDATED'}, 'SUBSCRIBED_EVENT'));
                     break;
-                }
-        })
+            }
+        });
     }
 
     publishToClients(msg) {
-        if(this.wss) {
+        if (this.wss) {
             this.wss.clients.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify(msg));
@@ -52,20 +52,20 @@ class NodeSocketController {
     }
 
     async apiResponseFor(cmdObj) {
-        let [cmd, params] = this._parseCmd(cmdObj.params.path)
-        let response = await this.console.cmd_api(cmd, ...params)
-        return this._formatResponse(cmdObj, response)
+        let [cmd, params] = this._parseCmd(cmdObj.params.path);
+        let response = await this.console.cmd_api(cmd, ...params);
+        return this._formatResponse(cmdObj, response);
     }
 
-    _formatResponse(cmd, response, event='DATA_EVENT') {
-        let payload = {...cmd, data: response, event}
-        return payload
+    _formatResponse(cmd, response, event = 'DATA_EVENT') {
+        let payload = {...cmd, data: response, event};
+        return payload;
     }
 
     _parseCmd(cmdstr) {
-        let [cmd, params] = cmdstr.split('?')
-        params ? params = params.split('&') : params = ''
-        return [cmd, params]
+        let [cmd, params] = cmdstr.split('?');
+        params ? params = params.split('&') : params = '';
+        return [cmd, params];
     }
 }
 

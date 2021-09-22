@@ -13,7 +13,7 @@
  —and you’re done! Any new connections will be filtered through the PAC file. You don’t need to restart Firefox.
  */
 
-PN_PROXY_SETTING="PROXY 127.0.0.1:65501"
+const PN_PROXY_SETTING="PROXY 127.0.0.1:65501";
 
 const allowed_ports = [
     // uncomment and list any exceptions:
@@ -22,7 +22,7 @@ const allowed_ports = [
 
 // CIDR 0/8 and 127/8
 const local_cidrs =
-    /^(?:127(?:\.(?:\d{1,})){1,3}|0+(?:\.0+){0,3})$/;
+    /^(?:127(?:\.(?:\d+)){1,3}|0+(?:\.0+){0,3})$/;
 
 // other notations for 0/8 and 127/8
 const localhosts = [

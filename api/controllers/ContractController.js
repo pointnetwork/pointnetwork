@@ -1,5 +1,5 @@
-const PointSDKController = require('./PointSDKController')
-const helpers = require('./helpers/WalletHelpers')
+const PointSDKController = require('./PointSDKController');
+const helpers = require('./helpers/WalletHelpers');
 const _ = require('lodash');
 
 class ContractController extends PointSDKController {
@@ -8,7 +8,7 @@ class ContractController extends PointSDKController {
         this.req = req;
         this.host = this.req.headers.host;
         // TODO: also verify the domain is registered in the Identity contract
-        if (! _.endsWith(this.host, '.z')) return reply.callNotFound()
+        if (! _.endsWith(this.host, '.z')) return reply.callNotFound();
 
         this.walletToken = this.req.headers['wallet-token'];
         this.payload = req.body;
@@ -16,8 +16,8 @@ class ContractController extends PointSDKController {
 
         // if the wallet is required for the current request
         if(this._walletRequired(req)) {
-            const wallet = helpers.initWallet(ctx, req.headers['wallet-token'])
-            wallet ? this.wallet = wallet : this.reply.callNotFound()
+            const wallet = helpers.initWallet(ctx, req.headers['wallet-token']);
+            wallet ? this.wallet = wallet : this.reply.callNotFound();
         }
     }
 
@@ -32,22 +32,22 @@ class ContractController extends PointSDKController {
         let data = await this.ctx.web3bridge.callContract(this.host, contract, method, params);
 
         return this._response(data);
-     }
+    }
 
-     async load() {
+    async load() {
         const contractName = this.req.params.contract;
 
         let contract = await this.ctx.web3bridge.loadWebsiteContract(this.host, contractName);
 
         let data = {
-           address: contract._address,
-           abi: contract._jsonInterface
-        }
+            address: contract._address,
+            abi: contract._jsonInterface
+        };
 
         return this._response(data);
-     }
+    }
 
-     async send() {
+    async send() {
         if(this.wallet) {
             const contract = this.payload.contract;
             const method = this.payload.method;
@@ -61,22 +61,22 @@ class ContractController extends PointSDKController {
             const options = {
                 amountInWei,
                 gasLimit
-            }
+            };
 
             let data = await this.ctx.web3bridge.sendToContract(this.host, contract, method, params, options);
 
             return this._response(data);
         }
-     }
+    }
 
-     async getPastEvents() {
-         // TODO call getPastEvents for the desired contract / event
-     }
+    async getPastEvents() {
+        // TODO call getPastEvents for the desired contract / event
+    }
 
-     /* Private Functions */
+    /* Private Functions */
     _walletRequired(req) {
-        let fn = req.url.slice(req.url.lastIndexOf('/') + 1, req.url.length)
-        return fn != 'call'
+        let fn = req.url.slice(req.url.lastIndexOf('/') + 1, req.url.length);
+        return fn !== 'call';
     }
 }
 

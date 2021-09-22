@@ -1,4 +1,4 @@
-const utils = require('../../core/utils');
+const utils = require('#utils');
 
 describe("Core/Utils", () => {
     // todo: test for null, Object, integers etc. - ideally it should throw errors
@@ -17,14 +17,14 @@ describe("Core/Utils", () => {
 
     test("hashFn functions should correctly calculate id hashes", () => {
         const vectors = {
-            '': 'dcc703c0e500b653ca82273b7bfad8045d85a470',
-            '1': '82df0950f5a951637e0307cdcb4c672f298b8bc6',
+            '': 'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
+            '1': 'c89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6',
         };
 
         for(let input in vectors) {
             let expectedOutput = vectors[input];
-            expect(utils.hashFnHex(input)).toEqual(expectedOutput);
-            expect(utils.hashFn(input)).toEqual(Buffer.from(expectedOutput, 'hex'));
+            expect(utils.hashFnUtf8Hex(input)).toEqual(expectedOutput);
+            expect(utils.hashFn(Buffer.from(input, 'utf8'))).toEqual(Buffer.from(expectedOutput, 'hex'));
         }
     });
 });
