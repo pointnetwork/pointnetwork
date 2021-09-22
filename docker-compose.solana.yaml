@@ -1,0 +1,7 @@
+version: '3.9'
+
+services:
+  blockchain_node:
+    image: solanalabs/solana:v1.7.11
+    entrypoint: solana-run.sh
+
