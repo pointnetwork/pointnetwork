@@ -3,13 +3,13 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
-const utils = require('../core/utils');
+const utils = require('#utils');
 const defaultConfig = require('../resources/defaultConfig.json');
 
 const BITS = defaultConfig.storage.redkey_encryption_bits;
 const STUPID_PADDING = defaultConfig.storage.redkey_stupid_padding;
 
-function encryptFile(filePath, toFile, privKey) {
+function encryptFile(filePath, toFile, privKey) { // chunkId and linkId are only needed for sanity check between threads, just in case
     const fromFile = path.resolve(filePath);
 
     const writeSize = BITS/8;
@@ -53,6 +53,10 @@ function encryptFile(filePath, toFile, privKey) {
     }
     fs.closeSync(fd);
     fs.closeSync(fe);
+
+    // console.log({fromFile, toFile, privKey})
+    // console.log(fs.readFileSync(fromFile));
+    // console.log(fs.readFileSync(toFile));
 }
 
 process.on('message', async (message) => {
@@ -66,7 +70,7 @@ process.on('message', async (message) => {
 
         // send response to master process
         // todo: reading the file AGAIN??? can't you hash it while encrypting?
-        process.send({ 'command': 'encrypt', 'success': true, 'chunkId': chunkId, 'linkId': linkId, 'hash': utils.hashFnHex(fs.readFileSync(encryptedPath)) });
+        process.send({ 'command': 'encrypt', 'success': true, 'chunkId': chunkId, 'linkId': linkId, 'hash': utils.hashFnHex(fs.readFileSync(encryptedPath, { encoding: null })) });
     }
 });
 

@@ -1,0 +1,49 @@
+{
+  "development": {
+    "username": "pointnetworkuser",
+    "password": "password",
+    "database": "pointnetworkdb",
+    "host": "127.0.0.1",
+    "port": "4321",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "database_test",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "database_production",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+
+  "pointnode1": {
+    "username": "pointnetworkuser",
+    "password": "password",
+    "database": "pointnode1",
+    "host": "127.0.0.1",
+    "port": "4321",
+    "dialect": "postgres"
+  },
+  "pointnode2": {
+    "username": "pointnetworkuser",
+    "password": "password",
+    "database": "pointnode2",
+    "host": "127.0.0.1",
+    "port": "4321",
+    "dialect": "postgres"
+  },
+  "pointnode3": {
+    "username": "pointnetworkuser",
+    "password": "password",
+    "database": "pointnode3",
+    "host": "127.0.0.1",
+    "port": "4321",
+    "dialect": "postgres"
+  }
+}

@@ -11,11 +11,14 @@ services:
       - ./example:/app/example:ro
       - ./network:/app/network:ro
       - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
-      - ./point:/app/point:ro
       - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
 
   website_owner:
     command: 'run start:docker:dev'
@@ -28,11 +31,14 @@ services:
       - ./example:/app/example:ro
       - ./network:/app/network:ro
       - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
-      - ./point:/app/point:ro
       - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
 
   website_visitor:
     command: 'run start:docker:dev'
@@ -45,8 +51,15 @@ services:
       - ./example:/app/example:ro
       - ./network:/app/network:ro
       - ./provider:/app/provider:ro
+      - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
+      - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
-      - ./point:/app/point:ro
       - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
+
+  database:
+    ports:
+      - '5432:5432'

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
-import "@openzeppelin/contracts/math/SafeMath.sol";
+pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract StorageProviderRegistry {
     using SafeMath for uint256;
@@ -21,7 +21,7 @@ contract StorageProviderRegistry {
 
     event Announcement(address id, string connection, uint collateral, uint collateral_lock_period, uint cost_per_kb);
 
-    constructor() public {
+    constructor() {
         // Set the provider address to the Raiden node address of that provider and keep the 'connection' property
         // set to the kademlia connection url of the PN node.
         providers[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = Provider({

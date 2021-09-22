@@ -1,5 +1,3 @@
-const Storage = require('./storage');
-const ZProxy = require('./proxy');
 const DeployerProgress = require('./zweb/deployer/progress');
 
 class Client {
@@ -22,13 +20,15 @@ class Client {
     }
 
     async init() {
-        this.storage = new Storage(ctx);
+        const Storage = require('./storage');
+        this.storage = new Storage(this.ctx);
         this.storage.start();
 
-        this.proxy = new ZProxy(ctx);
+        const ZProxy = require('./proxy');
+        this.proxy = new ZProxy(this.ctx);
         this.proxy.start();
 
-        this.deployerProgress = new DeployerProgress(ctx);
+        this.deployerProgress = new DeployerProgress(this.ctx);
 
         // start other services
     }

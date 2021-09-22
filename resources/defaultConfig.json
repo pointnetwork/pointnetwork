@@ -4,7 +4,13 @@
     "port": 2468
   },
   "db": {
-    "path": "data/db"
+    "__look_at_sequelizeConfig.json__": true,
+    "define": {
+      "underscored": true,
+      "timestamps": true,
+      "createdAt": "created_at",
+      "updatedAt": "updated_at"
+    }
   },
   "log": {
     "enabled": true,
@@ -39,7 +45,7 @@
       "host": "127.0.0.1",
       "sanitize_html": false,
       "cache_path": "data/zproxy_cache",
-      "redirect_to_https": false
+      "redirect_to_https": true
     },
     "wallet": {
       "__do not remove this section__": null,
@@ -68,6 +74,7 @@
     "communication_external_host": "127.0.0.0",
     "bootstrap_nodes": [],
     "peer_cache_file_path": "data/dht_peercache.db",
+    "kadence_storage_leveldb_path": "data/kad_leveldb",
     "solutions_dir_path": "data/dht_solutions/",
     "ssl_enabled": false,
     "key_child_derivation_index": 0,

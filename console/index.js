@@ -1,7 +1,5 @@
 const readline = require('readline');
-const qs = require('query-string');
 const axios = require('axios');
-const _ = require('lodash');
 
 const PROMPT = '> ';
 
@@ -39,7 +37,7 @@ class Console {
             console.log('console dead, exiting');
             process.exit(1);
             //todo: more, close gracefully
-        })
+        });
     }
 
     async cmd_api(...args) {
@@ -47,40 +45,40 @@ class Console {
     }
 
     async cmd_api_get(_host, cmd, ...args) {
-        _host = (_host === 'localhost') ? this.host : _host
+        _host = (_host === 'localhost') ? this.host : _host;
         try {
             const params = this.buildURLParams(args);
             const url = this.buildApiBaseUrl() + cmd + '?' + params;
             const response = await axios.get(url, {
                 headers: {
-                  'host': _host,
-                  'Content-Type': 'application/json'
+                    'host': _host,
+                    'Content-Type': 'application/json'
                 }
-            })
-            return response.data
+            });
+            return response.data;
         } catch (e) {
-            return {error: `Error fetching ${cmd} : ${e.message}`,
-                    status: e.response.status,
-                    statusText: e.response.statusText}
+            return {error: `Error fetching ${cmd} : ${e.message}`};
         }
     }
 
     async cmd_api_post(_host, cmd, body) {
-        _host = (_host === 'localhost') ? this.host : _host
+        _host = (_host === 'localhost') ? this.host : _host;
         const api_base_url = this.buildApiBaseUrl();
         try {
             const url = api_base_url + cmd;
             const response = await axios.post(url, body, {
                 headers: {
-                  'host': _host,
-                  'Content-Type': 'application/json'
+                    'host': _host,
+                    'Content-Type': 'application/json'
                 }
-            })
-            return response.data
+            });
+            return response.data;
         } catch (e) {
-            return {error: `Error posting ${cmd} : ${e.message}`,
-                    status: e.response.status,
-                    statusText: e.response.statusText}
+            return {
+                error: `Error posting ${cmd} : ${e.message}`,
+                status: e.response && e.response.status,
+                statusText: e.response && e.response.statusText
+            };
         }
     }
 
@@ -107,7 +105,7 @@ class Console {
     }
 
     get host() {
-        return `http://localhost:${parseInt(ctx.config.api.port)}`;
+        return `http://localhost:${parseInt(this.ctx.config.api.port)}`;
     }
 
     get path() {

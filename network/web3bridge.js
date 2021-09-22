@@ -2,6 +2,7 @@ const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
 const ethereumUtils = require('ethereumjs-util');
+const utils = require('#utils');
 const _ = require('lodash');
 
 const ZDNS_ROUTES_KEY = 'zdns/routes';
@@ -14,7 +15,7 @@ class Web3Bridge {
         this.chain_id = this.ctx.config.network.web3_chain_id;
 
         // use WebsocketProvider to support subscriptions
-        const localProvider = new Web3.providers.WebsocketProvider(this.connectionString)
+        const localProvider = new Web3.providers.WebsocketProvider(this.connectionString);
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(localProvider); // todo: maybe you should hide it behind this abstraction, no?
         this.ctx.web3bridge = this;
 
@@ -62,7 +63,7 @@ class Web3Bridge {
 
             return new this.web3.eth.Contract(abi.abi, at);
         } catch(e) {
-            throw Error('Could not read abi of the contract '+this.ctx.utils.htmlspecialchars(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
+            throw Error('Could not read abi of the contract '+utils.escape(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
         }
     }
 
@@ -75,9 +76,9 @@ class Web3Bridge {
             if (!gasLimit) gasLimit = await method.estimateGas({ from: account, value: amountInWei });
             return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
         } catch (e) {
-            console.info({ method, account, gasPrice, gasLimit, amountInWei })
-            console.error('web3send error:', e)
-            throw e
+            console.info({ method, account, gasPrice, gasLimit, amountInWei });
+            console.error('web3send error:', e);
+            throw e;
         }
         /*
         .on('transactionHash', function(hash){
@@ -92,11 +93,16 @@ class Web3Bridge {
     }
 
     async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage // huh?
-        const contract = await this.loadWebsiteContract(target, contractName);
-        if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
-        if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
-        let result = await contract.methods[ method ]( ...params ).call();
-        return result;
+        try {
+            const contract = await this.loadWebsiteContract(target, contractName);
+            if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
+            if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
+            let result = await contract.methods[ method ]( ...params ).call();
+            return result;
+        } catch(e) {
+            this.ctx.log.error('callContract Error', {target, contractName, method, params});
+            throw e;
+        }
     }
 
     async getPastEvents(target, contractName, event, options={fromBlock: 0, toBlock: 'latest'}) {
@@ -157,23 +163,37 @@ class Web3Bridge {
     }
 
     async identityByOwner(owner) {
-        const identityContract = await this.loadIdentityContract();
-        const method = identityContract.methods.getIdentityByOwner(owner);
-        return await method.call();
+        try {
+            const identityContract = await this.loadIdentityContract();
+            const method = identityContract.methods.getIdentityByOwner(owner);
+            return await method.call();
+        } catch(e) {
+            this.ctx.log.error('Error: identityByOwner', {owner});
+            throw e;
+        }
     }
 
     async ownerByIdentity(identity) {
-        const identityContract = await this.loadIdentityContract();
-        const method = identityContract.methods.getOwnerByIdentity(identity);
-        return await method.call();
+        try {
+            const identityContract = await this.loadIdentityContract();
+            const method = identityContract.methods.getOwnerByIdentity(identity);
+            return await method.call();
+        } catch(e) {
+            this.ctx.log.error('Error: identityByOwner', {identity});
+            throw e;
+        }
     }
 
     async commPublicKeyByIdentity(identity) {
-        const identityContract = await this.loadIdentityContract();
-        const method = identityContract.methods.getCommPublicKeyByIdentity(identity);
-        const parts = await method.call();
-        return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
-        // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
+        try {
+            const identityContract = await this.loadIdentityContract();
+            const method = identityContract.methods.getCommPublicKeyByIdentity(identity);
+            const parts = await method.call();
+            return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
+            // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
+        } catch(e) {
+            this.ctx.log.error('Error: commPublicKeyByIdentity', {identity});
+        }
     }
 
     async getZRecord(domain) {
@@ -184,53 +204,78 @@ class Web3Bridge {
     }
     async putZRecord(domain, routesFile) {
         domain = domain.replace('.z', ''); // todo: rtrim instead
-        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile)
+        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile);
     }
 
     async getKeyValue(identity, key) {
-        if (typeof identity !== 'string') throw Error('web3bridge.getKeyValue(): identity must be a string');
-        if (typeof key !== 'string') throw Error('web3bridge.getKeyValue(): key must be a string');
-        identity = identity.replace('.z', ''); // todo: rtrim instead
-        const contract = await this.loadIdentityContract();
-        let result = await contract.methods.ikvGet(identity, key).call();
-        return result;
+        try {
+            if (typeof identity !== 'string') throw Error('web3bridge.getKeyValue(): identity must be a string');
+            if (typeof key !== 'string') throw Error('web3bridge.getKeyValue(): key must be a string');
+            identity = identity.replace('.z', ''); // todo: rtrim instead
+            const contract = await this.loadIdentityContract();
+            let result = await contract.methods.ikvGet(identity, key).call();
+            return result;
+        } catch(e) {
+            this.ctx.log.error('getKeyValue error', {identity, key});
+            throw e;
+        }
     }
     async putKeyValue(identity, key, value) {
-        // todo: only send transaction if it's different. if it's already the same value, no need
-        identity = identity.replace('.z', ''); // todo: rtrim instead
-        const contract = await this.loadIdentityContract();
-        const method = contract.methods.ikvPut(identity, key, value);
-        console.log(await this.web3send(method)); // todo: remove console.log
+        try {
+            // todo: only send transaction if it's different. if it's already the same value, no need
+            identity = identity.replace('.z', ''); // todo: rtrim instead
+            const contract = await this.loadIdentityContract();
+            const method = contract.methods.ikvPut(identity, key, value);
+            console.log(await this.web3send(method)); // todo: remove console.log
+        } catch(e) {
+            this.ctx.log.error('putKeyValue error', {identity, key, value});
+            throw e;
+        }
     }
     async toChecksumAddress(address) {
-        const checksumAddress = await this.web3.utils.toChecksumAddress(address)
-        return checksumAddress
+        const checksumAddress = this.web3.utils.toChecksumAddress(address);
+        return checksumAddress;
     }
     async announceStorageProvider(connection, collateral_lock_period, cost_per_kb) {
-        let contract, method, account, gasPrice
+        let contract, method, account, gasPrice;
         try {
             contract = await this.loadStorageProviderRegistryContract();
             method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
             account = this.ctx.config.hardcode_default_provider;
             gasPrice = await this.web3.eth.getGasPrice();
-            return await method.send({ from: account, gasPrice, gas: 2000000, value: 100});
+            return await method.send({ from: account, gasPrice, gas: 2000000, value: 0.000001e18});
         } catch (e) {
-            console.info({ method, gasPrice, account, collateral_lock_period, cost_per_kb })
-            console.error('announceStorageProvider error:', e)
-            throw e
+            console.info({ method, gasPrice, account, collateral_lock_period, cost_per_kb });
+            console.error('announceStorageProvider error:', e);
+            throw e;
         }
     }
-    async getCheapestStorageProvider() {
-        const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.getCheapestProvider().call();
+    async getCheapestStorageProvider() { //todo: unused?
+        try {
+            const contract = await this.loadStorageProviderRegistryContract();
+            return contract.methods.getCheapestProvider().call();
+        } catch(e) {
+            this.ctx.log.error('getCheapestStorageProvider error');
+            throw e;
+        }
     }
-    async getAllStorageProvider() {
-        const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
+    async getAllStorageProviders() {
+        try {
+            const contract = await this.loadStorageProviderRegistryContract();
+            return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
+        } catch(e) {
+            this.ctx.log.error('getAllStorageProviders error');
+            throw e;
+        }
     }
     async getSingleProvider(address) {
-        const contract = await this.loadStorageProviderRegistryContract();
-        return contract.methods.getProvider(address).call();
+        try {
+            const contract = await this.loadStorageProviderRegistryContract();
+            return contract.methods.getProvider(address).call();
+        } catch(e) {
+            this.ctx.log.error('getSingleProvider error', {address});
+            throw e;
+        }
     }
 }
 

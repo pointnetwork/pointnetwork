@@ -1,14 +1,21 @@
 {
     "env": {
         "browser": true,
-        "es2021": true
+        "es2021": true,
+        "node": true
     },
+    "extends": "eslint:recommended",
+    "parser": "@babel/eslint-parser",
     "parserOptions": {
         "ecmaVersion": 12,
-        "sourceType": "module"
+        "sourceType": "module",
+        "babelOptions": {
+            "configFile": "./.babel-eslintrc"
+        }
     },
     "rules": {
-        "indent": ["error", 4, {"SwitchCase": {"case": ["error", 4]}}],
-        "semi": [2, "always"]
+        "indent": ["error", 4, {"SwitchCase": 1}],
+        "semi": [2, "always"],
+        "no-unused-vars": "warn"
     }
 }

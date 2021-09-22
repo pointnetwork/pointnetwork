@@ -1,157 +1,125 @@
-const _ = require('lodash');
-const DB = require('../db');
-const Indexable = require('./indexable');
+const sequelize_lib = require('sequelize');
+const { Op } = require("sequelize");
+const _ = require("lodash");
 
-class Model extends Indexable {
-    constructor(_this) {
-        super();
-        this.id = null;
-        this._attributes = {};
-        this._originalAttributes = {};
-    }
+let addUnderscoreIdFields = {};
 
-    static async find(id) {
-        try {
-            const data = await this.db.get(id);
-            let model = this.new();
-            model.id = id;
-            model._hydrate(data);
-            return model;
-        } catch(err) {
-            if (err.notFound) return null;
-            else throw err;
-        }
-    }
+class Model extends sequelize_lib.Model {
+    constructor(...args) {
+        super(...args);
+        this.ctx = Model.ctx;
 
-    static async findOrCreate(id) {
-        let result = await this.find(id);
+        // Sequelize requires relations in JS to be in the form of 'ProviderId'
+        // This creates proxy getters and setters allowing the same field to be aliased as 'provider_id' and 'providerId'
+        if (addUnderscoreIdFields[this.constructor.name]) {
+            for(let model of addUnderscoreIdFields[this.constructor.name]) {
+                const original_field = model+'Id';
+                const underscore_field = _.snakeCase(original_field);
+                const misspelled_original_field = _.lowerFirst(original_field);
 
-        if (result !== null) {
-            return result;
-        } else {
-            let created = await this.new();
-            created.id = id;
-            return created;
-        }
-    }
-
-    static async findOrCreateAndSave(id) {
-        let result = await this.find(id);
-
-        if (result !== null) {
-            return result;
-        } else {
-            let created = await this.new();
-            created.id = id;
-            await created.save();
-            return created;
-        }
-    }
-
-    static async all(query = {}, removePrefix = '') {
-        let keys = await this.allKeys(query);
-        let models = [];
-        for(let k of keys) {
-            models.push(await this.find(k.replace(removePrefix, '')));
-        }
-        return models;
-    }
-
-    static async allKeys(query = {}) {
-        return new Promise((resolve, reject) => {
-            let keys = [];
-            this.db.createKeyStream(query)
-                .on('data', (data) => {
-                    keys.push(data);
-                })
-                .on('error', reject)
-                .on('end', async () => {
-                    resolve(keys);
-                });
-        });
-        // todo: rewrite better? use db.iterator?
-    }
-
-    static new() {
-        // let model = new this();
-        let model = new (require('./models/'+this.tableName));
-        model.ctx = this.ctx;
-        model.tableName = this.tableName;
-        model.db = this.db;
-        model._indices = this._indices;
-        model._indexReducers = this._indexReducers;
-
-        return new Proxy(model, {
-            get: (model, key) => {
-                const getterName = 'get' + _.upperFirst(_.camelCase(key));
-                if (_.startsWith(key, '_')) {
-                    return model[key];
-                } else if (model[getterName] && typeof model[getterName] === 'function') {
-                    return model[getterName]();
-                } else if (key in model) {
-                    return model[key];
-                } else {
-                    return model._attributes[key];
-                }
-            },
-            set: (model, key, value) => {
-                const setterName = 'set' + _.upperFirst(_.camelCase(key));
-                if (_.startsWith(key, '_')) {
-                    model[key] = value;
-                } else if (model[setterName] && typeof model[setterName] === 'function') {
-                    model[setterName](value);
-                } else if (key in model) {
-                    model[key] = value;
-                } else if (key === 'id') {
-                    model.id = value;
-                    model._attributes.id = value;
-                } else {
-                    model._attributes[key] = value;
-                }
-                return true;
+                // Object.defineProperty(this, underscore_field, {
+                //     get: function() { return this[original_field]; },
+                //     set: function(newValue) { this[original_field] = newValue; }
+                // });
+                // Object.defineProperty(this, misspelled_original_field, {
+                //     get: function() { return this[original_field]; },
+                //     set: function(newValue) { this[original_field] = newValue; }
+                // });
             }
-        });
+        }
+    }
+
+    static init(attributes, options) {
+        const defaultOptions = {
+            sequelize: Model.connection,
+        };
+        options = Object.assign({}, defaultOptions, options);
+
+        const defaultAttributeOptions = {
+            allowNull: false
+        };
+        for(const fieldName in attributes) {
+            let v = attributes[fieldName];
+            if (v === null || v.constructor.name !== "Object") {
+                throw Error("Oops, I didn't think of how to handle this case: the options for attribute '"+fieldName+"' are not an object (value: "+v+")");
+            }
+            attributes[fieldName] = Object.assign({}, defaultAttributeOptions, v);
+        }
+
+        super.init(attributes, options);
+    }
+
+    static async findOrCreate(...args) {
+        if (args.length === 1 && !(typeof args[0] === 'object' && args[0] !== null && !Array.isArray(args[0]))) {
+            const returned = await super.findOrCreate({ where: { id: args[0] }});
+            return returned[0];
+        } else {
+            return await super.findOrCreate(...args);
+        }
     }
 
     async refresh() {
-        let refreshed = await this.db.get(this.id);
-        if (!refreshed) throw new Error('Row not found');
-        for(let k in refreshed) {
-            if (refreshed.hasOwnProperty(k) && typeof refreshed[k] !== 'function') {
-                this._attributes[k] = refreshed[k];
-                this._originalAttributes[k] = refreshed[k];
-            }
-        }
+        return await this.reload();
     }
 
-    async save() {
-        // todo: maybe do refresh first? and maybe at the end? // refresh, and if original attrs dont match, throw Error(race condition)
-
-        if (this.id === null || typeof this.id === 'undefined') {
-            this.id = DB.generateRandomIdForNewRecord();
-        }
-        this._attributes.id = this.id;
-        let batch = this.db.batch();
-        batch = this._fixIndices(batch);
-        batch = batch.put(this.id, this._attributes);
-        await new Promise((resolve, reject) => {
-            batch.write((err) => {
-                if (err) reject(err);
-                this._originalAttributes = _.cloneDeep(this._attributes);
-                resolve();
-            });
+    static async allBy(field, value) {
+        return await this.findAll({
+            where: {
+                [field]: value
+            }
         });
     }
 
-    _hydrate(data) {
-        this._originalAttributes = Object.assign({}, data);
-        this._attributes = Object.assign({}, data);
+    static async findOneBy(field, value) {
+        const collection = await this.findAll({
+            where: {
+                [field]: value
+            },
+            limit: 1 // Note: we only want one instance
+        });
+        return (collection.length < 1) ? null : collection[0];
     }
 
-    toJSON() {
-        // todo: Object.assign still not immutable (nested) - Object.freeze? immutable.js?
-        return Object.assign({}, this._attributes, {id: this.id});
+    static async findOneByOrFail(field, value) {
+        const one = await this.findOneBy(field, value);
+        if (one === null) throw Error('Row not found: Model '+this.constructor.name+', '+field+' #'+value); // todo: sanitize!
+        return one;
     }
+
+    static async find(id) {
+        return await this.findByPk(id);
+    }
+
+    static async findOrFail(id, ...args) {
+        const result = await this.findByPk(id, ...args);
+        if (!result) throw Error('Row not found: Model '+this.constructor.name+', id #'+id); // todo: sanitize!
+        return result;
+    }
+
+    static belongsTo(model, ...args) {
+        // See constructor for the explanation of this block
+        if (!addUnderscoreIdFields[this.name]) addUnderscoreIdFields[this.name] = [];
+        addUnderscoreIdFields[this.name].push(model.name);
+
+        const underscoredIdField = _.snakeCase(model.name) + '_id';
+        const extraAttributes = { foreignKey: underscoredIdField, as: _.lowerFirst(_.camelCase(model.name)) };
+        args[0] = Object.assign({}, extraAttributes, args[0] || {});
+
+        super.belongsTo(model, ...args);
+    }
+
+    static transaction(...args) {
+        return this.connection.transaction(...args);
+    }
+
+    // get(field, ...args) {
+    //     if (_.endsWith(field, '_id')) {
+    //         // provider_id -> ProviderId
+    //         return super.get(_.upperFirst(_.camelCase(field)), ...args);
+    //     } else {
+    //         return super.get(field, ...args);
+    //     }
+    // }
 }
 
 module.exports = Model;

@@ -6,12 +6,11 @@ const _async = require('async');
 const ethUtil = require('ethereumjs-util');
 const AuthenticatePlugin = require('./plugin-authenticate');
 const StorageProviderPlugin = require('./plugin-storage-provider');
-const StorageClientPlugin = require('./plugin-storage-client');
 const kadenceUtils = require('@pointnetwork/kadence/lib/utils');
 const pino = require('pino');
 const SerializerBSON = require('./serializer-bson');
 const Messenger = require('@pointnetwork/kadence/lib/messenger');
-const { log } = require('console');
+const level = require('level');
 
 class Kademlia {
     constructor(ctx) {
@@ -22,7 +21,9 @@ class Kademlia {
     async start() {
         this.patchKadence();
 
-        const storage = this.ctx.db._db.sublevel('kadence');
+        const storage_leveldb_path = path.join(this.ctx.datadir, this.config.kadence_storage_leveldb_path);
+        if (!fs.existsSync(storage_leveldb_path)) fs.mkdirSync(storage_leveldb_path);
+        const storage = level(storage_leveldb_path);
 
         const networkPrivateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
         const networkPrivateKey = Buffer.from(networkPrivateKeyHex, 'hex');
@@ -78,6 +79,12 @@ class Kademlia {
         //     difficulty: 8
         // }));
         // node.quasar = node.plugin(kadence.quasar());
+
+        node.use('DISCONNECT', (req, res) => {
+            node.router.removeContactByNodeId(req.contact[0]);
+            res.send(['bye']);
+        });
+
         node.authenticate = node.plugin(AuthenticatePlugin(this.ctx, networkPublicKey, networkPrivateKey, {
             privateKey: networkPrivateKey,
             publicKey: networkPublicKey
@@ -94,11 +101,9 @@ class Kademlia {
         // }));
 
         node.rolodex = node.plugin(kadence.rolodex(path.join(this.ctx.datadir, this.config.peer_cache_file_path)));
-
-        node.storage_client = node.plugin(StorageClientPlugin(ctx, networkPublicKey, networkPrivateKey, {}));
-
+        
         if (this.ctx.config.service_provider.enabled) {
-            node.storage_provider = node.plugin(StorageProviderPlugin(ctx, networkPublicKey, networkPrivateKey, {}));
+            node.storage_provider = node.plugin(StorageProviderPlugin(this.ctx, networkPublicKey, networkPrivateKey, {}));
         }
 
         // todo: all this vvvvvvv
@@ -189,7 +194,7 @@ class Kademlia {
                             node.router.getContactByNodeId(identity)
                         ])
                     ];
-                    joinNetwork(callback)
+                    joinNetwork(callback);
                 });
             }
             this.ctx.log.info(`joining network from ${peers.length} seeds`);
@@ -227,7 +232,7 @@ class Kademlia {
                 this.ctx.log.info(`Connected to Kadence DHT network via ${entry}`);
                 this.ctx.log.info(`Discovered ${node.router.size} peers from seed`);
 
-                this.ctx.network.peersCount = node.router.size
+                this.ctx.network.peersCount = node.router.size;
             });
         });
     }

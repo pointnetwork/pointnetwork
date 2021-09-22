@@ -2,13 +2,14 @@ const Chunk = require('../../db/models/chunk');
 const File = require('../../db/models/file');
 const Redkey = require('../../db/models/redkey');
 const Directory = require('../../db/models/directory');
+const Provider = require('../../db/models/provider');
 const StorageLink = require('../../db/models/storage_link');
-const DB = require('../../db');
+const Model = require('../../db/model');
 const path = require('path');
 const { fork } = require('child_process');
 const _ = require('lodash');
 const fs = require('fs');
-const lock = require('level-lock');
+const utils = require('#utils');
 const {
     checkExistingChannel,
     createChannel,
@@ -48,19 +49,18 @@ class Storage {
         autorenew = this.ctx.config.client.storage.default_autorenew
     ) {
         // Create at first to be able to chunkify and get the file id (hash), later we'll try to load it if it already exists
-        let file = File.new();
-        file.originalPath = filePath; // todo: should we rename it to lastoriginalPath or something? or store somewhere // todo: validate it exists
-        await file.chunkify(); // to receive an id (hash)
-
-        const existingFile = File.find(file.id);
-        if (existingFile === null) {
-            file = existingFile;
-        }
+        let throwAwayFile = File.build();
+        throwAwayFile.original_path = filePath; // todo: should we rename it to lastoriginalPath or something? or store somewhere // todo: validate it exists
+        await throwAwayFile.chunkify(); // to receive an id (hash) // Note: this will .save() it!
 
         // Setting `originalPath` to the `chunkify`ed version of `file`,
         // instead of the path where we find the original file source.
-        file.originalPath = path.join(this.getCacheDir(), 'chunk_'+file.id);
+        // todo: should we?
+        const original_path = path.join(this.getCacheDir(), 'chunk_'+throwAwayFile.id);
 
+        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } })) [0];
+
+        // todo: validate redundancy, expires and autorenew fields. merge them if they're already there
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
         file.expires = Math.max(parseInt(file.expires)||0, parseInt(expires)||0);
         file.autorenew = (!!file.autorenew) ? !!file.autorenew : !!autorenew;
@@ -87,10 +87,10 @@ class Storage {
         // Now process every item
         for(let f of directory.files) {
             if (f.type === 'fileptr') {
-                let uploaded = await this.putFile(f.originalPath, redundancy, expires, autorenew);
+                let uploaded = await this.putFile(f.original_path, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else if (f.type === 'dirptr') {
-                let uploaded = await this.putDirectory(f.originalPath, redundancy, expires, autorenew);
+                let uploaded = await this.putDirectory(f.original_path, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else {
                 throw Error('invalid type: '+f.type);
@@ -99,7 +99,7 @@ class Storage {
 
         // Get an id here:
 
-        const tmpFilePath = path.join(this.getCacheDir(), 'dir-tmp-'+this.ctx.utils.hashFnHex(dirPath));
+        const tmpFilePath = path.join(this.getCacheDir(), 'dir-tmp-'+utils.hashFnUtf8Hex(dirPath));
         directory.serializeToFile(tmpFilePath);
 
         let uploadedDirSpec = await this.putFile(tmpFilePath, redundancy, expires, autorenew);
@@ -118,13 +118,13 @@ class Storage {
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
-        if (!fs.existsSync(dirPath)) throw Error('Directory '+this.ctx.utils.htmlspecialchars(dirPath)+' does not exist');
-        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+this.ctx.utils.htmlspecialchars(dirPath)+' is not a directory');
+        if (!fs.existsSync(dirPath)) throw Error('client/storage/index.js: Directory '+utils.escape(dirPath)+' does not exist');
+        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+utils.escape(dirPath)+' is not a directory');
 
         const directory_id = await this.enqueueDirectoryForUpload(dirPath, redundancy, expires, autorenew);
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(async() => {
-                let file = await File.find(directory_id);
+                let file = await File.findOrFail(directory_id);
                 if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
                     resolve(file);
                 } else {
@@ -150,7 +150,7 @@ class Storage {
         const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(async() => {
-                let file = await File.find(file_id);
+                let file = await File.findOrFail(file_id);
                 if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
                     resolve(file);
                 } else {
@@ -168,9 +168,9 @@ class Storage {
 
     async enqueueFileForDownload(id, originalPath) {
         if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
-        let file = await File.findOrCreate(id);
-        // if (! file.originalPath) file.originalPath = '/tmp/'+id; // todo: put inside file? use cache folder?
-        if (! file.originalPath) file.originalPath = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
+        // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
+        // if (! file.original_path) file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
         if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
             file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
             await file.save();
@@ -184,7 +184,7 @@ class Storage {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
-        let file = await File.findOrCreate(id);
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
@@ -193,13 +193,15 @@ class Storage {
 
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
-                let file = await File.find(id);
-                if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED || file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
+                let file = await File.findOrFail(id);
+                if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
                     setTimeout(() => {
                         this.tick('downloading');
                     }, 0);
 
                     resolve(file);
+                } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
+                    reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
                 } else {
                     waitUntilRetrieval(resolve, reject);
                 }
@@ -217,7 +219,7 @@ class Storage {
         if (!id) throw new Error('undefined or null id passed to storage.readFile');
         id = id.replace('0x', '').toLowerCase();
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         const tmpFileName = path.join(cache_dir, 'file_' + id);
         const file = await this.getFile(id, tmpFileName);
         return file.getData(encoding);
@@ -258,14 +260,55 @@ class Storage {
         }
     }
 
-    async chooseProviderCandidate() {
-        const storageProviders = await this.ctx.web3bridge.getAllStorageProvider();
-        const randomProvider = storageProviders[storageProviders.length * Math.random() | 0];
-        const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider);
-        const id = getProviderDetails['0'];
-        return await this.ctx.db.provider.findOrCreateAndSave(id);
-        // todo: remove blacklist from options
-        // todo: remove those already in progress or failed in this chunk
+    async chooseProviderCandidate(recursive = true) {
+        try {
+            // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
+            const provider = await Model.transaction(async(t) => {
+                const storageProviders = await this.ctx.web3bridge.getAllStorageProviders();
+                // console.log({storageProviders})
+                const randomProvider = storageProviders[storageProviders.length * Math.random() | 0];
+                const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider);
+                const id = getProviderDetails['0'];
+
+                // old: const provider = await Provider.findOrCreate(id);
+                let provider, isNew;
+                let existingProviders = await Provider.findAll({
+                    where: { id: id },
+                    lock: t.LOCK.UPDATE,
+                    transaction: t,
+                    limit: 1,
+                });
+                if (existingProviders.length > 0) {
+                    provider = existingProviders[0];
+                    isNew = false;
+                    // todo: what if connectionstring changed on blockchain?
+                } else {
+                    provider = await Provider.create({
+                        id: id,
+                        address: ('0x' + id.split('#').pop()).slice(-42),
+                        connection: id,
+                    }, { transaction: t });
+                    isNew = true;
+                }
+
+                return provider;
+
+                // todo: remove blacklist from options
+                // todo: remove those already in progress or failed in this chunk
+            });
+
+            return provider;
+
+        } catch(e) {
+            // Something went wrong. Maybe we ran into a race condition and the key was just now generated?
+            // Try again but throw an error if it fails again
+            if (recursive) {
+                return this.chooseProviderCandidate(false);
+            } else {
+                this.ctx.log.error('chooseProviderCandidate error');
+                throw e;
+            }
+        }
     }
     async pickProviderToStoreWith() {
         // todo: pick the cheapest, closest storage providers somehow (do whatever's easy at first)
@@ -276,7 +319,7 @@ class Storage {
         // - you have a financial connection
         // - cycle until you find one
         // return ['989695771d51de19e9ccb943d32e58f872267fcc', {'protocol':'http:', 'hostname':'127.0.0.1', 'port':'12345'}];
-        return this.this.ctx.utils.urlToContact( await this.chooseProviderCandidate() );
+        return this.utils.urlToContact( await this.chooseProviderCandidate() );
         // return 'http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc'; // test1 // TODO!
     }
 
@@ -289,19 +332,21 @@ class Storage {
 
         this.send('GET_DECRYPTED_CHUNK', [chunk.id], provider.id, async(err, result) => { // todo: also send conditions
             if (err) {
-                console.log(err); // todo: for some reason, throw err doesn't display the error
-
-                if (_.startsWith(err, 'Error: ECHUNKNOTFOUND')) {
+                if (err.message && err.message.includes('ECHUNKNOTFOUND')) {
                     chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
                     await chunk.save();
                     await chunk.reconsiderDownloadingStatus(true);
                     return;
-                } else throw err;
+                } else {
+                    console.log({err, result}); // todo: for some reason, throw err doesn't display the error
+                    throw err;
+                } // todo: don't die
             } // todo
 
             const chunk_id = result[0]; // todo: validate
             const data = result[1]; // todo: validate that it's buffer
 
+            if (!Buffer.isBuffer(data)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
             chunk.setData(data); // todo: what if it errors out?
             chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
             await chunk.save();
@@ -311,7 +356,9 @@ class Storage {
 
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
         return new Promise((resolve, reject) => {
-            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getLength(), chunk.expires], link.provider_id, async(err, result) => {
+            const provider_id = link.provider_id;
+            if (!provider_id) { console.error('No provider id!'); process.exit(); }
+            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getSize(), chunk.expires], link.provider_id, async(err, result) => {
                 await link.refresh();
                 (!err) ? resolve(true) : reject(err); // machine will move to next state
             });
@@ -328,7 +375,7 @@ class Storage {
                 const channelExists = await checkExistingChannel(checksumAddress);
 
                 if (channelExists === undefined) {
-                    let currentProvider = await link.provider_id;
+                    let currentProvider = link.provider_id;
                     const storage_provider_cache = path.join(this.ctx.datadir, this.config.storage_provider_cache);
                     let sent_providers = '[]';
                     if (fs.existsSync(storage_provider_cache)) {
@@ -344,11 +391,11 @@ class Storage {
                 }
 
                 // channel exists
-                resolve(true);
+                return resolve(true);
             } catch (e) {
                 console.log(`CREATE_PAYMENT_CHANNEL ERROR: ${e}`);
                 // error creating channel so reject
-                reject(e);
+                return reject(e);
             }
         });
     }
@@ -363,34 +410,37 @@ class Storage {
 
             chunk_encryptor.on('message', async (message) => {
                 if (message.command === 'encrypt' && message.success === true) {
+                    const { chunkId, linkId } = message;
+                    if (chunkId !== chunk.id || linkId !== link.id) throw Error('ENCRYPT_CHUNK: chunkId/linkId returned from the encryptor thread do not match the original ones'); // Sanity check
+
                     // Let's calculate merkle tree
                     const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes; // todo: check that it's not 0/null or some weird value
                     const data = link.getEncryptedData();
-                    const data_length = data.length;
+                    const data_length = Buffer.byteLength(data);
                     let segment_hashes = [];
                     for (let i = 0; i < Math.ceil(data_length / SEGMENT_SIZE_BYTES); i++) { // todo: separate into encryption section
                         // Note: Buffer.slice is (start, end) not (start, length)
-                        segment_hashes.push(this.ctx.utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, i * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES)));
+                        segment_hashes.push(utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, i * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES)));
                     }
 
-                    const merkleTree = this.ctx.utils.merkle.merkle(segment_hashes, this.ctx.utils.hashFn);
+                    const merkleTree = utils.merkle.merkle(segment_hashes, utils.hashFn);
 
                     await link.refresh();
-                    link.encrypted_hash = message.hash;
+                    // link.encrypted_hash = message.hash;
                     link.encrypted_length = data_length;
                     link.segment_hashes = segment_hashes.map(x => x.toString('hex'));
                     link.merkle_tree = merkleTree.map(x => x.toString('hex'));
                     link.merkle_root = link.merkle_tree[link.merkle_tree.length - 1].toString('hex');
                     // cleanup chunk encryptor
                     let chunk_encryptor = this.chunk_encryptors[chunk.id + link.id];
-                    chunk_encryptor.kill('SIGINT');
+                    chunk_encryptor.kill('SIGINT'); // todo: killing each time?
                     delete this.chunk_encryptors[chunk.id + link.id];
 
-                    resolve(true); // machine will move to next state
+                    return resolve(true); // machine will move to next state
                 } else {
                     console.warn('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ', message);
                     this.ctx.die();
-                    reject('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ' + message);
+                    return reject('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ' + message);
                 }
             });
             // todo: do we need this?
@@ -412,7 +462,9 @@ class Storage {
                 }
             });
 
-            const privKey = (await link.getRedkey()).priv;
+            await link.refresh();
+            const redKey = await link.getRedkeyOrFail();
+            const privKey = redKey.private_key;
 
             chunk_encryptor.send({
                 command: 'encrypt',
@@ -441,18 +493,23 @@ class Storage {
                 const totalSegments = link.segment_hashes.length;
                 if (!err) {
                     // todo: use the clues server gives you about which segments it already received (helps in case of duplication?)
+
+                    // Mark this segment as received, because the provider node just acknowledged it
                     if (!link.segments_received) link.segments_received = [];
-                    link.segments_received.push(idx);
-                    link.segments_received = _.uniq(link.segments_received);
+                    link.segments_received = _.uniq([...link.segments_received, idx]);
+                    await link.save();
+
+                    // If everything is received, then we are done
                     if (Object.keys(link.segments_received).length >= totalSegments) {
-                        link.segments_received = null; // todo: delete completely, by using undefined?
-                        link.segments_sent = null; // todo: delete completely, by using undefined?
-                        // Then we are done
-                        resolve(true);
+                        link.segments_received = null;
+                        link.segments_sent = null;
+                        await link.save();
+                        return resolve(true);
                     }
-                    resolve(false); // not done yet
+                    return resolve(false); // not done yet
                 } else {
-                    reject(err);
+                    console.log('ERR', err); // todo: remove
+                    return reject(err);
                 }
             });
         });
@@ -463,7 +520,8 @@ class Storage {
             this.send('STORE_CHUNK_SIGNATURE_REQUEST', [link.merkle_root], link.provider_id, async (err, result) => {
                 await link.refresh();
                 try {
-                    if (err) reject('Provider responded with: ' + err); // todo
+                    if (err) return reject('Provider responded with: ' + err); // todo
+                    if (!result) return reject('STORE_CHUNK_SIGNATURE_REQUEST: Result is empty!'); // todo
 
                     // Verify the signature
                     const chunk_id = result[0]; // todo: validate
@@ -489,11 +547,11 @@ class Storage {
                     // const chunk = await link.getChunk();
                     // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
 
-                    resolve(true);
+                    return resolve(true);
                 } catch (e) {
                     // todo: don't just put this into the console, this is for debugging purposes
                     console.debug('FAILED CHUNK', {err, result}, e);
-                    reject(e);
+                    return reject(e);
                 }
             });
         });
@@ -511,20 +569,22 @@ class Storage {
         // todo
 
         // Push some candidates if not enough
-        const all = await chunk.storage_links[ StorageLink.STATUS_ALL ];
-        const candidates = await chunk.storage_links[ StorageLink.STATUS_CREATED ];
-        const failed = await chunk.storage_links[ StorageLink.STATUS_FAILED ];
+        const all = await chunk.getLinksWithStatus( StorageLink.STATUS_ALL );
+        const candidates = await chunk.getLinksWithStatus( StorageLink.STATUS_CREATED );
+        const failed = await chunk.getLinksWithStatus( StorageLink.STATUS_FAILED );
         const inProgressOrLiveCount = all.length - failed.length;
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
+        console.log({all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
+
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
-            let link = StorageLink.new();
+            let link = StorageLink.build();
             let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
-            link.id = DB.generateRandomIdForNewRecord();
-            link.provider = provider;
-            link.redkeyId = await this.getRedkeyId(provider);
+            // link.id = DB.generateRandomIdForNewRecord();
+            link.provider_id = provider.id;
+            link.redkey_id = await this.getOrGenerateRedkeyId(provider);
             link.chunk_id = chunk.id;
             link.initStateMachine(chunk);
             // use storage link state machine to sent CREATE event
@@ -534,13 +594,11 @@ class Storage {
         for(let link of all) {
             const requests_length = (this.current_requests[link.provider_id]) ? this.current_requests[link.provider_id].length : 0;
             const queued_length = (this.queued_requests[link.provider_id]) ? this.queued_requests[link.provider_id].length : 0;
-            console.debug(chunk.id, link.id, Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number), link.segments_received, link.status, (link.status==='failed')?link.error:'', {requests_length, queued_length});
+            console.debug(chunk.id, link.id, Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number), link.segments_received, link.status, (link.status===StorageLink.STATUS_FAILED)?link.error:'', {requests_length, queued_length});
         }
 
         // todo: what about expiring and renewing?
     }
-
-
 
     send(cmd, data, contact, callback) {
         const request = {
@@ -560,7 +618,7 @@ class Storage {
             const req = this.queued_requests[contact].shift();
             if (!this.current_requests[contact]) this.current_requests[contact] = [];
             this.current_requests[contact].push(req);
-            return this.ctx.network.kademlia.node.send(req.cmd, req.data, this.ctx.utils.urlToContact(contact), (err, result) => {
+            return this.ctx.network.kademlia.node.send(req.cmd, req.data, utils.urlToContact(contact), (err, result) => {
                 this.current_requests = _.remove(this.current_requests, function(n) {
                     return n.internal_id === req.internal_id;
                 });
@@ -594,38 +652,45 @@ class Storage {
 
     async removeChunk() { /*todo*/ }
 
-    async getRedkeyId(provider) {
+    async getOrGenerateRedkeyId(provider, recursive = true) {
         // Note: locking here is important because of concurrency issues. I've spent hours debugging random errors in
         // encryption when it turned out that several keys were generated for the same provider at once and they were
         // all mixed up when they were actually sent to the service provider, which made for invalid decryption
 
-        let unlock = lock(this.ctx.db._db, 'redkey'+'!'+provider.id, 'w');
-        if (!unlock) {
-            return new Promise((resolve, reject) => {
-                setTimeout(async() => {
-                    resolve(await this.getRedkeyId(provider));
-                }, 100);
+        try {
+            const redkey = await Model.transaction(async(t) => { // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
+                let existingProviderKeys = await Redkey.findAll({
+                    where: { provider_id: provider.id },
+                    lock: t.LOCK.UPDATE,
+                    transaction: t,
+                    limit: 1,
+                });
+
+                if (existingProviderKeys.length > 0) return existingProviderKeys[0];
+
+                const keyIndex = 0;
+
+                // If no keys, generate one
+                let { privateKey, publicKey } = await Redkey.generateNewForProvider(provider, keyIndex);
+
+                return await Redkey.create({
+                    public_key: publicKey,
+                    private_key: privateKey,
+                    provider_id: provider.id,
+                    index: keyIndex,
+                }, { transaction: t });
             });
-        }
 
-        let keys = await Redkey.allByProvider(provider);
-        if (keys.length === 0) {
-            // Generate a new one
+            return redkey.id;
 
-            const keyIndex = 0;
-            try {
-                let redkey = await Redkey.generateNewForProvider(provider, keyIndex);
-                unlock();
-                return redkey.id;
-            } catch(e) {
-                unlock();
+        } catch(e) {
+            // Something went wrong. Maybe we ran into a race condition and the key was just now generated?
+            // Try again but throw an error if it fails again
+            if (recursive) {
+                return this.getOrGenerateRedkeyId(provider, false);
+            } else {
                 throw e;
             }
-
-        } else {
-            // Return existing
-            unlock();
-            return keys[0].id;
         }
 
         // todo: multiple?
@@ -633,7 +698,7 @@ class Storage {
 
     getCacheDir() {
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        this.ctx.utils.makeSurePathExists(cache_dir);
+        utils.makeSurePathExists(cache_dir);
         return cache_dir;
     }
 }

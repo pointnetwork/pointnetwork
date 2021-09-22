@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const utils = require('#utils');
 
 class Directory {
     constructor() {
         this.name = '';
         this.files = [];
-        this.originalPath = null;
+        this.original_path = null;
         this.size = 0;
         // todo: include 'version' and 'compat' fields
     }
@@ -25,7 +26,7 @@ class Directory {
         for(let f of this.files) {
             if (f.name === firstFragment) {
                 if (f.type === 'fileptr') {
-                    return f.id
+                    return f.id;
                 } else if (f.type === 'dirptr') {
                     if (! f.downloaded) {
                         let subdir = new Directory();
@@ -48,16 +49,16 @@ class Directory {
     }
 
     setOriginalPath(originalPath) {
-        this.originalPath = originalPath;
+        this.original_path = originalPath;
     }
 
     addFilesFromOriginalPath() {
-        this.addFilesFromPath(this.originalPath);
+        this.addFilesFromPath(this.original_path);
     }
 
     addFilesFromPath(dirPath) {
-        if (!fs.existsSync(dirPath)) throw Error('Directory '+this.ctx.utils.htmlspecialchars(dirPath)+' does not exist');
-        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+this.ctx.utils.htmlspecialchars(dirPath)+' is not a directory');
+        if (!fs.existsSync(dirPath)) throw Error('directory.js: Directory '+utils.escape(dirPath)+' does not exist');
+        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+utils.escape(dirPath)+' is not a directory');
 
         fs.readdirSync(dirPath).forEach(fileName => {
             const combinedFullPath = path.join(dirPath, fileName);
@@ -76,7 +77,7 @@ class Directory {
                 type: 'dirptr',
                 name: name,
                 dirObj: subdir,
-                originalPath: filePath,
+                original_path: filePath,
                 size,
             });
         } else {
@@ -84,7 +85,7 @@ class Directory {
             this.files.push({
                 type: 'fileptr',
                 name: name,
-                originalPath: filePath,
+                original_path: filePath,
                 size
             });
         }
@@ -119,7 +120,7 @@ class Directory {
 
     unserialize(jsonString) {
         let obj = JSON.parse(jsonString);
-        if (obj.type !== 'dir') throw Error('directory unserialize fail: type is not a directory')
+        if (obj.type !== 'dir') throw Error('directory unserialize fail: type is not a directory');
         this.size = 0;
         for(let f of obj.files) {
             if (f.type === 'fileptr') {
@@ -149,5 +150,7 @@ class Directory {
 
 
 }
+
+Directory.__ignoreThisModelForNow = true;
 
 module.exports = Directory;
