@@ -21,6 +21,8 @@
       <h1>Hello World Example</h1>
       <h2>Demo Storage Layer features and the Point Browser SDK</h2>
 
+      <h4 style="color: pink">Using Point SDK Version: <span id="pointSDKVersion"></span></h4>
+
       <table>
         <tr>
           <td>Test <b>HelloWorld</b> Event</td>
@@ -73,10 +75,14 @@
           let callStorageValue = await window.point.contract.call({contract: 'Hello', method: 'storageValue'});
           // now use the storage value (which is the storage id) to get the content using the storage layer API:
           let contents = await window.point.storage.get({id: callStorageValue.data});
+
+          /* UNCOMMENT THE FUNCTIONS BELOW TO TEST EVM REVERTS */
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert
           // elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
+
+          elements.push(`<p>Point SDK Version: ${point.version}</p>`)
           elements.push(`<p>Ping Test: ${ping.data.ping}</p>`)
           elements.push(`<p>Wallet Address: ${address.data.address}</p>`)
           elements.push(`<p>Hello Smart Contract Address: ${contract.data.address}</p>`)
@@ -93,6 +99,8 @@
 
         let elementsStr = elements.join('')
         document.getElementById("results").innerHTML = `<div>${elementsStr}</div>`
+        // render out the version of Point SDK being used
+        document.getElementById("pointSDKVersion").innerText = point.version;
       })()
 
       // subscriptions manager (which could be part of Point SDK of course)
