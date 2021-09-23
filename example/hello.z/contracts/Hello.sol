@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 
 contract Hello {
   string public value = 'Hello Contract Default Value';
+  bytes32 public storageValue;
   int public counter = 0;
 
   event HelloWorld(string message);
@@ -17,6 +18,11 @@ contract Hello {
     string memory _oldValue = value;
     value = _newValue;
     emit UpdatedValue(_oldValue, _newValue);
+  }
+
+  // Should save the storage id of a text file on storage layer
+  function setStorageValue(bytes32 _newStorageValue) public {
+    storageValue = _newStorageValue;
   }
 
   function setValueAndCounter(string memory _value, int _counter) public {

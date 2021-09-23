@@ -2,6 +2,8 @@ let socket;
 let httpProtocol = window.location.protocol;
 let wsProtocol = (httpProtocol === 'https:') ? 'wss:' : 'ws:';
 
+console.log('**** LOADED LOCAL DEMO POINT SDK ****');
+
 pointSDKDemo = {
     websocket: {
         open: (callback) => {
@@ -10,6 +12,12 @@ pointSDKDemo = {
                 socket.onmessage = (e) => callback(e.data);
                 return socket;
             }
+        }
+    },
+    storage: {
+        get: async ({id, ...args}) => {
+            let response = await fetch(`/v1/api/storage/get/${id}`);
+            return await response.json();
         }
     },
     status: {
@@ -64,8 +72,8 @@ pointSDKDemo = {
             })
             return await response.json()
         },
-        load: async(contractName) => {
-            let contract = await fetch(`/v1/api/contract/load/${contractName}`)
+        load: async({contract}) => {
+            let contract = await fetch(`/v1/api/contract/load/${contract}`)
             return await contract.json()
         },
         subscribe: async(meta) => {

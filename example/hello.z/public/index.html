@@ -49,8 +49,10 @@
         // initialize websocket connect to point network node via PointSDK
         // the idea here is to initalize websockets for the app only if needed
         // and to specify the callback that will handle the incomming websocket messages
-        socket = window.point.websocket.open(websocketMessageHandler);
-        socket.onopen = function() { console.log('WebSocket Client Connected'); }
+        if(window.point.websocket) {
+          socket = window.point.websocket.open(websocketMessageHandler);
+          socket.onopen = function() { console.log('WebSocket Client Connected'); }
+        }
         let elements = []
 
         /* START API TEST */
@@ -59,14 +61,18 @@
           // let balance = await window.point.wallet.balance();
           let ping = await window.point.status.ping();
           let address = await window.point.wallet.address();
+          let contract = await window.point.contract.load({contract: 'Hello'});
           let hash = await window.point.wallet.hash();
-          let contract = await window.point.contract.load('Hello');
           let callValue = await window.point.contract.call({contract: 'Hello', method: 'value'});
           let callCounter = await window.point.contract.call({contract: 'Hello', method: 'counter'});
           let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??']});
           let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2]});
           let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
-          let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
+          await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
+          await window.point.contract.send({contract: 'Hello', method: 'setStorageValue', params: ["Testing Storage Layer Put!"], storage: [0]});
+          let callStorageValue = await window.point.contract.call({contract: 'Hello', method: 'storageValue'});
+          // now use the storage value (which is the storage id) to get the content using the storage layer API:
+          let contents = await window.point.storage.get({id: callStorageValue.data});
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert
@@ -80,6 +86,8 @@
           elements.push(`<p>Contract Call Echo: ${callEcho.data}</p>`)
           elements.push(`<p>Contract Call Square: ${callSquare.data}</p>`)
           elements.push(`<p>Contract Call Add: ${callAdd.data}</p>`)
+          elements.push(`<p>Storage Value: ${callStorageValue.data}</p>`)
+          elements.push(`<p>Storage Contents: ${contents.data}</p>`)
         }
         /* END API TEST */
 
