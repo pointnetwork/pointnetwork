@@ -16,15 +16,17 @@ export default function Share() {
   const submitHandler = async (e) => {
     e.preventDefault();
     const newPost = {
-        // contents: "0x00000000000000000000004920616d206472696e6b696e6720636f666665652e",
         contents: contents.current.value,
     };
 
     try {
-        // TODO use point SDK to create a new post
-        await window.point.contract.send({contract: 'PointSocial', method: 'addStatus', params: [newPost.contents], storage: [0]})
-        console.log('newPost.contents', newPost.contents)
-    } catch (err) {}
+        // Save the post content to the storage layer and keep the storage id
+        let {data: storageId} = await window.point.storage.putString({data: newPost.contents});
+        // Save the post contents storage id in the PoinSocial Smart Contract
+        await window.point.contract.send({contract: 'PointSocial', method: 'addStatus', params: [storageId]});
+    } catch (err) {
+      console.error('Error: ', err);
+    }
   };
 
   return (
