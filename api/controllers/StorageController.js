@@ -2,12 +2,18 @@ const PointSDKController = require('./PointSDKController');
 const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
 const DEFAULT_ENCODING = 'utf-8';
+const utils = require('#utils');
+const path = require('path');
+const fs = require('fs');
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
         super(ctx);
 
         this.req = req;
+        this.config = ctx.config.client.zproxy;
+
+        this.payload = req.body;
     }
 
     // similar to `storage_get` Twig function - gets a files contents from storage by its CID
@@ -17,6 +23,20 @@ class StorageController extends PointSDKController {
 
         const contents = await this.ctx.client.storage.readFile(cid, encoding);
         return this._response(contents);
+    }
+
+    async putString() {
+        let data = this.payload.data;
+        if(data) {
+            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+            utils.makeSurePathExists(cache_dir);
+            let tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(data));
+            fs.writeFileSync(tmpPostDataFilePath, data);
+            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+            return this._response(uploaded.id);
+        } else {
+            return this._response(null)
+        }
     }
 
     // Returns all file metadata stored in the nodes leveldb

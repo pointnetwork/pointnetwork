@@ -19,6 +19,17 @@ pointSDKDemo = {
         get: async ({id, ...args}) => {
             let response = await fetch(`/v1/api/storage/get/${id}`);
             return await response.json();
+        },
+        putString: async (data) => {
+            let response = await fetch('/v1/api/storage/putString/', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
         }
     },
     status: {

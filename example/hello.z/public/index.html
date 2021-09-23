@@ -71,12 +71,20 @@
           let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2]});
           let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
           await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
-          await window.point.contract.send({contract: 'Hello', method: 'setStorageValue', params: ["Testing Storage Layer Put!"], storage: [0]});
-          let callStorageValue = await window.point.contract.call({contract: 'Hello', method: 'storageValue'});
-          // now use the storage value (which is the storage id) to get the content using the storage layer API:
-          let contents = await window.point.storage.get({id: callStorageValue.data});
+
+          /* STORAGE API */
+
+          // 1. Put the string data onto the storage layer
+          let {data: putStringId} = await window.point.storage.putString({data: 'Testing Storage Layer PutString'});
+          // 2. Save the string storage id in the Smart Contract
+          await window.point.contract.send({contract: 'Hello', method: 'setStorageValue', params: [putStringId]});
+          // 3. Get the storage id back from the Smart Contract (will be the same id, of course)
+          let {data: stringIdFromContract} = await window.point.contract.call({contract: 'Hello', method: 'storageValue'});
+          // 4. Finally get the original string back from the storage layer using the id returned by the contracts
+          let {data: putStringValue} = await window.point.storage.get({id: stringIdFromContract});
 
           /* UNCOMMENT THE FUNCTIONS BELOW TO TEST EVM REVERTS */
+
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
           // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert
@@ -92,8 +100,9 @@
           elements.push(`<p>Contract Call Echo: ${callEcho.data}</p>`)
           elements.push(`<p>Contract Call Square: ${callSquare.data}</p>`)
           elements.push(`<p>Contract Call Add: ${callAdd.data}</p>`)
-          elements.push(`<p>Storage Value: ${callStorageValue.data}</p>`)
-          elements.push(`<p>Storage Contents: ${contents.data}</p>`)
+          elements.push(`<p>Storage Id (storage.putString): ${putStringId}</p>`)
+          elements.push(`<p>Storage Id (contract.call) ${stringIdFromContract}</p>`)
+          elements.push(`<p>Storage Value: ${putStringValue}</p>`)
         }
         /* END API TEST */
 
