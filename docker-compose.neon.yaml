@@ -3,8 +3,17 @@ version: '3.9'
 services:
   blockchain_node:
     image: cybercoredev/proxy:v0.2.0
-    # image: pointnetwork/neon-proxy:dev
     container_name: pointnetwork_blockchain_node
+    healthcheck:
+      test: |
+        curl -X POST \
+          -H 'Content-Type: application/json' \
+          -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}' \
+          http://localhost:9090/solana
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     ports:
       - '9090:9090'
     volumes:
@@ -13,25 +22,27 @@ services:
     environment:
       CONFIG: devnet
 
-  # contract_deployer:
-  #   image: pointnetwork/pointnetwork_deployer:dev
-  #   container_name: pointnetwork_contract_deployer
-  #   depends_on:
-  #     - blockchain_node
-  #   deploy:
-  #     restart_policy:
-  #       condition: none
-  #   volumes:
-  #     - ./truffle/migrations:/truffle/migrations:ro
-  #     - ./truffle/contracts:/truffle/contracts:ro
-  #     - shared_contracts:/build:rw
-  #   entrypoint: /truffle/run.js
-  #   environment:
-  #     BLOCKCHAIN_HOST: blockchain_node
-  #     BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-  #     BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-  #     COMPILER_VERSION: native
-  #     BUILD_PATH: /build
+  contract_deployer:
+    image: pointnetwork/pointnetwork_deployer:dev
+    container_name: pointnetwork_contract_deployer
+    depends_on:
+      blockchain_node:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - ./truffle/migrations:/truffle/migrations:ro
+      - ./truffle/contracts:/truffle/contracts:ro
+      - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
+      - shared_contracts:/build:rw
+    entrypoint: /truffle/run.js
+    environment:
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: 9090
+      BLOCKCHAIN_NETWORK_ID: '*'
+      COMPILER_VERSION: native
+      BUILD_PATH: /build
 
   # storage_provider:
   #   image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
@@ -128,7 +139,7 @@ services:
 volumes:
   neon_data:
   neon_config:
-  # shared_contracts:
+  shared_contracts:
   # storage_provider_data:
   # website_owner_data:
   # website_visitor_data:
