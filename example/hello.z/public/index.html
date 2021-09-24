@@ -38,7 +38,14 @@
         </tr>
       </table>
       <br />
-      <a href="#">Click Here to Test Notifications Extention (if you have it installed)</a>
+      <b>Try uploading a file!</b>
+      <br>
+      <input id="fileupload" type="file" name="fileupload"></input>
+      <br><br>
+      <button id="btnFileupload" onclick="uploadFile()">Upload File</button>
+      <br>
+      <br />
+      <a href="#">Click Here to Test Notifications Extention (check README in 'hello.z/extension')</a>
       <br />
       <br />
       <b>WebSocket Events</b>
@@ -47,6 +54,17 @@
       <p id="results"></p>
     </div>
     <script>
+      async function uploadFile() {
+        const formData = new FormData()
+        // its also possible to new Blob to send text that will be saved in a fle like so:
+        // formData.append('blob', new Blob(['Hello Point Network!\n']), 'somefile.txt')
+        formData.append("file", fileupload.files[0])
+        const res = await fetch('/v1/api/storage/putFile/', {
+            method: 'POST',
+            body: formData
+        })
+        console.log('File Upload Response: ', res);
+      }
       (async () => {
         // initialize websocket connect to point network node via PointSDK
         // the idea here is to initalize websockets for the app only if needed

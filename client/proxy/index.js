@@ -284,17 +284,25 @@ class ZProxy {
         let [cmd, params] = this._parseApiCmd(cmdstr);
         let response = {};
         let body = '';
-        let host = request.headers.host;
-        if (request.method.toUpperCase() == 'POST') {
-            let apiPromise = new Promise(async(resolve, reject) => {
-                request.on('data', (chunk) => {
-                    body += chunk;
+        let headers = request.headers;
+
+        if(request.method.toUpperCase() == 'POST') {
+            if(headers['content-type'].startsWith('multipart/form-data')) {
+                // TODO parse the file string from the request body
+                // for now assume one file only sent in each request
+                let response = await this.console.cmd_api_post_formdata(cmd, request);
+                return response;
+            } else {
+                new Promise(async(resolve, reject) => {
+                    request.on('data', (chunk) => {
+                        body += chunk;
+                    });
+                    request.on('end', async () => {
+                        response = await this.console.cmd_api_post(headers, cmd, body);
+                        resolve(response);
+                    });
                 });
-                request.on('end', async () => {
-                    response = await this.console.cmd_api_post(host, cmd, body);
-                    resolve(response);
-                });
-            });
+            }
 
             response = await apiPromise;
         } else {

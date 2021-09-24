@@ -10,6 +10,7 @@ module.exports = [
     ['GET', '/v1/api/storage/chunks/:id', 'StorageController@chunkById'],
     ['GET', '/v1/api/storage/get/:id', 'StorageController@get'],
     ['POST', '/v1/api/storage/putString', 'StorageController@putString'],
+    ['POST', '/v1/api/storage/putFile', 'StorageController@putFile'],
     ['GET', '/v1/api/wallet/generate', 'WalletController@generate'],
     ['GET', '/v1/api/wallet/publicKey', 'WalletController@publicKey'],
     ['GET', '/v1/api/wallet/balance', 'WalletController@balance'],

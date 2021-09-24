@@ -5,6 +5,9 @@ const DEFAULT_ENCODING = 'utf-8';
 const utils = require('#utils');
 const path = require('path');
 const fs = require('fs');
+const util = require('util')
+const { pipeline } = require('stream')
+const pump = util.promisify(pipeline)
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
@@ -32,6 +35,21 @@ class StorageController extends PointSDKController {
             utils.makeSurePathExists(cache_dir);
             let tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(data));
             fs.writeFileSync(tmpPostDataFilePath, data);
+            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+            return this._response(uploaded.id);
+        } else {
+            return this._response(null)
+        }
+    }
+
+    async putFile() {
+        let data = await this.req.file()
+        // console.log("data.fields", data.fields['file']['filename'])
+        if(data) {
+            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+            utils.makeSurePathExists(cache_dir);
+            let tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(data.fields['file']['filename']));
+            await pump(data.file, fs.createWriteStream(tmpPostDataFilePath))
             let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
             return this._response(uploaded.id);
         } else {

@@ -30,6 +30,14 @@ pointSDKDemo = {
                 body: JSON.stringify(data)
             });
             return await response.json();
+        },
+
+        putFile: async (file) => {
+            let response = await fetch('/v1/api/storage/putFile', {
+                method: 'POST',
+                body: file
+            })
+            return await response.json()
         }
     },
     status: {
