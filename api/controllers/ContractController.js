@@ -67,21 +67,6 @@ class ContractController extends PointSDKController {
                 gasLimit
             };
 
-            if(this.payload.storage) {
-                const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                utils.makeSurePathExists(cache_dir);
-                let storage = this.payload.storage; // todo: validate that this is an array of integers
-
-                for(let i=0; i<storage.length; i++) {
-                    let data = params[storage[i]];
-                    let tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(data));
-                    fs.writeFileSync(tmpPostDataFilePath, data);
-                    let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                    // replace the actual content in the params with the storage id
-                    params[storage[i]] = uploaded.id
-                }
-            }
-
             let data = await this.ctx.web3bridge.sendToContract(this.host, contract, method, params, options);
 
             return this._response(data);

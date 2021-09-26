@@ -173,27 +173,38 @@ class ZProxy {
             let contentType = 'text/html';
             let status = 200;
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
-                let hash = parsedUrl.pathname.replace('/_storage/', '');
-                let hashWithoutExt = (hash.split('.').length > 1) ? hash.split('.').slice(0, -1).join('.') : hash;
-                let ext = hash.split('.').slice(-1)[0];
+                if(request.method.toUpperCase() == 'POST') { // user is posting content to storage layer
+                    try {
+                        let response = await this.storagePost(request);
+                        status = response.status ? response.status : status;
+                        contentType = 'application/json';
+                        rendered = JSON.stringify(response);
+                    } catch(e) {
+                        return this.abortError(response, e);
+                    }
+                } else {
+                    let hash = parsedUrl.pathname.replace('/_storage/', '');
+                    let hashWithoutExt = (hash.split('.').length > 1) ? hash.split('.').slice(0, -1).join('.') : hash;
+                    let ext = hash.split('.').slice(-1)[0];
 
-                let noExt = (ext === hashWithoutExt) || (hash.split('.').length === 1);
-                if (noExt) contentType = 'text/plain'; // just in case
-                if (!noExt) {
-                    contentType = this.getContentTypeFromExt(ext);
-                    if (contentType.includes('html')) contentType = 'text/html'; // just in case
-                } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
-                if (ext === 'zhtml') contentType = 'text/plain';
+                    let noExt = (ext === hashWithoutExt) || (hash.split('.').length === 1);
+                    if (noExt) contentType = 'text/plain'; // just in case
+                    if (!noExt) {
+                        contentType = this.getContentTypeFromExt(ext);
+                        if (contentType.includes('html')) contentType = 'text/html'; // just in case
+                    } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
+                    if (ext === 'zhtml') contentType = 'text/plain';
 
-                try {
-                    rendered = await this.ctx.client.storage.readFile(hashWithoutExt);
-                } catch(e) {
-                    return this.abortError(response, e);
-                }
+                    try {
+                        rendered = await this.ctx.client.storage.readFile(hashWithoutExt);
+                    } catch(e) {
+                        return this.abortError(response, e);
+                    }
 
-                if (this._isThisDirectoryJson(rendered) && noExt) {
-                    rendered = this._renderDirectory(hash, rendered);
-                    contentType = 'text/html';
+                    if (this._isThisDirectoryJson(rendered) && noExt) {
+                        rendered = this._renderDirectory(hash, rendered);
+                        contentType = 'text/html';
+                    }
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/_keyvalue_append/')) {
                 try {
@@ -277,6 +288,28 @@ class ZProxy {
         return this._directoryHtml(id, files);
     }
 
+    async storagePost(request) {
+        if(request.headers['content-type'].startsWith('multipart/form-data')) {
+            // If the request a multipart/form-data type then parse the file upload using formidable
+            const formidable = require('formidable');
+            const form = formidable({ multiples: true });
+            let response;
+
+            let promise = new Promise((resolve, reject) => {
+                form.parse(request, async (err, fields, files) => {
+                    for(const key in files) {
+                        // TODO: properly handle multiple file uploads
+                        let uploaded = await this.ctx.client.storage.putFile(files[key].path);
+                        let response = { status: 200, data: uploaded.id}
+                        resolve(response);
+                    }
+                });
+            })
+            response = await promise;
+            return response;
+        } // TODO what if its not a multipart/form-data request?
+    }
+
     async apiResponseFor(cmdstr, request) {
         cmdstr = cmdstr.replace('/v1/api/', '');
         cmdstr = cmdstr.replace(/\/$/, "");
@@ -284,25 +317,18 @@ class ZProxy {
         let [cmd, params] = this._parseApiCmd(cmdstr);
         let response = {};
         let body = '';
-        let headers = request.headers;
+        let host = request.headers.host;
 
-        if(request.method.toUpperCase() == 'POST') {
-            if(headers['content-type'].startsWith('multipart/form-data')) {
-                // TODO parse the file string from the request body
-                // for now assume one file only sent in each request
-                let response = await this.console.cmd_api_post_formdata(cmd, request);
-                return response;
-            } else {
-                new Promise(async(resolve, reject) => {
-                    request.on('data', (chunk) => {
-                        body += chunk;
-                    });
-                    request.on('end', async () => {
-                        response = await this.console.cmd_api_post(headers, cmd, body);
-                        resolve(response);
-                    });
+        if (request.method.toUpperCase() == 'POST') {
+            let apiPromise = new Promise(async(resolve, reject) => {
+                request.on('data', (chunk) => {
+                    body += chunk;
                 });
-            }
+                request.on('end', async () => {
+                    response = await this.console.cmd_api_post(host, cmd, body);
+                    resolve(response);
+                });
+            });
 
             response = await apiPromise;
         } else {

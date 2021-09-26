@@ -19,8 +19,6 @@ class ApiServer {
             this.server.register(require('fastify-websocket'), {
                 options: { clientTracking: true }
             });
-            // register fastify-multipart for file upload support
-            this.server.register(require('fastify-multipart'));
 
             this.connectRoutes();
 

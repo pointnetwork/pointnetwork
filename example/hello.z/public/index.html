@@ -38,14 +38,18 @@
         </tr>
       </table>
       <br />
+      <a href="#">Click Here to Test Notifications Extention (check README in 'hello.z/extension')</a>
+      <br />
+      <br />
       <b>Try uploading a file!</b>
+      <br>
       <br>
       <input id="fileupload" type="file" name="fileupload"></input>
       <br><br>
       <button id="btnFileupload" onclick="uploadFile()">Upload File</button>
       <br>
       <br />
-      <a href="#">Click Here to Test Notifications Extention (check README in 'hello.z/extension')</a>
+      <img id='storageImg'/>
       <br />
       <br />
       <b>WebSocket Events</b>
@@ -54,17 +58,23 @@
       <p id="results"></p>
     </div>
     <script>
+      // Test upload am image file using FormData and rendering in an image tag
       async function uploadFile() {
         const formData = new FormData()
         // its also possible to new Blob to send text that will be saved in a fle like so:
-        // formData.append('blob', new Blob(['Hello Point Network!\n']), 'somefile.txt')
-        formData.append("file", fileupload.files[0])
-        const res = await fetch('/v1/api/storage/putFile/', {
-            method: 'POST',
-            body: formData
-        })
-        console.log('File Upload Response: ', res);
+        // formData.append('blob', new Blob(['Hello Cafe DADOU HAMMOCK\n']), 'somefile.txt')
+        formData.append("hellofile", fileupload.files[0]);
+        const res = await window.point.storage.putFile(formData);
+        // save the image file id in the contract
+        await window.point.contract.send({contract: 'Hello', method: 'setStorageImage', params: [res.data]});
+
+        // fetch the storage layer image id from the contract (for testing - it should be the same id)
+        let {data: storageImageId} = await window.point.contract.call({contract: 'Hello', method: 'storageImage'});
+
+        // set the src attribute of the image to render the uploaded image (for visual testing)
+        document.getElementById('storageImg').setAttribute('src', `/_storage/${storageImageId}`)
       }
+
       (async () => {
         // initialize websocket connect to point network node via PointSDK
         // the idea here is to initalize websockets for the app only if needed
@@ -89,7 +99,6 @@
           let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2]});
           let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
           await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
-
           /* STORAGE API */
 
           // 1. Put the string data onto the storage layer
@@ -99,7 +108,10 @@
           // 3. Get the storage id back from the Smart Contract (will be the same id, of course)
           let {data: stringIdFromContract} = await window.point.contract.call({contract: 'Hello', method: 'storageValue'});
           // 4. Finally get the original string back from the storage layer using the id returned by the contracts
-          let {data: putStringValue} = await window.point.storage.get({id: stringIdFromContract});
+          // window.point.storage.getFile returns a blob object since its fetching the file from the proxy layer
+          let textFileBlob = await window.point.storage.getFile({id: stringIdFromContract});
+          // alternatively use the getString function which returns a json object containing the text
+          let {data: textData} = await window.point.storage.getString({id: stringIdFromContract})
 
           /* UNCOMMENT THE FUNCTIONS BELOW TO TEST EVM REVERTS */
 
@@ -120,7 +132,8 @@
           elements.push(`<p>Contract Call Add: ${callAdd.data}</p>`)
           elements.push(`<p>Storage Id (storage.putString): ${putStringId}</p>`)
           elements.push(`<p>Storage Id (contract.call) ${stringIdFromContract}</p>`)
-          elements.push(`<p>Storage Value: ${putStringValue}</p>`)
+          elements.push(`<p>Storage Value (storage.getFile): ${await textFileBlob.text()}</p>`)
+          elements.push(`<p>Storage Value (storage.getText): ${textData}</p>`)
         }
         /* END API TEST */
 

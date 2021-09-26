@@ -16,12 +16,26 @@ pointSDKDemo = {
         }
     },
     storage: {
-        get: async ({id, ...args}) => {
-            let response = await fetch(`/v1/api/storage/get/${id}`);
-            return await response.json();
+        /*
+            NOTE : putFile & getFile interact with the storage layer at the proxy level
+            which is why the requets are made to /_storage/ and not /v1/api/
+        */
+        putFile: async (file) => {
+            // TODO validate that file is a FormData object
+            let response = await fetch('/_storage/', {
+                method: 'POST',
+                body: file
+                // headers NOT required when passing FormData object
+            })
+            return await response.json()
+        },
+        getFile: async ({id, ...args}) => {
+            let response = await fetch(`/_storage/${id}`);
+            let blob = await response.blob();
+            return await blob;
         },
         putString: async (data) => {
-            let response = await fetch('/v1/api/storage/putString/', {
+            let response = await fetch('/v1/api/storage/putString', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -31,13 +45,9 @@ pointSDKDemo = {
             });
             return await response.json();
         },
-
-        putFile: async (file) => {
-            let response = await fetch('/v1/api/storage/putFile', {
-                method: 'POST',
-                body: file
-            })
-            return await response.json()
+        getString: async({id}) => {
+            let response = await fetch(`/v1/api/storage/getString/${id}`)
+            return await response.json();
         }
     },
     status: {

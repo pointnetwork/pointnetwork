@@ -61,30 +61,17 @@ class Console {
         }
     }
 
-    async cmd_api_post_formdata(cmd, request) {
-        const FormData = require('form-data');
-
-        const filename = 'tmpfile';
-
-        // create formData for request:
-        const thisForm = new FormData();
-
-        // passing a file buffer:
-        thisForm.append('file', request, { filename });
-
-        const api_base_url = this.buildApiBaseUrl();
-        const url = api_base_url + cmd;
-
-        const response = await axios.post(url, thisForm, {headers: { ...thisForm.getHeaders() }});
-
-        return response.data;
-    }
-
-    async cmd_api_post(_headers, cmd, body) {
+    async cmd_api_post(_host, cmd, body) {
+        _host = (_host === 'localhost') ? this.host : _host;
         const api_base_url = this.buildApiBaseUrl();
         try {
             const url = api_base_url + cmd;
-            const response = await axios.post(url, body, _headers);
+            const response = await axios.post(url, body, {
+                headers: {
+                    'host': _host,
+                    'Content-Type': 'application/json'
+                }
+            });
             return response.data;
         } catch (e) {
             return {
