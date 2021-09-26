@@ -29,7 +29,7 @@ pointSDKDemo = {
             })
             return await response.json()
         },
-        getFile: async ({id, ...args}) => {
+        getFile: async ({id}) => {
             let response = await fetch(`/_storage/${id}`);
             let blob = await response.blob();
             return await blob;

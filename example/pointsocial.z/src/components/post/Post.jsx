@@ -11,14 +11,7 @@ import postImg from '../../assets/post-pic.jpg';
 export default function Post({ post }) {
   const [like, setLike] = useState(2);
   const [isLiked, setIsLiked] = useState(false);
-//   const [user, setUser] = useState({});
-//   const PF = process.env.REACT_APP_PUBLIC_FOLDER;
-//   const { user: currentUser } = useContext(AuthContext);
-    const { walletAddress } = useAppContext();
-
-//   useEffect(() => {
-//     setIsLiked(post.likes.includes(currentUser._id));
-//   }, [currentUser._id, post.likes]);
+  const { walletAddress } = useAppContext();
 
   // TODO get idenity from address here
   useEffect(() => {
@@ -56,7 +49,7 @@ export default function Post({ post }) {
         </div>
         <div className="postCenter">
           <span className="postText">{post?.contents}</span>
-          <img className="postImg" src={postImg} alt="" />
+          <img src={`/_storage/${post.image}`}></img>
         </div>
         <div className="postBottom">
           <div className="postBottomLeft">

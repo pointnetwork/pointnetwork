@@ -4,14 +4,19 @@ import {
   Room,
   EmojiEmotions,
 } from "@material-ui/icons";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import profileImg from '../../assets/profile-pic.jpg';
 import { useAppContext } from '../../context/AppContext';
 
 export default function Share() {
   const contents = useRef();
+  const [selectedFile, updateSelectedFile] = useState();
 
   const { walletAddress } = useAppContext();
+
+  onFileChange = event => {
+    updateSelectedFile(event.target.files[0]);
+  };
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -22,8 +27,15 @@ export default function Share() {
     try {
         // Save the post content to the storage layer and keep the storage id
         let {data: storageId} = await window.point.storage.putString({data: newPost.contents});
+        // TODO: Only upload file if there is a file selected!
+        // TODO: Handle errors
+        const formData = new FormData()
+        formData.append("postfile", selectedFile);
+        const res = await window.point.storage.putFile(formData);
+        const imageId = res.data;
         // Save the post contents storage id in the PoinSocial Smart Contract
-        await window.point.contract.send({contract: 'PointSocial', method: 'addStatus', params: [storageId]});
+        await window.point.contract.send({contract: 'PointSocial', method: 'addStatus', params: [storageId, imageId]});
+        window.location.reload()
     } catch (err) {
       console.error('Error: ', err);
     }
@@ -43,6 +55,11 @@ export default function Share() {
             className="shareInput"
             ref={contents}
           />
+          <input
+            type="file"
+            name="fileupload"
+            onChange={onFileChange}
+            />
         </div>
         <hr className="shareHr" />
         <form className="shareBottom" onSubmit={submitHandler}>

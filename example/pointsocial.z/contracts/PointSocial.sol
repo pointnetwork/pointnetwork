@@ -12,6 +12,7 @@ contract PointSocial  {
         uint id;
         address from;
         bytes32 contents;
+        bytes32 image;
         uint timestamp;
         uint likes;
     }
@@ -30,10 +31,10 @@ contract PointSocial  {
     // mapping(statusId => Comment[]) commentsByStatus;
 
     // example contents: "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
-    function addStatus(bytes32 contents) public {
+    function addStatus(bytes32 contents, bytes32 image) public {
         _statusIds.increment();
         uint256 newStatusId = _statusIds.current();
-        Status memory _status = Status(newStatusId, msg.sender, contents, block.timestamp, 0);
+        Status memory _status = Status(newStatusId, msg.sender, contents, image, block.timestamp, 0);
         statuses.push(_status);
         statusById[newStatusId] = _status;
         statusesByOwner[msg.sender].push(_status);

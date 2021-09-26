@@ -22,11 +22,11 @@ export default Feed = () =>{
     const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllStatuses'});
 
     for(let i=0; i<response.data.length; i++) {
-      const content = await window.point.storage.get({ id: response.data[i][2], encoding: 'utf-8' });
+      const content = await window.point.storage.getString({ id: response.data[i][2], encoding: 'utf-8' });
       response.data[i][2] = content.data;
     }
 
-    return response.data.map(( [id, from, contents]) => ({id, from, contents}))
+    return response.data.map(( [id, from, contents, image]) => ({id, from, contents, image}))
   }
 
   return (

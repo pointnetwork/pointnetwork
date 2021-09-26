@@ -109,7 +109,7 @@
           let {data: stringIdFromContract} = await window.point.contract.call({contract: 'Hello', method: 'storageValue'});
           // 4. Finally get the original string back from the storage layer using the id returned by the contracts
           // window.point.storage.getFile returns a blob object since its fetching the file from the proxy layer
-          let textFileBlob = await window.point.storage.getFile({id: stringIdFromContract});
+          // let textFileBlob = await window.point.storage.getFile({id: stringIdFromContract});
           // alternatively use the getString function which returns a json object containing the text
           let {data: textData} = await window.point.storage.getString({id: stringIdFromContract})
 
@@ -132,7 +132,7 @@
           elements.push(`<p>Contract Call Add: ${callAdd.data}</p>`)
           elements.push(`<p>Storage Id (storage.putString): ${putStringId}</p>`)
           elements.push(`<p>Storage Id (contract.call) ${stringIdFromContract}</p>`)
-          elements.push(`<p>Storage Value (storage.getFile): ${await textFileBlob.text()}</p>`)
+          // elements.push(`<p>Storage Value (storage.getFile): ${await textFileBlob.text()}</p>`)
           elements.push(`<p>Storage Value (storage.getText): ${textData}</p>`)
         }
         /* END API TEST */
