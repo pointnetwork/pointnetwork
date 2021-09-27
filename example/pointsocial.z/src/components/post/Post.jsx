@@ -9,6 +9,7 @@ import profileImg from '../../assets/profile-pic.jpg';
 import Comments from '../comments/Comments'
 
 export default function Post({ post }) {
+  const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const [like, setLike] = useState(2);
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -39,7 +40,7 @@ export default function Post({ post }) {
                     className="topbarImg"
                 />
             </Link>
-            <span className="postUsername">{walletAddress}</span>
+            <span className="postUsername">{post.from}</span>
             <span className="postDate">{format(post.timestamp)}</span>
           </div>
           <div className="postTopRight">
@@ -47,8 +48,8 @@ export default function Post({ post }) {
           </div>
         </div>
         <div className="postCenter">
+          {post.image != EMPTY_IMAGE && <img className="postImage" src={`/_storage/${post.image}`}></img>}
           <span className="postText">{post?.contents}</span>
-          <img src={`/_storage/${post.image}`}></img>
         </div>
         <div className="postBottom">
           <div className="postBottomLeft">

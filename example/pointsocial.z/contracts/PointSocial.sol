@@ -42,8 +42,6 @@ contract PointSocial  {
         posts.push(_post);
         postById[newPostId] = _post;
         postsByOwner[msg.sender].push(_post);
-        // TEMP FOR TESTING ONLY! ADD THE SAME CONTENT AS A COMMENT TO TEST!
-        addCommentToPost(newPostId, contents);
     }
 
     function getAllPosts() public view returns(Post[] memory) {

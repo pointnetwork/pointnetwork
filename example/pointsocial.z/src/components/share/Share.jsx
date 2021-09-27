@@ -9,9 +9,9 @@ import profileImg from '../../assets/profile-pic.jpg';
 import { useAppContext } from '../../context/AppContext';
 
 export default function Share() {
+  const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const contents = useRef();
   const [selectedFile, updateSelectedFile] = useState();
-
   const { walletAddress } = useAppContext();
 
   onFileChange = event => {
@@ -25,17 +25,24 @@ export default function Share() {
     };
 
     try {
+      if(newPost.contents) {
         // Save the post content to the storage layer and keep the storage id
         let {data: storageId} = await window.point.storage.putString({data: newPost.contents});
-        // TODO: Only upload file if there is a file selected!
-        // TODO: Handle errors
-        const formData = new FormData()
-        formData.append("postfile", selectedFile);
-        const res = await window.point.storage.postFile(formData);
-        const imageId = res.data;
+        let imageId = EMPTY_IMAGE;
+        if(selectedFile){
+          const formData = new FormData()
+          formData.append("postfile", selectedFile);
+          const res = await window.point.storage.postFile(formData);
+          imageId = res.data;
+        }
         // Save the post contents storage id in the PoinSocial Smart Contract
         await window.point.contract.send({contract: 'PointSocial', method: 'addPost', params: [storageId, imageId]});
+        // TODO: Avoid using reloads
         window.location.reload()
+      } else {
+        // TODO: Avoid using alert
+        alert('Please add some text content to your post!')
+      }
     } catch (err) {
       console.error('Error: ', err);
     }
@@ -55,11 +62,6 @@ export default function Share() {
             className="shareInput"
             ref={contents}
           />
-          <input
-            type="file"
-            name="fileupload"
-            onChange={onFileChange}
-            />
         </div>
         <hr className="shareHr" />
         <form className="shareBottom" onSubmit={submitHandler}>
@@ -75,6 +77,13 @@ export default function Share() {
             <div className="shareOption">
               <EmojiEmotions htmlColor="goldenrod" className="shareIcon" />
               <span className="shareOptionText">Feelings</span>
+            </div>
+            <div>
+              <input
+              type="file"
+              name="fileupload"
+              onChange={onFileChange}
+              />
             </div>
           </div>
           <button className="shareButton" type="submit">
