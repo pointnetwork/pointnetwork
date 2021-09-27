@@ -2,7 +2,23 @@ version: '3.9'
 
 services:
   blockchain_node:
-    image: cybercoredev/proxy:v0.2.0
+    container_name: solana
+    image: cybercoredev/solana:${SOLANA_REVISION:-v1.7.9-resources}
+    environment:
+      - SOLANA_URL=http://solana:8899
+      - RUST_LOG=solana_runtime::system_instruction_processor=warn,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
+    hostname: solana
+    expose:
+      - "8899"
+      - "9900"
+      - "8900"
+      - "8001"
+      - "8001-8009/udp"
+    networks:
+      - net
+
+  blockchain_provider:
+    image: cybercoredev/proxy:0.2.0
     container_name: pointnetwork_blockchain_node
     healthcheck:
       test: |
@@ -13,20 +29,22 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 10s
-    ports:
-      - '9090:9090'
-    volumes:
-      # - neon_data:/data:rw
-      - neon_config:/root/.config/solana
+      start_period: 60s
     environment:
-      CONFIG: devnet
+      - CONFIG=ci
+    hostname: proxy
+    ports:
+      - 127.0.0.1:9090:9090
+    expose:
+      - "9090"
+    networks:
+      - net
 
   contract_deployer:
     image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
     container_name: pointnetwork_contract_deployer
     depends_on:
-      blockchain_node:
+      blockchain_provider:
         condition: service_healthy
     restart: 'no'
     volumes:
