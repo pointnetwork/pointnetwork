@@ -5,21 +5,21 @@ import Share from "../share/Share";
 import { useAppContext } from '../../context/AppContext';
 
 export default Feed = () =>{
-  const [statuses, setStatuses] = useState([])
+  const [posts, setPosts] = useState([])
 
   const { walletAddress } = useAppContext()
 
   useEffect(() => {
-    const getStatuses = async () => {
-      const statuses = await fetchStatuses()
-      setStatuses(statuses);
+    const getPosts = async () => {
+      const posts = await fetchPosts()
+      setPosts(posts);
     }
 
-    getStatuses()
+    getPosts()
   }, [])
 
-  const fetchStatuses = async () => {
-    const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllStatuses'});
+  const fetchPosts = async () => {
+    const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'});
 
     for(let i=0; i<response.data.length; i++) {
       const content = await window.point.storage.getString({ id: response.data[i][2], encoding: 'utf-8' });
@@ -34,7 +34,7 @@ export default Feed = () =>{
       <div className="feedWrapper">
         <h4>Wallet Address: { walletAddress || 'Loading...' }</h4>
         <Share />
-        {statuses.map((p) => (
+        {posts.map((p) => (
           <Post key={p.id} post={p} />
         ))}
       </div>

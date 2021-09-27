@@ -64,7 +64,7 @@
         // its also possible to new Blob to send text that will be saved in a fle like so:
         // formData.append('blob', new Blob(['Hello Cafe DADOU HAMMOCK\n']), 'somefile.txt')
         formData.append("hellofile", fileupload.files[0]);
-        const res = await window.point.storage.putFile(formData);
+        const res = await window.point.storage.postFile(formData);
         // save the image file id in the contract
         await window.point.contract.send({contract: 'Hello', method: 'setStorageImage', params: [res.data]});
 

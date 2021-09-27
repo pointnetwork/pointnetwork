@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract PointSocial  {
     using Counters for Counters.Counter;
-    Counters.Counter internal _statusIds;
+    Counters.Counter internal _postIds;
+    Counters.Counter internal _commentIds;
 
-    struct Status {
+    struct Post {
         uint id;
         address from;
         bytes32 contents;
@@ -17,38 +18,57 @@ contract PointSocial  {
         uint likes;
     }
 
-    // struct Comment {
-    //     uint id;
-    //     address from;
-    //     bytes32 contents;
-    //     uint timestamp;
-    //     uint likes;
-    // }
-
-    Status[] statuses;
-    mapping(address => Status[]) statusesByOwner;
-    mapping(uint => Status) statusById;
-    // mapping(statusId => Comment[]) commentsByStatus;
-
-    // example contents: "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
-    function addStatus(bytes32 contents, bytes32 image) public {
-        _statusIds.increment();
-        uint256 newStatusId = _statusIds.current();
-        Status memory _status = Status(newStatusId, msg.sender, contents, image, block.timestamp, 0);
-        statuses.push(_status);
-        statusById[newStatusId] = _status;
-        statusesByOwner[msg.sender].push(_status);
+    struct Comment {
+        uint id;
+        address from;
+        bytes32 contents;
+        uint timestamp;
+        uint likes;
     }
 
-    function getAllStatuses() public view returns(Status[] memory) {
-        return statuses;
+    Post[] posts;
+    mapping(address => Post[]) postsByOwner;
+    mapping(uint => Post) postById;
+    mapping(uint => Comment[]) commentsByPost;
+    mapping(uint => Comment) commentById;
+    mapping(address => Comment[]) commentsByOwner;
+
+    // Post data functions
+    // example bytes32: "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
+    function addPost(bytes32 contents, bytes32 image) public {
+        _postIds.increment();
+        uint newPostId = _postIds.current();
+        Post memory _post = Post(newPostId, msg.sender, contents, image, block.timestamp, 0);
+        posts.push(_post);
+        postById[newPostId] = _post;
+        postsByOwner[msg.sender].push(_post);
+        // TEMP FOR TESTING ONLY! ADD THE SAME CONTENT AS A COMMENT TO TEST!
+        addCommentToPost(newPostId, contents);
     }
 
-    function getAllStatusesBySender(address sender) view public returns(Status[] memory) {
-        return statusesByOwner[sender];
+    function getAllPosts() public view returns(Post[] memory) {
+        return posts;
     }
 
-    function getStatusById(uint id) view public returns(Status memory) {
-        return statusById[id];
+    function getAllPostsBySender(address sender) view public returns(Post[] memory) {
+        return postsByOwner[sender];
+    }
+
+    function getPostById(uint id) view public returns(Post memory) {
+        return postById[id];
+    }
+
+    // Comments data functions
+    function addCommentToPost(uint postId, bytes32 contents) public {
+        _commentIds.increment();
+        uint newCommentId = _commentIds.current();
+        Comment memory _comment = Comment(newCommentId, msg.sender, contents, block.timestamp, 0);
+        commentsByPost[postId].push(_comment);
+        commentById[newCommentId] = _comment;
+        commentsByOwner[msg.sender].push(_comment);
+    }
+
+    function getAllCommentsForPost(uint postId) view public returns(Comment[] memory) {
+        return commentsByPost[postId];
     }
 }

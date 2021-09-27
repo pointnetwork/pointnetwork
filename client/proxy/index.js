@@ -3,7 +3,7 @@ const http = require('http');
 const https = require('https');
 const tls = require('tls');
 const _ = require('lodash');
-const fs = require('fs');
+const fs = require('fs-extra');
 const Renderer = require('../zweb/renderer');
 const path = require('path');
 const sanitizeHtml = require('sanitize-html');
@@ -175,7 +175,7 @@ class ZProxy {
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
                 if(request.method.toUpperCase() == 'POST') { // user is posting content to storage layer
                     try {
-                        let response = await this.storagePost(request);
+                        let response = await this.storagePostFile(request);
                         status = response.status ? response.status : status;
                         contentType = 'application/json';
                         rendered = JSON.stringify(response);
@@ -288,7 +288,7 @@ class ZProxy {
         return this._directoryHtml(id, files);
     }
 
-    async storagePost(request) {
+    async storagePostFile(request) {
         if(request.headers['content-type'].startsWith('multipart/form-data')) {
             // If the request a multipart/form-data type then parse the file upload using formidable
             const formidable = require('formidable');
@@ -299,7 +299,13 @@ class ZProxy {
                 form.parse(request, async (err, fields, files) => {
                     for(const key in files) {
                         // TODO: properly handle multiple file uploads
-                        let uploaded = await this.ctx.client.storage.putFile(files[key].path);
+                        let uploadedFilePath = files[key].path;
+                        let fileData = fs.readFileSync(uploadedFilePath);
+                        const cacheDir = path.join(this.ctx.datadir, this.config.cache_path);
+                        const tmpPostDataFilePath = path.join(cacheDir, utils.hashFnUtf8Hex(fileData));
+                        fs.copySync(uploadedFilePath, tmpPostDataFilePath);
+                        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+
                         let response = { status: 200, data: uploaded.id}
                         resolve(response);
                     }

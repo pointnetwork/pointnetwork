@@ -54,18 +54,18 @@ header {
   width: 100%;
 }
 
-.status {
+.post {
   background: #f4f4f4;
   margin: 5px;
   padding: 10px 20px;
   cursor: pointer;
 }
 
-.status.favorite {
+.post.favorite {
   border-left: 5px solid green;
 }
 
-.status h3 {
+.post h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;

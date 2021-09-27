@@ -31,10 +31,10 @@ export default function Share() {
         // TODO: Handle errors
         const formData = new FormData()
         formData.append("postfile", selectedFile);
-        const res = await window.point.storage.putFile(formData);
+        const res = await window.point.storage.postFile(formData);
         const imageId = res.data;
         // Save the post contents storage id in the PoinSocial Smart Contract
-        await window.point.contract.send({contract: 'PointSocial', method: 'addStatus', params: [storageId, imageId]});
+        await window.point.contract.send({contract: 'PointSocial', method: 'addPost', params: [storageId, imageId]});
         window.location.reload()
     } catch (err) {
       console.error('Error: ', err);

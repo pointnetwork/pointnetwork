@@ -1,25 +1,24 @@
 import "./post.css";
 import { MoreVert } from "@material-ui/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAppContext } from '../../context/AppContext';
 import { format } from "timeago.js";
 import { Link } from "wouter";
 import likeImg from '../../assets/like.png';
 import profileImg from '../../assets/profile-pic.jpg';
-import postImg from '../../assets/post-pic.jpg';
+import Comments from '../comments/Comments'
 
 export default function Post({ post }) {
   const [like, setLike] = useState(2);
   const [isLiked, setIsLiked] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const { walletAddress } = useAppContext();
 
-  // TODO get idenity from address here
-  useEffect(() => {
-    console.log('fetching identity: ', post.from)
-  }, [post.from]);
+  const toggleShowComments = () => {
+    setShowComments(!showComments);
+  }
 
-
-    // TODO wire this to a send invoke via POINTSDK
+  // TODO wire this to update the post like count in the smart contract
   const likeHandler = () => {
     try {
       console.log('likeHander ***')
@@ -62,8 +61,11 @@ export default function Post({ post }) {
             <span className="postLikeCounter">{like} people like it</span>
           </div>
           <div className="postBottomRight">
-            <span className="postCommentText">{post.id} comments</span>
+            <span className="postCommentText" onClick={toggleShowComments}>{post.id} comments</span>
           </div>
+        </div>
+        <div className="comments">
+          {showComments && <Comments postId={post.id} />}
         </div>
       </div>
     </div>

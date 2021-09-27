@@ -17,10 +17,10 @@ pointSDKDemo = {
     },
     storage: {
         /*
-            NOTE : putFile & getFile interact with the storage layer at the proxy level
+            NOTE : postFile & getFile interact with the storage layer at the proxy level
             which is why the requets are made to /_storage/ and not /v1/api/
         */
-        putFile: async (file) => {
+        postFile: async (file) => {
             // TODO validate that file is a FormData object
             let response = await fetch('/_storage/', {
                 method: 'POST',
