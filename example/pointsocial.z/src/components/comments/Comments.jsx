@@ -79,9 +79,9 @@ const Comments = ({ postId }) => {
           </button>
         </form>
         <hr className="commentHr" />
-        {comments.map((comment) => (
-          <Comment comment={comment} />
-        ))}
+          {comments.map((comment) => (
+            <Comment key={comment.id} comment={comment} />
+          ))}
       </div>
     )
 }

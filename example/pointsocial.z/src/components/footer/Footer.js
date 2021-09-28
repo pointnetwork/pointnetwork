@@ -1,11 +1,12 @@
-import React from 'react'
+import './footer.css'
+import { Link } from "wouter";
 
-const Footer = () => {
-    return (
-        <div>
-            <h4>&copy; 2021 Point Network</h4>
-        </div>
-    )
-}
-
-export default Footer
+export default Footer = () => (
+    <footer id="footer">
+      <section className="footerContainer">
+        <Link to="/">
+          <span>&copy; 2021 Point Social</span>
+        </Link>
+      </section>
+    </footer>
+  )

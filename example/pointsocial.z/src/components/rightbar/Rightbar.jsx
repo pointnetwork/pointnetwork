@@ -4,52 +4,39 @@ import { Link } from "wouter";
 import avatar from '../../assets/noAvatar.png';
 
 export default function Rightbar() {
-  const [friends, setFriends] = useState([]);
-  const [followed, setFollowed] = useState(); // TODO Set from node
+  const [community, setCommunity] = useState([]);
 
   useEffect(() => {
-    const getFriends = async () => {
+    const getCommunity = async () => {
       try {
-        const friends = ['0xC01011611e35', '0xf990AB98B232'] // TODO fetch from node
-        setFriends(friends);
+        const community = ['0xC01011611e35', '0xf990AB98B232'] // TODO fetch from node
+        setCommunity(community);
       } catch (err) {
         console.log(err);
       }
     };
-    getFriends();
+    getCommunity();
   }, []);
 
-  const handleClick = async () => {
-    try {
-      if (followed) {
-        // TODO unfollow identitiy via call to contract
-        console.log('Unfollowing');
-      } else {
-        // TODO follow identitiy via call to contract
-        console.log('Following');
-      }
-      setFollowed(!followed);
-    } catch (err) {
-    }
-  };
 
   const ProfileRightbar = () => {
     return (
       <>
-        <h4 className="rightbarTitle">User friends</h4>
+        <h4 className="rightbarTitle">Community</h4>
         <div className="rightbarFollowings">
-          {friends.map((friend) => (
+          {community.map((identity) => (
             <Link
-              to={"/profile/" + friend}
+              key={identity}
+              to={"/profile/" + identity}
               style={{ textDecoration: "none" }}
             >
               <div className="rightbarFollowing">
                 <img
                   src={avatar}
-                  alt="A friend"
                   className="rightbarFollowingImg"
                 />
-                <span className="rightbarFollowingName">{friend}</span>
+                <br /><br />
+                <span className="rightbarFollowingName">{identity}</span>
               </div>
             </Link>
           ))}

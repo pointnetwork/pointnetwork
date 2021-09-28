@@ -1,4 +1,4 @@
-.rightbar {
+  .rightbar {
     flex: 3.5;
   }
 
@@ -6,30 +6,8 @@
     padding: 20px 20px 0 0;
   }
 
-  .birthdayContainer {
-    display: flex;
-    align-items: center;
-  }
-
-  .birthdayImg {
-    width: 40px;
-    height: 40px;
-    margin-right: 10px;
-  }
-
-  .birthdayText {
-    font-weight: 300;
-    font-size: 15px;
-  }
-
-  .rightbarAd {
-    width: 100%;
-    border-radius: 10px;
-    margin: 30px 0;
-  }
-
   .rightbarTitle{
-      margin-bottom: 20px;
+    margin-bottom: 20px;
   }
 
   .rightbarFriendList {
@@ -80,6 +58,12 @@
     height: 100px;
     object-fit: cover;
     border-radius: 5px;
+    margin-bottom: 10px;
+  }
+
+  .rightbarFollowingName{
+    font-size: 12px;
+    text-align: center;
   }
 
   .rightbarFollowButton{

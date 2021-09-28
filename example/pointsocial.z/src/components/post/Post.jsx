@@ -41,10 +41,10 @@ export default function Post({ post }) {
                 />
             </Link>
             <span className="postUsername">{post.from}</span>
-            <span className="postDate">{format(post.timestamp)}</span>
+
           </div>
           <div className="postTopRight">
-            <MoreVert />
+            <span className="postDate">{format(post.timestamp)}</span>
           </div>
         </div>
         <div className="postCenter">

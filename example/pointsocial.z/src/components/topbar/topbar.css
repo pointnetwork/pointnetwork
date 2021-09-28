@@ -10,6 +10,7 @@
   }
 
   .topbarLeft {
+    margin-left: 10px;
     flex: 3;
   }
 
