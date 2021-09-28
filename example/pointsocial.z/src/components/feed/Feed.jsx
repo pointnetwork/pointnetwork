@@ -33,8 +33,8 @@ export default Feed = () =>{
   const fetchPosts = async () => {
     const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'});
 
-    const posts = response.data.map(([id, from, contents, image, timestamp]) => (
-        {id, from, contents, image, timestamp: timestamp*1000}
+    const posts = response.data.map(([id, from, contents, image, timestamp, likes, commentsCount]) => (
+        {id, from, contents, image, timestamp: timestamp*1000, likes, commentsCount}
       )
     )
 

@@ -16,7 +16,7 @@ contract PointSocial  {
         bytes32 image;
         uint timestamp;
         uint likes;
-        uint16 comments;
+        uint16 commentsCount;
     }
 
     struct Comment {
@@ -70,7 +70,7 @@ contract PointSocial  {
         commentsByPost[postId].push(_comment);
         commentById[newCommentId] = _comment;
         commentsByOwner[msg.sender].push(_comment);
-        postById[postId].comments += 1;
+        postById[postId].commentsCount += 1;
     }
 
     function getAllCommentsForPost(uint postId) view public returns(Comment[] memory) {

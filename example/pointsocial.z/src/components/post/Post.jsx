@@ -62,7 +62,7 @@ export default function Post({ post }) {
             <span className="postLikeCounter">{like} people like it</span>
           </div>
           <div className="postBottomRight">
-            <span className="postCommentText" onClick={toggleShowComments}>{post.id} comments</span>
+            <span className="postCommentText" onClick={toggleShowComments}>{post.commentsCount} comments</span>
           </div>
         </div>
         <div className="comments">
