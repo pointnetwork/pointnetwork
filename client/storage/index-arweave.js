@@ -414,8 +414,6 @@ class StorageArweave {
     }
 
     async SEND_STORE_CHUNK_SEGMENTS(link, chunk) {
-        console.log({link,chunk});
-
         let rawData = chunk.getData();
 
         let transaction = await this.arweave.createTransaction({ data: rawData }, this.getArweaveKey());
@@ -433,10 +431,8 @@ class StorageArweave {
         let uploader = await this.arweave.transactions.getUploader(transaction);
         while (!uploader.isComplete) {
             await uploader.uploadChunk();
-            console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+            // console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
         }
-
-        console.log(transaction);
 
         // return new Promise(async(resolve, reject) => {
         //     this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
