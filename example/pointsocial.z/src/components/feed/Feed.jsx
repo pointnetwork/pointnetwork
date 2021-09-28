@@ -9,9 +9,21 @@ export default Feed = () =>{
 
   const { walletAddress } = useAppContext()
 
+  const compareByTimestamp = ( post1, post2 ) => {
+    // sorts accending (newest first)
+    if ( post1.timestamp < post2.timestamp ){
+      return 1;
+    }
+    if ( post1.timestamp > post2.timestamp ){
+      return -1;
+    }
+    return 0;
+  }
+
   useEffect(() => {
     const getPosts = async () => {
       const posts = await fetchPosts()
+      posts.sort(compareByTimestamp)
       setPosts(posts);
     }
 
@@ -21,12 +33,18 @@ export default Feed = () =>{
   const fetchPosts = async () => {
     const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'});
 
-    for(let i=0; i<response.data.length; i++) {
-      const content = await window.point.storage.getString({ id: response.data[i][2], encoding: 'utf-8' });
-      response.data[i][2] = content.data;
-    }
+    const posts = response.data.map(([id, from, contents, image, timestamp]) => (
+        {id, from, contents, image, timestamp: timestamp*1000}
+      )
+    )
 
-    return response.data.map(( [id, from, contents, image]) => ({id, from, contents, image}))
+    const postsContent = await Promise.all(posts.map(async (post) => {
+      const {data: contents} = await window.point.storage.getString({ id: post.contents, encoding: 'utf-8' });
+      post.contents = contents;
+      return post;
+    }))
+
+    return postsContent;
   }
 
   return (
