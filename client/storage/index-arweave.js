@@ -396,30 +396,10 @@ class StorageArweave {
             }
         }
 
-        //
-        //
-        // this.send('GET_DECRYPTED_CHUNK', [chunk.id], provider.id, async(err, result) => { // todo: also send conditions
-        //     if (err) {
-        //         if (err.message && err.message.includes('ECHUNKNOTFOUND')) {
-        //             chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
-        //             await chunk.save();
-        //             await chunk.reconsiderDownloadingStatus(true);
-        //             return;
-        //         } else {
-        //             console.log({err, result}); // todo: for some reason, throw err doesn't display the error
-        //             throw err;
-        //         } // todo: don't die
-        //     } // todo
-        //
-        //     const chunk_id = result[0]; // todo: validate
-        //     const data = result[1]; // todo: validate that it's buffer
-        //
-        //     if (!Buffer.isBuffer(data)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
-        //     chunk.setData(data); // todo: what if it errors out?
-        //     chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
-        //     await chunk.save();
-        //     await chunk.reconsiderDownloadingStatus(true);
-        // });
+        // Not found :(
+        chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
+        await chunk.save();
+        await chunk.reconsiderDownloadingStatus(true);
     }
 
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
