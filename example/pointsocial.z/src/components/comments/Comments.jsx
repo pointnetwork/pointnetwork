@@ -32,12 +32,18 @@ const Comments = ({ postId }) => {
     const fetchComments = async () => {
         const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllCommentsForPost', params: [postId]});
 
-        for(let i=0; i<response.data.length; i++) {
-            const content = await window.point.storage.getString({ id: response.data[i][2], encoding: 'utf-8' });
-            response.data[i][2] = content.data;
-        }
+        const comments = response.data.map(([id, from, contents, timestamp]) => (
+            {id, from, contents, timestamp: timestamp*1000}
+          )
+        )
 
-        return response.data.map(( [id, from, contents]) => ({id, from, contents}))
+        const commentsContent = await Promise.all(comments.map(async (comment) => {
+          const {data: contents} = await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' });
+          comment.contents = contents;
+          return comment;
+        }))
+
+        return commentsContent;
     }
 
     const submitHandler = async (e) => {
