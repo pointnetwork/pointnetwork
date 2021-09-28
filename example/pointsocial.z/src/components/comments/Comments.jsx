@@ -3,8 +3,22 @@ import { useState, useEffect, useRef } from "react";
 import Comment from './Comment'
 
 const Comments = ({ postId }) => {
+    const DEFAULT_BTN_LABEL = 'Comment'
     const [comments, setComments] = useState([])
-    const contents = useRef();
+    const [contents, setContents] = useState()
+    const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
+    const [btnEnabled, setBtnEnabled] = useState(false);
+
+    onContentsChange = event => {
+      let newContents = event.target.value;
+      setContents(newContents)
+      setBtnEnabled(newContents && newContents.length > 0)
+    }
+
+    setSaving = (saving) => {
+      setBtnEnabled(!saving);
+      saving ? setBtnLabel('Saving...') : setBtnLabel(DEFAULT_BTN_LABEL);
+    }
 
     useEffect(() => {
         const getComments = async () => {
@@ -28,23 +42,17 @@ const Comments = ({ postId }) => {
 
     const submitHandler = async (e) => {
       e.preventDefault();
-      const newComment = {
-          contents: contents.current.value,
-      };
+      setSaving(true);
 
       try {
-          if(newComment.contents) {
-            // Save the post content to the storage layer and keep the storage id
-            let {data: storageId} = await window.point.storage.putString({data: newComment.contents});
-            // Save the post contents storage id in the PoinSocial Smart Contract
-            await window.point.contract.send({contract: 'PointSocial', method: 'addCommentToPost', params: [postId, storageId]});
-            // TODO: Avoid using reload
-            window.location.reload()
-          } else {
-            // TODO: Avoid using alert
-            alert('Please add some text content to your comment!')
-          }
+          // Save the post content to the storage layer and keep the storage id
+          let {data: storageId} = await window.point.storage.putString({data: contents});
+          // Save the post contents storage id in the PoinSocial Smart Contract
+          await window.point.contract.send({contract: 'PointSocial', method: 'addCommentToPost', params: [postId, storageId]});
+          // TODO: Avoid using reload
+          window.location.reload()
       } catch (err) {
+        setSaving(false);
         console.error('Error: ', err);
       }
     };
@@ -53,12 +61,15 @@ const Comments = ({ postId }) => {
       <div className="commentWrapper">
         <form className="commentBottom" onSubmit={submitHandler}>
           <input
+              id="contents"
+              name="contents"
               placeholder={"Any comment?"}
               className="commentCorners"
-              ref={contents}
+              onChange={onContentsChange}
+              value={contents}
             />
-          <button className="commentButton" type="submit">
-            Comment
+          <button className="commentButton" type="submit" disabled={!btnEnabled}>
+            {btnLabel}
           </button>
         </form>
         <hr className="commentHr" />
