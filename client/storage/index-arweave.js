@@ -10,19 +10,28 @@ const { fork } = require('child_process');
 const _ = require('lodash');
 const fs = require('fs');
 const utils = require('#utils');
-const {
-    checkExistingChannel,
-    createChannel,
-    makePayment,
-} = require('./payments');
+const Arweave = require('arweave');
+const { request, gql } = require('graphql-request');
 
-class Storage {
+class StorageArweave {
     constructor(ctx) {
         this.ctx = ctx;
         this.config = ctx.config.client.storage;
         this.current_requests = {};
         this.queued_requests = {};
         this.uploadingChunksProcessing = {};
+
+        this.__PN_TAG_INTEGRATION_VERSION = 2;
+        this.__PN_TAG_VERSION_KEY = '__pn_integration_version';
+        this.__PN_TAG_VERSION_VALUE = this.__PN_TAG_INTEGRATION_VERSION;
+        this.__PN_TAG_CHUNK_ID_KEY = '__pn_chunk_id';
+        this.__PN_TAG_VERSIONED_CHUNK_ID_KEY = '__pn_chunk_'+this.__PN_TAG_INTEGRATION_VERSION+'_id';
+    }
+
+    getArweaveKey() {
+        const key = this.config.arweave_key;
+        if (!key) throw Error('No arweave key set');
+        return key;
     }
 
     async start() {
@@ -39,7 +48,16 @@ class Storage {
     }
 
     async init() {
-        // todo
+        this.arweave = Arweave.init({
+            //    host: '127.0.0.1',
+            //    port: 1984,
+            //    protocol: 'http'
+            port: 443,
+            protocol: 'https',
+            host: 'arweave.net',
+            //timeout: 20000,     // Network request timeouts in milliseconds
+            //logging: false,     // Enable network request logging
+        });
     }
 
     async enqueueFileForUpload(
@@ -328,30 +346,80 @@ class Storage {
 
         if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) return;
 
-        let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed
+        // let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed
 
-        this.send('GET_DECRYPTED_CHUNK', [chunk.id], provider.id, async(err, result) => { // todo: also send conditions
-            if (err) {
-                if (err.message && err.message.includes('ECHUNKNOTFOUND')) {
-                    chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
-                    await chunk.save();
-                    await chunk.reconsiderDownloadingStatus(true);
-                    return;
-                } else {
-                    console.log({err, result}); // todo: for some reason, throw err doesn't display the error
-                    throw err;
-                } // todo: don't die
-            } // todo
+        const query = gql`
+                            {
+                                transactions(
+                                    tags: [
+                                        {
+                                            name: "${this.__PN_TAG_VERSION_KEY}",
+                                            values: ["${this.__PN_TAG_VERSION_VALUE}"]
+                                        },
+                                        {
+                                            name: "${this.__PN_TAG_VERSIONED_CHUNK_ID_KEY}",
+                                            values: ["${chunk.id}"]
+                                        }
+                                    ]
+                                ) {
+                                    edges {
+                                        node {
+                                            id
+                                            tags {
+                                                name
+                                                value
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+        `;
 
-            const chunk_id = result[0]; // todo: validate
-            const data = result[1]; // todo: validate that it's buffer
+        const queryResult = await request('https://arweave.net/graphql', query);
 
-            if (!Buffer.isBuffer(data)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
-            chunk.setData(data); // todo: what if it errors out?
-            chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
-            await chunk.save();
-            await chunk.reconsiderDownloadingStatus(true);
-        });
+        for(let edge of queryResult.transactions.edges) {
+            const txid = edge.node.id;
+
+            // Get the data decoded to a Uint8Array for binary data
+            const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+
+            const buf = Buffer.from(data);
+
+            if (utils.hashFnHex(buf) === chunk.id) {
+                if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
+                chunk.setData(buf); // todo: what if it errors out?
+                chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
+                await chunk.save();
+                await chunk.reconsiderDownloadingStatus(true);
+
+                return;
+            }
+        }
+
+        //
+        //
+        // this.send('GET_DECRYPTED_CHUNK', [chunk.id], provider.id, async(err, result) => { // todo: also send conditions
+        //     if (err) {
+        //         if (err.message && err.message.includes('ECHUNKNOTFOUND')) {
+        //             chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
+        //             await chunk.save();
+        //             await chunk.reconsiderDownloadingStatus(true);
+        //             return;
+        //         } else {
+        //             console.log({err, result}); // todo: for some reason, throw err doesn't display the error
+        //             throw err;
+        //         } // todo: don't die
+        //     } // todo
+        //
+        //     const chunk_id = result[0]; // todo: validate
+        //     const data = result[1]; // todo: validate that it's buffer
+        //
+        //     if (!Buffer.isBuffer(data)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
+        //     chunk.setData(data); // todo: what if it errors out?
+        //     chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
+        //     await chunk.save();
+        //     await chunk.reconsiderDownloadingStatus(true);
+        // });
     }
 
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
@@ -476,13 +544,37 @@ class Storage {
         });
     }
 
-    async SEND_STORE_CHUNK_SEGMENTS(data, link) {
-        return new Promise(async(resolve, reject) => {
-            this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
-                await link.refresh();
-                (!err) ? resolve(true) : reject(err); // machine will move to next state
-            });
-        });
+    async SEND_STORE_CHUNK_SEGMENTS(link, chunk) {
+        console.log({link,chunk});
+
+        let rawData = chunk.getData();
+
+        let transaction = await this.arweave.createTransaction({ data: rawData }, this.getArweaveKey());
+
+        // transaction.addTag('keccak256hex', hash);
+        // transaction.addTag('pn_experiment', '1');
+        transaction.addTag(this.__PN_TAG_VERSION_KEY, this.__PN_TAG_VERSION_VALUE);
+        transaction.addTag(this.__PN_TAG_CHUNK_ID_KEY, chunk.id);
+        transaction.addTag(this.__PN_TAG_VERSIONED_CHUNK_ID_KEY, chunk.id);
+
+        // Sign
+        await this.arweave.transactions.sign(transaction, this.getArweaveKey());
+
+        // Upload
+        let uploader = await this.arweave.transactions.getUploader(transaction);
+        while (!uploader.isComplete) {
+            await uploader.uploadChunk();
+            console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+        }
+
+        console.log(transaction);
+
+        // return new Promise(async(resolve, reject) => {
+        //     this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
+        //         await link.refresh();
+        //         (!err) ? resolve(true) : reject(err); // machine will move to next state
+        //     });
+        // });
     }
 
     async SEND_STORE_CHUNK_DATA(data, link) {
@@ -703,4 +795,4 @@ class Storage {
     }
 }
 
-module.exports = Storage;
+module.exports = StorageArweave;
