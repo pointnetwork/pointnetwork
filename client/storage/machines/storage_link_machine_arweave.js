@@ -6,24 +6,6 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
     let ctx = link.ctx;
     let storage = link.ctx.client.storage;
 
-    async function prepareChunkSegment() { // todo: rename! it's not a chunk segment, it's the whole segment map
-        // console.log('10');
-        // await link.refresh();
-        // console.log('12');
-        // const key = await link.getRedkeyOrFail();
-        // console.log('14');
-        // let _return = [
-        // link.merkle_root,
-        // link.segment_hashes.map(x=>Buffer.from(x, 'hex')),
-        // link.encrypted_length,
-        // chunk.id,
-        // key.public_key,
-        // chunk.size,
-        // ];
-        // console.log('23');
-        // return _return;
-    }
-
     async function prepareChunkData() {
         await link.refresh();
         if (!link.segments_sent) link.segments_sent = [];
@@ -99,42 +81,6 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
-                // creating_payment_channel: { // todo: no such status
-                //     invoke: {
-                //         id: 'SEND_CREATE_PAYMENT_CHANNEL',
-                //         src: async (context, event) => {
-                //             await link.save();
-                //             ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 10, link.state);
-                //             return storage.CREATE_PAYMENT_CHANNEL(link);
-                //         },
-                //         onDone: {
-                //             target: StorageLink.STATUS_SENDING_SEGMENT_MAP,
-                //         },
-                //         onError: {
-                //             actions: 'UPDATE_MODEL_ERR',
-                //             target: StorageLink.STATUS_FAILED,
-                //         }
-                //     },
-                //     exit: 'UPDATE_MODEL_STATUS'
-                // },
-                // [StorageLink.STATUS_ENCRYPTING]: {
-                //     invoke: {
-                //         id: 'ENCRYPT_CHUNK',
-                //         src: async (context, event) => {
-                //             await link.save();
-                //             ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 20, link.state);
-                //             return storage.ENCRYPT_CHUNK(chunk, link);
-                //         },
-                //         onDone: {
-                //             target: StorageLink.STATUS_SENDING_SEGMENT_MAP
-                //         },
-                //         onError: {
-                //             // actions: 'UPDATE_MODEL_ERR',
-                //             target: StorageLink.STATUS_FAILED
-                //         }
-                //     },
-                //     exit: 'UPDATE_MODEL_STATUS'
-                // },
                 [StorageLink.STATUS_SENDING_SEGMENT_MAP]: {
                     invoke: {
                         id: 'SEND_STORE_CHUNK_SEGMENTS',
@@ -142,9 +88,6 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             await link.save();
                             ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 40, link.state);
 
-                            console.log('141');
-                            // const data = await prepareChunkSegment();
-                            console.log('143');
                             return storage.SEND_STORE_CHUNK_SEGMENTS(link, chunk);
                         },
                         onDone: {
@@ -159,51 +102,6 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                             target: StorageLink.STATUS_FAILED,
                             cond: 'notNodeAlreadyStoredData'
                         }],
-                    },
-                    exit: 'UPDATE_MODEL_STATUS'
-                },
-                [StorageLink.STATUS_SENDING_DATA]: {
-                    invoke: {
-                        id: 'SEND_STORE_CHUNK_DATA',
-                        src: async (context, event) => {
-                            // nasty hack to ensure all chunks are uploaded
-                            await link.save();
-
-                            ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 60, link.state);
-                            let done = false;
-                            while(!done) {
-                                await link.refresh();
-                                const data = await prepareChunkData();
-                                done = await storage.SEND_STORE_CHUNK_DATA(data, link);
-                                await link.save();
-                            }
-                            Promise.resolve(true);
-                        },
-                        onDone: {
-                            target: StorageLink.STATUS_ASKING_FOR_SIGNATURE,
-                        },
-                        onError: {
-                            actions: 'UPDATE_MODEL_ERR',
-                            target: StorageLink.STATUS_FAILED,
-                        },
-                    },
-                    exit: 'UPDATE_MODEL_STATUS'
-                },
-                [StorageLink.STATUS_ASKING_FOR_SIGNATURE]: {
-                    invoke: {
-                        id: 'SEND_STORE_CHUNK_SIGNATURE_REQUEST',
-                        src: async (context, event) => {
-                            await link.save();
-                            ctx.client.deployerProgress.update(`chunk_${chunk.id}`, 80, link.state);
-                            return storage.SEND_STORE_CHUNK_SIGNATURE_REQUEST(link);
-                        },
-                        onDone: {
-                            target: StorageLink.STATUS_SIGNED,
-                        },
-                        onError: {
-                            actions: 'UPDATE_MODEL_ERR',
-                            target: StorageLink.STATUS_FAILED,
-                        },
                     },
                     exit: 'UPDATE_MODEL_STATUS'
                 },
