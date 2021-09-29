@@ -18,7 +18,7 @@ services:
       - net
 
   blockchain_provider:
-    image: cybercoredev/proxy:0.2.0
+    image: cybercoredev/proxy:v0.2.0
     container_name: pointnetwork_blockchain_node
     healthcheck:
       test: |
@@ -147,6 +147,9 @@ services:
   #   volumes:
   #     - database_data:/var/lib/postgresql/data/
   #     - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+
+networks:
+  net:
 
 volumes:
   neon_data:
