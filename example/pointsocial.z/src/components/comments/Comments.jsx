@@ -1,6 +1,8 @@
 import "./comments.css";
 import { useState, useEffect, useRef } from "react";
 import Comment from './Comment'
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Box from '@material-ui/core/Box';
 
 const Comments = ({ postId }) => {
     const DEFAULT_BTN_LABEL = 'Comment'
@@ -8,6 +10,7 @@ const Comments = ({ postId }) => {
     const [contents, setContents] = useState()
     const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
     const [btnEnabled, setBtnEnabled] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     onContentsChange = event => {
       let newContents = event.target.value;
@@ -24,6 +27,7 @@ const Comments = ({ postId }) => {
         const getComments = async () => {
           const comments = await fetchComments()
           setComments(comments);
+          setLoading(false);
         }
 
         getComments()
@@ -32,8 +36,8 @@ const Comments = ({ postId }) => {
     const fetchComments = async () => {
         const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllCommentsForPost', params: [postId]});
 
-        const comments = response.data.map(([id, from, contents, timestamp]) => (
-            {id, from, contents, timestamp: timestamp*1000}
+        const comments = response.data.map(([id, from, contents, createdAt]) => (
+            {id, from, contents, createdAt: createdAt*1000}
           )
         )
 
@@ -79,9 +83,13 @@ const Comments = ({ postId }) => {
           </button>
         </form>
         <hr className="commentHr" />
-          {comments.map((comment) => (
-            <Comment key={comment.id} comment={comment} />
-          ))}
+        {loading && <Box sx={{ display: 'flex' }}>
+          <CircularProgress />
+        </Box>}
+        {(!loading && comments.length == 0) && 'No comments yet. Be the first!'}
+        {comments.map((comment) => (
+          <Comment key={comment.id} comment={comment} />
+        ))}
       </div>
     )
 }
