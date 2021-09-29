@@ -1,5 +1,4 @@
 import "./post.css";
-import { MoreVert } from "@material-ui/icons";
 import { useState } from "react";
 import { useAppContext } from '../../context/AppContext';
 import { format } from "timeago.js";
@@ -10,8 +9,6 @@ import Comments from '../comments/Comments'
 
 export default function Post({ post }) {
   const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const [like, setLike] = useState(2);
-  const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const { walletAddress } = useAppContext();
 
@@ -19,13 +16,14 @@ export default function Post({ post }) {
     setShowComments(!showComments);
   }
 
-  // TODO wire this to update the post like count in the smart contract
-  const likeHandler = () => {
+  const updatePostLikes = async () => {
     try {
-      console.log('likeHander ***')
-    } catch (err) {}
-    setLike(isLiked ? like - 1 : like + 1);
-    setIsLiked(!isLiked);
+      await window.point.contract.send({contract: 'PointSocial', method: 'addLikeToPost', params: [post.id]});
+      // TODO: Avoid using reload
+      window.location.reload()
+    } catch (err) {
+    console.error('Error: ', err);
+    }
   };
 
   return (
@@ -56,10 +54,10 @@ export default function Post({ post }) {
             <img
               className="likeIcon"
               src={likeImg}
-              onClick={likeHandler}
+              onClick={updatePostLikes}
               alt=""
             />
-            <span className="postLikeCounter">{like} people like it</span>
+            <span className="postLikeCounter">{post.likesCount} people like it</span>
           </div>
           <div className="postBottomRight">
             <span className="postCommentText" onClick={toggleShowComments}>{post.commentsCount} comments</span>

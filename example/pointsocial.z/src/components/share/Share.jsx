@@ -1,11 +1,8 @@
 import "./share.css";
-import {
-  AttachFileTwoTone
-} from "@material-ui/icons";
+import { AttachFileTwoTone } from "@material-ui/icons";
 import { useState } from "react";
 import profileImg from '../../assets/profile-pic.jpg';
 import { useAppContext } from '../../context/AppContext';
-import { set } from "lodash";
 
 export default function Share() {
   const DEFAULT_BTN_LABEL = 'Share'

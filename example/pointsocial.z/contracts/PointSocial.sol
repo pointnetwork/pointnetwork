@@ -8,14 +8,15 @@ contract PointSocial  {
     using Counters for Counters.Counter;
     Counters.Counter internal _postIds;
     Counters.Counter internal _commentIds;
+    Counters.Counter internal _likeIds;
 
     struct Post {
         uint id;
         address from;
         bytes32 contents;
         bytes32 image;
-        uint timestamp;
-        uint likes;
+        uint createdAt;
+        uint16 likesCount;
         uint16 commentsCount;
     }
 
@@ -23,8 +24,13 @@ contract PointSocial  {
         uint id;
         address from;
         bytes32 contents;
-        uint timestamp;
-        uint likes;
+        uint createdAt;
+    }
+
+    struct Like {
+        uint id;
+        address from;
+        uint createdAt;
     }
 
     Post[] posts;
@@ -33,6 +39,7 @@ contract PointSocial  {
     mapping(uint => Comment[]) commentsByPost;
     mapping(uint => Comment) commentById;
     mapping(address => Comment[]) commentsByOwner;
+    mapping(uint => Like[]) likesByPost;
 
     // Post data functions
     // example bytes32: "0x0000000000000000000000000000000000000000000068692066726f6d20706e", "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
@@ -66,7 +73,7 @@ contract PointSocial  {
     function addCommentToPost(uint postId, bytes32 contents) public {
         _commentIds.increment();
         uint newCommentId = _commentIds.current();
-        Comment memory _comment = Comment(newCommentId, msg.sender, contents, block.timestamp, 0);
+        Comment memory _comment = Comment(newCommentId, msg.sender, contents, block.timestamp);
         commentsByPost[postId].push(_comment);
         commentById[newCommentId] = _comment;
         commentsByOwner[msg.sender].push(_comment);
@@ -75,5 +82,14 @@ contract PointSocial  {
 
     function getAllCommentsForPost(uint postId) view public returns(Comment[] memory) {
         return commentsByPost[postId];
+    }
+
+    // Likes data functions
+    function addLikeToPost(uint postId) public {
+        _likeIds.increment();
+        uint newLikeId = _likeIds.current();
+        Like memory _like = Like(newLikeId, msg.sender, block.timestamp);
+        likesByPost[postId].push(_like);
+        postById[postId].likesCount += 1;
     }
 }

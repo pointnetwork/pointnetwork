@@ -11,10 +11,10 @@ export default Feed = () =>{
 
   const compareByTimestamp = ( post1, post2 ) => {
     // sorts accending (newest first)
-    if ( post1.timestamp < post2.timestamp ){
+    if ( post1.createdAt < post2.createdAt ){
       return 1;
     }
-    if ( post1.timestamp > post2.timestamp ){
+    if ( post1.createdAt > post2.createdAt ){
       return -1;
     }
     return 0;
@@ -33,8 +33,8 @@ export default Feed = () =>{
   const fetchPosts = async () => {
     const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'});
 
-    const posts = response.data.map(([id, from, contents, image, timestamp, likes, commentsCount]) => (
-        {id, from, contents, image, timestamp: timestamp*1000, likes, commentsCount}
+    const posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
+        {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
       )
     )
 
