@@ -60,8 +60,12 @@ contract PointSocial  {
         return _posts;
     }
 
-    function getAllPostsBySender(address sender) view public returns(Post[] memory) {
-        return postsByOwner[sender];
+    function getAllPostsByOwner(address owner) view public returns(Post[] memory) {
+        Post[] memory _posts = new Post[](postsByOwner[owner].length);
+        for(uint256 i = 0; i<posts.length; i++) {
+            _posts[i] = postById[posts[i].id];
+        }
+        return _posts;
     }
 
     function getPostById(uint id) view public returns(Post memory) {
