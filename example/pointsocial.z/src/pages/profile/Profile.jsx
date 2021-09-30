@@ -3,7 +3,7 @@ import Topbar from "../../components/topbar/Topbar";
 import Sidebar from "../../components/sidebar/Sidebar";
 import Feed from "../../components/feed/Feed";
 import Rightbar from "../../components/rightbar/Rightbar";
-import avatar from '../../assets/noAvatar.png';
+import profilePic from '../../assets/profile-pic.jpg';
 import profileCoverImg from '../../assets/header-pic.jpg';
 import { useRoute } from "wouter";
 
@@ -14,7 +14,6 @@ export default Profile = () => {
     <>
       <Topbar />
       <div className="profile">
-        <Sidebar />
         <div className="profileRight">
           <div className="profileRightTop">
             <div className="profileCover">
@@ -25,7 +24,7 @@ export default Profile = () => {
               />
               <img
                 className="profileUserImg"
-                src={avatar}
+                src={profilePic}
                 alt=""
               />
             </div>
@@ -35,6 +34,7 @@ export default Profile = () => {
             </div>
           </div>
           <div className="profileRightBottom">
+            <Sidebar />
             <Feed account={params.account} />
             <Rightbar />
           </div>

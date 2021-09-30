@@ -13,13 +13,11 @@ export default function Topbar() {
           src={pointlogo}
           alt=""
           className="topbarImg" />
-      </div>
-      <div className="topbarCenter">
-        <div>
           <Link to="/" style={{ textDecoration: "none" }}>
             <span className="logo">Point Social</span>
           </Link>
-        </div>
+      </div>
+      <div className="topbarCenter">
       </div>
       <div className="topbarRight">
         <div className="topbarLinks">
