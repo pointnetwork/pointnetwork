@@ -2,14 +2,13 @@ import "./feed.css";
 import { useEffect, useState } from "react";
 import Post from "../post/Post";
 import Share from "../share/Share";
-import { useAppContext } from '../../context/AppContext';
+import Identity from "../identity/Identity";
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
 
 export default Feed = ({account}) =>{
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true);
-  const { walletAddress } = useAppContext()
 
   const compareByTimestamp = ( post1, post2 ) => {
     // sorts accending (newest first)
@@ -55,7 +54,7 @@ export default Feed = ({account}) =>{
   return (
     <div className="feed">
       <div className="feedWrapper">
-        {!account && <div><h4>Wallet Address: { walletAddress || 'Loading...' }</h4><Share /></div>}
+        {!account && <div><Identity /><Share /></div>}
         <br />
         {loading && <Box sx={{ display: 'flex' }}>
           <CircularProgress />
