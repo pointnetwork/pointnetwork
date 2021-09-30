@@ -10,8 +10,8 @@ export default function Sidebar() {
       <div className="sidebarWrapper">
         <ul className="sidebarList">
           <li className="sidebarListItem">
-            <RssFeed className="sidebarIcon" />
             <Link to='/'>
+              <RssFeed className="sidebarIcon" />
               <span className="sidebarListItemText">Feed</span>
             </Link>
           </li>

@@ -1,4 +1,4 @@
-.sidebar {
+  .sidebar {
     flex: 3;
     height: calc(100vh - 50px);
     overflow-y: scroll;
@@ -55,4 +55,6 @@
     list-style: none;
   }
 
-
+  .sidebarListItem a{
+    text-decoration: none;
+  }

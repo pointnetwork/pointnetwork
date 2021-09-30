@@ -2,6 +2,7 @@ import "./rightbar.css";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import avatar from '../../assets/noAvatar.png';
+import { trimAccount } from '../../utils';
 
 export default function Rightbar() {
   const [community, setCommunity] = useState([]);
@@ -9,7 +10,7 @@ export default function Rightbar() {
   useEffect(() => {
     const getCommunity = async () => {
       try {
-        const community = ['0xC01011611e35', '0xf990AB98B232'] // TODO fetch from node
+        const community = ['0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301', '0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8', '0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB'] // TODO fetch from node
         setCommunity(community);
       } catch (err) {
         console.log(err);
@@ -36,7 +37,7 @@ export default function Rightbar() {
                   className="rightbarFollowingImg"
                 />
                 <br /><br />
-                <span className="rightbarFollowingName">{identity}</span>
+                <span className="rightbarFollowingName">{trimAccount(identity)}</span>
               </div>
             </Link>
           ))}

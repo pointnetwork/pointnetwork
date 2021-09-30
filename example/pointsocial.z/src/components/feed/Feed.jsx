@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import Post from "../post/Post";
 import Share from "../share/Share";
 import { useAppContext } from '../../context/AppContext';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Box from '@material-ui/core/Box';
 
-export default Feed = () =>{
+export default Feed = ({account}) =>{
   const [posts, setPosts] = useState([])
-
+  const [loading, setLoading] = useState(true);
   const { walletAddress } = useAppContext()
 
   const compareByTimestamp = ( post1, post2 ) => {
@@ -25,13 +27,16 @@ export default Feed = () =>{
       const posts = await fetchPosts()
       posts.sort(compareByTimestamp)
       setPosts(posts);
+      setLoading(false);
     }
 
     getPosts()
-  }, [])
+  }, [account])
 
   const fetchPosts = async () => {
-    const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'});
+    const response = account
+      ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account]}) :
+      await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'})
 
     const posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
         {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
@@ -50,8 +55,12 @@ export default Feed = () =>{
   return (
     <div className="feed">
       <div className="feedWrapper">
-        <h4>Wallet Address: { walletAddress || 'Loading...' }</h4>
-        <Share />
+        {!account && <div><h4>Wallet Address: { walletAddress || 'Loading...' }</h4><Share /></div>}
+        <br />
+        {loading && <Box sx={{ display: 'flex' }}>
+          <CircularProgress />
+        </Box>}
+        {(!loading && posts.length == 0) && 'No posts made yet!'}
         {posts.map((p) => (
           <Post key={p.id} post={p} />
         ))}

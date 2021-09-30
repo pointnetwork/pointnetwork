@@ -38,8 +38,7 @@ export default function Post({ post }) {
                     className="topbarImg"
                 />
             </Link>
-            <span className="postUsername">{post.from}</span>
-
+            {walletAddress == post.from ? <span>You posted.</span> : <span className="postUsername">{post.from}</span>}
           </div>
           <div className="postTopRight">
             <span className="postDate">{format(post.timestamp)}</span>
