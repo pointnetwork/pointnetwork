@@ -109,7 +109,6 @@ services:
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
       - ./example:/app/example:ro
-      - ./mysites:/app/mysites:ro
     environment:
       DATADIR: /data
       DB_ENV: pointnode2

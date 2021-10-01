@@ -9,7 +9,3 @@ sessions/
 dist/
 .cache/
 .parcel-cache/
-
-# Ignore everything in mysites folder - except our README.md file.
-mysites/*
-!mysites/README.md
