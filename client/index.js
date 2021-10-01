@@ -20,7 +20,12 @@ class Client {
     }
 
     async init() {
-        const Storage = require('./storage');
+        let Storage;
+        if (this.ctx.config.client.storage.engine && this.ctx.config.client.storage.engine === 'arweave') {
+            Storage = require('./storage/index-arweave');
+        } else {
+            Storage = require('./storage');
+        }
         this.storage = new Storage(this.ctx);
         this.storage.start();
 
