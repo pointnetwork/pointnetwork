@@ -41,21 +41,6 @@ class StorageController extends PointSDKController {
         }
     }
 
-    async putFile() {
-        let data = await this.req.file()
-        // console.log("data.fields", data.fields['file']['filename'])
-        if(data) {
-            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-            utils.makeSurePathExists(cache_dir);
-            let tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(data.fields['file']['filename']));
-            await pump(data.file, fs.createWriteStream(tmpPostDataFilePath))
-            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-            return this._response(uploaded.id);
-        } else {
-            return this._response(null)
-        }
-    }
-
     // Returns all file metadata stored in the nodes leveldb
     async files() {
         throw Error("StorageController module is out of date! You need to sequelize it!");
