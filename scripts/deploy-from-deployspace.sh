@@ -3,12 +3,7 @@
 # This script is intended to be run by the exxternal point-deploy executable
 # See README in ./deployspace folder for details
 
-if [ "$1" == "--contracts" ]; then
-    DEPLOY_CONTRACTS="--contracts"
-else
-    DEPLOY_CONTRACTS=""
-fi
-
+DEPLOY_CONTRACTS="--contracts"
 DEPLOYSPACE="./deployspace"
 
 echo "DEPLOYING from DEPLOYSPACE"
