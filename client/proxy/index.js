@@ -3,7 +3,7 @@ const http = require('http');
 const https = require('https');
 const tls = require('tls');
 const _ = require('lodash');
-const fs = require('fs');
+const fs = require('fs-extra');
 const Renderer = require('../zweb/renderer');
 const path = require('path');
 const sanitizeHtml = require('sanitize-html');
@@ -173,27 +173,38 @@ class ZProxy {
             let contentType = 'text/html';
             let status = 200;
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
-                let hash = parsedUrl.pathname.replace('/_storage/', '');
-                let hashWithoutExt = (hash.split('.').length > 1) ? hash.split('.').slice(0, -1).join('.') : hash;
-                let ext = hash.split('.').slice(-1)[0];
+                if(request.method.toUpperCase() == 'POST') { // user is posting content to storage layer
+                    try {
+                        let response = await this.storagePostFile(request);
+                        status = response.status ? response.status : status;
+                        contentType = 'application/json';
+                        rendered = JSON.stringify(response);
+                    } catch(e) {
+                        return this.abortError(response, e);
+                    }
+                } else {
+                    let hash = parsedUrl.pathname.replace('/_storage/', '');
+                    let hashWithoutExt = (hash.split('.').length > 1) ? hash.split('.').slice(0, -1).join('.') : hash;
+                    let ext = hash.split('.').slice(-1)[0];
 
-                let noExt = (ext === hashWithoutExt) || (hash.split('.').length === 1);
-                if (noExt) contentType = 'text/plain'; // just in case
-                if (!noExt) {
-                    contentType = this.getContentTypeFromExt(ext);
-                    if (contentType.includes('html')) contentType = 'text/html'; // just in case
-                } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
-                if (ext === 'zhtml') contentType = 'text/plain';
+                    let noExt = (ext === hashWithoutExt) || (hash.split('.').length === 1);
+                    if (noExt) contentType = 'text/plain'; // just in case
+                    if (!noExt) {
+                        contentType = this.getContentTypeFromExt(ext);
+                        if (contentType.includes('html')) contentType = 'text/html'; // just in case
+                    } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
+                    if (ext === 'zhtml') contentType = 'text/plain';
 
-                try {
-                    rendered = await this.ctx.client.storage.readFile(hashWithoutExt);
-                } catch(e) {
-                    return this.abortError(response, e);
-                }
+                    try {
+                        rendered = await this.ctx.client.storage.readFile(hashWithoutExt);
+                    } catch(e) {
+                        return this.abortError(response, e);
+                    }
 
-                if (this._isThisDirectoryJson(rendered) && noExt) {
-                    rendered = this._renderDirectory(hash, rendered);
-                    contentType = 'text/html';
+                    if (this._isThisDirectoryJson(rendered) && noExt) {
+                        rendered = this._renderDirectory(hash, rendered);
+                        contentType = 'text/html';
+                    }
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/_keyvalue_append/')) {
                 try {
@@ -277,6 +288,34 @@ class ZProxy {
         return this._directoryHtml(id, files);
     }
 
+    async storagePostFile(request) {
+        if(request.headers['content-type'].startsWith('multipart/form-data')) {
+            // If the request a multipart/form-data type then parse the file upload using formidable
+            const formidable = require('formidable');
+            const form = formidable({ multiples: true });
+            let response;
+
+            let promise = new Promise((resolve, reject) => {
+                form.parse(request, async (err, fields, files) => {
+                    for(const key in files) {
+                        // TODO: properly handle multiple file uploads
+                        let uploadedFilePath = files[key].path;
+                        let fileData = fs.readFileSync(uploadedFilePath);
+                        const cacheDir = path.join(this.ctx.datadir, this.config.cache_path);
+                        const tmpPostDataFilePath = path.join(cacheDir, utils.hashFnUtf8Hex(fileData));
+                        fs.copySync(uploadedFilePath, tmpPostDataFilePath);
+                        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+
+                        let response = { status: 200, data: uploaded.id}
+                        resolve(response);
+                    }
+                });
+            })
+            response = await promise;
+            return response;
+        } // TODO what if its not a multipart/form-data request?
+    }
+
     async apiResponseFor(cmdstr, request) {
         cmdstr = cmdstr.replace('/v1/api/', '');
         cmdstr = cmdstr.replace(/\/$/, "");
@@ -285,6 +324,7 @@ class ZProxy {
         let response = {};
         let body = '';
         let host = request.headers.host;
+
         if (request.method.toUpperCase() == 'POST') {
             let apiPromise = new Promise(async(resolve, reject) => {
                 request.on('data', (chunk) => {
