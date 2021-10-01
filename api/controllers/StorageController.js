@@ -5,9 +5,6 @@ const DEFAULT_ENCODING = 'utf-8';
 const utils = require('#utils');
 const path = require('path');
 const fs = require('fs');
-const util = require('util')
-const { pipeline } = require('stream')
-const pump = util.promisify(pipeline)
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
