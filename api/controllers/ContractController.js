@@ -1,15 +1,11 @@
 const PointSDKController = require('./PointSDKController');
 const helpers = require('./helpers/WalletHelpers');
 const _ = require('lodash');
-const utils = require('#utils');
-const path = require('path');
-const fs = require('fs');
 
 class ContractController extends PointSDKController {
     constructor(ctx, req, reply) {
         super(ctx);
         this.req = req;
-        this.config = ctx.config.client.zproxy;
         this.host = this.req.headers.host;
         // TODO: also verify the domain is registered in the Identity contract
         if (! _.endsWith(this.host, '.z')) return reply.callNotFound();
