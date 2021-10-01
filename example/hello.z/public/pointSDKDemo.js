@@ -2,7 +2,10 @@ let socket;
 let httpProtocol = window.location.protocol;
 let wsProtocol = (httpProtocol === 'https:') ? 'wss:' : 'ws:';
 
+console.info('**** LOADED LOCAL DEMO POINT SDK ****');
+
 pointSDKDemo = {
+    version: "0.0.1 pointSDKDemo(Hello.z)",
     websocket: {
         open: (callback) => {
             if (!socket) {
@@ -10,6 +13,41 @@ pointSDKDemo = {
                 socket.onmessage = (e) => callback(e.data);
                 return socket;
             }
+        }
+    },
+    storage: {
+        /*
+            NOTE : postFile & getFile interact with the storage layer at the proxy level
+            which is why the requets are made to /_storage/ and not /v1/api/
+        */
+        postFile: async (file) => {
+            // TODO validate that file is a FormData object
+            let response = await fetch('/_storage/', {
+                method: 'POST',
+                body: file
+                // headers NOT required when passing FormData object
+            })
+            return await response.json()
+        },
+        getFile: async ({id}) => {
+            let response = await fetch(`/_storage/${id}`);
+            let blob = await response.blob();
+            return await blob;
+        },
+        putString: async (data) => {
+            let response = await fetch('/v1/api/storage/putString', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        },
+        getString: async({id}) => {
+            let response = await fetch(`/v1/api/storage/getString/${id}`)
+            return await response.json();
         }
     },
     status: {
@@ -64,9 +102,9 @@ pointSDKDemo = {
             })
             return await response.json()
         },
-        load: async(contractName) => {
-            let contract = await fetch(`/v1/api/contract/load/${contractName}`)
-            return await contract.json()
+        load: async({contract}) => {
+            let response = await fetch(`/v1/api/contract/load/${contract}`)
+            return await response.json()
         },
         subscribe: async(meta) => {
             let payload = {
