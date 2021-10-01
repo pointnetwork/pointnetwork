@@ -63,7 +63,7 @@ contract PointSocial  {
     function getAllPostsByOwner(address owner) view public returns(Post[] memory) {
         Post[] memory _posts = new Post[](postsByOwner[owner].length);
         for(uint256 i = 0; i<postsByOwner[owner].length; i++) {
-            _posts[i] = postById[posts[i].id];
+            _posts[i] = postById[postsByOwner[owner][i].id];
         }
         return _posts;
     }
