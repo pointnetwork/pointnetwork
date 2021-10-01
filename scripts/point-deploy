@@ -4,13 +4,17 @@
 
 POINTNETWORK_DEPLOYSPACE="$HOME/.point/src/deployspace"
 
+echo "copying files to deployspace...(please wait)"
+
 # Delete everything in deployspace first (keeping the README file)
 mv $POINTNETWORK_DEPLOYSPACE/README.md /tmp/.
 rm -r $POINTNETWORK_DEPLOYSPACE/*
-mv /tmp/README.md $POINTNETWORK_DEPLOYSPACE/.
 
 # Copy current Zapp folder to deployspace
 cp -r * $POINTNETWORK_DEPLOYSPACE
+
+# Move the original README.md file back
+mv /tmp/README.md $POINTNETWORK_DEPLOYSPACE/.
 
 # Execute the deployspace script from inside the website owner container
 docker exec -it pointnetwork_website_owner /app/scripts/deploy-from-deployspace.sh

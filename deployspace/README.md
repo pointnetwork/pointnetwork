@@ -7,7 +7,7 @@ This folder should be kept empty (except for this README). It is used by the [./
 To Deploy a Zapp from any folder location.
 
 1. Copy the [./point-deploy](./scripts/point-deploy) script to your global executable folder. On a Mac this is the folder `/usr/local/bin` (so just run `cp ~/.point/src/scripts/point-deploy /usr/local/bin`)
-2. Make sure that Point Network repo is cloned to your local machin in the directory `~/.point/src`.
+2. Make sure that Point Network repo is cloned to your local machine in the directory `~/.point/src`.
 3. Start a Point Network node using `docker-compose up -d` from the `~/.point/src` directory.
 4. Navigate to the folder where you have your Zapp that you want to deploy.
 5. While in the Zapp folder, run the `point-deploy` executable.
