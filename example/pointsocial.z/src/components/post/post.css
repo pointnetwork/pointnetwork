@@ -11,11 +11,16 @@
   }
 
   .postImage {
-    margin: 10px 0px;
+    padding: 0;
+    display: block;
+    margin: 0 auto;
+    max-height: 100%;
+    max-width: 100%;
   }
 
   .postText {
     display: flex;
+    margin-top: 10px;
   }
 
   .postTop {
