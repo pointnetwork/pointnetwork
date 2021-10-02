@@ -7,7 +7,7 @@ POINTNETWORK_DEPLOYSPACE="$HOME/.point/src/pointnetwork/deployspace"
 echo "copying files to deployspace...(please wait)"
 
 # Delete everything in deployspace first (keeping the README file)
-mv $POINTNETWORK_DEPLOYSPACE/README.md /tmp/.
+cp $POINTNETWORK_DEPLOYSPACE/README.md /tmp/.
 rm -r $POINTNETWORK_DEPLOYSPACE/*
 
 # Copy current Zapp folder to deployspace
