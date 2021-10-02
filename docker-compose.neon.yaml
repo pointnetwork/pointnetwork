@@ -3,6 +3,7 @@ version: '3.9'
 services:
   blockchain_node:
     container_name: solana
+    hostname: solana
     image: cybercoredev/solana:${SOLANA_REVISION:-v1.7.9-resources}
     environment:
       - SOLANA_URL=http://solana:8899
@@ -14,8 +15,8 @@ services:
       - "8900"
       - "8001"
       - "8001-8009/udp"
-    networks:
-      - net
+    volumes:
+      - solana_data:/opt/solana/config:rw
 
   blockchain_provider:
     image: cybercoredev/proxy:v0.2.0
@@ -29,16 +30,15 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 180s
     environment:
       - CONFIG=ci
-    hostname: proxy
     ports:
       - 127.0.0.1:9090:9090
     expose:
       - "9090"
-    networks:
-      - net
+    volumes:
+      - neon_config:/root/.config/solana:rw
 
   contract_deployer:
     image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
@@ -148,12 +148,10 @@ services:
   #     - database_data:/var/lib/postgresql/data/
   #     - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
 
-networks:
-  net:
-
 volumes:
   neon_data:
   neon_config:
+  solana_data:
   shared_contracts:
   # storage_provider_data:
   # website_owner_data:
