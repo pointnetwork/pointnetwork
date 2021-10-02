@@ -2,7 +2,7 @@
 
 # This script is used to deploy a zapp from any location external to the Docker image.
 
-POINTNETWORK_DEPLOYSPACE="$HOME/.point/src/deployspace"
+POINTNETWORK_DEPLOYSPACE="$HOME/.point/src/pointnetwork/deployspace"
 
 echo "copying files to deployspace...(please wait)"
 
