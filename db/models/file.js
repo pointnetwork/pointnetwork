@@ -8,6 +8,8 @@ const utils = require('#utils');
 let Chunk;
 
 class File extends Model {
+    CHUNKINFO_PROLOGUE = "PN^CHUNK\x05$\x06z\xf5*INFO"; // A very unlikely combination. In your probability reasoning, note that it must appear strictly at the beginning, not randomly
+
     constructor(...args) {
         super(...args);
 
@@ -58,7 +60,11 @@ class File extends Model {
             chunkInfo = chunkInfo.toString();
         }
 
-        let {type, hash, chunks, filesize, merkle} = JSON.parse(chunkInfo); // todo: rename hash to hash-algo or something, confusing
+        if (! _.startsWith(chunkInfo, this.CHUNKINFO_PROLOGUE)) {
+            throw Error('File.setChunkInfo: data does not start with a known chunkinfo_prologue');
+        }
+
+        let {type, hash, chunks, filesize, merkle} = JSON.parse(chunkInfo.substr(this.CHUNKINFO_PROLOGUE.length)); // todo: rename hash to hash-algo or something, confusing
 
         if (type !== 'file') {
             throw Error('main chunk is not of type "file"');
@@ -144,6 +150,11 @@ class File extends Model {
             if (chunk.isUploading()) {
                 chunks_uploading++; // todo: replace with needs_uploading and break;
             }
+
+            console.log({chunk, chunks, chunks_uploading});
+            for(let i in chunks) {
+                console.log(i, chunks[i].dataValues);
+            }
         }));
 
         // let percentage = chunks_uploading / chunks.length;
@@ -173,6 +184,21 @@ class File extends Model {
         } // else chunk info downloaded
 
         if (! this.chunkIds) {
+            let chunkInfoBuf = chunkinfo_chunk.getData();
+            if (! chunkInfoBuf.slice(0, this.CHUNKINFO_PROLOGUE.length).equals(Buffer.from(this.CHUNKINFO_PROLOGUE))) {
+                // doesn't contain chunkinfo prologue at the beginning
+                // whatever we've got in the chunkinfo chunk IS the whole file
+                this.size = Buffer.byteLength(chunkInfoBuf);
+                this.chunkIds = [ this.id ];
+                await this.save();
+
+                await this.dumpToDiskFromChunks();
+
+                await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADED);
+                return;
+            }
+
+            // else set chunk info and continue
             this.setChunkInfo(chunkinfo_chunk.getData().toString('utf-8'));
             await this.save();
         }
@@ -250,6 +276,54 @@ class File extends Model {
             const size = this.getFileSize();
             const totalChunks = Math.ceil(size / CHUNK_SIZE_BYTES);
 
+            console.log('--------------------------');
+            console.log({totalChunks});
+
+            if (totalChunks === 1) { // todo: don't forget that prologue increases the size, sometimes over the chunk_size_bytes boundary
+                // Only one chunk. Don't chunkify it or try to create chunkinfo chunk
+
+                let contents = fs.readFileSync(this.original_path, {encoding: null}); // buffer
+                let contents_id = Chunk.forceSaveToDisk(contents);
+                this.chunkIds = [];
+                this.id = contents_id;
+
+                console.log({_this:this});
+
+                // todo: this block of code repeats, compress
+                const alreadyExistingFile = await File.findByPk(this.id); // todo: use findOrCreate with locking
+                console.log({alreadyExistingFile});
+                if (alreadyExistingFile) {
+                    // A file with this id already exists! This changes everything
+                    // TODO: figure out how to merge redundancy, expires, autorenew etc.
+                    if (alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADING &&
+                        alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADED)
+                    {
+                        alreadyExistingFile.ul_status = File.UPLOADING_STATUS_UPLOADING;
+                        await alreadyExistingFile.changeULStatusOnAllChunks(Chunk.UPLOADING_STATUS_UPLOADING);
+                        await alreadyExistingFile.save();
+                    }
+                    console.log({alreadyExistingFile});
+                } else {
+                    await this.save();
+                }
+
+                let chunk = await Chunk.findOrCreate(contents_id);
+                chunk.size = Buffer.byteLength(contents);
+                chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
+                chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
+                chunk.redundancy = this.redundancy;
+                chunk.expires = this.expires;
+                chunk.autorenew = this.autorenew;
+                await chunk.save();
+                await chunk.addBelongsToFile(this, -1);
+
+                console.log({chunk});
+
+                return this.chunkIds;
+            }
+
+            // else: more than 1 chunk
+            
             return new Promise((resolve, reject) => {
                 let chunkIds = [];
                 let currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
@@ -275,6 +349,7 @@ class File extends Model {
                         currentChunkLength += (buf.length-bufCopied);
                     })
                     .on('end', () => {
+                        // ...And the final one
                         if (currentChunkLength !== 0) {
                             currentChunk = currentChunk.slice(0, currentChunkLength);
                             chunkId = Chunk.forceSaveToDisk(currentChunk);
@@ -289,7 +364,7 @@ class File extends Model {
 
                         (async() => {
                             let merkleTree = await this.getMerkleTree();
-                            let chunkInfoContents = JSON.stringify({
+                            let chunkInfoContents = this.CHUNKINFO_PROLOGUE + JSON.stringify({
                                 type: 'file',
                                 chunks: chunkIds,
                                 hash: 'keccak256',
@@ -339,7 +414,8 @@ class File extends Model {
                                     chunk.autorenew = this.autorenew;
                                     await chunk.save();
                                     await chunk.addBelongsToFile(this, offset);
-                                })(i, chunkId).then(nothing => {});
+                                })(i, chunkId).then(nothing => {
+                                });
                             }
 
                             resolve(this.chunkIds);

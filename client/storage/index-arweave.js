@@ -21,11 +21,30 @@ class StorageArweave {
         this.queued_requests = {};
         this.uploadingChunksProcessing = {};
 
-        this.__PN_TAG_INTEGRATION_VERSION = 2;
-        this.__PN_TAG_VERSION_KEY = '__pn_integration_version';
-        this.__PN_TAG_VERSION_VALUE = this.__PN_TAG_INTEGRATION_VERSION;
+        this.downloadingTicks = {};
+
+        this.__PN_TAG_INTEGRATION_VERSION_MAJOR = '0';
+        this.__PN_TAG_INTEGRATION_VERSION_MINOR = '1';
+        this.__PN_TAG_VERSION_MAJOR_KEY = '__pn_integration_version_major';
+        this.__PN_TAG_VERSION_MAJOR_VALUE = this.__PN_TAG_INTEGRATION_VERSION_MAJOR;
+        this.__PN_TAG_VERSION_MINOR_KEY = '__pn_integration_version_minor';
+        this.__PN_TAG_VERSION_MINOR_VALUE = this.__PN_TAG_INTEGRATION_VERSION_MINOR;
         this.__PN_TAG_CHUNK_ID_KEY = '__pn_chunk_id';
-        this.__PN_TAG_VERSIONED_CHUNK_ID_KEY = '__pn_chunk_'+this.__PN_TAG_INTEGRATION_VERSION+'_id';
+        this.__PN_TAG_VERSIONED_CHUNK_ID_KEY = '__pn_chunk_'+this.__PN_TAG_INTEGRATION_VERSION_MAJOR+'.'+this.__PN_TAG_INTEGRATION_VERSION_MINOR+'_id';
+    }
+
+    downloadingTickOn(chunk_id) {
+        // console.trace();
+        if (this.downloadingTicks[chunk_id] > 0) return false;
+        this.downloadingTicks[chunk_id] = 0;
+        this.downloadingTicks[chunk_id]++;
+        // console.log('on', chunk_id, this.downloadingTicks[chunk_id]);
+        return true;
+    }
+
+    downloadingTickOff(chunk_id) {
+        this.downloadingTicks[chunk_id] = Math.max( this.downloadingTicks[chunk_id]-1, 0 );
+        // console.log('off', chunk_id, this.downloadingTicks[chunk_id]);
     }
 
     getArweaveKey() {
@@ -165,21 +184,34 @@ class StorageArweave {
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
+        console.log(187);
         const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
+        console.log(189);
         let waitUntilUpload = (resolve, reject) => {
+            console.log(191);
             setTimeout(async() => {
+                console.log(193);
                 let file = await File.findOrFail(file_id);
+                console.log(195, {file});
                 if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
+                    console.log(197);
                     resolve(file);
+                    console.log(199);
                 } else {
+                    console.log(201);
                     waitUntilUpload(resolve, reject);
+                    console.log(202);
                 }
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
 
+        console.log(208);
         setTimeout(() => {
+            console.log(210);
             this.tick('uploading');
         }, 0);
+
+        console.log(214);
 
         return new Promise(waitUntilUpload);
     }
@@ -261,6 +293,7 @@ class StorageArweave {
         // todo:  .put(data, ) returns data_id
         if (mode === 'all' || mode === 'uploading') {
             let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
+            console.log({uploadingChunks});
             uploadingChunks.forEach((chunk) => {
                 setImmediate(async() => { // not waiting, just queueing for execution
                     await this.chunkUploadingTick(chunk);
@@ -346,16 +379,15 @@ class StorageArweave {
 
         if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) return;
 
+        if (! this.downloadingTickOn(chunk.id)) return;
+
         // let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed
 
-        const query = gql`
+        try {
+            const query = gql`
                             {
                                 transactions(
                                     tags: [
-                                        {
-                                            name: "${this.__PN_TAG_VERSION_KEY}",
-                                            values: ["${this.__PN_TAG_VERSION_VALUE}"]
-                                        },
                                         {
                                             name: "${this.__PN_TAG_VERSIONED_CHUNK_ID_KEY}",
                                             values: ["${chunk.id}"]
@@ -375,31 +407,55 @@ class StorageArweave {
                             }
         `;
 
-        const queryResult = await request('https://arweave.net/graphql', query);
+            const tabs = Math.floor(Math.random() * (Math.ceil(20) - Math.floor(0) + 1) + 0);
+            const QUERYING = ' '.repeat(tabs) + 'QUERYING ';
+            let QUERYING_TIME = Date.now();
+            const QUERYING_START = Date.now();
+            let elapsed = () => {
+                let now = Date.now();
+                let ret = ' elapsed from prev: '+((now - QUERYING_TIME) / 1000)+', from start: '+((now - QUERYING_START) / 1000);
+                QUERYING_TIME = now;
+                return ret;
+            };
 
-        for(let edge of queryResult.transactions.edges) {
-            const txid = edge.node.id;
+            console.log(QUERYING + '  arweave/graphql', chunk.id);
+            const queryResult = await request('https://arweave.net/graphql', query);
+            console.log(QUERYING + '  arweave/graphql - DONE', chunk.id, elapsed());
 
-            // Get the data decoded to a Uint8Array for binary data
-            const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+            console.log(QUERYING + '  iterations', elapsed());
+            for(let edge of queryResult.transactions.edges) {
+                const txid = edge.node.id;
 
-            const buf = Buffer.from(data);
+                // Get the data decoded to a Uint8Array for binary data
+                console.log(QUERYING + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
+                const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+                console.log(QUERYING + '  downloading getData from arweave - DONE', chunk.id, elapsed());
 
-            if (utils.hashFnHex(buf) === chunk.id) {
-                if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
-                chunk.setData(buf); // todo: what if it errors out?
-                chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
-                await chunk.save();
-                await chunk.reconsiderDownloadingStatus(true);
+                const buf = Buffer.from(data);
 
-                return;
+                if (utils.hashFnHex(buf) === chunk.id) {
+                    console.log(QUERYING + '  WORKED!', chunk.id, {txid}, elapsed());
+                    if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
+                    chunk.setData(buf); // todo: what if it errors out?
+                    chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
+                    await chunk.save();
+                    await chunk.reconsiderDownloadingStatus(true);
+
+                    return;
+                }
+                console.log(QUERYING + '  NOT WORKED! WRONG CHUNK', chunk.id, utils.hashFnHex(buf), {txid});
             }
+
+            // Not found :(
+            chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
+            await chunk.save();
+            await chunk.reconsiderDownloadingStatus(true);
+        } catch(e) {
+            this.downloadingTickOff(chunk.id);
+            throw e;
         }
 
-        // Not found :(
-        chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
-        await chunk.save();
-        await chunk.reconsiderDownloadingStatus(true);
+        this.downloadingTickOff(chunk.id);
     }
 
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
@@ -420,7 +476,8 @@ class StorageArweave {
 
         // transaction.addTag('keccak256hex', hash);
         // transaction.addTag('pn_experiment', '1');
-        transaction.addTag(this.__PN_TAG_VERSION_KEY, this.__PN_TAG_VERSION_VALUE);
+        transaction.addTag(this.__PN_TAG_VERSION_MAJOR_KEY, this.__PN_TAG_VERSION_MAJOR_VALUE);
+        transaction.addTag(this.__PN_TAG_VERSION_MINOR_KEY, this.__PN_TAG_VERSION_MINOR_VALUE);
         transaction.addTag(this.__PN_TAG_CHUNK_ID_KEY, chunk.id);
         transaction.addTag(this.__PN_TAG_VERSIONED_CHUNK_ID_KEY, chunk.id);
 
@@ -516,6 +573,8 @@ class StorageArweave {
 
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
+        console.log('this.uploadingChunksProcessing['+chunk.id+']', this.uploadingChunksProcessing[chunk.id]);
+
         if (this.uploadingChunksProcessing[chunk.id]) return;
         this.uploadingChunksProcessing[chunk.id] = true;
 
@@ -533,7 +592,7 @@ class StorageArweave {
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
-        console.log({all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
+        console.log({id: chunk.id, all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
 
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available

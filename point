@@ -227,9 +227,27 @@ sigs.forEach(function (sig) {
 });
 
 process.on('uncaughtException', (err) => {
-    npid.remove(pidFilePath);
     ctx.log.error(err.message);
     ctx.log.debug(err.stack);
+
+    if (err.message.includes('This socket has been ended by the other party')) {
+        // todo: where is it coming from?
+        /*
+        [1632829385722] ERROR (5912 on Serges-MacBook-Pro.local): This socket has been ended by the other party
+        [1632829385722] DEBUG (5912 on Serges-MacBook-Pro.local): Error: This socket has been ended by the other party
+    at Socket.writeAfterFIN [as write] (net.js:457:14)
+    at Socket.ondata (internal/streams/readable.js:726:22)
+    at Socket.emit (events.js:400:28)
+    at addChunk (internal/streams/readable.js:290:12)
+    at readableAddChunk (internal/streams/readable.js:265:9)
+    at Socket.Readable.push (internal/streams/readable.js:204:10)
+    at TCP.onStreamRead (internal/stream_base_commons.js:188:23)
+         */
+        // do nothing
+        return;
+    }
+
+    npid.remove(pidFilePath);
     process.exit(1);
 });
 process.on('unhandledRejection', (err, second) => {
