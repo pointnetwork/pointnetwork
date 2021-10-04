@@ -74,19 +74,18 @@ position: relative;">
         <table class="table table-inbox table-hover">
             <tbody>
 
-            {% set emailEvents = contract_events(host, 'Email', 'SendEmail', [{"to": wallet_address}]) %}
+            {% set emails = contract_get(host, 'PointEmail', 'getAllEmailsByToAddress', [wallet_address]) %}
 
-            {% set count = emailEvents|length %}
-            <p>Event count: {{ count }}</p>
+            {% set count = emails|length %}
+            <p>You have {{ count }} emails.</p>
 
-            {% for email in emailEvents %}
+            {% for email in emails %}
 
-                {% set data = email.data.emailMessage %}
-                {% set from = data.from %}
+                {% set from = email.from %}
                 {% set from_identity = identity_by_owner(from) %}
-                {% set to = data.to %}
-                {% set encryptedMessageId = data.encryptedMessageId %}
-                {% set timestamp = data.timestamp %}
+                {% set to = email.to %}
+                {% set encryptedMessageId = email.encryptedMessageId %}
+                {% set createdAt = email.createdAt %}
 
                 {% if to == wallet_address %}
 
@@ -104,10 +103,10 @@ position: relative;">
                     </td>
                     <td class="view-message  inbox-small-cells"></td>
                     <td class="view-message  text-right">
-                        {% if timestamp | date('Y-m-d') == date('Y-m-d') %}
-                            {{ timestamp | date('H:i') }}
+                        {% if createdAt | date('Y-m-d') == date('Y-m-d') %}
+                            {{ createdAt | date('H:i') }}
                         {% else %}
-                            {{ timestamp | date('F j, H:i') }}
+                            {{ createdAt | date('F j, H:i') }}
                         {% endif %}
                     </td>
 
