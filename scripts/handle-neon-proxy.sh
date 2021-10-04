@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ENV_FILE=/opt/env/.env
 RUNNABLE=/opt/proxy/run-proxy.sh
 DEPLOY_TRIGGER=deploy
@@ -10,8 +12,8 @@ DEPLOY_TRIGGER=deploy
 if [ -z $DEPLOY ]; then
   $RUNNABLE
 else
-  $RUNNABLE | less +F | while read LINE; do
+  $RUNNABLE | while read LINE; do
     echo $LINE
-    [[ $LINE == *"EVM_LOADER="* || $LINE == *"ETH_TOKEN_MINT="* || $LINE == *"COLLATERAL_POOL_BASE="* ]] && echo $LINE >> $ENV_FILE
+    [[ $LINE == *"EVM_LOADER="* || $LINE == *"ETH_TOKEN_MINT="* || $LINE == *"COLLATERAL_POOL_BASE="* ]] && echo "export $LINE" >> $ENV_FILE
   done
 fi

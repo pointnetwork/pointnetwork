@@ -4,9 +4,10 @@ services:
   blockchain_node:
     image: cybercoredev/solana:${SOLANA_REVISION:-v1.7.9-resources}
     container_name: pointnetwork_blockchain_node
+    hostname: blockchain_node
     healthcheck:
       test: solana cluster-version
-      interval: 15s
+      interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
@@ -46,11 +47,10 @@ services:
     expose:
       - "9090"
     volumes:
-      - blockchain_provider_env:/opt/pointnetwork:rw
+      - blockchain_provider_env:/opt/env:rw
       - blockchain_provider_config:/root/.config/solana:rw
       - ./scripts/handle-neon-proxy.sh:/opt/proxy/handle-run-proxy.sh:ro
-    entrypoint:
-      - /opt/proxy/handle-run-proxy.sh
+    entrypoint: /opt/proxy/handle-run-proxy.sh
 
   contract_deployer:
     image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
