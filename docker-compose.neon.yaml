@@ -21,7 +21,7 @@ services:
     expose:
       - "9090"
     volumes:
-      - /home/dev/neon:/root/.config/solana:ro
+      - /home/dev/neon/id.json:/root/.config/solana/id.json:ro
       - ./scripts/handle-neon-proxy.sh:/opt/proxy/handle-run-proxy.sh:ro
     entrypoint: /opt/proxy/handle-run-proxy.sh
 
