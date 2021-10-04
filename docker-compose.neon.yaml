@@ -36,6 +36,7 @@ services:
       - ./truffle/migrations:/truffle/migrations:ro
       - ./truffle/contracts:/truffle/contracts:ro
       - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
+      - /home/dev/geth/keystore:/root/.ethereum/keystore
       - shared_contracts:/build:rw
     command: deploy --network $DEPLOYER_ENV
     env_file:
