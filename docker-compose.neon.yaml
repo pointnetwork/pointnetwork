@@ -1,34 +1,9 @@
 version: '3.9'
 
 services:
-  blockchain_node:
-    image: cybercoredev/solana:${SOLANA_REVISION:-v1.7.9-resources}
-    container_name: pointnetwork_blockchain_node
-    hostname: blockchain_node
-    healthcheck:
-      test: solana cluster-version
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    environment:
-      - SOLANA_URL=http://blockchain_node:8899
-      - RUST_LOG=solana_runtime::system_instruction_processor=warn,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
-    expose:
-      - "8899"
-      - "9900"
-      - "8900"
-      - "8001"
-      - "8001-8009/udp"
-    volumes:
-      - blockchain_node_data:/opt/solana/config:rw
-
   blockchain_provider:
     image: cybercoredev/proxy:v0.2.0
     container_name: pointnetwork_blockchain_provider
-    depends_on:
-      blockchain_node:
-        condition: service_healthy
     healthcheck:
       test: |
         curl -X POST \
@@ -38,17 +13,15 @@ services:
       interval: 60s
       timeout: 5s
       retries: 4
-      start_period: 30s
+      start_period: 10s
     environment:
-      - CONFIG=ci
-      - SOLANA_URL=http://blockchain_node:8899
+      - CONFIG=devnet
     ports:
       - 127.0.0.1:9090:9090
     expose:
       - "9090"
     volumes:
-      - blockchain_provider_env:/opt/env:rw
-      - blockchain_provider_config:/root/.config/solana:rw
+      - /home/dev/neon:/root/.config/solana:ro
       - ./scripts/handle-neon-proxy.sh:/opt/proxy/handle-run-proxy.sh:ro
     entrypoint: /opt/proxy/handle-run-proxy.sh
 
@@ -162,8 +135,6 @@ services:
 
 volumes:
   shared_contracts:
-  blockchain_node_data:
-  blockchain_provider_env:
   blockchain_provider_config:
   # storage_provider_data:
   # website_owner_data:
