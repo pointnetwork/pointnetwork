@@ -67,6 +67,9 @@
     "____redkey_public_exponent": 65537
   },
   "network": {
+    "____solana_web3": "http://localhost:9090/solana",
+    "____solana_web3_network_id": "*",
+    "____solana_web3_chain_id": 111,
     "web3": "http://localhost:7545/",
     "web3_network_id": 5777,
     "web3_chain_id": 0,

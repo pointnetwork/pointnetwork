@@ -16,13 +16,16 @@ class Web3Bridge {
 
         // use WebsocketProvider to support subscriptions
         const localProvider = new Web3.providers.WebsocketProvider(this.connectionString);
-        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(localProvider); // todo: maybe you should hide it behind this abstraction, no?
+        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(this.connectionString); // todo: maybe you should hide it behind this abstraction, no?
+
         this.ctx.web3bridge = this;
 
         this.address = this.ctx.config.client.wallet.account;
         const account = this.web3.eth.accounts.privateKeyToAccount('0x' + this.ctx.config.client.wallet.privateKey);
         this.web3.eth.accounts.wallet.add(account);
         this.web3.eth.defaultAccount = account.address;
+
+        this.start();
     }
 
     async start() {
