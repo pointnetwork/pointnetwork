@@ -1,5 +1,6 @@
 const { Machine } = require('xstate');
 const StorageLink = require('../../../db/models/storage_link');
+const File = require('../../../db/models/file');
 const _ = require('lodash');
 
 exports.createStateMachine = function createStateMachine(link, chunk) {
@@ -50,8 +51,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                         },
                         onError: {
                             actions: 'UPDATE_MODEL_ERR',
-                            target: StorageLink.STATUS_FAILED,
-                            cond: 'notNodeAlreadyStoredData'
+                            target: StorageLink.STATUS_FAILED
                         },
                     },
                     exit: 'UPDATE_MODEL_STATUS'
@@ -73,7 +73,14 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                         id: 'SAVE_MODEL_FAILED',
                         src: async () => {
                             storage.uploadingChunksProcessing[chunk.id] = false;
-                            return link.save();
+                            await link.save();
+
+                            // todo: let's fail the whole file too for now, but ideally shouldn't be done from here
+                            const files = await File.getAllContainingChunkId(chunk.id);
+                            for(let file of files) {
+                                file.ul_status = File.UPLOADING_STATUS_FAILED;
+                                await file.save();
+                            }
                         }
                     },
                     type: 'final'

@@ -6,6 +6,7 @@ const Sequelize = require('sequelize');
 const _ = require('lodash');
 const utils = require('#utils');
 let Chunk;
+let FileMap;
 
 class File extends Model {
     CHUNKINFO_PROLOGUE = "PN^CHUNK\x05$\x06z\xf5*INFO"; // A very unlikely combination. In your probability reasoning, note that it must appear strictly at the beginning, not randomly
@@ -15,6 +16,7 @@ class File extends Model {
 
         // This is to avoid circular dependencies:
         Chunk = require('./chunk');
+        FileMap = require('./file_map');
 
         this._merkleTree = null;
         this._fileHash = null; // todo: remove
@@ -27,6 +29,23 @@ class File extends Model {
             throw Error('You need to chunkify the file first before calculating a merkle tree');
         }
         return [...this.chunkIds, this.id];
+    }
+
+    static async getAllContainingChunkId(chunk_id) {
+        const maps = await FileMap.allBy('chunk_id', chunk_id);
+        let file_ids = [];
+        for(let map of maps) {
+            file_ids.push(map.file_id);
+        }
+        file_ids = _.uniq(file_ids);
+        console.log({file_ids});
+
+        let files = [];
+        for(let file_id of file_ids) {
+            files.push(await File.findOrFail(file_id));
+        }
+
+        return files;
     }
 
     getMerkleHash() {
@@ -155,7 +174,7 @@ class File extends Model {
                 chunks_uploading++; // todo: replace with needs_uploading and break;
             }
 
-            console.log({chunk, chunks, chunks_uploading});
+            console.dir({chunk, chunks, chunks_uploading}, {depth: 3});
             for(let i in chunks) {
                 console.log(i, chunks[i].dataValues);
             }
@@ -239,6 +258,7 @@ class File extends Model {
         } else {
             let current_status = this.dl_status;
             if (current_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
+                console.dir({_this:this}, {depth: 2});
                 await this.dumpToDiskFromChunks();
             }
             await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADED);
@@ -303,6 +323,7 @@ class File extends Model {
                         alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADED)
                     {
                         alreadyExistingFile.chunkIds = [ contents_id ]; // todo: this is a hack, because it was null for some reason here, but check if this is not dangerous
+                        alreadyExistingFile.size = Buffer.byteLength(contents); // todo: this is a hack, because it was null for some reason here, but check if this is not dangerous
                         await alreadyExistingFile.save();
                         alreadyExistingFile.ul_status = File.UPLOADING_STATUS_UPLOADING;
                         await alreadyExistingFile.changeULStatusOnAllChunks(Chunk.UPLOADING_STATUS_UPLOADING);
@@ -452,6 +473,7 @@ class File extends Model {
 
 File.UPLOADING_STATUS_CREATED = 'us0';
 File.UPLOADING_STATUS_UPLOADING = 'us1';
+File.UPLOADING_STATUS_FAILED = 'us2';
 File.UPLOADING_STATUS_UPLOADED = 'us99';
 File.DOWNLOADING_STATUS_CREATED = 'ds0';
 File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO = 'ds1';

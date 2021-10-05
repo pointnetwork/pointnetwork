@@ -23,6 +23,8 @@ class StorageArweave {
 
         this.downloadingTicks = {};
 
+        if (!this.config.arweave_experiment_version_major) throw Error('arweave_experiment_version_major not set or is 0');
+        if (!this.config.arweave_experiment_version_minor) throw Error('arweave_experiment_version_minor not set or is 0');
         this.__PN_TAG_INTEGRATION_VERSION_MAJOR = ''+this.config.arweave_experiment_version_major;
         this.__PN_TAG_INTEGRATION_VERSION_MINOR = ''+this.config.arweave_experiment_version_minor;
         this.__PN_TAG_VERSION_MAJOR_KEY = '__pn_integration_version_major';
@@ -184,15 +186,21 @@ class StorageArweave {
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
+        console.log('enqueuing');
         const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
+        console.log('enqueued');
         let waitUntilUpload = (resolve, reject) => {
-            setTimeout(async() => {
-                let file = await File.findOrFail(file_id);
-                if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
-                    resolve(file);
-                } else {
-                    waitUntilUpload(resolve, reject);
-                }
+            setTimeout(() => {
+                (async() => {
+                    let file = await File.findOrFail(file_id);
+                    if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
+                        resolve(file);
+                    } else if (file.ul_status === File.UPLOADING_STATUS_FAILED) {
+                        reject(new Error('putFile: File failed to upload'));
+                    } else {
+                        waitUntilUpload(resolve, reject);
+                    }
+                })();
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
 
@@ -200,7 +208,9 @@ class StorageArweave {
             this.tick('uploading');
         }, 0);
 
-        return new Promise(waitUntilUpload);
+        const promise = new Promise(waitUntilUpload);
+        const response = await promise;
+        return response;
     }
 
     async enqueueFileForDownload(id, originalPath) {
@@ -393,7 +403,6 @@ class StorageArweave {
                                 }
                             }
         `;
-
             const tabs = Math.floor(Math.random() * (Math.ceil(20) - Math.floor(0) + 1) + 0);
             const ARW_LOG = ' '.repeat(tabs) + 'ARW_LOG ';
             let ARW_LOG_TIME = Date.now();
@@ -581,17 +590,31 @@ class StorageArweave {
 
         console.log({id: chunk.id, all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
 
-        if (additionalCandidatesRequired > 0) {
-            // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
-            let link = StorageLink.build();
-            let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
-            // link.id = DB.generateRandomIdForNewRecord();
-            link.provider_id = provider.id;
-            link.redkey_id = await this.getOrGenerateRedkeyId(provider);
-            link.chunk_id = chunk.id;
-            link.initStateMachine(chunk, this.config.engine);
-            // use storage link state machine to sent CREATE event
-            link.machine.send('CREATE');
+        if (failed.length > 0) {
+            // for some reason this block of code doesn't get used anyway until the next simulation tick, we fail the file long before in the machine
+            /// TODO: This is only specific to arweave! If one link failed, fail the whole chunk upload
+            chunk.ul_status = Chunk.UPLOADING_STATUS_FAILED;
+            await chunk.save();
+            const files = await File.getAllContainingChunkId(chunk.id);
+            for(let file of files) {
+                // todo: normally you would do it through another tick but we'll just fail the whole file
+                file.ul_status = File.UPLOADING_STATUS_FAILED;
+                await file.save();
+            }
+            return;
+        } else {
+            if (additionalCandidatesRequired > 0) {
+                // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
+                let link = StorageLink.build();
+                let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
+                // link.id = DB.generateRandomIdForNewRecord();
+                link.provider_id = provider.id;
+                link.redkey_id = await this.getOrGenerateRedkeyId(provider);
+                link.chunk_id = chunk.id;
+                link.initStateMachine(chunk, this.config.engine);
+                // use storage link state machine to sent CREATE event
+                link.machine.send('CREATE');
+            }
         }
 
         for(let link of all) {

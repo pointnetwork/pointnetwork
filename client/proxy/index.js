@@ -314,20 +314,24 @@ class ZProxy {
 
             let promise = new Promise((resolve, reject) => {
                 form.parse(request, async (err, fields, files) => {
-                    for(const key in files) {
-                        // TODO: properly handle multiple file uploads
-                        let uploadedFilePath = files[key].path;
-                        let fileData = fs.readFileSync(uploadedFilePath);
-                        const cacheDir = path.join(this.ctx.datadir, this.config.cache_path);
-                        const tmpPostDataFilePath = path.join(cacheDir, utils.hashFnUtf8Hex(fileData));
-                        fs.copySync(uploadedFilePath, tmpPostDataFilePath);
-                        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                    try {
+                        for(const key in files) {
+                            // TODO: properly handle multiple file uploads
+                            let uploadedFilePath = files[key].path;
+                            let fileData = fs.readFileSync(uploadedFilePath);
+                            const cacheDir = path.join(this.ctx.datadir, this.config.cache_path);
+                            const tmpPostDataFilePath = path.join(cacheDir, utils.hashFnUtf8Hex(fileData));
+                            fs.copySync(uploadedFilePath, tmpPostDataFilePath);
+                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
 
-                        let response = { status: 200, data: uploaded.id}
-                        resolve(response);
+                            let response = { status: 200, data: uploaded.id};
+                            resolve(response);
+                        }
+                    } catch(e) {
+                        reject(e);
                     }
                 });
-            })
+            });
             response = await promise;
             return response;
         } // TODO what if its not a multipart/form-data request?
@@ -531,66 +535,70 @@ class ZProxy {
                 body += chunk;
             });
             request.on('end', async() => {
-                if (request.method.toUpperCase() !== 'POST') return reject('Error: Must be POST');
-
-                let parsedUrl;
                 try {
-                    parsedUrl = new URL(request.url, `http://${request.headers.host}`);
-                } catch(e) {
-                    parsedUrl = { pathname: '/error' }; // todo
-                }
-                let contractAndMethod = parsedUrl.pathname.split('/_contract_send/')[1];
-                let [contractName, methodNameAndParams] = contractAndMethod.split('.');
-                let [methodName, paramsTogether] = methodNameAndParams.split('(');
-                paramsTogether = decodeURI(paramsTogether);
-                paramsTogether = paramsTogether.replace(')', '');
-                let paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
+                    if (request.method.toUpperCase() !== 'POST') return reject('Error: Must be POST');
 
-                let entries = new URL('http://localhost/?'+body).searchParams.entries();
-                let postData = {};
-                for(let entry of entries){
-                    postData[ entry[0] ] = entry[1];
-                }
-
-                let redirect = request.headers.referer;
-
-                for(let k in postData) {
-                    let v = postData[k];
-                    if (k === '__redirect') {
-                        redirect = v;
-                        delete postData[k];
-                    } else if (_.startsWith(k, 'storage[')) {
-                        // storage
-                        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                        utils.makeSurePathExists(cache_dir);
-                        const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
-                        fs.writeFileSync(tmpPostDataFilePath, v);
-                        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                        let uploaded_id = uploaded.id;
-
-                        delete postData[k];
-                        postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                    let parsedUrl;
+                    try {
+                        parsedUrl = new URL(request.url, `http://${request.headers.host}`);
+                    } catch(e) {
+                        parsedUrl = { pathname: '/error' }; // todo
                     }
-                }
+                    let contractAndMethod = parsedUrl.pathname.split('/_contract_send/')[1];
+                    let [contractName, methodNameAndParams] = contractAndMethod.split('.');
+                    let [methodName, paramsTogether] = methodNameAndParams.split('(');
+                    paramsTogether = decodeURI(paramsTogether);
+                    paramsTogether = paramsTogether.replace(')', '');
+                    let paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
 
-                let params = [];
-                for(let paramName of paramNames) {
-                    if (paramName in postData) {
-                        params.push(postData[paramName]);
-                    } else {
-                        return reject('Error: no '+utils.escape(paramName)+' param in the data, but exists as an argument to the contract call.');
+                    let entries = new URL('http://localhost/?'+body).searchParams.entries();
+                    let postData = {};
+                    for(let entry of entries){
+                        postData[ entry[0] ] = entry[1];
                     }
-                }
 
-                try {
-                    await this.ctx.web3bridge.sendToContract(host, contractName, methodName, params);
+                    let redirect = request.headers.referer;
+
+                    for(let k in postData) {
+                        let v = postData[k];
+                        if (k === '__redirect') {
+                            redirect = v;
+                            delete postData[k];
+                        } else if (_.startsWith(k, 'storage[')) {
+                            // storage
+                            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+                            utils.makeSurePathExists(cache_dir);
+                            const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
+                            fs.writeFileSync(tmpPostDataFilePath, v);
+                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                            let uploaded_id = uploaded.id;
+
+                            delete postData[k];
+                            postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                        }
+                    }
+
+                    let params = [];
+                    for(let paramName of paramNames) {
+                        if (paramName in postData) {
+                            params.push(postData[paramName]);
+                        } else {
+                            return reject('Error: no '+utils.escape(paramName)+' param in the data, but exists as an argument to the contract call.');
+                        }
+                    }
+
+                    try {
+                        await this.ctx.web3bridge.sendToContract(host, contractName, methodName, params);
+                    } catch(e) {
+                        reject('Error: ' + e);
+                    }
+
+                    console.log('Redirecting to '+redirect+'...');
+                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
+                    resolve(redirectHtml); // todo: sanitize! don't trust it
                 } catch(e) {
-                    reject('Error: ' + e);
+                    reject(e);
                 }
-
-                console.log('Redirecting to '+redirect+'...');
-                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
-                resolve(redirectHtml); // todo: sanitize! don't trust it
             });
             request.on('error', (e) => {
                 reject('Error: ' + e);
