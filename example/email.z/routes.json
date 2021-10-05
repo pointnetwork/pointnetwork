@@ -1,10 +1,6 @@
 {
-  "/": "app_inbox.zhtml",
-  "/compose": "app_compose.zhtml",
-  "/__disabled": "index.zhtml",
-  "/compose__disabled": "compose.zhtml",
-  "/inbox": "inbox.zhtml",
+  "/": "inbox.zhtml",
+  "/compose": "compose.zhtml",
   "/show": "show.zhtml",
-  "/app_show": "app_show.zhtml",
   "/encrypt_send": "_encrypt_send.zhtml"
 }

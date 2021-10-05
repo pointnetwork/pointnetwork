@@ -19,11 +19,7 @@ contract PointEmail {
 
     // Email mappings
     mapping(bytes32 => Email) encryptedMessageIdToEmail;
-    mapping(address => Email[]) fromEmails; // mapping from address to emails
     mapping(address => Email[]) toEmails; // mapping to address to emails
-
-    // Events
-    event SendEmail(address indexed to, Email email);
 
     // example 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2, "0x0000000000000000000000000000000000000000000068692066726f6d20706e", "PointNetwork"
     function send(address to, bytes32 encryptedMessageId, string memory encryptedSymmetricObj) public {
@@ -32,12 +28,8 @@ contract PointEmail {
         Email memory _email = Email(newEmailId, msg.sender, to, encryptedMessageId, encryptedSymmetricObj, block.timestamp);
         // add mapping from encrypted message id to the email id;
         encryptedMessageIdToEmail[encryptedMessageId] = _email;
-        // add email to fromEmails mapping
-        fromEmails[msg.sender].push(_email);
         // add email to toEmails mapping
         toEmails[to].push(_email);
-        // Emit the SendEmail event for listening clients to consume
-        emit SendEmail(to, _email);
     }
 
     function getAllEmailsByToAddress(address to) public view returns(Email[] memory) {
