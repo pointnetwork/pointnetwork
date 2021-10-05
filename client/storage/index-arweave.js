@@ -184,34 +184,21 @@ class StorageArweave {
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
-        console.log(187);
         const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
-        console.log(189);
         let waitUntilUpload = (resolve, reject) => {
-            console.log(191);
             setTimeout(async() => {
-                console.log(193);
                 let file = await File.findOrFail(file_id);
-                console.log(195, {file});
                 if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
-                    console.log(197);
                     resolve(file);
-                    console.log(199);
                 } else {
-                    console.log(201);
                     waitUntilUpload(resolve, reject);
-                    console.log(202);
                 }
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
 
-        console.log(208);
         setTimeout(() => {
-            console.log(210);
             this.tick('uploading');
         }, 0);
-
-        console.log(214);
 
         return new Promise(waitUntilUpload);
     }
