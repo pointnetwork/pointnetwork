@@ -40,11 +40,20 @@ contract Identity {
     }
 
     function _selfReg(string memory handle, address owner, PubKey64 memory commPublicKey) internal {
+        // Attach this identity to the owner address
         identityToOwner[handle] = owner;
         ownerToIdentity[owner] = handle;
+
+        // Attach public key for communication
         identityToCommPublicKey[handle] = commPublicKey;
+
+        // Add canonical version
         lowercaseToCanonicalIdentities[_toLower(handle)] = handle;
+
+        // Add the handle to identity list so that it can be iterated over
         identityList.push(handle);
+
+        emit IdentityRegistered(handle, owner, commPublicKey);
     }
 
     function register(string memory handle, address identityOwner, PubKey64 memory commPublicKey) public {
@@ -57,20 +66,7 @@ contract Identity {
         // Check if this owner already has an identity attached
         if (!_isEmptyString(ownerToIdentity[identityOwner])) revert('This owner already has an identity attached');
 
-        // Attach this identity to the owner address
-        identityToOwner[handle] = identityOwner;
-        ownerToIdentity[identityOwner] = handle;
-
-        // Attach public key for communication
-        identityToCommPublicKey[handle] = commPublicKey;
-
-        // Add canonical version
-        lowercaseToCanonicalIdentities[lowercase] = handle;
-
-        // Add the handle to identity list so that it can be iterated over
-        identityList.push(handle);
-
-        emit IdentityRegistered(handle, identityOwner, commPublicKey);
+        _selfReg(handle, identityOwner, commPublicKey);
     }
 
     function canonical(string memory anyCase) public view returns (string memory canonicalCase) {
