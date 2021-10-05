@@ -472,55 +472,59 @@ class ZProxy {
                 body += chunk;
             });
             request.on('end', async() => {
-                if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
-
-                let parsedUrl;
                 try {
-                    parsedUrl = new URL(request.url, `http://${request.headers.host}`);
-                } catch(e) {
-                    parsedUrl = { pathname: '/error' }; // todo
-                }
-                let key = parsedUrl.pathname.split('/_keyvalue_append/')[1];
-                let currentList = await this.ctx.keyvalue.list(host, key);
-                let newIdx = currentList.length;
-                let newKey = key + newIdx;
+                    if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
 
-                let entries = new URL('http://localhost/?'+body).searchParams.entries();
-                let postData = {};
-                for(let entry of entries){
-                    postData[ entry[0] ] = entry[1];
-                }
-
-                let redirect = request.headers.referer;
-                for(let k in postData) {
-                    let v = postData[k];
-                    if (k === '__redirect') {
-                        redirect = v;
-                        delete postData[k];
-                    } else if (_.startsWith(k, 'storage[')) {
-                        // storage
-                        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                        utils.makeSurePathExists(cache_dir);
-                        const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
-                        fs.writeFileSync(tmpPostDataFilePath, v);
-                        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                        let uploaded_id = uploaded.id;
-                        console.debug('Found storage[x], uploading file '+uploaded_id);
-
-                        delete postData[k];
-                        postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                    let parsedUrl;
+                    try {
+                        parsedUrl = new URL(request.url, `http://${request.headers.host}`);
+                    } catch(e) {
+                        parsedUrl = { pathname: '/error' }; // todo
                     }
+                    let key = parsedUrl.pathname.split('/_keyvalue_append/')[1];
+                    let currentList = await this.ctx.keyvalue.list(host, key);
+                    let newIdx = currentList.length;
+                    let newKey = key + newIdx;
+
+                    let entries = new URL('http://localhost/?'+body).searchParams.entries();
+                    let postData = {};
+                    for(let entry of entries){
+                        postData[ entry[0] ] = entry[1];
+                    }
+
+                    let redirect = request.headers.referer;
+                    for(let k in postData) {
+                        let v = postData[k];
+                        if (k === '__redirect') {
+                            redirect = v;
+                            delete postData[k];
+                        } else if (_.startsWith(k, 'storage[')) {
+                            // storage
+                            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+                            utils.makeSurePathExists(cache_dir);
+                            const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
+                            fs.writeFileSync(tmpPostDataFilePath, v);
+                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                            let uploaded_id = uploaded.id;
+                            console.debug('Found storage[x], uploading file '+uploaded_id);
+
+                            delete postData[k];
+                            postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                        }
+                    }
+
+                    postData.__from = this.ctx.config.client.wallet.account;
+                    postData.__time = Math.floor(Date.now() / 1000);
+                    let data = JSON.stringify(postData);
+
+                    await this.ctx.keyvalue.propagate(host, newKey, data);
+
+                    console.log('Redirecting to '+redirect+'...');
+                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
+                    resolve(redirectHtml);
+                } catch(e) {
+                    reject(e);
                 }
-
-                postData.__from = this.ctx.config.client.wallet.account;
-                postData.__time = Math.floor(Date.now() / 1000);
-                let data = JSON.stringify(postData);
-
-                await this.ctx.keyvalue.propagate(host, newKey, data);
-
-                console.log('Redirecting to '+redirect+'...');
-                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
-                resolve(redirectHtml);
             });
             request.on('error', (e) => {
                 reject('Error:', e);

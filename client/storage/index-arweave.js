@@ -163,11 +163,15 @@ class StorageArweave {
         const directory_id = await this.enqueueDirectoryForUpload(dirPath, redundancy, expires, autorenew);
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(async() => {
-                let file = await File.findOrFail(directory_id);
-                if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
-                    resolve(file);
-                } else {
-                    waitUntilUpload(resolve, reject);
+                try {
+                    let file = await File.findOrFail(directory_id);
+                    if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
+                        resolve(file);
+                    } else {
+                        waitUntilUpload(resolve, reject);
+                    }
+                } catch(e) {
+                    reject(e);
                 }
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
@@ -192,13 +196,17 @@ class StorageArweave {
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(() => {
                 (async() => {
-                    let file = await File.findOrFail(file_id);
-                    if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
-                        resolve(file);
-                    } else if (file.ul_status === File.UPLOADING_STATUS_FAILED) {
-                        reject(new Error('putFile: File failed to upload'));
-                    } else {
-                        waitUntilUpload(resolve, reject);
+                    try {
+                        let file = await File.findOrFail(file_id);
+                        if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
+                            resolve(file);
+                        } else if (file.ul_status === File.UPLOADING_STATUS_FAILED) {
+                            reject(new Error('putFile: File failed to upload'));
+                        } else {
+                            waitUntilUpload(resolve, reject);
+                        }
+                    } catch(e) {
+                        reject(e);
                     }
                 })();
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
@@ -240,17 +248,21 @@ class StorageArweave {
 
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
-                let file = await File.findOrFail(id);
-                if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
-                    setTimeout(() => {
-                        this.tick('downloading');
-                    }, 0);
+                try {
+                    let file = await File.findOrFail(id);
+                    if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
+                        setTimeout(() => {
+                            this.tick('downloading');
+                        }, 0);
 
-                    resolve(file);
-                } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
-                    reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
-                } else {
-                    waitUntilRetrieval(resolve, reject);
+                        resolve(file);
+                    } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
+                        reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
+                    } else {
+                        waitUntilRetrieval(resolve, reject);
+                    }
+                } catch(e) {
+                    reject(e);
                 }
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
