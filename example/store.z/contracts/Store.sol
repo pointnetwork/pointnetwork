@@ -39,6 +39,8 @@ contract Store is ERC721 {
     event NewProductEvent(uint tokenId, string name, uint256 timestamp);
     event ProductSoldEvent(uint tokenId, address from, address to, uint256);
 
+    // Store Functions
+    // Example: "My Store", "A quality store", "store.jpg"
     function registerStore(string memory name,
                            string memory description,
                            string memory logo) public {
@@ -49,6 +51,12 @@ contract Store is ERC721 {
         emit NewStoreEvent(newStoreId, name, block.timestamp);
     }
 
+    function getStores() public view returns(StoreFront[] memory) {
+        return stores;
+    }
+
+    // Product Functions
+    // Example: 1, "A product", 1000000, "Product metadata"
     function addProductToStore(uint storeId,
                                string memory name,
                                uint price,
@@ -93,7 +101,7 @@ contract Store is ERC721 {
         return _storeProducts;
     }
 
-    function getStores() public view returns(StoreFront[] memory) {
-        return stores;
+    function getProductByTokenId(uint tokenId) public view returns(Product memory) {
+        return tokenIdToProduct[tokenId];
     }
 }

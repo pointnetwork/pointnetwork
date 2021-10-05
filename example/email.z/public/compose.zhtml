@@ -1,20 +1,29 @@
 {% extends 'layout.zhtml' %}
 
 {% block contents %}
+  <aside class="lg-side">
+    <div class="inbox-head">
+      <h3>Compose</h3>
+      <form action="#" class="pull-right position">
+      </form>
+    </div>
 
-  <div class="formback">
-    <form method="post" action="/encrypt_send">
-      <label><b>From</b></label><br>
-      <span>{{ wallet_address }}</span><br><br>
+    <div class="formback" style="padding: 40px; height: 100%;">
+      <form method="post" action="/encrypt_send">
+        <label><b>From</b></label><br>
+        <span>@{{ identity_by_owner(wallet_address) }}</span><br><br>
 
-      <label><b>To</b></label><br>
-      <input type="text" name="recipient" id="recipient" />
-      <br>
-      <label><b>Body</b></label><br>
-      <textarea id="body" rows="4" cols="50" name="message"></textarea><br><br>
-      <input type="hidden" name="__redirect" value="/" />
-      <input type="submit" value="Encrypt & Send Email"/>
-    </form>
-  </div>
+        <label><b>To</b></label><br>
+        <input type="text" name="recipient" id="recipient" />
+        <br>
+        <label><b>Body</b></label><br>
+        <textarea id="body" rows="4" cols="50" name="message"></textarea><br><br>
+        <input type="hidden" name="__redirect" value="/" />
+        <input type="submit" value="Encrypt & Send Email"/>
+      </form>
+    </div>
+    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+  </aside>
 
 {% endblock %}

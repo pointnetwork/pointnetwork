@@ -6,7 +6,7 @@
 {#<p>Encrypted_results: {{ encrypted_results }}#}
 {% set stored_encrypted_message_id = storage_put(encrypted_results.encryptedMessage) %}
 {#<p>Stored encrypted message: {{ stored_encrypted_message_id }}#}
-{% set result = contract_call(host, 'Email', 'send', [ identity_owner, stored_encrypted_message_id, encrypted_results.encryptedSymmetricObjJSON ]) %}
+{% set result = contract_call(host, 'PointEmail', 'send', [ identity_owner, stored_encrypted_message_id, encrypted_results.encryptedSymmetricObjJSON ]) %}
 
 <html>
   <body>

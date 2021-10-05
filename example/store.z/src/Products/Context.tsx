@@ -27,35 +27,35 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
         setStoreId(params.storeId)
     }
 
-    const subscribeToProductPurchases = useCallback(async () => {
-        // @ts-ignore
-        const nextProductPurchase = await window.point.contract.subscribe({
-            contract: 'Store',
-            event: 'ProductSoldEvent',
-        });
+    // const subscribeToProductPurchases = useCallback(async () => {
+    //     // @ts-ignore
+    //     const nextProductPurchase = await window.point.contract.subscribe({
+    //         contract: 'Store',
+    //         event: 'ProductSoldEvent',
+    //     });
 
-        addSubscription(nextProductPurchase);
+    //     addSubscription(nextProductPurchase);
 
-        while (true) {
-            try {
-                const message = await nextProductPurchase();
-                if (!('returnValues' in message)) {
-                    continue;
-                }
+    //     while (true) {
+    //         try {
+    //             const message = await nextProductPurchase();
+    //             if (!('returnValues' in message)) {
+    //                 continue;
+    //             }
 
-                const {returnValues: {tokenId, to}} = message;
+    //             const {returnValues: {tokenId, to}} = message;
 
-                setProductList((productList) => {
-                    return productList?.map((productData: ProductData) => (
-                       productData.productId === tokenId ? { ...productData, owner: to } : productData
-                    ));
-                });
-            } catch (e) {
-                console.error('Subscription error:', e.message, e.stack);
-                break;
-            }
-        }
-    }, []);
+    //             setProductList((productList) => {
+    //                 return productList?.map((productData: ProductData) => (
+    //                    productData.productId === tokenId ? { ...productData, owner: to } : productData
+    //                 ));
+    //             });
+    //         } catch (e) {
+    //             console.error('Subscription error:', e.message, e.stack);
+    //             break;
+    //         }
+    //     }
+    // }, []);
 
     useEffect(() => {
         if (!storeId) {
@@ -89,7 +89,7 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
                     } as ProductData)
                 ));
 
-                await subscribeToProductPurchases();
+                // await subscribeToProductPurchases();
             } catch (e) {
                 setProductListError(e);
             }
