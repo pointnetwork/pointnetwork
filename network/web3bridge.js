@@ -15,8 +15,8 @@ class Web3Bridge {
         this.chain_id = this.ctx.config.network.web3_chain_id;
 
         // use WebsocketProvider to support subscriptions
-        const localProvider = new Web3.providers.WebsocketProvider(this.connectionString);
-        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(localProvider); // todo: maybe you should hide it behind this abstraction, no?
+        // const localProvider = new Web3.providers.WebsocketProvider(this.connectionString);
+        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(this.connectionString); // todo: maybe you should hide it behind this abstraction, no?
         this.ctx.web3bridge = this;
 
         this.address = this.ctx.config.client.wallet.account;
@@ -100,7 +100,7 @@ class Web3Bridge {
             let result = await contract.methods[ method ]( ...params ).call();
             return result;
         } catch(e) {
-            this.ctx.log.error('callContract Error', {target, contractName, method, params});
+            this.ctx.log.error('callContract Error ' + JSON.stringify({target, contractName, method, params}));
             throw e;
         }
     }

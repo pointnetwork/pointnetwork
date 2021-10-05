@@ -65,7 +65,9 @@
     "segment_size_bytes": 16384,
     "redkey_encryption_bits": 1024,
     "redkey_stupid_padding": 1,
-    "____redkey_public_exponent": 65537
+    "____redkey_public_exponent": 65537,
+    "arweave_experiment_version_major": 0,
+    "arweave_experiment_version_minor": 4
   },
   "network": {
     "web3": "http://localhost:7545/",

@@ -117,7 +117,7 @@ class Renderer {
                 return await this.renderer.ctx.web3bridge.sendToContract(host.replace('.z', ''), contractName, methodName, params);
             },
             contract_events: async function(host, contractName, event, filter = {}) {
-                const options = { filter, fromBlock: 1, toBlock: 'latest' };
+console.                const options = { filter, fromBlock: 1, toBlock: 'latest' };
                 const events =  await this.renderer.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
                 // for(let ev of events) console.log(ev, ev.raw);
 

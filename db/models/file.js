@@ -22,6 +22,8 @@ class File extends Model {
 
     getAllChunkIds() {
         if (! this.chunkIds) {
+            console.log({file:this});
+            console.trace();
             throw Error('You need to chunkify the file first before calculating a merkle tree');
         }
         return [...this.chunkIds, this.id];
@@ -92,6 +94,8 @@ class File extends Model {
 
         let temporaryFile = '/tmp/_point_tmp_'+Math.random().toString().replace('.', ''); // todo;
         let fd = fs.openSync(temporaryFile, 'a');
+
+        console.log('DUMP_TO_DISK_FROM_CHUNKS', this.id, this.chunkIds);
 
         for(let chunkId of this.chunkIds) {
             let chunk = await Chunk.findOrFail(chunkId);
@@ -183,7 +187,7 @@ class File extends Model {
             return;
         } // else chunk info downloaded
 
-        if (! this.chunkIds) {
+        if (! this.chunkIds || this.chunkIds.length === 0) {
             let chunkInfoBuf = chunkinfo_chunk.getData();
             if (! chunkInfoBuf.slice(0, this.CHUNKINFO_PROLOGUE.length).equals(Buffer.from(this.CHUNKINFO_PROLOGUE))) {
                 // doesn't contain chunkinfo prologue at the beginning
@@ -284,7 +288,7 @@ class File extends Model {
 
                 let contents = fs.readFileSync(this.original_path, {encoding: null}); // buffer
                 let contents_id = Chunk.forceSaveToDisk(contents);
-                this.chunkIds = [];
+                this.chunkIds = [ contents_id ];
                 this.id = contents_id;
 
                 console.log({_this:this});
@@ -298,6 +302,8 @@ class File extends Model {
                     if (alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADING &&
                         alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADED)
                     {
+                        alreadyExistingFile.chunkIds = [ contents_id ]; // todo: this is a hack, because it was null for some reason here, but check if this is not dangerous
+                        await alreadyExistingFile.save();
                         alreadyExistingFile.ul_status = File.UPLOADING_STATUS_UPLOADING;
                         await alreadyExistingFile.changeULStatusOnAllChunks(Chunk.UPLOADING_STATUS_UPLOADING);
                         await alreadyExistingFile.save();

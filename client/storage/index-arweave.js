@@ -23,8 +23,8 @@ class StorageArweave {
 
         this.downloadingTicks = {};
 
-        this.__PN_TAG_INTEGRATION_VERSION_MAJOR = '0';
-        this.__PN_TAG_INTEGRATION_VERSION_MINOR = '1';
+        this.__PN_TAG_INTEGRATION_VERSION_MAJOR = ''+this.config.arweave_experiment_version_major;
+        this.__PN_TAG_INTEGRATION_VERSION_MINOR = ''+this.config.arweave_experiment_version_minor;
         this.__PN_TAG_VERSION_MAJOR_KEY = '__pn_integration_version_major';
         this.__PN_TAG_VERSION_MAJOR_VALUE = this.__PN_TAG_INTEGRATION_VERSION_MAJOR;
         this.__PN_TAG_VERSION_MINOR_KEY = '__pn_integration_version_minor';
@@ -408,33 +408,33 @@ class StorageArweave {
         `;
 
             const tabs = Math.floor(Math.random() * (Math.ceil(20) - Math.floor(0) + 1) + 0);
-            const QUERYING = ' '.repeat(tabs) + 'QUERYING ';
-            let QUERYING_TIME = Date.now();
-            const QUERYING_START = Date.now();
+            const ARW_LOG = ' '.repeat(tabs) + 'ARW_LOG ';
+            let ARW_LOG_TIME = Date.now();
+            const ARW_LOG_START = Date.now();
             let elapsed = () => {
                 let now = Date.now();
-                let ret = ' elapsed from prev: '+((now - QUERYING_TIME) / 1000)+', from start: '+((now - QUERYING_START) / 1000);
-                QUERYING_TIME = now;
+                let ret = ' elapsed from prev: '+((now - ARW_LOG_TIME) / 1000)+', from start: '+((now - ARW_LOG_START) / 1000);
+                ARW_LOG_TIME = now;
                 return ret;
             };
 
-            console.log(QUERYING + '  arweave/graphql', chunk.id);
+            console.log(ARW_LOG + '  arweave/graphql', chunk.id);
             const queryResult = await request('https://arweave.net/graphql', query);
-            console.log(QUERYING + '  arweave/graphql - DONE', chunk.id, elapsed());
+            console.log(ARW_LOG + '  arweave/graphql - DONE', chunk.id, elapsed());
 
-            console.log(QUERYING + '  iterations', elapsed());
+            console.log(ARW_LOG + '  iterations', elapsed());
             for(let edge of queryResult.transactions.edges) {
                 const txid = edge.node.id;
 
                 // Get the data decoded to a Uint8Array for binary data
-                console.log(QUERYING + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
+                console.log(ARW_LOG + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
                 const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
-                console.log(QUERYING + '  downloading getData from arweave - DONE', chunk.id, elapsed());
+                console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
 
                 const buf = Buffer.from(data);
 
                 if (utils.hashFnHex(buf) === chunk.id) {
-                    console.log(QUERYING + '  WORKED!', chunk.id, {txid}, elapsed());
+                    console.log(ARW_LOG + '  WORKED!', chunk.id, {txid}, elapsed());
                     if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
                     chunk.setData(buf); // todo: what if it errors out?
                     chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
@@ -443,7 +443,7 @@ class StorageArweave {
 
                     return;
                 }
-                console.log(QUERYING + '  NOT WORKED! WRONG CHUNK', chunk.id, utils.hashFnHex(buf), {txid});
+                console.log(ARW_LOG + '  NOT WORKED! WRONG CHUNK', chunk.id, utils.hashFnHex(buf), {txid});
             }
 
             // Not found :(
