@@ -43,7 +43,7 @@ services:
       - CONFIG=ci
       - SOLANA_URL=http://blockchain_node:8899
     ports:
-      - 127.0.0.1:9090:9090
+      - 0.0.0.0:9090:9090
     expose:
       - "9090"
     volumes:
@@ -68,104 +68,118 @@ services:
     env_file:
       - .env.deployer
 
-  # storage_provider:
-  #   image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
-  #   container_name: pointnetwork_storage_provider
-  #   depends_on:
-  #     - blockchain_node
-  #   entrypoint: 'npm'
-  #   command: 'run start:docker'
-  #   volumes:
-  #     - storage_provider_data:/data:rw
-  #     - shared_contracts:/app/truffle/build/contracts:ro
-  #     - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
-  #     - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-  #   ports:
-  #     - '12345:9685'
-  #     - '65500:8666'
-  #     - '24680:2468'
-  #   environment:
-  #     DATADIR: /data
-  #     DB_ENV: pointnode1
-  #     BLOCKCHAIN_HOST: blockchain_node
-  #     BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-  #     BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-  #     DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
+  storage_provider:
+    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    container_name: pointnetwork_storage_provider
+    depends_on:
+      database:
+        condition: service_started
+      blockchain_provider:
+        condition: service_healthy
+      contract_deployer:
+        condition: service_completed_successfully
+    entrypoint: 'npm'
+    command: 'run start:docker'
+    volumes:
+      - storage_provider_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+    ports:
+      - '12345:9685'
+      - '65500:8666'
+      - '24680:2468'
+    environment:
+      DATADIR: /data
+      DB_ENV: pointnode1
+      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
+      BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
 
-  # website_owner:
-  #   image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
-  #   container_name: pointnetwork_website_owner
-  #   depends_on:
-  #     - blockchain_node
-  #     - database
-  #   ports:
-  #     - '12346:9685'
-  #     - '65501:8666'
-  #     - '24681:2468'
-  #   entrypoint: 'npm'
-  #   command: 'run start:docker'
-  #   volumes:
-  #     - website_owner_data:/data:rw
-  #     - shared_contracts:/app/truffle/build/contracts:ro
-  #     - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
-  #     - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-  #     - ./example:/app/example:ro
-  #   environment:
-  #     DATADIR: /data
-  #     DB_ENV: pointnode2
-  #     BLOCKCHAIN_HOST: blockchain_node
-  #     BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-  #     BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-  #     DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
+  website_owner:
+    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    container_name: pointnetwork_website_owner
+    depends_on:
+      database:
+        condition: service_started
+      blockchain_provider:
+        condition: service_healthy
+      contract_deployer:
+        condition: service_completed_successfully
+    ports:
+      - '12346:9685'
+      - '65501:8666'
+      - '24681:2468'
+    entrypoint: 'npm'
+    command: 'run start:docker'
+    volumes:
+      - website_owner_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+      - ./example:/app/example:ro
+    environment:
+      DATADIR: /data
+      DB_ENV: pointnode2
+      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
+      BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
 
-  # website_visitor:
-  #   image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
-  #   container_name: pointnetwork_website_visitor
-  #   depends_on:
-  #     - blockchain_node
-  #   ports:
-  #     - '12347:9685'
-  #     - '65502:8666'
-  #     - '24682:2468'
-  #   entrypoint: 'npm'
-  #   command: 'run start:docker'
-  #   volumes:
-  #     - website_visitor_data:/data:rw
-  #     - shared_contracts:/app/truffle/build/contracts:ro
-  #     - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
-  #     - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-  #   environment:
-  #     DATADIR: /data
-  #     DB_ENV: pointnode3
-  #     BLOCKCHAIN_HOST: blockchain_node
-  #     BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-  #     BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-  #     DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
+  website_visitor:
+    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    container_name: pointnetwork_website_visitor
+    depends_on:
+      database:
+        condition: service_started
+      blockchain_provider:
+        condition: service_healthy
+      contract_deployer:
+        condition: service_completed_successfully
+    ports:
+      - '12347:9685'
+      - '65502:8666'
+      - '24682:2468'
+    entrypoint: 'npm'
+    command: 'run start:docker'
+    volumes:
+      - website_visitor_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+    environment:
+      DATADIR: /data
+      DB_ENV: pointnode3
+      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
+      BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
 
-  # database:
-  #   image: postgres:13.4
-  #   container_name: pointnetwork_database
-  #   healthcheck:
-  #     test: pg_isready -U $DB_USERNAME
-  #     interval: 10s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 10s
-  #   environment:
-  #     POSTGRES_USER: $DB_USERNAME
-  #     POSTGRES_PASSWORD: $DB_PASSWORD
-  #     POSTGRES_DB: $DB_USERNAME
-  #     DATABASE: $DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
-  #   volumes:
-  #     - database_data:/var/lib/postgresql/data/
-  #     - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+  database:
+    image: postgres:13.4
+    container_name: pointnetwork_database
+    healthcheck:
+      test: pg_isready -U $DB_USERNAME
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    environment:
+      POSTGRES_USER: $DB_USERNAME
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_USERNAME
+      DATABASE: $DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
+    volumes:
+      - database_data:/var/lib/postgresql/data/
+      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
 
 volumes:
   shared_contracts:
   blockchain_node_data:
   blockchain_provider_env:
   blockchain_provider_config:
-  # storage_provider_data:
-  # website_owner_data:
-  # website_visitor_data:
-  # database_data:
+  storage_provider_data:
+  website_owner_data:
+  website_visitor_data:
+  database_data:

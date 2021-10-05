@@ -30,7 +30,7 @@ while (contractNames.size && (Date.now() - start < timeout)) {
             delete require.cache[require.resolve(filename)];
 
             const {networks} = require(filename);
-            const network = process.env.BLOCKCHAIN_NETWORK_ID || Math.max(...Object.keys(networks));
+            const network = Math.max(...Object.keys(networks));
 
             if (!(network in networks) || (typeof networks[network].address !== 'string')) continue;
 
