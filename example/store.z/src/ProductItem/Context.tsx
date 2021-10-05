@@ -36,7 +36,7 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
 
         try {
             // @ts-ignore
-            const response = await window.point.storage.get({ id: metadata, encoding: 'utf-8' });
+            const response = await window.point.storage.getString({ id: metadata, encoding: 'utf-8' });
             const { data: product } = response;
 
             if (!product) {

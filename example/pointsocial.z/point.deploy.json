@@ -1,0 +1,8 @@
+{
+    "version": 1,
+    "target": "pointsocial.z",
+    "keyvalue": {},
+    "contracts": [
+      "PointSocial"
+    ]
+  }
