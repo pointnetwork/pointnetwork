@@ -59,7 +59,7 @@ const config = require(templateConfig);
 
 config.network = {
     ...config.network,
-    web3: `http://${ process.env.BLOCKCHAIN_HOST || 'localhost' }:${ process.env.BLOCKCHAIN_PORT || 7545 }`,
+    web3: `http://${ process.env.BLOCKCHAIN_HOST || 'localhost' }:${ process.env.BLOCKCHAIN_PORT || 9090 }/solana`,
     identity_contract_address: contractAddresses.Identity,
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 };
@@ -80,7 +80,7 @@ if (!existsSync('/data/data/dht_peercache.db')) {
 
 console.info('Done.');
 
-;(async () => {
+(async () => {
     console.log('Awaiting for blockchain provider to start...');
 
     const web3 = new Web3(config.network.web3);
