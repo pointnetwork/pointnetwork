@@ -68,36 +68,36 @@ services:
     env_file:
       - .env.deployer
 
-  storage_provider:
-    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
-    container_name: pointnetwork_storage_provider
-    depends_on:
-      database:
-        condition: service_started
-      blockchain_provider:
-        condition: service_healthy
-      contract_deployer:
-        condition: service_completed_successfully
-    entrypoint: 'npm'
-    command: 'run start:docker'
-    volumes:
-      - storage_provider_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
-      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-      - ./scripts/await-contracts-docker.js:/app/scripts/await-contracts-docker.js:ro
-      - ./package.json:/app/spackage.json:ro
-    ports:
-      - '12345:9685'
-      - '65500:8666'
-      - '24680:2468'
-    environment:
-      DATADIR: /data
-      DB_ENV: pointnode1
-      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
-      BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
+  # storage_provider:
+  #   image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+  #   container_name: pointnetwork_storage_provider
+  #   depends_on:
+  #     database:
+  #       condition: service_started
+  #     blockchain_provider:
+  #       condition: service_healthy
+  #     contract_deployer:
+  #       condition: service_completed_successfully
+  #   entrypoint: 'npm'
+  #   command: 'run start:docker'
+  #   volumes:
+  #     - storage_provider_data:/data:rw
+  #     - shared_contracts:/app/truffle/build/contracts:ro
+  #     - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+  #     - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+  #     - ./scripts/await-contracts-docker.js:/app/scripts/await-contracts-docker.js:ro
+  #     - ./package.json:/app/spackage.json:ro
+  #   ports:
+  #     - '12345:9685'
+  #     - '65500:8666'
+  #     - '24680:2468'
+  #   environment:
+  #     DATADIR: /data
+  #     DB_ENV: pointnode1
+  #     BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
+  #     BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
+  #     BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+  #     DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
 
   website_owner:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION

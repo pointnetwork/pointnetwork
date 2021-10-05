@@ -3,10 +3,7 @@
     "address": "0.0.0.0"
   },
   "network": {
-    "communication_external_host": "website_owner",
-    "bootstrap_nodes": [
-      "http://storage_provider:9685/"
-    ]
+    "communication_external_host": "website_owner"
   },
   "client": {
     "zproxy": {
