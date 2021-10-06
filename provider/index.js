@@ -251,69 +251,73 @@ class Provider {
 
     async decryptChunkAsync(chunk) {
         return await new Promise((resolve, reject) => {
-            let decryptorID = chunk.id + Math.random(); // todo: can there be a situation where, while the chunk is being decrypted, another request comes in for the same chunk and it gets decrypted in parallel again? catch this
+            try {
+                let decryptorID = chunk.id + Math.random(); // todo: can there be a situation where, while the chunk is being decrypted, another request comes in for the same chunk and it gets decrypted in parallel again? catch this
 
-            let chunk_decryptor = fork(path.join(this.ctx.basepath, 'threads/decrypt.js'));
+                let chunk_decryptor = fork(path.join(this.ctx.basepath, 'threads/decrypt.js'));
 
-            this.chunk_decryptors[ decryptorID ] = chunk_decryptor;
+                this.chunk_decryptors[ decryptorID ] = chunk_decryptor;
 
-            chunk_decryptor.on('message', async(message) => {
-                if (message.command === 'decrypt' && message.success === true) {
-                    chunk_decryptor.kill('SIGINT');
-                    delete this.chunk_decryptors[ decryptorID ];
+                chunk_decryptor.on('message', async(message) => {
+                    if (message.command === 'decrypt' && message.success === true) {
+                        chunk_decryptor.kill('SIGINT');
+                        delete this.chunk_decryptors[ decryptorID ];
 
-                    resolve();
-                } else {
-                    // todo: don't die here
-                    console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', message);
-                    this.ctx.die();
-                }
-            });
-            // todo: do we need this?
-            chunk_decryptor.addListener("output", function (data) {
-                console.log('Chunk Decryptor output: '+data);
-            });
-            // todo: two error listeners?
-            chunk_decryptor.addListener("error", async (data) => { // todo
-                // await link.refresh();
-                // link.status = StorageLink.STATUS_FAILED;
-                // link.error = data;
-                // link.errored = true;
-                // console.error('Chunk decryption FAILED:' + link.error);
-                // await link.save();
-                // todo: don't die here, reject promise
-                console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', data);
-                this.ctx.die();
-            });
-            chunk_decryptor.on("error", async (data) => { // todo
-                // todo: don't die here, reject promise
-                console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', data);
-                this.ctx.die();
-                // await link.refresh();
-                // link.status = StorageLink.STATUS_FAILED;
-                // link.error = data;
-                // link.errored = true;
-                // console.error('Chunk encryption FAILED:' + link.error);
-                // await link.save();
-            });
-            chunk_decryptor.on("exit", async (code) => {
-                if (code === 0 || code === null) {
-                    // do nothing
-                }
-                else {
-                    // todo: don't die here, reject promise
-                    console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned code', code);
-                    this.ctx.die();
-                    // // todo: figure out which one is failed
+                        resolve();
+                    } else {
+                        // todo: don't die here
+                        console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', message);
+                        this.ctx.die();
+                    }
+                });
+                // todo: do we need this?
+                chunk_decryptor.addListener("output", function (data) {
+                    console.log('Chunk Decryptor output: '+data);
+                });
+                // todo: two error listeners?
+                chunk_decryptor.addListener("error", async (data) => { // todo
+                    // await link.refresh();
                     // link.status = StorageLink.STATUS_FAILED;
-                    // console.error('Chunk encryption FAILED, exit code', code);
-                    // //link.error = data;
+                    // link.error = data;
+                    // link.errored = true;
+                    // console.error('Chunk decryption FAILED:' + link.error);
                     // await link.save();
-                }
-            });
+                    // todo: don't die here, reject promise
+                    console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', data);
+                    this.ctx.die();
+                });
+                chunk_decryptor.on("error", async (data) => { // todo
+                    // todo: don't die here, reject promise
+                    console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', data);
+                    this.ctx.die();
+                    // await link.refresh();
+                    // link.status = StorageLink.STATUS_FAILED;
+                    // link.error = data;
+                    // link.errored = true;
+                    // console.error('Chunk encryption FAILED:' + link.error);
+                    // await link.save();
+                });
+                chunk_decryptor.on("exit", async (code) => {
+                    if (code === 0 || code === null) {
+                        // do nothing
+                    }
+                    else {
+                        // todo: don't die here, reject promise
+                        console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned code', code);
+                        this.ctx.die();
+                        // // todo: figure out which one is failed
+                        // link.status = StorageLink.STATUS_FAILED;
+                        // console.error('Chunk encryption FAILED, exit code', code);
+                        // //link.error = data;
+                        // await link.save();
+                    }
+                });
 
-            chunk_decryptor.send({ command: 'decrypt', fileIn: ProviderChunk.getChunkStoragePath(chunk.id), fileOut:  ProviderChunk.getDecryptedChunkStoragePath(chunk.id), pubKey: chunk.public_key, chunkId: chunk.id });
-        });
+                chunk_decryptor.send({ command: 'decrypt', fileIn: ProviderChunk.getChunkStoragePath(chunk.id), fileOut:  ProviderChunk.getDecryptedChunkStoragePath(chunk.id), pubKey: chunk.public_key, chunkId: chunk.id });
+            } catch(e) {
+                reject(e);
+            }
+       });
     }
 }
 

@@ -35,28 +35,44 @@ class ZProxy {
     }
 
     wsServer(server) {
-        const wss = new WebSocketServer({
-            httpServer: server.https
-        });
-
-        wss.on('request', (request) => {
-            let socket = request.accept(null, request.origin);
-            let parsedUrl = new URL(request.origin);
-
-            new ZProxySocketController(this.ctx, socket, wss, parsedUrl.host);
-
-            socket.on('close', () => {
-                console.log('WS Client disconnected.');
+        try {
+            const wss = new WebSocketServer({
+                httpServer: server.https
             });
-        });
 
-        server.http.on('upgrade', (request, socket, head) => {
-            wss.handleUpgrade(request, socket, head, (ws) => {
-                wss.emit('connection', ws, request);
+            wss.on('request', (request) => {
+                let socket = request.accept(null, request.origin);
+                let parsedUrl = new URL(request.origin);
+
+                new ZProxySocketController(this.ctx, socket, wss, parsedUrl.host);
+
+                socket.on('close', () => {
+                    console.log('WS Client disconnected.');
+                });
+
+                socket.on('error', (e) => {
+                    console.error('Error from WebSocket: ', e);
+                    this.ctx.log.error(e);
+                });
             });
-        });
 
-        return wss;
+            wss.on('error', (e) => {
+                console.error('Error from WebSocketServer: ', e);
+                this.ctx.log.error(e);
+            });
+
+            server.http.on('upgrade', (request, socket, head) => {
+                wss.handleUpgrade(request, socket, head, (ws) => {
+                    wss.emit('connection', ws, request);
+                });
+            });
+
+            return wss;
+        } catch(e) {
+            console.log('UNCAUGHT EXCEPTION IN ZPROXY:');
+            console.log(e);
+            throw e;
+        }
     }
 
     httpx() {
@@ -173,7 +189,7 @@ class ZProxy {
             let contentType = 'text/html';
             let status = 200;
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
-                if(request.method.toUpperCase() == 'POST') { // user is posting content to storage layer
+                if(request.method.toUpperCase() === 'POST') { // user is posting content to storage layer
                     try {
                         let response = await this.storagePostFile(request);
                         status = response.status ? response.status : status;
@@ -196,6 +212,7 @@ class ZProxy {
                     if (ext === 'zhtml') contentType = 'text/plain';
 
                     try {
+                        console.log('ZPROXY /_storage/: ASKING FOR '+hash);
                         rendered = await this.ctx.client.storage.readFile(hashWithoutExt);
                     } catch(e) {
                         return this.abortError(response, e);
@@ -297,20 +314,24 @@ class ZProxy {
 
             let promise = new Promise((resolve, reject) => {
                 form.parse(request, async (err, fields, files) => {
-                    for(const key in files) {
-                        // TODO: properly handle multiple file uploads
-                        let uploadedFilePath = files[key].path;
-                        let fileData = fs.readFileSync(uploadedFilePath);
-                        const cacheDir = path.join(this.ctx.datadir, this.config.cache_path);
-                        const tmpPostDataFilePath = path.join(cacheDir, utils.hashFnUtf8Hex(fileData));
-                        fs.copySync(uploadedFilePath, tmpPostDataFilePath);
-                        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                    try {
+                        for(const key in files) {
+                            // TODO: properly handle multiple file uploads
+                            let uploadedFilePath = files[key].path;
+                            let fileData = fs.readFileSync(uploadedFilePath);
+                            const cacheDir = path.join(this.ctx.datadir, this.config.cache_path);
+                            const tmpPostDataFilePath = path.join(cacheDir, utils.hashFnUtf8Hex(fileData));
+                            fs.copySync(uploadedFilePath, tmpPostDataFilePath);
+                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
 
-                        let response = { status: 200, data: uploaded.id}
-                        resolve(response);
+                            let response = { status: 200, data: uploaded.id};
+                            resolve(response);
+                        }
+                    } catch(e) {
+                        reject(e);
                     }
                 });
-            })
+            });
             response = await promise;
             return response;
         } // TODO what if its not a multipart/form-data request?
@@ -325,15 +346,19 @@ class ZProxy {
         let body = '';
         let host = request.headers.host;
 
-        if (request.method.toUpperCase() == 'POST') {
+        if (request.method.toUpperCase() === 'POST') {
             let apiPromise = new Promise(async(resolve, reject) => {
-                request.on('data', (chunk) => {
-                    body += chunk;
-                });
-                request.on('end', async () => {
-                    response = await this.console.cmd_api_post(host, cmd, body);
-                    resolve(response);
-                });
+                try {
+                    request.on('data', (chunk) => {
+                        body += chunk;
+                    });
+                    request.on('end', async () => {
+                        response = await this.console.cmd_api_post(host, cmd, body);
+                        resolve(response);
+                    });
+                } catch(e) {
+                    reject(e);
+                }
             });
 
             response = await apiPromise;
@@ -378,6 +403,7 @@ class ZProxy {
                     let zroute_id = await this.getZRouteIdFromDomain(host);
                     if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'Domain not found (Route file not specified for this domain)'); // todo: replace with is_valid_id
 
+                    console.log('ASKING FOR zroute id for domain '+host+' - '+zroute_id);
                     let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
                     if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
 
@@ -399,6 +425,7 @@ class ZProxy {
                     }
                     if (template_filename) {
                         let template_file_id = await rootDir.getFileIdByPath(template_filename);
+                        console.log('ASKING FOR getFileIdByPath '+template_filename+' - '+template_file_id);
                         let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
 
                         let renderer = new Renderer(this.ctx, rootDir);
@@ -445,55 +472,59 @@ class ZProxy {
                 body += chunk;
             });
             request.on('end', async() => {
-                if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
-
-                let parsedUrl;
                 try {
-                    parsedUrl = new URL(request.url, `http://${request.headers.host}`);
-                } catch(e) {
-                    parsedUrl = { pathname: '/error' }; // todo
-                }
-                let key = parsedUrl.pathname.split('/_keyvalue_append/')[1];
-                let currentList = await this.ctx.keyvalue.list(host, key);
-                let newIdx = currentList.length;
-                let newKey = key + newIdx;
+                    if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
 
-                let entries = new URL('http://localhost/?'+body).searchParams.entries();
-                let postData = {};
-                for(let entry of entries){
-                    postData[ entry[0] ] = entry[1];
-                }
-
-                let redirect = request.headers.referer;
-                for(let k in postData) {
-                    let v = postData[k];
-                    if (k === '__redirect') {
-                        redirect = v;
-                        delete postData[k];
-                    } else if (_.startsWith(k, 'storage[')) {
-                        // storage
-                        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                        utils.makeSurePathExists(cache_dir);
-                        const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
-                        fs.writeFileSync(tmpPostDataFilePath, v);
-                        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                        let uploaded_id = uploaded.id;
-                        console.debug('Found storage[x], uploading file '+uploaded_id);
-
-                        delete postData[k];
-                        postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                    let parsedUrl;
+                    try {
+                        parsedUrl = new URL(request.url, `http://${request.headers.host}`);
+                    } catch(e) {
+                        parsedUrl = { pathname: '/error' }; // todo
                     }
+                    let key = parsedUrl.pathname.split('/_keyvalue_append/')[1];
+                    let currentList = await this.ctx.keyvalue.list(host, key);
+                    let newIdx = currentList.length;
+                    let newKey = key + newIdx;
+
+                    let entries = new URL('http://localhost/?'+body).searchParams.entries();
+                    let postData = {};
+                    for(let entry of entries){
+                        postData[ entry[0] ] = entry[1];
+                    }
+
+                    let redirect = request.headers.referer;
+                    for(let k in postData) {
+                        let v = postData[k];
+                        if (k === '__redirect') {
+                            redirect = v;
+                            delete postData[k];
+                        } else if (_.startsWith(k, 'storage[')) {
+                            // storage
+                            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+                            utils.makeSurePathExists(cache_dir);
+                            const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
+                            fs.writeFileSync(tmpPostDataFilePath, v);
+                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                            let uploaded_id = uploaded.id;
+                            console.debug('Found storage[x], uploading file '+uploaded_id);
+
+                            delete postData[k];
+                            postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                        }
+                    }
+
+                    postData.__from = this.ctx.config.client.wallet.account;
+                    postData.__time = Math.floor(Date.now() / 1000);
+                    let data = JSON.stringify(postData);
+
+                    await this.ctx.keyvalue.propagate(host, newKey, data);
+
+                    console.log('Redirecting to '+redirect+'...');
+                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
+                    resolve(redirectHtml);
+                } catch(e) {
+                    reject(e);
                 }
-
-                postData.__from = this.ctx.config.client.wallet.account;
-                postData.__time = Math.floor(Date.now() / 1000);
-                let data = JSON.stringify(postData);
-
-                await this.ctx.keyvalue.propagate(host, newKey, data);
-
-                console.log('Redirecting to '+redirect+'...');
-                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
-                resolve(redirectHtml);
             });
             request.on('error', (e) => {
                 reject('Error:', e);
@@ -508,66 +539,70 @@ class ZProxy {
                 body += chunk;
             });
             request.on('end', async() => {
-                if (request.method.toUpperCase() !== 'POST') return reject('Error: Must be POST');
-
-                let parsedUrl;
                 try {
-                    parsedUrl = new URL(request.url, `http://${request.headers.host}`);
-                } catch(e) {
-                    parsedUrl = { pathname: '/error' }; // todo
-                }
-                let contractAndMethod = parsedUrl.pathname.split('/_contract_send/')[1];
-                let [contractName, methodNameAndParams] = contractAndMethod.split('.');
-                let [methodName, paramsTogether] = methodNameAndParams.split('(');
-                paramsTogether = decodeURI(paramsTogether);
-                paramsTogether = paramsTogether.replace(')', '');
-                let paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
+                    if (request.method.toUpperCase() !== 'POST') return reject('Error: Must be POST');
 
-                let entries = new URL('http://localhost/?'+body).searchParams.entries();
-                let postData = {};
-                for(let entry of entries){
-                    postData[ entry[0] ] = entry[1];
-                }
-
-                let redirect = request.headers.referer;
-
-                for(let k in postData) {
-                    let v = postData[k];
-                    if (k === '__redirect') {
-                        redirect = v;
-                        delete postData[k];
-                    } else if (_.startsWith(k, 'storage[')) {
-                        // storage
-                        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                        utils.makeSurePathExists(cache_dir);
-                        const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
-                        fs.writeFileSync(tmpPostDataFilePath, v);
-                        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                        let uploaded_id = uploaded.id;
-
-                        delete postData[k];
-                        postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                    let parsedUrl;
+                    try {
+                        parsedUrl = new URL(request.url, `http://${request.headers.host}`);
+                    } catch(e) {
+                        parsedUrl = { pathname: '/error' }; // todo
                     }
-                }
+                    let contractAndMethod = parsedUrl.pathname.split('/_contract_send/')[1];
+                    let [contractName, methodNameAndParams] = contractAndMethod.split('.');
+                    let [methodName, paramsTogether] = methodNameAndParams.split('(');
+                    paramsTogether = decodeURI(paramsTogether);
+                    paramsTogether = paramsTogether.replace(')', '');
+                    let paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
 
-                let params = [];
-                for(let paramName of paramNames) {
-                    if (paramName in postData) {
-                        params.push(postData[paramName]);
-                    } else {
-                        return reject('Error: no '+utils.escape(paramName)+' param in the data, but exists as an argument to the contract call.');
+                    let entries = new URL('http://localhost/?'+body).searchParams.entries();
+                    let postData = {};
+                    for(let entry of entries){
+                        postData[ entry[0] ] = entry[1];
                     }
-                }
 
-                try {
-                    await this.ctx.web3bridge.sendToContract(host, contractName, methodName, params);
+                    let redirect = request.headers.referer;
+
+                    for(let k in postData) {
+                        let v = postData[k];
+                        if (k === '__redirect') {
+                            redirect = v;
+                            delete postData[k];
+                        } else if (_.startsWith(k, 'storage[')) {
+                            // storage
+                            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+                            utils.makeSurePathExists(cache_dir);
+                            const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
+                            fs.writeFileSync(tmpPostDataFilePath, v);
+                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                            let uploaded_id = uploaded.id;
+
+                            delete postData[k];
+                            postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                        }
+                    }
+
+                    let params = [];
+                    for(let paramName of paramNames) {
+                        if (paramName in postData) {
+                            params.push(postData[paramName]);
+                        } else {
+                            return reject('Error: no '+utils.escape(paramName)+' param in the data, but exists as an argument to the contract call.');
+                        }
+                    }
+
+                    try {
+                        await this.ctx.web3bridge.sendToContract(host, contractName, methodName, params);
+                    } catch(e) {
+                        reject('Error: ' + e);
+                    }
+
+                    console.log('Redirecting to '+redirect+'...');
+                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
+                    resolve(redirectHtml); // todo: sanitize! don't trust it
                 } catch(e) {
-                    reject('Error: ' + e);
+                    reject(e);
                 }
-
-                console.log('Redirecting to '+redirect+'...');
-                const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
-                resolve(redirectHtml); // todo: sanitize! don't trust it
             });
             request.on('error', (e) => {
                 reject('Error: ' + e);
@@ -579,6 +614,7 @@ class ZProxy {
         const key = '::rootDir';
         const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
         if (!rootDirId) throw Error('getRootDirectoryForDomain failed: key '+key+' returned empty: '+rootDirId);
+        console.log('ASKING FOR getRootDirectoryForDomain '+host+' - '+rootDirId);
         const dirJsonString = await this.ctx.client.storage.readFile(rootDirId, 'utf-8');
         let directory = new Directory(); // todo: cache it, don't download/recreate each time?
         directory.unserialize(dirJsonString);

@@ -21,11 +21,32 @@ class StorageArweave {
         this.queued_requests = {};
         this.uploadingChunksProcessing = {};
 
-        this.__PN_TAG_INTEGRATION_VERSION = 2;
-        this.__PN_TAG_VERSION_KEY = '__pn_integration_version';
-        this.__PN_TAG_VERSION_VALUE = this.__PN_TAG_INTEGRATION_VERSION;
+        this.downloadingTicks = {};
+
+        if (!this.config.arweave_experiment_version_major) throw Error('arweave_experiment_version_major not set or is 0');
+        if (!this.config.arweave_experiment_version_minor) throw Error('arweave_experiment_version_minor not set or is 0');
+        this.__PN_TAG_INTEGRATION_VERSION_MAJOR = ''+this.config.arweave_experiment_version_major;
+        this.__PN_TAG_INTEGRATION_VERSION_MINOR = ''+this.config.arweave_experiment_version_minor;
+        this.__PN_TAG_VERSION_MAJOR_KEY = '__pn_integration_version_major';
+        this.__PN_TAG_VERSION_MAJOR_VALUE = this.__PN_TAG_INTEGRATION_VERSION_MAJOR;
+        this.__PN_TAG_VERSION_MINOR_KEY = '__pn_integration_version_minor';
+        this.__PN_TAG_VERSION_MINOR_VALUE = this.__PN_TAG_INTEGRATION_VERSION_MINOR;
         this.__PN_TAG_CHUNK_ID_KEY = '__pn_chunk_id';
-        this.__PN_TAG_VERSIONED_CHUNK_ID_KEY = '__pn_chunk_'+this.__PN_TAG_INTEGRATION_VERSION+'_id';
+        this.__PN_TAG_VERSIONED_CHUNK_ID_KEY = '__pn_chunk_'+this.__PN_TAG_INTEGRATION_VERSION_MAJOR+'.'+this.__PN_TAG_INTEGRATION_VERSION_MINOR+'_id';
+    }
+
+    downloadingTickOn(chunk_id) {
+        // console.trace();
+        if (this.downloadingTicks[chunk_id] > 0) return false;
+        this.downloadingTicks[chunk_id] = 0;
+        this.downloadingTicks[chunk_id]++;
+        // console.log('on', chunk_id, this.downloadingTicks[chunk_id]);
+        return true;
+    }
+
+    downloadingTickOff(chunk_id) {
+        this.downloadingTicks[chunk_id] = Math.max( this.downloadingTicks[chunk_id]-1, 0 );
+        // console.log('off', chunk_id, this.downloadingTicks[chunk_id]);
     }
 
     getArweaveKey() {
@@ -142,11 +163,15 @@ class StorageArweave {
         const directory_id = await this.enqueueDirectoryForUpload(dirPath, redundancy, expires, autorenew);
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(async() => {
-                let file = await File.findOrFail(directory_id);
-                if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
-                    resolve(file);
-                } else {
-                    waitUntilUpload(resolve, reject);
+                try {
+                    let file = await File.findOrFail(directory_id);
+                    if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
+                        resolve(file);
+                    } else {
+                        waitUntilUpload(resolve, reject);
+                    }
+                } catch(e) {
+                    reject(e);
                 }
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
@@ -165,15 +190,25 @@ class StorageArweave {
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
+        console.log('enqueuing');
         const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
+        console.log('enqueued');
         let waitUntilUpload = (resolve, reject) => {
-            setTimeout(async() => {
-                let file = await File.findOrFail(file_id);
-                if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
-                    resolve(file);
-                } else {
-                    waitUntilUpload(resolve, reject);
-                }
+            setTimeout(() => {
+                (async() => {
+                    try {
+                        let file = await File.findOrFail(file_id);
+                        if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
+                            resolve(file);
+                        } else if (file.ul_status === File.UPLOADING_STATUS_FAILED) {
+                            reject(new Error('putFile: File failed to upload'));
+                        } else {
+                            waitUntilUpload(resolve, reject);
+                        }
+                    } catch(e) {
+                        reject(e);
+                    }
+                })();
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
 
@@ -181,7 +216,9 @@ class StorageArweave {
             this.tick('uploading');
         }, 0);
 
-        return new Promise(waitUntilUpload);
+        const promise = new Promise(waitUntilUpload);
+        const response = await promise;
+        return response;
     }
 
     async enqueueFileForDownload(id, originalPath) {
@@ -211,17 +248,21 @@ class StorageArweave {
 
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
-                let file = await File.findOrFail(id);
-                if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
-                    setTimeout(() => {
-                        this.tick('downloading');
-                    }, 0);
+                try {
+                    let file = await File.findOrFail(id);
+                    if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
+                        setTimeout(() => {
+                            this.tick('downloading');
+                        }, 0);
 
-                    resolve(file);
-                } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
-                    reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
-                } else {
-                    waitUntilRetrieval(resolve, reject);
+                        resolve(file);
+                    } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
+                        reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
+                    } else {
+                        waitUntilRetrieval(resolve, reject);
+                    }
+                } catch(e) {
+                    reject(e);
                 }
             }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
         };
@@ -261,6 +302,7 @@ class StorageArweave {
         // todo:  .put(data, ) returns data_id
         if (mode === 'all' || mode === 'uploading') {
             let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
+            console.log({uploadingChunks});
             uploadingChunks.forEach((chunk) => {
                 setImmediate(async() => { // not waiting, just queueing for execution
                     await this.chunkUploadingTick(chunk);
@@ -346,16 +388,15 @@ class StorageArweave {
 
         if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) return;
 
+        if (! this.downloadingTickOn(chunk.id)) return;
+
         // let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed
 
-        const query = gql`
+        try {
+            const query = gql`
                             {
                                 transactions(
                                     tags: [
-                                        {
-                                            name: "${this.__PN_TAG_VERSION_KEY}",
-                                            values: ["${this.__PN_TAG_VERSION_VALUE}"]
-                                        },
                                         {
                                             name: "${this.__PN_TAG_VERSIONED_CHUNK_ID_KEY}",
                                             values: ["${chunk.id}"]
@@ -374,32 +415,55 @@ class StorageArweave {
                                 }
                             }
         `;
+            const tabs = Math.floor(Math.random() * (Math.ceil(20) - Math.floor(0) + 1) + 0);
+            const ARW_LOG = ' '.repeat(tabs) + 'ARW_LOG ';
+            let ARW_LOG_TIME = Date.now();
+            const ARW_LOG_START = Date.now();
+            let elapsed = () => {
+                let now = Date.now();
+                let ret = ' elapsed from prev: '+((now - ARW_LOG_TIME) / 1000)+', from start: '+((now - ARW_LOG_START) / 1000);
+                ARW_LOG_TIME = now;
+                return ret;
+            };
 
-        const queryResult = await request('https://arweave.net/graphql', query);
+            console.log(ARW_LOG + '  arweave/graphql', chunk.id);
+            const queryResult = await request('https://arweave.net/graphql', query);
+            console.log(ARW_LOG + '  arweave/graphql - DONE', chunk.id, elapsed());
 
-        for(let edge of queryResult.transactions.edges) {
-            const txid = edge.node.id;
+            console.log(ARW_LOG + '  iterations', elapsed());
+            for(let edge of queryResult.transactions.edges) {
+                const txid = edge.node.id;
 
-            // Get the data decoded to a Uint8Array for binary data
-            const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+                // Get the data decoded to a Uint8Array for binary data
+                console.log(ARW_LOG + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
+                const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+                console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
 
-            const buf = Buffer.from(data);
+                const buf = Buffer.from(data);
 
-            if (utils.hashFnHex(buf) === chunk.id) {
-                if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
-                chunk.setData(buf); // todo: what if it errors out?
-                chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
-                await chunk.save();
-                await chunk.reconsiderDownloadingStatus(true);
+                if (utils.hashFnHex(buf) === chunk.id) {
+                    console.log(ARW_LOG + '  WORKED!', chunk.id, {txid}, elapsed());
+                    if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
+                    chunk.setData(buf); // todo: what if it errors out?
+                    chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
+                    await chunk.save();
+                    await chunk.reconsiderDownloadingStatus(true);
 
-                return;
+                    return;
+                }
+                console.log(ARW_LOG + '  NOT WORKED! WRONG CHUNK', chunk.id, utils.hashFnHex(buf), {txid});
             }
+
+            // Not found :(
+            chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
+            await chunk.save();
+            await chunk.reconsiderDownloadingStatus(true);
+        } catch(e) {
+            this.downloadingTickOff(chunk.id);
+            throw e;
         }
 
-        // Not found :(
-        chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
-        await chunk.save();
-        await chunk.reconsiderDownloadingStatus(true);
+        this.downloadingTickOff(chunk.id);
     }
 
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
@@ -420,7 +484,8 @@ class StorageArweave {
 
         // transaction.addTag('keccak256hex', hash);
         // transaction.addTag('pn_experiment', '1');
-        transaction.addTag(this.__PN_TAG_VERSION_KEY, this.__PN_TAG_VERSION_VALUE);
+        transaction.addTag(this.__PN_TAG_VERSION_MAJOR_KEY, this.__PN_TAG_VERSION_MAJOR_VALUE);
+        transaction.addTag(this.__PN_TAG_VERSION_MINOR_KEY, this.__PN_TAG_VERSION_MINOR_VALUE);
         transaction.addTag(this.__PN_TAG_CHUNK_ID_KEY, chunk.id);
         transaction.addTag(this.__PN_TAG_VERSIONED_CHUNK_ID_KEY, chunk.id);
 
@@ -516,6 +581,8 @@ class StorageArweave {
 
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
+        console.log('this.uploadingChunksProcessing['+chunk.id+']', this.uploadingChunksProcessing[chunk.id]);
+
         if (this.uploadingChunksProcessing[chunk.id]) return;
         this.uploadingChunksProcessing[chunk.id] = true;
 
@@ -533,19 +600,33 @@ class StorageArweave {
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
-        console.log({all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
+        console.log({id: chunk.id, all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
 
-        if (additionalCandidatesRequired > 0) {
-            // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
-            let link = StorageLink.build();
-            let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
-            // link.id = DB.generateRandomIdForNewRecord();
-            link.provider_id = provider.id;
-            link.redkey_id = await this.getOrGenerateRedkeyId(provider);
-            link.chunk_id = chunk.id;
-            link.initStateMachine(chunk, this.config.engine);
-            // use storage link state machine to sent CREATE event
-            link.machine.send('CREATE');
+        if (failed.length > 0) {
+            // for some reason this block of code doesn't get used anyway until the next simulation tick, we fail the file long before in the machine
+            /// TODO: This is only specific to arweave! If one link failed, fail the whole chunk upload
+            chunk.ul_status = Chunk.UPLOADING_STATUS_FAILED;
+            await chunk.save();
+            const files = await File.getAllContainingChunkId(chunk.id);
+            for(let file of files) {
+                // todo: normally you would do it through another tick but we'll just fail the whole file
+                file.ul_status = File.UPLOADING_STATUS_FAILED;
+                await file.save();
+            }
+            return;
+        } else {
+            if (additionalCandidatesRequired > 0) {
+                // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
+                let link = StorageLink.build();
+                let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
+                // link.id = DB.generateRandomIdForNewRecord();
+                link.provider_id = provider.id;
+                link.redkey_id = await this.getOrGenerateRedkeyId(provider);
+                link.chunk_id = chunk.id;
+                link.initStateMachine(chunk, this.config.engine);
+                // use storage link state machine to sent CREATE event
+                link.machine.send('CREATE');
+            }
         }
 
         for(let link of all) {

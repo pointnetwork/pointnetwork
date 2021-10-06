@@ -6,7 +6,7 @@ const fs = require('fs');
 let certCache = {};
 
 function getCertificate(servername) {
-    if (!_.endsWith(servername, '.z') && !_.endsWith(servername, '.point')) return null;
+    // if (!_.endsWith(servername, '.z') && !_.endsWith(servername, '.point')) return null;
 
     if (!certCache[servername]) {
         certCache[servername] = generateCertificate(servername);
