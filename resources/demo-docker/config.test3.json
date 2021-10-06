@@ -5,7 +5,7 @@
   "network": {
     "communication_external_host": "website_visitor",
     "bootstrap_nodes": [
-      "http://website_owner:9685/"
+      "http://storage_provider:9685/"
     ]
   },
   "client": {
