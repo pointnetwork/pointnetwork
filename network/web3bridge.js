@@ -106,7 +106,7 @@ class Web3Bridge {
             let result = await contract.methods[ method ]( ...params ).call();
             return result;
         } catch(e) {
-            this.ctx.log.error('callContract Error', {target, contractName, method, params});
+            this.ctx.log.error('callContract Error ' + JSON.stringify({target, contractName, method, params}));
             throw e;
         }
     }

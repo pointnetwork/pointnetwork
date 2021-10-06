@@ -6,13 +6,17 @@ const Sequelize = require('sequelize');
 const _ = require('lodash');
 const utils = require('#utils');
 let Chunk;
+let FileMap;
 
 class File extends Model {
+    CHUNKINFO_PROLOGUE = "PN^CHUNK\x05$\x06z\xf5*INFO"; // A very unlikely combination. In your probability reasoning, note that it must appear strictly at the beginning, not randomly
+
     constructor(...args) {
         super(...args);
 
         // This is to avoid circular dependencies:
         Chunk = require('./chunk');
+        FileMap = require('./file_map');
 
         this._merkleTree = null;
         this._fileHash = null; // todo: remove
@@ -20,9 +24,28 @@ class File extends Model {
 
     getAllChunkIds() {
         if (! this.chunkIds) {
+            console.log({file:this});
+            console.trace();
             throw Error('You need to chunkify the file first before calculating a merkle tree');
         }
         return [...this.chunkIds, this.id];
+    }
+
+    static async getAllContainingChunkId(chunk_id) {
+        const maps = await FileMap.allBy('chunk_id', chunk_id);
+        let file_ids = [];
+        for(let map of maps) {
+            file_ids.push(map.file_id);
+        }
+        file_ids = _.uniq(file_ids);
+        console.log({file_ids});
+
+        let files = [];
+        for(let file_id of file_ids) {
+            files.push(await File.findOrFail(file_id));
+        }
+
+        return files;
     }
 
     getMerkleHash() {
@@ -58,7 +81,11 @@ class File extends Model {
             chunkInfo = chunkInfo.toString();
         }
 
-        let {type, hash, chunks, filesize, merkle} = JSON.parse(chunkInfo); // todo: rename hash to hash-algo or something, confusing
+        if (! _.startsWith(chunkInfo, this.CHUNKINFO_PROLOGUE)) {
+            throw Error('File.setChunkInfo: data does not start with a known chunkinfo_prologue');
+        }
+
+        let {type, hash, chunks, filesize, merkle} = JSON.parse(chunkInfo.substr(this.CHUNKINFO_PROLOGUE.length)); // todo: rename hash to hash-algo or something, confusing
 
         if (type !== 'file') {
             throw Error('main chunk is not of type "file"');
@@ -86,6 +113,8 @@ class File extends Model {
 
         let temporaryFile = '/tmp/_point_tmp_'+Math.random().toString().replace('.', ''); // todo;
         let fd = fs.openSync(temporaryFile, 'a');
+
+        console.log('DUMP_TO_DISK_FROM_CHUNKS', this.id, this.chunkIds);
 
         for(let chunkId of this.chunkIds) {
             let chunk = await Chunk.findOrFail(chunkId);
@@ -144,6 +173,11 @@ class File extends Model {
             if (chunk.isUploading()) {
                 chunks_uploading++; // todo: replace with needs_uploading and break;
             }
+
+            console.dir({chunk, chunks, chunks_uploading}, {depth: 3});
+            for(let i in chunks) {
+                console.log(i, chunks[i].dataValues);
+            }
         }));
 
         // let percentage = chunks_uploading / chunks.length;
@@ -172,7 +206,22 @@ class File extends Model {
             return;
         } // else chunk info downloaded
 
-        if (! this.chunkIds) {
+        if (! this.chunkIds || this.chunkIds.length === 0) {
+            let chunkInfoBuf = chunkinfo_chunk.getData();
+            if (! chunkInfoBuf.slice(0, this.CHUNKINFO_PROLOGUE.length).equals(Buffer.from(this.CHUNKINFO_PROLOGUE))) {
+                // doesn't contain chunkinfo prologue at the beginning
+                // whatever we've got in the chunkinfo chunk IS the whole file
+                this.size = Buffer.byteLength(chunkInfoBuf);
+                this.chunkIds = [ this.id ];
+                await this.save();
+
+                await this.dumpToDiskFromChunks();
+
+                await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADED);
+                return;
+            }
+
+            // else set chunk info and continue
             this.setChunkInfo(chunkinfo_chunk.getData().toString('utf-8'));
             await this.save();
         }
@@ -209,6 +258,7 @@ class File extends Model {
         } else {
             let current_status = this.dl_status;
             if (current_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
+                console.dir({_this:this}, {depth: 2});
                 await this.dumpToDiskFromChunks();
             }
             await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADED);
@@ -250,102 +300,152 @@ class File extends Model {
             const size = this.getFileSize();
             const totalChunks = Math.ceil(size / CHUNK_SIZE_BYTES);
 
+            if (totalChunks === 1) { // todo: don't forget that prologue increases the size, sometimes over the chunk_size_bytes boundary
+                // Only one chunk. Don't chunkify it or try to create chunkinfo chunk
+
+                let contents = fs.readFileSync(this.original_path, {encoding: null}); // buffer
+                let contents_id = Chunk.forceSaveToDisk(contents);
+                this.chunkIds = [ contents_id ];
+                this.id = contents_id;
+
+                // todo: this block of code repeats, compress
+                const alreadyExistingFile = await File.findByPk(this.id); // todo: use findOrCreate with locking
+                if (alreadyExistingFile) {
+                    // A file with this id already exists! This changes everything
+                    // TODO: figure out how to merge redundancy, expires, autorenew etc.
+                    if (alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADING &&
+                        alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADED)
+                    {
+                        alreadyExistingFile.chunkIds = [ contents_id ]; // todo: this is a hack, because it was null for some reason here, but check if this is not dangerous
+                        alreadyExistingFile.size = Buffer.byteLength(contents); // todo: this is a hack, because it was null for some reason here, but check if this is not dangerous
+                        await alreadyExistingFile.save();
+                        alreadyExistingFile.ul_status = File.UPLOADING_STATUS_UPLOADING;
+                        await alreadyExistingFile.changeULStatusOnAllChunks(Chunk.UPLOADING_STATUS_UPLOADING);
+                        await alreadyExistingFile.save();
+                    }
+                } else {
+                    await this.save();
+                }
+
+                let chunk = await Chunk.findOrCreate(contents_id);
+                chunk.size = Buffer.byteLength(contents);
+                chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
+                chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
+                chunk.redundancy = this.redundancy;
+                chunk.expires = this.expires;
+                chunk.autorenew = this.autorenew;
+                await chunk.save();
+                await chunk.addBelongsToFile(this, -1);
+
+                console.log({chunk});
+
+                return this.chunkIds;
+            }
+
+            // else: more than 1 chunk
+            
             return new Promise((resolve, reject) => {
-                let chunkIds = [];
-                let currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
-                let currentChunkLength = 0;
-                let chunkId = null;
+                try {
+                    let chunkIds = [];
+                    let currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
+                    let currentChunkLength = 0;
+                    let chunkId = null;
 
-                fs.createReadStream(this.original_path)
-                    .on('data', (buf) => {
-                        let bufCopied = 0;
+                    fs.createReadStream(this.original_path)
+                        .on('data', (buf) => {
+                            let bufCopied = 0;
 
-                        while (currentChunkLength + buf.length - bufCopied >= CHUNK_SIZE_BYTES) {
-                            let copyLength = CHUNK_SIZE_BYTES - currentChunkLength;
-                            buf.copy(currentChunk, currentChunkLength, bufCopied, bufCopied + copyLength);
-                            bufCopied += copyLength;
-                            currentChunkLength += copyLength;
-                            chunkId = Chunk.forceSaveToDisk(currentChunk);
-                            chunkIds.push(chunkId);
-                            currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
-                            currentChunkLength = 0;
-                        }
+                            while (currentChunkLength + buf.length - bufCopied >= CHUNK_SIZE_BYTES) {
+                                let copyLength = CHUNK_SIZE_BYTES - currentChunkLength;
+                                buf.copy(currentChunk, currentChunkLength, bufCopied, bufCopied + copyLength);
+                                bufCopied += copyLength;
+                                currentChunkLength += copyLength;
+                                chunkId = Chunk.forceSaveToDisk(currentChunk);
+                                chunkIds.push(chunkId);
+                                currentChunk = Buffer.alloc(CHUNK_SIZE_BYTES);
+                                currentChunkLength = 0;
+                            }
 
-                        buf.copy(currentChunk, currentChunkLength, bufCopied, buf.length);
-                        currentChunkLength += (buf.length-bufCopied);
-                    })
-                    .on('end', () => {
-                        if (currentChunkLength !== 0) {
-                            currentChunk = currentChunk.slice(0, currentChunkLength);
-                            chunkId = Chunk.forceSaveToDisk(currentChunk);
-                            chunkIds.push(chunkId);
-                        }
+                            buf.copy(currentChunk, currentChunkLength, bufCopied, buf.length);
+                            currentChunkLength += (buf.length-bufCopied);
+                        })
+                        .on('end', () => {
+                            // ...And the final one
+                            if (currentChunkLength !== 0) {
+                                currentChunk = currentChunk.slice(0, currentChunkLength);
+                                chunkId = Chunk.forceSaveToDisk(currentChunk);
+                                chunkIds.push(chunkId);
+                            }
 
-                        if (chunkIds.length !== totalChunks) {
-                            return reject('Something went wrong, totalChunks '+totalChunks+' didn\'t match chunks.length '+chunkIds.length);
-                        }
+                            if (chunkIds.length !== totalChunks) {
+                                return reject('Something went wrong, totalChunks '+totalChunks+' didn\'t match chunks.length '+chunkIds.length);
+                            }
 
-                        this.chunkIds = chunkIds;
+                            this.chunkIds = chunkIds;
 
-                        (async() => {
-                            let merkleTree = await this.getMerkleTree();
-                            let chunkInfoContents = JSON.stringify({
-                                type: 'file',
-                                chunks: chunkIds,
-                                hash: 'keccak256',
-                                filesize: this.getFileSize(),
-                                merkle: merkleTree.map(x => x.toString('hex')),
-                            });
+                            (async() => {
+                                let merkleTree = await this.getMerkleTree();
+                                let chunkInfoContents = this.CHUNKINFO_PROLOGUE + JSON.stringify({
+                                    type: 'file',
+                                    chunks: chunkIds,
+                                    hash: 'keccak256',
+                                    filesize: this.getFileSize(),
+                                    merkle: merkleTree.map(x => x.toString('hex')),
+                                });
 
-                            let chunkInfoContentsBuffer = Buffer.from(chunkInfoContents, 'utf-8');  // todo: sure it's utf8? buffer uses utf8 by default anyway when casting. but what about utf16?
-                            let chunkInfo = await Chunk.findOrCreateByData(chunkInfoContentsBuffer);
-                            this.id = chunkInfo.id;
-                            const alreadyExistingFile = await File.findByPk(this.id); // todo: use findOrCreate with locking
-                            if (alreadyExistingFile) {
-                                // A file with this id already exists! This changes everything
-                                // TODO: figure out how to merge redundancy, expires, autorenew etc.
-                                if (alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADING &&
-                                    alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADED)
-                                {
-                                    alreadyExistingFile.ul_status = File.UPLOADING_STATUS_UPLOADING;
-                                    await alreadyExistingFile.changeULStatusOnAllChunks(Chunk.UPLOADING_STATUS_UPLOADING);
-                                    await alreadyExistingFile.save();
+                                let chunkInfoContentsBuffer = Buffer.from(chunkInfoContents, 'utf-8');  // todo: sure it's utf8? buffer uses utf8 by default anyway when casting. but what about utf16?
+                                let chunkInfo = await Chunk.findOrCreateByData(chunkInfoContentsBuffer);
+                                this.id = chunkInfo.id;
+                                const alreadyExistingFile = await File.findByPk(this.id); // todo: use findOrCreate with locking
+                                if (alreadyExistingFile) {
+                                    // A file with this id already exists! This changes everything
+                                    // TODO: figure out how to merge redundancy, expires, autorenew etc.
+                                    if (alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADING &&
+                                        alreadyExistingFile.ul_status !== File.UPLOADING_STATUS_UPLOADED)
+                                    {
+                                        alreadyExistingFile.ul_status = File.UPLOADING_STATUS_UPLOADING;
+                                        await alreadyExistingFile.changeULStatusOnAllChunks(Chunk.UPLOADING_STATUS_UPLOADING);
+                                        await alreadyExistingFile.save();
+                                    }
+                                } else {
+                                    await this.save();
                                 }
-                            } else {
-                                await this.save();
-                            }
 
-                            chunkInfo.size = Buffer.byteLength(chunkInfoContentsBuffer);
-                            chunkInfo.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
-                            chunkInfo.redundancy = this.redundancy;
-                            chunkInfo.expires = this.expires;
-                            chunkInfo.autorenew = this.autorenew;
-                            chunkInfo.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
-                            await chunkInfo.save();
-                            await chunkInfo.addBelongsToFile(this, -1);
+                                chunkInfo.size = Buffer.byteLength(chunkInfoContentsBuffer);
+                                chunkInfo.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
+                                chunkInfo.redundancy = this.redundancy;
+                                chunkInfo.expires = this.expires;
+                                chunkInfo.autorenew = this.autorenew;
+                                chunkInfo.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
+                                await chunkInfo.save();
+                                await chunkInfo.addBelongsToFile(this, -1);
 
-                            for (let i in chunkIds) {
-                                let chunkId = chunkIds[i];
+                                for (let i in chunkIds) {
+                                    let chunkId = chunkIds[i];
 
-                                // no await needed, let them be free
-                                (async (i, chunkId) => {
-                                    let chunk = await Chunk.findOrCreate(chunkId); // todo: use with locking
-                                    let offset = i * CHUNK_SIZE_BYTES;
-                                    chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
-                                    chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
-                                    chunk.size = chunk.getSize();
-                                    chunk.redundancy = this.redundancy;
-                                    chunk.expires = this.expires;
-                                    chunk.autorenew = this.autorenew;
-                                    await chunk.save();
-                                    await chunk.addBelongsToFile(this, offset);
-                                })(i, chunkId).then(nothing => {});
-                            }
+                                    // no await needed, let them be free
+                                    (async (i, chunkId) => {
+                                        let chunk = await Chunk.findOrCreate(chunkId); // todo: use with locking
+                                        let offset = i * CHUNK_SIZE_BYTES;
+                                        chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
+                                        chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
+                                        chunk.size = chunk.getSize();
+                                        chunk.redundancy = this.redundancy;
+                                        chunk.expires = this.expires;
+                                        chunk.autorenew = this.autorenew;
+                                        await chunk.save();
+                                        await chunk.addBelongsToFile(this, offset);
+                                    })(i, chunkId).then(nothing => {
+                                    });
+                                }
 
-                            resolve(this.chunkIds);
-                        })();
-                    })
-                    .on('error', reject);
+                                resolve(this.chunkIds);
+                            })();
+                        })
+                        .on('error', reject);
+                } catch(e) {
+                    reject(e);
+                }
             });
         } else {
             return this.chunkIds;
@@ -370,6 +470,7 @@ class File extends Model {
 
 File.UPLOADING_STATUS_CREATED = 'us0';
 File.UPLOADING_STATUS_UPLOADING = 'us1';
+File.UPLOADING_STATUS_FAILED = 'us2';
 File.UPLOADING_STATUS_UPLOADED = 'us99';
 File.DOWNLOADING_STATUS_CREATED = 'ds0';
 File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO = 'ds1';

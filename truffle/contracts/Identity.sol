@@ -32,18 +32,29 @@ contract Identity {
         _selfReg('profile', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
         _selfReg('twitter', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
         _selfReg('store', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('pointsocial', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
         _selfReg('explorer', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
         _selfReg('zengarden', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
+        _selfReg('template', 0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB, PubKey64({part1: 0x5befb2b9737edb839afde5ded2b8187aa17f640c5a953f726242d50cc3b18a22, part2: 0x8cf4b8a2e249f236fc50362194dd524d25f458e9fcf3a70ce36904ab85316f56}));
 
         _selfReg('node3', 0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8, PubKey64({part1: 0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2, part2: 0xaeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34}));
     }
 
     function _selfReg(string memory handle, address owner, PubKey64 memory commPublicKey) internal {
+        // Attach this identity to the owner address
         identityToOwner[handle] = owner;
         ownerToIdentity[owner] = handle;
+
+        // Attach public key for communication
         identityToCommPublicKey[handle] = commPublicKey;
+
+        // Add canonical version
         lowercaseToCanonicalIdentities[_toLower(handle)] = handle;
+
+        // Add the handle to identity list so that it can be iterated over
         identityList.push(handle);
+
+        emit IdentityRegistered(handle, owner, commPublicKey);
     }
 
     function register(string memory handle, address identityOwner, PubKey64 memory commPublicKey) public {
@@ -56,20 +67,7 @@ contract Identity {
         // Check if this owner already has an identity attached
         if (!_isEmptyString(ownerToIdentity[identityOwner])) revert('This owner already has an identity attached');
 
-        // Attach this identity to the owner address
-        identityToOwner[handle] = identityOwner;
-        ownerToIdentity[identityOwner] = handle;
-
-        // Attach public key for communication
-        identityToCommPublicKey[handle] = commPublicKey;
-
-        // Add canonical version
-        lowercaseToCanonicalIdentities[lowercase] = handle;
-
-        // Add the handle to identity list so that it can be iterated over
-        identityList.push(handle);
-
-        emit IdentityRegistered(handle, identityOwner, commPublicKey);
+        _selfReg(handle, identityOwner, commPublicKey);
     }
 
     function canonical(string memory anyCase) public view returns (string memory canonicalCase) {

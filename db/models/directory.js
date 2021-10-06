@@ -30,6 +30,7 @@ class Directory {
                 } else if (f.type === 'dirptr') {
                     if (! f.downloaded) {
                         let subdir = new Directory();
+                        console.log('ASKING FOR Directory.getFileIdByPath ',{filePath, subdir}, 'f.id', f.id);
                         subdir.unserialize(await this.ctx.client.storage.readFile(f.id, 'utf-8')); // dir spec is always in utf-8
                         f.downloaded = true;
                         f.dirObj = subdir;
@@ -45,6 +46,7 @@ class Directory {
 
     async readFileByPath(filePath, encoding = 'utf-8') {
         let id = await this.getFileIdByPath(filePath);
+        console.log('ASKING FOR Directory.readFileByPath ',{filePath}, id);
         return await this.ctx.client.storage.readFile(id, encoding);
     }
 

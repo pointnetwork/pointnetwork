@@ -576,7 +576,7 @@ class Storage {
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
-        console.log({all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
+        console.log({id: chunk.id, all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
 
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
@@ -586,7 +586,7 @@ class Storage {
             link.provider_id = provider.id;
             link.redkey_id = await this.getOrGenerateRedkeyId(provider);
             link.chunk_id = chunk.id;
-            link.initStateMachine(chunk);
+            link.initStateMachine(chunk, this.config.engine);
             // use storage link state machine to sent CREATE event
             link.machine.send('CREATE');
         }

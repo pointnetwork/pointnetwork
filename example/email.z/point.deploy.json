@@ -3,6 +3,6 @@
   "target": "email.z",
   "keyvalue": {},
   "contracts": [
-    "Email"
+    "PointEmail"
   ]
 }

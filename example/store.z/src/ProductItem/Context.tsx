@@ -36,8 +36,11 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
 
         try {
             // @ts-ignore
-            const response = await window.point.storage.get({ id: metadata, encoding: 'utf-8' });
+            const response = await window.point.storage.getString({ id: metadata, encoding: 'utf-8' });
+            // @ts-ignore
+            const responseOwnership = await window.point.contract.call({contract: 'Store', method: 'getProductByTokenId', params: [productId]})
             const { data: product } = response;
+            const { data: productOwnership } = responseOwnership;
 
             if (!product) {
                 console.error('Incorrect product response:', response);
@@ -46,7 +49,7 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
 
             const { name, description, price } = JSON.parse(product);
 
-            setProduct({ productId, name, description, price, owner });
+            setProduct({ productId, name, description, price, owner: productOwnership[4]});
         } catch (e) {
             console.error('Failed to load product:', data, e);
             setProductError(e);

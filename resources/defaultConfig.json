@@ -32,13 +32,16 @@
   },
   "client": {
     "storage": {
+      "engine": "normal",
       "cache_path": "data/client_storage_cache",
       "storage_provider_cache": "data/storage_provider_cache.json",
       "default_redundancy": 1,
       "default_expires_period_seconds": 86400,
       "default_autorenew": true,
       "request_timeout_seconds": 60,
-      "retransmit_segments_timeout_seconds": 30
+      "retransmit_segments_timeout_seconds": 30,
+      "arweave_experiment_version_major": 1,
+      "arweave_experiment_version_minor": 7
     },
     "zproxy": {
       "port": 8666,

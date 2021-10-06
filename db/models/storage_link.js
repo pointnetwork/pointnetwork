@@ -11,8 +11,14 @@ class StorageLink extends Model {
         super(...args);
     }
 
-    initStateMachine(chunk) {
+    initStateMachine(chunk, engine = '') {
         // create a state machine using the factory
+        let storageLinkMachine;
+        if (engine === 'arweave') {
+            storageLinkMachine = require('../../client/storage/machines/storage_link_machine_arweave');
+        } else {
+            storageLinkMachine = require('../../client/storage/machines').storageLinkMachine;
+        }
         this._stateMachine = storageLinkMachine.createStateMachine(this, chunk);
 
         this._storageLinkService = interpret(this._stateMachine);//.onTransition(state => console.log(`Current State: ${state.value}`))
@@ -124,6 +130,3 @@ StorageLink.allStatuses = () => {
 };
 
 module.exports = StorageLink;
-
-// require statement declared after module.exports to avoid circular dependencies
-const { storageLinkMachine } = require('../../client/storage/machines');

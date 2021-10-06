@@ -1,0 +1,22 @@
+footer {
+    margin-top: 30px;
+    text-align: center;
+    vertical-align: center;
+}
+
+.footerContainer{
+    background-color: #1877f2;
+    height: 35px;
+    width: 100%;
+    color: white;
+}
+
+.footerContainer span{
+    margin: 0;
+    position: relative;
+    top: 30%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    text-align: center;
+    cursor: pointer;
+}

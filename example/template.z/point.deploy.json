@@ -1,0 +1,8 @@
+{
+    "version": 1,
+    "target": "template.z",
+    "keyvalue": {},
+    "contracts": [
+      "Template"
+    ]
+  }

@@ -49,7 +49,13 @@ const targetUrl = `${protocol}//localhost:${config.network.communication_port}/#
 const target = kadence.utils.parseContactURL(targetUrl);
 const checkHealth = async () => {
     try {
-        console.info({listen: await new Promise((resolve) => node.listen(tempPort, resolve))});
+        console.info({listen: await new Promise((resolve, reject) => {
+            try {
+                node.listen(tempPort, resolve);
+            } catch(e) {
+                reject(e);
+            }
+        } )});
         console.info({ping: await node.ping(target)});
         console.info({close: await node.send('DISCONNECT', [], target)});
         process.exit(0);
