@@ -23,7 +23,7 @@ const DB = require('./db');
 const program = new Command();
 
 // Disable https://nextjs.org/telemetry
-process.env['NEXT_TELEMETRY_DISABLED'] = '1'
+process.env['NEXT_TELEMETRY_DISABLED'] = '1';
 
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
@@ -104,10 +104,11 @@ const logFilePath = path.join(ctx.datadir, 'point.log');
 
 const level = pino.levels.values[ ctx.config.log.level ];
 const formatters = {
-  level: (label) => {
-    return { level: label };
-  },
-}
+    level: (label) => {
+        return { level: label };
+    },
+};
+
 const options = {
     enabled: ctx.config.log.enabled,
     formatters,
@@ -159,11 +160,13 @@ if (program.makemigration) {
 }
 if (program.migrate) {
     const seq_cmd = (program.migrate_undo) ? 'db:migrate:undo' : 'db:migrate';
-    exec(`npx sequelize-cli ${seq_cmd} --env ${process.env.DB_ENV || ctx.config.db.database}`, (error, stdout, stderr) => {
-        if (error) return console.log(`error: ${error.message}`);
-        if (stderr) return console.log(`stderr: ${stderr}`);
-        console.log(`${stdout}`);
-    });
+    exec(`npx sequelize-cli ${seq_cmd} --config resources/sequelizeConfig.json --env ${process.env.DB_ENV || ctx.config.db.database}`,
+        (error, stdout, stderr) => {
+            if (error) return console.log(`error: ${error.message}`);
+            if (stderr) return console.log(`stderr: ${stderr}`);
+            console.log(`${stdout}`);
+        }
+    );
     return;
 }
 
@@ -265,10 +268,10 @@ process.on('unhandledRejection', (err, second) => {
 ctx.db = new DB(ctx);
 setImmediate(async() => {
     await ctx.db.init();
-})
+});
 
 // ------------------- Start Point ------------------- //
 
 const Point = require('./core');
-point = new Point(ctx);
+const point = new Point(ctx);
 point.start();
