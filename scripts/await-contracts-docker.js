@@ -28,9 +28,13 @@ const {
 config.network = {
     ...config.network,
     web3: `http://${BLOCKCHAIN_HOST}:${BLOCKCHAIN_PORT}${BLOCKCHAIN_PATH ? `/${BLOCKCHAIN_PATH}` : ``}`,
+    communication_external_host: process.env.POINT_NODE_PUBLIC_HOSTNAME || undefined,
+    bootstrap_nodes: process.env.POINT_NODE_BOOTSTRAP_NODES || [],
     identity_contract_address: contractAddresses.Identity,
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 };
+
+config.service_provider.enabled = process.env.POINT_NODE_STORAGE_PROVIDER_ENABLED ? true : false;
 
 if (process.env.BLOCKCHAIN_NETWORK_ID) {
     config.network.web3_network_id = process.env.BLOCKCHAIN_NETWORK_ID;

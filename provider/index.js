@@ -16,7 +16,7 @@ class Provider {
 
     async start() {
         // If storage provider functionality is not enabled, why are we even here?
-        if (!this.ctx.config.service_provider.enabled && !process.env.POINT_NODE_STORAGE_PROVIDER_ENABLED) return;
+        if (!this.ctx.config.service_provider.enabled) return;
 
         await this.init();
 
@@ -39,7 +39,7 @@ class Provider {
 
         this.connectNode(this.node);
 
-        if (this.ctx.config.service_provider.enabled || process.env.POINT_NODE_STORAGE_PROVIDER_ENABLED) {
+        if (this.ctx.config.service_provider.enabled) {
             this.id = this.ctx.wallet.getNetworkAccount().replace('0x','').toLowerCase();
 
             await this.announce();
@@ -51,7 +51,7 @@ class Provider {
     }
 
     getConnectionString() {
-        const hostname = this.ctx.config.network.communication_external_host || process.env.POINT_NODE_PUBLIC_HOSTNAME;
+        const hostname = this.ctx.config.network.communication_external_host;
         return `http://${hostname}:${this.ctx.config.network.communication_port}/#${this.id}`;
     }
 

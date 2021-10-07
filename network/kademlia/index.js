@@ -35,7 +35,7 @@ class Kademlia {
 
         // Initialize public contact data
         const contact = {
-            hostname: this.config.communication_external_host || process.env.POINT_NODE_PUBLIC_HOSTNAME,
+            hostname: this.config.communication_external_host,
             protocol: parseInt(this.config.ssl_enabled) ? 'https:' : 'http:',
             port: parseInt(this.config.communication_port),
             agent: kadence.version.protocol // todo: versioning
@@ -102,7 +102,7 @@ class Kademlia {
 
         node.rolodex = node.plugin(kadence.rolodex(path.join(this.ctx.datadir, this.config.peer_cache_file_path)));
 
-        if (this.ctx.config.service_provider.enabled || process.env.POINT_NODE_STORAGE_PROVIDER_ENABLED) {
+        if (this.ctx.config.service_provider.enabled) {
             node.storage_provider = node.plugin(StorageProviderPlugin(this.ctx, networkPublicKey, networkPrivateKey, {}));
         }
 

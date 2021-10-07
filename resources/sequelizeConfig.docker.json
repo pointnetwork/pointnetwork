@@ -2,7 +2,7 @@
   "development": {
     "username": "pointuser",
     "password": "pointpassword",
-    "database": "point_dev",
+    "database": "point",
     "host": "pointnetwork_database",
     "port": "5432",
     "dialect": "postgres"

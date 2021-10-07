@@ -16,9 +16,9 @@ services:
       - ./scripts/await-contracts-docker.js:/app/scripts/await-contracts-docker.js:ro
       - ./package.json:/app/package.json:ro
     ports:
-      - '12345:9685'
-      - '65500:8666'
-      - '24680:2468'
+      - '9685:9685'
+      - '8666:8666'
+      - '2468:2468'
     environment:
       DATADIR: /data
       DB_ENV: production
