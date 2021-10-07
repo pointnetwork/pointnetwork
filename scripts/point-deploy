@@ -4,17 +4,21 @@
 
 POINTNETWORK_DEPLOYSPACE="$HOME/.point/src/pointnetwork/deployspace"
 
+# Validate current director contains both point.deploy.json and routes.json files and a public folder
+[ ! -f point.deploy.json ] && { echo "point.deploy.json file does not exist. Aborting deployment."; exit 1; }
+[ ! -f routes.json ] && { echo "routes.json file does not exist. Aborting deployment."; exit 1; }
+[ ! -d ./public ] && { echo "./public folder does not exist. Aborting deployment."; exit 1; }
+
 echo "copying files to deployspace...(please wait)"
 
-# Delete everything in deployspace first (keeping the README file)
-cp $POINTNETWORK_DEPLOYSPACE/README.md /tmp/.
+# Ensure the deployspace folder is empty
 rm -r $POINTNETWORK_DEPLOYSPACE/*
 
 # Copy current Zapp folder to deployspace
 cp -r * $POINTNETWORK_DEPLOYSPACE
 
-# Move the original README.md file back
-mv /tmp/README.md $POINTNETWORK_DEPLOYSPACE/.
-
 # Execute the deployspace script from inside the website owner container
 docker exec -it pointnetwork_website_owner /app/scripts/deploy-from-deployspace.sh
+
+# Finally, clean up and delete everything in deployspace
+rm -r $POINTNETWORK_DEPLOYSPACE/*

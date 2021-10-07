@@ -1,6 +1,6 @@
 # Deployspace Folder
 
-This folder should be kept empty (except for this README). It is used by the [./point-deploy](../scripts/point-deploy) script.
+The deployspace folder should be kept empty. It is used by the [./point-deploy](../scripts/point-deploy) script.
 
 ## Getting Started
 
