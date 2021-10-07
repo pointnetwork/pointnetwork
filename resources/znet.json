@@ -1,0 +1,17 @@
+{
+  "api": {
+    "address": "0.0.0.0"
+  },
+  "network": {},
+  "client": {
+    "zproxy": {
+      "host": "0.0.0.0"
+    },
+    "wallet": {
+      "id": "58225300-cf00-494a-be15-8a15e42d3758",
+      "passcode": "BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9",
+      "account": "0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB",
+      "privateKey": "8c8d57550b7f0d0d9410d842f3a9188d316e85a28daab498231e7577e863c643"
+    }
+  }
+}

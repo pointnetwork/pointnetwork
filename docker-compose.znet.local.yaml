@@ -69,7 +69,7 @@ services:
       - .env.znet
 
   storage_provider:
-    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_storage_provider
     depends_on:
       database:
@@ -101,7 +101,7 @@ services:
       DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
 
   website_owner:
-    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_website_owner
     depends_on:
       database:
@@ -127,6 +127,9 @@ services:
     environment:
       DATADIR: /data
       DB_ENV: pointnode2
+      POINT_NODE_PUBLIC_HOSTNAME: $POINT_NODE_PUBLIC_HOSTNAME
+      POINT_NODE_BOOTSTRAP_NODES: $POINT_NODE_BOOTSTRAP_NODES
+      POINT_NODE_STORAGE_PROVIDER_ENABLED: $POINT_NODE_STORAGE_PROVIDER_ENABLED
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
       BLOCKCHAIN_PATH: $BLOCKCHAIN_PATH
@@ -134,7 +137,7 @@ services:
       DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
 
   website_visitor:
-    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_website_visitor
     depends_on:
       database:

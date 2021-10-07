@@ -56,7 +56,7 @@ services:
       DEPLOYER_BUILD_PATH: /build
 
   storage_provider:
-    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_storage_provider
     healthcheck:
       test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
@@ -86,7 +86,7 @@ services:
       DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
 
   website_owner:
-    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_website_owner
     healthcheck:
       test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
@@ -119,7 +119,7 @@ services:
       DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
 
   website_visitor:
-    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_website_visitor
     healthcheck:
       test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping

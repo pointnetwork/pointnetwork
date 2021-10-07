@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  point_node:
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
+    container_name: point_node
+    depends_on:
+      database:
+        condition: service_healthy
+    entrypoint: 'npm'
+    command: 'run start:docker'
+    volumes:
+      - point_node_data:/data:rw
+      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+      - ./scripts/await-contracts-docker.js:/app/scripts/await-contracts-docker.js:ro
+      - ./package.json:/app/package.json:ro
+    ports:
+      - '12345:9685'
+      - '65500:8666'
+      - '24680:2468'
+    environment:
+      DATADIR: /data
+      DB_ENV: production
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_NAME
+      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
+      BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
+      BLOCKCHAIN_PATH: $BLOCKCHAIN_PATH
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      CONTRACT_ADDRESS_MIGRATIONS: $CONTRACT_ADDRESS_MIGRATIONS
+      CONTRACT_ADDRESS_IDENTITY: $CONTRACT_ADDRESS_IDENTITY
+      CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY: $CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY
+
+  database:
+    image: postgres:13.4
+    container_name: pointnetwork_database
+    healthcheck:
+      test: pg_isready -U $DB_USERNAME
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    environment:
+      DATABASE: $DB_NAME
+      POSTGRES_DB: $DB_USERNAME
+      POSTGRES_USER: $DB_USERNAME
+      POSTGRES_PASSWORD: $DB_PASSWORD
+    volumes:
+      - database_data:/var/lib/postgresql/data/
+      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+
+volumes:
+  point_node_data:
+  database_data:

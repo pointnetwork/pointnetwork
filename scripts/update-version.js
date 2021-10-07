@@ -17,7 +17,7 @@ if (!/^\d+\.\d+\.\d+$/.test (version)) {
     );
 }
 
-const varName = 'POINTNETWORK_NODE_VERSION';
+const varName = 'POINT_NODE_VERSION';
 const envFile = '.env';
 const envPath = require ('path').resolve (__dirname, '..', envFile);
 const { execSync } = require ('child_process');

@@ -5,56 +5,19 @@ const Web3 = require('web3');
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
 const templateConfig = '/nodeConfig.json';
 const targetConfig = '/data/config.json';
-const contractBuildDir = '/app/truffle/build/contracts';
 const contractAddresses = {
-    Identity: undefined,
-    Migrations: undefined,
-    StorageProviderRegistry: undefined
+    Identity: process.env.CONTRACT_ADDRESS_IDENTITY,
+    Migrations: process.env.CONTRACT_ADDRESS_MIGRATIONS,
+    StorageProviderRegistry: process.env.CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY,
 };
 
 const lockfiles = ['/data/point.pid', '/data/data/db/LOCK'];
 
 for (const lockfile of lockfiles) if (existsSync(lockfile)) unlinkSync(lockfile);
 
-const sleepSync = time => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, time);
-const contractNames = new Set(Object.keys(contractAddresses));
-const start = Date.now();
-
-while (contractNames.size && (Date.now() - start < timeout)) {
-    for (const contractName of contractNames) {
-        const filename = `${ contractBuildDir }/${ contractName }.json`;
-
-        try {
-            if (!existsSync(filename)) continue;
-
-            delete require.cache[require.resolve(filename)];
-
-            const {networks} = require(filename);
-            const network = Math.max(...Object.keys(networks));
-
-            if (!(network in networks) || (typeof networks[network].address !== 'string')) continue;
-
-            contractAddresses[contractName] = networks[network].address;
-            contractNames.delete(contractName);
-
-        } catch (e) {
-            console.error(e);
-            // todo
-        }
-    }
-
-    sleepSync(2048);
-}
-
-if (contractNames.size) {
-    console.error('Timeout error:');
-    console.error(`Could not find contract build file(s): ${ Array.from(contractNames).join(', ') }`);
-
-    process.exit(1);
-}
-
 console.info('Updating configuration file...');
 
+const sleepSync = time => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, time);
 const config = require(templateConfig);
 const {
     BLOCKCHAIN_HOST = 'localhost',
