@@ -1,9 +1,9 @@
 const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
-const ethereumUtils = require('ethereumjs-util');
 const utils = require('#utils');
 const _ = require('lodash');
+const mnemonic = require('/live/key.json');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 
@@ -14,17 +14,14 @@ class Web3Bridge {
         this.network_id = this.ctx.config.network.web3_network_id;
         this.chain_id = this.ctx.config.network.web3_chain_id;
 
-        // const localProvider = new Web3.providers.WebsocketProvider(this.connectionString);
-        const hdWalletProvider = new HDWalletProvider({
-            privateKeys: [this.ctx.config.client.wallet.privateKey],
-            providerOrUrl: this.connectionString
-        });
+        const hdWalletProvider = new HDWalletProvider({mnemonic, providerOrUrl: this.connectionString});
+
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(hdWalletProvider); // todo: maybe you should hide it behind this abstraction, no?
 
         this.ctx.web3bridge = this;
 
         this.address = this.ctx.config.client.wallet.account;
-        const account = this.web3.eth.accounts.privateKeyToAccount('0x' + this.ctx.config.client.wallet.privateKey);
+        const account = this.web3.eth.accounts.privateKeyToAccount('0x' + hdWalletProvider.hdwallet._hdkey._privateKey.toString('hex'));
         this.web3.eth.accounts.wallet.add(account);
         this.web3.eth.defaultAccount = account.address;
 

@@ -11,14 +11,10 @@ services:
     command: 'run start:docker'
     volumes:
       - point_node_data:/data:rw
-      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+      - $HOME/.point/live/key.json:/live/key.json:ro
+      - ./resources/znet.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-      - ./scripts/await-contracts-docker.js:/app/scripts/await-contracts-docker.js:ro
-      - ./resources/disclaimer.js:/app/resources/disclaimer.js:ro
-      - ./package.json:/app/package.json:ro
-      - ./point:/app/point:ro
     ports:
-      - '9685:9685'
       - '8666:8666'
       - '2468:2468'
     environment:
@@ -38,10 +34,10 @@ services:
     container_name: pointnetwork_database
     healthcheck:
       test: pg_isready -U $DB_USERNAME
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      interval: 16s
+      timeout: 16s
+      retries: 4
+      start_period: 4s
     environment:
       DATABASE: $DB_NAME
       POSTGRES_DB: $DB_USERNAME

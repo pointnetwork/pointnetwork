@@ -2,6 +2,8 @@
 
 const {existsSync, writeFileSync, unlinkSync, mkdirSync} = require('fs');
 const Web3 = require('web3');
+const HDWalletProvider = require("@truffle/hdwallet-provider");
+const mnemonic = require('/live/key.json');
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
 const templateConfig = '/nodeConfig.json';
 const targetConfig = '/data/config.json';
@@ -34,8 +36,6 @@ config.network = {
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 };
 
-config.service_provider.enabled = process.env.POINT_NODE_STORAGE_PROVIDER_ENABLED ? true : false;
-
 if (process.env.BLOCKCHAIN_NETWORK_ID) {
     config.network.web3_network_id = process.env.BLOCKCHAIN_NETWORK_ID;
 }
@@ -55,12 +55,14 @@ console.info('Done.');
 (async () => {
     console.log('Awaiting for blockchain provider at', config.network.web3);
 
-    const web3 = new Web3(config.network.web3);
+    const provider = new HDWalletProvider({mnemonic, providerOrUrl: config.network.web3});
+    const web3 = new Web3(provider);
     const start = Date.now();
 
     while (Date.now() - start < timeout) {
         try {
             await web3.eth.getBlockNumber();
+            await provider.engine.stop();
             return console.info('Done.');
         } catch (e) {
             sleepSync(1024);

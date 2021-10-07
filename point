@@ -70,7 +70,7 @@ if (! program.config) {
     program.config = path.join(program.datadir, 'config.json');
 }
 
-ctx = {};
+const ctx = {};
 
 ctx.datadir = ctx.datapath = program.datadir;
 ctx.configPath = program.config;

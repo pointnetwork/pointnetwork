@@ -13,3 +13,9 @@ dist/
 # Ignore everything in deployspace folder - except our README.md file.
 deployspace/*
 !deployspace/README.md
+
+key.json
+*.txt
+*.gz
+*.zip
+

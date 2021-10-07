@@ -12,7 +12,7 @@ const version = process.argv[2];
 
 if (!/^\d+\.\d+\.\d+$/.test (version)) {
     throw new Error(
-        `Unsupported version format: "${ version }". ` +
+        `Unsupported version format: "${ version }". ` +
         `Please provide a unique sequence of major, minor and build version identifiers.`
     );
 }

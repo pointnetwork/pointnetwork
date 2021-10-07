@@ -1,17 +1,19 @@
 {
   "api": {
-    "address": "0.0.0.0"
+    "address": "0.0.0.0",
+    "port": 2468
   },
-  "network": {},
   "client": {
     "zproxy": {
-      "host": "0.0.0.0"
+      "host": "0.0.0.0",
+      "port": 8666
+    },
+    "storage": {
+      "engine": "arweave"
     },
     "wallet": {
-      "id": "58225300-cf00-494a-be15-8a15e42d3758",
-      "passcode": "BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9",
-      "account": "0x4f5877E51067d0d68784aA74C39871cb2eF2D9eB",
-      "privateKey": "8c8d57550b7f0d0d9410d842f3a9188d316e85a28daab498231e7577e863c643"
+      "account": "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301",
+      "privateKey": "feec30f685ff378c117d1bb67095815a4604f03f1759a418e82df05b8c3be245"
     }
   }
 }
