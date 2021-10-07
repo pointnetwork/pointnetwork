@@ -5,7 +5,7 @@ ENV GRANAX_USE_SYSTEM_TOR="1"
 WORKDIR /app
 COPY . /app/
 
-RUN apt update && apt install -y python3 tor git build-essential && \
+RUN chmod 1777 /tmp && apt update && apt install -y python3 tor git build-essential && \
     npm install -g npm && PYTHON=$(which python3) npm i
 
 FROM node:14.17.5-stretch-slim

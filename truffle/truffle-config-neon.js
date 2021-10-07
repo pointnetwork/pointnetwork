@@ -1,20 +1,26 @@
-const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
-const port = process.env.BLOCKCHAIN_PORT || 9090;
-const build_path = process.env.BUILD_PATH || './build/contracts';
-const compiler_version = process.env.COMPILER_VERSION || '0.8.7';
+const {
+    BLOCKCHAIN_HOST = 'localhost',
+    BLOCKCHAIN_PORT = 9090,
+    BLOCKCHAIN_PATH,
+} = process.env;
+
+const build_path = process.env.DEPLOYER_BUILD_PATH || './build/contracts';
+const compiler_version = process.env.DEPLOYER_COMPILER_VERSION || '0.8.7';
 
 const Web3 = require("web3");
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
-const provider = new Web3.providers.HttpProvider(`http://${host}:${port}/solana`);
-const privateKey = process.env.CONTRACT_DEPLOYER_KEY;
+const privateKey = process.env.DEPLOYER_KEY;
+const provider = new Web3.providers.HttpProvider(
+    `http://${BLOCKCHAIN_HOST}:${BLOCKCHAIN_PORT}${BLOCKCHAIN_PATH ? `/${BLOCKCHAIN_PATH}` : ``}`
+);
 
 module.exports = {
     contracts_build_directory: build_path,
     networks: {
-        solana: {
+        znet: {
             provider: () => new HDWalletProvider(privateKey, provider),
-            from: process.env.CONTRACT_DEPLOYER_ADDRESS,
+            from: process.env.DEPLOYER_ADDRESS,
             network_id: '*',
             gas: 3000000,
             gasPrice: 1000000000,
