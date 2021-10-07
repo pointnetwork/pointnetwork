@@ -10,5 +10,5 @@ dist/
 .cache/
 .parcel-cache/
 
-# Ignore everything in deployspace folder - except our README.md file.
+# Ignore everything in deployspace folder
 deployspace/*

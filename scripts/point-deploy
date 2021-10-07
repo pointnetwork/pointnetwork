@@ -4,7 +4,7 @@
 
 POINTNETWORK_DEPLOYSPACE="$HOME/.point/src/pointnetwork/deployspace"
 
-# Validate current director contains both point.deploy.json and routes.json files and a public folder
+# Validate current directory contains both point.deploy.json and routes.json files and a public folder
 [ ! -f point.deploy.json ] && { echo "point.deploy.json file does not exist. Aborting deployment."; exit 1; }
 [ ! -f routes.json ] && { echo "routes.json file does not exist. Aborting deployment."; exit 1; }
 [ ! -d ./public ] && { echo "./public folder does not exist. Aborting deployment."; exit 1; }
