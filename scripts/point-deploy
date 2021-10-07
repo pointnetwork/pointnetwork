@@ -9,10 +9,15 @@ POINTNETWORK_DEPLOYSPACE="$HOME/.point/src/pointnetwork/deployspace"
 [ ! -f routes.json ] && { echo "routes.json file does not exist. Aborting deployment."; exit 1; }
 [ ! -d ./public ] && { echo "./public folder does not exist. Aborting deployment."; exit 1; }
 
-echo "copying files to deployspace...(please wait)"
+# Create the deployspace folder if it does not exist on the host
+[ ! -d $POINTNETWORK_DEPLOYSPACE ] && { echo "Creating $POINTNETWORK_DEPLOYSPACE"; mkdir $POINTNETWORK_DEPLOYSPACE; }
+
+echo
+echo "Copying Zapp files to Point Node deployspace...(please wait)"
+echo
 
 # Ensure the deployspace folder is empty
-rm -r $POINTNETWORK_DEPLOYSPACE/*
+[ "$(ls -A $POINTNETWORK_DEPLOYSPACE/)" ] && rm -r $POINTNETWORK_DEPLOYSPACE/*
 
 # Copy current Zapp folder to deployspace
 cp -r * $POINTNETWORK_DEPLOYSPACE
