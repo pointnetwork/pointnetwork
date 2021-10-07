@@ -56,10 +56,15 @@ if (contractNames.size) {
 console.info('Updating configuration file...');
 
 const config = require(templateConfig);
+const {
+    BLOCKCHAIN_HOST = 'localhost',
+    BLOCKCHAIN_PORT = 9090,
+    BLOCKCHAIN_PATH,
+} = process.env;
 
 config.network = {
     ...config.network,
-    web3: `http://${ process.env.BLOCKCHAIN_HOST || 'localhost' }:${ process.env.BLOCKCHAIN_PORT || 9090 }/solana`,
+    web3: `http://${BLOCKCHAIN_HOST}:${BLOCKCHAIN_PORT}${BLOCKCHAIN_PATH ? `/${BLOCKCHAIN_PATH}` : ``}`,
     identity_contract_address: contractAddresses.Identity,
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 };
@@ -81,7 +86,7 @@ if (!existsSync('/data/data/dht_peercache.db')) {
 console.info('Done.');
 
 (async () => {
-    console.log('Awaiting for blockchain provider to start...');
+    console.log('Awaiting for blockchain provider at', config.network.web3);
 
     const web3 = new Web3(config.network.web3);
     const start = Date.now();

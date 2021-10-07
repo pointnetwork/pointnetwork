@@ -52,8 +52,8 @@ services:
       BLOCKCHAIN_HOST: blockchain_node
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      COMPILER_VERSION: native
-      BUILD_PATH: /build
+      DEPLOYER_COMPILER_VERSION: native
+      DEPLOYER_BUILD_PATH: /build
 
   storage_provider:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION

@@ -15,11 +15,11 @@ services:
       - SOLANA_URL=http://blockchain_node:8899
       - RUST_LOG=solana_runtime::system_instruction_processor=warn,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
     expose:
-      - "8899"
-      - "9900"
-      - "8900"
-      - "8001"
-      - "8001-8009/udp"
+      - '8899'
+      - '9900'
+      - '8900'
+      - '8001'
+      - '8001-8009/udp'
     volumes:
       - blockchain_node_data:/opt/solana/config:rw
 
@@ -45,7 +45,7 @@ services:
     ports:
       - 0.0.0.0:9090:9090
     expose:
-      - "9090"
+      - '9090'
     volumes:
       - blockchain_provider_env:/opt/env:rw
       - blockchain_provider_config:/root/.config/solana:rw
@@ -66,7 +66,7 @@ services:
       - shared_contracts:/build:rw
     command: deploy --network $DEPLOYER_ENV
     env_file:
-      - .env.deployer
+      - .env.znet
 
   storage_provider:
     image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
@@ -86,7 +86,7 @@ services:
       - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
       - ./scripts/await-contracts-docker.js:/app/scripts/await-contracts-docker.js:ro
-      - ./package.json:/app/spackage.json:ro
+      - ./package.json:/app/package.json:ro
     ports:
       - '12345:9685'
       - '65500:8666'
@@ -96,6 +96,7 @@ services:
       DB_ENV: pointnode1
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
+      BLOCKCHAIN_PATH: $BLOCKCHAIN_PATH
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
       DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
 
@@ -121,13 +122,14 @@ services:
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
       - ./scripts/await-contracts-docker.js:/app/scripts/await-contracts-docker.js:ro
-      - ./package.json:/app/spackage.json:ro
+      - ./package.json:/app/package.json:ro
       - ./example:/app/example:ro
     environment:
       DATADIR: /data
       DB_ENV: pointnode2
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
+      BLOCKCHAIN_PATH: $BLOCKCHAIN_PATH
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
       DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
 
@@ -159,6 +161,7 @@ services:
       DB_ENV: pointnode3
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PORT
+      BLOCKCHAIN_PATH: $BLOCKCHAIN_PATH
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
       DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
 
