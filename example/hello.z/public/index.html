@@ -18,12 +18,12 @@
   </head>
   <body>
     <div>
-      <h1>Hello World Example</h1>
+      <h1>Hello World Example (WebSockets Disabled)</h1>
       <h2>Demo Storage Layer features and the Point Browser SDK</h2>
 
       <h4 style="color: pink">Using Point SDK Version: <span id="pointSDKVersion"></span></h4>
 
-      <table>
+      <!-- <table>
         <tr>
           <td>Test <b>HelloWorld</b> Event</td>
           <td>Test <b>UpdatedValue</b> Event</td>
@@ -36,7 +36,7 @@
           <td><button id="btnEmitHelloWorld" onclick="emitHelloWorld()">Emit</button><input type="text" id="txtHelloWorld" value="Tiger" ></input></td>
           <td><button id="btnEmitUpdatedValue" onclick="emitUpdatedValue()">Emit</button><input type="text" id="txtUpdatedValue" value="Durian" ></input></td>
         </tr>
-      </table>
+      </table> -->
       <br />
       <a href="#">Click Here to Test Notifications Extention (check README in 'hello.z/extension')</a>
       <br />
@@ -52,8 +52,8 @@
       <img id='storageImg'/>
       <br />
       <br />
-      <b>WebSocket Events</b>
-      <ul id="wsevents"></ul>
+      <!-- <b>WebSocket Events</b>
+      <ul id="wsevents"></ul> -->
       <b>API Responses</b>
       <p id="results"></p>
     </div>
@@ -79,7 +79,9 @@
         // initialize websocket connect to point network node via PointSDK
         // the idea here is to initalize websockets for the app only if needed
         // and to specify the callback that will handle the incomming websocket messages
-        if(window.point.websocket) {
+        const RUN_WS_TEST = false; // run web sockets test block below?
+
+        if(RUN_WS_TEST && window.point.websocket) {
           socket = window.point.websocket.open(websocketMessageHandler);
           socket.onopen = function() { console.log('WebSocket Client Connected'); }
         }
