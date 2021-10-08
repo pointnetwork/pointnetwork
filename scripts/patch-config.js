@@ -35,7 +35,7 @@ config.network = {
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 };
 
-const arweave_key = require('/live/arweave.json');
+const arweave_key = require('/data/keystore/arweave.json');
 if (typeof arweave_key !== 'object') {
     throw new Error('Unable to parse arweave key');
 }
@@ -55,7 +55,7 @@ if (!existsSync('/data/data/dht_peercache.db')) {
     writeFileSync('{}', '/data/data/dht_peercache.db');
 }
 
-const mnemonic = require('/live/key.json');
+const mnemonic = require('/data/keystore/key.json');
 if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
     throw new Error('Invalid key format');
 }
