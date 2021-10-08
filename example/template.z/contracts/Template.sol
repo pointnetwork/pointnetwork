@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 
+// This is an example contract. Please remove and create your own!
 contract Template  {
     using Counters for Counters.Counter;
     Counters.Counter internal _exampleIds;
