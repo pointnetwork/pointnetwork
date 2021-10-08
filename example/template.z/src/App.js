@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Footer from "./components/Footer";
 import Home from './pages/Home'
 import Examples from './pages/Examples'
+import Contracts from './pages/Contracts'
 
 const Main = () => {
     return (
@@ -14,6 +15,9 @@ const Main = () => {
                 </Route>
                 <Route path='/examples'>
                     <Examples/>
+                </Route>
+                <Route path='/contracts'>
+                    <Contracts/>
                 </Route>
             <Footer />
         </main>
