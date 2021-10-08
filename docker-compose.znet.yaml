@@ -11,7 +11,7 @@ services:
     command: 'run start:docker'
     volumes:
       - point_node_data:/data:rw
-      - $HOME/.point/live/key.json:/live/key.json:ro
+      - ${HOME}/.point/live/key.json:/live/key.json:ro
       - ./resources/znet.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
     ports:
