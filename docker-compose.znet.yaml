@@ -59,7 +59,7 @@ services:
     restart: 'no'
     volumes:
       - shared_contracts:/build:rw
-      - $DEPLOYER_KEYSTORE:/root/.ethereum/keystore/key.json:ro
+      - $DEPLOYER_KEYSTORE:/root/.ethereum/keystore:ro
       - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
       - ./truffle/migrations:/truffle/migrations:ro
       - ./truffle/contracts:/truffle/contracts:ro
