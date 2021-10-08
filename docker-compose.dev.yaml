@@ -15,7 +15,7 @@ services:
       - ./scripts:/app/scripts:ro
       - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
-      - ./truffle:/app/truffle:ro
+      # - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
       - ./package.json:/app/package.json:ro
       - ./point:/app/point:ro
@@ -35,7 +35,7 @@ services:
       - ./scripts:/app/scripts:ro
       - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
-      - ./truffle:/app/truffle:ro
+      # - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
       - ./package.json:/app/package.json:ro
       - ./point:/app/point:ro
@@ -55,7 +55,7 @@ services:
       - ./scripts:/app/scripts:ro
       - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
-      - ./truffle:/app/truffle:ro
+      # - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
       - ./package.json:/app/package.json:ro
       - ./point:/app/point:ro
