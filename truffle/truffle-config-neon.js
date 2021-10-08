@@ -4,13 +4,20 @@ const {
     BLOCKCHAIN_PATH,
 } = process.env;
 
+const keystore = require('/.keystore/key.json');
+
+if (typeof keystore !== 'object') {
+    throw new Error('Please provide a valid kstore');
+}
+
+const keystorePassword = process.env.BLOCKCHAIN_KEYSTORE_PASSWORD || '';
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build/contracts';
 const compiler_version = process.env.DEPLOYER_COMPILER_VERSION || '0.8.7';
 
-const Web3 = require("web3");
-const HDWalletProvider = require("@truffle/hdwallet-provider");
+const Web3 = require('web3');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 
-const privateKey = process.env.DEPLOYER_KEY;
+const {address, privateKey} = new Web3().eth.accounts.decrypt(keystore, keystorePassword);
 const provider = new Web3.providers.HttpProvider(
     `http://${BLOCKCHAIN_HOST}:${BLOCKCHAIN_PORT}${BLOCKCHAIN_PATH ? `/${BLOCKCHAIN_PATH}` : ``}`
 );
@@ -20,7 +27,7 @@ module.exports = {
     networks: {
         znet: {
             provider: () => new HDWalletProvider(privateKey, provider),
-            from: process.env.DEPLOYER_ADDRESS,
+            from: address,
             network_id: '*',
             gas: 3000000,
             gasPrice: 1000000000,
