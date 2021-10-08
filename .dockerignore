@@ -5,3 +5,11 @@
 .nvmrc
 .vscode
 src/
+
+deployspace/*
+!deployspace/README.md
+
+key.json
+*.txt
+*.gz
+*.zip

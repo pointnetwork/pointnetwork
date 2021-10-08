@@ -12,8 +12,7 @@ services:
     volumes:
       - point_node_data:/data:rw
       - ${HOME}/.point/live/key.json:/live/key.json:ro
-      - ./resources/znet.json:/nodeConfig.json:ro
-      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+      - ${HOME}/.point/live/arweave.json:/live/arweave.json:ro
     ports:
       - '8666:8666'
       - '2468:2468'

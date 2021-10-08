@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 
-const {existsSync, writeFileSync, unlinkSync, mkdirSync} = require('fs');
+const {existsSync, writeFileSync, unlinkSync, mkdirSync, renameSync} = require('fs');
 const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
-const mnemonic = require('/live/key.json');
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
-const templateConfig = '/nodeConfig.json';
-const targetConfig = '/data/config.json';
 const contractAddresses = {
     Identity: process.env.CONTRACT_ADDRESS_IDENTITY,
     Migrations: process.env.CONTRACT_ADDRESS_MIGRATIONS,
@@ -20,27 +17,35 @@ for (const lockfile of lockfiles) if (existsSync(lockfile)) unlinkSync(lockfile)
 console.info('Updating configuration file...');
 
 const sleepSync = time => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, time);
-const config = require(templateConfig);
+const config = require('/app/resources/znet.json');
 const {
     BLOCKCHAIN_HOST = 'localhost',
     BLOCKCHAIN_PORT = 9090,
     BLOCKCHAIN_PATH,
+    BLOCKCHAIN_NETWORK_ID,
 } = process.env;
 
 config.network = {
     ...config.network,
     web3: `http://${BLOCKCHAIN_HOST}:${BLOCKCHAIN_PORT}${BLOCKCHAIN_PATH ? `/${BLOCKCHAIN_PATH}` : ``}`,
+    web3_network_id: BLOCKCHAIN_NETWORK_ID || undefined,
     communication_external_host: process.env.POINT_NODE_PUBLIC_HOSTNAME || undefined,
     bootstrap_nodes: process.env.POINT_NODE_BOOTSTRAP_NODES || [],
     identity_contract_address: contractAddresses.Identity,
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 };
 
-if (process.env.BLOCKCHAIN_NETWORK_ID) {
-    config.network.web3_network_id = process.env.BLOCKCHAIN_NETWORK_ID;
+const arweave_key = require('/live/arweave.json');
+if (typeof arweave_key !== 'object') {
+    throw new Error('Unable to parse arweave key');
 }
 
-writeFileSync(targetConfig, JSON.stringify(config, null, 2));
+config.client = {...config.client, storage: {...(config.client && config.client.storage), arweave_key}};
+
+writeFileSync('/data/config.json', JSON.stringify(config, null, 2));
+renameSync('/app/resources/sequelizeConfig.docker.json', '/app/resources/sequelizeConfig.json');
+
+console.info('Config is successfully updated.');
 
 if (!existsSync('/data/data')) {
     mkdirSync('/data/data');
@@ -50,7 +55,10 @@ if (!existsSync('/data/data/dht_peercache.db')) {
     writeFileSync('{}', '/data/data/dht_peercache.db');
 }
 
-console.info('Done.');
+const mnemonic = require('/live/key.json');
+if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
+    throw new Error('Invalid key format');
+}
 
 (async () => {
     console.log('Awaiting for blockchain provider at', config.network.web3);
