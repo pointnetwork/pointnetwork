@@ -11,8 +11,8 @@ services:
     command: 'run start:docker'
     volumes:
       - point_node_data:/data:rw
-      - ${HOME}/.point/live/key.json:/live/key.json:ro
-      - ${HOME}/.point/live/arweave.json:/live/arweave.json:ro
+      - $POINT_KEYSTORE/key.json:/live/key.json:ro
+      - $POINT_KEYSTORE/arweave.json:/live/arweave.json:ro
     ports:
       - '8666:8666'
       - '2468:2468'
