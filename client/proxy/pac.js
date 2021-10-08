@@ -13,7 +13,7 @@
  —and you’re done! Any new connections will be filtered through the PAC file. You don’t need to restart Firefox.
  */
 
-const PN_PROXY_SETTING="PROXY 127.0.0.1:65501";
+const PN_PROXY_SETTING="PROXY 127.0.0.1:8666";
 
 const allowed_ports = [
     // uncomment and list any exceptions:
