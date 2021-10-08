@@ -19,15 +19,13 @@ console.info('Updating configuration file...');
 const sleepSync = time => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, time);
 const config = require('/app/resources/znet.json');
 const {
-    BLOCKCHAIN_HOST = 'localhost',
-    BLOCKCHAIN_PORT = 9090,
-    BLOCKCHAIN_PATH,
+    BLOCKCHAIN_URL = 'http://localhost:9090/solana',
     BLOCKCHAIN_NETWORK_ID,
 } = process.env;
 
 config.network = {
     ...config.network,
-    web3: `http://${BLOCKCHAIN_HOST}:${BLOCKCHAIN_PORT}${BLOCKCHAIN_PATH ? `/${BLOCKCHAIN_PATH}` : ``}`,
+    web3: BLOCKCHAIN_URL,
     web3_network_id: BLOCKCHAIN_NETWORK_ID || undefined,
     communication_external_host: process.env.POINT_NODE_PUBLIC_HOSTNAME || undefined,
     bootstrap_nodes: process.env.POINT_NODE_BOOTSTRAP_NODES || [],

@@ -1,9 +1,3 @@
-const {
-    BLOCKCHAIN_HOST = 'localhost',
-    BLOCKCHAIN_PORT = 9090,
-    BLOCKCHAIN_PATH,
-} = process.env;
-
 const keystore = require('/.keystore/key.json');
 
 if (typeof keystore !== 'object') {
@@ -18,9 +12,7 @@ const Web3 = require('web3');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
 const {address, privateKey} = new Web3().eth.accounts.decrypt(keystore, keystorePassword);
-const provider = new Web3.providers.HttpProvider(
-    `http://${BLOCKCHAIN_HOST}:${BLOCKCHAIN_PORT}${BLOCKCHAIN_PATH ? `/${BLOCKCHAIN_PATH}` : ``}`
-);
+const provider = new Web3.providers.HttpProvider(process.env.BLOCKCHAIN_URL);
 
 module.exports = {
     contracts_build_directory: build_path,
