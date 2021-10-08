@@ -84,7 +84,7 @@
     "watch:site:and:start:docker:dev": "./scripts/patch-config.js && npx concurrently -n \"pointnetwork,$SITE\" 'npm run start:dev' 'npm run watch:site'",
     "build:deployer": "source .env.znet && docker build -t pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION -f deployer.Dockerfile .",
     "push:deployer": "source .env.znet && docker push pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION",
-    "znet": "docker-compose -f docker-compose.znet.yaml --env-file .env.deployer up -d",
+    "znet": "docker-compose -f docker-compose.znet.yaml --env-file .env.deployer",
     "znet:local": "docker-compose -f docker-compose.znet.local.yaml"
   },
   "imports": {
