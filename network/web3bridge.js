@@ -219,7 +219,7 @@ class Web3Bridge {
             let result = await contract.methods.ikvGet(identity, key).call();
             return result;
         } catch(e) {
-            this.ctx.log.error('getKeyValue error', {identity, key});
+            this.ctx.log.error('getKeyValue error', {e, identity, key});
             throw e;
         }
     }
@@ -231,10 +231,27 @@ class Web3Bridge {
             const method = contract.methods.ikvPut(identity, key, value);
             console.log(await this.web3send(method)); // todo: remove console.log
         } catch(e) {
-            this.ctx.log.error('putKeyValue error', {identity, key, value});
+            this.ctx.log.error('putKeyValue error', {e, identity, key, value});
             throw e;
         }
     }
+
+    async registerIdentity(identity, address, commPublicKey) {
+        try {
+            if (! Buffer.isBuffer(commPublicKey)) throw Error('registerIdentity: commPublicKey must be a buffer');
+            if (Buffer.byteLength(commPublicKey) !== 64) throw Error('registerIdentity: commPublicKey must be 64 bytes');
+            // todo: validate identity and address
+
+            identity = identity.replace('.z', ''); // todo: rtrim instead
+            const contract = await this.loadIdentityContract();
+            const method = contract.methods.register(identity, address, [commPublicKey.slice(0, 32+1), commPublicKey.slice(32)]);
+            console.log(await this.web3send(method)); // todo: remove console.log
+        } catch(e) {
+            this.ctx.log.error('registerIdentity error', {e, identity, address, commPublicKey});
+            throw e;
+        }
+    }
+
     async toChecksumAddress(address) {
         const checksumAddress = this.web3.utils.toChecksumAddress(address);
         return checksumAddress;
