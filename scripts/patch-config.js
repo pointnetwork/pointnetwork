@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
-const {existsSync, writeFileSync, unlinkSync, mkdirSync, renameSync} = require('fs');
+const {existsSync, writeFileSync, unlinkSync, mkdirSync, readFileSync, renameSync} = require('fs');
+const path = require('path');
 const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
+const Deployer = require('../client/zweb/deployer');
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
 const contractAddresses = {
     Identity: process.env.CONTRACT_ADDRESS_IDENTITY,
@@ -45,6 +47,45 @@ renameSync('/app/resources/sequelizeConfig.docker.json', '/app/resources/sequeli
 
 console.info('Config is successfully updated.');
 
+async function compilePointContracts() {
+    console.info('Compiling point contracts:', Object.keys(contractAddresses));
+
+    const getImports = function(dependency) {
+        const dependencyNodeModulesPath = path.join(__dirname, '..', 'node_modules/', dependency);
+        if (!existsSync(dependencyNodeModulesPath)){
+            throw new Error(`Could not find contract dependency "${dependency}", have you tried npm install?`);
+        }
+        return {contents: readFileSync(dependencyNodeModulesPath, 'utf8')};
+    };
+    for (const contractName in contractAddresses) {
+        try {
+            const content = readFileSync(path.resolve(__dirname, '..', 'truffle', 'contracts', `${contractName}.sol`), 'utf8');
+            const version = await Deployer.getPragmaVersion(content);
+            const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
+            const compileConfig = {
+                language: 'Solidity',
+                sources: {[contractName+'.sol']: {content}},
+                settings: {outputSelection: {'*': {'*': ['*']}}}
+            };
+
+            const compiledContract = JSON.parse(solc.compile(JSON.stringify(compileConfig), {import: getImports}));
+            if (compiledContract) {
+                writeFileSync(
+                    path.resolve(__dirname, '..', 'truffle', 'build', 'contracts', `${contractName}.json`),
+                    JSON.stringify(compiledContract.contracts[`${contractName}.sol`][contractName]),
+                    'utf-8'
+                );
+            } else {
+                throw new Error('Compiled contract is empty');
+            }
+        } catch (e) {
+            console.error('Point contract compilation error:', e);
+            throw e;
+        }
+    }
+    console.info('Successfully compiled point contracts:', Object.keys(contractAddresses));
+}
+
 if (!existsSync('/data/data')) {
     mkdirSync('/data/data');
 }
@@ -59,6 +100,8 @@ if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
 }
 
 (async () => {
+    await compilePointContracts();
+
     console.log('Awaiting for blockchain provider at', config.network.web3);
 
     const provider = new HDWalletProvider({mnemonic, providerOrUrl: config.network.web3});
