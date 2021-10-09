@@ -34,6 +34,8 @@ services:
       timeout: 5s
       retries: 4
       start_period: 30s
+    ports:
+      - 127.0.0.1:9090:9090
     environment:
       CONFIG: ci
       SOLANA_URL: http://blockchain_node:8899
@@ -70,8 +72,8 @@ services:
         condition: service_started
       blockchain_provider:
         condition: service_healthy
-      contract_deployer:
-        condition: service_completed_successfully
+      # contract_deployer:
+      #   condition: service_completed_successfully
     volumes:
       - ./db:/app/db
       - ./api:/app/api
@@ -86,6 +88,9 @@ services:
       - point_contracts:/app/truffle/build/contracts
     environment:
       BLOCKCHAIN_URL: http://blockchain_provider:9090/solana
+      CONTRACT_ADDRESS_MIGRATIONS: '0xbE2a4E61eEDcE7102EA37B3AE0D741A50fC3ce4d'
+      CONTRACT_ADDRESS_IDENTITY: '0x4BeF84Ebf41Ac28ab9A46d94906ed1793dF2952E'
+      CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY: '0x8A2AB2cd8cb980e80b43BE4E62fdd90Cb6e44029'
 
 volumes:
   point_contracts:

@@ -43,7 +43,7 @@ contract Identity {
         emit IdentityRegistered(handle, owner, commPublicKey);
     }
 
-    function register(string memory handle, address identityOwner, PubKey64 memory commPublicKey) public {
+    function register(string memory handle, address identityOwner, bytes32 commPublicKey_part1, bytes32 commPublicKey_part2) public {
         if (!_isValidHandle(handle)) revert('Only alphanumeric characters and an underscore allowed');
 
         // Check if the identity is already registered
@@ -52,6 +52,8 @@ contract Identity {
 
         // Check if this owner already has an identity attached
         // if (!_isEmptyString(ownerToIdentity[identityOwner])) revert('This owner already has an identity attached');
+
+        PubKey64 memory commPublicKey = PubKey64(commPublicKey_part1, commPublicKey_part2);
 
         _selfReg(handle, identityOwner, commPublicKey);
     }

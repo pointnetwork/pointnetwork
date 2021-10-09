@@ -318,7 +318,7 @@ class Provider {
             } catch(e) {
                 reject(e);
             }
-       });
+        });
     }
 }
 
