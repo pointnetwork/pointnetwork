@@ -12,6 +12,7 @@ const fs = require('fs');
 const utils = require('#utils');
 const Arweave = require('arweave');
 const { request, gql } = require('graphql-request');
+const axios = require('axios');
 
 class StorageArweave {
     constructor(ctx) {
@@ -436,7 +437,20 @@ class StorageArweave {
 
                 // Get the data decoded to a Uint8Array for binary data
                 console.log(ARW_LOG + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
-                const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+                // const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+
+                // Read back data
+                // Don't use arweave.transactions.getData, data is not available instantly via
+                // that API (it results in a TX_PENDING error). Here's the explanation from Discord:
+                //
+                // but essentially if /{txid} returns 202
+                // it's "pending"
+                // which with regular txs is true
+                // but it also returns 202 for unseeded Bundlr txs
+                // so the data exists in Bundlr - but not on L1 (Arweave)
+                const result = await axios.get(`https://arweave.net/${txid}`);
+                const data = result.data;
+
                 console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
 
                 const buf = Buffer.from(data);
