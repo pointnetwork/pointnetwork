@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const {existsSync, writeFileSync, unlinkSync, mkdirSync, readFileSync, renameSync} = require('fs');
+const {existsSync, writeFileSync, unlinkSync, mkdirSync, readFileSync, copyFileSync} = require('fs');
 const path = require('path');
 const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
@@ -43,7 +43,7 @@ if (typeof arweave_key !== 'object') {
 config.client = {...config.client, storage: {...(config.client && config.client.storage), arweave_key}};
 
 writeFileSync('/data/config.json', JSON.stringify(config, null, 2));
-renameSync('/app/resources/sequelizeConfig.docker.json', '/app/resources/sequelizeConfig.json');
+copyFileSync('/app/resources/sequelizeConfig.docker.json', '/app/resources/sequelizeConfig.json');
 
 console.info('Config is successfully updated.');
 

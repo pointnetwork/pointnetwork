@@ -12,14 +12,9 @@ services:
       retries: 3
       start_period: 10s
     environment:
-      - SOLANA_URL=http://blockchain_node:8899
-      - RUST_LOG=solana_runtime::system_instruction_processor=warn,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
-    expose:
-      - '8899'
-      - '9900'
-      - '8900'
-      - '8001'
-      - '8001-8009/udp'
+      SOLANA_URL: http://blockchain_node:8899
+      RUST_LOG: |
+        solana_runtime::system_instruction_processor=warn,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
     volumes:
       - blockchain_node_data:/opt/solana/config:rw
 
@@ -40,12 +35,8 @@ services:
       retries: 4
       start_period: 30s
     environment:
-      - CONFIG=ci
-      - SOLANA_URL=http://blockchain_node:8899
-    ports:
-      - 0.0.0.0:9090:9090
-    expose:
-      - '9090'
+      CONFIG: ci
+      SOLANA_URL: http://blockchain_node:8899
     volumes:
       - blockchain_provider_env:/opt/env:rw
       - blockchain_provider_config:/root/.config/solana:rw
@@ -53,24 +44,27 @@ services:
     entrypoint: /opt/proxy/handle-run-proxy.sh
 
   contract_deployer:
-    image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
+    image: pointnetwork/pointnetwork_deployer:neon_proxy-0.0.1
     container_name: pointnetwork_contract_deployer
     depends_on:
       blockchain_provider:
         condition: service_healthy
     restart: 'no'
     volumes:
+      - ./geth/keystore:/.keystore
       - ./truffle/migrations:/truffle/migrations:ro
       - ./truffle/contracts:/truffle/contracts:ro
       - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
-      - shared_contracts:/build:rw
-    command: deploy --network $DEPLOYER_ENV
-    env_file:
-      - .env.znet
+      - point_contracts:/build:rw
+    command: deploy --network znet
+    environment:
+      DEPLOYER_COMPILER_VERSION: native
+      DEPLOYER_BUILD_PATH: /build
+      DEPLOYER_ENV: znet
+      BLOCKCHAIN_URL: http://blockchain_provider:9090/solana
+      BLOCKCHAIN_NETWORK_ID: '*'
 
-  storage_provider:
-    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
-    container_name: pointnetwork_storage_provider
+  point_node:
     depends_on:
       database:
         condition: service_started
@@ -78,114 +72,23 @@ services:
         condition: service_healthy
       contract_deployer:
         condition: service_completed_successfully
-    entrypoint: 'npm'
-    command: 'run start:docker'
     volumes:
-      - storage_provider_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
-      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-      - ./scripts/patch-config.js:/app/scripts/patch-config.js:ro
-      - ./package.json:/app/package.json:ro
-    ports:
-      - '12345:9685'
-      - '65500:8666'
-      - '24680:2468'
+      - ./db:/app/db
+      - ./api:/app/api
+      - ./point:/app/point
+      - ./client:/app/client
+      - ./scripts:/app/scripts
+      - ./example:/app/example
+      - ./network:/app/network
+      - ./provider:/app/provider
+      - ./resources:/app/resources
+      - ./package.json:/app/package.json
+      - point_contracts:/app/truffle/build/contracts
     environment:
-      DATADIR: /data
-      DB_ENV: pointnode1
-      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
-
-  website_owner:
-    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
-    container_name: pointnetwork_website_owner
-    depends_on:
-      database:
-        condition: service_started
-      blockchain_provider:
-        condition: service_healthy
-      contract_deployer:
-        condition: service_completed_successfully
-    ports:
-      - '12346:9685'
-      - '65501:8666'
-      - '24681:2468'
-    entrypoint: 'npm'
-    command: 'run start:docker'
-    volumes:
-      - website_owner_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
-      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-      - ./scripts/patch-config.js:/app/scripts/patch-config.js:ro
-      - ./package.json:/app/package.json:ro
-      - ./example:/app/example:ro
-    environment:
-      DATADIR: /data
-      DB_ENV: pointnode2
-      POINT_NODE_PUBLIC_HOSTNAME: $POINT_NODE_PUBLIC_HOSTNAME
-      POINT_NODE_BOOTSTRAP_NODES: $POINT_NODE_BOOTSTRAP_NODES
-      POINT_NODE_STORAGE_PROVIDER_ENABLED: $POINT_NODE_STORAGE_PROVIDER_ENABLED
-      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
-
-  website_visitor:
-    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
-    container_name: pointnetwork_website_visitor
-    depends_on:
-      database:
-        condition: service_started
-      blockchain_provider:
-        condition: service_healthy
-      contract_deployer:
-        condition: service_completed_successfully
-    ports:
-      - '12347:9685'
-      - '65502:8666'
-      - '24682:2468'
-    entrypoint: 'npm'
-    command: 'run start:docker'
-    volumes:
-      - website_visitor_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
-      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-      - ./scripts/patch-config.js:/app/scripts/patch-config.js:ro
-      - ./package.json:/app/spackage.json:ro
-    environment:
-      DATADIR: /data
-      DB_ENV: pointnode3
-      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
-
-  database:
-    image: postgres:13.4
-    container_name: pointnetwork_database
-    healthcheck:
-      test: pg_isready -U $DB_USERNAME
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    environment:
-      POSTGRES_USER: $DB_USERNAME
-      POSTGRES_PASSWORD: $DB_PASSWORD
-      POSTGRES_DB: $DB_USERNAME
-      DATABASE: $DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
-    volumes:
-      - database_data:/var/lib/postgresql/data/
-      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+      BLOCKCHAIN_URL: http://blockchain_provider:9090/solana
 
 volumes:
-  shared_contracts:
+  point_contracts:
   blockchain_node_data:
   blockchain_provider_env:
   blockchain_provider_config:
-  storage_provider_data:
-  website_owner_data:
-  website_visitor_data:
-  database_data:
