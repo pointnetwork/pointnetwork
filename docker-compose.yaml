@@ -10,6 +10,7 @@ services:
     entrypoint: 'npm'
     command: 'run start:docker'
     volumes:
+      - point_contracts:/app/truffle/build/contracts
       - point_node_data:/data
       - $POINT_KEYSTORE:/data/keystore
     ports:
@@ -44,5 +45,6 @@ services:
       - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
 
 volumes:
+  point_contracts:
   point_node_data:
   database_data:
