@@ -176,7 +176,7 @@ class ZProxy {
 
     async request(request, response) {
         let host = request.headers.host;
-        if ( host != 'explorer' && ! _.endsWith(host, '.z')) return this.abort404(response);
+        if ( host != 'point' && ! _.endsWith(host, '.z')) return this.abort404(response);
 
         try {
             let rendered;
@@ -245,9 +245,10 @@ class ZProxy {
                 } catch(e) {
                     return this.abortError(response, e);
                 }
-            } else if (host == 'explorer') {
-                // handle the point welcome page
-                rendered = await this.processLocalRequest(host, request, response, parsedUrl);;
+            } else if (host == 'point') {
+                // handle the point welcome page by rendering explorer.z
+                let localPath = 'example/explorer.z'; // hardcode to render explorer.z
+                rendered = await this.processLocalRequest(localPath, request, response, parsedUrl);;
             } else {
                 try {
                     rendered = await this.processRequest(host, request, response, parsedUrl);
@@ -395,8 +396,7 @@ class ZProxy {
         return re.exec(filename)[1];
     }
 
-    processLocalRequest(host, request, response, parsedUrl) {
-        console.log('** in processLocalRequest!!')
+    processLocalRequest(path, request, response, parsedUrl) {
         return new Promise(async(resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
@@ -404,28 +404,8 @@ class ZProxy {
             });
             request.on('end', async() => {
                 try {
-                    // First try route file (and check if this domain even exists)
-                    // let zroute_id = await this.getZRouteIdFromDomain(host);
-                    // if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'Domain not found (Route file not specified for this domain)'); // todo: replace with is_valid_id
-
-                    // check example/host.z exists in the current node
-                    console.log(`check example/${host}.z exists in the current node`);
-
-                    // console.log('ASKING FOR zroute id for domain '+host+' - '+zroute_id);
-                    // let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
-                    // if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
-                    let routesJsonPath = `example/${host}.z/routes.json`
-                    console.log(`read routes json from ${routesJsonPath}`)
-
+                    let routesJsonPath = `${path}/routes.json`
                     let routes = fs.readJSONSync(routesJsonPath)
-
-                    console.log(routes);
-                    console.log('FIN!');
-
-                    // Download info about root dir
-                    // let rootDir = await this.getRootDirectoryForDomain(host);
-                    // rootDir.setCtx(this.ctx);
-                    // rootDir.setHost(host);
 
                     let route_params = {};
                     let template_filename = null;
@@ -438,44 +418,32 @@ class ZProxy {
                             break;
                         }
                     }
-                    console.log('*** template: ', template_filename);
 
                     if (template_filename) {
-                        // let template_file_id = await rootDir.getFileIdByPath(template_filename);
-                        // console.log('ASKING FOR getFileIdByPath '+template_filename+' - '+template_file_id);
-                        // let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
-                        let template_file_path = `example/${host}.z/public/${template_filename}`
-                        console.log(`reading template file: ${template_file_path}`)
+                        let template_file_path = `${path}/public/${template_filename}`
                         let template_file_contents = fs.readFileSync(template_file_path, 'utf-8')
-                        console.log('template file contents: ', template_file_contents)
 
                         // Use a LocalDirectory object since we are rendering locally
                         let directory = new LocalDirectory();
-                        directory.setHost(`${host}.z`);
+                        directory.setLocalRoot(`${path}`);
 
                         let renderer = new Renderer(this.ctx, directory);
                         let request_params = {};
-                        // // GET
                         for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
-                        // // POST takes priority, rewrites if needed
-                        // let bodyParsed = qs.parse(body);
-                        // for (const k in bodyParsed) request_params[k] = bodyParsed[k];
 
                         // // Add params from route matching
                         request_params = Object.assign({}, request_params, route_params);
 
-                        let rendered = await renderer.render(template_filename, template_file_contents, host, request_params); // todo: sanitize
+                        let rendered = await renderer.render(template_filename, template_file_contents, path, request_params); // todo: sanitize
 
                         response._contentType = 'text/html';
-
-                        console.log('rendered: ', rendered);
 
                         resolve(rendered);
                     } else {
                         // If not, try root dir
                         // in parsedUrl.pathname will be something like "/index.css"
 
-                        let static_file_path = `example/${host}.z/public/${parsedUrl.pathname}`
+                        let static_file_path = `${path}/public/${parsedUrl.pathname}`
                         let rendered = fs.readFileSync(static_file_path, 'utf-8');
 
                         response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
