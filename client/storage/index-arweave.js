@@ -50,6 +50,10 @@ class StorageArweave {
         // console.log('off', chunk_id, this.downloadingTicks[chunk_id]);
     }
 
+    hasArweaveKey() {
+        return !!this.config.arweave_key;
+    }
+
     getArweaveKey() {
         const key = this.config.arweave_key;
         if (!key) throw Error('No arweave key set');
@@ -494,31 +498,41 @@ class StorageArweave {
     async SEND_STORE_CHUNK_SEGMENTS(link, chunk) {
         let rawData = chunk.getData();
 
-        let transaction = await this.arweave.createTransaction({ data: rawData }, this.getArweaveKey());
+        if (this.hasArweaveKey()) {
+            let transaction = await this.arweave.createTransaction({ data: rawData }, this.getArweaveKey());
 
-        // transaction.addTag('keccak256hex', hash);
-        // transaction.addTag('pn_experiment', '1');
-        transaction.addTag(this.__PN_TAG_VERSION_MAJOR_KEY, this.__PN_TAG_VERSION_MAJOR_VALUE);
-        transaction.addTag(this.__PN_TAG_VERSION_MINOR_KEY, this.__PN_TAG_VERSION_MINOR_VALUE);
-        transaction.addTag(this.__PN_TAG_CHUNK_ID_KEY, chunk.id);
-        transaction.addTag(this.__PN_TAG_VERSIONED_CHUNK_ID_KEY, chunk.id);
+            // transaction.addTag('keccak256hex', hash);
+            // transaction.addTag('pn_experiment', '1');
+            transaction.addTag(this.__PN_TAG_VERSION_MAJOR_KEY, this.__PN_TAG_VERSION_MAJOR_VALUE);
+            transaction.addTag(this.__PN_TAG_VERSION_MINOR_KEY, this.__PN_TAG_VERSION_MINOR_VALUE);
+            transaction.addTag(this.__PN_TAG_CHUNK_ID_KEY, chunk.id);
+            transaction.addTag(this.__PN_TAG_VERSIONED_CHUNK_ID_KEY, chunk.id);
 
-        // Sign
-        await this.arweave.transactions.sign(transaction, this.getArweaveKey());
+            // Sign
+            await this.arweave.transactions.sign(transaction, this.getArweaveKey());
 
-        // Upload
-        let uploader = await this.arweave.transactions.getUploader(transaction);
-        while (!uploader.isComplete) {
-            await uploader.uploadChunk();
-            // console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+            // Upload
+            let uploader = await this.arweave.transactions.getUploader(transaction);
+            while (!uploader.isComplete) {
+                await uploader.uploadChunk();
+                // console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+            }
+
+            // return new Promise(async(resolve, reject) => {
+            //     this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
+            //         await link.refresh();
+            //         (!err) ? resolve(true) : reject(err); // machine will move to next state
+            //     });
+            // });
+        } else {
+            console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
+            const response = await axios.post(this.config.arweave_airdrop_endpoint + '/sign', {
+                data: rawData.toString()
+            });
+            if (response.data.status !== 'ok') {
+                throw Error('Arweave airdrop endpoint return error: '+JSON.stringify(response));
+            }
         }
-
-        // return new Promise(async(resolve, reject) => {
-        //     this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
-        //         await link.refresh();
-        //         (!err) ? resolve(true) : reject(err); // machine will move to next state
-        //     });
-        // });
     }
 
     async SEND_STORE_CHUNK_DATA(data, link) {

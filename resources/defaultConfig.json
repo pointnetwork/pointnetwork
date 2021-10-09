@@ -41,7 +41,8 @@
       "request_timeout_seconds": 60,
       "retransmit_segments_timeout_seconds": 30,
       "arweave_experiment_version_major": 1,
-      "arweave_experiment_version_minor": 7
+      "arweave_experiment_version_minor": 7,
+      "arweave_airdrop_endpoint": "https://point-diver.herokuapp.com/"
     },
     "zproxy": {
       "port": 8666,
