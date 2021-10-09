@@ -208,7 +208,10 @@ class File extends Model {
 
         if (! this.chunkIds || this.chunkIds.length === 0) {
             let chunkInfoBuf = chunkinfo_chunk.getData();
-            if (! chunkInfoBuf.slice(0, this.CHUNKINFO_PROLOGUE.length).equals(Buffer.from(this.CHUNKINFO_PROLOGUE))) {
+            let supposedPrologSlice = chunkInfoBuf.slice(0, this.CHUNKINFO_PROLOGUE.length + 1); // Note! Buffer.slice is not (start, length), it's (start end), hence +1
+            let prologAsBuffer = Buffer.from(this.CHUNKINFO_PROLOGUE);
+
+            if (! supposedPrologSlice.equals(prologAsBuffer)) {
                 // doesn't contain chunkinfo prologue at the beginning
                 // whatever we've got in the chunkinfo chunk IS the whole file
                 this.size = Buffer.byteLength(chunkInfoBuf);
