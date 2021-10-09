@@ -13,6 +13,7 @@ const utils = require('#utils');
 const Arweave = require('arweave');
 const { request, gql } = require('graphql-request');
 const axios = require('axios');
+const { ArweaveSigner, createData } = require("arbundles");
 
 class StorageArweave {
     constructor(ctx) {
@@ -34,6 +35,8 @@ class StorageArweave {
         this.__PN_TAG_VERSION_MINOR_VALUE = this.__PN_TAG_INTEGRATION_VERSION_MINOR;
         this.__PN_TAG_CHUNK_ID_KEY = '__pn_chunk_id';
         this.__PN_TAG_VERSIONED_CHUNK_ID_KEY = '__pn_chunk_'+this.__PN_TAG_INTEGRATION_VERSION_MAJOR+'.'+this.__PN_TAG_INTEGRATION_VERSION_MINOR+'_id';
+
+        this.BUNDLER_URL ="https://bundler.arweave.net";
     }
 
     downloadingTickOn(chunk_id) {
@@ -498,7 +501,8 @@ class StorageArweave {
     async SEND_STORE_CHUNK_SEGMENTS(link, chunk) {
         let rawData = chunk.getData();
 
-        if (this.hasArweaveKey()) {
+        if (this.config.arweave_use_real_wallet) {
+            // Real "AR" mode
             let transaction = await this.arweave.createTransaction({ data: rawData }, this.getArweaveKey());
 
             // transaction.addTag('keccak256hex', hash);
@@ -525,13 +529,30 @@ class StorageArweave {
             //     });
             // });
         } else {
-            console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
-            const response = await axios.post(this.config.arweave_airdrop_endpoint + '/sign', {
-                data: rawData.toString()
-            });
-            if (response.data.status !== 'ok') {
-                throw Error('Arweave airdrop endpoint return error: '+JSON.stringify(response));
-            }
+            // Use bundler
+
+            // console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
+            // const response = await axios.post(this.config.arweave_airdrop_endpoint + '/sign', {
+            //     data: rawData.toString()
+            // });
+            // if (response.data.status !== 'ok') {
+            //     throw Error('Arweave airdrop endpoint return error: '+JSON.stringify(response));
+            // }
+
+            const key = this.getArweaveKey();
+
+            const signer = new ArweaveSigner(key);
+            const item = createData(rawData, signer);
+            await item.sign(signer);
+
+            // This transaction ID is guaranteed to be usable
+            // console.log("item id", item.id);
+            const txid = item.id;
+
+            const response = await item.sendToBundler(this.BUNDLER_URL);
+
+            this.ctx.log.debug(["bundler response status", response.status]);
+            this.ctx.log.debug({'chunk_id': chunk.id, 'txid': txid, 'bundler_response_status': response.status });
         }
     }
 
