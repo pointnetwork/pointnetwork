@@ -244,10 +244,17 @@ class Web3Bridge {
 
             identity = identity.replace('.z', ''); // todo: rtrim instead
             const contract = await this.loadIdentityContract();
-            const method = contract.methods.register(identity, address, [commPublicKey.slice(0, 32+1), commPublicKey.slice(32)]);
-            console.log(await this.web3send(method)); // todo: remove console.log
+            const method = contract.methods.register(identity, address,
+                `0x${commPublicKey.slice(0, 32).toString('hex')}`,
+                `0x${commPublicKey.slice(32).toString('hex')}`);
+
+            const result = await this.web3send(method);
+            this.ctx.log.info(result, 'Identity registration result'); // todo: remove console.log
+
+            return result;
         } catch(e) {
-            this.ctx.log.error('registerIdentity error', {e, identity, address, commPublicKey});
+            this.ctx.log.error({e, identity, address, commPublicKey}, 'Identity registration error');
+            this.ctx.log.error(e.stack);
             throw e;
         }
     }

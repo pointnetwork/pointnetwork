@@ -35,12 +35,26 @@ config.network = {
     storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
 };
 
+const mnemonic = require('/data/keystore/key.json');
+if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
+    throw new Error('Invalid key format');
+}
+
+const provider = new HDWalletProvider({mnemonic, providerOrUrl: config.network.web3});
+const web3 = new Web3(provider);
+const privateKey = provider.hdwallet._hdkey._privateKey.toString('hex');
+const account = web3.eth.accounts.privateKeyToAccount(`0x${privateKey}`);
+
 const arweave_key = require('/data/keystore/arweave.json');
 if (typeof arweave_key !== 'object') {
     throw new Error('Unable to parse arweave key');
 }
 
-config.client = {...config.client, storage: {...(config.client && config.client.storage), arweave_key}};
+config.client = {
+    ...config.client,
+    storage: {...(config.client && config.client.storage), arweave_key},
+    wallet: {...(config.client && config.client.wallet), account: account.address, privateKey}
+};
 
 writeFileSync('/data/config.json', JSON.stringify(config, null, 2));
 copyFileSync('/app/resources/sequelizeConfig.docker.json', '/app/resources/sequelizeConfig.json');
@@ -48,7 +62,7 @@ copyFileSync('/app/resources/sequelizeConfig.docker.json', '/app/resources/seque
 console.info('Config is successfully updated.');
 
 async function compilePointContracts() {
-    console.info('Compiling point contracts:', Object.keys(contractAddresses));
+    console.info('Compiling point contracts:', contractAddresses);
 
     const getImports = function(dependency) {
         const dependencyNodeModulesPath = path.join(__dirname, '..', 'node_modules/', dependency);
@@ -83,7 +97,7 @@ async function compilePointContracts() {
             throw e;
         }
     }
-    console.info('Successfully compiled point contracts:', Object.keys(contractAddresses));
+    console.info('Successfully compiled point contracts:', Object.keys(contractAddresses).join(', '));
 }
 
 if (!existsSync('/data/data')) {
@@ -94,18 +108,11 @@ if (!existsSync('/data/data/dht_peercache.db')) {
     writeFileSync('{}', '/data/data/dht_peercache.db');
 }
 
-const mnemonic = require('/data/keystore/key.json');
-if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
-    throw new Error('Invalid key format');
-}
-
 (async () => {
     await compilePointContracts();
 
     console.log('Awaiting for blockchain provider at', config.network.web3);
 
-    const provider = new HDWalletProvider({mnemonic, providerOrUrl: config.network.web3});
-    const web3 = new Web3(provider);
     const start = Date.now();
 
     while (Date.now() - start < timeout) {
