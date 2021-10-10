@@ -14,6 +14,7 @@ const ZProxySocketController = require('../../api/sockets/ZProxySocketController
 const url = require('url');
 const certificates = require('./certificates');
 const Directory = require('../../db/models/directory');
+const LocalDirectory = require('../../db/models/local_directory');
 const qs = require('query-string');
 const Console = require('../../console');
 const utils = require('#utils');
@@ -175,7 +176,7 @@ class ZProxy {
 
     async request(request, response) {
         let host = request.headers.host;
-        if (! _.endsWith(host, '.z')) return this.abort404(response);
+        if ( host != 'point' && ! _.endsWith(host, '.z')) return this.abort404(response);
 
         try {
             let rendered;
@@ -244,6 +245,10 @@ class ZProxy {
                 } catch(e) {
                     return this.abortError(response, e);
                 }
+            } else if (host == 'point') {
+                // handle the point welcome page by rendering explorer.z
+                let localPath = 'example/explorer.z'; // hardcode to render explorer.z
+                rendered = await this.processLocalRequest(localPath, request, response, parsedUrl);;
             } else {
                 try {
                     rendered = await this.processRequest(host, request, response, parsedUrl);
@@ -391,6 +396,68 @@ class ZProxy {
         return re.exec(filename)[1];
     }
 
+    processLocalRequest(path, request, response, parsedUrl) {
+        return new Promise(async(resolve, reject) => {
+            let body = '';
+            request.on('data', (chunk) => {
+                body += chunk;
+            });
+            request.on('end', async() => {
+                try {
+                    let routesJsonPath = `${path}/routes.json`
+                    let routes = fs.readJSONSync(routesJsonPath)
+
+                    let route_params = {};
+                    let template_filename = null;
+                    const { match } = require('node-match-path');
+                    for(const k in routes) {
+                        const matched = match(k, parsedUrl.pathname);
+                        if (matched.matches) {
+                            route_params = matched.params;
+                            template_filename = routes[ k ];
+                            break;
+                        }
+                    }
+
+                    if (template_filename) {
+                        let template_file_path = `${path}/public/${template_filename}`
+                        let template_file_contents = fs.readFileSync(template_file_path, 'utf-8')
+
+                        // Use a LocalDirectory object since we are rendering locally
+                        let directory = new LocalDirectory();
+                        directory.setLocalRoot(`${path}`);
+
+                        let renderer = new Renderer(this.ctx, directory);
+                        let request_params = {};
+                        for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
+
+                        // // Add params from route matching
+                        request_params = Object.assign({}, request_params, route_params);
+
+                        let rendered = await renderer.render(template_filename, template_file_contents, path, request_params); // todo: sanitize
+
+                        response._contentType = 'text/html';
+
+                        resolve(rendered);
+                    } else {
+                        // If not, try root dir
+                        // in parsedUrl.pathname will be something like "/index.css"
+
+                        let static_file_path = `${path}/public/${parsedUrl.pathname}`
+                        let rendered = fs.readFileSync(static_file_path, 'utf-8');
+
+                        response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
+                        if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
+
+                        resolve(rendered);
+                    }
+                } catch(e) {
+                    reject(e); // todo: sanitize?
+                }
+            });
+        });
+    }
+
     processRequest(host, request, response, parsedUrl) {
         return new Promise(async(resolve, reject) => {
             let body = '';
@@ -463,7 +530,6 @@ class ZProxy {
             });
         });
     }
-
 
     keyValueAppend(host, request) {
         return new Promise(async(resolve, reject) => {
