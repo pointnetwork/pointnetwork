@@ -4,6 +4,14 @@ Welcome to the Template Example Zapp. This README is a basic guide to getting st
 
 This is a React JS app. So you will need to install dependencies for it and run a build watcher if you want to develop it further.
 
+## Main Libraries
+
+This template Zapp uses:
+
+* [React JS](https://reactjs.org/) **v 17.x**
+* [React Bootstrap](https://react-bootstrap.github.io/) **v 2.x**
+* [Bootstrap](https://getbootstrap.com/) **v 5.x**
+
 ## Prepare for deployment
 
 Since this a React JS site it rquires to be built before it can be deployed as follows:
