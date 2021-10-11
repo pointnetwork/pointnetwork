@@ -235,6 +235,26 @@ class StorageArweave {
         // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
         // if (! file.original_path) file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
         if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
+            // Restart the file downloading, even if it failed. Don't forget to restart the chunks first
+
+            let chunkinfo_chunk = await Chunk.findOrCreate(file.id);
+            if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
+                // restart
+                chunkinfo_chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
+                await chunkinfo_chunk.save();
+            }
+
+            if (file.chunkIds && file.chunkIds.length > 0) {
+                await Promise.all(file.chunkIds.map(async(chunk_id, i) => {
+                    let chunk = await Chunk.findOrCreate(chunk_id);
+                    if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
+                        chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
+                        await chunk.save();
+                        return;
+                    }
+                }));
+            }
+
             file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
             await file.save();
             await file.reconsiderDownloadingStatus();
@@ -265,7 +285,7 @@ class StorageArweave {
 
                         resolve(file);
                     } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
-                        reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
+                        reject('ArweaveStorage: File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
                     } else {
                         waitUntilRetrieval(resolve, reject);
                     }
@@ -394,6 +414,8 @@ class StorageArweave {
     async chunkDownloadingTick(chunk) {
         // todo todo todo: make it in the same way as chunkUploadingTick - ??
 
+        console.log('chunkDownloadingTick----', chunk.id);
+
         if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) return;
 
         if (! this.downloadingTickOn(chunk.id)) return;
@@ -438,6 +460,9 @@ class StorageArweave {
             const queryResult = await request('https://arweave.net/graphql', query);
             console.log(ARW_LOG + '  arweave/graphql - DONE', chunk.id, elapsed());
 
+            console.log(ARW_LOG + '  query:', query);
+            console.log(ARW_LOG + '  queryResult:', queryResult);
+
             console.log(ARW_LOG + '  iterations', elapsed());
             for(let edge of queryResult.transactions.edges) {
                 const txid = edge.node.id;
@@ -455,7 +480,9 @@ class StorageArweave {
                 // which with regular txs is true
                 // but it also returns 202 for unseeded Bundlr txs
                 // so the data exists in Bundlr - but not on L1 (Arweave)
-                const result = await axios.get(`https://arweave.net/${txid}`);
+                const dl_url = `https://arweave.net/${txid}`;
+                const result = await axios.get();
+                console.log({dl_url, result});
                 const data = result.data;
 
                 console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
@@ -551,8 +578,8 @@ class StorageArweave {
 
             const response = await item.sendToBundler(this.BUNDLER_URL);
 
-            this.ctx.log.debug(["bundler response status", response.status]);
-            this.ctx.log.debug({'chunk_id': chunk.id, 'txid': txid, 'bundler_response_status': response.status });
+            console.log(["bundler response status", response.status]);
+            console.log({'chunk_id': chunk.id, 'txid': txid, 'bundler_response_status': response.status });
         }
     }
 
