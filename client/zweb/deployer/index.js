@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const utils = require('#utils');
 const ethUtil = require('ethereumjs-util');
+const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 class Deployer {
     constructor(ctx) {
@@ -70,7 +71,10 @@ class Deployer {
                 try {
                     await this.deployContract(target, contractName, fileName, deployPath);
                 } catch(e) {
-                    this.ctx.log.error(e);
+                    this.ctx.log.error({
+                        message: e.message,
+                        stack: e.stack
+                    }, 'Zapp contract deployment error');
                     throw e;
                 }
             }
@@ -182,7 +186,11 @@ class Deployer {
         }
         const truffleContract = require('@truffle/contract');
         const contract = truffleContract(artifacts);
-        contract.setProvider(this.ctx.web3.currentProvider);
+
+        contract.setProvider(new HDWalletProvider({
+            privateKeys: [`0x${this.ctx.web3.currentProvider.hdwallet._hdkey._privateKey.toString('hex')}`],
+            providerOrUrl: this.ctx.config.network.web3
+        }));
 
         let gasPrice = await this.ctx.web3.eth.getGasPrice();
         let estimateGas = Math.floor(await contract.new.estimateGas() * 1.1);
