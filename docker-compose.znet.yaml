@@ -10,7 +10,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     environment:
       - SOLANA_URL=http://blockchain_node:8899
       - RUST_LOG=solana_runtime::system_instruction_processor=warn,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
@@ -24,7 +24,7 @@ services:
       - blockchain_node_data:/opt/solana/config:rw
 
   blockchain_provider:
-    image: cybercoredev/proxy:v0.2.0
+    image: neonlabsorg/proxy:v0.2.0-rc5
     container_name: pointnetwork_blockchain_provider
     depends_on:
       blockchain_node:
@@ -38,7 +38,7 @@ services:
       interval: 60s
       timeout: 5s
       retries: 4
-      start_period: 30s
+      start_period: 180s
     environment:
       - CONFIG=ci
       - SOLANA_URL=http://blockchain_node:8899
