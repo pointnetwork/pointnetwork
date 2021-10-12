@@ -19,7 +19,7 @@ services:
     ports:
       - 127.0.0.1:9090:9090
     volumes:
-      - $BLOCKCHAIN_KEYSTORE:/root/.config/solana:ro
+      - $BLOCKCHAIN_KEYSTORE:/root/.config/solana
       - ./scripts/handle-neon-proxy.sh:/opt/proxy/handle-run-proxy.sh:ro
     entrypoint: /opt/proxy/handle-run-proxy.sh
 
