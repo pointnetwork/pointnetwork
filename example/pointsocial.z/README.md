@@ -34,6 +34,7 @@ Now a `public` folder will be created containing the deployable built site. You 
 
 
 1. Comment out [lines 151](https://github.com/pointnetwork/pointnetwork/blob/master/db/models/file.js#L151) & 152 in `db/models/file.js` class. (NOTE: **do not** commit this change to your branch! Always revert this change before making the commit.).
+1. (OPTIONAL) Stop the nodes using docker: `docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml down -v`
 1. Start the node using docker: `docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d`
 1. Connect to the running `website_owner` container `docker exec -it pointnetwork_website_owner bash`
 1. Deploy Point Social Zapp from within the container (check the logs of the container first to make sure the node has started before running this!): `./scripts/deploy-sites.sh pointsocial.z --contracts`
