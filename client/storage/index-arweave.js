@@ -574,6 +574,11 @@ class StorageArweave {
             const form = new FormData();
             form.append('file', fs.createReadStream(Chunk.getChunkStoragePath(chunk.id)));
 
+            for(let k in tags) {
+                let v = tags[k];
+                form.append(k, v);
+            }
+
             const request_config = {
                 headers: {
                     // 'Authorization': `Bearer ${access_token}`,
