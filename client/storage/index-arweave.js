@@ -567,7 +567,7 @@ class StorageArweave {
                 [this.__PN_TAG_VERSIONED_CHUNK_ID_KEY]: chunk.id
             };
 
-            console.debug('Signing '+this.config.arweave_airdrop_endpoint + 'sign'+' over data for chunk id '+chunk.id+'...');
+            console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
 
             const FormData = require('form-data'); // npm install --save form-data
 
@@ -581,7 +581,7 @@ class StorageArweave {
                 }
             };
 
-            const response = await axios.post(this.config.arweave_airdrop_endpoint + 'signPOST', form, request_config);
+            const response = await axios.post(this.config.arweave_airdrop_endpoint + '/signPOST', form, request_config);
 
             // const response = await axios.post(this.config.arweave_airdrop_endpoint + 'sign', {
             //     data: rawData.toString(),
