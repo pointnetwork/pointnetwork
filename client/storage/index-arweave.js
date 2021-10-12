@@ -469,7 +469,7 @@ class StorageArweave {
 
                 // Get the data decoded to a Uint8Array for binary data
                 console.log(ARW_LOG + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
-                // const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+                const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
 
                 // Read back data
                 // Don't use arweave.transactions.getData, data is not available instantly via
@@ -480,10 +480,11 @@ class StorageArweave {
                 // which with regular txs is true
                 // but it also returns 202 for unseeded Bundlr txs
                 // so the data exists in Bundlr - but not on L1 (Arweave)
-                const dl_url = `https://arweave.net/${txid}`;
-                const result = await axios.get();
-                console.log({dl_url, result});
-                const data = result.data;
+
+                // const dl_url = `https://arweave.net/${txid}`;
+                // const result = await axios.get();
+                // console.log({dl_url, result});
+                // const data = result.data;
 
                 console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
 
@@ -556,30 +557,44 @@ class StorageArweave {
             //     });
             // });
         } else {
-            // Use bundler
+            // Use bundler - no
+            // Use signer
 
-            // console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
-            // const response = await axios.post(this.config.arweave_airdrop_endpoint + '/sign', {
-            //     data: rawData.toString()
-            // });
-            // if (response.data.status !== 'ok') {
-            //     throw Error('Arweave airdrop endpoint return error: '+JSON.stringify(response));
-            // }
+            const tags = {
+                [this.__PN_TAG_VERSION_MAJOR_KEY]: this.__PN_TAG_VERSION_MAJOR_VALUE,
+                [this.__PN_TAG_VERSION_MINOR_KEY]: this.__PN_TAG_VERSION_MINOR_VALUE,
+                [this.__PN_TAG_CHUNK_ID_KEY]: chunk.id,
+                [this.__PN_TAG_VERSIONED_CHUNK_ID_KEY]: chunk.id
+            };
 
-            const key = this.getArweaveKey();
+            console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
+            const response = await axios.post(this.config.arweave_airdrop_endpoint + '/sign', {
+                data: rawData.toString(),
+                tags,
+            });
+            if (response.data.status !== 'ok') {
+                throw Error('Arweave airdrop endpoint return error: '+JSON.stringify(response));
+            } else {
+                console.debug('Chunk id '+chunk.id + ' uploaded, txid: '+response.data.txid);
+            }
 
-            const signer = new ArweaveSigner(key);
-            const item = createData(rawData, signer);
-            await item.sign(signer);
+            return;
 
-            // This transaction ID is guaranteed to be usable
-            // console.log("item id", item.id);
-            const txid = item.id;
 
-            const response = await item.sendToBundler(this.BUNDLER_URL);
-
-            console.log(["bundler response status", response.status]);
-            console.log({'chunk_id': chunk.id, 'txid': txid, 'bundler_response_status': response.status });
+            // const key = this.getArweaveKey();
+            //
+            // const signer = new ArweaveSigner(key);
+            // const item = createData(rawData, signer);
+            // await item.sign(signer);
+            //
+            // // This transaction ID is guaranteed to be usable
+            // // console.log("item id", item.id);
+            // const txid = item.id;
+            //
+            // const response = await item.sendToBundler(this.BUNDLER_URL);
+            //
+            // console.log(["bundler response status", response.status]);
+            // console.log({'chunk_id': chunk.id, 'txid': txid, 'bundler_response_status': response.status });
         }
     }
 
