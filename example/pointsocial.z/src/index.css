@@ -27,6 +27,10 @@ header {
   border-radius: 5px;
 }
 
+.error {
+  color: red;
+}
+
 .btn {
   display: inline-block;
   background: #000;

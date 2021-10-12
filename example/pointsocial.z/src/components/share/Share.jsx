@@ -11,6 +11,7 @@ export default function Share() {
   const [contents, setContents] = useState();
   const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
   const [btnEnabled, setBtnEnabled] = useState(false);
+  const [shareError, setShareError] = useState(undefined);
   const { walletAddress } = useAppContext();
 
   onFileChange = event => {
@@ -46,9 +47,10 @@ export default function Share() {
       await window.point.contract.send({contract: 'PointSocial', method: 'addPost', params: [storageId, imageId]});
       // TODO: Avoid using reloads
       window.location.reload()
-    } catch (err) {
-      console.error('Error: ', err);
+    } catch (e) {
+      console.error('Error sharing post: ', e.message);
       setSaving(false);
+      setShareError(e);
     }
   };
 
@@ -86,6 +88,7 @@ export default function Share() {
             {btnLabel}
           </button>
         </form>
+        {shareError && <div className='error'>Error sharing post: {shareError.message}. Did you deploy the contract sucessfully?</div>}
       </div>
     </div>
   );
