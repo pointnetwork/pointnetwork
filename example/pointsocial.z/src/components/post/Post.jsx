@@ -20,7 +20,7 @@ export default function Post({ post }) {
     try {
       await window.point.contract.send({contract: 'PointSocial', method: 'addLikeToPost', params: [post.id]});
       // TODO: Avoid using reload
-      window.location.reload()
+      window.location = '/';
     } catch (e) {
       console.error('Error updating likes: ', e.message);
     }

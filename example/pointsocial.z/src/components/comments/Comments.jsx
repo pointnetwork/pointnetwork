@@ -60,7 +60,7 @@ const Comments = ({ postId }) => {
           // Save the post contents storage id in the PoinSocial Smart Contract
           await window.point.contract.send({contract: 'PointSocial', method: 'addCommentToPost', params: [postId, storageId]});
           // TODO: Avoid using reload
-          window.location.reload()
+          window.location = '/';
       } catch (err) {
         setSaving(false);
         console.error('Error: ', err);
