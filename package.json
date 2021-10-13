@@ -58,6 +58,7 @@
     "web3": "^1.5.2",
     "websocket": "^1.0.34",
     "web3-provider-engine": "16.0.3",
+    "web3-providers-http": "1.6.0",
     "xstate": "^4.23.1"
   },
   "devDependencies": {

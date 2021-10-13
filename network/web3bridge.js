@@ -4,6 +4,7 @@ const fs = require('fs');
 const utils = require('#utils');
 const _ = require('lodash');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
+const Web3HttpProvider = require('web3-providers-http');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 
 class Web3Bridge {
@@ -13,8 +14,9 @@ class Web3Bridge {
         this.network_id = this.ctx.config.network.web3_network_id;
         this.chain_id = this.ctx.config.network.web3_chain_id;
 
+        const httpProvider = new Web3HttpProvider(this.connectionString, {keepAlive: true, timeout: 20000});
         const mnemonic = require(path.resolve(this.ctx.datadir, 'keystore', 'key.json'));
-        const hdWalletProvider = new HDWalletProvider({mnemonic, providerOrUrl: this.connectionString});
+        const hdWalletProvider = new HDWalletProvider({mnemonic, providerOrUrl: httpProvider});
 
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(hdWalletProvider); // todo: maybe you should hide it behind this abstraction, no?
 
@@ -76,12 +78,22 @@ class Web3Bridge {
         try {
             account = this.web3.eth.defaultAccount;
             gasPrice = await this.web3.eth.getGasPrice();
-            if (!gasLimit) gasLimit = await method.estimateGas({ from: account, value: amountInWei });
+            if (!gasLimit) {
+                this.ctx.log.debug('Web3 Send estimating gas limit');
+                gasLimit = await method.estimateGas({ from: account, value: amountInWei });
+                this.ctx.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
+            }
             return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
-        } catch (e) {
-            console.info({ method, account, gasPrice, gasLimit, amountInWei });
-            console.error('web3send error:', e);
-            throw e;
+        } catch (error) {
+            this.ctx.log.error({
+                method: method._method.name,
+                account,
+                gasPrice,
+                gasLimit,
+                optons,
+                error
+            }, 'Web3 Send error:');
+            throw error;
         }
         /*
         .on('transactionHash', function(hash){
