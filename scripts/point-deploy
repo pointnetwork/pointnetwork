@@ -23,7 +23,7 @@ echo
 cp -r * $POINTNETWORK_DEPLOYSPACE
 
 # Execute the deployspace script from inside the website owner container
-docker exec -it pointnetwork_website_owner /app/scripts/deploy-from-deployspace.sh
+docker exec -it point_node /app/scripts/deploy-from-deployspace.sh
 
 # Finally, clean up and delete everything in deployspace
 rm -r $POINTNETWORK_DEPLOYSPACE/*
