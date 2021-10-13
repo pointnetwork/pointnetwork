@@ -2,7 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const utils = require('#utils');
 const ethUtil = require('ethereumjs-util');
-const HDWalletProvider = require("@truffle/hdwallet-provider");
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
 
 class Deployer {
     constructor(ctx) {
@@ -186,11 +187,16 @@ class Deployer {
         }
         const truffleContract = require('@truffle/contract');
         const contract = truffleContract(artifacts);
-
-        contract.setProvider(new HDWalletProvider({
+        const provider = new HDWalletProvider({
             privateKeys: [`0x${this.ctx.web3.currentProvider.hdwallet._hdkey._privateKey.toString('hex')}`],
             providerOrUrl: this.ctx.config.network.web3
-        }));
+        });
+
+        const nonceTracker = new NonceTrackerSubprovider();
+        provider.engine._providers.unshift(nonceTracker);
+        nonceTracker.setEngine(provider.engine);
+
+        contract.setProvider(provider);
 
         let gasPrice = await this.ctx.web3.eth.getGasPrice();
         let estimateGas = Math.floor(await contract.new.estimateGas() * 1.1);

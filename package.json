@@ -57,6 +57,7 @@
     "uuid": "^8.3.2",
     "web3": "^1.5.2",
     "websocket": "^1.0.34",
+    "web3-provider-engine": "16.0.3",
     "xstate": "^4.23.1"
   },
   "devDependencies": {
