@@ -14,20 +14,224 @@
         <tr>
             <th>Currency</th>
             <th>Address</th>
-            <th>Balance</th>
-            <th>Actions</th>
+            <th style="text-align: right;">Balance</th>
+            <th style="text-align: right;">Actions</th>
         </tr>
         {% for wallet in wallets %}
             <tr>
                 <td><strong>{{ wallet.currency_name }}</strong> ({{ wallet.currency_code }})</td>
                 <td class="mono">{{ wallet.address }}</td>
                 <td style="text-align: right;">{{ wallet.balance | number_format(8, '.', '') }} {{ wallet.currency_code }}</td>
-                <td>
-                    <a href="#" class="btn btn-sm btn-warning">Send</a>
-                    <a href="#" class="btn btn-sm btn-success">Receive</a>
+                <td style="text-align: right;">
+                    {% if wallet.currency_code == 'devSOL' %}
+                        <a href="#" class="btn btn-sm btn-indigo" style="background-color: #7367f0; color: white;" onclick="walletAirdrop('{{ wallet.currency_code }}');">Airdrop</a>
+                    {% endif %}
+                    <a href="#" class="btn btn-sm btn-warning" onclick="walletSend('{{ wallet.currency_code }}');">Send</a>
+                    <a href="#" class="btn btn-sm btn-success" onclick="walletReceive('{{ wallet.currency_code }}', '{{ wallet.address }}');">Receive</a>
+                    <a href="#" class="btn btn-sm btn-info" onclick="walletHistory('{{ wallet.currency_code }}');">History</a>
                 </td>
             </tr>
         {% endfor %}
     </table>
+
+    <script>
+        function csrfPost(url, data, success, fail) {
+            data._csrf = '{{ csrf_value() }}';
+            $.post(url, data).done(success).fail(fail);
+        }
+
+        function pointMessage() {
+            // Swal.fire(
+            //     'Good job!',
+            //     'You clicked the button!',
+            //     'success'
+            // )
+            Swal.fire({
+                icon: 'info',
+                title: 'POINT token doesn\'t exist yet!',
+                text: 'Feel free to join our Telegram group to stay updated about the launch details',
+                // footer: '<a href="">Why do I have this issue?</a>'
+            })
+        }
+        function walletSend(code) {
+            if (code === 'POINT') return pointMessage()
+            $('#sendModal').modal('show');
+            $('#sendModal .modal-title').text('Send '+code);
+            $('#sendModal .insert-code').text(code);
+            $('#sendModal .amount').val('');
+            $('#sendModal .recipient').val('');
+            $('#sendModal').data('code', code);
+        }
+        function walletAirdrop(code) {
+            if (code === 'POINT') return pointMessage();
+            if (code === 'devSOL') {
+                Swal.fire({
+                    title: 'Request an airdrop from Solana Devnet?',
+                    // showDenyButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: 'Request',
+                    // denyButtonText: `Don't save`,
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        csrfPost('/wallet/requestDevSol', {}, function() {
+                            location.reload();
+                        }, function() {
+                            Swal.fire({
+                                title: 'Something went wrong',
+                                text: 'Perhaps you\'re requesting the airdrop too often?'
+                            });
+                        });
+                    }
+                })
+            }
+        }
+        function walletReceive(code, address) {
+            if (code === 'POINT') return pointMessage();
+            $('#receiveModal').modal('show');
+            $('#receiveModal .modal-title').text('Receive '+code);
+            $('#receiveModal .insert-code').text(code);
+            $('#receiveModal .address').val(address);
+
+            $('#receive-qrcode').html('')
+            var QR_CODE = new QRCode("receive-qrcode", {
+                width: 220,
+                height: 220,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H,
+            });
+            QR_CODE.makeCode(address);
+
+            // $('#receiveModal .amount').val('');
+            // $('#receiveModal .recipient').val('');
+            $('#receiveModal').data('code', code);
+        }
+        function walletHistory(code) {
+            if (code === 'POINT') return pointMessage();
+        }
+        function sendPOST(code, recipient, amount) {
+            csrfPost('/wallet/send', {code, recipient, amount}, function() {
+                location.reload();
+            }, function() {
+                Swal.fire({
+                    title: 'Something went wrong',
+                    // text: 'Perhaps you\'re requesting the airdrop too often?'
+                });
+                $('#sendModal').modal('hide');
+            });
+        }
+    </script>
+
+
+
+    <!-- Modal -->
+    <div class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" id="sendModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Send</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control recipient" placeholder="Recipient's address" aria-label="Recipient's address" aria-describedby="basic-addon2">
+{#                        <span class="input-group-text" id="basic-addon2"></span>#}
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <input type="number" class="form-control number amount" placeholder="Amount" aria-label="Amount" aria-describedby="basic-addon2">
+                        <span class="input-group-text insert-code"></span>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="sendPOST($('#sendModal').data('code'), $('#sendModal .recipient').val(), $('#sendModal .amount').val())">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" id="receiveModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Receive</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="input-group mb-3" style="text-align: center">
+                        <div class="qrcode" id="receive-qrcode" style="margin: 0 auto;"></div>
+                    </div>
+
+                    <div class="input-group mb-3">
+
+                        <div class="input-group">
+                            <input readonly type="text" class="form-control mono address" id="receive-address" value="" style="text-align: center">
+                            <span class="input-group-btn">
+                                <button class="btn btn-secondary btn-lg" type="button" id="receive-copy-button" data-toggle="tooltip" data-placement="button" title="Copy to Clipboard"
+                                        data-clipboard-action="copy" data-clipboard-target="#receive-address"
+                                >
+                                    <span class="checkmark" style="color: #69e069; display: none; width: 14px; text-align: center;">&#10003;</span>
+                                    &nbsp;
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16" style="width: 14px;">
+                                      <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                      <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                                    </svg>
+                                    &nbsp;
+                                </button>
+                                <script>
+                                    var clipboard = new ClipboardJS('#receive-copy-button');
+
+                                    clipboard.on('success', function(e) {
+                                        $('#receive-copy-button .checkmark').show();
+                                        $('#receive-copy-button svg').hide();
+                                        setTimeout(function() {
+                                            $('#receive-copy-button .checkmark').hide();
+                                            $('#receive-copy-button svg').show();
+                                        },
+                                            500
+                                        );
+
+                                        console.info('Action:', e.action);
+                                        console.info('Text:', e.text);
+                                        console.info('Trigger:', e.trigger);
+
+                                        e.clearSelection();
+                                    });
+                                </script>
+                            </span>
+                        </div>
+
+
+                        {#                        <span class="input-group-text" id="basic-addon2"></span>#}
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        var inputs = document.getElementsByClassName('number');
+        for(var input of inputs) {
+            input.addEventListener("keypress", e => {
+                // If the key pressed is not a number or a period, nothing is printed
+                if (!/[0-9.]/.test(e.key)) {
+                    e.preventDefault();
+                }
+                // if (e.target.value.includes('.') && e.key === '.') {
+                //     e.preventDefault();
+                // }
+            });
+        }
+    </script>
 
 {% endblock %}

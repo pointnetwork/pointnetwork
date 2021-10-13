@@ -43,7 +43,11 @@
       "arweave_experiment_version_major": 1,
       "arweave_experiment_version_minor": 8,
       "arweave_airdrop_endpoint": "https://arweave-bundler.herokuapp.com",
-      "arweave_key": false
+      "arweave_key": false,
+      "solana_main_endpoint": "https://still-billowing-smoke.solana-mainnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/",
+      "solana_dev_endpoint":  "https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/",
+      "solana_dev_standard_endpoint":  "https://api.devnet.solana.com/",
+      "solana_test_endpoint": "https://still-billowing-smoke.solana-testnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/"
     },
     "zproxy": {
       "port": 8666,

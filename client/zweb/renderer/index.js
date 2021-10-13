@@ -150,6 +150,30 @@ class Renderer {
                 return results;
             },
 
+            csrf_value: async function() {
+                // todo: regenerate per session, or maybe store more permanently?
+                if (! this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
+                if (! this.renderer.ctx.csrf_tokens[this.host]) this.renderer.ctx.csrf_tokens[this.host] = require("crypto").randomBytes(64).toString('hex');
+                return this.renderer.ctx.csrf_tokens[this.host];
+            },
+
+            csrf_field: async function() {
+                // todo: regenerate per session, or maybe store more permanently?
+                if (! this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
+                if (! this.renderer.ctx.csrf_tokens[this.host]) this.renderer.ctx.csrf_tokens[this.host] = require("crypto").randomBytes(64).toString('hex');
+                return "<input name='_csrf' value='" + this.renderer.ctx.csrf_tokens[this.host] + " />";
+            },
+
+            csrf_guard: async function(submitted_token) {
+                if (! this.renderer.ctx.csrf_tokens) throw new Error('No csrf token generated for this host (rather, no tokens at all)');
+                if (! this.renderer.ctx.csrf_tokens[this.host]) throw new Error('No csrf token generated for this host');
+                const real_token = this.renderer.ctx.csrf_tokens[this.host];
+                if (real_token !== submitted_token) {
+                    throw new Error('Invalid csrf token submitted');
+                }
+                return '';
+            },
+
             get_wallet_info: async function() {
                 this.renderer.#ensurePrivilegedAccess();
 
@@ -160,10 +184,10 @@ class Renderer {
                     { currency_name: 'Point', currency_code: 'POINT', address: 'N/A', balance: 0 },
                 );
                 wallets.push(
-                    { currency_name: 'Solana', currency_code: 'SOL', address: walletService.getSolanaAccount(), balance: 0 },
+                    { currency_name: 'Solana', currency_code: 'SOL', address: walletService.getSolanaAccount(), balance: await walletService.getSolanaMainnetBalanceInSOL() },
                 );
                 wallets.push(
-                    { currency_name: 'Solana - Devnet', currency_code: 'devSOL', address: walletService.getSolanaAccount(), balance: 0 },
+                    { currency_name: 'Solana - Devnet', currency_code: 'devSOL', address: walletService.getSolanaAccount(), balance: await walletService.getSolanaDevnetBalanceInSOL() },
                 );
                 wallets.push(
                     { currency_name: 'Neon', currency_code: 'NEON', address: walletService.getNetworkAccount(), balance: await walletService.getNetworkAccountBalanceInEth() },
@@ -173,6 +197,14 @@ class Renderer {
                 // );
 
                 return wallets;
+            },
+            wallet_request_dev_sol: async function() {
+                this.renderer.#ensurePrivilegedAccess();
+                await this.renderer.ctx.wallet.initiateSolanaDevAirdrop();
+            },
+            wallet_send: async function(code, recipient, amount) {
+                this.renderer.#ensurePrivilegedAccess();
+                await this.renderer.ctx.wallet.send(code, recipient, amount);
             }
         };
     }

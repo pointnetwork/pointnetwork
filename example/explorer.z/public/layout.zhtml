@@ -5,10 +5,14 @@
         <title>Point Explorer</title>
         <link rel="stylesheet" href="/css/bootstrap.min.css">
         <link rel="stylesheet" href="/css/custom.css">
+        <script src="/plugins/sweetalert2.js"></script>
+        <script src="/plugins/jquery-3.6.0.min.js"></script>
+        <script src="/plugins/bootstrap.min.js"></script>
+        <script src="/plugins/clipboard.min.js"></script>
+        <script src="/plugins/qrcode.min.js" defer></script>
         {% block head %}{% endblock %}
     </head>
     <body>
-
         <div class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
             <div class="container">
                 <img src="/img/pointlogowhite.png" style="height: 1.6em; margin-right: 0.8em;">

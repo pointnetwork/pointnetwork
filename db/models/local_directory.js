@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const {HttpNotFoundError} = require("../../core/exceptions");
 
 class LocalDirectory {
     setLocalRoot(localRoot) {
@@ -21,6 +22,8 @@ class LocalDirectory {
         }
 
         console.log('ASKING FOR LocalDirectory.readFileByPath ',{filePath, fullPath});
+
+        if (! fs.existsSync(fullPath)) throw new HttpNotFoundError('This route or file is not found');
 
         return fs.readFileSync(fullPath, encoding);
     }

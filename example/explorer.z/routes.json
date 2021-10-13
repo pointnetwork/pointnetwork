@@ -2,5 +2,7 @@
   "/": "index.zhtml",
   "/identities/:handle": "identity.zhtml",
   "/identities": "identities.zhtml",
-  "/wallet": "wallet.zhtml"
+  "/wallet": "wallet.zhtml",
+  "/wallet/requestDevSol": "wallet_requestDevSol.zhtml",
+  "/wallet/send": "wallet_send.zhtml"
 }

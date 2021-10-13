@@ -18,6 +18,7 @@ const LocalDirectory = require('../../db/models/local_directory');
 const qs = require('query-string');
 const Console = require('../../console');
 const utils = require('#utils');
+const {HttpNotFoundError} = require("../../core/exceptions");
 
 class ZProxy {
     constructor(ctx) {
@@ -280,7 +281,13 @@ class ZProxy {
         } catch(e) {
             // throw 'ZProxy Error: '+e; // todo: remove
             console.log('ZProxy Error:', e); // todo: this one can be important for debugging, but maybe use ctx.log not console
-            return this.abortError(response, 'ZProxy: '+e);
+
+            if (e instanceof HttpNotFoundError) {
+                return this.abort404(response, e.message);
+            } else {
+                return this.abortError(response, 'ZProxy: '+e);
+            }
+
         }
 
         // todo:?
@@ -430,7 +437,15 @@ class ZProxy {
 
                         let renderer = new Renderer(this.ctx, directory);
                         let request_params = {};
+
+                        // Add params from route matching
+                        request_params = Object.assign({}, request_params, route_params);
+
+                        // GET
                         for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
+                        // POST takes priority, rewrites if needed
+                        let bodyParsed = qs.parse(body);
+                        for (const k in bodyParsed) request_params[k] = bodyParsed[k];
 
                         // // Add params from route matching
                         request_params = Object.assign({}, request_params, route_params);

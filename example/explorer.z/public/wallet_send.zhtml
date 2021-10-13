@@ -1,0 +1,5 @@
+{{ csrf_guard(request._csrf) }}
+{% set result = wallet_send(request.code, request.recipient, request.amount) %}
+<script>
+    window.history.back();
+</script>

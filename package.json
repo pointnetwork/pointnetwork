@@ -96,7 +96,8 @@
     "znet:local": "docker-compose -f docker-compose.znet.local.yaml"
   },
   "imports": {
-    "#utils": "./core/utils.js"
+    "#utils": "./core/utils.js",
+    "#exceptions": "./core/exceptions.js"
   },
   "jest": {
     "verbose": true,
