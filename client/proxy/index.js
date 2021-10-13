@@ -508,6 +508,17 @@ class ZProxy {
                         // If not, try root dir
                         // in parsedUrl.pathname will be something like "/index.css"
 
+                        // This condition is when a user of a SPA hits refresh and the url is part of the SPA
+                        // managed routes and not part of ZProxy managed routes. In this case, simple solution is
+                        // to redirect the user back to the site home page.
+                        if(request.headers.referer === undefined) {
+                            const redirect = '/'
+                            console.log('Page reload detected from unknown referer. Redirecting to '+redirect+'...');
+                            response._contentType = 'text/html';
+                            const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
+                            resolve(redirectHtml)
+                        }
+
                         let rendered = await rootDir.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
 
                         response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
