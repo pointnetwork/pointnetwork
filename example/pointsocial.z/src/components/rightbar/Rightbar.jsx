@@ -46,10 +46,10 @@ export default function Rightbar() {
     );
   };
   return (
-    <div className="rightbar">
-      <div className="rightbarWrapper">
+    <div className="rightbar ml-10 p-10 ">
+      {/* <div className="rightbarWrapper">
         <ProfileRightbar />
-      </div>
+      </div> */}
     </div>
   );
 }

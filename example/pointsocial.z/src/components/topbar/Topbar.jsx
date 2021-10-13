@@ -8,7 +8,7 @@ export default function Topbar() {
   const { walletAddress } = useAppContext()
   return (
     <div className="topbarContainer">
-      <div className="topbarLeft">
+      <div className="topbarLeft flex v-center">
         <img
           src={pointlogo}
           alt=""

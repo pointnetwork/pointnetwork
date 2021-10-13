@@ -6,8 +6,8 @@ import { Link } from "wouter";
 
 export default function Sidebar() {
   return (
-    <div className="sidebar">
-      <div className="sidebarWrapper">
+    <div className="sidebar mr-10">
+      {/* <div className="sidebarWrapper">
         <ul className="sidebarList">
           <li className="sidebarListItem">
             <Link to='/'>
@@ -16,8 +16,7 @@ export default function Sidebar() {
             </Link>
           </li>
         </ul>
-        <hr className="sidebarHr" />
-      </div>
+      </div> */}
     </div>
   );
 }

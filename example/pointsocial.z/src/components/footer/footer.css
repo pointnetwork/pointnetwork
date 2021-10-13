@@ -5,10 +5,11 @@ footer {
 }
 
 .footerContainer{
-    background-color: #1877f2;
+    background-color: #e9ebee;
     height: 35px;
     width: 100%;
     color: white;
+    font-size: 11px;
 }
 
 .footerContainer span{
