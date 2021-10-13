@@ -180,16 +180,16 @@ class Storage {
         return file.id;
     }
 
-    async getFile(id, originalPath) {
+    async getFile(id /*, originalPath */) {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
+        const file = (await File.findOrCreate({ where: { id }, defaults: { } })) [0];
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
 
-        await this.enqueueFileForDownload(id, originalPath);
+        await this.enqueueFileForDownload(id);
 
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
@@ -218,10 +218,10 @@ class Storage {
     async readFile(id, encoding = null) {
         if (!id) throw new Error('undefined or null id passed to storage.readFile');
         id = id.replace('0x', '').toLowerCase();
-        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        utils.makeSurePathExists(cache_dir);
-        const tmpFileName = path.join(cache_dir, 'file_' + id);
-        const file = await this.getFile(id, tmpFileName);
+        // const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+        // utils.makeSurePathExists(cache_dir);
+        // const tmpFileName = path.join(cache_dir, 'file_' + id);
+        const file = await this.getFile(id);
         return file.getData(encoding);
     }
 

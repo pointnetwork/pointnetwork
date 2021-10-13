@@ -20,6 +20,8 @@ class File extends Model {
 
         this._merkleTree = null;
         this._fileHash = null; // todo: remove
+
+        this.cache_path = 'data/dl_files';
     }
 
     getAllChunkIds() {
@@ -103,6 +105,12 @@ class File extends Model {
 
         this.chunkIds = chunks;
         this.size = filesize;
+    }
+
+    getStoragePath() {
+        const cache_dir = path.join(this.ctx.datadir, this.cache_path);
+        utils.makeSurePathExists(cache_dir);
+        return path.join(cache_dir, 'file_dl_'+this.id);
     }
 
     async dumpToDiskFromChunks() {
