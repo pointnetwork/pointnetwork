@@ -8,6 +8,8 @@ const utils = require('#utils');
 let Chunk;
 let FileMap;
 
+const CACHE_PATH = 'data/dl_files';
+
 class File extends Model {
     CHUNKINFO_PROLOGUE = "PN^CHUNK\x05$\x06z\xf5*INFO"; // A very unlikely combination. In your probability reasoning, note that it must appear strictly at the beginning, not randomly
 
@@ -20,8 +22,6 @@ class File extends Model {
 
         this._merkleTree = null;
         this._fileHash = null; // todo: remove
-
-        this.cache_path = 'data/dl_files';
     }
 
     getAllChunkIds() {
@@ -111,7 +111,7 @@ class File extends Model {
         return File.getStoragePathForId(this.id);
     }
     static getStoragePathForId(id) {
-        const cache_dir = path.join(this.ctx.datadir, this.cache_path);
+        const cache_dir = path.join(this.ctx.datadir, CACHE_PATH);
         utils.makeSurePathExists(cache_dir);
         return path.join(cache_dir, 'file_dl_'+id);
     }
