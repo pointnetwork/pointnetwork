@@ -75,16 +75,23 @@ services:
       # contract_deployer:
       #   condition: service_completed_successfully
     volumes:
-      - ./db:/app/db
       - ./api:/app/api
-      - ./point:/app/point
       - ./client:/app/client
-      - ./scripts:/app/scripts
+      - ./console:/app/console
+      - ./core:/app/core
+      - ./db:/app/db
+      - ./debug:/app/debug
       - ./example:/app/example
       - ./network:/app/network
       - ./provider:/app/provider
       - ./resources:/app/resources
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+      - ./threads:/app/threads
+      - ./truffle:/app/truffle
+      - ./wallet:/app/wallet
       - ./package.json:/app/package.json
+      - ./point:/app/point
       - point_contracts:/app/truffle/build/contracts
     environment:
       BLOCKCHAIN_URL: http://blockchain_provider:9090/solana
