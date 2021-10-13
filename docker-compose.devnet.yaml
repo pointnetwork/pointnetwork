@@ -16,6 +16,7 @@ services:
       start_period: 30s
     environment:
       - CONFIG=devnet
+      - SOLANA_URL=https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
     ports:
       - 127.0.0.1:9090:9090
     volumes:
