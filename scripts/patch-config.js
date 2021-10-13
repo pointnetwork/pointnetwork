@@ -53,7 +53,7 @@ if (typeof arweave_key !== 'object') {
 config.client = {
     ...config.client,
     storage: {...(config.client && config.client.storage), arweave_key},
-    wallet: {...(config.client && config.client.wallet), account: account.address, privateKey}
+    wallet: {...(config.client && config.client.wallet), account: account.address, privateKey, secretPhrase: mnemonic.phrase }
 };
 
 writeFileSync('/data/config.json', JSON.stringify(config, null, 2));

@@ -1,0 +1,33 @@
+{% extends 'layout.zhtml' %}
+
+{% block head %}
+    {% set active_section = 'wallet' %}
+{% endblock %}
+
+{% block contents %}
+
+    <h1>Wallet</h1>
+
+    {% set wallets = get_wallet_info() %}
+
+    <table class="table table-bordered table-striped table-hover table-responsive table-primary">
+        <tr>
+            <th>Currency</th>
+            <th>Address</th>
+            <th>Balance</th>
+            <th>Actions</th>
+        </tr>
+        {% for wallet in wallets %}
+            <tr>
+                <td><strong>{{ wallet.currency_name }}</strong> ({{ wallet.currency_code }})</td>
+                <td class="mono">{{ wallet.address }}</td>
+                <td style="text-align: right;">{{ wallet.balance | number_format(8, '.', '') }} {{ wallet.currency_code }}</td>
+                <td>
+                    <a href="#" class="btn btn-sm btn-warning">Send</a>
+                    <a href="#" class="btn btn-sm btn-success">Receive</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}

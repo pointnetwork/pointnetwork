@@ -248,7 +248,7 @@ class ZProxy {
             } else if (host === 'point') {
                 // handle the point welcome page by rendering explorer.z
                 let localPath = 'example/explorer.z/public'; // hardcode to render explorer.z
-                rendered = await this.processLocalRequest(localPath, request, response, parsedUrl);;
+                rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
                 contentType = response._contentType;
             } else {
                 try {
@@ -397,7 +397,7 @@ class ZProxy {
         return re.exec(filename)[1];
     }
 
-    processLocalRequest(filePath, request, response, parsedUrl) {
+    processLocalRequest(host, filePath, request, response, parsedUrl) {
         return new Promise(async(resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
@@ -435,7 +435,7 @@ class ZProxy {
                         // // Add params from route matching
                         request_params = Object.assign({}, request_params, route_params);
 
-                        let rendered = await renderer.render(template_filename, template_file_contents, filePath, request_params); // todo: sanitize
+                        let rendered = await renderer.render(template_filename, template_file_contents, host, request_params); // todo: sanitize
 
                         response._contentType = 'text/html';
 

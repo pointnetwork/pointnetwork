@@ -3,6 +3,7 @@ const path = require('path');
 const mkdirp = require('mkdirp');
 const events = require('events');
 let ethereumjs = require('ethereumjs-util');
+const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 class Wallet {
     static get TRANSACTION_EVENT() { return 'TRANSACTION_EVENT'; }
@@ -86,14 +87,60 @@ class Wallet {
     async getNetworkAccountBalanceInWei() {
         return await this.web3.eth.getBalance(this.network_account);
     }
+    async getNetworkAccountBalanceInEth() {
+        return (await this.getNetworkAccountBalanceInWei()) / 1e18;
+    }
+
+    getNetworkAccount() {
+        return this.network_account;
+    }
+    getArweaveAccount() {
+        console.log(this.ctx);
+        return 0;
+    }
+    getArweaveBalanceInAR() {
+        return 0;
+    }
 
     getNetworkAccountPrivateKey() {
         // todo: Use keystore instead of config!!!
         return this.config.privateKey;
     }
+    getSecretPhrase() {
+        return this.config.secretPhrase;
+    }
 
-    getNetworkAccount() {
-        return this.network_account;
+    getSolanaAccount() {
+        // const provider = new HDWalletProvider({
+        //     mnemonic: this.getSecretPhrase(),
+        //     // providerOrUrl: "http://localhost:8545",
+        //     // numberOfAddresses: 1,
+        //     // shareNonce: true,
+        //     derivationPath: "m/44'/501'/0'/0'"
+        // });
+        //
+        const { Keypair } = require('@solana/web3.js');
+        const bip39 = require('bip39');
+        const bip32 = require('bip32');
+
+        const derivePath = "m/44'/501'/0'/0'";
+        const mnemonic = this.getSecretPhrase();
+
+        const seed = bip39.mnemonicToSeedSync(mnemonic); // Buffer
+        // also tried to slice seed.slice(0, 32);
+        const derivedSeed = bip32.fromSeed(seed).derivePath(derivePath).privateKey;
+        const keypair = Keypair.fromSeed(derivedSeed);
+        const publicKey = keypair.publicKey.toString();
+
+        return publicKey;
+    }
+    getSolanaBalance() {
+        return '';
+    }
+
+    sendMoney(currency_code, from, to, amount_wei) {
+        // todo
+        // this.web3.eth.sendTransaction({from, to, value: amount_wei, gas: 21000});
     }
 
     // todo: remove

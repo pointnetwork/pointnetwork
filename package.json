@@ -6,12 +6,15 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.0",
     "@pointnetwork/kadence": "^6.1.20",
+    "@solana/web3.js": "^1.29.2",
     "@truffle/contract": "^4.3.30",
     "@truffle/hdwallet-provider": "^1.5.0",
     "arbundles": "^0.2.9",
     "arweave": "^1.10.17",
     "async": "^3.2.1",
     "axios": "^0.21.1",
+    "bip32": "^2.0.6",
+    "bip39": "^3.0.4",
     "bootstrap": "^5.1.0",
     "bson": "^4.5.0",
     "buffer-chunks": "^0.1.1",
@@ -56,9 +59,9 @@
     "twig": "^1.15.4",
     "uuid": "^8.3.2",
     "web3": "^1.5.2",
-    "websocket": "^1.0.34",
     "web3-provider-engine": "16.0.3",
     "web3-providers-http": "1.6.0",
+    "websocket": "^1.0.34",
     "xstate": "^4.23.1"
   },
   "devDependencies": {

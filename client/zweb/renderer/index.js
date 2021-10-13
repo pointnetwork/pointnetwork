@@ -148,8 +148,37 @@ class Renderer {
                     }
                 }
                 return results;
-            },    
+            },
+
+            get_wallet_info: async function() {
+                this.renderer.#ensurePrivilegedAccess();
+
+                const walletService = this.renderer.ctx.wallet;
+
+                let wallets = [];
+                wallets.push(
+                    { currency_name: 'Point', currency_code: 'POINT', address: 'N/A', balance: 0 },
+                );
+                wallets.push(
+                    { currency_name: 'Solana', currency_code: 'SOL', address: walletService.getSolanaAccount(), balance: 0 },
+                );
+                wallets.push(
+                    { currency_name: 'Solana - Devnet', currency_code: 'devSOL', address: walletService.getSolanaAccount(), balance: 0 },
+                );
+                wallets.push(
+                    { currency_name: 'Neon', currency_code: 'NEON', address: walletService.getNetworkAccount(), balance: await walletService.getNetworkAccountBalanceInEth() },
+                );
+                // wallets.push(
+                //     { currency_name: 'Arweave', currency_code: 'AR', address: this.renderer.ctx.config.client.storage.arweave_key /*this.renderer.ctx.wallet.getArweaveAccount()*/, balance: (await this.renderer.ctx.wallet.getArweaveBalanceInAR()) }
+                // );
+
+                return wallets;
+            }
         };
+    }
+
+    #ensurePrivilegedAccess() {
+        if (this.host !== 'point') throw new Error('This function requires privileged access, host is not supported');
     }
 
     #defineAvailableFilters() {
@@ -181,6 +210,7 @@ class Renderer {
         Twig.extend((ExtTwig) => {
             ExtTwig.host = host;
             ExtTwig.renderer = this;
+            ExtTwig.renderer.host = host;
 
             this.#connectExtendsTagToPointStorage(ExtTwig);
             this.#connectIncludeTagToPointStorage(ExtTwig);

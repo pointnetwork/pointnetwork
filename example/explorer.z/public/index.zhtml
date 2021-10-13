@@ -4,6 +4,24 @@
 
 {% block contents %}
 
-    <p>Pick an option above.</p>
+    <h1>Welcome to Web 3.0!</h1>
+
+    <br>
+
+    <h5>Explore deployed websites</h5>
+
+    {% set websites = {
+        'pointsocial.z': 'Point Social',
+        'twitter.z': "Twitter Demo",
+        'blog.z': "Blog",
+        'demo.z': "Demo" }
+    %}
+
+    <style>ul { margin-bottom: 0; }</style>
+    {% for k,v in websites %}
+    <ul>
+        <li><a href="{{ 'https://' ~ k }}" target="_blank">{{ k }} &mdash; {{ v }}</a></li>
+    </ul>
+    {% endfor %}
 
 {% endblock %}

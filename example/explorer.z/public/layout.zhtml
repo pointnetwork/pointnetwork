@@ -32,7 +32,7 @@
 {#                            </div>#}
 {#                        </li>#}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_section=='storage' %}active{% endif %}" href="/#">Storage</a>
+                            <a class="nav-link {% if active_section=='wallet' %}active{% endif %}" href="/wallet">Wallet</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if active_section=='identities' %}active{% endif %}" href="/identities">Identities</a>
