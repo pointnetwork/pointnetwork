@@ -10,15 +10,8 @@ class ContractController extends PointSDKController {
         // TODO: also verify the domain is registered in the Identity contract
         if (! _.endsWith(this.host, '.z')) return reply.callNotFound();
 
-        this.walletToken = this.req.headers['wallet-token'];
         this.payload = req.body;
         this.reply = reply;
-
-        // if the wallet is required for the current request
-        if(this._walletRequired(req)) {
-            const wallet = helpers.initWallet(ctx, req.headers['wallet-token']);
-            wallet ? this.wallet = wallet : this.reply.callNotFound();
-        }
     }
 
     async call() {
@@ -48,35 +41,23 @@ class ContractController extends PointSDKController {
     }
 
     async send() {
-        if(this.wallet) {
-            const contract = this.payload.contract;
-            const method = this.payload.method;
-            const gasLimit = this.payload.gasLimit;
-            const amountInWei = this.payload.amountInWei;
+        const contract = this.payload.contract;
+        const method = this.payload.method;
+        const gasLimit = this.payload.gasLimit;
+        const amountInWei = this.payload.amountInWei;
 
-            // Note params must be in a valid array format for parsing
-            // since this is passed via url params the type will be string
-            // params=["String Param", 999, true, "Another string"] etc...
-            const params = this.payload.params ? this.payload.params : [];
-            const options = {
-                amountInWei,
-                gasLimit
-            };
+        // Note params must be in a valid array format for parsing
+        // since this is passed via url params the type will be string
+        // params=["String Param", 999, true, "Another string"] etc...
+        const params = this.payload.params ? this.payload.params : [];
+        const options = {
+            amountInWei,
+            gasLimit
+        };
 
-            let data = await this.ctx.web3bridge.sendToContract(this.host, contract, method, params, options);
+        let data = await this.ctx.web3bridge.sendToContract(this.host, contract, method, params, options);
 
-            return this._response(data);
-        }
-    }
-
-    async getPastEvents() {
-        // TODO call getPastEvents for the desired contract / event
-    }
-
-    /* Private Functions */
-    _walletRequired(req) {
-        let fn = req.url.slice(req.url.lastIndexOf('/') + 1, req.url.length);
-        return fn !== 'call';
+        return this._response(data);
     }
 }
 
