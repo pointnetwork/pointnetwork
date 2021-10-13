@@ -184,7 +184,8 @@ class Storage {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
-        const file = (await File.findOrCreate({ where: { id }, defaults: { } })) [0];
+        const originalPath = File.getStoragePathForId(id);
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }

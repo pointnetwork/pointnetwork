@@ -232,11 +232,11 @@ class StorageArweave {
     async enqueueFileForDownload(id /*, originalPath */) {
         if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
 
-        const file = (await File.findOrCreate({ where: { id }, defaults: { } })) [0];
+        const originalPath = File.getStoragePathForId(id);
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
         // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
 
-        const originalPath = file.getStoragePath();
-        file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
+        // file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
 
         if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
             // Restart the file downloading, even if it failed. Don't forget to restart the chunks first
@@ -272,7 +272,8 @@ class StorageArweave {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
-        const file = (await File.findOrCreate({ where: { id }, defaults: { } })) [0];
+        const originalPath = File.getStoragePathForId(id);
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }

@@ -108,9 +108,12 @@ class File extends Model {
     }
 
     getStoragePath() {
+        return File.getStoragePathForId(this.id);
+    }
+    static getStoragePathForId(id) {
         const cache_dir = path.join(this.ctx.datadir, this.cache_path);
         utils.makeSurePathExists(cache_dir);
-        return path.join(cache_dir, 'file_dl_'+this.id);
+        return path.join(cache_dir, 'file_dl_'+id);
     }
 
     async dumpToDiskFromChunks() {
