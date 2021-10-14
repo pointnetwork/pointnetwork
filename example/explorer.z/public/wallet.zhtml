@@ -49,7 +49,7 @@
             Swal.fire({
                 icon: 'info',
                 title: 'POINT token doesn\'t exist yet!',
-                text: 'Feel free to join our Telegram group to stay updated about the launch details',
+                text: 'Feel free to join our Telegram group to stay updated about the launch details in the future',
                 // footer: '<a href="">Why do I have this issue?</a>'
             })
         }

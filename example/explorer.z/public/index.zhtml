@@ -4,7 +4,11 @@
 
 {% block contents %}
 
-    <h1>Welcome to Web 3.0!</h1>
+    {% if not is_identity_registered() %}
+        <script>location.href = '/final'</script>
+    {% endif %}
+
+    <h1>Welcome to Web 3.0, <strong>@{{ get_current_identity() }}</strong>!</h1>
 
     <br>
 

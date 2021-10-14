@@ -271,6 +271,18 @@ class Web3Bridge {
         }
     }
 
+    async isCurrentIdentityRegistered() {
+        const address = this.ctx.wallet.getNetworkAccount();
+        const identity = await this.identityByOwner(address);
+        if (!identity || identity.replace('0x','').toLowerCase() === address.replace('0x','').toLowerCase()) return false;
+        return true;
+    }
+
+    async getCurrentIdentity() {
+        const address = this.ctx.wallet.getNetworkAccount();
+        return await this.identityByOwner(address);
+    }
+
     async toChecksumAddress(address) {
         const checksumAddress = this.web3.utils.toChecksumAddress(address);
         return checksumAddress;

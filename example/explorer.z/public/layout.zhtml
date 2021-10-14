@@ -21,6 +21,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarResponsive" style="padding-top: 3px;">
+                    {% if active_section |default('') != 'final' %}
                     <ul class="navbar-nav">
 {#                        <li class="nav-item dropdown">#}
 {#                            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" id="themes">Themes <span class="caret"></span></a>#}
@@ -56,6 +57,7 @@
 {#                            <a target="_blank" rel="noopener" class="nav-link" href="https://twitter.com/bootswatch"><i class="fa fa-twitter"></i> Twitter</a>#}
 {#                        </li>#}
 {#                    </ul>#}
+                    {% endif %}
                 </div>
             </div>
         </div>

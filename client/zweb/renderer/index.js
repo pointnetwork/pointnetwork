@@ -4,6 +4,7 @@ const path = require('path');
 const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
 const utils = require('#utils');
+const ethUtil = require("ethereumjs-util");
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -150,20 +151,31 @@ class Renderer {
                 return results;
             },
 
+            is_identity_registered: async function() {
+                return await this.renderer.ctx.web3bridge.isCurrentIdentityRegistered();
+            },
+            get_current_identity: async function() {
+                return await this.renderer.ctx.web3bridge.getCurrentIdentity();
+            },
+            identity_check_availability: async function(identity) {
+                const owner = await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
+                console.log({identity, owner});
+                if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
+                return false;
+            },
+
             csrf_value: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (! this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
                 if (! this.renderer.ctx.csrf_tokens[this.host]) this.renderer.ctx.csrf_tokens[this.host] = require("crypto").randomBytes(64).toString('hex');
                 return this.renderer.ctx.csrf_tokens[this.host];
             },
-
             csrf_field: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (! this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
                 if (! this.renderer.ctx.csrf_tokens[this.host]) this.renderer.ctx.csrf_tokens[this.host] = require("crypto").randomBytes(64).toString('hex');
                 return "<input name='_csrf' value='" + this.renderer.ctx.csrf_tokens[this.host] + " />";
             },
-
             csrf_guard: async function(submitted_token) {
                 if (! this.renderer.ctx.csrf_tokens) throw new Error('No csrf token generated for this host (rather, no tokens at all)');
                 if (! this.renderer.ctx.csrf_tokens[this.host]) throw new Error('No csrf token generated for this host');
@@ -174,6 +186,8 @@ class Renderer {
                 return '';
             },
 
+            // Privileged access functions (only scoped to https://point domain)
+
             get_wallet_info: async function() {
                 this.renderer.#ensurePrivilegedAccess();
 
@@ -181,7 +195,7 @@ class Renderer {
 
                 let wallets = [];
                 wallets.push(
-                    { currency_name: 'Point', currency_code: 'POINT', address: 'N/A', balance: 0 },
+                    { currency_name: 'Point', currency_code: 'POINT', address: (await this.renderer.ctx.web3bridge.getCurrentIdentity()+'.point') || 'N/A', balance: 0 },
                 );
                 wallets.push(
                     { currency_name: 'Solana', currency_code: 'SOL', address: walletService.getSolanaAccount(), balance: await walletService.getSolanaMainnetBalanceInSOL() },
@@ -205,7 +219,32 @@ class Renderer {
             wallet_send: async function(code, recipient, amount) {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
-            }
+            },
+            identity_register: async function(identity) {
+                this.renderer.#ensurePrivilegedAccess();
+
+                const privateKeyHex = this.renderer.ctx.wallet.getNetworkAccountPrivateKey();
+                const privateKey = Buffer.from(privateKeyHex, 'hex');
+                const publicKey = ethUtil.privateToPublic(privateKey);
+                const owner = this.renderer.ctx.wallet.getNetworkAccount();
+
+                this.renderer.ctx.log.info({
+                    identity,
+                    owner,
+                    publicKey: publicKey.toString('hex'),
+                    len: Buffer.byteLength(publicKey, 'utf-8'),
+                    parts: [
+                        `0x${publicKey.slice(0, 32).toString('hex')}`,
+                        `0x${publicKey.slice(32).toString('hex')}`
+                    ]}, 'Registering new identity');
+
+                await this.renderer.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
+
+                this.renderer.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
+
+                return true;
+            },
+
         };
     }
 

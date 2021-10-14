@@ -336,7 +336,6 @@ class StorageArweave {
         // todo:  .put(data, ) returns data_id
         if (mode === 'all' || mode === 'uploading') {
             let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
-            console.log({uploadingChunks});
             uploadingChunks.forEach((chunk) => {
                 setImmediate(async() => { // not waiting, just queueing for execution
                     await this.chunkUploadingTick(chunk);
