@@ -248,8 +248,9 @@ class ZProxy {
                 }
             } else if (host === 'point') {
                 // handle the point welcome page by rendering explorer.z
-                let localPath = 'internal/explorer.z'; // hardcode to render explorer.z
-                rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);;
+                let localPath = 'internal/explorer.z/public'; // hardcode to render explorer.z
+                rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
+                contentType = response._contentType;
             } else {
                 try {
                     rendered = await this.processRequest(host, request, response, parsedUrl);
@@ -411,7 +412,7 @@ class ZProxy {
             });
             request.on('end', async() => {
                 try {
-                    let routesJsonPath = `${filePath}/routes.json`;
+                    let routesJsonPath = `${filePath}/../routes.json`;
                     let routes = fs.readJSONSync(routesJsonPath);
 
                     let route_params = {};
@@ -429,15 +430,10 @@ class ZProxy {
                     if (template_filename) {
                         // Use a LocalDirectory object since we are rendering locally
                         let directory = new LocalDirectory();
-                        directory.setLocalRoot(`${filePath}/public`);
-
-                        // let template_file_path = `/public/${template_filename}`
-
-                        console.log('template_filename', template_filename)
-                        console.log('filePath', filePath)
+                        directory.setLocalRoot(filePath);
 
                         // const template_file_path = `${filePath}/${template_filename}`;
-                        const template_file_contents = await directory.readFileByPath(template_filename, 'utf-8');
+                        const template_file_contents = await directory.readFileByPath(`${template_filename}`, 'utf-8');
 
                         let renderer = new Renderer(this.ctx, directory);
                         let request_params = {};
@@ -465,7 +461,7 @@ class ZProxy {
 
                         // Use a LocalDirectory object since we are rendering locally
                         let directory = new LocalDirectory();
-                        directory.setLocalRoot(`${filePath}/public`);
+                        directory.setLocalRoot(filePath);
 
                         let rendered = await directory.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
 
