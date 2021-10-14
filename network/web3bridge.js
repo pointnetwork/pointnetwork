@@ -5,7 +5,43 @@ const utils = require('#utils');
 const _ = require('lodash');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3HttpProvider = require('web3-providers-http');
+const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
+const retryableErrors = {
+    'ESOCKETTIMEDOUT': 1,
+};
+
+function isRetryableError({message}) {
+    for (const code in retryableErrors) {
+        console.log({code, codeRegExp: RegExp(code), message, test: RegExp(code).test(message)});
+        if (RegExp(code).test(message)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function createWeb3Instance({blockchainUrl, datadir}) {
+    const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 20000});
+    const mnemonic = require(path.resolve(datadir, 'keystore', 'key.json'));
+    const privateKeyProvider = new HDWalletProvider({mnemonic, providerOrUrl: httpProvider});
+    const privateKey = `0x${privateKeyProvider.hdwallet._hdkey._privateKey.toString('hex')}`;
+    const hdWalletProvider = new HDWalletProvider({privateKeys: [privateKey], providerOrUrl: blockchainUrl});
+    const nonceTracker = new NonceTrackerSubprovider();
+
+    hdWalletProvider.engine._providers.unshift(nonceTracker);
+    nonceTracker.setEngine(hdWalletProvider.engine);
+
+    const web3 = new Web3(hdWalletProvider);
+    const account = web3.eth.accounts.privateKeyToAccount(privateKey);
+
+    web3.eth.accounts.wallet.add(account);
+    web3.eth.defaultAccount = account.address;
+
+    return web3;
+}
 
 class Web3Bridge {
     constructor(ctx) {
@@ -13,21 +49,19 @@ class Web3Bridge {
         this.connectionString = this.ctx.config.network.web3;
         this.network_id = this.ctx.config.network.web3_network_id;
         this.chain_id = this.ctx.config.network.web3_chain_id;
-
-        const httpProvider = new Web3HttpProvider(this.connectionString, {keepAlive: true, timeout: 20000});
-        const mnemonic = require(path.resolve(this.ctx.datadir, 'keystore', 'key.json'));
-        const hdWalletProvider = new HDWalletProvider({mnemonic, providerOrUrl: httpProvider});
-
-        this.web3 = this.ctx.web3 = this.ctx.network.web3 = new Web3(hdWalletProvider); // todo: maybe you should hide it behind this abstraction, no?
-
-        this.ctx.web3bridge = this;
-
         this.address = this.ctx.config.client.wallet.account;
-        const account = this.web3.eth.accounts.privateKeyToAccount('0x' + hdWalletProvider.hdwallet._hdkey._privateKey.toString('hex'));
-        this.web3.eth.accounts.wallet.add(account);
-        this.web3.eth.defaultAccount = account.address;
-
+        this.web3_call_retry_limit = this.ctx.config.network.web3_call_retry_limit || 4;
+        this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
+        this.ctx.log.debug('Successfully created a web3 instance');
+        this.ctx.web3bridge = this;
         this.start();
+    }
+
+    createWeb3Instance() {
+        return createWeb3Instance({
+            blockchainUrl: this.ctx.config.network.web3,
+            datadir: this.ctx.datadir
+        });
     }
 
     async start() {
@@ -75,25 +109,36 @@ class Web3Bridge {
     async web3send(method, optons={}) {
         let account, gasPrice;
         let { gasLimit, amountInWei } = optons;
-        try {
-            account = this.web3.eth.defaultAccount;
-            gasPrice = await this.web3.eth.getGasPrice();
-            if (!gasLimit) {
-                this.ctx.log.debug('Web3 Send estimating gas limit');
-                gasLimit = await method.estimateGas({ from: account, value: amountInWei });
-                this.ctx.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
+        let attempt = 0;
+
+        while (true) {
+            try {
+                account = this.web3.eth.defaultAccount;
+                gasPrice = await this.web3.eth.getGasPrice();
+                if (!gasLimit) {
+                    this.ctx.log.debug('Web3 Send estimating gas limit');
+                    gasLimit = await method.estimateGas({ from: account, value: amountInWei });
+                    this.ctx.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
+                }
+                return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
+            } catch (error) {
+                this.ctx.log.error({
+                    method: method._method.name,
+                    account,
+                    gasPrice,
+                    gasLimit,
+                    optons,
+                    error,
+                    stringifiedError: error.toString(),
+                    errorMessage: error.message
+                }, 'Web3 Contract Send error:');
+                if (isRetryableError(error) && (this.web3_call_retry_limit - ++attempt > 0)) {
+                    this.ctx.log.debut({attempt}, 'Retrying Web3 Contract Send');
+                    await sleep(attempt * 1000);
+                    continue;
+                }
+                throw error;
             }
-            return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
-        } catch (error) {
-            this.ctx.log.error({
-                method: method._method.name,
-                account,
-                gasPrice,
-                gasLimit,
-                optons,
-                error
-            }, 'Web3 Send error:');
-            throw error;
         }
         /*
         .on('transactionHash', function(hash){
@@ -108,15 +153,31 @@ class Web3Bridge {
     }
 
     async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage // huh?
-        try {
-            const contract = await this.loadWebsiteContract(target, contractName);
-            if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
-            if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
-            let result = await contract.methods[ method ]( ...params ).call();
-            return result;
-        } catch(e) {
-            this.ctx.log.error('callContract Error ' + JSON.stringify({target, contractName, method, params}));
-            throw e;
+        let attempt = 0;
+        while (true) {
+            try {
+                const contract = await this.loadWebsiteContract(target, contractName);
+                if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
+                if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
+                let result = await contract.methods[ method ]( ...params ).call();
+                return result;
+            } catch (error) {
+                this.ctx.log.error({
+                    contractName,
+                    method,
+                    params,
+                    target,
+                    error,
+                    stringifiedError: error.toString(),
+                    errorMessage: error.message
+                }, 'Web3 Contract Call error:');
+                if (isRetryableError(error) && (this.web3_call_retry_limit - ++attempt > 0)) {
+                    this.ctx.log.debut({attempt}, 'Retrying Web3 Contract Call');
+                    await sleep(attempt * 1000);
+                    continue;
+                }
+                throw error;
+            }
         }
     }
 
