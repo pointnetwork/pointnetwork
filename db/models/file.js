@@ -148,8 +148,8 @@ class File extends Model {
         }
 
         // todo: check full file integrity
-        // fs.copyFileSync(temporaryFile, this.original_path);
-        // fs.unlinkSync(temporaryFile);
+        fs.copyFileSync(temporaryFile, this.original_path);
+        fs.unlinkSync(temporaryFile);
     }
 
     getFileSize() {
