@@ -10,15 +10,19 @@
 
     <h1>Welcome to Web 3.0, <strong>@{{ get_current_identity() }}</strong>!</h1>
 
+    <p>If you can see this page, this means you've successfully installed the alpha! You're amazing! Please send the screenshot to the group.</p>
+    <p>There's not much content in here, but we will be filling it up from now on</p>
+
     <br>
 
     <h5>Explore deployed websites</h5>
 
     {% set websites = {
-        'pointsocial.z': 'Point Social',
         'twitter.z': "Twitter Demo",
         'blog.z': "Blog",
-        'demo.z': "Demo" }
+        'demo.z': "Demo",
+        'pointsocial.z': 'Point Social',
+    }
     %}
 
     <style>ul { margin-bottom: 0; }</style>
