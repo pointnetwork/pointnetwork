@@ -20,9 +20,9 @@ export default function Post({ post }) {
     try {
       await window.point.contract.send({contract: 'PointSocial', method: 'addLikeToPost', params: [post.id]});
       // TODO: Avoid using reload
-      window.location.reload()
-    } catch (err) {
-    console.error('Error: ', err);
+      window.location = '/';
+    } catch (e) {
+      console.error('Error updating likes: ', e.message);
     }
   };
 
@@ -38,7 +38,7 @@ export default function Post({ post }) {
                     className="topbarImg"
                 />
             </Link>
-            {walletAddress == post.from ? <span>You posted.</span> : <span className="postUsername">{post.from}</span>}
+            {walletAddress == post.from ? <span className="posted-id">You posted</span> : <span className="postUsername">{post.from}</span>}
           </div>
           <div className="postTopRight">
             <span className="postDate">{format(post.timestamp)}</span>

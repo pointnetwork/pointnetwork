@@ -19,8 +19,8 @@
     "clear": "mkdir -p ./public && rm -rf ./public/* .cache .parcel-cache",
     "start": "react-scripts start",
     "watch:docker": "./watch.docker.js",
-    "build": "npm run clear && cp src/*.html ./public/. && cp src/*.css ./public/. && parcel build src/index.js --dist-dir ./public --no-source-maps",
-    "watch": "npm run clear && cp src/*.html ./public/. && cp src/*.css ./public/. && parcel watch src/index.js --dist-dir ./public/",
+    "build": "npm run clear && cp src/*.html ./public/. && cp src/*.ico ./public/. && cp src/*.css ./public/. && parcel build src/index.js --dist-dir ./public --no-source-maps",
+    "watch": "npm run clear && cp src/*.html ./public/. && cp src/*.ico ./public/. && cp src/*.css ./public/. && parcel watch src/index.js --dist-dir ./public/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "eslintConfig": {

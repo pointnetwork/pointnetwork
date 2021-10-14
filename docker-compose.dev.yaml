@@ -9,6 +9,7 @@ services:
       - ./core:/app/core:ro
       - ./db:/app/db:ro
       - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
       - ./network:/app/network:ro
       - ./provider:/app/provider:ro
       - ./resources:/app/resources:ro
@@ -29,6 +30,7 @@ services:
       - ./core:/app/core:ro
       - ./db:/app/db:ro
       - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
       - ./network:/app/network:ro
       - ./provider:/app/provider:ro
       - ./resources:/app/resources:ro
@@ -49,6 +51,7 @@ services:
       - ./core:/app/core:ro
       - ./db:/app/db:ro
       - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
       - ./network:/app/network:ro
       - ./provider:/app/provider:ro
       - ./resources:/app/resources:ro

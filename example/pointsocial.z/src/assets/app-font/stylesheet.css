@@ -1,0 +1,110 @@
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-BoldItalic.eot');
+    src: local('Lab Grotesque Bold Italic'), local('LabGrotesque-BoldItalic'),
+        url('LabGrotesque-BoldItalic.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-BoldItalic.woff') format('woff'),
+        url('LabGrotesque-BoldItalic.ttf') format('truetype');
+    font-weight: bold;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-Light.eot');
+    src: local('Lab Grotesque Light'), local('LabGrotesque-Light'),
+        url('LabGrotesque-Light.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-Light.woff') format('woff'),
+        url('LabGrotesque-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-MediumItalic.eot');
+    src: local('Lab Grotesque Medium Italic'), local('LabGrotesque-MediumItalic'),
+        url('LabGrotesque-MediumItalic.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-MediumItalic.woff') format('woff'),
+        url('LabGrotesque-MediumItalic.ttf') format('truetype');
+    font-weight: 500;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-Regular.eot');
+    src: local('Lab Grotesque Regular'), local('LabGrotesque-Regular'),
+        url('LabGrotesque-Regular.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-Regular.woff') format('woff'),
+        url('LabGrotesque-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* @font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-LightItalic.eot');
+    src: local('Lab Grotesque Light Italic'), local('LabGrotesque-LightItalic'),
+        url('LabGrotesque-LightItalic.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-LightItalic.woff') format('woff'),
+        url('LabGrotesque-LightItalic.ttf') format('truetype');
+    font-weight: 300;
+    font-style: italic;
+} */
+
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-Italic.eot');
+    src: local('Lab Grotesque Italic'), local('LabGrotesque-Italic'),
+        url('LabGrotesque-Italic.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-Italic.woff') format('woff'),
+        url('LabGrotesque-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-Black.eot');
+    src: local('Lab Grotesque Black'), local('LabGrotesque-Black'),
+        url('LabGrotesque-Black.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-Black.woff') format('woff'),
+        url('LabGrotesque-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-Medium.eot');
+    src: local('Lab Grotesque Medium'), local('LabGrotesque-Medium'),
+        url('LabGrotesque-Medium.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-Medium.woff') format('woff'),
+        url('LabGrotesque-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-BlackItalic.eot');
+    src: local('Lab Grotesque Black Italic'), local('LabGrotesque-BlackItalic'),
+        url('LabGrotesque-BlackItalic.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-BlackItalic.woff') format('woff'),
+        url('LabGrotesque-BlackItalic.ttf') format('truetype');
+    font-weight: 900;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Lab Grotesque';
+    src: url('LabGrotesque-Bold.eot');
+    src: local('Lab Grotesque Bold'), local('LabGrotesque-Bold'),
+        url('LabGrotesque-Bold.eot?#iefix') format('embedded-opentype'),
+        url('LabGrotesque-Bold.woff') format('woff'),
+        url('LabGrotesque-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+

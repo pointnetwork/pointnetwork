@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import Post from "../post/Post";
 import Share from "../share/Share";
 import Identity from "../identity/Identity";
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Box from '@material-ui/core/Box';
+import LoadingSpinner from '../loading/LoadingSpinner';
 
 export default Feed = ({account}) =>{
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true);
+  const [feedError, setFeedError] = useState(undefined);
 
   const compareByTimestamp = ( post1, post2 ) => {
     // sorts accending (newest first)
@@ -33,33 +33,37 @@ export default Feed = ({account}) =>{
   }, [account])
 
   const fetchPosts = async () => {
-    const response = account
-      ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account]}) :
-      await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'})
+    try {
+      const response = account
+        ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account]}) :
+        await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'})
 
-    const posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
-        {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
+      const posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
+          {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
+        )
       )
-    )
 
-    const postsContent = await Promise.all(posts.map(async (post) => {
-      const {data: contents} = await window.point.storage.getString({ id: post.contents, encoding: 'utf-8' });
-      post.contents = contents;
-      return post;
-    }))
+      const postsContent = await Promise.all(posts.map(async (post) => {
+        const {data: contents} = await window.point.storage.getString({ id: post.contents, encoding: 'utf-8' });
+        post.contents = contents;
+        return post;
+      }))
 
-    return postsContent;
+      return postsContent;
+    } catch(e) {
+      console.error('Error loading feed: ', e.message);
+      setLoading(false);
+      setFeedError(e);
+    }
   }
 
   return (
     <div className="feed">
       <div className="feedWrapper">
         {!account && <div><Identity /><Share /></div>}
-        <br />
-        {loading && <Box sx={{ display: 'flex' }}>
-          <CircularProgress />
-        </Box>}
-        {(!loading && posts.length == 0) && 'No posts made yet!'}
+        {loading && <LoadingSpinner />}
+        {(!loading && feedError) && <span className='error'>Error loading feed: {feedError.message}. Did you deploy the contract sucessfully?</span>}
+        {(!loading && !feedError && posts.length == 0) && <span className='no-post-to-show'>No posts made yet!</span>}
         {posts.map((p) => (
           <Post key={p.id} post={p} />
         ))}

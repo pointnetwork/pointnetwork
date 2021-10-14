@@ -1,12 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Bungee+Inline&display=swap');
+
 .topbarContainer {
     height: 50px;
     width: 100%;
-    background-color: #1877f2;
+    background-color: #1c385b;
     display: flex;
     align-items: center;
     position: sticky;
     top: 0;
     z-index: 999;
+    color:white;
   }
 
   .topbarLeft {
@@ -16,7 +19,7 @@
 
   .logo {
     font-size: 24px;
-    margin-left: 20px;
+    margin-left: 5px;
     font-weight: bold;
     color: white;
     cursor: pointer;
@@ -89,9 +92,10 @@
   }
 
   .topbarImg {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     object-fit: cover;
     cursor: pointer;
+   
   }
