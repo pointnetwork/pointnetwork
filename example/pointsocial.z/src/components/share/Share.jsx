@@ -8,7 +8,7 @@ export default function Share() {
   const DEFAULT_BTN_LABEL = 'Share'
   const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const [selectedFile, setSelectedFile] = useState();
-  const [contents, setContents] = useState();
+  const [contents, setContents] = useState('');
   const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
   const [btnEnabled, setBtnEnabled] = useState(false);
   const [shareError, setShareError] = useState(undefined);

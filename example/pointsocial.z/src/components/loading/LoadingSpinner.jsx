@@ -4,7 +4,7 @@ import Box from '@material-ui/core/Box';
 const LoadingSpinner = () => {
     return (
         <>
-            <Box sx={{ display: 'flex' }}><CircularProgress /></Box>
+            <Box key="1" sx={{ display: 'flex' }}><CircularProgress /></Box>
         </>
     )
 }
