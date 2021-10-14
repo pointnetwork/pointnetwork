@@ -1,0 +1,171 @@
+version: '3.9'
+
+services:
+  blockchain_node:
+    image: trufflesuite/ganache-cli:v6.12.2
+    container_name: pointnetwork_blockchain_node
+    healthcheck:
+      test: |
+        wget -qO- http://localhost:$BLOCKCHAIN_PROVIDER_PORT \
+          --header='Content-Type: application/json' \
+          --header="Accept: application/json" \
+          --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}'
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    ports:
+      - '$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT'
+    volumes:
+      - blockchain_data:/data:rw
+    environment:
+      - DOCKER=true
+    command:
+      - -v
+      - -p
+      - $BLOCKCHAIN_PROVIDER_PORT
+      - -m
+      - $BLOCKCHAIN_PROVIDER_MNEMONIC
+      - -e
+      - $DEFAULT_BALANCE
+      - -i
+      - $BLOCKCHAIN_NETWORK_ID
+      - --keepAliveTimeout
+      - '20000'
+      - --db
+      - '/data'
+
+  contract_deployer:
+    image: pointnetwork/pointnetwork_deployer:dev
+    container_name: pointnetwork_contract_deployer
+    depends_on:
+      - blockchain_node
+    deploy:
+      restart_policy:
+        condition: none
+    volumes:
+      - ./truffle/migrations:/truffle/migrations:ro
+      - ./truffle/contracts:/truffle/contracts:ro
+      - shared_contracts:/build:rw
+    entrypoint: /truffle/run.js
+    environment:
+      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DEPLOYER_COMPILER_VERSION: native
+      DEPLOYER_BUILD_PATH: /build
+
+  storage_provider:
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
+    container_name: pointnetwork_storage_provider
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      - blockchain_node
+    entrypoint: 'npm'
+    command: 'run start:docker'
+    volumes:
+      - storage_provider_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+    ports:
+      - '12345:9685'
+      - '65500:8666'
+      - '24680:2468'
+    environment:
+      DATADIR: /data
+      DB_ENV: pointnode1
+      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
+
+  website_owner:
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
+    container_name: pointnetwork_website_owner
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      - blockchain_node
+      - database
+    ports:
+      - '12346:9685'
+      - '65501:8666'
+      - '24681:2468'
+    entrypoint: 'npm'
+    command: 'run start:docker'
+    volumes:
+      - website_owner_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+      - ./example:/app/example:ro
+      - ./deployspace:/app/deployspace:ro
+    environment:
+      DATADIR: /data
+      DB_ENV: pointnode2
+      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
+
+  website_visitor:
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
+    container_name: pointnetwork_website_visitor
+    healthcheck:
+      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      - blockchain_node
+    ports:
+      - '12347:9685'
+      - '65502:8666'
+      - '24682:2468'
+    entrypoint: 'npm'
+    command: 'run start:docker'
+    volumes:
+      - website_visitor_data:/data:rw
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
+    environment:
+      DATADIR: /data
+      DB_ENV: pointnode3
+      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
+      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
+
+  database:
+    image: postgres:13.4
+    container_name: pointnetwork_database
+    healthcheck:
+      test: pg_isready -U $DB_USERNAME
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    environment:
+      POSTGRES_USER: $DB_USERNAME
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_USERNAME
+      DATABASE: $DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
+    volumes:
+      - database_data:/var/lib/postgresql/data/
+      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+
+volumes:
+  blockchain_data:
+  shared_contracts:
+  storage_provider_data:
+  website_owner_data:
+  website_visitor_data:
+  database_data:

@@ -16,7 +16,7 @@ services:
       - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
 
   tests:
-    image: pointnetwork/pointnetwork_node:$POINTNETWORK_NODE_VERSION
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_tests
     depends_on:
       - database
@@ -25,8 +25,7 @@ services:
     environment:
       - DB_ENV=test
       - DATADIR=/data
-      - BLOCKCHAIN_HOST=blockchain_node
-      - BLOCKCHAIN_PORT=$BLOCKCHAIN_PROVIDER_PORT
+      - BLOCKCHAIN_URL=$BLOCKCHAIN_URL
       - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
       - DB_TEST=$DB_TEST
       - DB_USERNAME=$DB_USERNAME

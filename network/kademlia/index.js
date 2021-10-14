@@ -101,7 +101,7 @@ class Kademlia {
         // }));
 
         node.rolodex = node.plugin(kadence.rolodex(path.join(this.ctx.datadir, this.config.peer_cache_file_path)));
-        
+
         if (this.ctx.config.service_provider.enabled) {
             node.storage_provider = node.plugin(StorageProviderPlugin(this.ctx, networkPublicKey, networkPrivateKey, {}));
         }
@@ -176,7 +176,9 @@ class Kademlia {
             node.plugin(kadence.logger(this.log));
         }
 
-        const bootstrapNodes = this.config.bootstrap_nodes;
+        const bootstrapNodes = this.config.bootstrap_nodes || (
+            process.env.BOOTSTRAP_NODES && process.env.BOOTSTRAP_NODES.split(',') || undefined
+        );
 
         const joinNetwork = async(callback) => {
             let peers = bootstrapNodes.concat(

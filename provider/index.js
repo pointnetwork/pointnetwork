@@ -51,7 +51,8 @@ class Provider {
     }
 
     getConnectionString() {
-        return 'http://' + this.ctx.config.network.communication_external_host + ':' + this.ctx.config.network.communication_port + '/#' + this.id;
+        const hostname = this.ctx.config.network.communication_external_host;
+        return `http://${hostname}:${this.ctx.config.network.communication_port}/#${this.id}`;
     }
 
     async announce() {
@@ -317,7 +318,7 @@ class Provider {
             } catch(e) {
                 reject(e);
             }
-       });
+        });
     }
 }
 

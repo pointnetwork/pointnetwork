@@ -5,3 +5,16 @@
 .nvmrc
 .vscode
 src/
+
+deployspace/*
+!deployspace/README.md
+
+key.json
+arweave.json
+*.txt
+*.gz
+*.zip
+geth
+
+# todo: remove a temporary fix below
+package-lock.json

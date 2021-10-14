@@ -12,6 +12,8 @@ const fs = require('fs');
 const utils = require('#utils');
 const Arweave = require('arweave');
 const { request, gql } = require('graphql-request');
+const axios = require('axios');
+const { ArweaveSigner, createData } = require("arbundles");
 
 class StorageArweave {
     constructor(ctx) {
@@ -33,6 +35,8 @@ class StorageArweave {
         this.__PN_TAG_VERSION_MINOR_VALUE = this.__PN_TAG_INTEGRATION_VERSION_MINOR;
         this.__PN_TAG_CHUNK_ID_KEY = '__pn_chunk_id';
         this.__PN_TAG_VERSIONED_CHUNK_ID_KEY = '__pn_chunk_'+this.__PN_TAG_INTEGRATION_VERSION_MAJOR+'.'+this.__PN_TAG_INTEGRATION_VERSION_MINOR+'_id';
+
+        this.BUNDLER_URL ="https://bundler.arweave.net";
     }
 
     downloadingTickOn(chunk_id) {
@@ -47,6 +51,10 @@ class StorageArweave {
     downloadingTickOff(chunk_id) {
         this.downloadingTicks[chunk_id] = Math.max( this.downloadingTicks[chunk_id]-1, 0 );
         // console.log('off', chunk_id, this.downloadingTicks[chunk_id]);
+    }
+
+    hasArweaveKey() {
+        return !!this.config.arweave_key;
     }
 
     getArweaveKey() {
@@ -221,12 +229,36 @@ class StorageArweave {
         return response;
     }
 
-    async enqueueFileForDownload(id, originalPath) {
+    async enqueueFileForDownload(id /*, originalPath */) {
         if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
+
+        const originalPath = File.getStoragePathForId(id);
         const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
         // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
-        // if (! file.original_path) file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
+
+        // file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
+
         if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
+            // Restart the file downloading, even if it failed. Don't forget to restart the chunks first
+
+            let chunkinfo_chunk = await Chunk.findOrCreate(file.id);
+            if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
+                // restart
+                chunkinfo_chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
+                await chunkinfo_chunk.save();
+            }
+
+            if (file.chunkIds && file.chunkIds.length > 0) {
+                await Promise.all(file.chunkIds.map(async(chunk_id, i) => {
+                    let chunk = await Chunk.findOrCreate(chunk_id);
+                    if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
+                        chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
+                        await chunk.save();
+                        return;
+                    }
+                }));
+            }
+
             file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
             await file.save();
             await file.reconsiderDownloadingStatus();
@@ -235,16 +267,18 @@ class StorageArweave {
         return file.id;
     }
 
-    async getFile(id, originalPath) {
+
+    async getFile(id /*, originalPath */) {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
+        const originalPath = File.getStoragePathForId(id);
         const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
 
-        await this.enqueueFileForDownload(id, originalPath);
+        await this.enqueueFileForDownload(id);
 
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
@@ -257,7 +291,7 @@ class StorageArweave {
 
                         resolve(file);
                     } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
-                        reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
+                        reject('ArweaveStorage: File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
                     } else {
                         waitUntilRetrieval(resolve, reject);
                     }
@@ -277,10 +311,10 @@ class StorageArweave {
     async readFile(id, encoding = null) {
         if (!id) throw new Error('undefined or null id passed to storage.readFile');
         id = id.replace('0x', '').toLowerCase();
-        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        utils.makeSurePathExists(cache_dir);
-        const tmpFileName = path.join(cache_dir, 'file_' + id);
-        const file = await this.getFile(id, tmpFileName);
+        // const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+        // utils.makeSurePathExists(cache_dir);
+        // const tmpFileName = path.join(cache_dir, 'file_' + id);
+        const file = await this.getFile(id);
         return file.getData(encoding);
     }
 
@@ -302,7 +336,6 @@ class StorageArweave {
         // todo:  .put(data, ) returns data_id
         if (mode === 'all' || mode === 'uploading') {
             let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
-            console.log({uploadingChunks});
             uploadingChunks.forEach((chunk) => {
                 setImmediate(async() => { // not waiting, just queueing for execution
                     await this.chunkUploadingTick(chunk);
@@ -386,6 +419,8 @@ class StorageArweave {
     async chunkDownloadingTick(chunk) {
         // todo todo todo: make it in the same way as chunkUploadingTick - ??
 
+        console.log('chunkDownloadingTick----', chunk.id);
+
         if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) return;
 
         if (! this.downloadingTickOn(chunk.id)) return;
@@ -430,6 +465,9 @@ class StorageArweave {
             const queryResult = await request('https://arweave.net/graphql', query);
             console.log(ARW_LOG + '  arweave/graphql - DONE', chunk.id, elapsed());
 
+            console.log(ARW_LOG + '  query:', query);
+            console.log(ARW_LOG + '  queryResult:', queryResult);
+
             console.log(ARW_LOG + '  iterations', elapsed());
             for(let edge of queryResult.transactions.edges) {
                 const txid = edge.node.id;
@@ -437,6 +475,22 @@ class StorageArweave {
                 // Get the data decoded to a Uint8Array for binary data
                 console.log(ARW_LOG + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
                 const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+
+                // Read back data
+                // Don't use arweave.transactions.getData, data is not available instantly via
+                // that API (it results in a TX_PENDING error). Here's the explanation from Discord:
+                //
+                // but essentially if /{txid} returns 202
+                // it's "pending"
+                // which with regular txs is true
+                // but it also returns 202 for unseeded Bundlr txs
+                // so the data exists in Bundlr - but not on L1 (Arweave)
+
+                // const dl_url = `https://arweave.net/${txid}`;
+                // const result = await axios.get();
+                // console.log({dl_url, result});
+                // const data = result.data;
+
                 console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
 
                 const buf = Buffer.from(data);
@@ -480,31 +534,93 @@ class StorageArweave {
     async SEND_STORE_CHUNK_SEGMENTS(link, chunk) {
         let rawData = chunk.getData();
 
-        let transaction = await this.arweave.createTransaction({ data: rawData }, this.getArweaveKey());
+        if (this.config.arweave_use_real_wallet) {
+            // Real "AR" mode
+            let transaction = await this.arweave.createTransaction({ data: rawData }, this.getArweaveKey());
 
-        // transaction.addTag('keccak256hex', hash);
-        // transaction.addTag('pn_experiment', '1');
-        transaction.addTag(this.__PN_TAG_VERSION_MAJOR_KEY, this.__PN_TAG_VERSION_MAJOR_VALUE);
-        transaction.addTag(this.__PN_TAG_VERSION_MINOR_KEY, this.__PN_TAG_VERSION_MINOR_VALUE);
-        transaction.addTag(this.__PN_TAG_CHUNK_ID_KEY, chunk.id);
-        transaction.addTag(this.__PN_TAG_VERSIONED_CHUNK_ID_KEY, chunk.id);
+            // transaction.addTag('keccak256hex', hash);
+            // transaction.addTag('pn_experiment', '1');
+            transaction.addTag(this.__PN_TAG_VERSION_MAJOR_KEY, this.__PN_TAG_VERSION_MAJOR_VALUE);
+            transaction.addTag(this.__PN_TAG_VERSION_MINOR_KEY, this.__PN_TAG_VERSION_MINOR_VALUE);
+            transaction.addTag(this.__PN_TAG_CHUNK_ID_KEY, chunk.id);
+            transaction.addTag(this.__PN_TAG_VERSIONED_CHUNK_ID_KEY, chunk.id);
 
-        // Sign
-        await this.arweave.transactions.sign(transaction, this.getArweaveKey());
+            // Sign
+            await this.arweave.transactions.sign(transaction, this.getArweaveKey());
 
-        // Upload
-        let uploader = await this.arweave.transactions.getUploader(transaction);
-        while (!uploader.isComplete) {
-            await uploader.uploadChunk();
-            // console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+            // Upload
+            let uploader = await this.arweave.transactions.getUploader(transaction);
+            while (!uploader.isComplete) {
+                await uploader.uploadChunk();
+                // console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+            }
+
+            // return new Promise(async(resolve, reject) => {
+            //     this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
+            //         await link.refresh();
+            //         (!err) ? resolve(true) : reject(err); // machine will move to next state
+            //     });
+            // });
+        } else {
+            // Use bundler - no
+            // Use signer
+
+            const tags = {
+                [this.__PN_TAG_VERSION_MAJOR_KEY]: this.__PN_TAG_VERSION_MAJOR_VALUE,
+                [this.__PN_TAG_VERSION_MINOR_KEY]: this.__PN_TAG_VERSION_MINOR_VALUE,
+                [this.__PN_TAG_CHUNK_ID_KEY]: chunk.id,
+                [this.__PN_TAG_VERSIONED_CHUNK_ID_KEY]: chunk.id
+            };
+
+            console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
+
+            const FormData = require('form-data'); // npm install --save form-data
+
+            const form = new FormData();
+            form.append('file', fs.createReadStream(Chunk.getChunkStoragePath(chunk.id)));
+
+            for(let k in tags) {
+                let v = tags[k];
+                form.append(k, v);
+            }
+
+            const request_config = {
+                headers: {
+                    // 'Authorization': `Bearer ${access_token}`,
+                    ...form.getHeaders()
+                }
+            };
+
+            const response = await axios.post(this.config.arweave_airdrop_endpoint + '/signPOST', form, request_config);
+
+            // const response = await axios.post(this.config.arweave_airdrop_endpoint + 'sign', {
+            //     data: rawData.toString(),
+            //     tags,
+            // });
+            if (response.data.status !== 'ok') {
+                throw Error('Arweave airdrop endpoint return error: '+JSON.stringify(response));
+            } else {
+                console.debug('Chunk id '+chunk.id + ' uploaded, txid: '+response.data.txid);
+            }
+
+            return;
+
+
+            // const key = this.getArweaveKey();
+            //
+            // const signer = new ArweaveSigner(key);
+            // const item = createData(rawData, signer);
+            // await item.sign(signer);
+            //
+            // // This transaction ID is guaranteed to be usable
+            // // console.log("item id", item.id);
+            // const txid = item.id;
+            //
+            // const response = await item.sendToBundler(this.BUNDLER_URL);
+            //
+            // console.log(["bundler response status", response.status]);
+            // console.log({'chunk_id': chunk.id, 'txid': txid, 'bundler_response_status': response.status });
         }
-
-        // return new Promise(async(resolve, reject) => {
-        //     this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
-        //         await link.refresh();
-        //         (!err) ? resolve(true) : reject(err); // machine will move to next state
-        //     });
-        // });
     }
 
     async SEND_STORE_CHUNK_DATA(data, link) {

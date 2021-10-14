@@ -12,26 +12,11 @@ class WalletController extends PointSDKController {
         this.keystorePath = this.ctx.wallet.keystore_path;
         this.payload = req.body;
         this.reply = reply;
-        this.wallet = null;
-        // if the wallet is required for the current request
-        if (this._walletRequired(req)) {
-            const wallet = helpers.initWallet(ctx, req.headers['wallet-token']);
-            wallet ? this.wallet = wallet : this.reply.callNotFound();
-        }
-    }
-
-    generate() {
-        let passcode = this.web3.utils.randomHex(32); // todo: improve entropy
-        let keystoreId = this.ctx.wallet.generate(passcode);
-
-        return this._response({
-            walletId: keystoreId,
-            passcode
-        });
+        this.defaultWallet = web3.eth.accounts.wallet[0];
     }
 
     async tx() {
-        let from = this.wallet.address;
+        let from = this.defaultWallet.address;
         let to = this.payload.to;
         let value = this.payload.value;
 
@@ -44,7 +29,7 @@ class WalletController extends PointSDKController {
     }
 
     publicKey() {
-        let publicKeyBuffer = ethereumjs.privateToPublic(this.wallet.privateKey);
+        let publicKeyBuffer = ethereumjs.privateToPublic(this.defaultWallet.privateKey);
         let publicKey = ethereumjs.bufferToHex(publicKeyBuffer);
 
         // return the public key
@@ -54,7 +39,7 @@ class WalletController extends PointSDKController {
     }
 
     address() {
-        let address = this.wallet.address;
+        let address = this.defaultWallet.address;
 
         // return the public key
         return this._response({
@@ -63,7 +48,7 @@ class WalletController extends PointSDKController {
     }
 
     async balance() {
-        let balance = (await this.web3.eth.getBalance(this.wallet.address)).toString();
+        let balance = (await this.web3.eth.getBalance(this.defaultWallet.address)).toString();
 
         // return the wallet balance
         return this._response({
@@ -72,18 +57,13 @@ class WalletController extends PointSDKController {
     }
 
     hash() {
-        let partialPK = this.wallet.privateKey.substr(0, 33);
+        let partialPK = this.defaultWallet.privateKey.substr(0, 33);
         let hashBuffer = ethereumjs.sha256(Buffer.from(partialPK));
         let hash = ethereumjs.bufferToHex(hashBuffer);
 
         return this._response({
             hash
         });
-    }
-
-    /* Private Functions */
-    _walletRequired(req) {
-        return req.url !== '/api/wallet/generate';
     }
 }
 

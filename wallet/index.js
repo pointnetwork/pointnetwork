@@ -3,6 +3,11 @@ const path = require('path');
 const mkdirp = require('mkdirp');
 const events = require('events');
 let ethereumjs = require('ethereumjs-util');
+const HDWalletProvider = require("@truffle/hdwallet-provider");
+const solana = require("@solana/web3.js");
+const bip39 = require("bip39");
+const bip32 = require("bip32");
+const {Keypair} = require("@solana/web3.js");
 
 class Wallet {
     static get TRANSACTION_EVENT() { return 'TRANSACTION_EVENT'; }
@@ -23,7 +28,31 @@ class Wallet {
             mkdirp.sync(this.keystore_path);
         }
 
+        this.solanaMainConnection = new solana.Connection(this.ctx.config.client.storage.solana_main_endpoint, "confirmed");
+        this.solanaDevConnection = new solana.Connection(this.ctx.config.client.storage.solana_dev_endpoint, "confirmed");
+        this.solanaDevStandardConnection = new solana.Connection(this.ctx.config.client.storage.solana_dev_standard_endpoint, "confirmed");
+        this.solanaTestConnection = new solana.Connection(this.ctx.config.client.storage.solana_test_endpoint, "confirmed");
+
+        this.initSolanaWallet();
+
         // todo: other setup?
+    }
+
+    initSolanaWallet() {
+        const { Keypair } = require('@solana/web3.js');
+        const bip39 = require('bip39');
+        const bip32 = require('bip32');
+
+        const derivePath = "m/44'/501'/0'/0'";
+        const mnemonic = this.getSecretPhrase();
+
+        const seed = bip39.mnemonicToSeedSync(mnemonic); // Buffer
+        // also tried to slice seed.slice(0, 32);
+        const derivedSeed = bip32.fromSeed(seed).derivePath(derivePath).privateKey;
+        const keypair = Keypair.fromSeed(derivedSeed);
+
+        this.solanaKeyPair = keypair;
+        this.solanaAddress = this.solanaPublicKey = keypair.publicKey.toString();
     }
 
     get web3() {
@@ -86,14 +115,90 @@ class Wallet {
     async getNetworkAccountBalanceInWei() {
         return await this.web3.eth.getBalance(this.network_account);
     }
+    async getNetworkAccountBalanceInEth() {
+        return (await this.getNetworkAccountBalanceInWei()) / 1e18;
+    }
+
+    getNetworkAccount() {
+        return this.network_account;
+    }
+    getArweaveAccount() {
+        console.log(this.ctx);
+        return 0;
+    }
+    getArweaveBalanceInAR() {
+        return 0;
+    }
 
     getNetworkAccountPrivateKey() {
         // todo: Use keystore instead of config!!!
         return this.config.privateKey;
     }
+    getSecretPhrase() {
+        return this.config.secretPhrase;
+    }
 
-    getNetworkAccount() {
-        return this.network_account;
+    getSolanaAccount() {
+        return this.solanaAddress;
+        // const provider = new HDWalletProvider({
+        //     mnemonic: this.getSecretPhrase(),
+        //     // providerOrUrl: "http://localhost:8545",
+        //     // numberOfAddresses: 1,
+        //     // shareNonce: true,
+        //     derivationPath: "m/44'/501'/0'/0'"
+        // });
+        //
+    }
+
+    getSolanaPublicKey() {
+        return new solana.PublicKey(this.getSolanaAccount());
+    }
+
+    async #getSolanaBalanceInSOLWithConnection(connection) {
+        const solanaAddress = this.getSolanaPublicKey();
+        const result = await connection.getBalance(solanaAddress) / 1e9;
+        return result;
+    }
+    async getSolanaMainnetBalanceInSOL() {
+        return this.#getSolanaBalanceInSOLWithConnection(this.solanaMainConnection);
+    }
+    async getSolanaDevnetBalanceInSOL() {
+        return this.#getSolanaBalanceInSOLWithConnection(this.solanaDevConnection);
+    }
+
+    async initiateSolanaDevAirdrop() {
+        const solanaAddress = this.getSolanaPublicKey();
+        const signature = await this.solanaDevStandardConnection.requestAirdrop(solanaAddress, 1 * solana.LAMPORTS_PER_SOL);
+        await this.solanaDevStandardConnection.confirmTransaction(signature);
+    }
+
+    async send(code, recipient, amount) {
+        switch(code) {
+            case 'devSOL':
+            case 'SOL':
+                const transaction = new solana.Transaction().add(
+                    solana.SystemProgram.transfer({
+                        fromPubkey: this.getSolanaPublicKey(),
+                        toPubkey: new solana.PublicKey(this.getSolanaAccount()),
+                        lamports: amount / solana.LAMPORTS_PER_SOL,
+                    }),
+                );
+
+                // Sign transaction, broadcast, and confirm
+                const signature = await solana.sendAndConfirmTransaction(
+                    (code === 'SOL') ? this.solanaMainConnection : this.solanaDevConnection,
+                    transaction,
+                    [ this.solanaKeyPair ],
+                );
+
+                break;
+            case 'NEON':
+                console.log({from: this.getNetworkAccount(), to: recipient, value: amount * 1e18, gas: 21000});
+                await this.ctx.web3.eth.sendTransaction({from: this.getNetworkAccount(), to: recipient, value: amount * 1e18, gas: 21000});
+                break;
+            default:
+                throw Error('This currency is not supported yet');
+        }
     }
 
     // todo: remove

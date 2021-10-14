@@ -1,0 +1,19 @@
+{
+  "api": {
+    "address": "0.0.0.0",
+    "port": 2468
+  },
+  "client": {
+    "zproxy": {
+      "host": "0.0.0.0",
+      "port": 8666
+    },
+    "storage": {
+      "engine": "arweave"
+    },
+    "wallet": {
+      "account": "0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301",
+      "privateKey": "feec30f685ff378c117d1bb67095815a4604f03f1759a418e82df05b8c3be245"
+    }
+  }
+}

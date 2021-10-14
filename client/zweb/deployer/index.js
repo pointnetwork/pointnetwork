@@ -1,6 +1,9 @@
 const path = require('path');
 const fs = require('fs');
 const utils = require('#utils');
+const ethUtil = require('ethereumjs-util');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
 
 class Deployer {
     constructor(ctx) {
@@ -28,7 +31,37 @@ class Deployer {
 
         // assert(deployConfig.version === 1); // todo: msg
 
-        let target = deployConfig.target;
+        const target = deployConfig.target;
+        const identity = target.replace(/\.z$/, '');
+        const {defaultAccount: owner} = this.ctx.web3.eth;
+
+        const registeredOwner = await this.ctx.web3bridge.ownerByIdentity(identity);
+        const identityIsRegistered = registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
+
+        if (identityIsRegistered && registeredOwner !== owner) {
+            this.ctx.log.error({identity, registeredOwner, owner}, 'Identity is already registered');
+            throw new Error(`Identity ${identity} is already registered, please choose a new one and try again`);
+        }
+
+        if (!identityIsRegistered) {
+            const privateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
+            const privateKey = Buffer.from(privateKeyHex, 'hex');
+            const publicKey = ethUtil.privateToPublic(privateKey);
+
+            this.ctx.log.info({
+                identity,
+                owner,
+                publicKey: publicKey.toString('hex'),
+                len: Buffer.byteLength(publicKey, 'utf-8'),
+                parts: [
+                    `0x${publicKey.slice(0, 32).toString('hex')}`,
+                    `0x${publicKey.slice(32).toString('hex')}`
+                ]}, 'Registring new identity');
+
+            await this.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
+
+            this.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
+        }
 
         // Deploy contracts
         if (deployContracts) {
@@ -39,7 +72,10 @@ class Deployer {
                 try {
                     await this.deployContract(target, contractName, fileName, deployPath);
                 } catch(e) {
-                    this.ctx.log.error(e);
+                    this.ctx.log.error({
+                        message: e.message,
+                        stack: e.stack
+                    }, 'Zapp contract deployment error');
                     throw e;
                 }
             }
@@ -151,7 +187,16 @@ class Deployer {
         }
         const truffleContract = require('@truffle/contract');
         const contract = truffleContract(artifacts);
-        contract.setProvider(this.ctx.web3.currentProvider);
+        const provider = new HDWalletProvider({
+            privateKeys: [`0x${this.ctx.web3.currentProvider.hdwallet._hdkey._privateKey.toString('hex')}`],
+            providerOrUrl: this.ctx.config.network.web3
+        });
+
+        const nonceTracker = new NonceTrackerSubprovider();
+        provider.engine._providers.unshift(nonceTracker);
+        nonceTracker.setEngine(provider.engine);
+
+        contract.setProvider(provider);
 
         let gasPrice = await this.ctx.web3.eth.getGasPrice();
         let estimateGas = Math.floor(await contract.new.estimateGas() * 1.1);

@@ -12,3 +12,11 @@ dist/
 
 # Ignore everything in deployspace folder
 deployspace/*
+
+key.json
+arweave.json
+*.txt
+*.gz
+*.zip
+geth
+

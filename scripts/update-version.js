@@ -12,12 +12,12 @@ const version = process.argv[2];
 
 if (!/^\d+\.\d+\.\d+$/.test (version)) {
     throw new Error(
-        `Unsupported version format: "${ version }". ` +
+        `Unsupported version format: "${ version }". ` +
         `Please provide a unique sequence of major, minor and build version identifiers.`
     );
 }
 
-const varName = 'POINTNETWORK_NODE_VERSION';
+const varName = 'POINT_NODE_VERSION';
 const envFile = '.env';
 const envPath = require ('path').resolve (__dirname, '..', envFile);
 const { execSync } = require ('child_process');

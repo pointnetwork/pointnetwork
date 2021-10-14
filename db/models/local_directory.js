@@ -1,4 +1,6 @@
 const fs = require('fs');
+const path = require('path');
+const {HttpNotFoundError} = require("../../core/exceptions");
 
 class LocalDirectory {
     setLocalRoot(localRoot) {
@@ -6,10 +8,24 @@ class LocalDirectory {
     }
 
     async readFileByPath(filePath, encoding = 'utf-8') {
-        console.log('ASKING FOR LocalDirectory.readFileByPath ',{filePath});
-        let fileLocalPath = `${this.localRoot}/public/${filePath}`;
+        const fullPath = path.join(this.localRoot, filePath);
 
-        return await fs.readFileSync(fileLocalPath, encoding);
+        // Poison null bytes https://nodejs.org/en/knowledge/file-system/security/introduction/#poison-null-bytes
+        if (filePath.indexOf('\0') !== -1) {
+            throw Error('Null bytes are not allowed');
+        }
+
+        // Preventing directory traversal https://nodejs.org/en/knowledge/file-system/security/introduction/#preventing-directory-traversal
+        // Must be after poison null bytes check
+        if (fullPath.indexOf(this.localRoot) !== 0) {
+            throw Error('Directory traversal is not allowed');
+        }
+
+        console.log('ASKING FOR LocalDirectory.readFileByPath ',{filePath, fullPath});
+
+        if (! fs.existsSync(fullPath)) throw new HttpNotFoundError('This route or file is not found');
+
+        return fs.readFileSync(fullPath, encoding);
     }
 }
 
