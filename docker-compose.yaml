@@ -7,6 +7,11 @@ services:
     depends_on:
       database:
         condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 60s
     entrypoint: 'npm'
     command: 'run start:docker'
     volumes:
