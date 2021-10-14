@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import Post from "../post/Post";
 import Share from "../share/Share";
 import Identity from "../identity/Identity";
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Box from '@material-ui/core/Box';
+import LoadingSpinner from '../loading/LoadingSpinner';
 
 export default Feed = ({account}) =>{
   const [posts, setPosts] = useState([])
@@ -62,9 +61,7 @@ export default Feed = ({account}) =>{
     <div className="feed">
       <div className="feedWrapper">
         {!account && <div><Identity /><Share /></div>}
-        {loading && <Box sx={{ display: 'flex' }}>
-          <CircularProgress />
-        </Box>}
+        {loading && <LoadingSpinner />}
         {(!loading && feedError) && <span className='error'>Error loading feed: {feedError.message}. Did you deploy the contract sucessfully?</span>}
         {(!loading && !feedError && posts.length == 0) && <span className='no-post-to-show'>No posts made yet!</span>}
         {posts.map((p) => (

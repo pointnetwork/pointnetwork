@@ -30,7 +30,7 @@ export default Profile = () => {
             </div>
             <div className="profileInfo">
               <h4 className="profileInfoName">{params.account}</h4>
-              <span className="profileInfoDesc">Someones account.</span>
+              <span className="profileInfoDesc">My account.</span>
             </div>
           </div>
           <div className="profileRightBottom">
