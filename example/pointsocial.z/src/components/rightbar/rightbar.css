@@ -1,5 +1,6 @@
   .rightbar {
     flex: 3.5;
+    display: none;;
   }
 
   .rightbarWrapper {

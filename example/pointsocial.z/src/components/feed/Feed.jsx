@@ -62,12 +62,11 @@ export default Feed = ({account}) =>{
     <div className="feed">
       <div className="feedWrapper">
         {!account && <div><Identity /><Share /></div>}
-        <br />
         {loading && <Box sx={{ display: 'flex' }}>
           <CircularProgress />
         </Box>}
         {(!loading && feedError) && <span className='error'>Error loading feed: {feedError.message}. Did you deploy the contract sucessfully?</span>}
-        {(!loading && !feedError && posts.length == 0) && 'No posts made yet!'}
+        {(!loading && !feedError && posts.length == 0) && <span className='no-post-to-show'>No posts made yet!</span>}
         {posts.map((p) => (
           <Post key={p.id} post={p} />
         ))}

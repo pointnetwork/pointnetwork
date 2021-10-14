@@ -55,7 +55,7 @@ export default function Share() {
   };
 
   return (
-    <div className="share">
+    <div className="share bg-white">
       <div className="shareWrapper">
         <div className="shareTop">
           <img
