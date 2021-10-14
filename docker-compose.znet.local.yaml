@@ -82,6 +82,7 @@ services:
       - ./db:/app/db
       - ./debug:/app/debug
       - ./example:/app/example
+      - ./internal:/app/internal
       - ./network:/app/network
       - ./provider:/app/provider
       - ./resources:/app/resources

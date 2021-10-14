@@ -249,7 +249,7 @@ class ZProxy {
             } else if (host === 'point') {
                 // handle the point welcome page by rendering explorer.z
                 let localPath = 'internal/explorer.z'; // hardcode to render explorer.z
-                rendered = await this.processLocalRequest(localPath, request, response, parsedUrl);;
+                rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);;
             } else {
                 try {
                     rendered = await this.processRequest(host, request, response, parsedUrl);
@@ -403,59 +403,82 @@ class ZProxy {
         return re.exec(filename)[1];
     }
 
-    async processLocalRequest(path, request, response, parsedUrl) {
-        try {
-            let routesJsonPath = `${path}/routes.json`
-            let routes = fs.readJSONSync(routesJsonPath)
+    processLocalRequest(host, filePath, request, response, parsedUrl) {
+        return new Promise(async(resolve, reject) => {
+            let body = '';
+            request.on('data', (chunk) => {
+                body += chunk;
+            });
+            request.on('end', async() => {
+                try {
+                    let routesJsonPath = `${filePath}/routes.json`;
+                    let routes = fs.readJSONSync(routesJsonPath);
 
-            let route_params = {};
-            let template_filename = null;
-            const { match } = require('node-match-path');
+                    let route_params = {};
+                    let template_filename = null;
+                    const { match } = require('node-match-path');
+                    for(const k in routes) {
+                        const matched = match(k, parsedUrl.pathname);
+                        if (matched.matches) {
+                            route_params = matched.params;
+                            template_filename = routes[ k ];
+                            break;
+                        }
+                    }
 
-            for(const k in routes) {
-                const matched = match(k, parsedUrl.pathname);
-                if (matched.matches) {
-                    route_params = matched.params;
-                    template_filename = routes[ k ];
-                    break;
+                    if (template_filename) {
+                        // Use a LocalDirectory object since we are rendering locally
+                        let directory = new LocalDirectory();
+                        directory.setLocalRoot(`${filePath}/public`);
+
+                        // let template_file_path = `/public/${template_filename}`
+
+                        console.log('template_filename', template_filename)
+                        console.log('filePath', filePath)
+
+                        // const template_file_path = `${filePath}/${template_filename}`;
+                        const template_file_contents = await directory.readFileByPath(template_filename, 'utf-8');
+
+                        let renderer = new Renderer(this.ctx, directory);
+                        let request_params = {};
+
+                        // Add params from route matching
+                        request_params = Object.assign({}, request_params, route_params);
+
+                        // GET
+                        for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
+                        // POST takes priority, rewrites if needed
+                        let bodyParsed = qs.parse(body);
+                        for (const k in bodyParsed) request_params[k] = bodyParsed[k];
+
+                        // // Add params from route matching
+                        request_params = Object.assign({}, request_params, route_params);
+
+                        let rendered = await renderer.render(template_filename, template_file_contents, host, request_params); // todo: sanitize
+
+                        response._contentType = 'text/html';
+
+                        resolve(rendered);
+                    } else {
+                        // If not, try root dir
+                        // in parsedUrl.pathname will be something like "/index.css"
+
+                        // Use a LocalDirectory object since we are rendering locally
+                        let directory = new LocalDirectory();
+                        directory.setLocalRoot(`${filePath}/public`);
+
+                        let rendered = await directory.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
+
+                        response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
+                        if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
+
+                        resolve(rendered);
+                    }
+                } catch(e) {
+                    reject(e); // todo: sanitize?
                 }
-            }
-
-            if (template_filename) {
-                let template_file_path = `${path}/public/${template_filename}`
-                let template_file_contents = fs.readFileSync(template_file_path, 'utf-8')
-
-                // Use a LocalDirectory object since we are rendering locally
-                let directory = new LocalDirectory();
-                directory.setLocalRoot(path);
-
-                let renderer = new Renderer(this.ctx, directory);
-                let request_params = {};
-                for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
-
-                // Add params from route matching
-                request_params = Object.assign({}, request_params, route_params);
-
-                let rendered = await renderer.render(template_filename, template_file_contents, path, request_params); // todo: sanitize
-
-                response._contentType = 'text/html';
-
-                return rendered;
-            } else {
-                // If not, try root dir
-                // in parsedUrl.pathname will be something like "/index.css"
-
-                let static_file_path = `${path}/public/${parsedUrl.pathname}`
-                let rendered = fs.readFileSync(static_file_path, 'utf-8');
-
-                response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
-                if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
-
-                return rendered;
-            }
-        } catch(e) {
-            return this.abortError(response, e); //
-        }
+            });
+        });
     }
 
     processRequest(host, request, response, parsedUrl) {
