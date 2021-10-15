@@ -20,7 +20,6 @@
     {% set websites = {
         'twitter.z': "Twitter Demo",
         'blog.z': "Blog",
-        'demo.z': "Demo",
         'pointsocial.z': 'Point Social',
     }
     %}
