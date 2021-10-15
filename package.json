@@ -81,6 +81,7 @@
     "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
     "start:docker": "./scripts/patch-config.js && npm run migrate && npm start",
     "start:docker:dev": "./scripts/patch-config.js && npm run migrate && npm run start:dev",
+    "start:docker:e2e": "./scripts/await-contracts-docker.js && npm run migrate && npm run start:dev",
     "migrate": "./point migrate --datadir $DATADIR",
     "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
     "watch:sites": "ls -d example/*/ | xargs -I {} echo \"SITE={} npm run watch:site\" | sed \"s/.*/\\\\'&\\\\'/\" | xargs npx concurrently",
