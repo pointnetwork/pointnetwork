@@ -7,7 +7,7 @@ import Box from '@material-ui/core/Box';
 const Comments = ({ postId }) => {
     const DEFAULT_BTN_LABEL = 'Comment'
     const [comments, setComments] = useState([])
-    const [contents, setContents] = useState()
+    const [contents, setContents] = useState('')
     const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
     const [btnEnabled, setBtnEnabled] = useState(false);
     const [loading, setLoading] = useState(true);
