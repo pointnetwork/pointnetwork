@@ -12,8 +12,6 @@ const contractAddresses = {
     StorageProviderRegistry: undefined
 };
 
-console.log('IN AWAIT SCRIPT')
-
 const lockfiles = ['/data/point.pid', '/data/data/db/LOCK'];
 
 for (const lockfile of lockfiles) if (existsSync(lockfile)) unlinkSync(lockfile);
