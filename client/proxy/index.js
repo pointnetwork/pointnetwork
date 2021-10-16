@@ -251,7 +251,13 @@ class ZProxy {
                 let localPath = 'internal/explorer.z/public'; // hardcode to render explorer.z
                 rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
                 contentType = response._contentType;
-            } else {
+            } else if (host === process.env.DEV_ZAPP_HOST) {
+                console.log('process.env.DEV_ZAPP_HOST: ', process.env.DEV_ZAPP_HOST);
+                // handle the point welcome page by rendering explorer.z
+                let localPath = `example/${process.env.DEV_ZAPP_HOST}/public`; // hardcode to render the zapp host stated in DEV_ZAPP_HOST local env
+                rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
+                contentType = response._contentType;
+            }  else {
                 try {
                     rendered = await this.processRequest(host, request, response, parsedUrl);
                     contentType = response._contentType;

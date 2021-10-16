@@ -25,7 +25,7 @@ services:
       - -p
       - $BLOCKCHAIN_PROVIDER_PORT
       - --account
-      - "$DEFAULT_ACCOUNT_PK,0x56bc75e2d63100000"
+      - $ACCOUNT_PK_AND_BALANCE
       - -i
       - $BLOCKCHAIN_NETWORK_ID
       - --keepAliveTimeout
@@ -72,6 +72,7 @@ services:
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
+      - $POINT_KEYSTORE:/data/keystore
     ports:
       - '12345:9685'
       - '65500:8666'
@@ -114,6 +115,7 @@ services:
     environment:
       DATADIR: /data
       DB_ENV: pointnode2
+      DEV_ZAPP_HOST: $DEV_ZAPP_HOST
       BLOCKCHAIN_URL: $BLOCKCHAIN_URL
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
@@ -142,6 +144,7 @@ services:
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
+      - $POINT_KEYSTORE:/data/keystore
     environment:
       DATADIR: /data
       DB_ENV: pointnode3
