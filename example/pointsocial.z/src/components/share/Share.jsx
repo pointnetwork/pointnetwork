@@ -15,7 +15,12 @@ export default function Share() {
   const { walletAddress } = useAppContext();
 
   onFileChange = event => {
-    setSelectedFile(event.target.files[0]);
+    let fileToUpload = event.target.files[0];
+    if(fileToUpload.type.startsWith('image')) {
+      setSelectedFile(event.target.files[0]);
+    } else {
+      alert('Point Social only supports image uploads for now. Please change to an image file!')
+    }
   };
 
   onContentsChange = event => {
@@ -80,6 +85,7 @@ export default function Share() {
               <input
                 type="file"
                 name="fileupload"
+                accept="image/*"
                 onChange={onFileChange}
               />
             </div>
