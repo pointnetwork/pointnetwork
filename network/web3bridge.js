@@ -24,7 +24,7 @@ function isRetryableError({message}) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function createWeb3Instance({blockchainUrl, datadir}) {
-    const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 20000});
+    const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
     const mnemonic = require(path.resolve(datadir, 'keystore', 'key.json'));
     const privateKeyProvider = new HDWalletProvider({mnemonic, providerOrUrl: httpProvider});
     const privateKey = `0x${privateKeyProvider.hdwallet._hdkey._privateKey.toString('hex')}`;
@@ -110,17 +110,19 @@ class Web3Bridge {
         let account, gasPrice;
         let { gasLimit, amountInWei } = optons;
         let attempt = 0;
+        let requestStart;
 
         while (true) {
             try {
                 account = this.web3.eth.defaultAccount;
                 gasPrice = await this.web3.eth.getGasPrice();
-                if (!gasLimit) {
-                    this.ctx.log.debug('Web3 Send estimating gas limit');
-                    gasLimit = await method.estimateGas({ from: account, value: amountInWei });
-                    this.ctx.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
-                }
-                return await method.send({ from: account, gasPrice, gas: gasLimit, value: amountInWei });
+                this.ctx.log.debug({gasLimit, gasPrice, account}, 'Prepared to send tx to contract method');
+                // if (!gasLimit) {
+                gasLimit = await method.estimateGas({ from: account, value: amountInWei });
+                this.ctx.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
+                // }
+                requestStart = Date.now();
+                return await method.send({from: account, gasPrice, gas: gasLimit, value: amountInWei});
             } catch (error) {
                 this.ctx.log.error({
                     method: method._method.name,
@@ -129,11 +131,11 @@ class Web3Bridge {
                     gasLimit,
                     optons,
                     error,
-                    stringifiedError: error.toString(),
-                    errorMessage: error.message
+                    stack: error.stack,
+                    timePassedSinceRequestStart: Date.now() - requestStart
                 }, 'Web3 Contract Send error:');
                 if (isRetryableError(error) && (this.web3_call_retry_limit - ++attempt > 0)) {
-                    this.ctx.log.debut({attempt}, 'Retrying Web3 Contract Send');
+                    this.ctx.log.debug({attempt}, 'Retrying Web3 Contract Send');
                     await sleep(attempt * 1000);
                     continue;
                 }
@@ -168,11 +170,10 @@ class Web3Bridge {
                     params,
                     target,
                     error,
-                    stringifiedError: error.toString(),
-                    errorMessage: error.message
+                    stack: error.stack
                 }, 'Web3 Contract Call error:');
                 if (isRetryableError(error) && (this.web3_call_retry_limit - ++attempt > 0)) {
-                    this.ctx.log.debut({attempt}, 'Retrying Web3 Contract Call');
+                    this.ctx.log.debug({attempt}, 'Retrying Web3 Contract Call');
                     await sleep(attempt * 1000);
                     continue;
                 }
@@ -278,6 +279,7 @@ class Web3Bridge {
         if (result.substr(0, 2) === '0x') result = result.substr(2);
         return result;
     }
+
     async putZRecord(domain, routesFile) {
         domain = domain.replace('.z', ''); // todo: rtrim instead
         return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile);
@@ -302,9 +304,10 @@ class Web3Bridge {
             identity = identity.replace('.z', ''); // todo: rtrim instead
             const contract = await this.loadIdentityContract();
             const method = contract.methods.ikvPut(identity, key, value);
-            console.log(await this.web3send(method)); // todo: remove console.log
+            this.ctx.log.debug({identity, key, value}, 'Ready to put key value');
+            await this.web3send(method); // todo: remove console.log
         } catch(e) {
-            this.ctx.log.error('putKeyValue error', {e, identity, key, value});
+            this.ctx.log.error({e, identity, key, value}, 'putKeyValue error');
             throw e;
         }
     }
