@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 const defaultContext = {
   walletAddress: undefined,
   walletError: undefined,
+  identity: undefined,
   goHome: () => {}
 };
 
@@ -13,6 +14,7 @@ export const useAppContext = () => useContext(AppContext)
 
 export const ProvideAppContext = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState();
+  const [identity, setIdentity] = useState();
   const [walletError, setWallerError] = useState();
   const [, setLocation] = useLocation();
 
@@ -20,8 +22,10 @@ export const ProvideAppContext = ({ children }) => {
     (async () => {
       try {
         const {data: {address}} = await window.point.wallet.address();
+        const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: address});
 
         setWalletAddress(address);
+        setIdentity(identity);
       } catch (e) {
         setWallerError(e);
       }
@@ -35,6 +39,7 @@ export const ProvideAppContext = ({ children }) => {
   const context = {
     walletAddress,
     walletError,
+    identity,
     goHome
   }
 
