@@ -12,7 +12,7 @@ export default function Share() {
   const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
   const [btnEnabled, setBtnEnabled] = useState(false);
   const [shareError, setShareError] = useState(undefined);
-  const { walletAddress } = useAppContext();
+  const { identity } = useAppContext();
 
   onFileChange = event => {
     let fileToUpload = event.target.files[0];
@@ -71,7 +71,7 @@ export default function Share() {
           <input
             id="contents"
             name="contents"
-            placeholder={"What's in your mind " + walletAddress + "?"}
+            placeholder={"What's in your mind " + identity + "?"}
             className="shareInput"
             value={contents}
             onChange={onContentsChange}
