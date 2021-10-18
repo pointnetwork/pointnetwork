@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   blockchain_provider:
-    image: neonlabsorg/proxy:v0.2.0-rc5
+    image: neonlabsorg/proxy:v0.2.1
     container_name: pointnetwork_blockchain_provider
     healthcheck:
       test: |
