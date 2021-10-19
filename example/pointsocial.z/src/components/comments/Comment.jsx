@@ -6,7 +6,7 @@ const Comment = ({ comment }) => {
     return (
         <div className="comment">
             <span className="commentFrom">{trimAccount(comment.from)}</span>
-            <span className="commentDate">{`(${format(comment.timestamp)})`}</span>
+            <span className="commentDate">{`(${format(comment.createdAt)})`}</span>
             <span>{comment.contents}</span>
         </div>
     )
