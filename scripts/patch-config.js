@@ -52,7 +52,11 @@ if (typeof arweave_key !== 'object') {
 
 config.client = {
     ...config.client,
-    storage: {...(config.client && config.client.storage), arweave_key},
+    storage: {
+        ...(config.client && config.client.storage),
+        arweave_key,
+        arweave_experiment_version_minor: process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || 7
+    },
     wallet: {...(config.client && config.client.wallet), account: account.address, privateKey, secretPhrase: mnemonic.phrase }
 };
 
