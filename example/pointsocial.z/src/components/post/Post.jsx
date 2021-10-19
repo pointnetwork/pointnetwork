@@ -41,7 +41,7 @@ export default function Post({ post }) {
             {walletAddress == post.from ? <span className="posted-id">You posted</span> : <span className="postUsername">{post.from}</span>}
           </div>
           <div className="postTopRight">
-            <span className="postDate">{format(post.timestamp)}</span>
+            <span className="postDate">{format(post.createdAt)}</span>
           </div>
         </div>
         <div className="postCenter">
