@@ -4,9 +4,6 @@ services:
   point_node:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: point_node
-    depends_on:
-      database:
-        condition: service_healthy
     deploy:
       restart_policy:
         condition: on-failure
@@ -23,15 +20,12 @@ services:
       - '8666:8666'
       - '2468:2468'
     environment:
-      DATADIR: /data
-      DB_ENV: production
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_NAME
-      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      CONTRACT_ADDRESS_MIGRATIONS: $CONTRACT_ADDRESS_MIGRATIONS
-      CONTRACT_ADDRESS_IDENTITY: $CONTRACT_ADDRESS_IDENTITY
-      CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY: $CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY
-      ARWEAVE_EXPERIMENT_VERSION_MINOR: $ARWEAVE_EXPERIMENT_VERSION_MINOR
+      - DATADIR=/data
+      - DB_ENV=production
+      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_NAME
+      - BLOCKCHAIN_URL=https://localhost:9090/solana
+      - BLOCKCHAIN_NETWORK_ID=*
+      - ARWEAVE_EXPERIMENT_VERSION_MINOR=7
 
   database:
     image: postgres:13.4

@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  blockchain_node:
+    extends:
+      file: docker-compose.provider.yaml
+      service: blockchain_node
+    volumes:
+      - blockchain_node_data_znet:/opt/solana/config:rw
+
+  blockchain_provider:
+    extends:
+      file: docker-compose.provider.yaml
+      service: blockchain_provider
+    depends_on:
+      blockchain_node:
+        condition: service_healthy
+    volumes:
+      - blockchain_provider_env_znet:/opt/env:rw
+      - /home/dev/neon:/root/.config/solana:rw
+
+  contract_deployer:
+    extends:
+      file: docker-compose.provider.yaml
+      service: contract_deployer
+    depends_on:
+      blockchain_provider:
+        condition: service_healthy
+    volumes:
+      - point_contracts_znet:/build:rw
+      - /home/dev/geth/keystore:/.keystore:ro
+
+volumes:
+  point_contracts_znet:
+  blockchain_node_data_znet:
+  blockchain_provider_env_znet:

@@ -1,45 +1,31 @@
 version: '3.9'
 
 services:
-  blockchain_provider:
-    image: neonlabsorg/proxy:v0.2.1
-    container_name: pointnetwork_blockchain_provider
-    healthcheck:
-      test: |
-        curl -X POST \
-          -H 'Content-Type: application/json' \
-          -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}' \
-          http://localhost:9090/solana
-      interval: 60s
-      timeout: 5s
-      retries: 4
-      start_period: 30s
-    environment:
-      - CONFIG=devnet
-      - SOLANA_URL=https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
-    ports:
-      - 127.0.0.1:9090:9090
-    volumes:
-      - $BLOCKCHAIN_KEYSTORE:/root/.config/solana
-      - ./scripts/handle-neon-proxy.sh:/opt/proxy/handle-run-proxy.sh:ro
-    entrypoint: /opt/proxy/handle-run-proxy.sh
-
-  contract_deployer:
-    image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
-    container_name: pointnetwork_contract_deployer
+  point_node:
+    extends:
+      file: docker-compose.yaml
+      service: point_node
     depends_on:
-      blockchain_provider:
+      database:
         condition: service_healthy
-    restart: 'no'
     volumes:
-      - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
-      - ./truffle/migrations:/truffle/migrations:ro
-      - ./truffle/contracts:/truffle/contracts:ro
-      - $DEPLOYER_KEYSTORE:/.keystore:ro
-      - shared_contracts:/build:rw
-    command: deploy --network $DEPLOYER_ENV
-    env_file:
-      - .env.deployer.devnet
+      - point_contracts_devnet:/app/truffle/build/contracts
+      - point_node_data_devnet:/data
+    environment:
+      - BLOCKCHAIN_URL=https://devnet.pointspace.io
+      - CONTRACT_ADDRESS_MIGRATIONS=0x7D694495f89B2E166e67Ab32cfdfC12de0cb29ad
+      - CONTRACT_ADDRESS_IDENTITY=0xcb71206EDe92A17770E64D624f7a772e8e620254
+      - CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY=0x4F4ce10Ff8acD3B81A6155DA7E9AaAe50bae4CeA
+      - ARWEAVE_EXPERIMENT_VERSION_MINOR=9
+
+  database:
+    extends:
+      file: docker-compose.yaml
+      service: database
+    volumes:
+      - database_data_devnet:/var/lib/postgresql/data/
 
 volumes:
-  shared_contracts:
+  database_data_devnet:
+  point_contracts_devnet:
+  point_node_data_devnet:

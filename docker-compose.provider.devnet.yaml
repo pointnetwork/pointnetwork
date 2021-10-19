@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  blockchain_provider:
+    extends:
+      file: docker-compose.provider.yaml
+      service: blockchain_provider
+    depends_on:
+      blockchain_node:
+        condition: service_healthy
+    environment:
+      - CONFIG=devnet
+      - SOLANA_URL=https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
+    volumes:
+      - blockchain_provider_env_devnet:/opt/env:rw
+      - /home/dev/neon:/root/.config/solana:rw
+
+  contract_deployer:
+    extends:
+      file: docker-compose.provider.yaml
+      service: contract_deployer
+    depends_on:
+      blockchain_provider:
+        condition: service_healthy
+    volumes:
+      - point_contracts_devnet:/build:rw
+      - /home/dev/geth/keystore:/.keystore:ro
+
+volumes:
+  point_contracts_devnet:
+  blockchain_provider_env_devnet:

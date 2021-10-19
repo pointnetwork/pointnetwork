@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   blockchain_node:
-    image: cybercoredev/solana:${SOLANA_REVISION:-v1.7.9-resources}
+    image: neonlabsorg/solana:${BLOCKCHAIN_VERSION:-v1.7.9-resources}
     container_name: pointnetwork_blockchain_node
     hostname: blockchain_node
     healthcheck:
@@ -19,11 +19,8 @@ services:
       - blockchain_node_data:/opt/solana/config:rw
 
   blockchain_provider:
-    image: cybercoredev/proxy:v0.2.0
+    image: neonlabsorg/proxy:${BLOCKCHAIN_PROVIDER_VERSION:-v0.2.0}
     container_name: pointnetwork_blockchain_provider
-    depends_on:
-      blockchain_node:
-        condition: service_healthy
     healthcheck:
       test: |
         curl -X POST \
@@ -46,59 +43,23 @@ services:
     entrypoint: /opt/proxy/handle-run-proxy.sh
 
   contract_deployer:
-    image: pointnetwork/pointnetwork_deployer:neon_proxy-0.0.1
+    image: pointnetwork/pointnetwork_deployer:${POINT_DEPLOYER_VERSION:-neon_proxy-0.0.1}
     container_name: pointnetwork_contract_deployer
-    depends_on:
-      blockchain_provider:
-        condition: service_healthy
     restart: 'no'
     volumes:
       - ./geth/keystore:/.keystore
       - ./truffle/migrations:/truffle/migrations:ro
       - ./truffle/contracts:/truffle/contracts:ro
       - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
+      - ./geth/keystore:/.keystore:ro
       - point_contracts:/build:rw
     command: deploy --network znet
     environment:
-      DEPLOYER_COMPILER_VERSION: native
-      DEPLOYER_BUILD_PATH: /build
-      DEPLOYER_ENV: znet
-      BLOCKCHAIN_URL: http://blockchain_provider:9090/solana
-      BLOCKCHAIN_NETWORK_ID: '*'
-
-  point_node:
-    depends_on:
-      database:
-        condition: service_started
-      blockchain_provider:
-        condition: service_healthy
-      # contract_deployer:
-      #   condition: service_completed_successfully
-    volumes:
-      - ./api:/app/api
-      - ./client:/app/client
-      - ./console:/app/console
-      - ./core:/app/core
-      - ./db:/app/db
-      - ./debug:/app/debug
-      - ./example:/app/example
-      - ./internal:/app/internal
-      - ./network:/app/network
-      - ./provider:/app/provider
-      - ./resources:/app/resources
-      - ./scripts:/app/scripts
-      - ./tests:/app/tests
-      - ./threads:/app/threads
-      - ./truffle:/app/truffle
-      - ./wallet:/app/wallet
-      - ./package.json:/app/package.json
-      - ./point:/app/point
-      - point_contracts:/app/truffle/build/contracts
-    environment:
-      BLOCKCHAIN_URL: http://blockchain_provider:9090/solana
-      CONTRACT_ADDRESS_MIGRATIONS: '0xbE2a4E61eEDcE7102EA37B3AE0D741A50fC3ce4d'
-      CONTRACT_ADDRESS_IDENTITY: '0x4BeF84Ebf41Ac28ab9A46d94906ed1793dF2952E'
-      CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY: '0x8A2AB2cd8cb980e80b43BE4E62fdd90Cb6e44029'
+      - DEPLOYER_COMPILER_VERSION=native
+      - BLOCKCHAIN_NETWORK_ID=*
+      - DEPLOYER_BUILD_PATH=/build
+      - DEPLOYER_ENV=znet
+      - BLOCKCHAIN_URL=http://blockchain_provider:9090/solana
 
 volumes:
   point_contracts:

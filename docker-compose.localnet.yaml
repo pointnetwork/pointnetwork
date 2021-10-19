@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+  blockchain_node:
+    extends:
+      file: docker-compose.provider.yaml
+      service: blockchain_node
+    volumes:
+      - blockchain_node_data_localnet:/opt/solana/config:rw
+
+  blockchain_provider:
+    extends:
+      file: docker-compose.provider.yaml
+      service: blockchain_provider
+    depends_on:
+      blockchain_node:
+        condition: service_healthy
+    volumes:
+      - blockchain_provider_env_localnet:/opt/env:rw
+      - blockchain_provider_config_localnet:/root/.config/solana:rw
+
+  contract_deployer:
+    extends:
+      file: docker-compose.provider.yaml
+      service: contract_deployer
+    depends_on:
+      blockchain_provider:
+        condition: service_healthy
+    volumes:
+      - point_contracts_localnet:/build:rw
+    environment:
+      - BLOCKCHAIN_URL=http://blockchain_provider:9090/solana
+
+  point_node:
+    extends:
+      file: docker-compose.yaml
+      service: point_node
+    depends_on:
+      database:
+        condition: service_started
+      blockchain_provider:
+        condition: service_healthy
+      contract_deployer:
+        condition: service_completed_successfully
+    volumes:
+      - point_node_data_localnet:/data
+      - point_contracts_localnet:/app/truffle/build/contracts
+    environment:
+      BLOCKCHAIN_URL: http://blockchain_provider:9090/solana
+      CONTRACT_ADDRESS_MIGRATIONS: '0xbE2a4E61eEDcE7102EA37B3AE0D741A50fC3ce4d'
+      CONTRACT_ADDRESS_IDENTITY: '0x4BeF84Ebf41Ac28ab9A46d94906ed1793dF2952E'
+      CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY: '0x8A2AB2cd8cb980e80b43BE4E62fdd90Cb6e44029'
+
+  database:
+    extends:
+      file: docker-compose.yaml
+      service: database
+    volumes:
+      - database_data_localnet:/var/lib/postgresql/data/
+
+volumes:
+  database_data_localnet:
+  point_node_data_localnet:
+  point_contracts_localnet:
+  blockchain_node_data_localnet:
+  blockchain_provider_env_localnet:
+  blockchain_provider_config_localnet:
