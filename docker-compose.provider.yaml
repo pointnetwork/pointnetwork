@@ -19,7 +19,7 @@ services:
       - blockchain_node_data:/opt/solana/config:rw
 
   blockchain_provider:
-    image: neonlabsorg/proxy:${BLOCKCHAIN_PROVIDER_VERSION:-v0.2.0}
+    image: neonlabsorg/proxy:${BLOCKCHAIN_PROVIDER_VERSION:-stable}
     container_name: pointnetwork_blockchain_provider
     healthcheck:
       test: |
