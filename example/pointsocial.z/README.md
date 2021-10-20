@@ -24,7 +24,7 @@ Now a `public` folder will be created containing the deployable built site. You 
 
 1. Update `.env.e2e` with your local account Private Key and Initial Balance in the `ACCOUNT_PK_AND_BALANCE` env key.
 1. Update `.env.e2e` with your the Zapp domain that you are developing in the `DEV_ZAPP_HOST` env key (i.e. set this to 'pointsocial.z').
-1. In `StorageProviderRegistry.sol` update the `connection` of the defualt provider in the constructor function to: http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301 (**TODO**: need to avoid having to do this)
+1. In `StorageProviderRegistry.sol` update the `connection` of the defualt provider in the constructor function to: `http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301` (**TODO**: need to avoid having to do this)
 1. Stop the nodes using docker: `docker-compose --env-file .env.e2e -f docker-compose.e2e.yaml -f docker-compose.dev.yaml down -v`
 1. Start the node using docker: `docker-compose --env-file .env.e2e -f docker-compose.e2e.yaml -f docker-compose.dev.yaml up -d`
 1. Open up a terminal to view the `website_owner` logs: ` docker-compose --env-file .env.e2e -f docker-compose.e2e.yaml -f docker-compose.dev.yaml logs -f website_owner`
