@@ -11,7 +11,7 @@ Since this a React JS site it rquires to be built before it can be deployed as f
 1. Run `npm i`
 2. Run `npm run build`
 
-Now a `public` folder will be created containing the deployable built site. You can now deploy the site to the network using the `point-deploy` executable. For details on deploying to the network see this [README](../../deployspace/README.md)
+Now a `public` folder will be created containing the deployable built site. You can now deploy the site to the network using the `point-deploy` executable. For details on deploying to the network see this [README](../../scripts/README.md)
 
 ## Prepare for developer deployment
 
