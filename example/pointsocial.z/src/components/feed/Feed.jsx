@@ -45,6 +45,8 @@ export default Feed = ({account}) =>{
 
       const postsContent = await Promise.all(posts.map(async (post) => {
         const {data: contents} = await window.point.storage.getString({ id: post.contents, encoding: 'utf-8' });
+        const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: post.from});
+        post.identity = identity;
         post.contents = contents;
         return post;
       }))
