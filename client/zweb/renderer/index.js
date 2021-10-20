@@ -212,6 +212,10 @@ class Renderer {
 
                 return wallets;
             },
+            get_wallet_history: async function(code) {
+                this.renderer.#ensurePrivilegedAccess();
+                return await this.renderer.ctx.wallet.getHistoryForCurrency(code);
+            },
             wallet_request_dev_sol: async function() {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.initiateSolanaDevAirdrop();

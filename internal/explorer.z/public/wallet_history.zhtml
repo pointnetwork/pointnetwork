@@ -1,0 +1,44 @@
+{% extends 'layout.zhtml' %}
+
+{% block head %}
+    {% set active_section = 'wallet' %}
+{% endblock %}
+
+{% block contents %}
+
+    <h1>Wallet</h1>
+
+{#    <p>Unfortunately, Neon EVM nodes we use do not implement history indexing yet. We're working</p>#}
+
+{#    {% set history = get_wallet_history(request.code) %}#}
+
+{#    {% for tx in history %}#}
+{#        {{ dump(tx) }}#}
+{#    {% else %}#}
+{#    {% endfor %}#}
+
+    <table class="table table-bordered table-striped table-hover table-responsive table-primary">
+{#        <tr>#}
+{#            <th>Currency</th>#}
+{#            <th>Address</th>#}
+{#            <th style="text-align: right;">Balance</th>#}
+{#            <th style="text-align: right;">Actions</th>#}
+{#        </tr>#}
+{#        {% for wallet in wallets %}#}
+{#            <tr>#}
+{#                <td><strong>{{ wallet.currency_name }}</strong> ({{ wallet.currency_code }})</td>#}
+{#                <td class="mono">{{ wallet.address }}</td>#}
+{#                <td style="text-align: right;">{{ wallet.balance | number_format(8, '.', '') }} {{ wallet.currency_code }}</td>#}
+{#                <td style="text-align: right;">#}
+{#                    {% if wallet.currency_code == 'devSOL' %}#}
+{#                        <a href="#" class="btn btn-sm btn-indigo" style="background-color: #7367f0; color: white;" onclick="walletAirdrop('{{ wallet.currency_code }}');">Airdrop</a>#}
+{#                    {% endif %}#}
+{#                    <a href="#" class="btn btn-sm btn-warning" onclick="walletSend('{{ wallet.currency_code }}');">Send</a>#}
+{#                    <a href="#" class="btn btn-sm btn-success" onclick="walletReceive('{{ wallet.currency_code }}', '{{ wallet.address }}');">Receive</a>#}
+{#                    <a href="#" class="btn btn-sm btn-info" onclick="walletHistory('{{ wallet.currency_code }}');">History</a>#}
+{#                </td>#}
+{#            </tr>#}
+{#        {% endfor %}#}
+    </table>
+
+{% endblock %}
