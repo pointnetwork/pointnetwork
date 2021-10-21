@@ -1,0 +1,10 @@
+{{ csrf_guard(request._csrf) }}
+{% set tweet_contents_id = storage_put(request.contents) %}
+{<p>Tweet contents id: {{ tweet_contents_id }}#}
+{% set result = contract_call(host, 'Twitter', 'tweet', [ tweet_contents_id ]) %}
+
+<html>
+  <body>
+    <script>location.href='/'</script>
+  </body>
+</html>
