@@ -21,6 +21,7 @@
         'twitter.z': "Twitter Demo",
         'blog.z': "Blog",
         'pointsocial.z': 'Point Social',
+        'email.z': 'Email',
     }
     %}
 

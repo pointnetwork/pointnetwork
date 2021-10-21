@@ -9,6 +9,53 @@ const bip39 = require("bip39");
 const bip32 = require("bip32");
 const {Keypair} = require("@solana/web3.js");
 
+// from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
+async function getTransactionsByAccount(eth, myaccount, startBlockNumber, endBlockNumber) {
+    if (endBlockNumber == null) {
+        endBlockNumber = await eth.getBlockNumber();
+        console.log("Using endBlockNumber: " + endBlockNumber);
+    }
+    if (startBlockNumber == null) {
+        startBlockNumber = Math.max(0, endBlockNumber - 1000000);
+        console.log("Using startBlockNumber: " + startBlockNumber);
+    }
+    console.log("Searching for transactions to/from account \"" + myaccount + "\" within blocks "  + startBlockNumber + " and " + endBlockNumber);
+
+    console.log('ethblocknumber', eth.blockNumber);
+
+    const txs = [];
+
+    for (var i = startBlockNumber; i <= endBlockNumber; i++) {
+        if (i % 1000 == 0) {
+            console.log("Searching block " + i);
+        }
+        var block = eth.getBlock(i, true);
+        if (block != null && block.transactions != null) {
+            block.transactions.forEach( function(e) {
+                if (myaccount == "*" || myaccount == e.from || myaccount == e.to) {
+                    txs.push(e);
+                    // console.log("  tx hash          : " + e.hash + "\n"
+                    //     + "   nonce           : " + e.nonce + "\n"
+                    //     + "   blockHash       : " + e.blockHash + "\n"
+                    //     + "   blockNumber     : " + e.blockNumber + "\n"
+                    //     + "   transactionIndex: " + e.transactionIndex + "\n"
+                    //     + "   from            : " + e.from + "\n"
+                    //     + "   to              : " + e.to + "\n"
+                    //     + "   value           : " + e.value + "\n"
+                    //     + "   time            : " + block.timestamp + " " + new Date(block.timestamp * 1000).toGMTString() + "\n"
+                    //     + "   gasPrice        : " + e.gasPrice + "\n"
+                    //     + "   gas             : " + e.gas + "\n"
+                    //     + "   input           : " + e.input);
+                }
+            });
+        }
+
+        console.log(txs);
+    }
+
+    return txs;
+}
+
 class Wallet {
     static get TRANSACTION_EVENT() { return 'TRANSACTION_EVENT'; }
 
@@ -117,6 +164,18 @@ class Wallet {
     }
     async getNetworkAccountBalanceInEth() {
         return (await this.getNetworkAccountBalanceInWei()) / 1e18;
+    }
+
+    async getHistoryForCurrency(code) {
+        switch(code) {
+            case 'NEON':
+                console.log('web3', this.web3);
+                console.log('web3.eth', this.web3.eth);
+                const txs = await getTransactionsByAccount(this.web3.eth, this.getNetworkAccount(), null, null);
+                return txs;
+            default:
+                throw Error('Unsupported currency: '+code);
+        }
     }
 
     getNetworkAccount() {

@@ -108,6 +108,7 @@
         }
         function walletHistory(code) {
             if (code === 'POINT') return pointMessage();
+            // location.href = '/wallet/history/' + code;
         }
         function sendPOST(code, recipient, amount) {
             csrfPost('/wallet/send', {code, recipient, amount}, function() {
