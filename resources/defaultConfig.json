@@ -14,7 +14,8 @@
   },
   "log": {
     "enabled": true,
-    "level": "info"
+    "level": "info",
+    "sendLogsTo": ""
   },
   "console": {
     "prompt": "> "

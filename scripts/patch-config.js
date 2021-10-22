@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-const {existsSync, writeFileSync, unlinkSync, mkdirSync, readFileSync, copyFileSync} = require('fs');
+const {existsSync, writeFileSync, unlinkSync, mkdirSync, readFileSync} = require('fs');
 const {execSync} = require('child_process');
 const path = require('path');
+const config = require('../core/config');
+const log = require('../core/log').child({module: __filename, account: config.client.wallet.account});
 const Web3 = require('web3');
-const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Deployer = require('../client/zweb/deployer');
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
 const contractAddresses = {
@@ -22,56 +23,8 @@ const lockfiles = ['/data/point.pid', '/data/data/db/LOCK'];
 
 for (const lockfile of lockfiles) if (existsSync(lockfile)) unlinkSync(lockfile);
 
-console.info('Updating configuration file...');
-
-const sleepSync = time => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, time);
-const config = require('/app/resources/znet.json');
-const {
-    BLOCKCHAIN_URL = 'http://localhost:9090/solana',
-    BLOCKCHAIN_NETWORK_ID,
-} = process.env;
-
-config.network = {
-    ...config.network,
-    web3: BLOCKCHAIN_URL,
-    web3_network_id: BLOCKCHAIN_NETWORK_ID || undefined,
-    communication_external_host: process.env.POINT_NODE_PUBLIC_HOSTNAME || undefined,
-    bootstrap_nodes: process.env.POINT_NODE_BOOTSTRAP_NODES || [],
-    identity_contract_address: contractAddresses.Identity,
-    storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
-};
-
-const mnemonic = require('/data/keystore/key.json');
-if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
-    throw new Error('Invalid key format');
-}
-
-const provider = new HDWalletProvider({mnemonic, providerOrUrl: config.network.web3});
-const web3 = new Web3(provider);
-const privateKey = provider.hdwallet._hdkey._privateKey.toString('hex');
-const account = web3.eth.accounts.privateKeyToAccount(`0x${privateKey}`);
-
-const arweave_key = require('/data/keystore/arweave.json');
-if (typeof arweave_key !== 'object') {
-    throw new Error('Unable to parse arweave key');
-}
-
-config.client = {
-    ...config.client,
-    storage: {
-        ...(config.client && config.client.storage),
-        arweave_key,
-        arweave_experiment_version_minor: process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || 7
-    },
-    wallet: {...(config.client && config.client.wallet), account: account.address, privateKey, secretPhrase: mnemonic.phrase }
-};
-
-writeFileSync('/data/config.json', JSON.stringify(config, null, 2));
-
-console.info('Config is successfully updated.');
-
 async function compilePointContracts() {
-    console.info('Compiling point contracts:', contractAddresses);
+    log.debug(contractAddresses, 'Compiling point contracts');
 
     const getImports = function(dependency) {
         const dependencyNodeModulesPath = path.join(__dirname, '..', 'node_modules/', dependency);
@@ -102,11 +55,11 @@ async function compilePointContracts() {
                 throw new Error('Compiled contract is empty');
             }
         } catch (e) {
-            console.error('Point contract compilation error:', e);
+            log.error({error: e}, 'Point contract compilation error');
             throw e;
         }
     }
-    console.info('Successfully compiled point contracts:', Object.keys(contractAddresses).join(', '));
+    log.info(contractAddresses, 'Successfully compiled point contracts');
 }
 
 if (!existsSync('/data/data')) {
@@ -118,22 +71,29 @@ if (!existsSync('/data/data/dht_peercache.db')) {
 }
 
 (async () => {
-    await compilePointContracts();
+    try {
+        await compilePointContracts();
 
-    console.log('Awaiting for blockchain provider at', config.network.web3);
+        const web3 = new Web3(config.network.web3);
+        log.info({provider: config.network.web3, timeout}, 'Awaiting for blockchain provider');
 
-    const start = Date.now();
+        const start = Date.now();
+        let error;
 
-    while (Date.now() - start < timeout) {
-        try {
-            await web3.eth.getBlockNumber();
-            await provider.engine.stop();
-            return console.info('Done.');
-        } catch (e) {
-            sleepSync(1024);
+        while (Date.now() - start < timeout) {
+            log.info({provider: config.network.web3, start, error}, 'Polling block number');
+            try {
+                const blockNumber = await web3.eth.getBlockNumber();
+                log.info({blockNumber}, 'Success');
+                log.info('Point is ready');
+                return;
+            } catch (e) {
+                log.error(e, 'Polling loop Error:');
+                throw e;
+            }
         }
+    } catch (error) {
+        log.error({provider: config.network.web3}, 'Unable to reach blockchain');
+        process.exit(1);
     }
-
-    console.error(`Unable to reach blockchain provider at ${ config.network.web3 }`);
-    process.exit(1);
 })();
