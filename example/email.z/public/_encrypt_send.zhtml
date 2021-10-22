@@ -1,3 +1,4 @@
+{{ csrf_guard(request._csrf) }}
 {% set identity_owner = owner_by_identity(request.recipient) %}
 {#<p>Identity owner: {{ identity_owner }}#}
 {% set identity_comm_public_key = public_key_by_identity(request.recipient) %}

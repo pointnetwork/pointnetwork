@@ -18,7 +18,8 @@
         <br>
         <label><b>Body</b></label><br>
         <textarea id="body" rows="4" cols="50" name="message"></textarea><br><br>
-        <input type="hidden" name="__redirect" value="/" />
+        <input name="__redirect" type="hidden" value="/" />
+        <input name="_csrf" type="hidden" value="{{ csrf_value() }}" />
         <input type="submit" value="Encrypt & Send Email"/>
       </form>
     </div>
