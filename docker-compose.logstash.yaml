@@ -7,4 +7,3 @@ services:
         gelf-address: udp://znet.pointspace.io:12201
         tag: znet
         labels: point_node,znet,$PUBLIC_ADDRESS
-

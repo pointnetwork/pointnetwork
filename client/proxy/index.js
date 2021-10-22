@@ -33,7 +33,7 @@ class ZProxy {
     async start() {
         let server = this.httpx();
         let ws = this.wsServer(server);
-        server.listen(this.port, () => console.log(`ZProxy server listening on localhost:${ this.port }`));
+        server.listen(this.port, () => this.ctx.log.info({host: this.host, port: this.port}, 'ZProxy server is started'));
     }
 
     wsServer(server) {

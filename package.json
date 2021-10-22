@@ -33,7 +33,7 @@
     "formidable": "^1.2.2",
     "fs-extra": "^10.0.0",
     "graphql": "^16.2.0",
-    "graphql-request": "^3.5.0",
+    "graphql-request": "^4.0.0",
     "html-entities": "^2.3.2",
     "http2-proxy": "^5.0.53",
     "level": "^7.0.0",
