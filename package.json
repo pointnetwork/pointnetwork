@@ -26,6 +26,7 @@
     "commander": "^8.1.0",
     "eccrypto": "^1.1.6",
     "ethereumjs-util": "^7.1.0",
+    "ethereumjs-wallet": "^1.0.2",
     "fastify": "^3.20.2",
     "fastify-http-proxy": "^6.2.1",
     "fastify-websocket": "^3.2.1",

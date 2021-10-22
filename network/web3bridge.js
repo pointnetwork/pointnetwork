@@ -23,12 +23,8 @@ function isRetryableError({message}) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function createWeb3Instance({blockchainUrl, datadir}) {
-    const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
-    const mnemonic = require(path.resolve(datadir, 'keystore', 'key.json'));
-    const privateKeyProvider = new HDWalletProvider({mnemonic, providerOrUrl: httpProvider});
-    const privateKey = `0x${privateKeyProvider.hdwallet._hdkey._privateKey.toString('hex')}`;
-    const hdWalletProvider = new HDWalletProvider({privateKeys: [privateKey], providerOrUrl: blockchainUrl});
+function createWeb3Instance({blockchainUrl, privateKey}) {
+    const hdWalletProvider = new HDWalletProvider(privateKey, blockchainUrl);
     const nonceTracker = new NonceTrackerSubprovider();
 
     hdWalletProvider.engine._providers.unshift(nonceTracker);
@@ -60,7 +56,7 @@ class Web3Bridge {
     createWeb3Instance() {
         return createWeb3Instance({
             blockchainUrl: this.ctx.config.network.web3,
-            datadir: this.ctx.datadir
+            privateKey: '0x' + this.ctx.config.client.wallet.privateKey
         });
     }
 

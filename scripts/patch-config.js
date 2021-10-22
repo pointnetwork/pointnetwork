@@ -7,7 +7,7 @@ const config = require('../core/config');
 const log = require('../core/log').child({module: __filename, account: config.client.wallet.account});
 const Web3 = require('web3');
 const Deployer = require('../client/zweb/deployer');
-const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
+const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 5000;
 const contractAddresses = {
     Identity: process.env.CONTRACT_ADDRESS_IDENTITY,
     Migrations: process.env.CONTRACT_ADDRESS_MIGRATIONS,
@@ -59,7 +59,7 @@ async function compilePointContracts() {
             throw e;
         }
     }
-    log.info(contractAddresses, 'Successfully compiled point contracts');
+    log.debug(contractAddresses, 'Successfully compiled point contracts');
 }
 
 if (!existsSync('/data/data')) {
@@ -71,29 +71,22 @@ if (!existsSync('/data/data/dht_peercache.db')) {
 }
 
 (async () => {
-    try {
-        await compilePointContracts();
+    await compilePointContracts();
 
-        const web3 = new Web3(config.network.web3);
-        log.info({provider: config.network.web3, timeout}, 'Awaiting for blockchain provider');
+    const web3 = new Web3(config.network.web3);
+    const start = Date.now();
+    let error;
 
-        const start = Date.now();
-        let error;
-
-        while (Date.now() - start < timeout) {
-            log.info({provider: config.network.web3, start, error}, 'Polling block number');
-            try {
-                const blockNumber = await web3.eth.getBlockNumber();
-                log.info({blockNumber}, 'Success');
-                log.info('Point is ready');
-                return;
-            } catch (e) {
-                log.error(e, 'Polling loop Error:');
-                throw e;
-            }
+    while (Date.now() - start < timeout) {
+        try {
+            await web3.eth.getBlockNumber();
+            log.info('Point Node is ready');
+            process.exit(0);
+        } catch (e) {
+            error = e;
         }
-    } catch (error) {
-        log.error({provider: config.network.web3}, 'Unable to reach blockchain');
-        process.exit(1);
     }
+
+    log.error({provider: config.network.web3, error}, 'Unable to reach blockchain');
+    process.exit(1);
 })();

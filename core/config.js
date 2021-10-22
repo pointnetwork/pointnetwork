@@ -1,18 +1,17 @@
 const path = require('path');
 const {merge} = require('lodash');
 const {existsSync} = require('fs');
-const Web3 = require('web3');
-const HDWalletProvider = require("@truffle/hdwallet-provider");
+const bip39 = require('bip39');
+const {hdkey} = require('ethereumjs-wallet');
 
 const mnemonic = require('/data/keystore/key.json');
 if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
     throw new Error('Invalid key format');
 }
 
-const provider = new HDWalletProvider({mnemonic, providerOrUrl: 'http://localhost:7545/'});
-const web3 = new Web3();
-const privateKey = provider.hdwallet._hdkey._privateKey.toString('hex');
-const account = web3.eth.accounts.privateKeyToAccount(`0x${privateKey}`);
+/* TODO: move wallet creation to the Wallet class, this should not be a part of config */
+const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic.phrase));
+const wallet = hdwallet.getWallet(); // .derivePath("m/44'/60'/0'/0/0").getWallet();
 
 const arweave_key = require('/data/keystore/arweave.json');
 if (typeof arweave_key !== 'object') {
@@ -38,8 +37,9 @@ const variables = {
             arweave_experiment_version_minor: process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || undefined
         },
         wallet: {
-            account: account.address,
-            privateKey,
+            account: '0x' + wallet.getAddress().toString('hex'),
+            privateKey: wallet.getPrivateKey().toString('hex'),
+            publicKey: wallet.getPublicKey().toString('hex'),
             secretPhrase: mnemonic.phrase
         }
     },

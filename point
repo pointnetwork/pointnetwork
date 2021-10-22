@@ -67,7 +67,6 @@ if (! program.config) {
 const ctx = {};
 
 ctx.datadir = ctx.datapath = program.datadir;
-ctx.configPath = program.config;
 ctx.basepath = __dirname;
 ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit() function here below. and why 1?
 ctx.die = (err) => { ctx.log.fatal(err); ctx.exit(1); };
@@ -82,7 +81,6 @@ if (program.demo) {
 // ------------------- Init Config ----------------- //
 
 if (! fs.existsSync(ctx.datadir)) mkdirp.sync(ctx.datadir);
-if (! fs.existsSync(ctx.configPath)) throw Error('Cannot find configuration file '+ctx.configPath);
 
 ctx.config = require('./core/config');
 
