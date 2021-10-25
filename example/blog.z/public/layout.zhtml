@@ -3,6 +3,7 @@
 <head>
     <title>Example Blog</title>
     <link type="text/css" rel="stylesheet" href="index.css" />
+    {{ csrf_meta_tags() | raw }}
 </head>
 <body>
     <header>

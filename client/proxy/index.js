@@ -175,9 +175,22 @@ class ZProxy {
         response.end();
     }
 
+    csrfTokenGuard(host, submittedToken) {
+        if (! this.ctx.csrf_tokens) throw new Error('No csrf token generated for this host (rather, no tokens at all)');
+        if (! this.ctx.csrf_tokens[host]) throw new Error('No csrf token generated for this host');
+        const real_token = this.ctx.csrf_tokens[host];
+        if (real_token !== submittedToken) {
+            throw new Error('Invalid csrf token submitted');
+        }
+    }
+
     async request(request, response) {
         let host = request.headers.host;
         if ( host != 'point' && ! _.endsWith(host, '.z')) return this.abort404(response);
+        // validate the csrf token for all POST requests (TODO: Include PUT / DELETE etc)
+        if(request.method.toUpperCase() === 'POST') {
+            this.csrfTokenGuard(host, request.headers['csrf-token']);
+        }
 
         try {
             let rendered;
