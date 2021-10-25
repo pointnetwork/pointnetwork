@@ -174,7 +174,13 @@ class Renderer {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (! this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
                 if (! this.renderer.ctx.csrf_tokens[this.host]) this.renderer.ctx.csrf_tokens[this.host] = require("crypto").randomBytes(64).toString('hex');
-                return "<input name='_csrf' value='" + this.renderer.ctx.csrf_tokens[this.host] + " />";
+                return "<input name='_csrf' type='hidden' value='" + this.renderer.ctx.csrf_tokens[this.host] + "' />";
+            },
+            csrf_meta_tags: async function() {
+                // todo: regenerate per session, or maybe store more permanently?
+                if (! this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
+                if (! this.renderer.ctx.csrf_tokens[this.host]) this.renderer.ctx.csrf_tokens[this.host] = require("crypto").randomBytes(64).toString('hex');
+                return "<meta name='_csrf' content='" + this.renderer.ctx.csrf_tokens[this.host] + "' />";
             },
             csrf_guard: async function(submitted_token) {
                 if (! this.renderer.ctx.csrf_tokens) throw new Error('No csrf token generated for this host (rather, no tokens at all)');
@@ -289,7 +295,7 @@ class Renderer {
 
             this.#connectExtendsTagToPointStorage(ExtTwig);
             this.#connectIncludeTagToPointStorage(ExtTwig);
-            
+
             for(let [name, fn] of Object.entries( this.#defineAvailableFunctions() ))
                 ExtTwig.exports.extendFunction(name, fn.bind(ExtTwig));
 
