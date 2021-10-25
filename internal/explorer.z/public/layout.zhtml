@@ -10,6 +10,7 @@
         <script src="/plugins/bootstrap.min.js"></script>
         <script src="/plugins/clipboard.min.js"></script>
         <script src="/plugins/qrcode.min.js" defer></script>
+        {{ csrf_meta_tags() | raw }}
         {% block head %}{% endblock %}
     </head>
     <body>
