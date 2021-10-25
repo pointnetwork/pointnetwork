@@ -195,6 +195,11 @@ class ZProxy {
         try {
             let rendered;
             let parsedUrl;
+            // validate the csrf token for all POST requests (TODO: Include PUT / DELETE etc)
+            if(request.method.toUpperCase() === 'POST') {
+                // NOTE: X-CSRF-TOKEN header is set in the PointSDK Client Script.
+                this.csrfTokenGuard(host, request.headers['x-csrf-token']);
+            }
             try {
                 parsedUrl = new URL(request.url, `http://${request.headers.host}`);
             } catch(e) {

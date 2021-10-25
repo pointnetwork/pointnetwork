@@ -12,6 +12,7 @@
         <link rel="pointsocial icon" type="image/jpg" href="favicon.ico"/>
         <script defer src="index.js"></script>
         <link rel="stylesheet" href="index.css">
+        {{ csrf_meta_tags() | raw }}
     </head>
     <body>
         <noscript>You need to enable JavaScript to run Point Social.</noscript>
