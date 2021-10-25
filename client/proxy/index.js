@@ -189,7 +189,7 @@ class ZProxy {
         if ( host != 'point' && ! _.endsWith(host, '.z')) return this.abort404(response);
         // validate the csrf token for all POST requests (TODO: Include PUT / DELETE etc)
         if(request.method.toUpperCase() === 'POST') {
-            this.csrfTokenGuard(host, request.headers['csrf-token']);
+            this.csrfTokenGuard(host, request.headers['x-csrf-token']);
         }
 
         try {
