@@ -18,11 +18,18 @@ Total: {{ identity_handles|length }}
     <tr>
         <th>Handle</th>
         <th>Owner</th>
+        <th>Zapp</th>
     </tr>
     {% for identity_handle in identity_handles %}
+        {% set zapp_domain = '' %}
+        {% set zapp_routes = contract_get('@', 'Identity', 'ikvGet', [identity_handle,'zdns/routes']) %}
+        {% if(zapp_routes) %}
+        {% set zapp_domain = identity_handle ~ '.z' %}
+        {% endif %}
         <tr>
             <td><a href="/identities/{{ identity_handle }}" target="_blank">@{{ identity_handle }}</a></td>
             <td class="mono">{{ owner_by_identity(identity_handle) }}</td>
+            <td class="mono"><b>{% if(zapp_domain) %}<a href='https://{{ zapp_domain }}' target=_new>{{ zapp_domain }}</a>{% endif %}</b></td>
         </tr>
     {% endfor %}
 </table>
