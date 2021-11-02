@@ -29,7 +29,7 @@ Total: {{ identity_handles|length }}
         <tr>
             <td><a href="/identities/{{ identity_handle }}" target="_blank">@{{ identity_handle }}</a></td>
             <td class="mono">{{ owner_by_identity(identity_handle) }}</td>
-            <td class="mono"><b>{% if(zapp_domain) %}<a href='https://{{ zapp_domain }}' target=_new>{{ zapp_domain }}</a>{% endif %}</b></td>
+            <td class="mono"><b>{% if(zapp_domain) %}<a href='https://{{ zapp_domain }}' target="_blank">{{ zapp_domain }}</a>{% endif %}</b></td>
         </tr>
     {% endfor %}
 </table>
