@@ -133,11 +133,16 @@ if (program.makemigration) {
 }
 if (program.migrate) {
     const seq_cmd = (program.migrate_undo) ? 'db:migrate:undo' : 'db:migrate';
+    const migrateLog = log.child({module: 'migrate'})
     exec(`npx sequelize-cli ${seq_cmd} --config resources/sequelizeConfig.json --env ${process.env.DB_ENV || ctx.config.db.database}`,
         (error, stdout, stderr) => {
-            if (error) return log.error(error, 'Migration error');
-            if (stderr) return log.error(`Migration stderr: ${stderr}`);
-            log.debug(`Migration stdout: ${stdout}`);
+            if (error) {
+                return migrateLog.error(error, 'Migration error');
+            }
+            if (stderr) {
+                return migrateLog.error(`Migration stderr: ${stderr}`);
+            }
+            migrateLog.debug(`Migration result: ${stdout}`);
         }
     );
     return;
