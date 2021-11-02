@@ -9,7 +9,7 @@ const npid = require('npid');
 const mkdirp = require('mkdirp');
 const DB = require('./db');
 const program = new Command();
-const log = require('./core/log');
+const logger = require('./core/log');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -68,8 +68,6 @@ const ctx = {};
 
 ctx.datadir = ctx.datapath = program.datadir;
 ctx.basepath = __dirname;
-ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit() function here below. and why 1?
-ctx.die = (err) => { ctx.log.fatal(err); ctx.exit(1); };
 
 // --------------- Dump Demo Configs ----------------- //
 // Must be placed before we're checking for existence of any configs!
@@ -88,13 +86,17 @@ if (program.verbose) ctx.config.log.level = 'debug';
 
 // ------------------- Init Logger ----------------- //
 
-ctx.log = log.child({module: 'point', account: ctx.config.client.wallet.account});
+ctx.log = logger.child({account: ctx.config.client.wallet.account});
+const log = ctx.log.child({module: 'point'});
+
+ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit() function here below. and why 1?
+ctx.die = (err) => { log.fatal(err); ctx.exit(1); };
 
 // ----------------- Console Mode -------------------- //
 
 if (program.attach) {
     const Console = require('./console');
-    const console = new Console();
+    const console = new Console(ctx);
     console.start();
     return;
 }
@@ -133,7 +135,7 @@ if (program.makemigration) {
 }
 if (program.migrate) {
     const seq_cmd = (program.migrate_undo) ? 'db:migrate:undo' : 'db:migrate';
-    const migrateLog = log.child({module: 'migrate'})
+    const migrateLog = log.child({module: 'migrate'});
     exec(`npx sequelize-cli ${seq_cmd} --config resources/sequelizeConfig.json --env ${process.env.DB_ENV || ctx.config.db.database}`,
         (error, stdout, stderr) => {
             if (error) {

@@ -13,6 +13,7 @@ class SequelizeFactory {
     init = (ctx) => {
         this.ctx = ctx;
         this.config = this.ctx.config.db;
+        this.log = this.ctx.log.child({module: 'SequelizeFactory'});
 
         this.sequelize = new Sequelize(this.config.database, this.config.username, this.config.password, {
             dialect: this.config.dialect,
@@ -23,8 +24,7 @@ class SequelizeFactory {
                 max: this.config.retry.max
             },
             logQueryParameters: true,
-            logging: false,
-            // todo: logging: ...
+            logging: this.log.debug.bind(this.log),
         }); // todo: validate config
 
         // Pass context to base Model
@@ -39,8 +39,9 @@ class SequelizeFactory {
             })
             .forEach(file => {
                 const modelClass = require(path.join(__dirname, file));
-                if (modelClass.__ignoreThisModelForNow) return;
-                const model = new modelClass(); // will load this into sequelize.models
+                if (!modelClass.__ignoreThisModelForNow) {
+                    return new modelClass(); // will load this into sequelize.models
+                }
             });
 
         // todo: remove, right? why is it here?
