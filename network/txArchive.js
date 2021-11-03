@@ -20,6 +20,8 @@ const txArchiveDir = '/data/blockchain'
 
 let ownerToIdentity = {};
 let functionSelectorToName = {};
+let config;
+let meta;
 const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
 const txArchiveFinalFile= `${txArchiveDir}/txArchiveFinal.json`;
 const txArchiveFile = `${txArchiveDir}/txArchive.json`;
@@ -31,11 +33,15 @@ init = () => {
         mkdirSync(txArchiveDir);
         console.log(`Directory ${txArchiveDir} created.`);
     }
+
     // backup exisisting files, just in case!
     let ts = Date.now()
     if (existsSync(txArchiveMetaFile)) { copyFileSync(txArchiveMetaFile, `${txArchiveMetaFile}-${ts}`) }
     if (existsSync(txArchiveFinalFile)) { copyFileSync(txArchiveFinalFile, `${txArchiveFinalFile}-${ts}`) }
     if (existsSync(txArchiveFile)) { copyFileSync(txArchiveFile, `${txArchiveFile}-${ts}`) }
+
+    config = loadNodeConfig();
+    meta = loadArchiveMeta();
 }
 
 loadNodeConfig = () => {
@@ -91,15 +97,20 @@ loadIdentityAbi = () => {
 
 loadFnSelectorToName = () => {
     const abiFile = loadIdentityAbi();
-    const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
-    const fnCount = abiFile.ast.nodes[2].nodes.length;
+    // const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
+    // const fnCount = abiFile.ast.nodes[2].nodes.length;
+    const methodIdentifiers = abiFile.evm.methodIdentifiers;
 
-    for(let i=0; i<fnCount; i++){
-        let currentFn = contractFunctionDefinitions[i];
-        if(currentFn && currentFn.functionSelector) {
-            functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
-        }
+    for(method in methodIdentifiers){
+        functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
     }
+
+    // for(let i=0; i<fnCount; i++){
+    //     let currentFn = contractFunctionDefinitions[i];
+    //     if(currentFn && currentFn.functionSelector) {
+    //         functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
+    //     }
+    // }
     console.log('functionSelectorToName: ', functionSelectorToName);
 }
 
@@ -136,14 +147,14 @@ loadOwnerToIdentityMapping = async () => {
         }
     }
 
+    // const latestBlock = await web3.eth.getBlock('latest');
+    // console.log(latestBlock)
+
     ownerToIdentity[identity_contract_address] = "Identity Contract";
     ownerToIdentity[storage_provider_registry_contract_address] = "Storage Provider Registry Contract";
 
     console.log('ownerToIdentity: ', ownerToIdentity);
 }
-
-const config = loadNodeConfig();
-const meta = loadArchiveMeta();
 
 /* initialize */
 init();
@@ -152,9 +163,9 @@ const identity_contract_address = config.network.identity_contract_address;
 const storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
 const Web3 = require('web3');
 const Web3HttpProvider = require('web3-providers-http');
-const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
-const port = process.env.BLOCKCHAIN_PORT || 7545;
-const blockchainUrl = `http://${host}:${port}`
+// const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
+// const port = process.env.BLOCKCHAIN_PORT || 7545;
+const blockchainUrl =  process.env.BLOCKCHAIN_URL // `http://${host}:${port}`
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const web3 = new Web3(httpProvider);
 
@@ -180,23 +191,31 @@ if(PARSE_BLOCKCHAIN) {
 
         for (let i = meta.latestParsedBlockNumber + 1; i <= endBlockNumber; i++) {
             let block = await web3.eth.getBlock(i);
+            // console.log('Block: ', block);
             if (block != null && block.transactions != null) {
                 for(let j = 0; j <= block.transactions.length-1; j++) {
-                    // console.log('BLOCK #: ', i);
                     const hash = block.transactions[j];
-                    const txObj = await web3.eth.getTransaction(hash);
-                    const tx = (({ blockNumber, hash, from, to, value, input }) => ({ blockNumber, hash, from, to, value, input }))(txObj);
-                    tx.timestamp = block.timestamp;
-                    tx.fromIdentity = ownerToIdentity[tx.from];
-                    tx.toIdentity = ownerToIdentity[tx.to];
-                    tx.inputFn = functionSelectorToName[tx.input.slice(0,10)]
+                    // console.log('hash: ', hash);
+                    console.log(`Block ${i}: Transactions Count: ${block.transactions.length}`)
+                    try{
+                        const txObj = await web3.eth.getTransaction(hash);
+                        // console.log('txObj: ', txObj);
+                        const tx = (({ blockNumber, hash, from, to, value, input }) => ({ blockNumber, hash, from, to, value, input }))(txObj);
+                        tx.timestamp = block.timestamp;
+                        tx.fromIdentity = ownerToIdentity[tx.from];
+                        tx.toIdentity = ownerToIdentity[tx.to];
+                        tx.inputFn = functionSelectorToName[tx.input.slice(0,10)]
 
-                    // TODO: inputFn, inputVars
-                    // console.log(tx.hash);
-                    txJsonStr = JSON.stringify(tx);
+                        // TODO: inputFn, inputVars
+                        // console.log(tx.hash);
+                        txJsonStr = JSON.stringify(tx);
 
-                    stream.write(sep + txJsonStr);
-                    if (!sep) { sep = ",\n" };
+                        stream.write(sep + txJsonStr);
+                        if (!sep) { sep = ",\n" };
+                    } catch (e) {
+                        console.log(e.message)
+                    }
+
                 }
             }
         }
