@@ -439,7 +439,7 @@ class ZProxy {
 
                     if (template_filename) {
                         // Use a LocalDirectory object since we are rendering locally
-                        let directory = new LocalDirectory();
+                        let directory = new LocalDirectory(this.ctx);
                         directory.setLocalRoot(filePath);
 
                         // const template_file_path = `${filePath}/${template_filename}`;
@@ -470,7 +470,7 @@ class ZProxy {
                         // in parsedUrl.pathname will be something like "/index.css"
 
                         // Use a LocalDirectory object since we are rendering locally
-                        let directory = new LocalDirectory();
+                        let directory = new LocalDirectory(this.ctx);
                         directory.setLocalRoot(filePath);
 
                         let rendered = await directory.readFileByPath(parsedUrl.pathname, null); // todo: encoding?

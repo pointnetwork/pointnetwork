@@ -40,7 +40,7 @@ class SequelizeFactory {
             .forEach(file => {
                 const modelClass = require(path.join(__dirname, file));
                 if (!modelClass.__ignoreThisModelForNow) {
-                    return new modelClass(); // will load this into sequelize.models
+                    return new modelClass(this.ctx); // will load this into sequelize.models
                 }
             });
 

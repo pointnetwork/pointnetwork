@@ -25,8 +25,7 @@ class File extends Model {
 
     getAllChunkIds() {
         if (! this.chunkIds) {
-            console.log({file:this});
-            console.trace();
+            this.log.error({file: this.id}, 'No chunks found for file');
             throw Error('You need to chunkify the file first before calculating a merkle tree');
         }
         return [...this.chunkIds, this.id];
@@ -39,7 +38,7 @@ class File extends Model {
             file_ids.push(map.file_id);
         }
         file_ids = _.uniq(file_ids);
-        console.log({file_ids});
+        this.log.debug({file_ids, chunk_id}, 'File.getAllContainingChunkId');
 
         let files = [];
         for(let file_id of file_ids) {
@@ -124,7 +123,7 @@ class File extends Model {
         let temporaryFile = '/tmp/_point_tmp_'+Math.random().toString().replace('.', ''); // todo;
         let fd = fs.openSync(temporaryFile, 'a');
 
-        console.log('DUMP_TO_DISK_FROM_CHUNKS', this.id, this.chunkIds);
+        this.log.debug({file: this.id, chunkIds: this.chunkIds}, 'File.dumpToDiskFromChunks');
 
         for(let chunkId of this.chunkIds) {
             let chunk = await Chunk.findOrFail(chunkId);
@@ -176,7 +175,7 @@ class File extends Model {
         await Promise.all(chunks.map(async(chunk, i) => {
             chunk.redundancy = Math.max(parseInt(chunk.redundancy)||0, this.redundancy);
             chunk.expires = Math.max(parseInt(chunk.expires)||0, this.expires);
-            chunk.autorenew = (chunk.autorenew) ? !!chunk.autorenew : !!this.autorenew;
+            chunk.autorenew = !!chunk.autorenew || !!this.autorenew;
             await chunk.save();
             await chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
             await chunk.reconsiderUploadingStatus(false);
@@ -184,10 +183,12 @@ class File extends Model {
                 chunks_uploading++; // todo: replace with needs_uploading and break;
             }
 
-            console.dir({chunk, chunks, chunks_uploading}, {depth: 3});
-            for(let i in chunks) {
-                console.log(i, chunks[i].dataValues);
-            }
+            this.log.debug({
+                i,
+                chunk: chunk.id,
+                chunks: chunks.map((id, dataValues) => ({id, dataValues})),
+                chunks_uploading
+            }, 'File.reconsiderUploadingStatus');
         }));
 
         // let percentage = chunks_uploading / chunks.length;
@@ -352,7 +353,10 @@ class File extends Model {
                 await chunk.save();
                 await chunk.addBelongsToFile(this, -1);
 
-                console.log({chunk});
+                this.log.debug(
+                    _.pick(chunk, 'id', 'size', 'dl_status', 'ul_status', 'redundancy', 'expires', 'autorenew'),
+                    'File.chunkify'
+                );
 
                 return this.chunkIds;
             }

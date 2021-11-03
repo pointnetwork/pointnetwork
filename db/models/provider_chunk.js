@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const utils = require('#utils');
+const _ = require('lodash');
 
 // todo: two files? maybe reuse some code at least
 
@@ -88,8 +89,12 @@ class ProviderChunk extends Model {
         try {
             segment_hash = this.segment_hashes[segment_index].toString('hex'); // todo: validate that data is Buffer
         } catch(e) {
-            console.warn(e);
-            console.log(this.toJSON());
+            this.log.error({
+                error: e,
+                stack: e.stack,
+                provider_chunk: _.pick(this, 'id', 'size', 'real_id', 'real_id_verified', 'real_size', 'status', 'public_key', 'segment_hashes'),
+            }, 'ProviderChunk.setSegmentData error');
+
             throw e; // todo: process
         }
         if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setSegmentData: data must be a Buffer!');

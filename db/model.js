@@ -5,9 +5,10 @@ const _ = require("lodash");
 let addUnderscoreIdFields = {};
 
 class Model extends sequelize_lib.Model {
-    constructor(...args) {
+    constructor(ctx, ...args) {
         super(...args);
-        this.ctx = Model.ctx;
+        this.ctx = ctx;
+        this.log = ctx.log.child({module: this.constructor.name});
 
         // Sequelize requires relations in JS to be in the form of 'ProviderId'
         // This creates proxy getters and setters allowing the same field to be aliased as 'provider_id' and 'providerId'

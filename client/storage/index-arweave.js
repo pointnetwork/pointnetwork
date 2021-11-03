@@ -110,17 +110,17 @@ class StorageArweave {
         expires = (new Date).getTime() + this.ctx.config.client.storage.default_expires_period_seconds,
         autorenew = this.ctx.config.client.storage.default_autorenew
     ) {
-        let directory = new Directory();
+        const directory = new Directory(this.ctx);
         directory.setOriginalPath(dirPath);
         directory.addFilesFromOriginalPath();
 
         // Now process every item
-        for(let f of directory.files) {
+        for(const f of directory.files) {
             if (f.type === 'fileptr') {
-                let uploaded = await this.putFile(f.original_path, redundancy, expires, autorenew);
+                const uploaded = await this.putFile(f.original_path, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else if (f.type === 'dirptr') {
-                let uploaded = await this.putDirectory(f.original_path, redundancy, expires, autorenew);
+                const uploaded = await this.putDirectory(f.original_path, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else {
                 throw Error('invalid type: '+f.type);
@@ -614,11 +614,11 @@ class StorageArweave {
                         signature
                     };
                     link.validatePledge();
-                    if (this.ctx.config.payments.enabled) {
-                        const provider = await link.provider;
-                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`);
-                        await makePayment(checksumAddress, 10); // todo: calculate amount using cost per kb for service provider
-                    }
+                    // if (this.ctx.config.payments.enabled) {
+                    //     const provider = await link.provider;
+                    //     const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`);
+                    //     await makePayment(checksumAddress, 10); // todo: calculate amount using cost per kb for service provider
+                    // }
                     // const chunk = await link.getChunk();
                     // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
 
