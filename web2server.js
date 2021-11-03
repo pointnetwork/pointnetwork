@@ -7,7 +7,8 @@ server.register(proxy, {
     replyOptions: {
         rewriteRequestHeaders: (request, headers) => {
             const {rawHeaders} = request;
-            const subdomain = rawHeaders[rawHeaders.indexOf('Host') + 1];
+            const host = rawHeaders[rawHeaders.indexOf('Host') + 1];
+            const [subdomain] = host.split('.');
             return {...headers, host: `${subdomain}.z`};
         },
         onError: (reply, error) => {
