@@ -7,6 +7,7 @@ const { fork } = require('child_process');
 class Provider {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Provider'});
         this.config = ctx.config.service_provider;
         this.node = this.ctx.network.kademlia.node;
 
@@ -58,7 +59,7 @@ class Provider {
     async announce() {
         // todo: see if already announced?
 
-        console.log('Announcing '+this.getConnectionString()+'...');
+        this.log.info('Announcing '+this.getConnectionString()+'...');
 
         let collateralSizeEth = "5"; // todo: magic number
         let cost_per_kb = "1"; // todo: magic numbers
@@ -66,8 +67,7 @@ class Provider {
         try {
             return await this.ctx.web3bridge.announceStorageProvider(this.getConnectionString(), collateralSizeEth, cost_per_kb);
         } catch(e) {
-            this.ctx.log.error(e);
-            console.log('\x07'); // bell
+            this.log.error({error: e, stack: e.stack}, 'Announcing error');
 
             // try again in 20 seconds
             setTimeout(this.announce.bind(this), 20000);
@@ -127,7 +127,7 @@ class Provider {
         try {
             signature = utils.pointSign([ 'STORAGE', 'PLEDGE', chunk_id, 'time' ], this.privateKey, this.chainId);
         } catch(e) {
-            this.ctx.log.error(e);
+            this.log.error({error: e, stack: e.stack}, 'STORE_CHUNK_SIGNATURE_REQUEST error');
             return next(new Error('Error while trying to sign the pledge'));
         }
 
@@ -154,12 +154,11 @@ class Provider {
             try {
                 await chunk.setSegmentData(segment_data, segment_index);
             } catch(e) {
+                this.log.error({error: e, stack: e.stack}, 'STORE_CHUNK_DATA error');
                 if (/EINVALIDHASH/.test(e)) {
-                    this.ctx.log.debug(e); // todo: remove;
                     return next(new Error('Error while attempting to setSegmentData on a provider_chunk. Possible mismatch of the hash and the data.'));
                 } else {
-                    this.ctx.log.warn('Error while attempting to setSegmentData on a provider_chunk with id '+chunk_id+': '+e); // todo: remove explanation if not in debug mode
-                    this.ctx.log.debug(e.stack);
+                    this.log.debug('Error while attempting to setSegmentData on a provider_chunk with id '+chunk_id+': '+e); // todo: remove explanation if not in debug mode
                     return next(new Error('Error while attempting to setSegmentData on a provider_chunk.'));
                 }
             }
@@ -273,7 +272,7 @@ class Provider {
                 });
                 // todo: do we need this?
                 chunk_decryptor.addListener("output", function (data) {
-                    console.log('Chunk Decryptor output: '+data);
+                    this.log.debug('Chunk Decryptor output: '+data);
                 });
                 // todo: two error listeners?
                 chunk_decryptor.addListener("error", async (data) => { // todo
