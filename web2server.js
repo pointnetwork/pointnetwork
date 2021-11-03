@@ -6,8 +6,8 @@ server.register(proxy, {
     upstream: 'https://localhost:8666',
     replyOptions: {
         rewriteRequestHeaders: (request, headers) => {
-            console.log({request, headers});
-            const [subdomain] = headers.host.split('.');
+            const {rawHeaders} = request;
+            const subdomain = rawHeaders[rawHeaders.indexOf('Host') + 1];
             return {...headers, host: `${subdomain}.z`};
         },
         onError: (reply, error) => {
