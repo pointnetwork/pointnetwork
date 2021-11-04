@@ -10,7 +10,8 @@ Collected data fields are: blockNumber, hash, timestamp, from, to, value, input,
 TESTING:
 
     To reset rm the meta file like so `rm /data/blockchain/txArchive*.json`
-    To test from - to specific blocks set `DEFAULT_START_BLOCK` and `DEFAULT_END_BLOCK`
+    To test from - to specific blocks set `DEFAULT_START_BLOCK` and `DEFAULT_END_BLOCK` (see below)
+    To run the script first add a mount to the script folder in the docker-compose you are using. Then start the container and enter a session and run `node scripts/blockchain/txArchive.js` from withing the container shell.
 
 */
 
@@ -32,10 +33,14 @@ const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
 const txArchiveFinalFile= `${txArchiveDir}/txArchiveFinal.json`;
 const txArchiveFile = `${txArchiveDir}/txArchive.json`;
 const nodeConfigFile = '/data/config.json';
-// change these for manual testing
-// also note need to delete the meta file like so `rm /data/blockchain/txArchive*.json` before running
-const DEFAULT_START_BLOCK = 73; // set to any value withing the current avilable block range
-const DEFAULT_END_BLOCK = 73; // undefined will get the latest block (see below)
+
+/*
+change DEFAULT_START_BLOCK &  DEFAULT_END_BLOCKfor manual testing
+set to any integer value within the current avilable block range
+NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber +1 <-to-> latest block' (see function below)
+*/
+const DEFAULT_START_BLOCK = undefined;
+const DEFAULT_END_BLOCK = undefined;
 
 init = () => {
     // create the txArchiveDir directory if needed
@@ -218,7 +223,7 @@ if(PARSE_BLOCKCHAIN) {
                         tx.toIdentity = ownerToIdentity[tx.to];
                         tx.inputFn = functionSelectorToName[tx.input.slice(0,10)]
 
-                        // TODO: inputFn, inputVars
+                        // TODO: inputVars
                         // console.log(tx.hash);
                         txJsonStr = JSON.stringify(tx);
 
