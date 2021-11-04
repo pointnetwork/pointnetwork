@@ -203,7 +203,7 @@ if(PARSE_BLOCKCHAIN) {
 
         for (let i = startBlockNumber; i <= endBlockNumber; i++) {
             let block = await web3.eth.getBlock(i);
-            // console.log('Block: ', block);
+            console.log('Block: ', block);
             if (block != null && block.transactions != null) {
                 for(let j = 0; j <= block.transactions.length-1; j++) {
                     const hash = block.transactions[j];
