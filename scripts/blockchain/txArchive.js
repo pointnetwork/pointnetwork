@@ -6,6 +6,12 @@ Script keeps a log of the last parsed block number so that it can be rerun witho
 and saves this meta data on disk: /data/blockchain/txArchiveMeta.json
 
 Collected data fields are: blockNumber, hash, timestamp, from, to, value, input, fromIdentity, toIdentity, inputFn, inputVars
+
+TESTING:
+
+    To reset rm the meta file like so `rm /data/blockchain/txArchive*.json`
+    To test from - to specific blocks set `DEFAULT_START_BLOCK` and `DEFAULT_END_BLOCK`
+
 */
 
 const { readFileSync,
@@ -26,6 +32,10 @@ const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
 const txArchiveFinalFile= `${txArchiveDir}/txArchiveFinal.json`;
 const txArchiveFile = `${txArchiveDir}/txArchive.json`;
 const nodeConfigFile = '/data/config.json';
+// change these for manual testing
+// also note need to delete the meta file like so `rm /data/blockchain/txArchive*.json` before running
+const DEFAULT_START_BLOCK = 73; // set to any value withing the current avilable block range
+const DEFAULT_END_BLOCK = 73; // undefined will get the latest block (see below)
 
 init = () => {
     // create the txArchiveDir directory if needed
@@ -54,7 +64,7 @@ loadArchiveMeta = () => {
         'createdAt': Date.now(),
         'updatedAt': Date.now(),
         'networkId': config.network.web3_network_id,
-        'latestParsedBlockNumber': 0,
+        'latestParsedBlockNumber': DEFAULT_START_BLOCK,
     }
 
     if(!existsSync(txArchiveMetaFile)) {
@@ -174,12 +184,14 @@ const PARSE_BLOCKCHAIN = true;
 /* Actual Blockchain parsing performed below */
 if(PARSE_BLOCKCHAIN) {
     (async () => {
-        await loadOwnerToIdentityMapping(); // populates ownerToIdentity
-        loadFnSelectorToName(); // populates functionSelectorToName
+        // await loadOwnerToIdentityMapping(); // populates ownerToIdentity
+        // loadFnSelectorToName(); // populates functionSelectorToName
 
         const latestBlock = await web3.eth.getBlock('latest');
         const txArchiveFileExists = existsSync(txArchiveFile);
-        const endBlockNumber = latestBlock.number;
+        // Note: DEFAULT_END_BLOCK used for testing
+        const endBlockNumber = DEFAULT_END_BLOCK || latestBlock.number;
+        const startBlockNumber = DEFAULT_START_BLOCK || meta.latestParsedBlockNumber + 1;
         const stream = createWriteStream(txArchiveFile, {flags:'a'});
 
         console.log('start block number: ', meta.latestParsedBlockNumber);
@@ -189,7 +201,7 @@ if(PARSE_BLOCKCHAIN) {
         let sep = ""
         if (txArchiveFileExists) { sep = ",\n" }
 
-        for (let i = meta.latestParsedBlockNumber + 1; i <= endBlockNumber; i++) {
+        for (let i = startBlockNumber; i <= endBlockNumber; i++) {
             let block = await web3.eth.getBlock(i);
             // console.log('Block: ', block);
             if (block != null && block.transactions != null) {
