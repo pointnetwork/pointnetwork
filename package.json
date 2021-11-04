@@ -94,7 +94,9 @@
     "push:deployer": "source .env.znet && docker push pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION",
     "znet": "docker-compose -f docker-compose.znet.yaml --env-file .env.deployer",
     "devnet": "docker-compose -f docker-compose.devnet.yaml --env-file .env.deployer.devnet",
-    "znet:local": "docker-compose -f docker-compose.znet.local.yaml"
+    "znet:local": "docker-compose -f docker-compose.znet.local.yaml",
+    "volume:backup": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu tar -czvf /backup/$VOLUME-$(date \"+%Y-%m-%dT%H:%M:%S\").tar.gz /data",
+    "volume:restore": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu bash -c \"cd /data && tar -xvf /backup/$FILE --strip 1\""
   },
   "imports": {
     "#utils": "./core/utils.js",
