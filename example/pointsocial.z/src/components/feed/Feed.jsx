@@ -21,15 +21,16 @@ export default Feed = ({account}) =>{
     return 0;
   }
 
-  useEffect(() => {
-    const getPosts = async () => {
-      const posts = await fetchPosts()
-      posts.sort(compareByTimestamp)
-      setPosts(posts);
-      setLoading(false);
-    }
+  const getPosts = async () => {
+    setLoading(true);
+    const posts = await fetchPosts()
+    posts.sort(compareByTimestamp)
+    setPosts(posts);
+    setLoading(false);
+  }
 
-    getPosts()
+  useEffect(() => {
+      getPosts()
   }, [account])
 
   const fetchPosts = async () => {
@@ -59,15 +60,24 @@ export default Feed = ({account}) =>{
     }
   }
 
+  // function reloads the post by id and updates the likes count of the object in state
+  const reloadPostLikesCount = async(id) => {
+    let post = await window.point.contract.call({contract: 'PointSocial', method: 'getPostById', params: [id]});
+    const updatedPosts = [...posts];
+    const updatedLikesCount = post.data[5];
+    updatedPosts.filter((post) => post.id == id)[0].likesCount = updatedLikesCount;
+    setPosts(updatedPosts);
+  }
+
   return (
     <div className="feed">
       <div className="feedWrapper">
-        {!account && <div><Identity /><Share /></div>}
+        {!account && <div><Identity /><Share getPosts={getPosts} /></div>}
         {loading && <LoadingSpinner />}
         {(!loading && feedError) && <span className='error'>Error loading feed: {feedError.message}. Did you deploy the contract sucessfully?</span>}
         {(!loading && !feedError && posts.length == 0) && <span className='no-post-to-show'>No posts made yet!</span>}
         {posts.map((p) => (
-          <Post key={p.id} post={p} />
+          <Post key={p.id} post={p} reloadPostLikesCount={reloadPostLikesCount} />
         ))}
       </div>
     </div>

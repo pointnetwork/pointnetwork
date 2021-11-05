@@ -4,7 +4,7 @@ import { useState } from "react";
 import profileImg from '../../assets/profile-pic.jpg';
 import { useAppContext } from '../../context/AppContext';
 
-export default function Share() {
+export default function Share({getPosts}) {
   const DEFAULT_BTN_LABEL = 'Share'
   const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const [selectedFile, setSelectedFile] = useState();
@@ -50,8 +50,9 @@ export default function Share() {
       }
       // Save the post contents storage id in the PoinSocial Smart Contract
       await window.point.contract.send({contract: 'PointSocial', method: 'addPost', params: [storageId, imageId]});
-      // TODO: Avoid using reloads
-      window.location.reload()
+      setSaving(false);
+      setContents('');
+      await getPosts();
     } catch (e) {
       console.error('Error sharing post: ', e.message);
       setSaving(false);
