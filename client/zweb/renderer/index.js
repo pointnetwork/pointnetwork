@@ -65,7 +65,12 @@ class Renderer {
                 return await this.renderer.ctx.client.storage.readFile(fileKey, 'utf-8');
             },
             storage_get: async function(key) {
-                return await this.renderer.ctx.client.storage.readFile(key, 'utf-8');
+                try {
+                    return await this.renderer.ctx.client.storage.readFile(key, 'utf-8');
+                } catch (e) {
+                    console.error('Twig.storage_get error:', e);
+                    return 'Invalid Content';
+                }
             },
             storage_get_parsed: async function(key) {
                 return await this.renderer.ctx.client.storage.readJSON(key, 'utf-8');

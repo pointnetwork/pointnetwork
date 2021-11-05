@@ -22,7 +22,6 @@ services:
       - ./point:/app/point:ro
 
   website_owner:
-    command: 'run start:docker:dev'
     volumes:
       - ./api:/app/api:ro
       - ./client:/app/client:ro
@@ -43,7 +42,6 @@ services:
       - ./point:/app/point:ro
 
   website_visitor:
-    command: 'run start:docker:dev'
     volumes:
       - ./api:/app/api:ro
       - ./client:/app/client:ro

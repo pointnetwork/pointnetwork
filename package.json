@@ -22,6 +22,7 @@
     "eccrypto": "^1.1.6",
     "ethereumjs-util": "^7.1.0",
     "fastify": "^3.20.2",
+    "fastify-http-proxy": "^6.2.1",
     "fastify-websocket": "^3.2.1",
     "form-data": "^4.0.0",
     "formidable": "^1.2.2",
@@ -81,6 +82,7 @@
     "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
     "start:docker": "./scripts/patch-config.js && npm run migrate && npm start",
     "start:docker:dev": "./scripts/patch-config.js && npm run migrate && npm run start:dev",
+    "start:docker:e2e": "./scripts/patch-config-e2e.js && npm run migrate && npm run start:dev",
     "migrate": "./point migrate --datadir $DATADIR",
     "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
     "watch:sites": "ls -d example/*/ | xargs -I {} echo \"SITE={} npm run watch:site\" | sed \"s/.*/\\\\'&\\\\'/\" | xargs npx concurrently",
@@ -93,7 +95,9 @@
     "push:deployer": "source .env.znet && docker push pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION",
     "znet": "docker-compose -f docker-compose.znet.yaml --env-file .env.deployer",
     "devnet": "docker-compose -f docker-compose.devnet.yaml --env-file .env.deployer.devnet",
-    "znet:local": "docker-compose -f docker-compose.znet.local.yaml"
+    "znet:local": "docker-compose -f docker-compose.znet.local.yaml",
+    "volume:backup": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu tar -czvf /backup/$VOLUME-$(date \"+%Y-%m-%dT%H:%M:%S\").tar.gz /data",
+    "volume:restore": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu bash -c \"cd /data && tar -xvf /backup/$FILE --strip 1\""
   },
   "imports": {
     "#utils": "./core/utils.js",
