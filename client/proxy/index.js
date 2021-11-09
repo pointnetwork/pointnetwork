@@ -140,7 +140,7 @@ class ZProxy {
             response.end();
         };
         this.doubleServer.http = http.createServer((this.config.redirect_to_https) ? redirectToHttpsHandler : this.request.bind(this));
-        this.doubleServer.http.on('error', (err) => this.log.error(err));
+        this.doubleServer.http.on('error', (err) => this.log.error(err, 'Double Server HTTP error'));
         this.doubleServer.http.on('connect', (req, cltSocket, head) => {
             // connect to an origin server
             const srvUrl = url.parse(`https://${req.url}`);
@@ -155,7 +155,7 @@ class ZProxy {
             });
         });
         this.doubleServer.https = https.createServer(credentials, this.request.bind(this));
-        this.doubleServer.https.on('error', (err) => this.log.error(err));
+        this.doubleServer.https.on('error', (err) => this.log.error(err, 'Double Server HTTPS error'));
         return this.doubleServer;
     }
 
@@ -174,14 +174,13 @@ class ZProxy {
         };
         response.writeHead(500, headers);
         response.write(this._errorMsgHtml(err, 500)); // better code
-        this.log.error({err, response, stack: err.stack}, `ZProxy 500 Error`);
+        this.log.error({err, stack: err.stack}, `ZProxy 500 Error`);
         response.end();
     }
 
     async request(request, response) {
         let host = request.headers.host;
         if ( host != 'point' && ! _.endsWith(host, '.z')) return this.abort404(response);
-
         try {
             let rendered;
             let parsedUrl;

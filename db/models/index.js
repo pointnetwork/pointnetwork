@@ -13,7 +13,7 @@ class SequelizeFactory {
     init = (ctx) => {
         this.ctx = ctx;
         this.config = this.ctx.config.db;
-        this.log = this.ctx.log.child({module: 'SequelizeFactory'});
+        this.log = this.ctx.log.child({module: 'Sequelize'});
 
         this.sequelize = new Sequelize(this.config.database, this.config.username, this.config.password, {
             dialect: this.config.dialect,
@@ -25,6 +25,7 @@ class SequelizeFactory {
             },
             logQueryParameters: true,
             logging: this.log.debug.bind(this.log),
+            ctx
         }); // todo: validate config
 
         // Pass context to base Model
@@ -32,17 +33,11 @@ class SequelizeFactory {
         Model.connection = this.sequelize;
 
         // Load models
-        fs
-            .readdirSync(__dirname)
-            .filter(file => {
-                return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
-            })
-            .forEach(file => {
-                const modelClass = require(path.join(__dirname, file));
-                if (!modelClass.__ignoreThisModelForNow) {
-                    return new modelClass(this.ctx); // will load this into sequelize.models
-                }
-            });
+        for (const file of fs.readdirSync(__dirname)) {
+            if ((file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js')) {
+                require(path.join(__dirname, file));
+            }
+        }
 
         // todo: remove, right? why is it here?
         // Object.keys(this.sequelize.models).forEach(modelName => {
