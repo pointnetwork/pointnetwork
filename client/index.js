@@ -4,6 +4,7 @@ const ZProxy = require('./proxy');
 class Client {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Client'});
         this.config = ctx.config.client;
     }
 

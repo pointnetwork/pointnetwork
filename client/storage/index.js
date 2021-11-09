@@ -19,6 +19,7 @@ const {
 class Storage {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Storage'});
         this.config = ctx.config.client.storage;
         this.current_requests = {};
         this.queued_requests = {};
@@ -249,7 +250,6 @@ class Storage {
             // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
             const provider = await Model.transaction(async(t) => {
                 const storageProviders = await this.ctx.web3bridge.getAllStorageProviders();
-                // console.log({storageProviders})
                 const randomProvider = storageProviders[storageProviders.length * Math.random() | 0];
                 const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider);
                 const id = getProviderDetails['0'];
@@ -289,7 +289,7 @@ class Storage {
             if (recursive) {
                 return this.chooseProviderCandidate(false);
             } else {
-                this.ctx.log.error('chooseProviderCandidate error');
+                this.log.error(_.pick(e, 'message', 'stack'), 'chooseProviderCandidate error');
                 throw e;
             }
         }
@@ -322,7 +322,7 @@ class Storage {
                     await chunk.reconsiderDownloadingStatus();
                     return;
                 } else {
-                    console.log({err, result}); // todo: for some reason, throw err doesn't display the error
+                    this.log.error({message: err.message, stack: err.stack, result}, 'chunkDownloadingTick error');
                     throw err;
                 } // todo: don't die
             } // todo
@@ -341,7 +341,11 @@ class Storage {
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
         return new Promise((resolve, reject) => {
             const provider_id = link.provider_id;
-            if (!provider_id) { console.error('No provider id!'); process.exit(); }
+            if (!provider_id) {
+                const msg = 'Unable to identify provider';
+                this.log.error({chunkId: chunk.id, link: link.id}, msg);
+                throw new Error(msg);
+            }
             this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getSize(), chunk.expires], link.provider_id, async(err, result) => {
                 await link.refresh();
                 (!err) ? resolve(true) : reject(err); // machine will move to next state
@@ -377,8 +381,7 @@ class Storage {
                 // channel exists
                 return true;
             } catch (e) {
-                console.log(`CREATE_PAYMENT_CHANNEL ERROR: ${e}`);
-                // error creating channel so reject
+                this.log.eror(e, 'CREATE_PAYMENT_CHANNEL ERROR');
                 throw e;
             }
         })();
@@ -425,14 +428,13 @@ class Storage {
 
                     return resolve(true); // machine will move to next state
                 } else {
-                    console.warn('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ', message);
-                    this.ctx.die();
+                    this.log.warn({chunkId: chunk.id, message}, 'Chunk encryption failed');
                     return reject('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ' + message);
                 }
             });
             // todo: do we need this?
             chunk_encryptor.addListener("output", function (data) {
-                console.log('Chunk Encryptor output: ' + data);
+                this.log.debug({data}, 'Chunk Encryptor output');
             });
             // todo: two error listeners?
             chunk_encryptor.addListener("error", () => { // todo
@@ -497,7 +499,7 @@ class Storage {
                     }
                     return resolve(false); // not done yet
                 } else {
-                    console.log('ERR', err); // todo: remove
+                    this.log.error(err, 'SEND_STORE_CHUNK_DATA error');
                     return reject(err);
                 }
             });
@@ -539,7 +541,7 @@ class Storage {
                     return resolve(true);
                 } catch (e) {
                     // todo: don't just put this into the console, this is for debugging purposes
-                    console.debug('FAILED CHUNK', {err, result}, e);
+                    this.log.error({error: e.message, stack: e.stack, result}, 'Chunk signature request has failed');
                     return reject(e);
                 }
             });
@@ -565,7 +567,14 @@ class Storage {
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
-        console.log({id: chunk.id, all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
+        this.log.debug({
+            id: chunk.id,
+            all,
+            candidates,
+            failed,
+            inProgressOrLiveCount,
+            candidatesRequiredCount,
+            additionalCandidatesRequired}, 'chunkUploadingTick after refresh');
 
         if (additionalCandidatesRequired > 0) {
             // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
@@ -583,7 +592,15 @@ class Storage {
         for(let link of all) {
             const requests_length = (this.current_requests[link.provider_id]) ? this.current_requests[link.provider_id].length : 0;
             const queued_length = (this.queued_requests[link.provider_id]) ? this.queued_requests[link.provider_id].length : 0;
-            console.debug(chunk.id, link.id, Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number), link.segments_received, link.status, (link.status===StorageLink.STATUS_FAILED)?link.error:'', {requests_length, queued_length});
+            this.log.debug({
+                chunkId: chunk.id,
+                linkId: link.id,
+                linkSegmentsReceived: link.segments_received,
+                linkStatus: link.status,
+                lingSegmentsSent: Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number),
+                lingError: link.error || '',
+                requests_length,
+                queued_length}, 'StorageLink status');
         }
 
         // todo: what about expiring and renewing?

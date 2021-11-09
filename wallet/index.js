@@ -174,7 +174,7 @@ class Wallet {
         return this.network_account;
     }
     getArweaveAccount() {
-        console.log(this.ctx);
+        this.log.debug(this.ctx, 'getArweaveAccount context');
         return 0;
     }
     getArweaveBalanceInAR() {

@@ -14,6 +14,7 @@ class Renderer {
 
     constructor(ctx, rootDir) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Renderer'});
         this.config = ctx.config.client.zproxy;
         this.rootDir = rootDir;
     }
@@ -68,7 +69,7 @@ class Renderer {
                 try {
                     return await this.renderer.ctx.client.storage.readFile(key, 'utf-8');
                 } catch (e) {
-                    console.error('Twig.storage_get error:', e);
+                    this.log.error({error: e.message, stack: e.stack}, 'Twig.storage_get error:');
                     return 'Invalid Content';
                 }
             },
@@ -130,7 +131,7 @@ class Renderer {
 
                 const options = { filter, fromBlock: 1, toBlock: 'latest' };
                 const events =  await this.renderer.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
-                let eventData = []
+                let eventData = [];
                 for(let ev of events) {
                     //console.log(ev, ev.raw);
                     const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(ev.blockNumber);
@@ -138,13 +139,13 @@ class Renderer {
                     eventData.push({
                         data: ev.returnValues,
                         timestamp: eventTimestamp
-                    })
+                    });
                 }
 
                 //filter non-indexed properties from return value for convenience
                 if (filter != {}){
                     for(let k in filter)
-                        eventData  = eventData.filter(e => e.data[k] == filter[k])
+                        eventData = eventData.filter(e => e.data[k] == filter[k]);
                 }
                 
                 return eventData;
@@ -183,7 +184,7 @@ class Renderer {
             },
             identity_check_availability: async function(identity) {
                 const owner = await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
-                console.log({identity, owner});
+                this.log.debug({identity, owner}, 'identity_check_availability');
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
@@ -256,7 +257,7 @@ class Renderer {
                 const publicKey = ethUtil.privateToPublic(privateKey);
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
-                this.renderer.ctx.log.info({
+                this.log.info({
                     identity,
                     owner,
                     publicKey: publicKey.toString('hex'),
@@ -264,7 +265,7 @@ class Renderer {
                     parts: [
                         `0x${publicKey.slice(0, 32).toString('hex')}`,
                         `0x${publicKey.slice(32).toString('hex')}`
-                    ]}, 'Registering new identity');
+                    ]}, 'Registering a new identity');
 
                 await this.renderer.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
@@ -551,7 +552,6 @@ class Renderer {
 
     #registerPointStorageFsLoader(Twig) {
         Twig.Templates.registerLoader('fs', async(location, params, callback, error_callback/*todo*/) => {
-            // console.log({location, params});
             // ... load the template ...
             const src = await this.fetchTemplateByPath(params.path);
             params.data = src;

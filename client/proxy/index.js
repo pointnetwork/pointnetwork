@@ -54,12 +54,12 @@ class ZProxy {
                 });
 
                 socket.on('error', (error) => {
-                    this.log.error({error}, 'Error from WebSocket');
+                    this.log.error(error, 'Error from WebSocket');
                 });
             });
 
             wss.on('error', (error) => {
-                this.log.error({error}, 'Error from WebSocket');
+                this.log.error(error, 'Error from WebSocket');
             });
 
             server.http.on('upgrade', (request, socket, head) => {
@@ -70,7 +70,7 @@ class ZProxy {
 
             return wss;
         } catch (error) {
-            this.log.error({error}, 'ZProxy.wsServer error');
+            this.log.error(error, 'ZProxy.wsServer error');
             throw error;
         }
     }
@@ -110,7 +110,7 @@ class ZProxy {
                 } else if (32 < byte && byte < 127) {
                     protocol = 'http';
                 } else {
-                    console.error('Access Runtime Error! Protocol: not http, not https!');
+                    this.log.error({byte}, 'Access Runtime Error! Protocol: not http, not https!');
                     protocol = 'error'; // todo: !
                 }
 
@@ -289,7 +289,7 @@ class ZProxy {
 
         } catch(error) {
             // throw 'ZProxy Error: '+e; // todo: remove
-            this.log.error({host, error, stack: error.stack}, 'ZProxy.request Error');
+            this.log.error({host, error: error.message, stack: error.stack}, 'ZProxy.request Error');
 
             if (error instanceof HttpNotFoundError) {
                 return this.abort404(response, error.message);
@@ -300,10 +300,6 @@ class ZProxy {
         }
 
         // todo:?
-        // console.log(request.headers.host);
-        // console.log(request.port);
-        // console.log(request.method);
-        // console.log(request.url);
     }
 
     _isThisDirectoryJson(text) {
@@ -613,7 +609,7 @@ class ZProxy {
                             fs.writeFileSync(tmpPostDataFilePath, v);
                             let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
                             let uploaded_id = uploaded.id;
-                            console.debug('Found storage[x], uploading file '+uploaded_id);
+                            this.log.debug({uploaded_id}, 'Found storage[x], uploading file');
 
                             delete postData[k];
                             postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;

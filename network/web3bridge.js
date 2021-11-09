@@ -13,7 +13,6 @@ const retryableErrors = {
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
-        // console.log({code, codeRegExp: RegExp(code), message, test: RegExp(code).test(message)});
         if (RegExp(code).test(message)) {
             return true;
         }
@@ -306,7 +305,7 @@ class Web3Bridge {
             const contract = await this.loadIdentityContract();
             const method = contract.methods.ikvPut(identity, key, value);
             this.log.debug({identity, key, value}, 'Ready to put key value');
-            await this.web3send(method); // todo: remove console.log
+            await this.web3send(method);
         } catch(e) {
             this.log.error({error: e, stack: e.stack, identity, key, value}, 'putKeyValue error');
             throw e;
@@ -326,7 +325,7 @@ class Web3Bridge {
                 `0x${commPublicKey.slice(32).toString('hex')}`);
 
             const result = await this.web3send(method);
-            this.log.info(result, 'Identity registration result'); // todo: remove console.log
+            this.log.info(result, 'Identity registration result');
 
             return result;
         } catch(e) {
@@ -360,8 +359,15 @@ class Web3Bridge {
             gasPrice = await this.web3.eth.getGasPrice();
             return await method.send({ from: account, gasPrice, gas: 2000000, value: 0.000001e18});
         } catch (e) {
-            console.info({ method, gasPrice, account, collateral_lock_period, cost_per_kb });
-            console.error('announceStorageProvider error:', e);
+            this.log.error({
+                method,
+                gasPrice,
+                account,
+                collateral_lock_period,
+                cost_per_kb,
+                error: e.message,
+                stack: e.stack}, 'announceStorageProvider error');
+
             throw e;
         }
     }

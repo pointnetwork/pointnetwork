@@ -98,7 +98,7 @@ class File extends Model {
         let merkleReassembled = utils.merkle.merkle(chunks.map(x => Buffer.from(x, 'hex')), utils.hashFn).map(x => x.toString('hex'));
         if (!utils.areScalarArraysEqual(merkleReassembled, merkle)) {
             // todo: error? ignore?
-            return console.error('MERKLE INCORRECT!', {merkleReassembled, merkle, hash, chunks});
+            return this.log.error({merkleReassembled, merkle, hash, chunks}, 'MERKLE INCORRECT!');
         }
 
         this.chunkIds = chunks;
@@ -190,9 +190,6 @@ class File extends Model {
                 chunks_uploading
             }, 'File.reconsiderUploadingStatus');
         }));
-
-        // let percentage = chunks_uploading / chunks.length;
-        // console.log("file: "+this.original_path+": "+"█".repeat(percentage)+".".repeat(100-percentage));
 
         await this.changeULStatus((chunks_uploading > 0) ? File.UPLOADING_STATUS_UPLOADING : File.UPLOADING_STATUS_UPLOADED);
     }

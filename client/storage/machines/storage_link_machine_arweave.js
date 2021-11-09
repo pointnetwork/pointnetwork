@@ -4,8 +4,9 @@ const File = require('../../../db/models/file');
 const _ = require('lodash');
 
 exports.createStateMachine = function createStateMachine(link, chunk) {
-    let ctx = link.ctx;
-    let storage = link.ctx.client.storage;
+    const ctx = link.ctx;
+    const log = ctx.log.child({module: 'StateMachineArweave', storageLink: link.id});
+    const storage = link.ctx.client.storage;
 
     return Machine(
         {
@@ -93,8 +94,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     link.status = link.state;
                 },
                 UPDATE_MODEL_ERR: async (context, event) => { // todo: how is .errored different from .status = FAILED?
-                    console.error({event, context});
-                    console.error(`UPDATE_MODEL_ERR: ${event.data}`);
+                    log.error({event, context}, `UPDATE_MODEL_ERR: ${event.data}`);
                     link.errored = true;
                     link.err = event.data;
                 },

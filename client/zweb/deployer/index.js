@@ -6,6 +6,7 @@ const ethUtil = require('ethereumjs-util');
 class Deployer {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Deployer'});
         this.config = this.ctx.config.deployer;
         this.cache_uploaded = {}; // todo: unused? either remove or use
     }
@@ -90,7 +91,7 @@ class Deployer {
         }
 
         // Upload public - root dir
-        console.log('uploading root directory...');
+        this.log.debug('Uploading root directory...');
         let publicDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'public')); // todo: and more options
         let publicDirId = publicDirectory.id;
         await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
@@ -100,7 +101,7 @@ class Deployer {
         let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         let routes = JSON.parse(routesFile);
 
-        console.log('uploading route file...', {routes});
+        this.log.debug({routes}, 'Uploading route file...');
         const tmpRoutesFilePath = path.join(this.getCacheDir(), utils.hashFnUtf8Hex(JSON.stringify(routes)));
         fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
@@ -110,7 +111,7 @@ class Deployer {
 
         await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts);
 
-        console.log('Deploy finished');
+        this.log.info('Deploy finished');
     }
 
     static async getPragmaVersion(source){
@@ -175,7 +176,7 @@ class Deployer {
             let msg = '';
             for(let e of compiledSources.errors) {
                 if (e.severity === 'warning') {
-                    console.warn(e);
+                    this.log.warn(e, 'Contract compilation warning');
                     continue;
                 }
                 found = true;
@@ -208,7 +209,7 @@ class Deployer {
         });
         const address = tx.options && tx.options.address;
 
-        console.log('Deployed Contract Instance of '+contractName, address);
+        this.log.debug({contractName, address}, 'Deployed Contract Instance');
         this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
         const artifactsJSON = JSON.stringify(artifacts);
@@ -224,12 +225,12 @@ class Deployer {
 
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`);
 
-        console.log(`Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`);
+        this.log.debug(`Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`);
     }
 
     async updateZDNS(host, id) {
         let target = host.replace('.z', '');
-        console.log('Updating ZDNS', {target, id});
+        this.log.info({target, id}, 'Updating ZDNS');
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
     }
 
