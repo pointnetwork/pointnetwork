@@ -7,7 +7,7 @@ import likeImg from '../../assets/like.png';
 import profileImg from '../../assets/profile-pic.jpg';
 import Comments from '../comments/Comments'
 
-export default function Post({ post }) {
+export default function Post({ post, reloadPostLikesCount }) {
   const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const [showComments, setShowComments] = useState(false);
   const { walletAddress } = useAppContext();
@@ -16,11 +16,10 @@ export default function Post({ post }) {
     setShowComments(!showComments);
   }
 
-  const updatePostLikes = async () => {
+  const addLikeToPost = async () => {
     try {
       await window.point.contract.send({contract: 'PointSocial', method: 'addLikeToPost', params: [post.id]});
-      // TODO: Avoid using reload
-      window.location = '/';
+      reloadPostLikesCount(post.id);
     } catch (e) {
       console.error('Error updating likes: ', e.message);
     }
@@ -53,7 +52,7 @@ export default function Post({ post }) {
             <img
               className="likeIcon"
               src={likeImg}
-              onClick={updatePostLikes}
+              onClick={addLikeToPost}
               alt=""
             />
             <span className="postLikeCounter">{post.likesCount} people like it</span>

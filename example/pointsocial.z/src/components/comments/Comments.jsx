@@ -23,13 +23,14 @@ const Comments = ({ postId }) => {
       saving ? setBtnLabel('Saving...') : setBtnLabel(DEFAULT_BTN_LABEL);
     }
 
-    useEffect(() => {
-        const getComments = async () => {
-          const comments = await fetchComments()
-          setComments(comments);
-          setLoading(false);
-        }
+    const getComments = async () => {
+      setLoading(true);
+      const comments = await fetchComments()
+      setComments(comments);
+      setLoading(false);
+    }
 
+    useEffect(() => {
         getComments()
     }, [postId])
 
@@ -59,8 +60,9 @@ const Comments = ({ postId }) => {
           let {data: storageId} = await window.point.storage.putString({data: contents});
           // Save the post contents storage id in the PoinSocial Smart Contract
           await window.point.contract.send({contract: 'PointSocial', method: 'addCommentToPost', params: [postId, storageId]});
-          // TODO: Avoid using reload
-          window.location = '/';
+          setSaving(false);
+          setContents('');
+          await getComments();
       } catch (err) {
         setSaving(false);
         console.error('Error: ', err);
