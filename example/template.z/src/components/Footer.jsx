@@ -6,8 +6,8 @@ import logo from '../assets/pointlogowhite.png'
 const Footer = () => {
     return (
         <>
-           <Navbar fixed="bottom" bg="dark" variant="dark">
-            <Container>
+           <Navbar key='NavbarFooter' fixed="bottom" bg="dark" variant="dark">
+              <Container key='NavbarFooterContainer'>
                 <Link to="/">
                     <Navbar.Brand href="/">
                         <img
@@ -20,7 +20,7 @@ const Footer = () => {
                     &copy; {new Date().getFullYear()} Copyright: Point Network
                     </Navbar.Brand>
                 </Link>
-            </Container>
+             </Container>
           </Navbar>
         </>
     )

@@ -27,17 +27,17 @@ export default function Home() {
         <h1 className="header">Welcome to the Point Network Template App!</h1>
         <Wallet walletAddress={walletAddress} />
         <Row>
-          <Col>
+          <Col key='1'>
             <h4>Column 1 of 3</h4>
             <Link to='/examples'><Button variant="primary" size="sm">Component Examples</Button></Link><br/>
             Click the above button to view some more examples of React Bootstrap components.<br/><br/>
           </Col>
-          <Col>
+          <Col key='2'>
             <h4>Column 2 of 3</h4>
             <Link to='/contracts'><Button variant="primary" size="sm">Contract Examples</Button></Link><br/>
             Click the above button to view some examples of calling Smart Contract functions.<br/><br/>
           </Col>
-          <Col>
+          <Col key='3'>
             <h4>Column 3 of 3</h4>
             <OverlayTrigger trigger="click" placement="primary" overlay={popover}>
               <Button variant="primary" size="sm">Popover Example</Button>
