@@ -19,4 +19,4 @@ arweave.json
 *.gz
 *.zip
 geth
-
+.env.e2e
