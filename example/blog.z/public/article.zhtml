@@ -38,9 +38,10 @@
                 </div>
             {% endfor %}
 
-            <form method="post" action="/_contract_send/Blog.createCommentByArticle(articleId,contents)" class="comments-form">
-                <textarea name="storage[contents]" required rows=5 cols=40></textarea>
+            <form method="post" action="/submit_comment" class="comments-form">
+                <textarea name="contents" required rows=5 cols=40></textarea>
                 <input type="submit" value="Add" />
+                <input name="_csrf" type="hidden" value="{{ csrf_value() }}" />
                 <input type="hidden" value="{{article.id}}" name="articleId" />
             </form>
         </div>

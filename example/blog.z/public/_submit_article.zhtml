@@ -1,0 +1,10 @@
+{{ csrf_guard(request._csrf) }}
+{% set article_contents_id = storage_put(request.contents) %}
+{% set result = contract_call(host, 'Blog', 'createArticle', [ request.title, article_contents_id ]) %}
+
+<html>
+  <body>
+    <p>Saving article contents with id: {{ article_contents_id }}. Redirecting...</p>
+    <script>location.href='/'</script>
+  </body>
+</html>

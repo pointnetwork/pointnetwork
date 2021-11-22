@@ -4,7 +4,7 @@
 
     <h1>New Article</h1>
 
-    <form method="post" action="/_contract_send/Blog.createArticle(title,contents)" class="new-article-form">
+    <form method="post" action="/submit_article" class="new-article-form">
         <table>
             <tr>
                 <th>Title:</th>
@@ -15,14 +15,14 @@
             <tr>
                 <th>Contents:</th>
                 <td>
-                    <textarea name="storage[contents]" required rows="20" cols="40"></textarea>
+                    <textarea name="contents" required rows="20" cols="40"></textarea>
                 </td>
             </tr>
             <tr>
                 <td colspan="2" style="text-align: right;"><input type="submit" value="Add" /></td>
             </tr>
 
-            <input type="hidden" name="__redirect" value="/" />
+            <input name="_csrf" type="hidden" value="{{ csrf_value() }}" />
         </table>
     </form>
 
