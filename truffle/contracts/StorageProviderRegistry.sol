@@ -26,7 +26,7 @@ contract StorageProviderRegistry {
         // set to the kademlia connection url of the PN node.
         providers[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = Provider({
             id: 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301,
-            connection: 'http://127.0.0.1:12345/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301',
+            connection: 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301',
             announced_at: 1613647823,
             announced_by: msg.sender,
             collateral: 50,
