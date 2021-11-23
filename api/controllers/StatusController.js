@@ -5,8 +5,8 @@ const ws_routes = require('../ws_routes');
 const PointSDKController = require('./PointSDKController');
 
 class StatusController extends PointSDKController {
-    constructor(ctx) {
-        super(ctx);
+    constructor(ctx, req) {
+        super(ctx, req);
     }
 
     async meta() {

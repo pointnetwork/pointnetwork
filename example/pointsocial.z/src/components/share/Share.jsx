@@ -12,7 +12,7 @@ export default function Share({getPosts}) {
   const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
   const [btnEnabled, setBtnEnabled] = useState(false);
   const [shareError, setShareError] = useState(undefined);
-  const { identity } = useAppContext();
+  const { identity, csrfToken } = useAppContext();
 
   onFileChange = event => {
     let fileToUpload = event.target.files[0];
@@ -40,7 +40,7 @@ export default function Share({getPosts}) {
 
     try {
       // Save the post content to the storage layer and keep the storage id
-      let {data: storageId} = await window.point.storage.putString({data: contents});
+      let {data: storageId} = await window.point.storage.putString({data: contents, csrfToken});
       let imageId = EMPTY_IMAGE;
       if(selectedFile){
         const formData = new FormData()
@@ -49,7 +49,7 @@ export default function Share({getPosts}) {
         imageId = res.data;
       }
       // Save the post contents storage id in the PoinSocial Smart Contract
-      await window.point.contract.send({contract: 'PointSocial', method: 'addPost', params: [storageId, imageId]});
+      await window.point.contract.send({contract: 'PointSocial', method: 'addPost', params: [storageId, imageId], csrfToken});
       setSaving(false);
       setContents('');
       await getPosts();

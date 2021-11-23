@@ -17,6 +17,8 @@ export const ProvideAppContext = ({ children }) => {
   const [identity, setIdentity] = useState();
   const [walletError, setWallerError] = useState();
   const [, setLocation] = useLocation();
+  const csrfMeta = document.getElementsByName('_csrf')[0];
+  const csrfToken = csrfMeta?.getAttribute('content');
 
   useEffect(() => {
     (async () => {
@@ -40,6 +42,7 @@ export const ProvideAppContext = ({ children }) => {
     walletAddress,
     walletError,
     identity,
+    csrfToken,
     goHome
   }
 

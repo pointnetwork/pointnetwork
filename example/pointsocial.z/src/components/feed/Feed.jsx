@@ -1,11 +1,13 @@
 import "./feed.css";
 import { useEffect, useState } from "react";
+import { useAppContext } from '../../context/AppContext';
 import Post from "../post/Post";
 import Share from "../share/Share";
 import Identity from "../identity/Identity";
 import LoadingSpinner from '../loading/LoadingSpinner';
 
 export default Feed = ({account}) =>{
+  const { csrfToken } = useAppContext()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(undefined);
@@ -36,8 +38,8 @@ export default Feed = ({account}) =>{
   const fetchPosts = async () => {
     try {
       const response = account
-        ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account]}) :
-        await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'})
+        ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account], csrfToken}) :
+        await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts', csrfToken})
 
       const posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
           {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
@@ -62,7 +64,7 @@ export default Feed = ({account}) =>{
 
   // function reloads the post by id and updates the likes count of the object in state
   const reloadPostLikesCount = async(id) => {
-    let post = await window.point.contract.call({contract: 'PointSocial', method: 'getPostById', params: [id]});
+    let post = await window.point.contract.call({contract: 'PointSocial', method: 'getPostById', params: [id], csrfToken});
     const updatedPosts = [...posts];
     const updatedLikesCount = post.data[5];
     updatedPosts.filter((post) => post.id == id)[0].likesCount = updatedLikesCount;

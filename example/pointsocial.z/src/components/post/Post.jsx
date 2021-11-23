@@ -10,7 +10,7 @@ import Comments from '../comments/Comments'
 export default function Post({ post, reloadPostLikesCount }) {
   const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const [showComments, setShowComments] = useState(false);
-  const { walletAddress } = useAppContext();
+  const { walletAddress, csrfToken } = useAppContext();
 
   const toggleShowComments = () => {
     setShowComments(!showComments);
@@ -18,7 +18,7 @@ export default function Post({ post, reloadPostLikesCount }) {
 
   const addLikeToPost = async () => {
     try {
-      await window.point.contract.send({contract: 'PointSocial', method: 'addLikeToPost', params: [post.id]});
+      await window.point.contract.send({contract: 'PointSocial', method: 'addLikeToPost', params: [post.id], csrfToken});
       reloadPostLikesCount(post.id);
     } catch (e) {
       console.error('Error updating likes: ', e.message);

@@ -8,7 +8,7 @@ const fs = require('fs');
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
-        super(ctx);
+        super(ctx, req);
 
         this.req = req;
         this.config = ctx.config.client.zproxy;

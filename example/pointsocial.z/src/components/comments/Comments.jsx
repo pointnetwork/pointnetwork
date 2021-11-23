@@ -1,10 +1,12 @@
 import "./comments.css";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { useAppContext } from '../../context/AppContext';
 import Comment from './Comment'
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
 
 const Comments = ({ postId }) => {
+    const { csrfToken } = useAppContext()
     const DEFAULT_BTN_LABEL = 'Comment'
     const [comments, setComments] = useState([])
     const [contents, setContents] = useState()
@@ -35,7 +37,7 @@ const Comments = ({ postId }) => {
     }, [postId])
 
     const fetchComments = async () => {
-        const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllCommentsForPost', params: [postId]});
+        const response = await window.point.contract.call({contract: 'PointSocial', method: 'getAllCommentsForPost', params: [postId], csrfToken});
 
         const comments = response.data.map(([id, from, contents, createdAt]) => (
             {id, from, contents, createdAt: createdAt*1000}
@@ -57,9 +59,9 @@ const Comments = ({ postId }) => {
 
       try {
           // Save the post content to the storage layer and keep the storage id
-          let {data: storageId} = await window.point.storage.putString({data: contents});
+          let {data: storageId} = await window.point.storage.putString({data: contents, csrfToken});
           // Save the post contents storage id in the PoinSocial Smart Contract
-          await window.point.contract.send({contract: 'PointSocial', method: 'addCommentToPost', params: [postId, storageId]});
+          await window.point.contract.send({contract: 'PointSocial', method: 'addCommentToPost', params: [postId, storageId], csrfToken});
           setSaving(false);
           setContents('');
           await getComments();
