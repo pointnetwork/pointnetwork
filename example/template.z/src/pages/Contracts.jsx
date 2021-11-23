@@ -2,11 +2,13 @@ import Container from 'react-bootstrap/Container';
 import Spinner from 'react-bootstrap/Spinner';
 import { useEffect, useState } from "react";
 import ExampleContentTable from '../components/ExampleContentTable';
+import { useAppContext } from '../context/AppContext';
 
 export default function Contracts({account}) {
   const [examples, setExamples] = useState([])
   const [loading, setLoading] = useState(true);
   const [loadingError, setLoadingError] = useState(undefined);
+  const { csrfToken } = useAppContext();
 
   useEffect(() => {
     const getExamples = async () => {
@@ -21,8 +23,8 @@ export default function Contracts({account}) {
   const fetchExamples = async () => {
     try {
       const response = account
-        ? await window.point.contract.call({contract: 'Template', method: 'getAllExamplesByOwner', params: [account]}) :
-      await window.point.contract.call({contract: 'Template', method: 'getAllExamples'})
+        ? await window.point.contract.call({contract: 'Template', method: 'getAllExamplesByOwner', params: [account], csrfToken}) :
+      await window.point.contract.call({contract: 'Template', method: 'getAllExamples', csrfToken})
 
       const examples = response.data.map(([id, from, contents, createdAt]) => (
           {id, from, contents, createdAt: createdAt*1000}

@@ -15,6 +15,8 @@ export const ProvideAppContext = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState();
   const [walletError, setWallerError] = useState();
   const [, setLocation] = useLocation();
+  const csrfMeta = document.getElementsByName('_csrf')[0];
+  const csrfToken = csrfMeta?.getAttribute('content');
 
   useEffect(() => {
     (async () => {
@@ -35,7 +37,8 @@ export const ProvideAppContext = ({ children }) => {
   const context = {
     walletAddress,
     walletError,
-    goHome
+    goHome,
+    csrfToken
   }
 
   return <AppContext.Provider value={ context }>{ children }</AppContext.Provider>
