@@ -15,6 +15,7 @@
         color:gold;
       }
     </style>
+    <meta name='_csrf' content="{{ csrf_value() }}" />
   </head>
   <body>
     <div>
@@ -76,6 +77,8 @@
       }
 
       (async () => {
+        const csrfMeta = document.getElementsByName('_csrf')[0];
+        const csrfToken = csrfMeta?.getAttribute('content');
         // initialize websocket connect to point network node via PointSDK
         // the idea here is to initalize websockets for the app only if needed
         // and to specify the callback that will handle the incomming websocket messages
@@ -95,20 +98,20 @@
           let address = await window.point.wallet.address();
           let contract = await window.point.contract.load({contract: 'Hello'});
           let hash = await window.point.wallet.hash();
-          let callValue = await window.point.contract.call({contract: 'Hello', method: 'value'});
-          let callCounter = await window.point.contract.call({contract: 'Hello', method: 'counter'});
-          let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??']});
-          let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2]});
-          let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
-          await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
+          let callValue = await window.point.contract.call({contract: 'Hello', method: 'value', csrfToken});
+          let callCounter = await window.point.contract.call({contract: 'Hello', method: 'counter', csrfToken});
+          let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??'], csrfToken});
+          let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2], csrfToken});
+          let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4], csrfToken});
+          await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, csrfToken} );
           /* STORAGE API */
 
           // 1. Put the string data onto the storage layer
-          let {data: putStringId} = await window.point.storage.putString({data: 'Testing Storage Layer PutString'});
+          let {data: putStringId} = await window.point.storage.putString({data: 'Testing Storage Layer PutString', csrfToken});
           // 2. Save the string storage id in the Smart Contract
-          await window.point.contract.send({contract: 'Hello', method: 'setStorageValue', params: [putStringId]});
+          await window.point.contract.send({contract: 'Hello', method: 'setStorageValue', params: [putStringId], csrfToken});
           // 3. Get the storage id back from the Smart Contract (will be the same id, of course)
-          let {data: stringIdFromContract} = await window.point.contract.call({contract: 'Hello', method: 'storageValue'});
+          let {data: stringIdFromContract} = await window.point.contract.call({contract: 'Hello', method: 'storageValue', csrfToken});
           // 4. Finally get the original string back from the storage layer using the id returned by the contracts
           // window.point.storage.getFile returns a blob object since its fetching the file from the proxy layer
           // let textFileBlob = await window.point.storage.getFile({id: stringIdFromContract});
