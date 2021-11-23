@@ -16,7 +16,7 @@ const ProductItemContext = createContext(defaultContext)
 
 export const useProductItemContext = () => useContext(ProductItemContext)
 export const ProvideProductItemsContext = ({ data, children }: { data: ProductData, children: ReactNode }) => {
-    const { walletAddress } = useAppContext();
+    const { walletAddress, csrfToken } = useAppContext();
     const [product, setProduct] = useState<Product | undefined>();
     const [fatalError, setFatalError] = useState<Error | undefined>();
     const [productError, setProductError] = useState<Error | undefined>();
@@ -38,7 +38,7 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
             // @ts-ignore
             const response = await window.point.storage.getString({ id: metadata, encoding: 'utf-8' });
             // @ts-ignore
-            const responseOwnership = await window.point.contract.call({contract: 'Store', method: 'getProductByTokenId', params: [productId]})
+            const responseOwnership = await window.point.contract.call({contract: 'Store', method: 'getProductByTokenId', params: [productId], csrfToken})
             const { data: product } = response;
             const { data: productOwnership } = responseOwnership;
 
@@ -70,7 +70,8 @@ export const ProvideProductItemsContext = ({ data, children }: { data: ProductD
                 contract: 'Store',
                 method: 'buyProduct',
                 amountInWei: price,
-                params: [productId]
+                params: [productId],
+                csrfToken
             });
 
             // TODO: handle purchase

@@ -21,7 +21,7 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
     const [productList, setProductList] = useState<ProductData[] | undefined>();
     const [productListError, setProductListError] = useState<Error | undefined>();
     const [, params] = useRoute<ProductsRouteParams>('/products/:storeId');
-    const { addSubscription } = useAppContext();
+    const { csrfToken } = useAppContext();
 
     if (params?.storeId && params.storeId !== storeId) {
         setStoreId(params.storeId)
@@ -68,7 +68,8 @@ export const ProvideProductsContext = ({ children }: { children: ReactNode }) =
                 const response = await window.point.contract.call({
                     contract: 'Store',
                     method: 'getProductsByStoreId',
-                    params: [parseInt(storeId)]
+                    params: [parseInt(storeId)],
+                    csrfToken
                 });
 
                 const { data: products } = response;

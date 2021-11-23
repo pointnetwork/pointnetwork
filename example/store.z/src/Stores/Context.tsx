@@ -1,4 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react'
+import { useAppContext } from '~/App/Context';
 
 export type Store = {
   id: string,
@@ -18,12 +19,13 @@ export const useStoreContext = () => useContext(StoreContext)
 export const ProvideStoreContext = ({ children }: { children: ReactNode }) => {
   const [storeList, setStoreList] = useState<Store[] | undefined>();
   const [storeListError, setStoreListError] = useState<Error | undefined>();
+  const { csrfToken } = useAppContext();
 
   useEffect(() => {
     (async () => {
       try {
         // @ts-ignore
-        const response = await window.point.contract.call({contract: 'Store', method: 'getStores'});
+        const response = await window.point.contract.call({contract: 'Store', method: 'getStores', csrfToken});
         const {data: stores} = response;
 
         if (!Array.isArray(stores)) {

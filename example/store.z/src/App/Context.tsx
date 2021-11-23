@@ -7,6 +7,7 @@ const defaultContext = {
   walletError: undefined as Error | undefined,
   goHome: () => {},
   addSubscription: (() => {}) as (s: Subscription) => void,
+  csrfToken: undefined as string | undefined
 };
 
 const AppContext = createContext(defaultContext);
@@ -17,6 +18,8 @@ export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
   const [walletError, setWallerError] = useState<Error>();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>();
   const [, setLocation] = useLocation();
+  const csrfMeta = document.getElementsByName('_csrf')[0];
+  const csrfToken = csrfMeta?.getAttribute('content');
 
   useEffect(() => {
     (async () => {
@@ -51,7 +54,8 @@ export const ProvideAppContext = ({ children }: { children: ReactNode }) => {
     walletAddress,
     walletError,
     addSubscription,
-    goHome
+    goHome,
+    csrfToken
   }
 
   return <AppContext.Provider value={ context }>{ children }</AppContext.Provider>
