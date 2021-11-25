@@ -23,7 +23,7 @@ const { readFileSync,
         createReadStream,
         mkdirSync} = require('fs');
 
-const txArchiveDir = '/data/blockchain'
+const txArchiveDir = `${process.env.DATADIR}/blockchain`;
 
 let ownerToIdentity = {};
 let functionSelectorToName = {};
@@ -32,10 +32,10 @@ let meta;
 const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
 const txArchiveFinalFile= `${txArchiveDir}/txArchiveFinal.json`;
 const txArchiveFile = `${txArchiveDir}/txArchive.json`;
-const nodeConfigFile = '/data/config.json';
+const nodeConfigFile = `${process.env.DATADIR}/config.json`;
 
 /*
-change DEFAULT_START_BLOCK &  DEFAULT_END_BLOCK for manual testing
+change DEFAULT_START_BLOCK & DEFAULT_END_BLOCK for manual testing
 set to any integer value within the current avilable block range
 NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber +1 <-to-> latest block' (see function below)
 */
@@ -50,10 +50,10 @@ init = () => {
     }
 
     // backup exisisting files, just in case!
-    let ts = Date.now()
-    if (existsSync(txArchiveMetaFile)) { copyFileSync(txArchiveMetaFile, `${txArchiveMetaFile}-${ts}`) }
-    if (existsSync(txArchiveFinalFile)) { copyFileSync(txArchiveFinalFile, `${txArchiveFinalFile}-${ts}`) }
-    if (existsSync(txArchiveFile)) { copyFileSync(txArchiveFile, `${txArchiveFile}-${ts}`) }
+    let ts = Date.now();
+    if (existsSync(txArchiveMetaFile)) { copyFileSync(txArchiveMetaFile, `${txArchiveMetaFile}-${ts}`); }
+    if (existsSync(txArchiveFinalFile)) { copyFileSync(txArchiveFinalFile, `${txArchiveFinalFile}-${ts}`); }
+    if (existsSync(txArchiveFile)) { copyFileSync(txArchiveFile, `${txArchiveFile}-${ts}`); }
 
     config = loadNodeConfig();
     meta = loadArchiveMeta();
@@ -69,7 +69,7 @@ loadArchiveMeta = () => {
         'createdAt': Date.now(),
         'updatedAt': Date.now(),
         'networkId': config.network.web3_network_id,
-        'latestParsedBlockNumber': DEFAULT_START_BLOCK || 0,
+        'latestParsedBlockNumber': DEFAULT_START_BLOCK || -1,
     }
 
     if(!existsSync(txArchiveMetaFile)) {
@@ -80,7 +80,7 @@ loadArchiveMeta = () => {
     }
 
     // read the existing file
-    console.log('Reading existing archive meta file.')
+    console.log('Reading existing archive meta file.');
     return JSON.parse(readFileSync(txArchiveMetaFile));
 }
 
@@ -91,6 +91,7 @@ updateArchiveMeta = (latestParsedBlockNumber = 0) => {
     jsonStr = JSON.stringify(metaData);
 
     writeFileSync(txArchiveMetaFile, jsonStr);
+    console.log('Updated metaData: ', metaData);
 }
 
 writeFinalTxArchive = () => {
@@ -98,7 +99,7 @@ writeFinalTxArchive = () => {
     let wrt = createWriteStream(txArchiveFinalFile);
     let src = createReadStream(txArchiveFile);
 
-    wrt.write('[')
+    wrt.write('[');
     src.pipe(wrt, {end: false});
     src.on('end', () => {
         wrt.end(']');
@@ -112,20 +113,12 @@ loadIdentityAbi = () => {
 
 loadFnSelectorToName = () => {
     const abiFile = loadIdentityAbi();
-    const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
-    const fnCount = abiFile.ast.nodes[2].nodes.length;
-    // const methodIdentifiers = abiFile.evm.methodIdentifiers;
+    const methodIdentifiers = abiFile.evm.methodIdentifiers;
 
-    // for(method in methodIdentifiers){
-    //     functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
-    // }
-
-    for(let i=0; i<fnCount; i++){
-        let currentFn = contractFunctionDefinitions[i];
-        if(currentFn && currentFn.functionSelector) {
-            functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
-        }
+    for(method in methodIdentifiers){
+        functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
     }
+
     console.log('loaded functionSelectorToName: ', functionSelectorToName);
 }
 
@@ -153,7 +146,7 @@ loadOwnerToIdentityMapping = async () => {
                     ownerToIdentity[contractAddress] = contractName + ' Contract';
                 }
             } catch (e) {
-                console.log(`Identity ${handle} has not deployed a contract.`)
+                console.log(`Identity ${handle} has not deployed a contract.`);
             }
         }
         catch(e) {
@@ -162,13 +155,26 @@ loadOwnerToIdentityMapping = async () => {
         }
     }
 
-    // const latestBlock = await web3.eth.getBlock('latest');
-    // console.log(latestBlock)
-
     ownerToIdentity[identity_contract_address] = "Identity Contract";
     ownerToIdentity[storage_provider_registry_contract_address] = "Storage Provider Registry Contract";
 
     console.log('loaded ownerToIdentity: ', ownerToIdentity);
+}
+
+cleanup = () => {
+    stream.end();
+
+    let latestParsedBlockNumber = currentBlockNumber - 1;
+
+    updateArchiveMeta(latestParsedBlockNumber);
+}
+
+exitHandler = (options, exitCode) => {
+    console.log('App is exiting. Time to clean up! Current Block Number: ', currentBlockNumber);
+
+    cleanup();
+
+    process.exit();
 }
 
 /* initialize */
@@ -178,11 +184,19 @@ const identity_contract_address = config.network.identity_contract_address;
 const storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
 const Web3 = require('web3');
 const Web3HttpProvider = require('web3-providers-http');
-const blockchainUrl = process.env.BLOCKCHAIN_URL
+const blockchainUrl = process.env.BLOCKCHAIN_URL;
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const web3 = new Web3(httpProvider);
+const stream = createWriteStream(txArchiveFile, {flags:'a'});
+
+let currentBlockNumber;
 
 const PARSE_BLOCKCHAIN = true;
+
+// make sure meta data is updated if the process is stopped for some reason
+[`SIGINT`, `SIGUSR1`, `SIGUSR2`, `SIGTERM`].forEach((eventType) => {
+    process.on(eventType, exitHandler.bind(null, eventType));
+})
 
 /* Actual Blockchain parsing performed below */
 if(PARSE_BLOCKCHAIN) {
@@ -192,52 +206,57 @@ if(PARSE_BLOCKCHAIN) {
 
         const latestBlock = await web3.eth.getBlock('latest');
         const txArchiveFileExists = existsSync(txArchiveFile);
-        // Note: DEFAULT_END_BLOCK used for testing
+        // Note: DEFAULT_START_BLOCK & DEFAULT_END_BLOCK are essentially used during development / testing
+        // see const definitions and note at top of this script for details
         const endBlockNumber = DEFAULT_END_BLOCK || latestBlock.number;
         const startBlockNumber = DEFAULT_START_BLOCK || meta.latestParsedBlockNumber + 1;
-        const stream = createWriteStream(txArchiveFile, {flags:'a'});
 
-        console.log('start block number: ', meta.latestParsedBlockNumber);
+        currentBlockNumber = startBlockNumber;
+
+        console.log('start block number: ', startBlockNumber);
         console.log('end block number: ', endBlockNumber);
 
         // Just append to the txArchiveStreamFile
-        let sep = ""
-        if (txArchiveFileExists) { sep = ",\n" }
+        let sep = "";
 
-        for (let i = startBlockNumber; i <= endBlockNumber; i++) {
-            let block = await web3.eth.getBlock(i);
-            // console.log('Block: ', block);
-            if (block != null && block.transactions != null) {
-                for(let j = 0; j <= block.transactions.length-1; j++) {
-                    const hash = block.transactions[j];
-                    // console.log('hash: ', hash);
-                    console.log(`Block ${i}: Transactions Count: ${block.transactions.length}`)
-                    try{
+        if (txArchiveFileExists) { sep = ",\n" };
+
+        try {
+            for (currentBlockNumber; currentBlockNumber <= endBlockNumber; currentBlockNumber++) {
+                // if(currentBlockNumber==505) {
+                //     throw Error('Test Error!!');
+                // }
+                let block = await web3.eth.getBlock(currentBlockNumber);
+                (currentBlockNumber % 1000 == 0) && console.log(`Reached block: ${currentBlockNumber} (remaining blocks ${endBlockNumber - currentBlockNumber})`);
+                console.log('currentBlockNumber: ', currentBlockNumber);
+                // console.log('Block: ', block);
+                if (block != null && block.transactions != null) {
+                    for(let j = 0; j <= block.transactions.length-1; j++) {
+                        const hash = block.transactions[j];
+                        // console.log('hash: ', hash);
+                        console.log(`Block ${currentBlockNumber}: Transactions Count: ${block.transactions.length}`);
                         const txObj = await web3.eth.getTransaction(hash);
                         // console.log('txObj: ', txObj);
                         const tx = (({ blockNumber, hash, from, to, value, input }) => ({ blockNumber, hash, from, to, value, input }))(txObj);
                         tx.timestamp = block.timestamp;
                         tx.fromIdentity = ownerToIdentity[tx.from];
                         tx.toIdentity = ownerToIdentity[tx.to];
-                        tx.inputFn = functionSelectorToName[tx.input.slice(0,10)]
+                        tx.inputFn = functionSelectorToName[tx.input.slice(0,10)];
 
                         // TODO: inputVars
-                        // console.log(tx.hash);
                         txJsonStr = JSON.stringify(tx);
 
                         stream.write(sep + txJsonStr);
                         if (!sep) { sep = ",\n" };
-                    } catch (e) {
-                        console.log(e)
                     }
-
                 }
             }
+        } catch (e) {
+            console.log('ERROR: at block: ' + currentBlockNumber + ' :', e);
+        } finally {
+            writeFinalTxArchive();
+
+            cleanup();
         }
-        stream.end();
-
-        writeFinalTxArchive();
-
-        updateArchiveMeta(endBlockNumber);
     })()
 }
