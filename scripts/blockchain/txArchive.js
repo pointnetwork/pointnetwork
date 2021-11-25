@@ -112,21 +112,21 @@ loadIdentityAbi = () => {
 
 loadFnSelectorToName = () => {
     const abiFile = loadIdentityAbi();
-    // const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
-    // const fnCount = abiFile.ast.nodes[2].nodes.length;
-    const methodIdentifiers = abiFile.evm.methodIdentifiers;
+    const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
+    const fnCount = abiFile.ast.nodes[2].nodes.length;
+    // const methodIdentifiers = abiFile.evm.methodIdentifiers;
 
-    for(method in methodIdentifiers){
-        functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
-    }
-
-    // for(let i=0; i<fnCount; i++){
-    //     let currentFn = contractFunctionDefinitions[i];
-    //     if(currentFn && currentFn.functionSelector) {
-    //         functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
-    //     }
+    // for(method in methodIdentifiers){
+    //     functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
     // }
-    console.log('functionSelectorToName: ', functionSelectorToName);
+
+    for(let i=0; i<fnCount; i++){
+        let currentFn = contractFunctionDefinitions[i];
+        if(currentFn && currentFn.functionSelector) {
+            functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
+        }
+    }
+    console.log('loaded functionSelectorToName: ', functionSelectorToName);
 }
 
 loadOwnerToIdentityMapping = async () => {
@@ -168,7 +168,7 @@ loadOwnerToIdentityMapping = async () => {
     ownerToIdentity[identity_contract_address] = "Identity Contract";
     ownerToIdentity[storage_provider_registry_contract_address] = "Storage Provider Registry Contract";
 
-    console.log('ownerToIdentity: ', ownerToIdentity);
+    console.log('loaded ownerToIdentity: ', ownerToIdentity);
 }
 
 /* initialize */
@@ -178,9 +178,7 @@ const identity_contract_address = config.network.identity_contract_address;
 const storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
 const Web3 = require('web3');
 const Web3HttpProvider = require('web3-providers-http');
-// const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
-// const port = process.env.BLOCKCHAIN_PORT || 7545;
-const blockchainUrl = process.env.BLOCKCHAIN_URL // `http://${host}:${port}`//
+const blockchainUrl = process.env.BLOCKCHAIN_URL
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const web3 = new Web3(httpProvider);
 
@@ -189,8 +187,8 @@ const PARSE_BLOCKCHAIN = true;
 /* Actual Blockchain parsing performed below */
 if(PARSE_BLOCKCHAIN) {
     (async () => {
-        // await loadOwnerToIdentityMapping(); // populates ownerToIdentity
-        // loadFnSelectorToName(); // populates functionSelectorToName
+        await loadOwnerToIdentityMapping(); // populates ownerToIdentity
+        loadFnSelectorToName(); // populates functionSelectorToName
 
         const latestBlock = await web3.eth.getBlock('latest');
         const txArchiveFileExists = existsSync(txArchiveFile);
@@ -208,7 +206,7 @@ if(PARSE_BLOCKCHAIN) {
 
         for (let i = startBlockNumber; i <= endBlockNumber; i++) {
             let block = await web3.eth.getBlock(i);
-            console.log('Block: ', block);
+            // console.log('Block: ', block);
             if (block != null && block.transactions != null) {
                 for(let j = 0; j <= block.transactions.length-1; j++) {
                     const hash = block.transactions[j];
@@ -230,7 +228,7 @@ if(PARSE_BLOCKCHAIN) {
                         stream.write(sep + txJsonStr);
                         if (!sep) { sep = ",\n" };
                     } catch (e) {
-                        console.log(e.message)
+                        console.log(e)
                     }
 
                 }
