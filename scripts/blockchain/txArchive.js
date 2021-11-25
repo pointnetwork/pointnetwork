@@ -9,9 +9,9 @@ Collected data fields are: blockNumber, hash, timestamp, from, to, value, input,
 
 TESTING:
 
-    To reset rm the meta file like so `rm /data/blockchain/txArchive*.json`
-    To test from - to specific blocks set `DEFAULT_START_BLOCK` and `DEFAULT_END_BLOCK` (see below)
-    To run the script first add a mount to the script folder in the docker-compose you are using. Then start the container and enter a session and run `node scripts/blockchain/txArchive.js` from withing the container shell.
+    To reset remove the meta file like so `rm /data/blockchain/txArchive*.json` or completely delete the folder (BACKUP FIRST if you need to!) `rm -rf /data/blockchain/`
+    To test from - to specific blocks set consts `DEFAULT_START_BLOCK` and `DEFAULT_END_BLOCK` (see below)
+    To run the script first add a mount to the script folder in the docker-compose you are using. Then start the container and enter a session and run `node scripts/blockchain/txArchive.js` from within the container shell.
 
 */
 
@@ -35,7 +35,7 @@ const txArchiveFile = `${txArchiveDir}/txArchive.json`;
 const nodeConfigFile = '/data/config.json';
 
 /*
-change DEFAULT_START_BLOCK &  DEFAULT_END_BLOCKfor manual testing
+change DEFAULT_START_BLOCK &  DEFAULT_END_BLOCK for manual testing
 set to any integer value within the current avilable block range
 NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber +1 <-to-> latest block' (see function below)
 */
@@ -69,7 +69,7 @@ loadArchiveMeta = () => {
         'createdAt': Date.now(),
         'updatedAt': Date.now(),
         'networkId': config.network.web3_network_id,
-        'latestParsedBlockNumber': DEFAULT_START_BLOCK,
+        'latestParsedBlockNumber': DEFAULT_START_BLOCK || 0,
     }
 
     if(!existsSync(txArchiveMetaFile)) {
@@ -180,7 +180,7 @@ const Web3 = require('web3');
 const Web3HttpProvider = require('web3-providers-http');
 // const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
 // const port = process.env.BLOCKCHAIN_PORT || 7545;
-const blockchainUrl =  process.env.BLOCKCHAIN_URL // `http://${host}:${port}`
+const blockchainUrl = process.env.BLOCKCHAIN_URL // `http://${host}:${port}`//
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const web3 = new Web3(httpProvider);
 
