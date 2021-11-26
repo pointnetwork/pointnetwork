@@ -24,16 +24,26 @@ const { readFileSync,
         stat,
         truncateSync} = require('fs');
 
+const Web3 = require('web3');
+const Web3HttpProvider = require('web3-providers-http');
+const blockchainUrl = process.env.BLOCKCHAIN_URL;
+const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
+const web3 = new Web3(httpProvider);
 const txArchiveDir = `${process.env.DATADIR}/blockchain`;
+const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
+const txArchiveFinalFile= `${txArchiveDir}/txArchiveFinal.json`;
+const txArchiveFile = `${txArchiveDir}/txArchive.json`;
+const nodeConfigFile = `${process.env.DATADIR}/config.json`;
 
 let ownerToIdentity = {};
 let functionSelectorToName = {};
 let config;
 let meta;
-const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
-const txArchiveFinalFile= `${txArchiveDir}/txArchiveFinal.json`;
-const txArchiveFile = `${txArchiveDir}/txArchive.json`;
-const nodeConfigFile = `${process.env.DATADIR}/config.json`;
+let txArchiveFileIsNew;
+let stream;
+let identity_contract_address;
+let storage_provider_registry_contract_address;
+let currentBlockNumber;
 
 /*
 change DEFAULT_START_BLOCK & DEFAULT_END_BLOCK for manual testing
@@ -42,16 +52,22 @@ NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber +1 <-to-
 */
 const DEFAULT_START_BLOCK = undefined; // undefined means will read from last saved (or 0).
 const DEFAULT_END_BLOCK = undefined; // undefined means will go too last block found
+const PARSE_BLOCKCHAIN = true;
 
 init = () => {
-    if (existsSync(txArchiveFile)) {
-        // remove the last ']' from the file so we can easily continue to append new objects
+    txArchiveFileIsNew = !existsSync(txArchiveFile);
+
+    if (!txArchiveFileIsNew) {
+        // if not a new file then remove the last ']' from the file so we can easily continue to append new objects
         stat(txArchiveFile, (err, stats) => {
             truncateSync(txArchiveFile, stats.size - 1, (err) => {
                 if (err) throw err;
             })
         })
     }
+
+    stream = createWriteStream(txArchiveFile, {flags:'a'});
+    if (txArchiveFileIsNew) { stream.write('[\n') };
 
     // create the txArchiveDir directory if needed
     if (!existsSync(txArchiveDir)) {
@@ -67,6 +83,9 @@ init = () => {
 
     config = loadNodeConfig();
     meta = loadArchiveMeta();
+
+    identity_contract_address = config.network.identity_contract_address;
+    storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
 }
 
 loadNodeConfig = () => {
@@ -178,21 +197,6 @@ cleanup = () => {
     updateArchiveMeta(latestParsedBlockNumber);
 }
 
-/* initialize */
-init();
-
-const identity_contract_address = config.network.identity_contract_address;
-const storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
-const Web3 = require('web3');
-const Web3HttpProvider = require('web3-providers-http');
-const blockchainUrl = process.env.BLOCKCHAIN_URL;
-const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
-const web3 = new Web3(httpProvider);
-const txArchiveFileIsNew = !existsSync(txArchiveFile);
-const stream = createWriteStream(txArchiveFile, {flags:'a'});
-
-if (txArchiveFileIsNew) { stream.write('[\n') };
-
 exitHandler = (options, exitCode) => {
     console.log('App is exiting. Time to clean up! Current Block Number: ', currentBlockNumber);
 
@@ -206,38 +210,32 @@ exitHandler = (options, exitCode) => {
     process.on(eventType, exitHandler.bind(null, eventType));
 })
 
-const PARSE_BLOCKCHAIN = true;
-
-let currentBlockNumber;
+/* initialize */
+init();
 
 /* Actual Blockchain parsing performed below */
 if(PARSE_BLOCKCHAIN) {
     (async () => {
-        await loadOwnerToIdentityMapping(); // populates ownerToIdentity
-        loadFnSelectorToName(); // populates functionSelectorToName
-
-        const latestBlock = await web3.eth.getBlock('latest');
-        // const txArchiveFileExists = existsSync(txArchiveFile);
-        // Note: DEFAULT_START_BLOCK & DEFAULT_END_BLOCK are essentially used during development / testing
-        // see const definitions and note at top of this script for details
-        const endBlockNumber = DEFAULT_END_BLOCK || latestBlock.number;
-        const startBlockNumber = DEFAULT_START_BLOCK || meta.latestParsedBlockNumber + 1;
-
-        currentBlockNumber = startBlockNumber;
-
-        console.log('start block number: ', startBlockNumber);
-        console.log('end block number: ', endBlockNumber);
-
-        // Just append to the txArchiveStreamFile
-        let sep = "";
-
-        if (!txArchiveFileIsNew) { sep = ",\n" };
-
         try {
+            const latestBlock = await web3.eth.getBlock('latest');
+            // Note: DEFAULT_START_BLOCK & DEFAULT_END_BLOCK are essentially used during development / testing
+            // see const definitions and note at top of this script for details
+            const endBlockNumber = DEFAULT_END_BLOCK || latestBlock.number;
+            const startBlockNumber = DEFAULT_START_BLOCK || meta.latestParsedBlockNumber + 1;
+            currentBlockNumber = startBlockNumber;
+
+            await loadOwnerToIdentityMapping(); // populates ownerToIdentity
+            loadFnSelectorToName(); // populates functionSelectorToName
+
+            console.log('start block number: ', startBlockNumber);
+            console.log('end block number: ', endBlockNumber);
+
+            // Just append to the txArchiveStreamFile
+            let sep = "";
+
+            if (!txArchiveFileIsNew) { sep = ",\n" };
+
             for (currentBlockNumber; currentBlockNumber <= endBlockNumber; currentBlockNumber++) {
-                // if(currentBlockNumber==505) {
-                //     throw Error('Test Error!!');
-                // }
                 let block = await web3.eth.getBlock(currentBlockNumber);
                 (currentBlockNumber % 1000 == 0) && console.log(`Reached block: ${currentBlockNumber} (remaining blocks ${endBlockNumber - currentBlockNumber})`);
                 // console.log('currentBlockNumber: ', currentBlockNumber);
