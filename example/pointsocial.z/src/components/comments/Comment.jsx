@@ -1,11 +1,14 @@
 import './comments.css'
 import { format } from "timeago.js";
 import { trimAccount } from '../../utils';
+import { useAppContext } from '../../context/AppContext';
 
 const Comment = ({ comment }) => {
+    const { walletAddress } = useAppContext();
+
     return (
         <div className="comment">
-            <span className="commentFrom">{trimAccount(comment.from)}</span>
+            {walletAddress == comment.from ? <span className="commentFrom">You commented: </span> : <span className="commentUsername">{comment.identity} commented</span>}
             <span className="commentDate">{`(${format(comment.createdAt)})`}</span>
             <span>{comment.contents}</span>
         </div>
