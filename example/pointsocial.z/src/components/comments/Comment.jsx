@@ -1,6 +1,5 @@
 import './comments.css'
 import { format } from "timeago.js";
-import { trimAccount } from '../../utils';
 import { useAppContext } from '../../context/AppContext';
 
 const Comment = ({ comment }) => {
