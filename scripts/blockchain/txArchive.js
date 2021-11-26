@@ -31,7 +31,6 @@ const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeo
 const web3 = new Web3(httpProvider);
 const txArchiveDir = `${process.env.DATADIR}/blockchain`;
 const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
-const txArchiveFinalFile= `${txArchiveDir}/txArchiveFinal.json`;
 const txArchiveFile = `${txArchiveDir}/txArchive.json`;
 const nodeConfigFile = `${process.env.DATADIR}/config.json`;
 
@@ -78,7 +77,7 @@ init = () => {
     // backup exisisting files, just in case!
     let ts = Date.now();
     if (existsSync(txArchiveMetaFile)) { copyFileSync(txArchiveMetaFile, `${txArchiveMetaFile}-${ts}`); }
-    if (existsSync(txArchiveFinalFile)) { copyFileSync(txArchiveFinalFile, `${txArchiveFinalFile}-${ts}`); }
+
     if (existsSync(txArchiveFile)) { copyFileSync(txArchiveFile, `${txArchiveFile}-${ts}`); }
 
     config = loadNodeConfig();
