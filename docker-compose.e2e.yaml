@@ -25,7 +25,9 @@ services:
       - -p
       - $BLOCKCHAIN_PROVIDER_PORT
       - --account
-      - $ACCOUNT_PK_AND_BALANCE
+      - $PK_STORAGE_PROVIDER,0x56bc75e2d63100000
+      - $PK_WEBSITE_OWNER,0x56bc75e2d63100000
+      - $PK_WEBSITE_VISITOR,0x56bc75e2d63100000
       - -i
       - $BLOCKCHAIN_NETWORK_ID
       - --keepAliveTimeout
@@ -71,8 +73,8 @@ services:
       - storage_provider_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
+      - ./resources/demo-docker/mnemonic-storage_provider.json:/data/keystore/key.json
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
-      - $POINT_KEYSTORE:/data/keystore
     ports:
       - '12345:9685'
       - '65500:8666'
@@ -108,10 +110,10 @@ services:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ./resources/demo-docker/mnemonic-website_owner.json:/data/keystore/key.json
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
       - ./example:/app/example:ro
       - ./deployspace:/app/deployspace:ro
-      - $POINT_KEYSTORE:/data/keystore
     environment:
       DATADIR: /data
       DB_ENV: pointnode2
@@ -143,8 +145,8 @@ services:
       - website_visitor_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
+      - ./resources/demo-docker/mnemonic-website_visitor.json:/data/keystore/key.json
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
-      - $POINT_KEYSTORE:/data/keystore
     environment:
       DATADIR: /data
       DB_ENV: pointnode3

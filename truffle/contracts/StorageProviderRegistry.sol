@@ -24,17 +24,17 @@ contract StorageProviderRegistry {
     constructor() {
         // Set the provider address to the Raiden node address of that provider and keep the 'connection' property
         // set to the kademlia connection url of the PN node.
-        providers[0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301] = Provider({
-            id: 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301,
-            connection: 'http://storage_provider:9685/#c01011611e3501c6b3f6dc4b6d3fe644d21ab301',
+        providers[0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1] = Provider({
+            id: 0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1,
+            connection: 'http://storage_provider:9685/#3c903addcc954b318a5077d0f7bce44a7b9c95b1',
             announced_at: 1613647823,
             announced_by: msg.sender,
             collateral: 50,
             cost_per_kb: 5,
             collateral_lock_period: 500
         });
-        cheapest_provider = 0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301;
-        providerIds.push(0xC01011611e3501C6b3F6dC4B6d3FE644d21aB301);
+        cheapest_provider = 0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1;
+        providerIds.push(0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1);
     }
     function announce(string memory connection, uint collateral_lock_period, uint cost_per_kb) payable public {
         if (providers[msg.sender].id == address(0)) providerIds.push(msg.sender);

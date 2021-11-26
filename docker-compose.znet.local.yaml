@@ -19,7 +19,7 @@ services:
       - blockchain_node_data:/opt/solana/config:rw
 
   blockchain_provider:
-    image: cybercoredev/proxy:v0.2.0
+    image: neonlabsorg/proxy:v0.3.0-rc2
     container_name: pointnetwork_blockchain_provider
     depends_on:
       blockchain_node:
