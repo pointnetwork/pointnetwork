@@ -1,5 +1,5 @@
 import "./comments.css";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Comment from './Comment'
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
@@ -44,6 +44,8 @@ const Comments = ({ postId }) => {
 
         const commentsContent = await Promise.all(comments.map(async (comment) => {
           const {data: contents} = await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' });
+          const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: comment.from});
+          comment.identity = identity;
           comment.contents = contents;
           return comment;
         }))
