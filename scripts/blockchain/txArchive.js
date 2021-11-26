@@ -20,8 +20,9 @@ const { readFileSync,
         copyFileSync,
         existsSync,
         createWriteStream,
-        createReadStream,
-        mkdirSync} = require('fs');
+        mkdirSync,
+        stat,
+        truncateSync} = require('fs');
 
 const txArchiveDir = `${process.env.DATADIR}/blockchain`;
 
@@ -39,10 +40,19 @@ change DEFAULT_START_BLOCK & DEFAULT_END_BLOCK for manual testing
 set to any integer value within the current avilable block range
 NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber +1 <-to-> latest block' (see function below)
 */
-const DEFAULT_START_BLOCK = undefined;
-const DEFAULT_END_BLOCK = undefined;
+const DEFAULT_START_BLOCK = undefined; // undefined means will read from last saved (or 0).
+const DEFAULT_END_BLOCK = undefined; // undefined means will go too last block found
 
 init = () => {
+    if (existsSync(txArchiveFile)) {
+        // remove the last ']' from the file so we can easily continue to append new objects
+        stat(txArchiveFile, (err, stats) => {
+            truncateSync(txArchiveFile, stats.size - 1, (err) => {
+                if (err) throw err;
+            })
+        })
+    }
+
     // create the txArchiveDir directory if needed
     if (!existsSync(txArchiveDir)) {
         mkdirSync(txArchiveDir);
@@ -94,18 +104,6 @@ updateArchiveMeta = (latestParsedBlockNumber = 0) => {
     console.log('Updated metaData: ', metaData);
 }
 
-writeFinalTxArchive = () => {
-    // copy to a new stream adding the surrounding array braces
-    let wrt = createWriteStream(txArchiveFinalFile);
-    let src = createReadStream(txArchiveFile);
-
-    wrt.write('[');
-    src.pipe(wrt, {end: false});
-    src.on('end', () => {
-        wrt.end(']');
-    });
-}
-
 loadIdentityAbi = () => {
     const abiFileName = '/app/truffle/build/contracts/Identity.json';
     return JSON.parse(readFileSync(abiFileName));
@@ -113,10 +111,20 @@ loadIdentityAbi = () => {
 
 loadFnSelectorToName = () => {
     const abiFile = loadIdentityAbi();
-    const methodIdentifiers = abiFile.evm.methodIdentifiers;
+    // const methodIdentifiers = abiFile.evm.methodIdentifiers;
 
-    for(method in methodIdentifiers){
-        functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
+    // for(method in methodIdentifiers){
+    //     functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
+    // }
+
+    const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
+    const fnCount = abiFile.ast.nodes[2].nodes.length;
+
+    for(let i=0; i<fnCount; i++){
+        let currentFn = contractFunctionDefinitions[i];
+        if(currentFn && currentFn.functionSelector) {
+            functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
+        }
     }
 
     console.log('loaded functionSelectorToName: ', functionSelectorToName);
@@ -162,19 +170,12 @@ loadOwnerToIdentityMapping = async () => {
 }
 
 cleanup = () => {
-    stream.end();
-
     let latestParsedBlockNumber = currentBlockNumber - 1;
 
+    stream.write('\n]')
+    stream.end();
+
     updateArchiveMeta(latestParsedBlockNumber);
-}
-
-exitHandler = (options, exitCode) => {
-    console.log('App is exiting. Time to clean up! Current Block Number: ', currentBlockNumber);
-
-    cleanup();
-
-    process.exit();
 }
 
 /* initialize */
@@ -187,16 +188,27 @@ const Web3HttpProvider = require('web3-providers-http');
 const blockchainUrl = process.env.BLOCKCHAIN_URL;
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const web3 = new Web3(httpProvider);
+const txArchiveFileIsNew = !existsSync(txArchiveFile);
 const stream = createWriteStream(txArchiveFile, {flags:'a'});
 
-let currentBlockNumber;
+if (txArchiveFileIsNew) { stream.write('[\n') };
 
-const PARSE_BLOCKCHAIN = true;
+exitHandler = (options, exitCode) => {
+    console.log('App is exiting. Time to clean up! Current Block Number: ', currentBlockNumber);
+
+    cleanup();
+
+    process.exit();
+}
 
 // make sure meta data is updated if the process is stopped for some reason
 [`SIGINT`, `SIGUSR1`, `SIGUSR2`, `SIGTERM`].forEach((eventType) => {
     process.on(eventType, exitHandler.bind(null, eventType));
 })
+
+const PARSE_BLOCKCHAIN = true;
+
+let currentBlockNumber;
 
 /* Actual Blockchain parsing performed below */
 if(PARSE_BLOCKCHAIN) {
@@ -205,7 +217,7 @@ if(PARSE_BLOCKCHAIN) {
         loadFnSelectorToName(); // populates functionSelectorToName
 
         const latestBlock = await web3.eth.getBlock('latest');
-        const txArchiveFileExists = existsSync(txArchiveFile);
+        // const txArchiveFileExists = existsSync(txArchiveFile);
         // Note: DEFAULT_START_BLOCK & DEFAULT_END_BLOCK are essentially used during development / testing
         // see const definitions and note at top of this script for details
         const endBlockNumber = DEFAULT_END_BLOCK || latestBlock.number;
@@ -219,7 +231,7 @@ if(PARSE_BLOCKCHAIN) {
         // Just append to the txArchiveStreamFile
         let sep = "";
 
-        if (txArchiveFileExists) { sep = ",\n" };
+        if (!txArchiveFileIsNew) { sep = ",\n" };
 
         try {
             for (currentBlockNumber; currentBlockNumber <= endBlockNumber; currentBlockNumber++) {
@@ -228,7 +240,7 @@ if(PARSE_BLOCKCHAIN) {
                 // }
                 let block = await web3.eth.getBlock(currentBlockNumber);
                 (currentBlockNumber % 1000 == 0) && console.log(`Reached block: ${currentBlockNumber} (remaining blocks ${endBlockNumber - currentBlockNumber})`);
-                console.log('currentBlockNumber: ', currentBlockNumber);
+                // console.log('currentBlockNumber: ', currentBlockNumber);
                 // console.log('Block: ', block);
                 if (block != null && block.transactions != null) {
                     for(let j = 0; j <= block.transactions.length-1; j++) {
@@ -254,8 +266,6 @@ if(PARSE_BLOCKCHAIN) {
         } catch (e) {
             console.log('ERROR: at block: ' + currentBlockNumber + ' :', e);
         } finally {
-            writeFinalTxArchive();
-
             cleanup();
         }
     })()
