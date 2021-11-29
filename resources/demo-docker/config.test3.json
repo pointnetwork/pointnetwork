@@ -13,8 +13,8 @@
       "host": "0.0.0.0"
     },
     "wallet": {
-      "account": "0xf990AB98B33dd48dffaC735C572D6cd8f75E60d8",
-      "privateKey": "4e094c21d2b1a068da6ecbb8d0aeea65569741a6c14c592cb29d8b7aadf5ea49"
+      "account": "0x2D76d508A0451a7938b1eF905AA958091c632790",
+      "privateKey": "ca5553f04971d32c8c3082a466f0a8729d199a55d6086f40bbbde5daadbe4130"
     }
   }
 }
