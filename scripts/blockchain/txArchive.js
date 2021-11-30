@@ -24,6 +24,7 @@ const { readFileSync,
         stat,
         truncateSync} = require('fs');
 
+const os = require('os');
 const Web3 = require('web3');
 const Web3HttpProvider = require('web3-providers-http');
 const blockchainUrl = process.env.BLOCKCHAIN_URL;
@@ -32,6 +33,8 @@ const web3 = new Web3(httpProvider);
 const txArchiveDir = `${process.env.DATADIR}/blockchain`;
 const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
 const txArchiveFile = `${txArchiveDir}/txArchive.json`;
+const ownerToIdentityFile = `${txArchiveDir}/ownerToIdentity.json`;
+const ownerToPublicKeyFile = `${txArchiveDir}/ownerToPublicKey.json`;
 const nodeConfigFile = `${process.env.DATADIR}/config.json`;
 
 let ownerToIdentity = {};
@@ -65,14 +68,14 @@ init = () => {
         })
     }
 
-    stream = createWriteStream(txArchiveFile, {flags:'a'});
-    if (txArchiveFileIsNew) { stream.write('[\n') };
-
     // create the txArchiveDir directory if needed
     if (!existsSync(txArchiveDir)) {
         mkdirSync(txArchiveDir);
         console.log(`Directory ${txArchiveDir} created.`);
     }
+
+    stream = createWriteStream(txArchiveFile, {flags:'a'});
+    if (txArchiveFileIsNew) { stream.write('[\n') };
 
     // backup exisisting files, just in case!
     let ts = Date.now();
@@ -98,6 +101,8 @@ loadArchiveMeta = () => {
         'updatedAt': Date.now(),
         'networkId': config.network.web3_network_id,
         'latestParsedBlockNumber': DEFAULT_START_BLOCK || -1,
+        'platformOS': os.platform(),
+        'releaseOS': os.release()
     }
 
     if(!existsSync(txArchiveMetaFile)) {
@@ -153,13 +158,16 @@ loadOwnerToIdentityMapping = async () => {
     const abiFile = loadIdentityAbi();
     const abi = abiFile.abi;
     const identityInstance = new web3.eth.Contract(abi, identity_contract_address);
+    let ownerToPublicKey = {};
     let identityIndex = 0;
 
     while(true) {
         try{
             const handle = await identityInstance.methods.identityList(identityIndex).call();
             const owner = await identityInstance.methods.getOwnerByIdentity(handle).call();
+            const publicKey = await identityInstance.methods.getCommPublicKeyByIdentity(handle).call();
             ownerToIdentity[owner] = handle;
+            ownerToPublicKey[owner] = publicKey;
             identityIndex++;
             // Get ikvs starting with 'zweb/contracts/address/' and map the address to the name
             try{
@@ -185,6 +193,11 @@ loadOwnerToIdentityMapping = async () => {
     ownerToIdentity[storage_provider_registry_contract_address] = "Storage Provider Registry Contract";
 
     console.log('loaded ownerToIdentity: ', ownerToIdentity);
+    console.log('loaded ownerToPublicKey: ', ownerToPublicKey);
+
+    // save identities to disk
+    writeFileSync(ownerToIdentityFile, JSON.stringify(ownerToIdentity));
+    writeFileSync(ownerToPublicKeyFile, JSON.stringify(ownerToPublicKey));
 }
 
 cleanup = () => {
@@ -246,7 +259,7 @@ if(PARSE_BLOCKCHAIN) {
                         console.log(`Block ${currentBlockNumber}: Transactions Count: ${block.transactions.length}`);
                         const txObj = await web3.eth.getTransaction(hash);
                         // console.log('txObj: ', txObj);
-                        const tx = (({ blockNumber, hash, from, to, value, input }) => ({ blockNumber, hash, from, to, value, input }))(txObj);
+                        const tx = txObj; // save all the properties
                         tx.timestamp = block.timestamp;
                         tx.fromIdentity = ownerToIdentity[tx.from];
                         tx.toIdentity = ownerToIdentity[tx.to];
