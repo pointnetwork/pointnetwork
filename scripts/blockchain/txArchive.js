@@ -25,6 +25,7 @@ const { readFileSync,
         truncateSync} = require('fs');
 
 const os = require('os');
+const fetch = require('node-fetch')
 const Web3 = require('web3');
 const Web3HttpProvider = require('web3-providers-http');
 const blockchainUrl = process.env.BLOCKCHAIN_URL;
@@ -156,6 +157,16 @@ loadFnSelectorToName = () => {
     console.log('loaded functionSelectorToName: ', functionSelectorToName);
 }
 
+loadFnSelectorToNameForDeployedContract = async (handle, contractName) => {
+    const options = {headers: {'host': `${handle}.z`}}
+    let response = await fetch(`http://127.0.0.1:2468/v1/api/contract/load/${contractName}`, options);
+    let json = await response.json();
+
+    json.data.abi.forEach((currentFn) => {
+        functionSelectorToName[currentFn.signature] = currentFn.name;
+    })
+}
+
 loadOwnerToIdentityMapping = async () => {
     // load Identity contract and get all the identity mappings
     const abiFile = loadIdentityAbi();
@@ -176,11 +187,14 @@ loadOwnerToIdentityMapping = async () => {
             try{
                 // assuming that the contract address is the first key in the ikvList
                 const contractKey = await identityInstance.methods.ikvList(handle, 0).call();
+
                 if(contractKey.startsWith('zweb/contracts/address')) {
                     // the owner deployed a contract so we add to the mapping
                     const contractName = contractKey.replace('zweb/contracts/address/', '');
                     const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
                     ownerToIdentity[contractAddress] = contractName + ' Contract';
+                    // now load the function signatures to the function names for the deployed contract
+                    await loadFnSelectorToNameForDeployedContract(handle, contractName);
                 }
             } catch (e) {
                 console.log(`Identity ${handle} has not deployed a contract.`);
