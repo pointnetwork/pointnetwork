@@ -46,6 +46,8 @@ const Comments = ({ postId }) => {
 
         const commentsContent = await Promise.all(comments.map(async (comment) => {
           const {data: contents} = await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' });
+          const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: comment.from});
+          comment.identity = identity;
           comment.contents = contents;
           return comment;
         }))
