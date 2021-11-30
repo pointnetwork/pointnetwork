@@ -46,11 +46,12 @@ let stream;
 let identity_contract_address;
 let storage_provider_registry_contract_address;
 let currentBlockNumber;
+let currentTransactionIndex;
 
 /*
 change DEFAULT_START_BLOCK & DEFAULT_END_BLOCK for manual testing
 set to any integer value within the current avilable block range
-NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber +1 <-to-> latest block' (see function below)
+NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber (at meta.latestParsedTransactionIndex + 1) <-to-> latest block (at latest transaction)' (see function below)
 */
 const DEFAULT_START_BLOCK = undefined; // undefined means will read from last saved (or 0).
 const DEFAULT_END_BLOCK = undefined; // undefined means will go too last block found
@@ -100,7 +101,8 @@ loadArchiveMeta = () => {
         'createdAt': Date.now(),
         'updatedAt': Date.now(),
         'networkId': config.network.web3_network_id,
-        'latestParsedBlockNumber': DEFAULT_START_BLOCK || -1,
+        'latestParsedBlockNumber': DEFAULT_START_BLOCK || 0,
+        'latestParsedTransactionIndex': 0,
         'platformOS': os.platform(),
         'releaseOS': os.release()
     }
@@ -117,10 +119,11 @@ loadArchiveMeta = () => {
     return JSON.parse(readFileSync(txArchiveMetaFile));
 }
 
-updateArchiveMeta = (latestParsedBlockNumber = 0) => {
+updateArchiveMeta = (latestParsedBlockNumber = 0, latestParsedTransactionIndex = 0) => {
     metaData = loadArchiveMeta();
     metaData.updatedAt = Date.now();
     metaData.latestParsedBlockNumber = latestParsedBlockNumber;
+    metaData.latestParsedTransactionIndex = latestParsedTransactionIndex;
     jsonStr = JSON.stringify(metaData);
 
     writeFileSync(txArchiveMetaFile, jsonStr);
@@ -201,16 +204,17 @@ loadOwnerToIdentityMapping = async () => {
 }
 
 cleanup = () => {
-    let latestParsedBlockNumber = currentBlockNumber - 1;
+    let latestParsedBlockNumber = currentBlockNumber;
+    let latestParsedTransactionIndex = currentTransactionIndex - 1;
 
     stream.write('\n]')
     stream.end();
 
-    updateArchiveMeta(latestParsedBlockNumber);
+    updateArchiveMeta(latestParsedBlockNumber, latestParsedTransactionIndex);
 }
 
 exitHandler = (options, exitCode) => {
-    console.log('App is exiting. Time to clean up! Current Block Number: ', currentBlockNumber);
+    console.log('App is exiting. Time to clean up! Current Block Number: ', currentBlockNumber, ' Current Transaction Index: ', currentTransactionIndex);
 
     cleanup();
 
@@ -233,14 +237,15 @@ if(PARSE_BLOCKCHAIN) {
             // Note: DEFAULT_START_BLOCK & DEFAULT_END_BLOCK are essentially used during development / testing
             // see const definitions and note at top of this script for details
             const endBlockNumber = DEFAULT_END_BLOCK || latestBlock.number;
-            const startBlockNumber = DEFAULT_START_BLOCK || meta.latestParsedBlockNumber + 1;
-            currentBlockNumber = startBlockNumber;
+            currentBlockNumber = DEFAULT_START_BLOCK || meta.latestParsedBlockNumber;
+            currentTransactionIndex = meta.latestParsedTransactionIndex + 1;
 
             await loadOwnerToIdentityMapping(); // populates ownerToIdentity
             loadFnSelectorToName(); // populates functionSelectorToName
 
-            console.log('start block number: ', startBlockNumber);
-            console.log('end block number: ', endBlockNumber);
+            console.log('start (current) block number: ', currentBlockNumber);
+            console.log('end (latest) block number: ', endBlockNumber);
+            console.log('current transaction index: ', currentTransactionIndex);
 
             // Just append to the txArchiveStreamFile
             let sep = "";
@@ -250,13 +255,13 @@ if(PARSE_BLOCKCHAIN) {
             for (currentBlockNumber; currentBlockNumber <= endBlockNumber; currentBlockNumber++) {
                 let block = await web3.eth.getBlock(currentBlockNumber);
                 (currentBlockNumber % 1000 == 0) && console.log(`Reached block: ${currentBlockNumber} (remaining blocks ${endBlockNumber - currentBlockNumber})`);
-                // console.log('currentBlockNumber: ', currentBlockNumber);
                 // console.log('Block: ', block);
-                if (block != null && block.transactions != null) {
-                    for(let j = 0; j <= block.transactions.length-1; j++) {
-                        const hash = block.transactions[j];
+                if (block != null && block.transactions != null && block.transactions.length > 0) {
+                    console.log(`Block ${currentBlockNumber}: Transactions Count: ${block.transactions.length}; Transactions Index: ${currentTransactionIndex}`);
+
+                    for(currentTransactionIndex; currentTransactionIndex <= block.transactions.length-1; currentTransactionIndex++) {
+                        const hash = block.transactions[currentTransactionIndex];
                         // console.log('hash: ', hash);
-                        console.log(`Block ${currentBlockNumber}: Transactions Count: ${block.transactions.length}`);
                         const txObj = await web3.eth.getTransaction(hash);
                         // console.log('txObj: ', txObj);
                         const tx = txObj; // save all the properties
@@ -272,6 +277,7 @@ if(PARSE_BLOCKCHAIN) {
                         if (!sep) { sep = ",\n" };
                     }
                 }
+                currentTransactionIndex = 0;
             }
         } catch (e) {
             console.log('ERROR: at block: ' + currentBlockNumber + ' :', e);
