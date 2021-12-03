@@ -267,34 +267,44 @@ if(PARSE_BLOCKCHAIN) {
             if (!txArchiveFileIsNew) { sep = ",\n" };
 
             for (currentBlockNumber; currentBlockNumber <= endBlockNumber; currentBlockNumber++) {
-                let block = await web3.eth.getBlock(currentBlockNumber);
-                (currentBlockNumber % 1000 == 0) && console.log(`Reached block: ${currentBlockNumber} (remaining blocks ${endBlockNumber - currentBlockNumber})`);
-                // console.log('Block: ', block);
-                if (block != null && block.transactions != null && block.transactions.length > 0) {
-                    console.log(`Block ${currentBlockNumber}: Transactions Count: ${block.transactions.length}; Transactions Index: ${currentTransactionIndex}`);
+                try {
+                    let block = await web3.eth.getBlock(currentBlockNumber);
+                    (currentBlockNumber % 1000 == 0) && console.log(`Reached block: ${currentBlockNumber} (remaining blocks ${endBlockNumber - currentBlockNumber})`);
+                    // console.log('Block: ', block);
+                    if (block != null && block.transactions != null && block.transactions.length > 0) {
+                        console.log(`Block ${currentBlockNumber}: Transactions Count: ${block.transactions.length}; Transactions Index: ${currentTransactionIndex}`);
 
-                    for(currentTransactionIndex; currentTransactionIndex <= block.transactions.length-1; currentTransactionIndex++) {
-                        const hash = block.transactions[currentTransactionIndex];
-                        // console.log('hash: ', hash);
-                        const txObj = await web3.eth.getTransaction(hash);
-                        // console.log('txObj: ', txObj);
-                        const tx = txObj; // save all the properties
-                        tx.timestamp = block.timestamp;
-                        tx.fromIdentity = ownerToIdentity[tx.from];
-                        tx.toIdentity = ownerToIdentity[tx.to];
-                        tx.inputFn = functionSelectorToName[tx.input.slice(0,10)];
+                        for(currentTransactionIndex; currentTransactionIndex <= block.transactions.length-1; currentTransactionIndex++) {
+                            const hash = block.transactions[currentTransactionIndex];
+                            // console.log('hash: ', hash);
+                            const txObj = await web3.eth.getTransaction(hash);
+                            // console.log('txObj: ', txObj);
+                            const tx = txObj; // save all the properties
+                            tx.timestamp = block.timestamp;
+                            tx.fromIdentity = ownerToIdentity[tx.from];
+                            tx.toIdentity = ownerToIdentity[tx.to];
+                            tx.inputFn = functionSelectorToName[tx.input.slice(0,10)];
 
-                        // TODO: inputVars
-                        txJsonStr = JSON.stringify(tx);
+                            // TODO: inputVars
+                            txJsonStr = JSON.stringify(tx);
 
-                        stream.write(sep + txJsonStr);
-                        if (!sep) { sep = ",\n" };
+                            stream.write(sep + txJsonStr);
+                            if (!sep) { sep = ",\n" };
+                        }
+                    }
+                    currentTransactionIndex = 0;
+                } catch(e) {
+                    if(e.message.includes('missing due to ledger jump to recent snapshot')) {
+                        console.log(`*** Block ${currentBlockNumber} missing due to ledger jump to recent snapshot or perhaps a forced restart of the Solana node. Continuing anyway. ***`)
+                    } else {
+                        console.log('ERROR: at block: ' + currentBlockNumber + ' :', e.message);
+                        console.log('Unkown error. Please report this to developers!')
+                        break;
                     }
                 }
-                currentTransactionIndex = 0;
             }
         } catch (e) {
-            console.log('ERROR: at block: ' + currentBlockNumber + ' :', e);
+            console.log('*** CRITICAL ERROR (Cleaning up and exiting) :', e);
         } finally {
             cleanup();
         }
