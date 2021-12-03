@@ -24,14 +24,20 @@ const { readFileSync,
         stat,
         truncateSync} = require('fs');
 
+const os = require('os');
+const fetch = require('node-fetch')
 const Web3 = require('web3');
 const Web3HttpProvider = require('web3-providers-http');
 const blockchainUrl = process.env.BLOCKCHAIN_URL;
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const web3 = new Web3(httpProvider);
+const pointNodeAPI = 'http://127.0.0.1:2468'
+const pointNodePath = '/app'
 const txArchiveDir = `${process.env.DATADIR}/blockchain`;
 const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
 const txArchiveFile = `${txArchiveDir}/txArchive.json`;
+const ownerToIdentityFile = `${txArchiveDir}/ownerToIdentity.json`;
+const ownerToPublicKeyFile = `${txArchiveDir}/ownerToPublicKey.json`;
 const nodeConfigFile = `${process.env.DATADIR}/config.json`;
 
 let ownerToIdentity = {};
@@ -43,11 +49,12 @@ let stream;
 let identity_contract_address;
 let storage_provider_registry_contract_address;
 let currentBlockNumber;
+let currentTransactionIndex;
 
 /*
 change DEFAULT_START_BLOCK & DEFAULT_END_BLOCK for manual testing
 set to any integer value within the current avilable block range
-NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber +1 <-to-> latest block' (see function below)
+NOTE setting both to 'undefined' will use 'meta.latestParsedBlockNumber (at meta.latestParsedTransactionIndex + 1) <-to-> latest block (at latest transaction)' (see function below)
 */
 const DEFAULT_START_BLOCK = undefined; // undefined means will read from last saved (or 0).
 const DEFAULT_END_BLOCK = undefined; // undefined means will go too last block found
@@ -65,14 +72,14 @@ init = () => {
         })
     }
 
-    stream = createWriteStream(txArchiveFile, {flags:'a'});
-    if (txArchiveFileIsNew) { stream.write('[\n') };
-
     // create the txArchiveDir directory if needed
     if (!existsSync(txArchiveDir)) {
         mkdirSync(txArchiveDir);
         console.log(`Directory ${txArchiveDir} created.`);
     }
+
+    stream = createWriteStream(txArchiveFile, {flags:'a'});
+    if (txArchiveFileIsNew) { stream.write('[\n') };
 
     // backup exisisting files, just in case!
     let ts = Date.now();
@@ -97,7 +104,10 @@ loadArchiveMeta = () => {
         'createdAt': Date.now(),
         'updatedAt': Date.now(),
         'networkId': config.network.web3_network_id,
-        'latestParsedBlockNumber': DEFAULT_START_BLOCK || -1,
+        'latestParsedBlockNumber': DEFAULT_START_BLOCK || 0,
+        'latestParsedTransactionIndex': 0,
+        'platformOS': os.platform(),
+        'releaseOS': os.release()
     }
 
     if(!existsSync(txArchiveMetaFile)) {
@@ -112,10 +122,11 @@ loadArchiveMeta = () => {
     return JSON.parse(readFileSync(txArchiveMetaFile));
 }
 
-updateArchiveMeta = (latestParsedBlockNumber = 0) => {
+updateArchiveMeta = (latestParsedBlockNumber = 0, latestParsedTransactionIndex = 0) => {
     metaData = loadArchiveMeta();
     metaData.updatedAt = Date.now();
     metaData.latestParsedBlockNumber = latestParsedBlockNumber;
+    metaData.latestParsedTransactionIndex = latestParsedTransactionIndex;
     jsonStr = JSON.stringify(metaData);
 
     writeFileSync(txArchiveMetaFile, jsonStr);
@@ -123,29 +134,39 @@ updateArchiveMeta = (latestParsedBlockNumber = 0) => {
 }
 
 loadIdentityAbi = () => {
-    const abiFileName = '/app/truffle/build/contracts/Identity.json';
+    const abiFileName = `${pointNodePath}/truffle/build/contracts/Identity.json`;
     return JSON.parse(readFileSync(abiFileName));
 }
 
 loadFnSelectorToName = () => {
     const abiFile = loadIdentityAbi();
-    // const methodIdentifiers = abiFile.evm.methodIdentifiers;
+    const methodIdentifiers = abiFile.evm.methodIdentifiers;
 
-    // for(method in methodIdentifiers){
-    //     functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
-    // }
-
-    const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
-    const fnCount = abiFile.ast.nodes[2].nodes.length;
-
-    for(let i=0; i<fnCount; i++){
-        let currentFn = contractFunctionDefinitions[i];
-        if(currentFn && currentFn.functionSelector) {
-            functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
-        }
+    for(method in methodIdentifiers){
+        functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
     }
 
+    // const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
+    // const fnCount = abiFile.ast.nodes[2].nodes.length;
+
+    // for(let i=0; i<fnCount; i++){
+    //     let currentFn = contractFunctionDefinitions[i];
+    //     if(currentFn && currentFn.functionSelector) {
+    //         functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
+    //     }
+    // }
+
     console.log('loaded functionSelectorToName: ', functionSelectorToName);
+}
+
+loadFnSelectorToNameForDeployedContract = async (handle, contractName) => {
+    const options = {headers: {'host': `${handle}.z`}}
+    let response = await fetch(`${pointNodeAPI}/v1/api/contract/load/${contractName}`, options);
+    let json = await response.json();
+
+    json.data.abi.forEach((currentFn) => {
+        functionSelectorToName[currentFn.signature] = currentFn.name;
+    })
 }
 
 loadOwnerToIdentityMapping = async () => {
@@ -153,23 +174,29 @@ loadOwnerToIdentityMapping = async () => {
     const abiFile = loadIdentityAbi();
     const abi = abiFile.abi;
     const identityInstance = new web3.eth.Contract(abi, identity_contract_address);
+    let ownerToPublicKey = {};
     let identityIndex = 0;
 
     while(true) {
         try{
             const handle = await identityInstance.methods.identityList(identityIndex).call();
             const owner = await identityInstance.methods.getOwnerByIdentity(handle).call();
+            const publicKey = await identityInstance.methods.getCommPublicKeyByIdentity(handle).call();
             ownerToIdentity[owner] = handle;
+            ownerToPublicKey[owner] = publicKey;
             identityIndex++;
             // Get ikvs starting with 'zweb/contracts/address/' and map the address to the name
             try{
                 // assuming that the contract address is the first key in the ikvList
                 const contractKey = await identityInstance.methods.ikvList(handle, 0).call();
+
                 if(contractKey.startsWith('zweb/contracts/address')) {
                     // the owner deployed a contract so we add to the mapping
                     const contractName = contractKey.replace('zweb/contracts/address/', '');
                     const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
                     ownerToIdentity[contractAddress] = contractName + ' Contract';
+                    // now load the function signatures to the function names for the deployed contract
+                    await loadFnSelectorToNameForDeployedContract(handle, contractName);
                 }
             } catch (e) {
                 console.log(`Identity ${handle} has not deployed a contract.`);
@@ -185,19 +212,25 @@ loadOwnerToIdentityMapping = async () => {
     ownerToIdentity[storage_provider_registry_contract_address] = "Storage Provider Registry Contract";
 
     console.log('loaded ownerToIdentity: ', ownerToIdentity);
+    console.log('loaded ownerToPublicKey: ', ownerToPublicKey);
+
+    // save identities to disk
+    writeFileSync(ownerToIdentityFile, JSON.stringify(ownerToIdentity));
+    writeFileSync(ownerToPublicKeyFile, JSON.stringify(ownerToPublicKey));
 }
 
 cleanup = () => {
-    let latestParsedBlockNumber = currentBlockNumber - 1;
+    let latestParsedBlockNumber = currentBlockNumber;
+    let latestParsedTransactionIndex = currentTransactionIndex - 1;
 
     stream.write('\n]')
     stream.end();
 
-    updateArchiveMeta(latestParsedBlockNumber);
+    updateArchiveMeta(latestParsedBlockNumber, latestParsedTransactionIndex);
 }
 
 exitHandler = (options, exitCode) => {
-    console.log('App is exiting. Time to clean up! Current Block Number: ', currentBlockNumber);
+    console.log('App is exiting. Time to clean up! Current Block Number: ', currentBlockNumber, ' Current Transaction Index: ', currentTransactionIndex);
 
     cleanup();
 
@@ -220,14 +253,15 @@ if(PARSE_BLOCKCHAIN) {
             // Note: DEFAULT_START_BLOCK & DEFAULT_END_BLOCK are essentially used during development / testing
             // see const definitions and note at top of this script for details
             const endBlockNumber = DEFAULT_END_BLOCK || latestBlock.number;
-            const startBlockNumber = DEFAULT_START_BLOCK || meta.latestParsedBlockNumber + 1;
-            currentBlockNumber = startBlockNumber;
+            currentBlockNumber = DEFAULT_START_BLOCK || meta.latestParsedBlockNumber;
+            currentTransactionIndex = meta.latestParsedTransactionIndex + 1;
 
             await loadOwnerToIdentityMapping(); // populates ownerToIdentity
             loadFnSelectorToName(); // populates functionSelectorToName
 
-            console.log('start block number: ', startBlockNumber);
-            console.log('end block number: ', endBlockNumber);
+            console.log('start (current) block number: ', currentBlockNumber);
+            console.log('end (latest) block number: ', endBlockNumber);
+            console.log('current transaction index: ', currentTransactionIndex);
 
             // Just append to the txArchiveStreamFile
             let sep = "";
@@ -235,33 +269,44 @@ if(PARSE_BLOCKCHAIN) {
             if (!txArchiveFileIsNew) { sep = ",\n" };
 
             for (currentBlockNumber; currentBlockNumber <= endBlockNumber; currentBlockNumber++) {
-                let block = await web3.eth.getBlock(currentBlockNumber);
-                (currentBlockNumber % 1000 == 0) && console.log(`Reached block: ${currentBlockNumber} (remaining blocks ${endBlockNumber - currentBlockNumber})`);
-                // console.log('currentBlockNumber: ', currentBlockNumber);
-                // console.log('Block: ', block);
-                if (block != null && block.transactions != null) {
-                    for(let j = 0; j <= block.transactions.length-1; j++) {
-                        const hash = block.transactions[j];
-                        // console.log('hash: ', hash);
-                        console.log(`Block ${currentBlockNumber}: Transactions Count: ${block.transactions.length}`);
-                        const txObj = await web3.eth.getTransaction(hash);
-                        // console.log('txObj: ', txObj);
-                        const tx = (({ blockNumber, hash, from, to, value, input }) => ({ blockNumber, hash, from, to, value, input }))(txObj);
-                        tx.timestamp = block.timestamp;
-                        tx.fromIdentity = ownerToIdentity[tx.from];
-                        tx.toIdentity = ownerToIdentity[tx.to];
-                        tx.inputFn = functionSelectorToName[tx.input.slice(0,10)];
+                try {
+                    let block = await web3.eth.getBlock(currentBlockNumber);
+                    (currentBlockNumber % 1000 == 0) && console.log(`Reached block: ${currentBlockNumber} (remaining blocks ${endBlockNumber - currentBlockNumber})`);
+                    // console.log('Block: ', block);
+                    if (block != null && block.transactions != null && block.transactions.length > 0) {
+                        console.log(`Block ${currentBlockNumber}: Transactions Count: ${block.transactions.length}; Transactions Index: ${currentTransactionIndex}`);
 
-                        // TODO: inputVars
-                        txJsonStr = JSON.stringify(tx);
+                        for(currentTransactionIndex; currentTransactionIndex <= block.transactions.length-1; currentTransactionIndex++) {
+                            const hash = block.transactions[currentTransactionIndex];
+                            // console.log('hash: ', hash);
+                            const txObj = await web3.eth.getTransaction(hash);
+                            // console.log('txObj: ', txObj);
+                            const tx = txObj; // save all the properties
+                            tx.timestamp = block.timestamp;
+                            tx.fromIdentity = ownerToIdentity[tx.from];
+                            tx.toIdentity = ownerToIdentity[tx.to];
+                            tx.inputFn = functionSelectorToName[tx.input.slice(0,10)];
 
-                        stream.write(sep + txJsonStr);
-                        if (!sep) { sep = ",\n" };
+                            // TODO: inputVars
+                            txJsonStr = JSON.stringify(tx);
+
+                            stream.write(sep + txJsonStr);
+                            if (!sep) { sep = ",\n" };
+                        }
+                    }
+                    currentTransactionIndex = 0;
+                } catch(e) {
+                    if(e.message.includes('missing due to ledger jump to recent snapshot')) {
+                        console.log(`*** Block ${currentBlockNumber} missing due to ledger jump to recent snapshot or perhaps a forced restart of the Solana node. Continuing anyway. ***`)
+                    } else {
+                        console.log('ERROR: at block: ' + currentBlockNumber + ' :', e.message);
+                        console.log('Unkown error. Please report this to developers!')
+                        break;
                     }
                 }
             }
         } catch (e) {
-            console.log('ERROR: at block: ' + currentBlockNumber + ' :', e);
+            console.log('*** CRITICAL ERROR (Cleaning up and exiting) :', e);
         } finally {
             cleanup();
         }
