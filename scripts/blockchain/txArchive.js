@@ -140,21 +140,21 @@ loadIdentityAbi = () => {
 
 loadFnSelectorToName = () => {
     const abiFile = loadIdentityAbi();
-    // const methodIdentifiers = abiFile.evm.methodIdentifiers;
+    const methodIdentifiers = abiFile.evm.methodIdentifiers;
 
-    // for(method in methodIdentifiers){
-    //     functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
-    // }
-
-    const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
-    const fnCount = abiFile.ast.nodes[2].nodes.length;
-
-    for(let i=0; i<fnCount; i++){
-        let currentFn = contractFunctionDefinitions[i];
-        if(currentFn && currentFn.functionSelector) {
-            functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
-        }
+    for(method in methodIdentifiers){
+        functionSelectorToName[`0x${methodIdentifiers[method]}`] = method;
     }
+
+    // const contractFunctionDefinitions = abiFile.ast.nodes[2].nodes;
+    // const fnCount = abiFile.ast.nodes[2].nodes.length;
+
+    // for(let i=0; i<fnCount; i++){
+    //     let currentFn = contractFunctionDefinitions[i];
+    //     if(currentFn && currentFn.functionSelector) {
+    //         functionSelectorToName[`0x${currentFn.functionSelector}`] = currentFn.name;
+    //     }
+    // }
 
     console.log('loaded functionSelectorToName: ', functionSelectorToName);
 }
