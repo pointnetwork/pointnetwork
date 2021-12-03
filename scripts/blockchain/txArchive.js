@@ -31,6 +31,8 @@ const Web3HttpProvider = require('web3-providers-http');
 const blockchainUrl = process.env.BLOCKCHAIN_URL;
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const web3 = new Web3(httpProvider);
+const pointNodeAPI = 'http://127.0.0.1:2468'
+const pointNodePath = '/app'
 const txArchiveDir = `${process.env.DATADIR}/blockchain`;
 const txArchiveMetaFile = `${txArchiveDir}/txArchiveMeta.json`;
 const txArchiveFile = `${txArchiveDir}/txArchive.json`;
@@ -132,7 +134,7 @@ updateArchiveMeta = (latestParsedBlockNumber = 0, latestParsedTransactionIndex =
 }
 
 loadIdentityAbi = () => {
-    const abiFileName = '/app/truffle/build/contracts/Identity.json';
+    const abiFileName = `${pointNodePath}/truffle/build/contracts/Identity.json`;
     return JSON.parse(readFileSync(abiFileName));
 }
 
@@ -159,7 +161,7 @@ loadFnSelectorToName = () => {
 
 loadFnSelectorToNameForDeployedContract = async (handle, contractName) => {
     const options = {headers: {'host': `${handle}.z`}}
-    let response = await fetch(`http://127.0.0.1:2468/v1/api/contract/load/${contractName}`, options);
+    let response = await fetch(`${pointNodeAPI}/v1/api/contract/load/${contractName}`, options);
     let json = await response.json();
 
     json.data.abi.forEach((currentFn) => {
