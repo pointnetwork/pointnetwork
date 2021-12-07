@@ -42,6 +42,7 @@ contract PointSocial  {
     mapping(uint => Like[]) likesByPost;
 
     constructor() {
+        // Posts
         Post[14] memory _posts = [Post({
             id: 1,
             from: 0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e,
@@ -85,7 +86,7 @@ contract PointSocial  {
             image: 0x0000000000000000000000000000000000000000000000000000000000000000,
             createdAt: 1634237758,
             likesCount: 0,
-            commentsCount: 3
+            commentsCount: 1
         }),
         Post({
             id: 6,
@@ -170,46 +171,46 @@ contract PointSocial  {
         })];
 
         for (uint i = 0; i < 14; i++) {
+            _postIds.increment();
             posts.push(_posts[i]);
             postsByOwner[_posts[i].from].push(_posts[i]);
             postById[_posts[i].id] = _posts[i];
         }
 
-        //comments post 1
+        // comment 1 on post 1
+        _commentIds.increment();
         Comment memory comment1 = Comment({
             id: 1,
             from: 0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e,
             contents: 0xb87a664b88b76657f5e91ca6a50af72c2d27d2949fc85fd07528fdf0298d5953,
             createdAt: 1634132804
         });
-
         commentsByPost[1].push(comment1);
-        commentById[comment1.id] = comment1;
-        commentsByOwner[comment1.from].push(comment1);
+        // commentById[comment1.id] = comment1;
+        // commentsByOwner[comment1.from].push(comment1);
 
-        // comments post 6
-        Comment memory comment2 = Comment({
-            id: 3,
-            from: 0x8690481754AaFF7f6cC51EeA188a1903C5E451b4,
-            contents: 0x873a1dcee5a00bb350f24e0cdfcbcc1d34144abe8dde37a5ff67ed3a1f5cd534,
-            createdAt: 1634294379
-        });
+        // comment 2 on post 5
+        // _commentIds.increment();
+        // commentsByPost[5].push(Comment({
+        //     id: 2,
+        //     from: 0xB183c65f61BE14C77e31079A685ddeDEfF9937Ad,
+        //     contents: 0xd8f4902ce8afaab5381cca38732a6cc4b784dfae7735c0efdcc1ed58ab70fcad,
+        //     createdAt: 1634284869
+        // }));
+        // // commentById[comment2.id] = comment2;
+        // // commentsByOwner[comment2.from].push(comment2);
 
-        commentsByPost[6].push(comment2);
-        commentById[comment2.id] = comment2;
-        commentsByOwner[comment2.from].push(comment2);
 
-        // comments post 5
-        Comment memory comment3 = Comment({
-            id: 2,
-            from: 0xB183c65f61BE14C77e31079A685ddeDEfF9937Ad,
-            contents: 0xd8f4902ce8afaab5381cca38732a6cc4b784dfae7735c0efdcc1ed58ab70fcad,
-            createdAt: 1634284869
-        });
-
-        commentsByPost[5].push(comment3);
-        commentById[comment3.id] = comment3;
-        commentsByOwner[comment3.from].push(comment3);
+        // comment 3 on post 6
+        // _commentIds.increment();
+        // commentsByPost[6].push(Comment({
+        //     id: 3,
+        //     from: 0x8690481754AaFF7f6cC51EeA188a1903C5E451b4,
+        //     contents: 0x873a1dcee5a00bb350f24e0cdfcbcc1d34144abe8dde37a5ff67ed3a1f5cd534,
+        //     createdAt: 1634294379
+        // }));
+        // commentById[comment3.id] = comment3;
+        // commentsByOwner[comment3.from].push(comment3);
     }
 
     // Post data functions
