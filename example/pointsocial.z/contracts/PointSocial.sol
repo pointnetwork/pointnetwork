@@ -43,7 +43,7 @@ contract PointSocial  {
 
     constructor() {
         // Posts
-        Post[14] memory _posts = [Post({
+        posts.push(Post({
             id: 1,
             from: 0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e,
             contents: 0x0a06675482e75ca68ff9624b72f49ca547247ddfe108ef35dbe60a42f0b61a10,
@@ -51,8 +51,8 @@ contract PointSocial  {
             createdAt: 1634132287,
             likesCount: 2,
             commentsCount: 1
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 2,
             from: 0x2d5360AAb543E92efc40B438b813f0FD5fa64620,
             image: 0x0000000000000000000000000000000000000000000000000000000000000000,
@@ -60,8 +60,8 @@ contract PointSocial  {
             createdAt: 1634221707,
             likesCount: 0,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 3,
             from: 0x2d5360AAb543E92efc40B438b813f0FD5fa64620,
             contents: 0x921317564aafceb78d5b16dd89949367ba437239a9a19d91dff9d8f4a3107ea7,
@@ -69,8 +69,8 @@ contract PointSocial  {
             createdAt: 1634222732,
             likesCount: 0,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 4,
             from: 0x574318Fc15C6Db801dC4719D4f746acF79FfC3cf,
             contents: 0x6cf5c64617ed2471496447abd8b905c620046c732f00e965f287421dfb94d91b,
@@ -78,8 +78,8 @@ contract PointSocial  {
             createdAt: 1634230250,
             likesCount: 0,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 5,
             from: 0xF003B0d9ABefd8B8Dea98a003802Baa60b69A09e,
             contents: 0xfd41d877049c14922ac693b7bda78e7d654f8e3c2349a2bebdcb8d760841035c,
@@ -87,8 +87,8 @@ contract PointSocial  {
             createdAt: 1634237758,
             likesCount: 0,
             commentsCount: 1
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 6,
             from: 0xB183c65f61BE14C77e31079A685ddeDEfF9937Ad,
             contents: 0x76faf88b7826ce189618d5f47a9f2cbd5e55e3955e1d74d1214c3fb7a4920690,
@@ -96,8 +96,8 @@ contract PointSocial  {
             createdAt: 1634285355,
             likesCount: 1,
             commentsCount: 1
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 7,
             from: 0x8834C336ea54f164fE7D797B5aa2d0Cc65c3EF3a,
             contents: 0x232e2460af818d3b74b09442a231ddafc42ffa8f18be79635b5914d30aa4c891,
@@ -105,8 +105,8 @@ contract PointSocial  {
             createdAt: 1634288596,
             likesCount: 4,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 8,
             from: 0x8690481754AaFF7f6cC51EeA188a1903C5E451b4,
             contents: 0x52695c9ee40d6ad09b765bd0bd892ca78a7047eca22b208d15d5ae74f60badfa,
@@ -114,8 +114,8 @@ contract PointSocial  {
             createdAt: 1634293825,
             likesCount: 0,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 9,
             from: 0x8690481754AaFF7f6cC51EeA188a1903C5E451b4,
             contents: 0x4c323b6cbe739a806c81b824a2ac8fcd80c5ea20f1062b4a41d4ac6e50f3ef04,
@@ -123,8 +123,8 @@ contract PointSocial  {
             createdAt: 1634294254,
             likesCount: 3,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 10,
             from: 0xEc8bAaaAf82170f06c6E7e937a7e37c1DAffA45c,
             contents: 0xb0936212a42ae1bcb48204eaf01975988e9948b0721fe169766629088fd399ca,
@@ -132,8 +132,8 @@ contract PointSocial  {
             createdAt: 1634362182,
             likesCount: 1,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 11,
             from: 0xb17315291626773aeb5F6B4B4d4FAaacf4B5bc6a,
             contents: 0xb24b8538401c033fa3d1c57db7e871c69f7bd4fa3c1a7fd622cc6de1e6cb7925,
@@ -141,8 +141,8 @@ contract PointSocial  {
             createdAt: 1634364174,
             likesCount: 0,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 12,
             from: 0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e,
             contents: 0xc623ff98cfa1504709cfb6be7a6b3e1ef383781accacbba8bc365df9bfa0869f,
@@ -150,8 +150,8 @@ contract PointSocial  {
             createdAt: 1634574080,
             likesCount: 0,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 13,
             from: 0xCCb4D3509443B7b6Fe1e2c27FB61dC3D635E3088,
             contents: 0x6f7eb7a9eed0eb4e8660144071820fe18e4597c647af6fdca5a14063b08e0f6c,
@@ -159,8 +159,8 @@ contract PointSocial  {
             createdAt: 1635428005,
             likesCount: 0,
             commentsCount: 0
-        }),
-        Post({
+        }));
+        posts.push(Post({
             id: 14,
             from: 0x6535DfCAe615068e58d3B96F85b72BD738234e02,
             contents: 0x2eaa56ca1b61daea9a3a13ac9f37ade2859c292d003f45546a2df3b0ec262a86,
@@ -168,46 +168,47 @@ contract PointSocial  {
             createdAt: 1635530735,
             likesCount:  0,
             commentsCount: 0
-        })];
+        }));
 
         for (uint i = 0; i < 14; i++) {
             _postIds.increment();
-            posts.push(_posts[i]);
-            postsByOwner[_posts[i].from].push(_posts[i]);
-            postById[_posts[i].id] = _posts[i];
+            postsByOwner[posts[i].from].push(posts[i]);
+            postById[posts[i].id] = posts[i];
         }
 
-        Comment[3] memory comments = [Comment({
+        Comment memory comment1 = Comment({
             id: 1,
             from: 0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e,
             contents: 0xb87a664b88b76657f5e91ca6a50af72c2d27d2949fc85fd07528fdf0298d5953,
             createdAt: 1634132804
-        }), Comment({
+        });
+        Comment memory comment2 = Comment({
             id: 2,
             from: 0xB183c65f61BE14C77e31079A685ddeDEfF9937Ad,
             contents: 0xd8f4902ce8afaab5381cca38732a6cc4b784dfae7735c0efdcc1ed58ab70fcad,
             createdAt: 1634284869
-        }), Comment({
+        });
+        Comment memory comment3 = Comment({
             id: 3,
             from: 0x8690481754AaFF7f6cC51EeA188a1903C5E451b4,
             contents: 0x873a1dcee5a00bb350f24e0cdfcbcc1d34144abe8dde37a5ff67ed3a1f5cd534,
             createdAt: 1634294379
-        })];
+        });
 
         // comment 1 on post 1
-        commentsByPost[1].push(comments[0]);
-        commentById[comments[0].id] = comments[0];
-        commentsByOwner[comments[0].from].push(comments[0]);
+        commentsByPost[1].push(comment1);
+        commentById[comment1.id] = comment1;
+        commentsByOwner[comment1.from].push(comment1);
 
         // comment 2 on post 5
-        commentsByPost[5].push(comments[1]);
-        commentById[comments[1].id] = comments[1];
-        commentsByOwner[comments[1].from].push(comments[1]);
+        commentsByPost[5].push(comment2);
+        commentById[comment2.id] = comment2;
+        commentsByOwner[comment2.from].push(comment2);
 
         // comment 3 on post 6
-        commentsByPost[6].push(comments[2]);
-        commentById[comments[2].id] = comments[2];
-        commentsByOwner[comments[2].from].push(comments[2]);
+        commentsByPost[6].push(comment3);
+        commentById[comment3.id] = comment3;
+        commentsByOwner[comment3.from].push(comment3);
 
         for (uint i = 0; i < 3; i++) {
             _commentIds.increment();
