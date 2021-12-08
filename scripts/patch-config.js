@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const {existsSync, writeFileSync, unlinkSync, mkdirSync, readFileSync, copyFileSync} = require('fs');
+const {execSync} = require('child_process');
 const path = require('path');
 const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
@@ -11,6 +12,11 @@ const contractAddresses = {
     Migrations: process.env.CONTRACT_ADDRESS_MIGRATIONS,
     StorageProviderRegistry: process.env.CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY,
 };
+
+console.info(
+    'Patching Subprovider rpc',
+    execSync('sed -i \'s/timeout: 20000,/timeout: process.env.SUBPROVIDER_RPC_TIMEOUT || 120000,/g\' /app/node_modules/\\@trufflesuite/web3-provider-engine/subproviders/rpc.js').toString()
+);
 
 const lockfiles = ['/data/point.pid', '/data/data/db/LOCK'];
 
