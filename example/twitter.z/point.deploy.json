@@ -2,32 +2,6 @@
   "version": 1,
   "target": "twitter.z",
   "keyvalue": {
-    "tweet0": {
-      "contract_send": "Twitter.tweet(contents)",
-      "storage[contents]": {
-        "blob": "Point Network is awesome!",
-        "type": "text/plain"
-      }
-    },
-    "tweet0like1": {
-      "contract_send": "Twitter.like(tweet_id)",
-      "tweet_id": 0
-    },
-    "tweet0like2": {
-      "contract_send": "Twitter.like(tweet_id)",
-      "tweet_id": 0
-    },
-    "tweet0like3": {
-      "contract_send": "Twitter.like(tweet_id)",
-      "tweet_id": 0
-    },
-    "tweet1": {
-      "contract_send": "Twitter.tweet(contents)",
-      "storage[contents]": {
-        "blob": "Another interesting Tweet",
-        "type": "text/plain"
-      }
-    }
   },
   "contracts": [
     "Twitter"
