@@ -1,40 +1,5 @@
 const Identity = artifacts.require("./Identity.sol");
 
-module.exports = async function(deployer) {
-    await deployer.deploy(Identity);
-    identityInstance = await Identity.deployed();
-
-    await identityInstance.register("zengarden", "0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e", "0x4b0ac48ed8e7709b1ca749f32a64e9cb32c9e8efa086369da7f389f640f59f64", "0xd98ce61cf8fcefa11f44eecac8a0e4591402ab1210cda9a323348d5f20307e4a");
-    await identityInstance.register("explorer", "0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e", "0x4b0ac48ed8e7709b1ca749f32a64e9cb32c9e8efa086369da7f389f640f59f64", "0xd98ce61cf8fcefa11f44eecac8a0e4591402ab1210cda9a323348d5f20307e4a");
-    // await identityInstance.register("twitter", "0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e", "0x4b0ac48ed8e7709b1ca749f32a64e9cb32c9e8efa086369da7f389f640f59f64", "0xd98ce61cf8fcefa11f44eecac8a0e4591402ab1210cda9a323348d5f20307e4a");
-    // await identityInstance.register("blog", "0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e", "0x4b0ac48ed8e7709b1ca749f32a64e9cb32c9e8efa086369da7f389f640f59f64", "0xd98ce61cf8fcefa11f44eecac8a0e4591402ab1210cda9a323348d5f20307e4a");
-    // await identityInstance.register("pointsocial", "0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e", "0x4b0ac48ed8e7709b1ca749f32a64e9cb32c9e8efa086369da7f389f640f59f64", "0xd98ce61cf8fcefa11f44eecac8a0e4591402ab1210cda9a323348d5f20307e4a");
-    await identityInstance.register("hello", "0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e", "0x4b0ac48ed8e7709b1ca749f32a64e9cb32c9e8efa086369da7f389f640f59f64", "0xd98ce61cf8fcefa11f44eecac8a0e4591402ab1210cda9a323348d5f20307e4a");
-    await identityInstance.register("email", "0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e", "0x4b0ac48ed8e7709b1ca749f32a64e9cb32c9e8efa086369da7f389f640f59f64", "0xd98ce61cf8fcefa11f44eecac8a0e4591402ab1210cda9a323348d5f20307e4a");
-    await identityInstance.register("finalanswer", "0x68002708ECc34CcD490e1859Fa8652Ba9dDD29D6", "0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce", "0xe1e032c91d4c8fe6bab1f198871dbafb8842f073acff8ee9b822f748b180d7eb");
-    await identityInstance.register("ubuntutest", "0x574318Fc15C6Db801dC4719D4f746acF79FfC3cf","0x9d6b0f937680809a01639ad1ae4770241c7c8a0ded490d2f023669f18c6d744b", "0x5f04837d78fa7a656419f98d73fc1ddaac1bfdfca9a244a2ee128737a186da6e");
-    await identityInstance.register("Slothnado", "0x2d5360AAb543E92efc40B438b813f0FD5fa64620", "0xdd5a0873f998fff6b00052b51d1662f2993b603d9837da33cbc281a06b9f3b55", "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe");
-    await identityInstance.register("Sina", "0x8834C336ea54f164fE7D797B5aa2d0Cc65c3EF3a", "0x8aac7b9c9c31d9b49435ec249d97b15c2777b684cdecffbd095a932b17d4ec93", "0x3c7b3a492a09eb9dce7397ade8a19fa5c439ac7de85d7c610a2301cb4e59fef9");
-    await identityInstance.register("AnupamSingh", "0xF003B0d9ABefd8B8Dea98a003802Baa60b69A09e", "0x2e65584b959c9debff200739fd2de23aa8637be7ae94321b31f0fe79a93e04d3", "0xe636e87a00af722667430e64005c4107ab615aa02d5391ef443a20ef6b7cc0c4");
-    await identityInstance.register("NitinKumar", "0xb17315291626773aeb5F6B4B4d4FAaacf4B5bc6a", "0xd1e75edad42c6aa2e83bfafec5f00ffffc0e56236b7122007d03a6bf11288383", "0x18def7c947b87d227b52b153b30363c0cf437aac0d3cd647d4ff49d9966e7fe9");
-    await identityInstance.register("bnc", "0xB183c65f61BE14C77e31079A685ddeDEfF9937Ad", "0xdda52315c2b57684ad3b720610b8fb549a990a315f5b3d7bbcdf1f07074b8428", "0xaeda6acd284734bf6de01a31c77339e5ce886639c10acb6f79ea01925e5ca3d5");
-    await identityInstance.register("Enaliel", "0x8690481754AaFF7f6cC51EeA188a1903C5E451b4", "0x1c992a15cc1bc258d7e36613ad81f39034918684b8528f2a6abd21b2fdea181f", "0x08dcafa795c84720f746e24729a2c37821fc17de000d513adbc98b65fb45f9ad");
-    await identityInstance.register("ubuntutest2", "0x651c21909Cfb2ceB5Bb6aa8fd8d7b62570CbcCa0", "0x5599aa288c2f86c62ba56e169abb63f4094a47ebf55b6fbd124312fedcfeceb2", "0xa4bb1a5e9d07961026af956446ee3754415c44c2ec0cddaac23ab1e456344b69");
-    await identityInstance.register("helloyoutube", "0xAAe915e21d92f084756e5243E5F70E717451238B", "0xee539aef57658800bf11f0d575d20d5dcb5f5f8aa9bb006cabcfe414d421024a", "0xeb3e7c0ecd1489d8415dd0f6d9e0a287a82b2a59d13d6d4c5ef94710201d7e32");
-    await identityInstance.register("drodriguezavila8", "0xEc8bAaaAf82170f06c6E7e937a7e37c1DAffA45c", "0x8a2b7a899f1d40c51db97401f0c88ee7680b2349b7a642a07266efa2af27f42e", "0xac741e60e0c8e4a234f8293b9f122c0a4e05548727239f0d9ad711689559e90e");
-    await identityInstance.register("C3jotarov", "0x53a83acf5202C1a8dF60aA21f0695817aa850C5B", "0x5350566029011f3b56422bbe7a50ff5341ff7f1db738dff8a6aa9e76ea3b9348", "0xb2b787ee46f9f49abcc4e3cfe45db4c28ae04b1b5c13622a70f94ff5396bce04");
-    await identityInstance.register("testoct18n1", "0xb3f46CF4C3aBDC952DCfd9270CeB9FF9CE0aDb9F", "0x239fa9b7ca2f4fead86def603502f83082831f88ab70d4302215200f927e8934", "0xe12732e0ddf4d0d00c184eb26bcd5a667401fad40f971453f4c0c4f73d7b127c");
-    await identityInstance.register("jensendarren", "0x1F32b3Eb1AE217155C9d915f51079d14e562941e", "0xbd664b4c750a3fe8b07b7eb81dbeda3a16efe39e6ee8d1495d2f39074c2670fc", "0x2a778806ed733f3e56eb45111baa794cb08fffc92a126698f28a9ddda951901f");
-    await identityInstance.register("test5", "0x973d0dBE97Acd4E313cd06D25f9321D01305fE87", "0x7535efe1d1ec66321545c43d2d706b9932ae416d145ba1c28f7adba3c77dbe2f", "0x70ab7d0ddf3d9acfcbb7e922f067fd1194d3efb3cbe4ebd68d7dbda19c60f208");
-    await identityInstance.register("arweavesam", "0x64c4240e082879C7B8CC39a1bF0f7801321B18cA", "0x319cc3981837b7dc79c96cb66c6d42893d4ad8b048a1991b8d69ff63f874eee8", "0x807d620f9bc38865db1a33e803e78db2d449f082b40e7c98e542aab7377ec831");
-    await identityInstance.register("ubuntoo", "0x78C16aF63EA147c5Ca60604E5f4bFE2CE7c46c2A", "0xf81ff7a87654ded8572aff280debc450be2ba325f7e9783ef576f1611ced7822", "0x0da08adcae4da2ed5b2014830447e479671b5b93ec16e01da1edce389b4d475f");
-    await identityInstance.register("alex", "0xB780b13D48DF86f123Ba09b58Fe9747B00E9babd", "0x8f50eef03fefbfd1bc3f27e8676e7855dc48f6b45517f2781ac4a76820c2fec1", "0xa80d4089a15f6db45c0192fc00d66e6008f0be71c143d8c5aa4ae37ab90603ca");
-    await identityInstance.register("meowmeow30", "0x94B1293F8CEC91738D307cD88b8f7Df535cE3373", "0xd379e2176297bd3fe31f14c8866556fb25e00058ba04a003593ae48f89ada9c2", "0xa68ff790bab63c551d1b6c2cc7e13e62f89d098eb484bf46e9ce24fc83d176d1");
-    await identityInstance.register("anonymous", "0x766b8860A5e6B4dC3d915734454238Cd5ec810e0", "0x19adc8bb761168fca046608caebe91d07f5b8bb86f1b243815f5a4be4c7991fd", "0x3bdade11c2872cbf22df6b41af7c6f21cefa6d9b0d8776e90939a27cff55733d");
-    await identityInstance.register("p4ul17", "0xe235C8145894c1bA934B82b1C51F8Ccc6f344D72", "0x498c776b3dc033697a8f07f735179e34dd89b3ed7c62d90ede5df813f3d3da63", "0xfe98f7f0a93dba545caccd556cca24faf1cffc1f4da594885ea808c7d2dcd965");
-    await identityInstance.register("darwin", "0xbFbb3E7A5A2d514ad7022bB56E8Ac354A6524BBb", "0x42914314df7585021dc6d65abc37602fce1332e8baf78778df997ff5c7026368", "0xfab79b79be2b4d8134ec86f03af36075c10777d15d1097787e7c2477598eba88");
-    await identityInstance.register("pemulis", "0xCCb4D3509443B7b6Fe1e2c27FB61dC3D635E3088", "0x8a16715c38842e09a244864b4eccc87fbe925d955e33162321a83d31011465e0", "0xa2d643c928f807c7cbd5d725ca55ecfe15ef60397bc76acbe26883d843d8ed1e");
-    await identityInstance.register("NazdarKluku", "0x6535DfCAe615068e58d3B96F85b72BD738234e02", "0xb927574077f2c427e8d338c3be057fd1fb013750ced713e80249c0733576f623", "0xa32d187c828923622750d218491a1dee01625f1526892d7e8644910aa5fb9a12");
-    await identityInstance.register("secondvm", "0x54eD443839d09B064C5C16e6B199b99D955Bb1aA", "0xd1600842ce30f358e37684e709b9746f3d620f521a8b8abf67142934a319c20a", "0x0188db412a44b3f36c89491f143df2a5d5f0d5e1d8e5a1501667873fcbcd455b");
-    await identityInstance.register("demo", "0xaD83f44e0D9B4013df24CDAD020bf6Eef98d9783", "0xb6d3e0cac9c0e218e49f9d7e5317ffe781330d92f14f67136d82be103615c1ee", "0x3f9e091ab195f9294b50438870d8a6e1b22b2d8911b18dda60714e059918a445");
+module.exports = function(deployer) {
+    deployer.deploy(Identity);
 }

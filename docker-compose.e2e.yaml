@@ -42,7 +42,7 @@ services:
       - blockchain_node
     deploy:
       restart_policy:
-        condition: none
+        condition: 'no'
     volumes:
       - ./truffle/migrations:/truffle/migrations:ro
       - ./truffle/contracts:/truffle/contracts:ro
