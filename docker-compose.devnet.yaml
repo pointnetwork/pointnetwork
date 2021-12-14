@@ -1,8 +1,28 @@
 version: '3.9'
 
 services:
+  postgres:
+    container_name: postgres
+    image: postgres:14.0
+    command: postgres -c 'max_connections=1000'
+    environment:
+      POSTGRES_DB: neon-db
+      POSTGRES_USER: neon-proxy
+      POSTGRES_PASSWORD: neon-proxy-pass
+    hostname: postgres
+    healthcheck:
+      test: [ CMD-SHELL, "pg_isready" ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 5s
+    expose:
+      - "5432"
+    networks:
+      - net
+
   blockchain_provider:
-    image: neonlabsorg/proxy:v0.2.1
+    image: neonlabsorg/proxy:v0.4.1
     container_name: pointnetwork_blockchain_provider
     healthcheck:
       test: |
@@ -14,32 +34,49 @@ services:
       timeout: 5s
       retries: 4
       start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
-      - CONFIG=devnet
-      - SOLANA_URL=https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: neon-db
+      POSTGRES_USER: neon-proxy
+      POSTGRES_PASSWORD: neon-proxy-pass
+      NEON_CLI_TIMEOUT: 60
+      EXTRA_ARGS: '--num-worker 1'
+      NEW_USER_AIRDROP_AMOUNT: 0
+      CONFIG: devnet
     ports:
       - 127.0.0.1:9090:9090
+    expose:
+      - "9090"
+    networks:
+      - net
     volumes:
       - $BLOCKCHAIN_KEYSTORE:/root/.config/solana
       - ./scripts/handle-neon-proxy.sh:/opt/proxy/handle-run-proxy.sh:ro
     entrypoint: /opt/proxy/handle-run-proxy.sh
+    command: ''
 
-  contract_deployer:
-    image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
-    container_name: pointnetwork_contract_deployer
-    depends_on:
-      blockchain_provider:
-        condition: service_healthy
-    restart: 'no'
-    volumes:
-      - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
-      - ./truffle/migrations:/truffle/migrations:ro
-      - ./truffle/contracts:/truffle/contracts:ro
-      - $DEPLOYER_KEYSTORE:/.keystore:ro
-      - shared_contracts:/build:rw
-    command: deploy --network $DEPLOYER_ENV
-    env_file:
-      - .env.deployer.devnet
+  # contract_deployer:
+  #   image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
+  #   container_name: pointnetwork_contract_deployer
+  #   depends_on:
+  #     blockchain_provider:
+  #       condition: service_healthy
+  #   restart: 'no'
+  #   volumes:
+  #     - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
+  #     - ./truffle/migrations:/truffle/migrations:ro
+  #     - ./truffle/contracts:/truffle/contracts:ro
+  #     - $DEPLOYER_KEYSTORE:/.keystore:ro
+  #     - shared_contracts:/build:rw
+  #   command: deploy --network $DEPLOYER_ENV
+  #   env_file:
+  #     - .env.deployer.devnet
 
 volumes:
   shared_contracts:
+
+networks:
+  net:
