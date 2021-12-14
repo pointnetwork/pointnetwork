@@ -6,14 +6,12 @@ const Provider = require('../../db/models/provider');
 const StorageLink = require('../../db/models/storage_link');
 const Model = require('../../db/model');
 const path = require('path');
-const { fork } = require('child_process');
 const _ = require('lodash');
 const fs = require('fs');
 const utils = require('#utils');
 const Arweave = require('arweave');
 const { request, gql } = require('graphql-request');
 const axios = require('axios');
-const { ArweaveSigner, createData } = require("arbundles");
 
 class StorageArweave {
     constructor(ctx) {
@@ -358,12 +356,9 @@ class StorageArweave {
             // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
             const provider = await Model.transaction(async(t) => {
                 const storageProviders = await this.ctx.web3bridge.getAllStorageProviders();
-                // console.log({storageProviders})
                 const randomProvider = storageProviders[storageProviders.length * Math.random() | 0];
                 const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider);
                 const id = getProviderDetails['0'];
-
-                // old: const provider = await Provider.findOrCreate(id);
                 let provider, isNew;
                 let existingProviders = await Provider.findAll({
                     where: { id: id },
@@ -371,6 +366,7 @@ class StorageArweave {
                     transaction: t,
                     limit: 1,
                 });
+
                 if (existingProviders.length > 0) {
                     provider = existingProviders[0];
                     isNew = false;
@@ -398,7 +394,6 @@ class StorageArweave {
             if (recursive) {
                 return this.chooseProviderCandidate(false);
             } else {
-                this.ctx.log.error('chooseProviderCandidate error');
                 throw e;
             }
         }
@@ -734,10 +729,10 @@ class StorageArweave {
             if (additionalCandidatesRequired > 0) {
                 // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
                 let link = StorageLink.build();
-                let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
+                // let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
                 // link.id = DB.generateRandomIdForNewRecord();
-                link.provider_id = provider.id;
-                link.redkey_id = await this.getOrGenerateRedkeyId(provider);
+                // link.provider_id = provider.id;
+                // link.redkey_id = await this.getOrGenerateRedkeyId(provider);
                 link.chunk_id = chunk.id;
                 link.initStateMachine(chunk, this.config.engine);
                 // use storage link state machine to sent CREATE event
