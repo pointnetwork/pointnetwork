@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   blockchain_node:
-    image: cybercoredev/solana:${SOLANA_REVISION:-v1.7.9-resources}
+    image: neonlabsorg/solana:${BLOCKCHAIN_VERSION:-v1.7.9-resources}
     container_name: pointnetwork_blockchain_node
     hostname: blockchain_node
     healthcheck:
@@ -13,18 +13,67 @@ services:
       start_period: 30s
     environment:
       - SOLANA_URL=http://blockchain_node:8899
-      - RUST_LOG=solana_runtime::system_instruction_processor=warn,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
+      - RUST_LOG=solana_runtime::system_instruction_processor=trace,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
     expose:
       - "8899"
       - "9900"
       - "8900"
       - "8001"
       - "8001-8009/udp"
+    ports:
+      - "8899"
     volumes:
       - blockchain_node_data:/opt/solana/config:rw
+      - blockchain_node_config:/root/.config/solana:rw
+      # - ./patch/run.sh:/opt/solana/run.sh
+
+  blockchain_node2:
+    image: pointnetwork/solana:v1.7.9
+    container_name: pointnetwork_blockchain_node2
+    hostname: blockchain_node2
+    environment:
+      - SOLANA_URL=http://blockchain_node:8899
+      - RUST_LOG=solana_runtime::system_instruction_processor=trace,solana_runtime::message_processor=debug,solana_bpf_loader=debug,solana_rbpf=debug
+    volumes:
+      - blockchain_node_data:/opt/solana/config
+      - blockchain_node_config:/root/.config/solana:rw
+      # - ./config-solana.sh:/opt/solana/config.sh
+      # - ./patch/run.sh:/opt/solana/run.sh
+
+  # blockchain_provider:
+  #   image: neonlabsorg/proxy:v0.2.0-rc5
+  #   container_name: pointnetwork_blockchain_provider
+  #   depends_on:
+  #     blockchain_node:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: |
+  #       curl -X POST \
+  #         -H 'Content-Type: application/json' \
+  #         -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}' \
+  #         http://localhost:9090/solana
+  #     interval: 60s
+  #     timeout: 5s
+  #     retries: 4
+  #     start_period: 180s
+  #   deploy:
+  #     restart_policy:
+  #       condition: on-failure
+  #       max_attempts: 4
+  #       window: 60s
+  #   environment:
+  #     - CONFIG=ci
+  #     - SOLANA_URL=http://blockchain_node:8899
+  #   ports:
+  #     - 127.0.0.1:9090:9090
+  #   volumes:
+  #     - blockchain_provider_env:/opt/env:rw
+  #     - $BLOCKCHAIN_KEYSTORE:/root/.config/solana:rw
+  #     - ./scripts/handle-neon-proxy.sh:/opt/proxy/handle-run-proxy.sh:ro
+  #   entrypoint: /opt/proxy/handle-run-proxy.sh
 
   blockchain_provider:
-    image: neonlabsorg/proxy:v0.2.0-rc5
+    image: neonlabsorg/proxy:v0.3.0-rc2
     container_name: pointnetwork_blockchain_provider
     depends_on:
       blockchain_node:
@@ -39,36 +88,44 @@ services:
       timeout: 5s
       retries: 4
       start_period: 180s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 4
+        window: 60s
     environment:
       - CONFIG=ci
       - SOLANA_URL=http://blockchain_node:8899
     ports:
       - 127.0.0.1:9090:9090
     volumes:
-      - blockchain_provider_env:/opt/env:rw
+      - blockchain_provider_env_v0.3.0-rc-2:/opt/env:rw
       - $BLOCKCHAIN_KEYSTORE:/root/.config/solana:rw
       - ./scripts/handle-neon-proxy.sh:/opt/proxy/handle-run-proxy.sh:ro
     entrypoint: /opt/proxy/handle-run-proxy.sh
 
-  contract_deployer:
-    image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
-    container_name: pointnetwork_contract_deployer
-    depends_on:
-      blockchain_provider:
-        condition: service_healthy
-    restart: 'no'
-    volumes:
-      - shared_contracts:/build:rw
-      - $DEPLOYER_KEYSTORE:/.keystore:ro
-      - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
-      - ./truffle/migrations:/truffle/migrations:ro
-      - ./truffle/contracts:/truffle/contracts:ro
-    command: deploy --network $DEPLOYER_ENV
-    env_file:
-      - .env.deployer
+  # contract_deployer:
+  #   image: pointnetwork/pointnetwork_deployer:$DEPLOYER_IMAGE_VERSION
+  #   container_name: pointnetwork_contract_deployer
+  #   depends_on:
+  #     blockchain_provider:
+  #       condition: service_healthy
+  #   restart: 'no'
+  #   volumes:
+  #     - shared_contracts:/build:rw
+  #     - $DEPLOYER_KEYSTORE:/.keystore:ro
+  #     - ./truffle/truffle-config-neon.js:/truffle/truffle-config.js:ro
+  #     - ./truffle/migrations:/truffle/migrations:ro
+  #     - ./truffle/contracts:/truffle/contracts:ro
+  #   command: deploy --network $DEPLOYER_ENV
+  #   env_file:
+  #     - .env.deployer
 
 volumes:
   shared_contracts:
   blockchain_node_data:
+  blockchain_node_config:
   blockchain_provider_env:
+  blockchain_provider_env_v0.3.0-rc-2:
   blockchain_provider_config:
+  
