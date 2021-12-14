@@ -1,8 +1,16 @@
 version: '3.9'
 
 services:
-  storage_provider:
+  point_node:
+    extends:
+      file: docker-compose.yaml
+      service: point_node
+    depends_on:
+      database:
+        condition: service_healthy
     volumes:
+      - point_contracts_dev:/app/truffle/build/contracts
+      - point_node_data_dev:/data
       - ./api:/app/api:ro
       - ./client:/app/client:ro
       - ./console:/app/console:ro
@@ -12,47 +20,7 @@ services:
       - ./internal:/app/internal:ro
       - ./network:/app/network:ro
       - ./provider:/app/provider:ro
-      - ./resources:/app/resources:ro
-      - ./scripts:/app/scripts:ro
-      - ./tests:/app/tests:ro
-      - ./threads:/app/threads:ro
-      # - ./truffle:/app/truffle:ro
-      - ./wallet:/app/wallet:ro
-      - ./package.json:/app/package.json:ro
-      - ./point:/app/point:ro
-
-  website_owner:
-    volumes:
-      - ./api:/app/api:ro
-      - ./client:/app/client:ro
-      - ./console:/app/console:ro
-      - ./core:/app/core:ro
-      - ./db:/app/db:ro
-      - ./example:/app/example:ro
-      - ./internal:/app/internal:ro
-      - ./network:/app/network:ro
-      - ./provider:/app/provider:ro
-      - ./resources:/app/resources:ro
-      - ./scripts:/app/scripts:ro
-      - ./tests:/app/tests:ro
-      - ./threads:/app/threads:ro
-      # - ./truffle:/app/truffle:ro
-      - ./wallet:/app/wallet:ro
-      - ./package.json:/app/package.json:ro
-      - ./point:/app/point:ro
-
-  website_visitor:
-    volumes:
-      - ./api:/app/api:ro
-      - ./client:/app/client:ro
-      - ./console:/app/console:ro
-      - ./core:/app/core:ro
-      - ./db:/app/db:ro
-      - ./example:/app/example:ro
-      - ./internal:/app/internal:ro
-      - ./network:/app/network:ro
-      - ./provider:/app/provider:ro
-      - ./resources:/app/resources:ro
+      # - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
       - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
@@ -62,5 +30,15 @@ services:
       - ./point:/app/point:ro
 
   database:
+    extends:
+      file: docker-compose.yaml
+      service: database
+    volumes:
+      - database_data_dev:/var/lib/postgresql/data/
     ports:
       - '5432:5432'
+
+volumes:
+  point_contracts_dev:
+  point_node_data_dev:
+  database_data_dev:

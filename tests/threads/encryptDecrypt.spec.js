@@ -41,19 +41,12 @@ function encryptDecrypt(pubKey, privKey, plaintext) {
         encrypt.encryptFile(tmpFileNameFrom, tmpFileNameTo, privKey);
 
         let encryptedBuf = fs.readFileSync(tmpFileNameTo);
-        // console.log('encryptedBuf', encryptedBuf.toString());
-        // console.log('encryptedBuf.length', encryptedBuf.length);
 
         decrypt.decryptFile(tmpFileNameTo, tmpFileNameResult, pubKey);
 
         let result = fs.readFileSync(tmpFileNameResult);
 
-        // console.log('result before slice', result.toString());
         result = result.slice(0, plaintextBuf.length);
-
-        // console.log('plaintextBuf', plaintextBuf.toString());
-        // console.log('plaintextBuf.length', plaintextBuf.length);
-        // console.log('result', result.toString());
 
         expect(result).toEqual(plaintextBuf);
 
