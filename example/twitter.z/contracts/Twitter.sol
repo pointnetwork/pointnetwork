@@ -12,8 +12,10 @@ contract Twitter {
 
     Tweet[] tweets;
     mapping(address => Tweet[]) tweetsByOwner;
+    address private _owner;
 
     constructor() {
+        _owner = msg.sender;
         tweets.push(Tweet({
             from: 0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e,
             contents: 0xa40acf739591f4260467e3ba06aa4c1cf076ea2fc3b1fa66cd3fadec0e9788cc,
@@ -74,10 +76,11 @@ contract Twitter {
             timestamp: 1636198274,
             likes: 0
         }));
+    }
 
-        for (uint i = 0; i < 10; i++) {
-            tweetsByOwner[tweets[i].from].push(tweets[i]);
-        }
+    function _init(uint i) public {
+        require(msg.sender == _owner, "Access denied");
+        tweetsByOwner[tweets[i].from].push(tweets[i]);
     }
 
     function tweet(bytes32 contents) public {
