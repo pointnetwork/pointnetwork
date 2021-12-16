@@ -59,14 +59,11 @@ services:
   storage_provider:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_storage_provider
-    healthcheck:
-      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
     depends_on:
-      - blockchain_node
+      blockchain_node:
+        condition: service_healthy
+      database:
+        condition: service_healthy
     entrypoint: 'npm'
     command: 'run start:docker:e2e'
     volumes:
@@ -91,15 +88,11 @@ services:
   website_owner:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: pointnetwork_website_owner
-    healthcheck:
-      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
     depends_on:
-      - blockchain_node
-      - database
+      blockchain_node:
+        condition: service_healthy
+      database:
+        condition: service_healthy
     ports:
       - '12346:9685'
       - '65501:8666'
@@ -109,6 +102,22 @@ services:
     volumes:
       - website_owner_data:/data:rw
       - shared_contracts:/app/truffle/build/contracts:ro
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./internal:/app/internal:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      # - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      # - ./truffle:/app/truffle:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
       - ./resources/demo-docker/mnemonic-website_owner.json:/data/keystore/key.json
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
@@ -134,7 +143,10 @@ services:
       retries: 3
       start_period: 15s
     depends_on:
-      - blockchain_node
+      blockchain_node:
+        condition: service_healthy
+      database:
+        condition: service_healthy
     ports:
       - '12347:9685'
       - '65502:8666'
