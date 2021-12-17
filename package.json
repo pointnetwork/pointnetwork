@@ -57,6 +57,7 @@
     "solc0_6": "npm:solc@^0.8",
     "solc0_7": "npm:solc@^0.8",
     "solc0_8": "npm:solc@^0.8.6",
+    "sqlite3": "^5.0.2",
     "twig": "^1.15.4",
     "uuid": "^8.3.2",
     "web3": "^1.5.2",
