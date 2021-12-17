@@ -5,7 +5,7 @@
     },
     "pointnode2": {
         "dialect": "sqlite",
-        "storage": "/data/pointdb.sqlite"
+        "storage": "/data/pointdadou.sqlite"
     },
     "pointnode3": {
         "dialect": "sqlite",
