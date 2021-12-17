@@ -15,10 +15,9 @@ class SequelizeFactory {
         this.config = this.ctx.config.db;
 
         this.sequelize = new Sequelize(this.config.database, this.config.username, this.config.password, {
-            host: this.config.host,
-            port: this.config.port,
             dialect: this.config.dialect,
             define: this.config.define,
+            storage: this.config.storage,
             logQueryParameters: true,
             logging: false,
             // todo: logging: ...
