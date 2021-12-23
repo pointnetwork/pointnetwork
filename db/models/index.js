@@ -18,6 +18,7 @@ class SequelizeFactory {
             dialect: this.config.dialect,
             define: this.config.define,
             storage: this.config.storage,
+            transactionType: this.config.transactionType,
             logQueryParameters: true,
             logging: false,
             // todo: logging: ...

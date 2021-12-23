@@ -1,14 +1,17 @@
 {
-  "development": {
-    "dialect": "sqlite",
-    "storage": "/data/pointdb.sqlite"
-  },
-  "test": {
-    "dialect": "sqlite",
-    "storage": "/data/pointdb.sqlite"
-  },
-  "production": {
-    "dialect": "sqlite",
-    "storage": "/data/pointdb.sqlite"
-  }
+    "development": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
+    },
+    "test": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
+    },
+    "production": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
+    }
 }

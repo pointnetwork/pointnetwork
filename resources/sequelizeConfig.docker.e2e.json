@@ -1,14 +1,17 @@
 {
     "pointnode1": {
         "dialect": "sqlite",
-        "storage": "/data/pointdb.sqlite"
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
     },
     "pointnode2": {
         "dialect": "sqlite",
-        "storage": "/data/pointdb.sqlite"
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
     },
     "pointnode3": {
         "dialect": "sqlite",
-        "storage": "/data/pointdb.sqlite"
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
     }
 }
