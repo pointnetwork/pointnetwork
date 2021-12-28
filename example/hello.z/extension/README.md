@@ -1,8 +1,8 @@
 ## Hello.z Extention Demo
 
-This is a very basic demo to show the core parts of building a browser extention and how to install, run and debut it in your browser.
+This is a very basic demo to show the core parts of building a browser extention and how to install, run and debug it in your browser.
 
-### Tutoral
+### Tutorial
 
 For a full, in-depth overview of building an extension, try this [tutorial from Sitepoint](https://www.sitepoint.com/create-firefox-add-on/).
 
