@@ -19,6 +19,9 @@ class SequelizeFactory {
             define: this.config.define,
             storage: this.config.storage,
             transactionType: this.config.transactionType,
+            retry: {
+                max: this.config.retry.max
+            },
             logQueryParameters: true,
             logging: false,
             // todo: logging: ...
