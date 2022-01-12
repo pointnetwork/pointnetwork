@@ -37,7 +37,7 @@ class Network {
         await this.web3bridge.start(); // todo: do we need await?
 
         this.kademlia = new Kademlia(this.ctx);
-        await this.kademlia.start(); // todo: do we need await? if so, make sure it doesn't impact everything else
+        // await this.kademlia.start(); // todo: do we need await? if so, make sure it doesn't impact everything else
 
         this.keyvalue = new KeyValue(this.ctx, this);
         this.ctx.keyvalue = this.keyvalue;
