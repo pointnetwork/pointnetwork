@@ -11,6 +11,7 @@
     "@truffle/hdwallet-provider": "^1.5.0",
     "arbundles": "^0.2.9",
     "arweave": "^1.10.17",
+    "arweave-mnemonic-keys": "^0.0.9",
     "async": "^3.2.1",
     "axios": "^0.21.1",
     "bip32": "^2.0.6",
