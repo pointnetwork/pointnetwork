@@ -18,11 +18,26 @@ contract Identity {
     mapping(string => PubKey64) identityToCommPublicKey;
     string[] public identityList;
 
+    bool public migrationApplied = false;
+
     uint public constant MAX_HANDLE_LENGTH = 16;
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
     event IKVSet(string identity, string key, string value);
-  
+
+    modifier onlyIdentityOwner(string memory identity) {
+
+        require(msg.sender == getOwnerByIdentity(identity), "You are not the owner of this identity");
+        // todo: identityToOwner[identity] == address(0) ?
+        _;
+    }
+
+    modifier onlyBeforeMigrations() {
+
+        require(migrationApplied == false, "Access denied");
+        _;
+    }
+
     function register(
         string memory handle, 
         address identityOwner, 
@@ -62,27 +77,23 @@ contract Identity {
         return identityToCommPublicKey[canonical(identity)];
     }
 
-    modifier onlyIdentityOwner(string memory identity) {
-        require(msg.sender == getOwnerByIdentity(identity), "You are not the owner of this identity");
-        // todo: identityToOwner[identity] == address(0) ?
-        _;
-    }
-
     // todo: put or set? decide
     function ikvPut(string memory identity, string memory key, string memory value) public onlyIdentityOwner(identity) {
-        if (bytes(ikv[identity][key]).length == 0) {
-            ikvList[identity].push(key);
-        }
+        ikvSet(identity,key,value);
+    }
 
-        ikv[identity][key] = value;
-
-        emit IKVSet(identity, key, value);
+    function ikvMigrate(string memory identity, string memory key, string memory value) public onlyBeforeMigrations() {
+        ikvSet(identity,key,value);
     }
 
     function ikvGet(string memory identity, string memory key) public view returns (string memory value) {
         return ikv[identity][key];
     } 
-    
+
+    function finishMigrations() external {
+        migrationApplied = true;
+    }
+
     //*** Internal functions ***//
     function _isAlphaNumeric(bytes1 char) internal pure returns (bool) {
 
@@ -93,7 +104,7 @@ contract Identity {
         );
     }
 
-    function _isValidHandle(string memory str) internal view returns (bool) {
+    function _isValidHandle(string memory str) internal pure returns (bool) {
 
         bytes memory b = bytes(str);
         if (b.length > MAX_HANDLE_LENGTH) return false;
@@ -145,5 +156,15 @@ contract Identity {
         identityList.push(handle);
 
         emit IdentityRegistered(handle, owner, commPublicKey);
+    }
+
+    function ikvSet(string memory identity, string memory key, string memory value) internal {
+        if (bytes(ikv[identity][key]).length == 0) {
+            ikvList[identity].push(key);
+        }
+
+        ikv[identity][key] = value;
+
+        emit IKVSet(identity, key, value);
     }
 }
