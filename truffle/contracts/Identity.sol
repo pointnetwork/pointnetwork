@@ -22,19 +22,25 @@ contract Identity {
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
     event IKVSet(string identity, string key, string value);
-
   
-    function register(string memory handle, address identityOwner, bytes32 commPublicKey_part1, bytes32 commPublicKey_part2) public {
-        if (!_isValidHandle(handle)) revert('Only alphanumeric characters and an underscore allowed');
+    function register(
+        string memory handle, 
+        address identityOwner, 
+        bytes32 commPublicKeyPart1, 
+        bytes32 commPublicKeyPart2) public {
+
+        if (!_isValidHandle(handle)) revert("Only alphanumeric characters and an underscore allowed");
 
         // Check if the identity is already registered
         string memory lowercase = _toLower(handle);
-        if (!_isEmptyString(lowercaseToCanonicalIdentities[lowercase])) revert('This identity has already been registered');
+        if (!_isEmptyString(lowercaseToCanonicalIdentities[lowercase])) { 
+            revert("This identity has already been registered");
+        }
 
         // Check if this owner already has an identity attached
         // if (!_isEmptyString(ownerToIdentity[identityOwner])) revert('This owner already has an identity attached');
 
-        PubKey64 memory commPublicKey = PubKey64(commPublicKey_part1, commPublicKey_part2);
+        PubKey64 memory commPublicKey = PubKey64(commPublicKeyPart1, commPublicKeyPart2);
 
         _selfReg(handle, identityOwner, commPublicKey);
     }
@@ -57,7 +63,7 @@ contract Identity {
     }
 
     modifier onlyIdentityOwner(string memory identity) {
-        require(msg.sender == getOwnerByIdentity(identity), 'You are not the owner of this identity');
+        require(msg.sender == getOwnerByIdentity(identity), "You are not the owner of this identity");
         // todo: identityToOwner[identity] == address(0) ?
         _;
     }
@@ -76,7 +82,7 @@ contract Identity {
     function ikvGet(string memory identity, string memory key) public view returns (string memory value) {
         return ikv[identity][key];
     } 
-
+    
     //*** Internal functions ***//
     function _isAlphaNumeric(bytes1 char) internal pure returns (bool) {
 
