@@ -227,46 +227,7 @@ class StorageArweave {
         return response;
     }
 
-    async enqueueFileForDownload(id /*, originalPath */) {
-        if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
-
-        const originalPath = File.getStoragePathForId(id);
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } }));
-        // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
-
-        // file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
-
-        if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
-            // Restart the file downloading, even if it failed. Don't forget to restart the chunks first
-
-            let chunkinfo_chunk = await Chunk.findOrCreate({where: {id: file.id}});
-            if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
-                // restart
-                chunkinfo_chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
-                await chunkinfo_chunk.save();
-            }
-
-            if (file.chunkIds && file.chunkIds.length > 0) {
-                await Promise.all(file.chunkIds.map(async(chunk_id, i) => {
-                    let chunk = await Chunk.findOrCreate({where: {id: chunk_id}});
-                    if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
-                        chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
-                        await chunk.save();
-                        return;
-                    }
-                }));
-            }
-
-            file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
-            await file.save();
-            await file.reconsiderDownloadingStatus();
-        }
-
-        return file.id;
-    }
-
-
-    async getFile(id /*, originalPath */) {
+    async getFile(id) {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
         // already downloaded?
@@ -275,8 +236,27 @@ class StorageArweave {
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
-
-        await this.enqueueFileForDownload(id);
+	
+	      let chunkinfo_chunk = await Chunk.findOrCreate({where: {id: file.id}});
+	      if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
+		      // restart
+		      chunkinfo_chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
+	  	    await chunkinfo_chunk.save();
+  	    }
+	
+	      if (file.chunkIds && file.chunkIds.length > 0) {
+		      await Promise.all(file.chunkIds.map(async(chunk_id, i) => {
+	  		    let chunk = await Chunk.findOrCreate({where: {id: chunk_id}});
+			      if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
+				      chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
+			  	    await chunk.save();
+		  	    }
+		      }));
+	      }
+	
+	      file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
+	      await file.save();
+	      await file.reconsiderDownloadingStatus();
 
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {
@@ -335,18 +315,14 @@ class StorageArweave {
         if (mode === 'all' || mode === 'uploading') {
             let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
             uploadingChunks.forEach((chunk) => {
-                setImmediate(async() => { // not waiting, just queueing for execution
-                    await this.chunkUploadingTick(chunk);
-                });
+	            this.chunkUploadingTick(chunk);
             });
         }
 
         if (mode === 'all' || mode === 'downloading') {
             let downloadingChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADING);
             downloadingChunks.forEach((chunk) => { // not waiting, just queueing for execution
-                setImmediate(async() => {
-                    await this.chunkDownloadingTick(chunk);
-                });
+							this.chunkDownloadingTick(chunk);
             });
         }
     }
@@ -456,12 +432,8 @@ class StorageArweave {
                 return ret;
             };
 
-            console.log(ARW_LOG + '  arweave/graphql', chunk.id);
             const queryResult = await request('https://arweave.net/graphql', query);
             console.log(ARW_LOG + '  arweave/graphql - DONE', chunk.id, elapsed());
-
-            console.log(ARW_LOG + '  query:', query);
-            console.log(ARW_LOG + '  queryResult:', queryResult);
 
             console.log(ARW_LOG + '  iterations', elapsed());
             for(let edge of queryResult.transactions.edges) {
