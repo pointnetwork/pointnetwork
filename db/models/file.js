@@ -199,7 +199,7 @@ class File extends Model {
 
     async reconsiderDownloadingStatus(cascade) {  // todo: cascade is not used?
         // todo: wrap everything in a transaction/locking later
-        const chunkinfo_chunk = await Chunk.findOrCreate({where: {id: this.id}}); // todo: use with locking
+        const chunkinfo_chunk = await Chunk.findByIdOrCreate(this.id); // todo: use with locking
         // At this point we know for sure that the chunk with this id exists
 
         if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
@@ -244,7 +244,7 @@ class File extends Model {
 
         let needs_downloading = false;
         await Promise.all(chunk_ids.map(async(chunk_id, i) => {
-            let chunk = await Chunk.findOrCreate({where: {id: chunk_id}});
+            let chunk = await Chunk.findByIdOrCreate(chunk_id);
             await chunk.reconsiderDownloadingStatus(false);
             if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
                 await this.changeDLStatus(File.DOWNLOADING_STATUS_FAILED);
@@ -289,7 +289,7 @@ class File extends Model {
     async getAllChunks() {
         const ids = this.getAllChunkIds();
         return await Promise.all(ids.map(async(id) => {
-            return await Chunk.findOrCreate({where: {id}});
+            return await Chunk.findByIdOrCreate(id);
         }));
     }
 
@@ -337,7 +337,7 @@ class File extends Model {
                     await this.save();
                 }
 
-                let chunk = await Chunk.findOrCreate({where: {id: contents_id}});
+                let chunk = await Chunk.findByIdOrCreate(contents_id);
                 chunk.size = Buffer.byteLength(contents);
                 chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;
                 chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
@@ -435,7 +435,7 @@ class File extends Model {
 
                                     // no await needed, let them be free
                                     (async (i, chunkId) => {
-                                        let chunk = await Chunk.findOrCreate({where: {id: chunkId}}); // todo: use with locking
+                                        let chunk = await Chunk.findByIdOrCreate(chunkId); // todo: use with locking
                                         let offset = i * CHUNK_SIZE_BYTES;
                                         chunk.ul_status = Chunk.UPLOADING_STATUS_UPLOADING;
                                         chunk.dl_status = Chunk.DOWNLOADING_STATUS_CREATED;

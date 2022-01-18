@@ -103,7 +103,7 @@ class StorageArweave {
         // todo: should we?
         const original_path = path.join(this.getCacheDir(), 'chunk_'+throwAwayFile.id);
 
-        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } }));
+        const file = (await File.findByIdOrCreate(throwAwayFile.id, {original_path}));
 
         // todo: validate redundancy, expires and autorenew fields. merge them if they're already there
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
@@ -232,31 +232,31 @@ class StorageArweave {
 
         // already downloaded?
         const originalPath = File.getStoragePathForId(id);
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } }));
+        const file = (await File.findByIdOrCreate(id, { original_path: originalPath }));
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
+				
+        let chunkinfo_chunk = await Chunk.findOrCreate({where: {id: file.id}});
+        if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
+          // restart
+          chunkinfo_chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
+          await chunkinfo_chunk.save();
+        }
 	
-	      let chunkinfo_chunk = await Chunk.findOrCreate({where: {id: file.id}});
-	      if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
-		      // restart
-		      chunkinfo_chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
-	  	    await chunkinfo_chunk.save();
-  	    }
+        if (file.chunkIds && file.chunkIds.length > 0) {
+          await Promise.all(file.chunkIds.map(async(chunk_id, i) => {
+            let chunk = await Chunk.findOrCreate({where: {id: chunk_id}});
+            if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
+              chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
+              await chunk.save();
+            }
+          }));
+        }
 	
-	      if (file.chunkIds && file.chunkIds.length > 0) {
-		      await Promise.all(file.chunkIds.map(async(chunk_id, i) => {
-	  		    let chunk = await Chunk.findOrCreate({where: {id: chunk_id}});
-			      if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
-				      chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
-			  	    await chunk.save();
-		  	    }
-		      }));
-	      }
-	
-	      file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
-	      await file.save();
-	      await file.reconsiderDownloadingStatus();
+        file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
+        await file.save();
+        await file.reconsiderDownloadingStatus();
 
         let waitUntilRetrieval = (resolve, reject) => {
             setTimeout(async() => {

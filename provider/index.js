@@ -140,7 +140,7 @@ class Provider {
         const chunk_id = request.params[0]; // todo: validate
         
         try {
-            let chunk = await ProviderChunk.findOrCreate({where: {id: chunk_id}});
+            let chunk = await ProviderChunk.findByIdOrCreate(chunk_id);
 
             const segment_index = request.params[1]; // todo: validate
             const segment_data = request.params[2]; // todo: validate
@@ -179,7 +179,7 @@ class Provider {
         // todo: make sure you agreed to storing it + conditions
 
         try {
-            let chunk = await ProviderChunk.findOrCreate({where: {id: chunk_id}});
+            let chunk = await ProviderChunk.findByIdOrCreate(chunk_id);
 
             if (chunk.status === ProviderChunk.STATUS_STORED) {
                 // todo: check the integrity of the data before confidently saying you have the chunk

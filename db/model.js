@@ -59,6 +59,10 @@ class Model extends sequelize_lib.Model {
 		    ...defaults
 	    })
     }
+		
+		static async findByIdOrCreate(id, defaults) {
+			return this.findOrCreate({where: {id}, defaults})
+		}
 
     async refresh() {
         return await this.reload();

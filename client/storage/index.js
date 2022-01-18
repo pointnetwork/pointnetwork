@@ -58,7 +58,7 @@ class Storage {
         // todo: should we?
         const original_path = path.join(this.getCacheDir(), 'chunk_'+throwAwayFile.id);
 
-        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } }));
+        const file = (await File.findByIdOrCreate(throwAwayFile.id, {original_path}));
 
         // todo: validate redundancy, expires and autorenew fields. merge them if they're already there
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
@@ -171,7 +171,7 @@ class Storage {
 
         // already downloaded?
         const originalPath = File.getStoragePathForId(id);
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } }));
+        const file = (await File.findByIdOrCreate(id, { original_path: originalPath }));
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
