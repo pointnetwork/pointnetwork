@@ -2,7 +2,7 @@
     "development": {
         "dialect": "sqlite",
         "storage": "/data/pointdb.sqlite",
-        "transactionType": "IMMEDIATE",
+        "transactionType": "DEFERRED",
         "retry": {
             "max": 30
         }
@@ -10,7 +10,7 @@
     "test": {
         "dialect": "sqlite",
         "storage": "/data/pointdb.sqlite",
-        "transactionType": "IMMEDIATE",
+        "transactionType": "DEFERRED",
         "retry": {
             "max": 30
         }
@@ -18,7 +18,7 @@
     "production": {
         "dialect": "sqlite",
         "storage": "/data/pointdb.sqlite",
-        "transactionType": "IMMEDIATE",
+        "transactionType": "DEFERRED",
         "retry": {
             "max": 30
         }

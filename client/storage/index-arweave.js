@@ -103,7 +103,7 @@ class StorageArweave {
         // todo: should we?
         const original_path = path.join(this.getCacheDir(), 'chunk_'+throwAwayFile.id);
 
-        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } })) [0];
+        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } }));
 
         // todo: validate redundancy, expires and autorenew fields. merge them if they're already there
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
@@ -231,7 +231,7 @@ class StorageArweave {
         if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
 
         const originalPath = File.getStoragePathForId(id);
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } }));
         // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
 
         // file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
@@ -239,7 +239,7 @@ class StorageArweave {
         if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
             // Restart the file downloading, even if it failed. Don't forget to restart the chunks first
 
-            let chunkinfo_chunk = await Chunk.findOrCreate(file.id);
+            let chunkinfo_chunk = await Chunk.findOrCreate({where: {id: file.id}});
             if (chunkinfo_chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
                 // restart
                 chunkinfo_chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
@@ -248,7 +248,7 @@ class StorageArweave {
 
             if (file.chunkIds && file.chunkIds.length > 0) {
                 await Promise.all(file.chunkIds.map(async(chunk_id, i) => {
-                    let chunk = await Chunk.findOrCreate(chunk_id);
+                    let chunk = await Chunk.findOrCreate({where: {id: chunk_id}});
                     if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_FAILED) {
                         chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADING;
                         await chunk.save();
@@ -271,7 +271,7 @@ class StorageArweave {
 
         // already downloaded?
         const originalPath = File.getStoragePathForId(id);
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } }));
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
@@ -469,38 +469,44 @@ class StorageArweave {
 
                 // Get the data decoded to a Uint8Array for binary data
                 console.log(ARW_LOG + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
-                const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
-
-                // Read back data
-                // Don't use arweave.transactions.getData, data is not available instantly via
-                // that API (it results in a TX_PENDING error). Here's the explanation from Discord:
-                //
-                // but essentially if /{txid} returns 202
-                // it's "pending"
-                // which with regular txs is true
-                // but it also returns 202 for unseeded Bundlr txs
-                // so the data exists in Bundlr - but not on L1 (Arweave)
-
-                // const dl_url = `https://arweave.net/${txid}`;
-                // const result = await axios.get();
-                // console.log({dl_url, result});
-                // const data = result.data;
-
-                console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
-
-                const buf = Buffer.from(data);
-
-                if (utils.hashFnHex(buf) === chunk.id) {
-                    console.log(ARW_LOG + '  WORKED!', chunk.id, {txid}, elapsed());
-                    if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
-                    chunk.setData(buf); // todo: what if it errors out?
-                    chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
-                    await chunk.save();
-                    await chunk.reconsiderDownloadingStatus(true);
-
-                    return;
-                }
-                console.log(ARW_LOG + '  NOT WORKED! WRONG CHUNK', chunk.id, utils.hashFnHex(buf), {txid});
+								try {
+									const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
+									
+									// Read back data
+									// Don't use arweave.transactions.getData, data is not available instantly via
+									// that API (it results in a TX_PENDING error). Here's the explanation from Discord:
+									//
+									// but essentially if /{txid} returns 202
+									// it's "pending"
+									// which with regular txs is true
+									// but it also returns 202 for unseeded Bundlr txs
+									// so the data exists in Bundlr - but not on L1 (Arweave)
+									
+									// const dl_url = `https://arweave.net/${txid}`;
+									// const result = await axios.get();
+									// console.log({dl_url, result});
+									// const data = result.data;
+									
+									console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
+									
+									const buf = Buffer.from(data);
+									
+									if (utils.hashFnHex(buf) === chunk.id) {
+										console.log(ARW_LOG + '  WORKED!', chunk.id, {txid}, elapsed());
+										if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
+										chunk.setData(buf); // todo: what if it errors out?
+										chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
+										await chunk.save();
+										await chunk.reconsiderDownloadingStatus(true);
+										
+										return;
+									}
+									
+									console.log(ARW_LOG + '  NOT WORKED! WRONG CHUNK', chunk.id, utils.hashFnHex(buf), {txid});
+								} catch (e) {
+									console.error(e)
+									console.log(ARW_LOG + '  NOT WORKED! FAILED TO GET DATA!')
+								}
             }
 
             // Not found :(

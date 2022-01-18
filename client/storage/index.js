@@ -58,7 +58,7 @@ class Storage {
         // todo: should we?
         const original_path = path.join(this.getCacheDir(), 'chunk_'+throwAwayFile.id);
 
-        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } })) [0];
+        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } }));
 
         // todo: validate redundancy, expires and autorenew fields. merge them if they're already there
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
@@ -168,7 +168,7 @@ class Storage {
 
     async enqueueFileForDownload(id, originalPath) {
         if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } }));
         // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
         // if (! file.original_path) file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
         if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
@@ -185,7 +185,7 @@ class Storage {
 
         // already downloaded?
         const originalPath = File.getStoragePathForId(id);
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
+        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } }));
         if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
             return file;
         }
