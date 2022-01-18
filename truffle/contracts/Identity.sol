@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.0;
 pragma abicoder v2;
+
 
 contract Identity {
     struct PubKey64 {
@@ -17,32 +18,12 @@ contract Identity {
     mapping(string => PubKey64) identityToCommPublicKey;
     string[] public identityList;
 
-    uint public MAX_HANDLE_LENGTH = 16;
+    uint public constant MAX_HANDLE_LENGTH = 16;
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
     event IKVSet(string identity, string key, string value);
 
-    constructor() {
-
-    }
-
-    function _selfReg(string memory handle, address owner, PubKey64 memory commPublicKey) internal {
-        // Attach this identity to the owner address
-        identityToOwner[handle] = owner;
-        ownerToIdentity[owner] = handle;
-
-        // Attach public key for communication
-        identityToCommPublicKey[handle] = commPublicKey;
-
-        // Add canonical version
-        lowercaseToCanonicalIdentities[_toLower(handle)] = handle;
-
-        // Add the handle to identity list so that it can be iterated over
-        identityList.push(handle);
-
-        emit IdentityRegistered(handle, owner, commPublicKey);
-    }
-
+  
     function register(string memory handle, address identityOwner, bytes32 commPublicKey_part1, bytes32 commPublicKey_part2) public {
         if (!_isValidHandle(handle)) revert('Only alphanumeric characters and an underscore allowed');
 
@@ -94,11 +75,11 @@ contract Identity {
 
     function ikvGet(string memory identity, string memory key) public view returns (string memory value) {
         return ikv[identity][key];
-    }
+    } 
 
     //*** Internal functions ***//
-
     function _isAlphaNumeric(bytes1 char) internal pure returns (bool) {
+
         return (
             (char >= bytes1(uint8(0x30)) && char <= bytes1(uint8(0x39))) || // 9-0
             (char >= bytes1(uint8(0x41)) && char <= bytes1(uint8(0x5A))) || // A-Z
@@ -107,13 +88,14 @@ contract Identity {
     }
 
     function _isValidHandle(string memory str) internal view returns (bool) {
-        bytes memory b = bytes(str);
-        if(b.length > MAX_HANDLE_LENGTH) return false;
 
-        for(uint i; i<b.length; i++){
+        bytes memory b = bytes(str);
+        if (b.length > MAX_HANDLE_LENGTH) return false;
+
+        for (uint i; i < b.length; i++) {
             bytes1 char = b[i];
 
-            if(!_isAlphaNumeric(char) && !(char == bytes1(uint8(0x5f)))) {
+            if (!_isAlphaNumeric(char) && !(char == bytes1(uint8(0x5f)))) {
                 return false; // neither alpha-numeric nor '_'
             }
         }
@@ -122,6 +104,7 @@ contract Identity {
     }
 
     function _toLower(string memory str) internal pure returns (string memory) {
+
         bytes memory bStr = bytes(str);
         bytes memory bLower = new bytes(bStr.length);
         for (uint i = 0; i < bStr.length; i++) {
@@ -139,5 +122,22 @@ contract Identity {
 
     function _isEmptyString(string memory str) internal pure returns (bool result) {
         return (bytes(str).length == 0);
+    }
+
+    function _selfReg(string memory handle, address owner, PubKey64 memory commPublicKey) internal {
+        // Attach this identity to the owner address
+        identityToOwner[handle] = owner;
+        ownerToIdentity[owner] = handle;
+
+        // Attach public key for communication
+        identityToCommPublicKey[handle] = commPublicKey;
+
+        // Add canonical version
+        lowercaseToCanonicalIdentities[_toLower(handle)] = handle;
+
+        // Add the handle to identity list so that it can be iterated over
+        identityList.push(handle);
+
+        emit IdentityRegistered(handle, owner, commPublicKey);
     }
 }
