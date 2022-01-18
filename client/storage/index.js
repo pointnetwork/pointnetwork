@@ -318,7 +318,7 @@ class Storage {
                 if (err.message && err.message.includes('ECHUNKNOTFOUND')) {
                     chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
                     await chunk.save();
-                    await chunk.reconsiderDownloadingStatus(true);
+                    await chunk.reconsiderDownloadingStatus();
                     return;
                 } else {
                     console.log({err, result}); // todo: for some reason, throw err doesn't display the error
@@ -333,7 +333,7 @@ class Storage {
             chunk.setData(data); // todo: what if it errors out?
             chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
             await chunk.save();
-            await chunk.reconsiderDownloadingStatus(true);
+            await chunk.reconsiderDownloadingStatus();
         });
     }
 
