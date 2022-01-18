@@ -1,5 +1,7 @@
 'use strict';
 
+//comand: truffle exec scripts/identityMigrator.js --config truffle-config-neon.js  --network ynet 
+
 let migrationData = [
       {
         "handle":"twitter",
