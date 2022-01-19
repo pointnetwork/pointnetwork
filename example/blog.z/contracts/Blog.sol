@@ -67,13 +67,7 @@ contract Blog {
         return commentsByArticleId[articleId];
     }
 
-    function add(
-        uint256 id,
-        address author,
-        string memory title,
-        bytes32 contents,
-        uint256 timestamp
-    ) public {
+    function add(uint256 id,address author,string memory title,bytes32 contents,uint256 timestamp) public {
         require(msg.sender == _migrator, "Access Denied");
         Article memory _article = Article(
             id,
@@ -85,12 +79,7 @@ contract Blog {
         articles.push(_article);
     }
 
-    function addComments(
-        uint256 postId,
-        address author,
-        bytes32 contents,
-        uint256 timestamp
-    ) public {
+    function addComments(uint256 postId,address author ,bytes32 contents,uint256 timestamp) public {
         require(msg.sender == _migrator, "Access Denied");
         require(articles[postId].id != 0, "Invalid article");
         
