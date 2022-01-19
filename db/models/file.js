@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
@@ -177,7 +176,7 @@ class File extends Model {
         await Promise.all(chunks.map(async(chunk, i) => {
             chunk.redundancy = Math.max(parseInt(chunk.redundancy)||0, this.redundancy);
             chunk.expires = Math.max(parseInt(chunk.expires)||0, this.expires);
-            chunk.autorenew = (!!chunk.autorenew) ? !!chunk.autorenew : !!this.autorenew;
+            chunk.autorenew = (chunk.autorenew) ? !!chunk.autorenew : !!this.autorenew;
             await chunk.save();
             await chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
             await chunk.reconsiderUploadingStatus(false);
@@ -208,11 +207,11 @@ class File extends Model {
             return;
         } else if (chunkinfo_chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADED) {
             await chunkinfo_chunk.addBelongsToFile(this, -1);
-						if (chunkinfo_chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) {
-							await chunkinfo_chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_READY_TO_DOWNLOAD);
-							await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO);
-							this.ctx.client.storage.downloadChunk(chunkinfo_chunk);
-						}
+            if (chunkinfo_chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) {
+                await chunkinfo_chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_READY_TO_DOWNLOAD);
+                await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO);
+                this.ctx.client.storage.downloadChunk(chunkinfo_chunk);
+            }
             return;
         } // else chunk info downloaded
 
@@ -246,39 +245,38 @@ class File extends Model {
         let allChunksDownloaded = true;
         await Promise.all(chunk_ids.map(async(chunk_id, i) => {
             let chunk = await Chunk.findByIdOrCreate(chunk_id);
-	          switch (chunk.dl_status) {
-		          case Chunk.DOWNLOADING_STATUS_CREATED:
-		          case Chunk.DOWNLOADING_STATUS_READY_TO_DOWNLOAD:
-								allChunksDownloaded = false
-			          const CHUNK_SIZE_BYTES = this.ctx.config.storage.chunk_size_bytes;
-			          await chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
-								if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_CREATED) {
-									await chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_READY_TO_DOWNLOAD);
-								}
-			          this.ctx.client.storage.downloadChunk(chunk);
-								break
-		          case Chunk.DOWNLOADING_STATUS_DOWNLOADING:
-								allChunksDownloaded = false
-			          break
-		          case Chunk.DOWNLOADING_STATUS_FAILED:
-								allChunksDownloaded = false
-			          await this.changeDLStatus(File.DOWNLOADING_STATUS_FAILED);
-			          await this.save();
-								break
-		          case Chunk.DOWNLOADING_STATUS_DOWNLOADED:
-								// do nothing
-			          break
-		          default:
-								throw new Error(`Unexpected chunk download status ${chunk.dl_status}`)
-	          }
+            switch (chunk.dl_status) {
+                case Chunk.DOWNLOADING_STATUS_CREATED:
+                case Chunk.DOWNLOADING_STATUS_READY_TO_DOWNLOAD:
+                    allChunksDownloaded = false;
+                    await chunk.addBelongsToFile(this, i * this.ctx.config.storage.chunk_size_bytes);
+                    if (chunk.dl_status === Chunk.DOWNLOADING_STATUS_CREATED) {
+                        await chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_READY_TO_DOWNLOAD);
+                    }
+                    this.ctx.client.storage.downloadChunk(chunk);
+                    break;
+                case Chunk.DOWNLOADING_STATUS_DOWNLOADING:
+                    allChunksDownloaded = false;
+                    break;
+                case Chunk.DOWNLOADING_STATUS_FAILED:
+                    allChunksDownloaded = false;
+                    await this.changeDLStatus(File.DOWNLOADING_STATUS_FAILED);
+                    await this.save();
+                    break;
+                case Chunk.DOWNLOADING_STATUS_DOWNLOADED:
+                    // do nothing
+                    break;
+                default:
+                    throw new Error(`Unexpected chunk download status ${chunk.dl_status}`);
+            }
         }));
-	
-	      const current_status = this.dl_status;
+
+        const current_status = this.dl_status;
         if (allChunksDownloaded && current_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
-	        await this.dumpToDiskFromChunks();
-	        await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADED);
+            await this.dumpToDiskFromChunks();
+            await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADED);
         } else if (current_status !== File.DOWNLOADING_STATUS_FAILED) {
-	        await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADING);
+            await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADING);
         }
     }
 
@@ -360,7 +358,7 @@ class File extends Model {
             }
 
             // else: more than 1 chunk
-            
+
             return new Promise((resolve, reject) => {
                 try {
                     let chunkIds = [];
