@@ -14,7 +14,7 @@ contract BlogMigrations {
 
 
     function persistArticles(address _contract) public {
-        require(migrationsApplied == false, "Migrations already applied.");
+        require(migrationsApplied == false, "Migrations already applied");
         require(msg.sender == _owner, "Access Denied");
 
         string memory sig = "add(uint256,address,string,bytes32,uint256)";
