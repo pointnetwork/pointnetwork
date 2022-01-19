@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
@@ -211,7 +210,7 @@ class File extends Model {
             await chunkinfo_chunk.addBelongsToFile(this, -1);
             await chunkinfo_chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_DOWNLOADING);
             await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO);
-	          this.ctx.client.storage.chunkDownloadingTick(chunkinfo_chunk);
+            this.ctx.client.storage.chunkDownloadingTick(chunkinfo_chunk);
             return;
         } // else chunk info downloaded
 
@@ -258,8 +257,8 @@ class File extends Model {
                 await chunk.save();
                 await chunk.addBelongsToFile(this, i * CHUNK_SIZE_BYTES);
                 await chunk.changeDLStatus(Chunk.DOWNLOADING_STATUS_DOWNLOADING);
-	
-	              this.ctx.client.storage.chunkDownloadingTick(chunk);
+
+                this.ctx.client.storage.chunkDownloadingTick(chunk);
             }
         }));
 
@@ -353,7 +352,7 @@ class File extends Model {
             }
 
             // else: more than 1 chunk
-            
+
             return new Promise((resolve, reject) => {
                 try {
                     let chunkIds = [];
