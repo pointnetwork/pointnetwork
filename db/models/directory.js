@@ -31,9 +31,9 @@ class Directory {
                     if (! f.downloaded) {
                         let subdir = new Directory();
                         console.log('ASKING FOR Directory.getFileIdByPath ',{filePath, subdir}, 'f.id', f.id);
-												// TODO: this makes us to get the sqlite unique violation issue
-	                      // when we read multiple files from the same folder, as readFile triggers
-	                      // findOrCreate, and we run into the race condition
+                        // TODO: this makes us to get the sqlite unique violation issue
+                        // when we read multiple files from the same folder, as readFile triggers
+                        // findOrCreate, and we run into the race condition
                         subdir.unserialize(await this.ctx.client.storage.readFile(f.id, 'utf-8')); // dir spec is always in utf-8
                         f.downloaded = true;
                         f.dirObj = subdir;

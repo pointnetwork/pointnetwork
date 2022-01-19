@@ -113,9 +113,9 @@ class Chunk extends Model {
     }
 
     async reconsiderDownloadingStatus() {
-	    for(let f of await this.getFiles()) {
-		    await f.reconsiderDownloadingStatus();
-	    }
+        for(let f of await this.getFiles()) {
+            await f.reconsiderDownloadingStatus();
+        }
     }
 
     async getFiles() {

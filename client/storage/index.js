@@ -238,7 +238,7 @@ class Storage {
         if (mode === 'all' || mode === 'downloading') {
             let downloadingChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADING);
             downloadingChunks.forEach((chunk) => { // not waiting, just queueing for execution
-	            this.chunkDownloadingTick(chunk);
+                this.chunkDownloadingTick(chunk);
             });
         }
     }
