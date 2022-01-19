@@ -13,6 +13,7 @@ fi
 if [ $# -eq 0 ]; then
     # No arguments supplied
     EXAMPLE_SITES="./example/*"
+    DEPLOY_CONTRACTS="--contracts"
 else
     EXAMPLE_SITES="./example/${1}*"
 fi

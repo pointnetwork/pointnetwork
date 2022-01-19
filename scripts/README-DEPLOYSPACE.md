@@ -4,7 +4,7 @@ The deployspace folder should be kept empty. It is used by the [./point-deploy](
 
 ## Getting Started
 
-To Deploy a Zapp from any folder location.
+To Deploy a Zapp from **any** folder location.
 
 1. Copy the [./point-deploy](../scripts/point-deploy) script to your global executable folder. On a Mac this is the folder `/usr/local/bin` (so just run `cp ~/.point/src/pointnetwork/scripts/point-deploy /usr/local/bin`)
 2. Make sure that Point Network repo is cloned to your local machine in the directory `~/.point/src`.
