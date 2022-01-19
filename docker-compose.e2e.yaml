@@ -87,7 +87,7 @@ services:
 
   website_owner:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
-    container_name: pointnetwork_website_owner
+    container_name: point_node
     depends_on:
       blockchain_node:
         condition: service_healthy
