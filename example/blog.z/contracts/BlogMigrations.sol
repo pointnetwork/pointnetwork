@@ -5,12 +5,16 @@ pragma solidity ^0.8.0;
 contract BlogMigrations {
     address private _owner;
     address private _migrator;
+    bool migrationsApplied = false;
+
 
     constructor() {
         _owner = msg.sender;
     }
 
+
     function persistArticles(address _contract) public {
+        require(migrationsApplied == false, "Migrations already applied.");
         require(msg.sender == _owner, "Access Denied");
 
         string memory sig = "add(uint256,address,string,bytes32,uint256)";
@@ -180,5 +184,7 @@ contract BlogMigrations {
                 1634588401
             )
         );
+
+        migrationsApplied = true;
     }
 }
