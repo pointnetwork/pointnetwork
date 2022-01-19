@@ -17,5 +17,5 @@ To Deploy a Zapp from **any** folder location.
 The `point-deploy` executable performs the following steps:
 
 1. Copies all the contents from the folder where you executed the command into the `deployspace` folder of your Point Network node on your host machine (so in `~/.point/src/pointnetwork/deployspace`)
-2. Executes the `./scripts/deploy-from-deployspace.sh` script from within the running `website_owner` container.
+2. Executes the `./scripts/deploy-from-deployspace.sh` script from within the running `point_node` container.
 3. The `deploy-from-deployspace.sh` script runs the `point deploy` command for the site now in the `deployspace` which deployes your site to the network.
