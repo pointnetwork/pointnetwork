@@ -233,7 +233,7 @@ process.on('uncaughtException', (err) => {
     ctx.log.error(err.message);
     ctx.log.debug(err.stack);
 
-    if (err.message.includes('This socket has been ended by the other party')) {
+    if (err.message.includes('EPIPE') || err.message.includes("ECONNRESET")) {
         // todo: where is it coming from?
         /*
         [1632829385722] ERROR (5912 on Serges-MacBook-Pro.local): This socket has been ended by the other party

@@ -49,13 +49,19 @@ class Model extends sequelize_lib.Model {
         super.init(attributes, options);
     }
 
-    static async findOrCreate(...args) {
-        if (args.length === 1 && !(typeof args[0] === 'object' && args[0] !== null && !Array.isArray(args[0]))) {
-            const returned = await super.findOrCreate({ where: { id: args[0] }});
-            return returned[0];
-        } else {
-            return await super.findOrCreate(...args);
+    static async findOrCreate({where, defaults}) {
+        const res = await super.findOne({ where });
+        if (res) {
+            return res;
         }
+        return super.create({
+            ...where,
+            ...defaults
+        });
+    }
+
+    static async findByIdOrCreate(id, defaults) {
+        return this.findOrCreate({where: {id}, defaults});
     }
 
     async refresh() {

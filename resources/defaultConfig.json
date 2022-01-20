@@ -32,7 +32,7 @@
   },
   "client": {
     "storage": {
-      "engine": "normal",
+      "engine": "arweave",
       "cache_path": "data/client_storage_cache",
       "storage_provider_cache": "data/storage_provider_cache.json",
       "default_redundancy": 1,
@@ -41,7 +41,7 @@
       "request_timeout_seconds": 60,
       "retransmit_segments_timeout_seconds": 30,
       "arweave_experiment_version_major": 1,
-      "arweave_experiment_version_minor": 9,
+      "arweave_experiment_version_minor": 8,
       "arweave_airdrop_endpoint": "https://arweave-bundler.herokuapp.com",
       "arweave_key": false,
       "solana_main_endpoint": "https://still-billowing-smoke.solana-mainnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/",
@@ -62,7 +62,7 @@
       "passcode": "BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9",
       "account": "",
       "privateKey": "",
-      "keystore_path": "wallets/keystore"
+      "keystore_path": "keystore"
     },
     "max_parallel_requests_per_provider": 3
   },
@@ -79,7 +79,7 @@
     "____solana_web3": "http://localhost:9090/solana",
     "____solana_web3_network_id": "*",
     "____solana_web3_chain_id": 111,
-    "web3": "http://localhost:7545/",
+    "web3": "https://proxy.devnet.neonlabs.org/solana",
     "web3_network_id": 5777,
     "web3_chain_id": 0,
     "web3_call_retry_limit": 4,
@@ -96,7 +96,7 @@
       "cooldown_multiplier": 2,
       "cooldown_reset_time": "60M"
     },
-    "identity_contract_address": "0x9d00b186CB89CA253D910e7ccB94C1755504EE42",
+    "identity_contract_address": "0x6F036a2d4355CAe3B49eaA85d62a05A25f4DDBF7",
     "storage_provider_registry_contract_address": "0x947D4038b17954d544336aFF8C8dF08AF31bb52F"
   },
   "payments": {

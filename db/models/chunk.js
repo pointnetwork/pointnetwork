@@ -57,7 +57,7 @@ class Chunk extends Model {
         if (!Buffer.isBuffer(rawData)) throw Error('Chunk.findOrCreateByData: rawData must be a Buffer');
 
         let id = utils.hashFnHex(rawData);
-        let result = await this.findOrCreate(id);
+        let result = await this.findByIdOrCreate(id);
 
         result.setData(rawData);
 
