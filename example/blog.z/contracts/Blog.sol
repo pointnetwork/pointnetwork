@@ -52,8 +52,7 @@ contract Blog {
     }
 
     // Comment Functions
-    function createCommentByArticle(uint256 articleId, bytes32 contents) public
-    {
+    function createCommentByArticle(uint256 articleId, bytes32 contents) public {
         Comment memory _comment = Comment(
             msg.sender,
             contents,
@@ -67,7 +66,7 @@ contract Blog {
         return commentsByArticleId[articleId];
     }
 
-    function add(uint256 id,address author,string memory title,bytes32 contents,uint256 timestamp) public {
+    function add(uint256 id ,address author ,string memory title ,bytes32 contents ,uint256 timestamp) public {
         require(msg.sender == _migrator, "Access Denied");
         Article memory _article = Article(
             id,
