@@ -16,7 +16,7 @@
 {% else %}
   <html>
     <body>
-      <script>location.href='/compose?recipient={{request.recipient}}&message={{request.message}}&recipient_error=This recipient does not existis'</script>
+      <script>location.href='/compose?recipient={{request.recipient|url_encode}}&message={{request.message|url_encode}}&recipient_error=This recipient does not existis'</script>
     </body>
   </html>
 
