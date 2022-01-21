@@ -24,11 +24,16 @@ contract Blog {
     address private _owner;
     address private _migrator;
 
-    constructor(address migrator) {
+    constructor() {
         _owner = msg.sender;
-        _migrator = migrator;
     }
 
+    function addMigrator(address migrator) public {
+        require(msg.sender == _owner, "Access Denied");
+        require(_migrator == address(0), "Access Denied");
+        _migrator = migrator;
+    }
+    
     // Article Functions
     function createArticle(string memory title, bytes32 contents) public {
         uint256 _id = articles.length + 1;
