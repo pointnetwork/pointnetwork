@@ -56,6 +56,7 @@
     "socket.io": "^4.1.3",
     "solc0_8": "npm:solc@^0.8.6",
     "twig": "^1.15.4",
+    "umzug": "^3.0.0",
     "uuid": "^8.3.2",
     "web3": "^1.5.2",
     "web3-provider-engine": "16.0.3",
@@ -69,8 +70,7 @@
     "@babel/preset-env": "^7.15.4",
     "eslint": "^7.32.0",
     "jest": "^27.0.6",
-    "nodemon": "^2.0.12",
-    "sequelize-cli": "^6.2.0"
+    "nodemon": "^2.0.12"
   },
   "scripts": {
     "test": "jest",
@@ -78,7 +78,7 @@
     "test:restart": "docker-compose -f docker-compose.test.yaml restart tests && docker logs -f pointnetwork_tests",
     "start": "./point --datadir $DATADIR -v",
     "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
-    "start:docker": "./scripts/patch-config.js && npm run migrate && npm start",
+    "start:docker": "./scripts/patch-config.js && npm start",
     "start:docker:dev": "./scripts/patch-config.js && npm run migrate && npm run start:dev",
     "start:docker:e2e": "./scripts/patch-config-e2e.js && npm run migrate && npm run start:dev",
     "migrate": "./point migrate --datadir $DATADIR",
