@@ -49,7 +49,7 @@ class ApiServer {
 
             await this.server.listen(parseInt(this.config.port), this.config.address, async (err) => {
                 if (err) {
-                    this.ctx.log.error(err);
+                    this.ctx.log.error(err, "Error from API server");
                     return;
                 }
                 if (await checkRegisteredToken() === undefined) await registerToken();
