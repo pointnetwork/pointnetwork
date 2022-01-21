@@ -1,4 +1,5 @@
 const fastify = require('fastify');
+const fastifyWs = require('fastify-websocket');
 const { checkRegisteredToken, registerToken } = require('../client/storage/payments');
 
 class ApiServer {
@@ -16,7 +17,7 @@ class ApiServer {
 
         try {
             // https://github.com/fastify/fastify-websocket - for websocket support
-            this.server.register(require('fastify-websocket'), {
+            this.server.register(fastifyWs, {
                 options: { clientTracking: true }
             });
 
@@ -46,13 +47,15 @@ class ApiServer {
 
             this.server.setNotFoundHandler(this.server.notFound);
 
-            await this.server.listen(parseInt(this.config.port), this.config.address, async (err, address) => {
-                if (err) throw err;
+            await this.server.listen(parseInt(this.config.port), this.config.address, async (err) => {
+                if (err) {
+                    this.ctx.log.error(err);
+                    return;
+                }
                 if (await checkRegisteredToken() === undefined) await registerToken();
             });
         } catch (err) {
             this.server.log.error(err);
-            process.exit(1);
         }
     }
 

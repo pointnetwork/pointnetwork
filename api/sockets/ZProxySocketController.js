@@ -67,6 +67,11 @@ class ZProxySocketController {
                 }
             }
         });
+
+        this.ws.on("error", err => {
+            this.ctx.log.error("Error from ZProxySocketController: ");
+            this.ctx.log.error(err);
+        });
     }
 
     pushToClients(msg) {

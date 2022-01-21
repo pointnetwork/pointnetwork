@@ -231,44 +231,18 @@ sigs.forEach(function (sig) {
 
 process.on('uncaughtException', (err) => {
     ctx.log.error(err.message);
-    ctx.log.debug(err.stack);
-
-    if (err.message.includes('EPIPE') || err.message.includes("ECONNRESET")) {
-        // todo: where is it coming from?
-        /*
-        [1632829385722] ERROR (5912 on Serges-MacBook-Pro.local): This socket has been ended by the other party
-        [1632829385722] DEBUG (5912 on Serges-MacBook-Pro.local): Error: This socket has been ended by the other party
-    at Socket.writeAfterFIN [as write] (net.js:457:14)
-    at Socket.ondata (internal/streams/readable.js:726:22)
-    at Socket.emit (events.js:400:28)
-    at addChunk (internal/streams/readable.js:290:12)
-    at readableAddChunk (internal/streams/readable.js:265:9)
-    at Socket.Readable.push (internal/streams/readable.js:204:10)
-    at TCP.onStreamRead (internal/stream_base_commons.js:188:23)
-         */
-        // do nothing
-        return;
-    }
-
-    npid.remove(pidFilePath);
-    process.exit(1);
+    ctx.log.error(err.stack);
 });
+
 process.on('unhandledRejection', (err, second) => {
-    npid.remove(pidFilePath);
-
-    if (err.message && err.message.includes && err.message.includes('Invalid JSON RPC response')) ctx.log.debug('>>> Are you sure you have a web3 connection? Such as Ganache, Ethereum etc. <<<');
-
     ctx.log.debug(err, second);
     ctx.log.error('Unhandled Rejection: ' + err.message);
-    ctx.log.debug(err.stack);
-    process.exit(1);
+    ctx.log.error(err.stack);
 });
 
 // -------------------- Init DB ---------------------- //
 ctx.db = new DB(ctx);
-setImmediate(async() => {
-    await ctx.db.init();
-});
+ctx.db.init();
 
 // ------------------- Start Point ------------------- //
 

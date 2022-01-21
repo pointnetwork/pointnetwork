@@ -39,6 +39,11 @@ class NodeSocketController {
                     break;
             }
         });
+
+        this.ws.on("error", err => {
+            this.ctx.log.error("Error from NodeSocketController: ");
+            this.ctx.log.error(err);
+        });
     }
 
     publishToClients(msg) {
