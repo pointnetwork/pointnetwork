@@ -14,7 +14,7 @@ export default function Share({getPosts}) {
   const [shareError, setShareError] = useState(undefined);
   const { identity } = useAppContext();
 
-  onFileChange = event => {
+  const onFileChange = event => {
     let fileToUpload = event.target.files[0];
     if(fileToUpload.type.startsWith('image')) {
       setSelectedFile(event.target.files[0]);
@@ -23,13 +23,13 @@ export default function Share({getPosts}) {
     }
   };
 
-  onContentsChange = event => {
+  const onContentsChange = event => {
     let newContents = event.target.value;
     setContents(newContents)
     setBtnEnabled(newContents && newContents.length > 0)
   }
 
-  setSaving = (saving) => {
+  const setSaving = (saving) => {
     setBtnEnabled(!saving);
     saving ? setBtnLabel('Saving...') : setBtnLabel(DEFAULT_BTN_LABEL);
   }

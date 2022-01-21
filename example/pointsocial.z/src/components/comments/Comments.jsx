@@ -12,13 +12,13 @@ const Comments = ({ postId }) => {
     const [btnEnabled, setBtnEnabled] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    onContentsChange = event => {
+    const onContentsChange = event => {
       let newContents = event.target.value;
       setContents(newContents)
       setBtnEnabled(newContents && newContents.length > 0)
     }
 
-    setSaving = (saving) => {
+    const setSaving = (saving) => {
       setBtnEnabled(!saving);
       saving ? setBtnLabel('Saving...') : setBtnLabel(DEFAULT_BTN_LABEL);
     }
@@ -90,7 +90,7 @@ const Comments = ({ postId }) => {
         {loading && <Box sx={{ display: 'flex' }}>
           <CircularProgress />
         </Box>}
-        {(!loading && comments.length == 0) && 'No comments yet. Be the first!'}
+        {(!loading && comments.length === 0) && 'No comments yet. Be the first!'}
         {comments.map((comment) => (
           <Comment key={comment.id} comment={comment} />
         ))}
