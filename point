@@ -11,7 +11,7 @@ if (major < 14) {
 // Load first dependencies
 const { Command } = require('commander');
 const { homedir } = require('os');
-const { exec } = require("child_process");
+const { execSync } = require("child_process");
 const path = require('path');
 const fs = require('fs');
 const _ = require('lodash');
@@ -158,16 +158,15 @@ if (program.makemigration) {
     require('./node_modules/sequelize-auto-migrations/bin/makemigration.js');
     return;
 }
+
 if (program.migrate) {
-    const seq_cmd = (program.migrate_undo) ? 'db:migrate:undo' : 'db:migrate';
-    exec(`npx sequelize-cli ${seq_cmd} --config resources/sequelizeConfig.json --env ${process.env.DB_ENV || ctx.config.db.database}`,
-        (error, stdout, stderr) => {
-            if (error) return console.log(`error: ${error.message}`);
-            if (stderr) return console.log(`stderr: ${stderr}`);
-            console.log(`${stdout}`);
-        }
-    );
-    return;
+    try {
+        console.log(execSync(program.migrate_undo ? 'npm run migration:undo' : 'npm run migration').toString());
+    } catch (e) {
+        console.error(e);
+        process.exit(1);
+    }
+    process.exit(0);
 }
 
 // ------------------ Remove Everything ------------ //

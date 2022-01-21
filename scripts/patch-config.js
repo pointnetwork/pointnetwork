@@ -6,11 +6,8 @@ const path = require('path');
 const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Deployer = require('../client/zweb/deployer');
-const contractAddresses = {
-    Identity: process.env.CONTRACT_ADDRESS_IDENTITY,
-    Migrations: process.env.CONTRACT_ADDRESS_MIGRATIONS,
-    StorageProviderRegistry: process.env.CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY,
-};
+const runMigrations = require('./migrate');
+const contractAddresses = {Identity: process.env.CONTRACT_ADDRESS_IDENTITY};
 
 function updateConfig() {
     const config = require('/app/resources/znet.json');
@@ -122,9 +119,7 @@ async function profile(callback, description) {
 
         await profile(compilePointContracts, 'Contract compilation');
 
-        await profile(() => console.info(
-            execSync(`sequelize-cli db:migrate --config resources/sequelizeConfig.json --env ${process.env.DB_ENV}`).toString(),
-        ), 'Running DB migrations');
+        await profile(runMigrations, 'Running DB migrations');
 
         console.info('Ready to start the node in', Date.now() - start, 'ms');
         process.exit(0);

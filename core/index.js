@@ -19,7 +19,6 @@ class Core {
         await this.initWallet();
         await this.initNetwork();
         await this.initClient();
-        await this.initProvider();
 
         await this.postInit();
     }

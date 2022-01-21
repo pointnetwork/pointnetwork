@@ -1,7 +1,7 @@
 const path = require('path');
 const {Sequelize} = require('sequelize');
 const {Umzug, SequelizeStorage, MigrationError} = require('umzug');
-const {production: config} = require(path.resolve(__dirname, 'resources', 'sequelizeConfig.json'));
+const {production: config} = require(path.resolve(process.cwd(), 'resources', 'sequelizeConfig.json'));
 
 const sequelize = new Sequelize(config.database, config.username, config.password, {
     host: config.host,
@@ -30,7 +30,7 @@ const umzug = new Umzug({
     logger: console,
 });
 
-(async () => {
+module.exports = async () => {
     try {
         await umzug.up();
         await sequelize.close();
@@ -42,4 +42,4 @@ const umzug = new Umzug({
             throw e;
         }
     }
-})();
+};
