@@ -38,6 +38,11 @@ do
   ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v
 
   echo
+  if [ -f ${SITE}/package.json ] && [ ! -d ${SITE}/node_modules ]; then 
+    echo "WARNING: ZApp has a package.json file but node_modules folder is missing. Did you forget to install Zapp dependencies?"
+  fi
+
+  echo
   echo "FINISHED: ${SITE}"
   echo
 done
