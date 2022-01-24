@@ -3,5 +3,16 @@ alias point-browser-docker-1="web-ext run --firefox-profile=storage_provider_doc
 alias point-browser-docker-2="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 alias point-browser-docker-3="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 
+build-e2e() {
+    docker image inspect pointnetwork/pointnetwork_node:`git branch --show-current` > /dev/null 2>&1;
+
+    if [[ $? != 0 ]]; then 
+        docker build -t "pointnetwork/pointnetwork_node:`git branch --show-current`" .; 
+        sed -i "s/POINT_NODE_VERSION=\w*/POINT_NODE_VERSION=`git branch --show-current`/" .env.e2e;
+    else
+        echo "Docker Image for current branch exists. To rebuild the image, delete it first and run this script again.";
+    fi;
+}
+
 dexec() { docker exec -it "$1" bash; }
 dclean() { docker stop $(docker ps -a -q); docker rm -f $(docker ps -a -q); docker rmi -f $(docker images | grep "<none>" | awk "{print \$3}"); docker system prune -f; docker system prune --volumes -f; }
