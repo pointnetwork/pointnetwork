@@ -230,14 +230,12 @@ sigs.forEach(function (sig) {
 });
 
 process.on('uncaughtException', (err) => {
-    ctx.log.error(err.message);
-    ctx.log.error(err.stack);
+    ctx.log.error(err, "Error: uncaught exception");
 });
 
 process.on('unhandledRejection', (err, second) => {
     ctx.log.debug(err, second);
-    ctx.log.error('Unhandled Rejection: ' + err.message);
-    ctx.log.error(err.stack);
+    ctx.log.error(err, "Error: unhandled rejection");
 });
 
 // -------------------- Init DB ---------------------- //
