@@ -39,7 +39,8 @@ services:
     image: pointnetwork/pointnetwork_deployer:dev
     container_name: pointnetwork_contract_deployer
     depends_on:
-      - blockchain_node
+      blockchain_node:
+        condition: service_healthy
     deploy:
       restart_policy:
         condition: none
