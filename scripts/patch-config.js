@@ -9,8 +9,8 @@ const Deployer = require('../client/zweb/deployer');
 const runMigrations = require('./migrate');
 const contractAddresses = {Identity: process.env.CONTRACT_ADDRESS_IDENTITY};
 
-function updateConfig() {
-    const config = require('/app/resources/znet.json');
+function updateConfig(datadir = '/data', write = true) {
+    const config = require(path.resolve(process.cwd(), 'resources', 'znet.json'));
     const {
         BLOCKCHAIN_URL = 'http://localhost:9090/solana',
         BLOCKCHAIN_NETWORK_ID,
@@ -26,7 +26,7 @@ function updateConfig() {
         storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
     };
 
-    const mnemonic = require('/data/keystore/key.json');
+    const mnemonic = require(path.resolve(datadir, 'keystore', 'key.json'));
     if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
         throw new Error('Invalid key format');
     }
@@ -36,7 +36,7 @@ function updateConfig() {
     const privateKey = provider.hdwallet._hdkey._privateKey.toString('hex');
     const account = web3.eth.accounts.privateKeyToAccount(`0x${privateKey}`);
 
-    const arweave_key = require('/data/keystore/arweave.json');
+    const arweave_key = require(path.resolve(datadir, 'keystore', 'arweave.json'));
     if (typeof arweave_key !== 'object') {
         throw new Error('Unable to parse arweave key');
     }
@@ -51,7 +51,11 @@ function updateConfig() {
         wallet: {...(config.client && config.client.wallet), account: account.address, privateKey, secretPhrase: mnemonic.phrase }
     };
 
-    writeFileSync('/data/config.json', JSON.stringify(config, null, 2));
+    if (write) {
+        writeFileSync(path.resolve(datadir, 'config.json'), JSON.stringify(config, null, 2));
+    } else {
+        return config;
+    }
 }
 
 async function compilePointContracts() {
@@ -97,7 +101,7 @@ async function profile(callback, description) {
     console.log(description || callback.toString(), 'completed in', Date.now() - start, 'ms');
 }
 
-(async () => {
+const patch = async () => {
     try {
         const start = Date.now();
 
@@ -127,4 +131,13 @@ async function profile(callback, description) {
         console.error('Error patching config:', e);
         process.exit(1);
     }
-})();
+};
+
+if (require.main === module) {
+    patch();
+} else {
+    module.exports = {
+        updateConfig: (datadir) => updateConfig(datadir, false),
+        profile
+    };
+}
