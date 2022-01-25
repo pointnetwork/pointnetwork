@@ -4,6 +4,11 @@
 # Run this script from within the project root folder like so:
 # ./scripts/deploy-sites.sh
 
+# Text color for error and warning messages
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
 if [ "$2" == "--contracts" ]; then
     DEPLOY_CONTRACTS="--contracts"
 else
@@ -31,16 +36,16 @@ do
     continue
   fi
   echo
+  if [ -f ${SITE}/package.json ] && [ ! -d ${SITE}/node_modules ]; then
+    echo -e "${YELLOW}WARNING${NC}: ZApp has a package.json file but node_modules folder is missing. ${YELLOW}Did you forget to install Zapp dependencies?${NC}"
+  fi
+
+  echo
   echo "DEPLOYING: ${SITE}"
   echo
 
   echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v"
   ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v
-
-  echo
-  if [ -f ${SITE}/package.json ] && [ ! -d ${SITE}/node_modules ]; then 
-    echo "WARNING: ZApp has a package.json file but node_modules folder is missing. Did you forget to install Zapp dependencies?"
-  fi
 
   echo
   echo "FINISHED: ${SITE}"
