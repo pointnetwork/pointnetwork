@@ -5,7 +5,7 @@ import Share from "../share/Share";
 import Identity from "../identity/Identity";
 import LoadingSpinner from '../loading/LoadingSpinner';
 
-export default Feed = ({account}) =>{
+const Feed = ({account}) =>{
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(undefined);
@@ -65,7 +65,7 @@ export default Feed = ({account}) =>{
     let post = await window.point.contract.call({contract: 'PointSocial', method: 'getPostById', params: [id]});
     const updatedPosts = [...posts];
     const updatedLikesCount = post.data[5];
-    updatedPosts.filter((post) => post.id == id)[0].likesCount = updatedLikesCount;
+    updatedPosts.filter((post) => post.id === id)[0].likesCount = updatedLikesCount;
     setPosts(updatedPosts);
   }
 
@@ -75,7 +75,7 @@ export default Feed = ({account}) =>{
         {!account && <div><Identity /><Share getPosts={getPosts} /></div>}
         {loading && <LoadingSpinner />}
         {(!loading && feedError) && <span className='error'>Error loading feed: {feedError.message}. Did you deploy the contract sucessfully?</span>}
-        {(!loading && !feedError && posts.length == 0) && <span className='no-post-to-show'>No posts made yet!</span>}
+        {(!loading && !feedError && posts.length === 0) && <span className='no-post-to-show'>No posts made yet!</span>}
         {posts.map((p) => (
           <Post key={p.id} post={p} reloadPostLikesCount={reloadPostLikesCount} />
         ))}
@@ -83,3 +83,4 @@ export default Feed = ({account}) =>{
     </div>
   );
 }
+export default Feed
