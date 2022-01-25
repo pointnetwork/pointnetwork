@@ -7,6 +7,14 @@ const utils = require('#utils');
 let Chunk;
 let FileMap;
 
+// TODO: import from storage, now having problems with circular dependencies
+const DOWNLOAD_STATUS = {
+    NOT_STARTED: "NOT_STARTED",
+    IN_PROGRESS: "IN_PROGRESS",
+    COMPLETED: "COMPLETED",
+    FAILED: "FAILED"
+};
+
 const CACHE_PATH = 'data/dl_files';
 
 class File extends Model {
@@ -196,6 +204,7 @@ class File extends Model {
         await this.changeULStatus((chunks_uploading > 0) ? File.UPLOADING_STATUS_UPLOADING : File.UPLOADING_STATUS_UPLOADED);
     }
 
+    // TODO REFACTOR
     async reconsiderDownloadingStatus() {
         // todo: wrap everything in a transaction/locking later
         const chunkinfo_chunk = await Chunk.findByIdOrCreate(this.id); // todo: use with locking
@@ -497,10 +506,9 @@ File.init({
     id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
     original_path: { type: Sequelize.DataTypes.TEXT },
     size: { type: Sequelize.DataTypes.INTEGER, allowNull: true },  // allowNull:true because on downloading we don't yet know the file size before we have the chunkInfo chunk
-    chunkIds: { type: Sequelize.DataTypes.JSON, allowNull: true },
 
-    ul_status: { type: Sequelize.DataTypes.STRING, defaultValue: File.UPLOADING_STATUS_CREATED },
-    dl_status: { type: Sequelize.DataTypes.STRING, defaultValue: File.DOWNLOADING_STATUS_CREATED },
+    ul_status: { type: Sequelize.DataTypes.STRING, defaultValue: DOWNLOAD_STATUS.NOT_STARTED },
+    dl_status: { type: Sequelize.DataTypes.STRING, defaultValue: DOWNLOAD_STATUS.NOT_STARTED },
 
     // allowNull in the next rows because this is only related to uploading and storing, not files queued for downloading
     redundancy: { type: Sequelize.DataTypes.INTEGER, allowNull: true },

@@ -35,10 +35,11 @@ class StorageArweave {
         this.BUNDLER_URL ="https://bundler.arweave.net";
     }
 
-    hasArweaveKey() {
-        return !!this.config.arweave_key;
-    }
+    // hasArweaveKey() {
+    //     return !!this.config.arweave_key;
+    // }
 
+    // INTERNAL
     getArweaveKey() {
         const key = this.config.arweave_key;
         if (!key) throw Error('No arweave key set');
@@ -58,6 +59,7 @@ class StorageArweave {
         this.timerFn();
     }
 
+    // INTERNAL
     async init() {
         this.arweave = Arweave.init({
             //    host: '127.0.0.1',
@@ -71,6 +73,7 @@ class StorageArweave {
         });
     }
 
+    // INTERNAL
     async enqueueFileForUpload(
         filePath,
         redundancy = this.ctx.config.client.storage.default_redundancy,
@@ -103,6 +106,7 @@ class StorageArweave {
         return file.id;
     }
 
+    // INTERNAL
     async enqueueDirectoryForUpload(
         dirPath,
         redundancy = this.ctx.config.client.storage.default_redundancy,
@@ -141,6 +145,7 @@ class StorageArweave {
         return uploadedDirSpecId;
     }
 
+    // USED
     async putDirectory(
         dirPath,
         redundancy = this.config.default_redundancy,
@@ -173,6 +178,7 @@ class StorageArweave {
         return new Promise(waitUntilUpload);
     }
 
+    // USED MOST
     // todo: make sure the network is properly initialized etc.
     async putFile(
         filePath,
@@ -211,6 +217,7 @@ class StorageArweave {
         return response;
     }
 
+    // INTERNAL (except demo)
     async getFile(id) {
         if (!id) throw new Error('undefined or null id passed to storage.getFile');
 
@@ -263,6 +270,7 @@ class StorageArweave {
         return new Promise(waitUntilRetrieval);
     }
 
+    // USED
     async readFile(id, encoding = null) {
         if (!id) throw new Error('undefined or null id passed to storage.readFile');
         id = id.replace('0x', '').toLowerCase();
@@ -273,6 +281,7 @@ class StorageArweave {
         return file.getData(encoding);
     }
 
+    // USED
     async readJSON(id) {
         let contents = await this.readFile(id, 'utf-8'); // todo: check fsize sanity check if routes or something
         try {
@@ -282,6 +291,7 @@ class StorageArweave {
         }
     }
 
+    // INTERNAL
     async tick(mode = 'all') {
         // todo
 
@@ -297,6 +307,7 @@ class StorageArweave {
         }
     }
 
+    // INTERNAL
     async chooseProviderCandidate(recursive = true) {
         try {
             // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
@@ -344,19 +355,22 @@ class StorageArweave {
             }
         }
     }
-    async pickProviderToStoreWith() {
-        // todo: pick the cheapest, closest storage providers somehow (do whatever's easy at first)
-        // todo: don't pick the one you already store it with
-        // conditions:
-        // - it has cheapest fees
-        // - it's online - ping it (remote ping possible?)
-        // - you have a financial connection
-        // - cycle until you find one
-        // return ['989695771d51de19e9ccb943d32e58f872267fcc', {'protocol':'http:', 'hostname':'127.0.0.1', 'port':'12345'}];
-        return this.utils.urlToContact( await this.chooseProviderCandidate() );
-        // return 'http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc'; // test1 // TODO!
-    }
 
+
+    // async pickProviderToStoreWith() {
+    //     // todo: pick the cheapest, closest storage providers somehow (do whatever's easy at first)
+    //     // todo: don't pick the one you already store it with
+    //     // conditions:
+    //     // - it has cheapest fees
+    //     // - it's online - ping it (remote ping possible?)
+    //     // - you have a financial connection
+    //     // - cycle until you find one
+    //     // return ['989695771d51de19e9ccb943d32e58f872267fcc', {'protocol':'http:', 'hostname':'127.0.0.1', 'port':'12345'}];
+    //     return this.utils.urlToContact( await this.chooseProviderCandidate() );
+    //     // return 'http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc'; // test1 // TODO!
+    // }
+
+    // USED in models - refactor
     async downloadChunk(chunk) {
         // todo todo todo: make it in the same way as chunkUploadingTick - ??
 
@@ -632,6 +646,7 @@ class StorageArweave {
     }
 
     // todo: move to client/storage
+    // INTERNAL
     async chunkUploadingTick(chunk) {
         console.log('this.uploadingChunksProcessing['+chunk.id+']', this.uploadingChunksProcessing[chunk.id]);
 
@@ -690,6 +705,7 @@ class StorageArweave {
         // todo: what about expiring and renewing?
     }
 
+    // INTERNAL
     send(cmd, data, contact, callback) {
         const request = {
             'internal_id': (new Date).getTime().toString() + Math.random().toString(),
@@ -701,6 +717,7 @@ class StorageArweave {
         this.sendQueued(contact);
     }
 
+    // INTERNAL
     sendQueued(contact) {
         const MAX_PARALLEL_PER_PROVIDER = this.ctx.config.client.max_parallel_requests_per_provider;
         const requests_length = (this.current_requests[contact]) ? this.current_requests[contact].length : 0;
@@ -718,6 +735,7 @@ class StorageArweave {
         }
     }
 
+    // USED BY LINK MACHINE
     isProviderQueueFull(contact) {
         const MAX_PARALLEL_PER_PROVIDER = this.ctx.config.client.max_parallel_requests_per_provider;
         const requests_length = (this.current_requests[contact]) ? this.current_requests[contact].length : 0;
@@ -725,23 +743,7 @@ class StorageArweave {
         return (requests_length+queued_length >= MAX_PARALLEL_PER_PROVIDER);
     }
 
-    async ___getChunk(chunk_id) {
-        // FIND_NODE / FIND_VALUE / STORE should not be paid for for now
-        // You have to change FIND_VALUE to turn it into array
-        // 1. iterativeFindValues - get results
-        // filter out banned nodes
-        // 2. see whether you have financial connections to those nodes (and channel with enough funds), filter out everybody else
-        // as per raiden docs:
-        // POST /api/v1/payments/0x0f114A1E9Db192502E7856309cc899952b3db1ED/0x61C808D82A3Ac53231750daDc13c777b59310bD9 HTTP/1.1
-        // + the nodes that are online todo: remote ping? possible?
-        // + take the closest ones
-        // 3. poll nodes (even distant ones) and ask them if they still have the chunk and if they're online, and already offer them to pay for the chunk
-        // 4. start paying as soon as they send you first data. ban each other if the deal goes wrong after payment
-        // todo: what if they send you invalid data? you can only check integrity after you receive the whole chunk, right? maybe the chunk should be the merkle tree as well?
-    }
-
-    async removeChunk() { /*todo*/ }
-
+    // INTERNAL
     async getOrGenerateRedkeyId(provider, recursive = true) {
         // Note: locking here is important because of concurrency issues. I've spent hours debugging random errors in
         // encryption when it turned out that several keys were generated for the same provider at once and they were
@@ -786,6 +788,7 @@ class StorageArweave {
         // todo: multiple?
     }
 
+    // INTERNAL
     getCacheDir() {
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
         utils.makeSurePathExists(cache_dir);

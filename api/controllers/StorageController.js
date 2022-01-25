@@ -5,6 +5,7 @@ const DEFAULT_ENCODING = 'utf-8';
 const utils = require('#utils');
 const path = require('path');
 const fs = require('fs');
+const {getFile} = require("../../client/storage/index-new.js");
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
@@ -20,7 +21,7 @@ class StorageController extends PointSDKController {
         const cid = this.req.params.id;
         const encoding = this.req.query.encoding ? this.req.query.encoding : DEFAULT_ENCODING;
 
-        const contents = await this.ctx.client.storage.readFile(cid, encoding);
+        const contents = (await getFile(cid, encoding)).toString(encoding);
         return this._response(contents);
     }
 
@@ -34,7 +35,7 @@ class StorageController extends PointSDKController {
             let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
             return this._response(uploaded.id);
         } else {
-            return this._response(null)
+            return this._response(null);
         }
     }
 

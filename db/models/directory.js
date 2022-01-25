@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const utils = require('#utils');
+const {getFile} = require("../../client/storage/index-new.js");
 
 class Directory {
     constructor() {
@@ -31,10 +32,7 @@ class Directory {
                     if (! f.downloaded) {
                         let subdir = new Directory();
                         console.log('ASKING FOR Directory.getFileIdByPath ',{filePath, subdir}, 'f.id', f.id);
-                        // TODO: this makes us to get the sqlite unique violation issue
-                        // when we read multiple files from the same folder, as readFile triggers
-                        // findOrCreate, and we run into the race condition
-                        subdir.unserialize(await this.ctx.client.storage.readFile(f.id, 'utf-8')); // dir spec is always in utf-8
+                        subdir.unserialize((await getFile(f.id)));
                         f.downloaded = true;
                         f.dirObj = subdir;
                         f.dirObj.setCtx(this.ctx);
@@ -50,7 +48,7 @@ class Directory {
     async readFileByPath(filePath, encoding = 'utf-8') {
         let id = await this.getFileIdByPath(filePath);
         console.log('ASKING FOR Directory.readFileByPath ',{filePath}, id);
-        return await this.ctx.client.storage.readFile(id, encoding);
+        return getFile(id, encoding);
     }
 
     setOriginalPath(originalPath) {

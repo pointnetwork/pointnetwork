@@ -4,9 +4,18 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const _ = require('lodash');
 const utils = require('#utils');
+
 let StorageLink;
 let File;
 let FileMap;
+
+// TODO: import from storage, now having problems with circular dependencies
+const DOWNLOAD_STATUS = {
+    NOT_STARTED: "NOT_STARTED",
+    IN_PROGRESS: "IN_PROGRESS",
+    COMPLETED: "COMPLETED",
+    FAILED: "FAILED"
+};
 
 class Chunk extends Model {
     constructor(...args) {
@@ -223,8 +232,8 @@ Chunk.init({
     id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
     size: { type: Sequelize.DataTypes.INTEGER, allowNull: true },
 
-    ul_status: { type: Sequelize.DataTypes.STRING, defaultValue: Chunk.UPLOADING_STATUS_CREATED },
-    dl_status: { type: Sequelize.DataTypes.STRING, defaultValue: Chunk.DOWNLOADING_STATUS_CREATED },
+    ul_status: { type: Sequelize.DataTypes.STRING, defaultValue: DOWNLOAD_STATUS.NOT_STARTED },
+    dl_status: { type: Sequelize.DataTypes.STRING, defaultValue: DOWNLOAD_STATUS.NOT_STARTED },
 
     // allowNull in the next rows because this is only related to uploading and storing, not chunks queued for downloading
     redundancy: { type: Sequelize.DataTypes.INTEGER, allowNull: true },

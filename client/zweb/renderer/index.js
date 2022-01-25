@@ -5,6 +5,7 @@ const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
 const utils = require('#utils');
 const ethUtil = require("ethereumjs-util");
+const {getFile, getJSON} = require("../../storage/index-new.js");
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -62,18 +63,18 @@ class Renderer {
             },
             storage_get_by_ikv: async function(identity, key) {
                 const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
-                return await this.renderer.ctx.client.storage.readFile(fileKey, 'utf-8');
+                return getFile(fileKey);
             },
             storage_get: async function(key) {
                 try {
-                    return await this.renderer.ctx.client.storage.readFile(key, 'utf-8');
+                    return getFile(key);
                 } catch (e) {
                     console.error('Twig.storage_get error:', e);
                     return 'Invalid Content';
                 }
             },
             storage_get_parsed: async function(key) {
-                return await this.renderer.ctx.client.storage.readJSON(key, 'utf-8');
+                return await getJSON(key);
             },
             storage_put: async function(content) {
                 const cache_dir = path.join(this.renderer.ctx.datadir, this.renderer.config.cache_path);
