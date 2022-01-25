@@ -43,7 +43,18 @@ const Comments = ({ postId }) => {
         )
 
         const commentsContent = await Promise.all(comments.map(async (comment) => {
-          const {data: contents} = await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' });
+          let {data: contents, error: errors} = await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' });
+          console.log('1');
+          if(errors){
+            console.log('2');
+            //just wait one secod
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log('3');
+            //try again
+            contents = (await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' })).data;
+            console.log('4');
+          }
+          console.log('5');
           const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: comment.from});
           comment.identity = identity;
           comment.contents = contents;
