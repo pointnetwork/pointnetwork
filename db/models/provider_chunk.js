@@ -88,8 +88,6 @@ class ProviderChunk extends Model {
         try {
             segment_hash = this.segment_hashes[segment_index].toString('hex'); // todo: validate that data is Buffer
         } catch(e) {
-            console.warn(e);
-            console.log(this.toJSON());
             throw e; // todo: process
         }
         if (!Buffer.isBuffer(rawData)) throw Error('ProviderChunk.setSegmentData: data must be a Buffer!');

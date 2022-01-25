@@ -21,8 +21,6 @@ class LocalDirectory {
             throw Error('Directory traversal is not allowed');
         }
 
-        console.log('ASKING FOR LocalDirectory.readFileByPath ',{filePath, fullPath});
-
         if (! fs.existsSync(fullPath)) throw new HttpNotFoundError('This route or file is not found');
 
         return fs.readFileSync(fullPath, encoding);

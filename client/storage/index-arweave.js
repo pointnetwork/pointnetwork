@@ -38,17 +38,14 @@ class StorageArweave {
     }
 
     downloadingTickOn(chunk_id) {
-        // console.trace();
         if (this.downloadingTicks[chunk_id] > 0) return false;
         this.downloadingTicks[chunk_id] = 0;
         this.downloadingTicks[chunk_id]++;
-        // console.log('on', chunk_id, this.downloadingTicks[chunk_id]);
         return true;
     }
 
     downloadingTickOff(chunk_id) {
         this.downloadingTicks[chunk_id] = Math.max( this.downloadingTicks[chunk_id]-1, 0 );
-        // console.log('off', chunk_id, this.downloadingTicks[chunk_id]);
     }
 
     hasArweaveKey() {
@@ -196,9 +193,7 @@ class StorageArweave {
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
-        console.log('enqueuing');
         const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
-        console.log('enqueued');
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(() => {
                 (async() => {
@@ -413,9 +408,6 @@ class StorageArweave {
 
     async chunkDownloadingTick(chunk) {
         // todo todo todo: make it in the same way as chunkUploadingTick - ??
-
-        console.log('chunkDownloadingTick----', chunk.id);
-
         if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) return;
 
         if (! this.downloadingTickOn(chunk.id)) return;
@@ -456,19 +448,12 @@ class StorageArweave {
                 return ret;
             };
 
-            console.log(ARW_LOG + '  arweave/graphql', chunk.id);
             const queryResult = await request('https://arweave.net/graphql', query);
-            console.log(ARW_LOG + '  arweave/graphql - DONE', chunk.id, elapsed());
 
-            console.log(ARW_LOG + '  query:', query);
-            console.log(ARW_LOG + '  queryResult:', queryResult);
-
-            console.log(ARW_LOG + '  iterations', elapsed());
             for(let edge of queryResult.transactions.edges) {
                 const txid = edge.node.id;
 
                 // Get the data decoded to a Uint8Array for binary data
-                console.log(ARW_LOG + '  downloading getData from arweave', chunk.id, {txid}, elapsed());
                 const data = await this.arweave.transactions.getData(txid, {decode: true}); //.then(data => {     // Uint8Array [10, 60, 33, 68, ...]
 
                 // Read back data
@@ -483,15 +468,11 @@ class StorageArweave {
 
                 // const dl_url = `https://arweave.net/${txid}`;
                 // const result = await axios.get();
-                // console.log({dl_url, result});
                 // const data = result.data;
-
-                console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
 
                 const buf = Buffer.from(data);
 
                 if (utils.hashFnHex(buf) === chunk.id) {
-                    console.log(ARW_LOG + '  WORKED!', chunk.id, {txid}, elapsed());
                     if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
                     chunk.setData(buf); // todo: what if it errors out?
                     chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
@@ -500,7 +481,6 @@ class StorageArweave {
 
                     return;
                 }
-                console.log(ARW_LOG + '  NOT WORKED! WRONG CHUNK', chunk.id, utils.hashFnHex(buf), {txid});
             }
 
             // Not found :(
@@ -518,7 +498,10 @@ class StorageArweave {
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
         return new Promise((resolve, reject) => {
             const provider_id = link.provider_id;
-            if (!provider_id) { console.error('No provider id!'); process.exit(); }
+            if (!provider_id) {
+                this.ctx.log.error('No provider id!');
+                process.exit(); // WTF?
+            }
             this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getSize(), chunk.expires], link.provider_id, async(err, result) => {
                 await link.refresh();
                 (!err) ? resolve(true) : reject(err); // machine will move to next state
@@ -547,7 +530,6 @@ class StorageArweave {
             let uploader = await this.arweave.transactions.getUploader(transaction);
             while (!uploader.isComplete) {
                 await uploader.uploadChunk();
-                // console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
             }
 
             // return new Promise(async(resolve, reject) => {
@@ -566,8 +548,6 @@ class StorageArweave {
                 [this.__PN_TAG_CHUNK_ID_KEY]: chunk.id,
                 [this.__PN_TAG_VERSIONED_CHUNK_ID_KEY]: chunk.id
             };
-
-            console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
 
             const FormData = require('form-data'); // npm install --save form-data
 
@@ -595,7 +575,7 @@ class StorageArweave {
             if (response.data.status !== 'ok') {
                 throw Error('Arweave airdrop endpoint return error: '+JSON.stringify(response));
             } else {
-                console.debug('Chunk id '+chunk.id + ' uploaded, txid: '+response.data.txid);
+                this.ctx.log.debug('Chunk id '+chunk.id + ' uploaded, txid: '+response.data.txid);
             }
 
             return;
@@ -608,13 +588,9 @@ class StorageArweave {
             // await item.sign(signer);
             //
             // // This transaction ID is guaranteed to be usable
-            // // console.log("item id", item.id);
             // const txid = item.id;
             //
             // const response = await item.sendToBundler(this.BUNDLER_URL);
-            //
-            // console.log(["bundler response status", response.status]);
-            // console.log({'chunk_id': chunk.id, 'txid': txid, 'bundler_response_status': response.status });
         }
     }
 
@@ -641,7 +617,7 @@ class StorageArweave {
                     }
                     return resolve(false); // not done yet
                 } else {
-                    console.log('ERR', err); // todo: remove
+                    this.ctx.log.error(err, 'SEND_STORE_CHUNK_DATA Error'); // todo: remove
                     return reject(err);
                 }
             });
@@ -682,8 +658,7 @@ class StorageArweave {
 
                     return resolve(true);
                 } catch (e) {
-                    // todo: don't just put this into the console, this is for debugging purposes
-                    console.debug('FAILED CHUNK', {err, result}, e);
+                    this.ctx.log.debug({err, result, e}, 'FAILED CHUNK');
                     return reject(e);
                 }
             });
@@ -692,8 +667,6 @@ class StorageArweave {
 
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
-        console.log('this.uploadingChunksProcessing['+chunk.id+']', this.uploadingChunksProcessing[chunk.id]);
-
         if (this.uploadingChunksProcessing[chunk.id]) return;
         this.uploadingChunksProcessing[chunk.id] = true;
 
@@ -710,8 +683,6 @@ class StorageArweave {
         const inProgressOrLiveCount = all.length - failed.length;
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
-
-        console.log({id: chunk.id, all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
 
         if (failed.length > 0) {
             // for some reason this block of code doesn't get used anyway until the next simulation tick, we fail the file long before in the machine
@@ -743,7 +714,6 @@ class StorageArweave {
         for(let link of all) {
             const requests_length = (this.current_requests[link.provider_id]) ? this.current_requests[link.provider_id].length : 0;
             const queued_length = (this.queued_requests[link.provider_id]) ? this.queued_requests[link.provider_id].length : 0;
-            console.debug(chunk.id, link.id, Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number), link.segments_received, link.status, (link.status===StorageLink.STATUS_FAILED)?link.error:'', {requests_length, queued_length});
         }
 
         // todo: what about expiring and renewing?

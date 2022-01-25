@@ -26,8 +26,6 @@ class File extends Model {
 
     getAllChunkIds() {
         if (! this.chunkIds) {
-            console.log({file:this});
-            console.trace();
             throw Error('You need to chunkify the file first before calculating a merkle tree');
         }
         return [...this.chunkIds, this.id];
@@ -40,7 +38,6 @@ class File extends Model {
             file_ids.push(map.file_id);
         }
         file_ids = _.uniq(file_ids);
-        console.log({file_ids});
 
         let files = [];
         for(let file_id of file_ids) {
@@ -125,8 +122,6 @@ class File extends Model {
         let temporaryFile = '/tmp/_point_tmp_'+Math.random().toString().replace('.', ''); // todo;
         let fd = fs.openSync(temporaryFile, 'a');
 
-        console.log('DUMP_TO_DISK_FROM_CHUNKS', this.id, this.chunkIds);
-
         for(let chunkId of this.chunkIds) {
             let chunk = await Chunk.findOrFail(chunkId);
 
@@ -183,11 +178,6 @@ class File extends Model {
             await chunk.reconsiderUploadingStatus(false);
             if (chunk.isUploading()) {
                 chunks_uploading++; // todo: replace with needs_uploading and break;
-            }
-
-            console.dir({chunk, chunks, chunks_uploading}, {depth: 3});
-            for(let i in chunks) {
-                console.log(i, chunks[i].dataValues);
             }
         }));
 
@@ -272,7 +262,6 @@ class File extends Model {
         } else {
             let current_status = this.dl_status;
             if (current_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
-                console.dir({_this:this}, {depth: 2});
                 await this.dumpToDiskFromChunks();
             }
             await this.changeDLStatus(File.DOWNLOADING_STATUS_DOWNLOADED);
@@ -350,9 +339,6 @@ class File extends Model {
                 chunk.autorenew = this.autorenew;
                 await chunk.save();
                 await chunk.addBelongsToFile(this, -1);
-
-                console.log({chunk});
-
                 return this.chunkIds;
             }
 
