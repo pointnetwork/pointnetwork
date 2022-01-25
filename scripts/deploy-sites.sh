@@ -10,8 +10,8 @@ else
     DEPLOY_CONTRACTS=""
 fi
 
-if [ $# -eq 0 ]; then
-    # No arguments supplied
+if [ $# -eq 0 ] || [ "$MODE" == "e2e" ]; then
+    # No arguments supplied or mode === e2e
     EXAMPLE_SITES="./example/*"
     DEPLOY_CONTRACTS="--contracts"
 else
