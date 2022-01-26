@@ -8,7 +8,7 @@ build-e2e() {
 
     if [[ $? != 0 ]]; then 
         docker build -t "pointnetwork/pointnetwork_node:`git branch --show-current`" .; 
-        sed -i "s/POINT_NODE_VERSION=\w*/POINT_NODE_VERSION=`git branch --show-current`/" .env.e2e;
+        perl -i -pe"s/POINT_NODE_VERSION=.*/POINT_NODE_VERSION=`git branch --show-current`/" .env.e2e;
     else
         echo "Docker Image for current branch exists. To rebuild the image, delete it first and run this script again.";
     fi;
