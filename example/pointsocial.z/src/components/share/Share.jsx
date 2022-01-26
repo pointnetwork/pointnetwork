@@ -1,10 +1,10 @@
 import "./share.css";
 import { AttachFileTwoTone } from "@material-ui/icons";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import profileImg from '../../assets/profile-pic.jpg';
 import { useAppContext } from '../../context/AppContext';
 
-export default function Share({getPosts}) {
+export default function Share({getPosts, renderPostsImmediate}) {
   const DEFAULT_BTN_LABEL = 'Share'
   const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const [selectedFile, setSelectedFile] = useState();
@@ -13,6 +13,8 @@ export default function Share({getPosts}) {
   const [btnEnabled, setBtnEnabled] = useState(false);
   const [shareError, setShareError] = useState(undefined);
   const { identity } = useAppContext();
+
+  const fileInputRef = useRef()
 
   const onFileChange = event => {
     let fileToUpload = event.target.files[0];
@@ -50,9 +52,12 @@ export default function Share({getPosts}) {
       }
       // Save the post contents storage id in the PoinSocial Smart Contract
       await window.point.contract.send({contract: 'PointSocial', method: 'addPost', params: [storageId, imageId]});
+      renderPostsImmediate({contents,image:imageId})
       setSaving(false);
       setContents('');
-      await getPosts();
+      setSelectedFile()
+      fileInputRef.current.value = null
+      // await getPosts();
     } catch (e) {
       console.error('Error sharing post: ', e.message);
       setSaving(false);
@@ -87,6 +92,7 @@ export default function Share({getPosts}) {
                 type="file"
                 name="fileupload"
                 accept="image/*"
+                ref={fileInputRef}
                 onChange={onFileChange}
               />
             </div>
