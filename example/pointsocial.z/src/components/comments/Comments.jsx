@@ -1,5 +1,6 @@
 import "./comments.css";
 import { useState, useEffect } from "react";
+import { useAppContext } from '../../context/AppContext';
 import Comment from './Comment'
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
@@ -11,6 +12,7 @@ const Comments = ({ postId }) => {
     const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
     const [btnEnabled, setBtnEnabled] = useState(false);
     const [loading, setLoading] = useState(true);
+    const { walletAddress } = useAppContext();
 
     const onContentsChange = event => {
       let newContents = event.target.value;
@@ -30,6 +32,16 @@ const Comments = ({ postId }) => {
       setLoading(false);
     }
 
+    const renderCommentsImmediate = (newCommentContent) => {
+      setLoading(true);
+      updatedComments = [...comments];
+      newCommentId = parseInt(comments[comments.length-1].id) + 1;
+      const newComment = {id: newCommentId, from: walletAddress, contents: newCommentContent, createdAt: Date.now()}
+      updatedComments.push(newComment);
+      setComments(updatedComments);
+      setLoading(false);
+    }
+
     useEffect(() => {
         getComments()
     }, [postId])
@@ -43,18 +55,7 @@ const Comments = ({ postId }) => {
         )
 
         const commentsContent = await Promise.all(comments.map(async (comment) => {
-          let {data: contents, error: errors} = await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' });
-          console.log('1');
-          if(errors){
-            console.log('2');
-            //just wait one secod
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log('3');
-            //try again
-            contents = (await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' })).data;
-            console.log('4');
-          }
-          console.log('5');
+          const {data: contents} = await window.point.storage.getString({ id: comment.contents, encoding: 'utf-8' });
           const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: comment.from});
           comment.identity = identity;
           comment.contents = contents;
@@ -74,8 +75,10 @@ const Comments = ({ postId }) => {
           // Save the post contents storage id in the PoinSocial Smart Contract
           await window.point.contract.send({contract: 'PointSocial', method: 'addCommentToPost', params: [postId, storageId]});
           setSaving(false);
+          // calling renderCommentsImmediate instead of fetching the comments due to issues with fetching content too soon from Arweave after posting.
+          renderCommentsImmediate(contents);
           setContents('');
-          await getComments();
+          // await getComments();
       } catch (err) {
         setSaving(false);
         console.error('Error: ', err);
