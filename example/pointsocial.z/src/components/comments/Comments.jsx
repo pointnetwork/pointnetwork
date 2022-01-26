@@ -33,9 +33,10 @@ const Comments = ({ postId }) => {
     }
 
     const renderCommentsImmediate = (newCommentContent) => {
+      console.log('Using renderCommentsImmediate function.')
       setLoading(true);
       updatedComments = [...comments];
-      newCommentId = parseInt(comments[comments.length-1].id) + 1;
+      newCommentId = comments.length + 1;
       const newComment = {id: newCommentId, from: walletAddress, contents: newCommentContent, createdAt: Date.now()}
       updatedComments.push(newComment);
       setComments(updatedComments);
