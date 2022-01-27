@@ -5,7 +5,7 @@ import Comment from './Comment'
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
 
-const Comments = ({ postId }) => {
+const Comments = ({ postId, commentsCount, setCommentsCount }) => {
     const DEFAULT_BTN_LABEL = 'Comment'
     const [comments, setComments] = useState([])
     const [contents, setContents] = useState()
@@ -40,6 +40,7 @@ const Comments = ({ postId }) => {
       const newComment = {id: newCommentId, from: walletAddress, contents: newCommentContent, createdAt: Date.now()}
       updatedComments.push(newComment);
       setComments(updatedComments);
+      setCommentsCount(parseInt(commentsCount) + 1);
       setLoading(false);
     }
 
