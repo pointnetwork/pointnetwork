@@ -1,7 +1,7 @@
 {{ csrf_guard(request._csrf) }}
 
 {% if identity_check_availability(request.recipient) == false %}
-  
+
   {% set identity_owner = owner_by_identity(request.recipient) %}
   {#<p>Identity owner: {{ identity_owner }}#}
   {% set identity_comm_public_key = public_key_by_identity(request.recipient) %}
@@ -11,12 +11,12 @@
   {% set stored_encrypted_message_id = storage_put(encrypted_results.encryptedMessage) %}
   {#<p>Stored encrypted message: {{ stored_encrypted_message_id }}#}
   {% set result = contract_call(host, 'PointEmail', 'send', [ identity_owner, stored_encrypted_message_id, encrypted_results.encryptedSymmetricObjJSON ]) %}
-  
+
 
 {% else %}
   <html>
     <body>
-      <script>location.href='/compose?recipient={{request.recipient|url_encode}}&message={{request.message|url_encode}}&recipient_error=This recipient does not existis'</script>
+      <script>location.href='/compose?recipient={{request.recipient|url_encode}}&message={{request.message|url_encode}}&recipient_error=This recipient identity does not exist!'</script>
     </body>
   </html>
 
