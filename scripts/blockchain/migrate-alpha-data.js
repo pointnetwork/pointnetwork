@@ -61,12 +61,11 @@ const minimal_contract_abi = [
 ]
 
 
-/*
+
 if(process.argv[2] === undefined){
-    let sites = Array.from(allowedSites.keys()).join(', ');
-    console.log(`Please inform one of the website to migrate data eg: (${sites})`);
+    console.log(`Please inform the zapp to migrate eg: blog.z`);
     return;
-}*/
+}
 
 const site = process.argv[2];
 
@@ -75,12 +74,18 @@ init = () => {
     identity_contract_address = config.network.identity_contract_address;
     storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
 
+    if(allowedSites[site] == undefined) {
+        console.log('Please inform a valid zapp domain');
+        exit(0);
+    }
+    
     startMigration();
 }
 
 startMigration = async() => {
 
-    console.log('Migrating');    
+    
+
     const handle = allowedSites[site].handle;
     const migrationAddress = allowedSites[site].contract;
     const migrationgAbi = loadSiteMigrationsAbi(allowedSites[site].abi);
@@ -89,10 +94,18 @@ startMigration = async() => {
     const identityInstance = new web3.eth.Contract(identityAbiFile.abi, identity_contract_address);
     const migratorInstance = new web3.eth.Contract(migrationgAbi.abi, migrationAddress);
 
+    const handleAddress = await identityInstance.methods.getOwnerByIdentity(handle).call({from:account.address});
+
+    if(handleAddress == '0x0000000000000000000000000000000000000000') {
+        console.log('Please deplot your zapp before running their migrations');
+        exit(0);
+    }
+
     //validate if handle exists
     const contractKey = await identityInstance.methods.ikvList(handle, 0).call({from:account.address});
     const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
     const zappInstance = new web3.eth.Contract(minimal_contract_abi, contractAddress);
+    
 
     await zappInstance.methods.addMigrator(migrationAddress).send(
     {
