@@ -102,6 +102,7 @@ startMigration = async() => {
     const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
     const zappInstance = new web3.eth.Contract(minimal_contract_abi, contractAddress);
 
+    
     await zappInstance.methods.addMigrator(migrationAddress).send(
     {
         from: account.address,
