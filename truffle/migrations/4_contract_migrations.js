@@ -1,4 +1,5 @@
 const twitterMigrations = artifacts.require("./TwitterMigrations.sol");
+const twitterMigrations = artifacts.require("./TwitterMigrations.sol");
 const blogMigrations = artifacts.require("./BlogMigrations.sol");
 const pointSocialMigrations = artifacts.require("./PointSocialMigrations.sol");
 
