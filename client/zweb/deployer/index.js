@@ -19,20 +19,8 @@ class Deployer {
         utils.makeSurePathExists(cache_dir);
         return cache_dir;
     }
-
-    async migrate(site) {
-        const privateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
-        const privateKey = Buffer.from(privateKeyHex, 'hex');
-        const publicKey = ethUtil.privateToPublic(privateKey);
-        
-
-        console.log(privateKeyHex);
-        console.log(privateKey);
-        console.log(publicKey);
-    }
-
+    
     async deploy(deployPath, deployContracts = false) {
-
         // todo: error handling, as usual
         let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');

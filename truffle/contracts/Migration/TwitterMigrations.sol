@@ -3,14 +3,12 @@ pragma solidity ^0.8.0;
 
 contract TwitterMigrations {
     address private _owner;
-    bool public migrationsApplied = false;
 
     constructor() {
         _owner = msg.sender;
     }
 
-    function persistTweets(address _contract) public {
-        require(migrationsApplied == false, "Migrations already applied");
+    function migrate(address _contract) public {
         require(msg.sender == _owner, "Access Denied");
         string memory sig = "add(address,bytes32,uint256,uint256)";
 
@@ -124,6 +122,5 @@ contract TwitterMigrations {
             )
         );
 
-        migrationsApplied  = true;
     }
 }
