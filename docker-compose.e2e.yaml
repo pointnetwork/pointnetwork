@@ -126,8 +126,8 @@ services:
       - ./deployspace:/app/deployspace:ro
     environment:
       DATADIR: /data
+      MODE: e2e
       DB_ENV: pointnode2
-      DEV_ZAPP_HOST: $DEV_ZAPP_HOST
       BLOCKCHAIN_URL: $BLOCKCHAIN_URL
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
