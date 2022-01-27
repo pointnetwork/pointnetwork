@@ -1,14 +1,88 @@
 'use strict';
+
+//truffle exec scripts/identityImporter.js --upload 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 1643305855-identity.json
+//truffle exec scripts/identityImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 
+
+const { Console } = require('console');
 const fs = require('fs');
+const { identity } = require('lodash');
+const { exit } = require('process');
 
 global.artifacts = artifacts;
 global.web3 = web3;
 
+if(process.argv[4] === undefined){
+    console.log(`Please use the tags --download or --upload <contract_addresss>`);
+    exit(0);
+}
+
+if(process.argv[5] === undefined){
+    console.log(`Please inform the contract address`);
+    exit(0);
+}
+
+const action = process.argv[4];
+const contract = process.argv[5];
 
 async function main(){
+    action == '--download' ? await download(contract) : await upload(contract);
+}
+
+async function upload(contract){
+    if(process.argv[6] === undefined){
+        console.log(`Please inform the migration file`);
+        exit(0);
+    }
+
+    const migrationFile = '../resources/migrations/'+process.argv[6];
+
+    if (!fs.existsSync(migrationFile)) {
+        console.log("Migration not found");
+        exit(0);
+      }
+
+    let data = JSON.parse(fs.readFileSync(migrationFile));
+
     const artifact = artifacts.require("./Identity.sol");
-    const sourceContract = new web3.eth.Contract(artifact.abi, '0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b');
-    //const targetContract = new web3.eth.Contract(artifact.abi, '0xfF27950b569FdeE3ddc222953cd9F960E5923e84');
+    const targetContract = new web3.eth.Contract(artifact.abi, contract);
+    let accounts = await web3.eth.getAccounts();
+
+    for (const identity of data.identities) {
+        console.log('Migrating: '+identity.handle);
+        await targetContract.methods.register(
+            identity.handle,
+            identity.owner, 
+            identity.keyPart1, 
+            identity.keyPart2
+        ).send({
+            from: accounts[0]
+        });
+    }
+
+    for (const ikv of data.ikv) {
+        console.log('Migrating IKV value for: '+ikv.handle);
+        await targetContract.methods.ikvImportKV(
+            ikv.handle,
+            ikv.key, 
+            ikv.value
+        ).send({
+            from: accounts[0]
+        });
+    }
+
+   
+    console.log('Closing migrations');
+    await targetContract.methods.finishMigrations().send({
+        from: accounts[0]
+    });
+
+    console.log('Closed migrations');
+
+}
+
+async function download(contract){
+    const artifact = artifacts.require("./Identity.sol");
+    const sourceContract = new web3.eth.Contract(artifact.abi, contract);
     let accounts = await web3.eth.getAccounts();
     const options = { fromBlock: 0, toBlock: 'latest' }
    
@@ -22,9 +96,12 @@ async function main(){
         let identities = [];
         for (const e of events) {
             const {handle, identityOwner, commPublicKey} = e.returnValues;
+
+            console.log('Found: '+handle)
+
             let identity = {
                 handle,
-                identityOwner,
+                owner:identityOwner,
                 keyPart1:commPublicKey.part1,
                 keyPart2:commPublicKey.part2
             }
@@ -44,7 +121,7 @@ async function main(){
         for (const e of events) {
             const {identity, key, value} = e.returnValues;
             let ikv = {
-                identity,
+                handle:identity,
                 key,
                 value    
             }
@@ -55,7 +132,13 @@ async function main(){
         e => console.log(e)
     )
 
-    console.log(fileStructure);
+    const timestamp = Math.round(+new Date()/1000); 
+    const contractName = 'identity';
+    const filename = timestamp+'-'+contractName+'.json'
+
+    fs.writeFileSync('../resources/migrations/'+filename, JSON.stringify(fileStructure, null, 4));    
+    console.log('Downloaded');
+    exit(0);
 }
 
 // For truffle exec
