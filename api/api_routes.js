@@ -4,6 +4,7 @@ module.exports = [
     ['GET', '/v1/api/status/ping', 'PingController@ping'],
     ['GET', '/v1/api/status/meta', 'StatusController@meta'],
     ['GET', '/v1/api/deploy', 'DeployController@deploy'],
+    ['GET', '/v1/api/migrate', 'MigrateController@migrate'],
     ['GET', '/v1/api/storage/files', 'StorageController@files'],
     ['GET', '/v1/api/storage/files/:id', 'StorageController@fileById'],
     ['GET', '/v1/api/storage/chunks', 'StorageController@chunks'],
