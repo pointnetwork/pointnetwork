@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+//node scripts/blockchain/migrate-alpha-data.js twitter.z
 
 const { readFileSync } = require('fs');
 const Web3 = require('web3');
@@ -60,8 +61,6 @@ const minimal_contract_abi = [
      }
 ]
 
-
-
 if(process.argv[2] === undefined){
     console.log(`Please inform the zapp to migrate eg: blog.z`);
     return;
@@ -83,9 +82,6 @@ init = () => {
 }
 
 startMigration = async() => {
-
-    
-
     const handle = allowedSites[site].handle;
     const migrationAddress = allowedSites[site].contract;
     const migrationgAbi = loadSiteMigrationsAbi(allowedSites[site].abi);
@@ -105,20 +101,22 @@ startMigration = async() => {
     const contractKey = await identityInstance.methods.ikvList(handle, 0).call({from:account.address});
     const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
     const zappInstance = new web3.eth.Contract(minimal_contract_abi, contractAddress);
-    
 
     await zappInstance.methods.addMigrator(migrationAddress).send(
     {
         from: account.address,
         gas:200000
+    }).then(function(txRaw) {
+        console.log(txRaw)
     });
-
     
     console.log('Migrator added');    
     await migratorInstance.methods.migrate(contractAddress).send(
     {
         from: account.address,
         gas:200000
+    }).then(function(txRaw) {
+        console.log(txRaw)
     });
 
     console.log('Migrated');    
