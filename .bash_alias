@@ -9,11 +9,11 @@ alias point-browser-docker-3="web-ext run --firefox-profile=website_visitor_dock
 build-e2e() {
     docker image inspect pointnetwork/pointnetwork_node:`git branch --show-current` > /dev/null 2>&1;
 
-    if [[ $? != 0 ]]; then 
+    if [[ $? != 0 ]] || [ "$1" == "--force" ]; then 
         docker build -t "pointnetwork/pointnetwork_node:`git branch --show-current`" .; 
         perl -i -pe"s/POINT_NODE_VERSION=.*/POINT_NODE_VERSION=`git branch --show-current`/" .env.e2e;
     else
-        echo "Docker Image for current branch exists. To rebuild the image, delete it first and run this script again.";
+        echo "Docker Image for current branch exists. To rebuild the image run 'build-e2e --force'";
     fi;
 }
 
