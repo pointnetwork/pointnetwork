@@ -57,6 +57,10 @@ program.command('deploy <path>')
     .description('deploy a website')
     .action((path, cmd) => { program.deploy = path; program.deploy_contracts = !!cmd.contracts; })
     .option('--contracts', '(re)deploy contracts too', false);
+
+program.command('migrate-contract <site>')
+    .description('migrates contracts genesis data')
+    .action((cmd) => { program.migrateContract = true; program.site = cmd});
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
 // program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
@@ -134,6 +138,17 @@ if (program.attach) {
     const Console = require('./console');
     const console = new Console();
     console.start();
+    return;
+}
+
+// -------------------- Solidity Migrations --------------------- //
+
+if (program.migrateContract) {
+
+    if (program.site.length === 0) return ctx.die('error: missing site');
+    const Deploy = require('./core/deploy');
+    const deploy = new Deploy(ctx);
+    deploy.migrate(program.site);
     return;
 }
 

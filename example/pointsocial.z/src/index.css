@@ -65,7 +65,7 @@ header {
 
 .post {
   background: white;
-  cursor: pointer;
+  /* cursor: pointer; */
 }
 
 .post.favorite {

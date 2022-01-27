@@ -7,7 +7,7 @@ import profilePic from '../../assets/profile-pic.jpg';
 import profileCoverImg from '../../assets/header-pic.jpg';
 import { useRoute } from "wouter";
 
-export default Profile = () => {
+const Profile = () => {
   const [match, params] = useRoute("/profile/:account");
 
   return (
@@ -43,3 +43,5 @@ export default Profile = () => {
     </>
   );
 }
+
+export default Profile

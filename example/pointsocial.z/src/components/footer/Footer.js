@@ -1,7 +1,7 @@
 import './footer.css'
 import { Link } from "wouter";
 
-export default Footer = () => (
+const Footer = () => (
     <footer id="footer">
       <section className="footerContainer">
         <Link to="/">
@@ -10,3 +10,5 @@ export default Footer = () => (
       </section>
     </footer>
   )
+  
+export default Footer
