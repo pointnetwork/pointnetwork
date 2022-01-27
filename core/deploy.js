@@ -6,11 +6,11 @@ class Deploy {
         this.ctx = ctx;
     }
 
-    async deploy(deploy_path, deploy_contracts = false) {
+    async deploy(deploy_path, deploy_contracts = false, staging = false) {
         let deploy_path_absolute = path.resolve(deploy_path);
         if (deploy_path_absolute.length === 0) return this.ctx.die('error: invalid path');
         const t0 = Date.now();
-        const result = await new Console(this.ctx).cmd_api('deploy', "deploy_path="+deploy_path_absolute, "deploy_contracts="+((deploy_contracts)?'true':'false'));
+        const result = await new Console(this.ctx).cmd_api('deploy', "deploy_path="+deploy_path_absolute, "deploy_contracts="+((deploy_contracts)?'true':'false'), "staging="+((staging)?'true':'false'));
         if (result.error) {
             console.error(result.error);
         }

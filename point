@@ -55,8 +55,9 @@ program.command('demo').description('dump demo configs to ~/.point').action(() =
 program.command('debug-destroy-everything').description('destroys everything in datadir: database and files. dangerous!').action(() => program.debug_destroy_everything = true);
 program.command('deploy <path>')
     .description('deploy a website')
-    .action((path, cmd) => { program.deploy = path; program.deploy_contracts = !!cmd.contracts; })
-    .option('--contracts', '(re)deploy contracts too', false);
+    .action((path, cmd) => { program.deploy = path; program.deploy_contracts = !!cmd.contracts; program.staging = !!cmd.staging; })
+    .option('--contracts', '(re)deploy contracts too', false)
+    .option('--staging', 'deploy zapp to staging too', false)
 
 program.command('migrate-contract <site>')
     .description('migrates contracts genesis data')
@@ -158,7 +159,7 @@ if (program.deploy) {
     if (program.deploy.length === 0) return ctx.die('error: missing path');
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
-    deploy.deploy(program.deploy, program.deploy_contracts);
+    deploy.deploy(program.deploy, program.deploy_contracts, program.staging);
     return;
 }
 

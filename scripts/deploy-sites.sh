@@ -9,10 +9,16 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-if [ "$2" == "--contracts" ]; then
+if [ "$2" == "--contracts" ] || [ "$3" == "--contracts" ] ; then
     DEPLOY_CONTRACTS="--contracts"
 else
     DEPLOY_CONTRACTS=""
+fi
+
+if [ "$2" == "--staging" ] || [ "$3" == "--staging" ]; then
+    STAGING="--staging"
+else
+    STAGING=""
 fi
 
 if [ $# -eq 0 ]; then
@@ -44,8 +50,8 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v"
-  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS -v
+  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $STAGING -v"
+  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $STAGING -v
 
   echo
   echo "FINISHED: ${SITE}"
