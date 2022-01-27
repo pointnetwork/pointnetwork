@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const { readFileSync } = require('fs');
 const Web3 = require('web3');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
@@ -26,17 +28,17 @@ let identity_contract_address;
 
 const allowedSites = {
     "twitter.z": {
-        "abi":`/app/truffle/build/contracts/TwitterMigrations.json`,
+        "abi":`${pointNodePath}/truffle/build/contracts/TwitterMigrations.json`,
         "contract":"0x9EF1BEcF1e63BAB97F883bA3C5fDf8f761eD41F8",
         "handle":"twitter",
     }, 
     "blog.z": {
-        "abi":`/app/truffle/build/contracts/BlogMigrations.json`,
+        "abi":`${pointNodePath}/truffle/build/contracts/BlogMigrations.json`,
         "contract":"0x506d6A079856A6EF444c99dAef1bf15fcbc37bbb",
         "handle":"blog",
     }, 
     "pointsocial.z": {
-        "abi":`/app/truffle/build/contracts/PointSocialMigrations.json`,
+        "abi":`${pointNodePath}/truffle/build/contracts/PointSocialMigrations.json`,
         "contract":"0x59BDA94F762c9227cC426Ea29C0aC1c196f1d7b6",
         "handle":"pointsocial",
     }, 
@@ -77,37 +79,36 @@ init = () => {
 }
 
 startMigration = async() => {
-    console.log('Migrating');    
 
-    const identityAbiFile = loadIdentityAbi();
-    const identityInstance = new web3.eth.Contract(identityAbiFile.abi, identity_contract_address);
+    console.log('Migrating');    
     const handle = allowedSites[site].handle;
     const migrationAddress = allowedSites[site].contract;
     const migrationgAbi = loadSiteMigrationsAbi(allowedSites[site].abi);
-    const contractKey = await identityInstance.methods.ikvList(handle, 0).call();
-    const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
-    const siteInstance = new web3.eth.Contract(minimal_contract_abi, contractAddress);
-    const migratorInstance = new web3.eth.Contract(migrationgAbi, migrationAddress);
-    const account = web3.eth.defaultAccount;
 
-    
-    await siteInstance.methods.addMigrator(migrationAddress).send(
+    const identityAbiFile = loadIdentityAbi();
+    const identityInstance = new web3.eth.Contract(identityAbiFile.abi, identity_contract_address);
+    const migratorInstance = new web3.eth.Contract(migrationgAbi.abi, migrationAddress);
+
+    //validate if handle exists
+    const contractKey = await identityInstance.methods.ikvList(handle, 0).call({from:account.address});
+    const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
+    const zappInstance = new web3.eth.Contract(minimal_contract_abi, contractAddress);
+
+    await zappInstance.methods.addMigrator(migrationAddress).send(
     {
-        from: account,
+        from: account.address,
         gas:200000
     });
+
     
-
     console.log('Migrator added');    
-
     await migratorInstance.methods.migrate(contractAddress).send(
     {
-        from: account,
+        from: account.address,
         gas:200000
     });
 
     console.log('Migrated');    
-
     exit(0);
 }
 
