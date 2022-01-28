@@ -61,14 +61,14 @@ const minimal_contract_abi = [
      }
 ]
 
-if(process.argv[2] === undefined){
-    console.log(`Please inform the zapp to migrate eg: blog.z`);
-    return;
-}
-
-const site = process.argv[2];
-
 init = () => {
+    if(process.argv[2] === undefined){
+        console.log(`Please inform the zapp to migrate eg: blog.z`);
+        return;
+    }
+
+    const site = process.argv[2];
+
     config = loadNodeConfig();
     identity_contract_address = config.network.identity_contract_address;
     storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
@@ -78,10 +78,10 @@ init = () => {
         exit(0);
     }
     
-    startMigration();
+    startMigration(site);
 }
 
-startMigration = async() => {
+startMigration = async(site) => {
     const handle = allowedSites[site].handle;
     const migrationAddress = allowedSites[site].contract;
     const migrationgAbi = loadSiteMigrationsAbi(allowedSites[site].abi);
