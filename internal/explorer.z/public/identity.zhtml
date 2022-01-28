@@ -31,7 +31,8 @@
 
 <table class="table table-bordered table-primary table-striped table-hover table-responsive">
     {% set ikvKeys = contract_list('@', 'Identity', 'ikvList', [request.handle]) %}
-
+    {% set events = contract_events('@', 'Identity', 'IKVSet', {identity: request.handle})  %}
+    
     {% for k in ikvKeys %}
         {% set v = identity_ikv_get(request.handle, k) %}
 
@@ -46,6 +47,15 @@
                 {% else %}
                     {{ v }}
                 {% endif %}
+            </td>
+            <td>
+                {% set timestamp_array = [] %}
+                {% for ev in events %}
+                    {% if ev.data.key == k and ev.data.value == v %}
+                        {% set timestamp_array = timestamp_array|merge([ev.timestamp]) %}
+                    {% endif %}
+                {% endfor %}
+                {{timestamp_array|sort|reverse|first|date}}
             </td>
         </tr>
     {% else %}
