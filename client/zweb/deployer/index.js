@@ -39,7 +39,7 @@ class Deployer {
 
         // assert(deployConfig.version === 1); // todo: msg
 
-        const target = staging ? `${deployConfig.target}staging`: deployConfig.target;
+        const target = staging ? `${deployConfig.target.replace('.z','staging')}.z`: deployConfig.target;
         const identity = target.replace(/\.z$/, '');
         const {defaultAccount: owner} = this.ctx.web3.eth;
 
@@ -65,7 +65,7 @@ class Deployer {
                     `0x${publicKey.slice(0, 32).toString('hex')}`,
                     `0x${publicKey.slice(32).toString('hex')}`
                 ]}, 'Registring new identity');
-
+                
             await this.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
             this.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
