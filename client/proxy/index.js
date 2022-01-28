@@ -253,7 +253,9 @@ class ZProxy {
                 contentType = response._contentType;
             } else if (process.env.MODE === 'e2e') {
                 // when MODE=e2e is set this site will be loaded directly from the local system - useful for Zapp developers :)
-                let localPath = `example/${host}/public`; // hardcode to render the zapp host
+                // If host contains `dev`, then we slice the zapp name out of the host to serve from local example folder
+                const zappName = host.includes('dev') ? `${host.split('dev')[0]}.z` : host;
+                let localPath = `example/${zappName}/public`; // hardcode to render the zapp host
                 rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
                 contentType = response._contentType;
             }  else {

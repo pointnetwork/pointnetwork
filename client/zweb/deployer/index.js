@@ -31,8 +31,7 @@ class Deployer {
         console.log(publicKey);
     }
 
-    async deploy(deployPath, deployContracts = false) {
-
+    async deploy(deployPath, deployContracts = false, dev = false) {
         // todo: error handling, as usual
         let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
@@ -40,7 +39,7 @@ class Deployer {
 
         // assert(deployConfig.version === 1); // todo: msg
 
-        const target = deployConfig.target;
+        const target = dev ? `${deployConfig.target.replace('.z','dev')}.z`: deployConfig.target;
         const identity = target.replace(/\.z$/, '');
         const {defaultAccount: owner} = this.ctx.web3.eth;
 
@@ -66,7 +65,7 @@ class Deployer {
                     `0x${publicKey.slice(0, 32).toString('hex')}`,
                     `0x${publicKey.slice(32).toString('hex')}`
                 ]}, 'Registring new identity');
-
+                
             await this.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
             this.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
