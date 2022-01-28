@@ -409,11 +409,8 @@ const getJSON = async (id, useCache = true) => {
 };
 
 const getFileIdByPath = async (dirId, filePath) => {
-    console.log("DIR ID: ", dirId, "PATH: ", filePath);
     const directory = await getJSON(dirId);
-    console.log("DIRECTORY: ", directory);
     const segments = filePath.split(/[/\\]/).filter(s => s !== "");
-    console.log("SEGMENTS: ", segments);
     const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
     if (!nextFileOrDir) {
         throw new Error(`Failed to find file ${filePath} in directory ${dirId}: not found`);
