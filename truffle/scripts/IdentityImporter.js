@@ -3,9 +3,7 @@
 //truffle exec scripts/identityImporter.js --upload 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 1643305855-identity.json
 //truffle exec scripts/identityImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 
 
-const { Console } = require('console');
 const fs = require('fs');
-const { identity } = require('lodash');
 const { exit } = require('process');
 
 global.artifacts = artifacts;
