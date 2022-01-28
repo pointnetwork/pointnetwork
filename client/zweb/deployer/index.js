@@ -31,7 +31,7 @@ class Deployer {
         console.log(publicKey);
     }
 
-    async deploy(deployPath, deployContracts = false, staging = false) {
+    async deploy(deployPath, deployContracts = false, dev = false) {
         // todo: error handling, as usual
         let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
@@ -39,7 +39,7 @@ class Deployer {
 
         // assert(deployConfig.version === 1); // todo: msg
 
-        const target = staging ? `${deployConfig.target.replace('.z','staging')}.z`: deployConfig.target;
+        const target = dev ? `${deployConfig.target.replace('.z','dev')}.z`: deployConfig.target;
         const identity = target.replace(/\.z$/, '');
         const {defaultAccount: owner} = this.ctx.web3.eth;
 

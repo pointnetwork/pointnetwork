@@ -15,10 +15,10 @@ else
     DEPLOY_CONTRACTS=""
 fi
 
-if [ "$2" == "--staging" ] || [ "$3" == "--staging" ]; then
-    STAGING="--staging"
+if [ "$2" == "--dev" ] || [ "$3" == "--dev" ]; then
+    DEV="--dev"
 else
-    STAGING=""
+    DEV=""
 fi
 
 if [ $# -eq 0 ]; then
@@ -50,8 +50,8 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $STAGING -v"
-  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $STAGING -v
+  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV -v"
+  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV -v
 
   echo
   echo "FINISHED: ${SITE}"
