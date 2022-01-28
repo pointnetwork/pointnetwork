@@ -19,9 +19,10 @@ class SequelizeFactory {
             define: this.config.define,
             storage: this.config.storage,
             transactionType: this.config.transactionType,
-            retry: {
-                max: this.config.retry.max
-            },
+            // TODO: docker e2e fails bc this is missing in config. is it needed?
+            // retry: {
+            //     max: this.config.retry.max
+            // },
             logQueryParameters: true,
             logging: false,
             // todo: logging: ...

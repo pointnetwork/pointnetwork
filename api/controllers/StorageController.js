@@ -2,10 +2,7 @@ const PointSDKController = require('./PointSDKController');
 const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
 const DEFAULT_ENCODING = 'utf-8';
-const utils = require('#utils');
-const path = require('path');
-const fs = require('fs');
-const {getFile} = require("../../client/storage/index-new.js");
+const {getFile, uploadFile, DOWNLOAD_STATUS} = require("../../client/storage/index-new.js");
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
@@ -19,7 +16,7 @@ class StorageController extends PointSDKController {
 
     async getString() {
         const cid = this.req.params.id;
-        const encoding = this.req.query.encoding ? this.req.query.encoding : DEFAULT_ENCODING;
+        const encoding = this.req.query.encoding ?? DEFAULT_ENCODING;
 
         const contents = (await getFile(cid, encoding)).toString(encoding);
         return this._response(contents);
@@ -28,12 +25,8 @@ class StorageController extends PointSDKController {
     async putString() {
         let data = this.payload.data;
         if(data) {
-            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-            utils.makeSurePathExists(cache_dir);
-            let tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(data));
-            fs.writeFileSync(tmpPostDataFilePath, data);
-            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-            return this._response(uploaded.id);
+            const id = await uploadFile(data);
+            return this._response(id);
         } else {
             return this._response(null);
         }
@@ -41,23 +34,19 @@ class StorageController extends PointSDKController {
 
     // Returns all file metadata stored in the nodes leveldb
     async files() {
-
-        const allUploadedFiles = await File.allBy('ul_status', File.UPLOADING_STATUS_UPLOADED);
-        const allDownloadedFiles = await File.allBy('dl_status', File.DOWNLOADING_STATUS_DOWNLOADED);
-        // union all uploaded and downloaded files to a unique list
-        var allFiles = [...new Set([...allUploadedFiles, ...allDownloadedFiles])];
+        const allDownloadedFiles = await File.allBy('dl_status', DOWNLOAD_STATUS.COMPLETED);
+        // union all downloaded files to a unique list
+        const allFiles = Array.from(new Set(allDownloadedFiles));
         // return a subset of the attributes to the client
-        const files = allFiles.map((file) =>
-            (({id, originalPath, size, redundancy, expires, autorenew, chunkIds, ul_status}) => ({
-                id,
-                originalPath,
-                size,
-                redundancy,
-                expires,
-                autorenew,
-                chunkCount: chunkIds.length,
-                ul_status
-            }))(file));
+        const files = await Promise.all(allFiles.map((file) =>
+            (({id, originalPath, size}) => {
+                return {
+                    id,
+                    originalPath,
+                    size
+                };
+            })(file)
+        ));
 
         return this._response(files);
     }
@@ -67,26 +56,6 @@ class StorageController extends PointSDKController {
         const id = this.req.params.id;
         const file = await File.findOrFail(id);
         return this._response(file);
-    }
-
-    // Returns all chunk metadata stored in the nodes leveldb
-    async chunks() {
-        const allUploadedChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADED);
-        // union all uploaded and downloaded chunks to a unique list
-        var allChunks = allUploadedChunks;
-        // return a subset of the attributes to the client
-        const chunks = allChunks.map((chunk) =>
-            (({id, redundancy, expires, autorenew, length, ul_status, dl_status}) => ({
-                id,
-                redundancy,
-                expires,
-                autorenew,
-                length,
-                ul_status,
-                dl_status
-            }))(chunk));
-
-        return this._response(chunks);
     }
 
     // Returns a single chunk metadata stored in the nodes leveldb

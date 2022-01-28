@@ -3,11 +3,16 @@ const fs = require('fs');
 const utils = require('#utils');
 const ethUtil = require('ethereumjs-util');
 
+// TODO: direct import cause fails in some docker scripts
+let storage;
+
 class Deployer {
     constructor(ctx) {
         this.ctx = ctx;
         this.config = this.ctx.config.deployer;
         this.cache_uploaded = {}; // todo: unused? either remove or use
+        const _storage = require("../../../client/storage/index-new.js");
+        storage = _storage;
     }
 
     async start() {
@@ -81,8 +86,8 @@ class Deployer {
 
         // Upload public - root dir
         console.log('uploading root directory...');
-        let publicDirectory = await this.ctx.client.storage.putDirectory(path.join(deployPath, 'public')); // todo: and more options
-        let publicDirId = publicDirectory.id;
+
+        const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
         await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
 
         // Upload routes
@@ -91,12 +96,10 @@ class Deployer {
         let routes = JSON.parse(routesFile);
 
         console.log('uploading route file...', {routes});
-        const tmpRoutesFilePath = path.join(this.getCacheDir(), utils.hashFnUtf8Hex(JSON.stringify(routes)));
-        fs.writeFileSync(tmpRoutesFilePath, JSON.stringify(routes));
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
-        let routeFileUploaded = await this.ctx.client.storage.putFile(tmpRoutesFilePath); // todo: and more options
-        this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploaded.id}`);
-        await this.updateZDNS(target, routeFileUploaded.id);
+        let routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
+        this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploadedId}`);
+        await this.updateZDNS(target, routeFileUploadedId);
 
         await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts);
 
@@ -197,11 +200,9 @@ class Deployer {
         this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
         const artifactsJSON = JSON.stringify(artifacts);
-        const tmpFilePath = path.join(this.getCacheDir(), utils.hashFnUtf8Hex(artifactsJSON));
-        fs.writeFileSync(tmpFilePath, artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts');
-        let artifacts_storage_id = (await this.ctx.client.storage.putFile(tmpFilePath)).id;
+        let artifacts_storage_id = await storage.uploadFile(artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
         await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/address/'+contractName, address);
@@ -218,15 +219,6 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
     }
 
-    async storagePutUtf8String(content) {
-        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        utils.makeSurePathExists(cache_dir);
-        const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(content));
-        fs.writeFileSync(tmpPostDataFilePath, content);
-        let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-        return uploaded.id;
-    }
-
     async updateKeyValue (target, values, deployPath, deployContracts = false) {
         const replaceContentsWithCids = async obj => {
 
@@ -240,26 +232,21 @@ class Deployer {
 
                     if ('blob' in value) {
 
-                        const tmpFilePath = path.join (
-                            this.getCacheDir (),
-                            utils.hashFnUtf8Hex (value.blob)
-                        );
+                        const uploaded = await storage.uploadFile(String(value.blob));
 
-                        fs.writeFileSync (tmpFilePath, String (value.blob));
-                        const uploaded = await this.ctx.client.storage.putFile (tmpFilePath);
-
-                        value = uploaded.id;
+                        value = uploaded;
 
                     } else if ('file' in value) {
 
-                        const file = path.join (deployPath, 'public', value.file);
+                        const filePath = path.join(deployPath, 'public', value.file);
 
-                        if (!fs.existsSync (file)) {
-                            throw new Error ('File not found: ' + file);
+                        if (!fs.existsSync (filePath)) {
+                            throw new Error ('File not found: ' + filePath);
                         }
 
                         const ext = value.file.replace (/.*\.([a-zA-Z0-9]+)$/, '$1');
-                        const cid = (await this.ctx.client.storage.putFile (file)).id;
+                        const file = await fs.promises.readFile(filePath);
+                        const cid = await storage.uploadFile(file);
 
                         value = '/_storage/' + cid + '.' + ext;
 
@@ -301,7 +288,7 @@ class Deployer {
                     let paramNames = paramsTogether.split(',');
                     let params = [];
                     if (value.metadata){
-                        const metadataHash = await this.storagePutUtf8String(JSON.stringify(value.metadata));
+                        const metadataHash = await storage.uploadFile(JSON.stringify(value.metadata));
                         value.metadata['metadataHash'] = metadataHash;
                         for(let paramName of paramNames) {
                             params.push(value.metadata[paramName]);

@@ -13,13 +13,12 @@ const WebSocketServer = require('websocket').server;
 const ZProxySocketController = require('../../api/sockets/ZProxySocketController');
 const url = require('url');
 const certificates = require('./certificates');
-const Directory = require('../../db/models/directory');
 const LocalDirectory = require('../../db/models/local_directory');
 const qs = require('query-string');
 const Console = require('../../console');
 const utils = require('#utils');
 const {HttpNotFoundError} = require("../../core/exceptions");
-const {getFile, getJSON} = require("../storage/index-new.js");
+const {getFile, getJSON, uploadFile, getFileIdByPath} = require("../storage/index-new.js");
 
 class ZProxy {
     constructor(ctx) {
@@ -441,7 +440,7 @@ class ZProxy {
                         // const template_file_path = `${filePath}/${template_filename}`;
                         const template_file_contents = await directory.readFileByPath(`${template_filename}`, 'utf-8');
 
-                        let renderer = new Renderer(this.ctx, directory);
+                        let renderer = new Renderer(this.ctx, {localDir: directory});
                         let request_params = {};
 
                         // Add params from route matching
@@ -500,9 +499,7 @@ class ZProxy {
                     if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
 
                     // Download info about root dir
-                    let rootDir = await this.getRootDirectoryForDomain(host);
-                    rootDir.setCtx(this.ctx);
-                    rootDir.setHost(host);
+                    const rootDirId = await this.getRootDirectoryIdForDomain(host);
 
                     let route_params = {};
                     let template_filename = null;
@@ -516,11 +513,11 @@ class ZProxy {
                         }
                     }
                     if (template_filename) {
-                        let template_file_id = await rootDir.getFileIdByPath(template_filename);
+                        let template_file_id = await getFileIdByPath(rootDirId, template_filename);
                         console.log('ASKING FOR getFileIdByPath '+template_filename+' - '+template_file_id);
                         let template_file_contents = await getFile(template_file_id);
 
-                        let renderer = new Renderer(this.ctx, rootDir);
+                        let renderer = new Renderer(this.ctx, {rootDirId});
                         let request_params = {};
                         // GET
                         for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
@@ -551,13 +548,13 @@ class ZProxy {
                             resolve(redirectHtml);
                         }
 
-                        // TODO: this is a very dumb temporary hack to make images work
-                        // we should either add more complex check for mime type here,
-                        // or, preferrably, migrate to some framework like express so we should not
-                        // care about encodings
-                        let rendered = await rootDir.readFileByPath(
-                            parsedUrl.pathname,
-                            parsedUrl.pathname.endsWith(".png") ? null : "utf8"
+                        const renderedId = await getFileIdByPath(
+                            rootDirId,
+                            parsedUrl.pathname
+                        );
+                        const rendered = await getFile(
+                            renderedId,
+                            null
                         );
 
                         response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
@@ -678,13 +675,7 @@ class ZProxy {
                             redirect = v;
                             delete postData[k];
                         } else if (_.startsWith(k, 'storage[')) {
-                            // storage
-                            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                            utils.makeSurePathExists(cache_dir);
-                            const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
-                            fs.writeFileSync(tmpPostDataFilePath, v);
-                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                            let uploaded_id = uploaded.id;
+                            const uploaded_id = await uploadFile(v);
 
                             delete postData[k];
                             postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
@@ -719,16 +710,11 @@ class ZProxy {
         });
     }
 
-    async getRootDirectoryForDomain(host) {
+    async getRootDirectoryIdForDomain(host) {
         const key = '::rootDir';
         const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
-        if (!rootDirId) throw Error('getRootDirectoryForDomain failed: key '+key+' returned empty: '+rootDirId);
-        console.log('ASKING FOR getRootDirectoryForDomain '+host+' - '+rootDirId);
-        const dirJsonString = (await getFile(rootDirId)).toString("utf8");
-        let directory = new Directory(); // todo: cache it, don't download/recreate each time?
-        directory.unserialize(dirJsonString);
-        directory.id = rootDirId;
-        return directory;
+        if (!rootDirId) throw Error('getRootDirectoryIdForDomain failed: key '+key+' returned empty: '+rootDirId);
+        return rootDirId;
     }
 
     async getZRouteIdFromDomain(host) {

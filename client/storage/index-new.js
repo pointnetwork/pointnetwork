@@ -1,10 +1,38 @@
 const File = require( "../../db/models/file.js");
 const Chunk = require("../../db/models/chunk.js");
-const {gql, request} = require("graphql-request");
-const utils = require("#utils");
+const {request, gql} = require("graphql-request");
+const {
+    hashFn,
+    merkle,
+    makeSurePathExistsAsync,
+    delay,
+    areScalarArraysEqual,
+    escape
+} = require("#utils");
 const Arweave = require("arweave");
 const {promises: fs} = require("fs");
 const path = require("path");
+const FormData = require('form-data');
+const axios = require("axios");
+
+// TODO: for some reason docker fails to resolve module if I move it to another file
+const getDownloadQuery = (chunkId, majorVersion, minorVersion) =>
+    gql`{
+      transactions(
+        tags: [
+          {
+            name: "__pn_chunk_${majorVersion}.${minorVersion}_id",
+            values: ["${chunkId}"]
+          }
+        ]
+      ) {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }`;
 
 const DOWNLOAD_STATUS = {
     NOT_STARTED: "NOT_STARTED",
@@ -15,21 +43,9 @@ const DOWNLOAD_STATUS = {
 
 const CHUNKINFO_PROLOGUE = "PN^CHUNK\x05$\x06z\xf5*INFO";
 const CONCURRENT_DOWNLOAD_DELAY = 100;
-// TODO: move to some new utils file
-const delay = ms => new Promise(resolve => {setTimeout(resolve, ms);});
-const makeSurePathExists = async folderPath => {
-    try {
-        await fs.stat(folderPath);
-    } catch (e) {
-        if (e.code === "ENOENT") {
-            await fs.mkdir(folderPath, {recursive: true});
-        } else {
-            throw e;
-        }
-    }
-};
 
 // TODO: get rid of this and read config directly.
+// TODO: possibly split this file into several ones after refactoring config
 let config;
 let logger;
 let cacheDir;
@@ -51,8 +67,8 @@ const init = async ctx => {
     // TODO: this should also come from config, but we don't have such a property
     filesDir = path.join(ctx.datadir, "files");
     await Promise.all([
-        makeSurePathExists(cacheDir),
-        makeSurePathExists(filesDir)
+        makeSurePathExistsAsync(cacheDir),
+        makeSurePathExistsAsync(filesDir)
     ]);
 };
 
@@ -81,24 +97,12 @@ const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
     await chunk.save();
 
     try {
-        // TODO: move to separate file
-        const query = gql`{
-                                transactions(
-                                    tags: [
-                                        {
-                                            name: "__pn_chunk_${config.arweave_experiment_version_major}.${config.arweave_experiment_version_minor}_id",
-                                            values: ["${chunk.id}"]
-                                        }
-                                    ]
-                                ) {
-                                    edges {
-                                        node {
-                                            id
-                                        }
-                                    }
-                                }
-                            }
-        `;
+        const query = getDownloadQuery(
+            chunkId,
+            config.arweave_experiment_version_major,
+            config.arweave_experiment_version_minor
+        );
+
         const queryResult = await request('https://arweave.net/graphql', query);
         logger.debug(`Graphql request success for chunk ${chunk.id}`);
         
@@ -111,8 +115,7 @@ const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
 
             const buf = Buffer.from(data);
 
-            // todo: remove this util
-            const hash = utils.hashFnHex(buf);
+            const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
                 logger.warn(`Chunk id and data do not match, chunk id: ${chunk.id}, hash: ${hash}`);
                 continue;
@@ -134,6 +137,180 @@ const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
         await chunk.save();
         throw e;
     }
+};
+
+const uploadChunk = async data => {
+    const id = hashFn(data).toString('hex');
+
+    const chunk = await Chunk.findByIdOrCreate(id);
+    if (chunk.dl_status === DOWNLOAD_STATUS.COMPLETED) {
+        logger.debug(`Chunk ${id} already exists, cancelling upload`);
+        return id;
+    }
+
+    logger.debug(`Starting chunk upload: ${id}`);
+
+    const formData = new FormData();
+    formData.append("file", data);
+    formData.append("__pn_integration_version_major", config.arweave_experiment_version_major);
+    formData.append("__pn_integration_version_minor", config.arweave_experiment_version_minor);
+    formData.append("__pn_chunk_id", id);
+    formData.append(
+        `__pn_chunk_${config.arweave_experiment_version_major}.${config.arweave_experiment_version_minor}_id`,
+        id
+    );
+
+    const response = await axios.post(
+        `${config.arweave_airdrop_endpoint}/signPOST`,
+        formData,
+        {
+            headers: {
+                ...formData.getHeaders()
+            }
+        }
+    );
+
+    if (response.data.status !== 'ok') {
+        throw new Error(`Chunk ${id} uploading failed: arweave airdrop endpoint error: ${
+            JSON.stringify(response, null , 2)}`);
+    }
+
+    logger.debug(`Chunk ${id} successfully uploaded, saving to disk`);
+
+    await fs.writeFile(path.join(cacheDir, `chunk_${id}`), data);
+    chunk.dl_status = DOWNLOAD_STATUS.COMPLETED;
+    chunk.size = data.length;
+    await chunk.save();
+
+    logger.debug(`Chunk ${id} successfully uploaded and saved`);
+
+    return id;
+};
+
+const uploadFile = async data => {
+    const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
+
+    const CHUNK_SIZE = config.chunk_size_bytes;
+    const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
+
+    if (totalChunks === 1) {
+        const id = hashFn(buf).toString('hex');
+        logger.debug(`File ${id} consists only from 1 chunk, uploading`);
+
+        const filePath = path.join(filesDir, `file_${id}`);
+        const file = await File.findByIdOrCreate(id, {original_path: filePath});
+        if (file.dl_status === DOWNLOAD_STATUS.COMPLETED) {
+            logger.debug(`File ${id} already exists, cancelling upload`);
+            return id;
+        }
+
+        const chunkId = await uploadChunk(buf);
+        if (chunkId !== id) {
+            throw new Error(`Unexpected different ids for file and it's only chunk: ${id}, ${chunkId}`);
+        }
+
+        await fs.writeFile(filePath, buf);
+        file.size = buf.length;
+        file.dl_status = DOWNLOAD_STATUS.COMPLETED;
+        await file.save();
+
+        logger.debug(`File ${id} successfully uploaded`);
+
+        return id;
+    }
+
+    const chunks = [];
+    for (let i=0; i<totalChunks; i++) {
+        chunks.push(buf.slice(i * CHUNK_SIZE, (i+1) * CHUNK_SIZE));
+    }
+
+    // TODO: retry logic
+    const chunkIds = await Promise.all(chunks.map(chunk => uploadChunk(chunk)));
+
+    const merkleTree = merkle.merkle(chunkIds.map(x => Buffer.from(x, 'hex')), hashFn);
+    const chunkInfoContents = CHUNKINFO_PROLOGUE + JSON.stringify({
+        type: 'file',
+        chunks: chunkIds,
+        hash: 'keccak256',
+        filesize: buf.length,
+        merkle: merkleTree.map(x => x.toString('hex')),
+    });
+    const chunkInfoBuffer = Buffer.from(chunkInfoContents, 'utf-8');
+    const id = await uploadChunk(chunkInfoBuffer);
+
+    logger.debug(`Successfully chunkified file ${id}`);
+
+    const filePath = path.join(filesDir, `file_${id}`);
+    const file = await File.findByIdOrCreate(id, {original_path: filePath});
+    if (file.dl_status === DOWNLOAD_STATUS.COMPLETED) {
+        logger.debug(`File ${id} already exists, not rewriting`);
+        return id;
+    }
+
+    logger.debug(`File ${id} successfully uploaded, saving to disk`);
+
+    await fs.writeFile(filePath, buf);
+    file.size = buf.length;
+    file.dl_status = DOWNLOAD_STATUS.COMPLETED;
+    await file.save();
+    
+    logger.debug(`File ${id} successfully uploaded and saved`);
+    return id;
+};
+
+const uploadDir = async dirPath => {
+    try {
+        const stat = await fs.stat(dirPath);
+        const isDir = stat.isDirectory();
+        if (!isDir) {
+            throw new Error(`Path ${escape(dirPath)} is not a directory`);
+        }
+    } catch (e) {
+        if (e.code === "ENOENT") {
+            throw new Error(`Directory ${escape(dirPath)} does not exist`);
+        }
+        throw e;
+    }
+
+    logger.debug(`Uploading directory ${escape(dirPath)}`);
+
+    const files = await fs.readdir(dirPath);
+    const dirInfo = {
+        type: "dir",
+        files: []
+    };
+
+    await Promise.all(files.map(async fileName => {
+        const filePath = path.join(dirPath, fileName);
+        const stat = await fs.stat(filePath);
+
+        if (stat.isDirectory()) {
+            const dirId = await uploadDir(filePath);
+            dirInfo.files.push({
+                type: 'dirptr',
+                name: fileName,
+                original_path: filePath,
+                size: stat.size,
+                id: dirId
+            });
+        } else {
+            const file = await fs.readFile(filePath);
+            const fileId = await uploadFile(file);
+            dirInfo.files.push({
+                type: 'fileptr',
+                name: fileName,
+                original_path: filePath,
+                size: stat.size,
+                id: fileId
+            });
+        }
+    }));
+
+    const id = await uploadFile(JSON.stringify(dirInfo));
+
+    logger.debug(`Successfully uploaded directory ${escape(dirPath)}`);
+
+    return id;
 };
 
 const getFile = async (rawId, encoding = "utf8", useCache = true) => {
@@ -179,7 +356,7 @@ const getFile = async (rawId, encoding = "utf8", useCache = true) => {
             hash,
             chunks,
             filesize,
-            merkle
+            merkle: merkleHash
         } = JSON.parse(chunkInfo.slice(CHUNKINFO_PROLOGUE.length + 1));
 
         if (type !== 'file') {
@@ -189,10 +366,10 @@ const getFile = async (rawId, encoding = "utf8", useCache = true) => {
         if (hash !== 'keccak256') {
             throw new Error("Bad hash type");
         }
-        const merkleReassembled = utils.merkle
-            .merkle(chunks.map(x => Buffer.from(x, 'hex')), utils.hashFn)
+        const merkleReassembled = merkle
+            .merkle(chunks.map(x => Buffer.from(x, 'hex')), hashFn)
             .map(x => x.toString('hex'));
-        if (!utils.areScalarArraysEqual(merkleReassembled, merkle)) {
+        if (!areScalarArraysEqual(merkleReassembled, merkleHash)) {
             throw new Error("Incorrect Merkle hash");
         }
 
@@ -231,9 +408,32 @@ const getJSON = async (id, useCache = true) => {
     return JSON.parse(file.toString("utf-8"));
 };
 
+const getFileIdByPath = async (dirId, filePath) => {
+    console.log("DIR ID: ", dirId, "PATH: ", filePath);
+    const directory = await getJSON(dirId);
+    console.log("DIRECTORY: ", directory);
+    const segments = filePath.split(/[/\\]/).filter(s => s !== "");
+    console.log("SEGMENTS: ", segments);
+    const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
+    if (!nextFileOrDir) {
+        throw new Error(`Failed to find file ${filePath} in directory ${dirId}: not found`);
+    }
+    if (segments.length === 1) {
+        return nextFileOrDir.id;
+    }
+    if (nextFileOrDir.type === "fileptr") {
+        throw new Error(`Failed to find file ${filePath} in directory ${dirId}: ${segments[0]} is not a directory`);
+    } else {
+        return getFileIdByPath(nextFileOrDir.id, path.join(...segments.slice(1)));
+    }
+};
+
 module.exports = {
     DOWNLOAD_STATUS,
     init,
     getFile,
-    getJSON
+    getJSON,
+    uploadFile,
+    uploadDir,
+    getFileIdByPath
 };

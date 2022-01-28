@@ -5,7 +5,7 @@ const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
 const utils = require('#utils');
 const ethUtil = require("ethereumjs-util");
-const {getFile, getJSON} = require("../../storage/index-new.js");
+const {getFile, getJSON, getFileIdByPath} = require("../../storage/index-new.js");
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -13,10 +13,11 @@ class Renderer {
     #twigs = {};
     #twigs_use_counter = {};
 
-    constructor(ctx, rootDir) {
+    constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
         this.config = ctx.config.client.zproxy;
-        this.rootDir = rootDir;
+        this.rootDirId = rootDirId;
+        this.localDir = localDir;
     }
 
     async render(template_id, template_contents, host, request_params = {}) {
@@ -270,8 +271,15 @@ class Renderer {
         };
     }
 
+    // TODO: this is a temporary hack unless we are using LocalDirectory, but
+    // already got rid of Directory model
     async fetchTemplateByPath(templatePath) {
-        return await this.rootDir.readFileByPath(templatePath, 'utf-8');
+        if (this.rootDirId) {
+            const templateFileId = await getFileIdByPath(this.rootDirId, templatePath);
+            return getFile(templateFileId, "utf8");
+        } else {
+            return this.localDir.readFileByPath(templatePath, 'utf-8');
+        }
     }
 
     #getTwigForHost(host) {
