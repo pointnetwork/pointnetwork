@@ -121,10 +121,15 @@ contract PointSocial {
 
     // Likes data functions
     function addLikeToPost(uint256 postId) public {
+        Like[] memory _likesOnPost = likesByPost[postId];
+        for (uint256 i = 0; i < _likesOnPost.length; i++) {
+            require(_likesOnPost[i].from != msg.sender,"You have already liked the post");
+        }
+
         _likeIds.increment();
         uint256 newLikeId = _likeIds.current();
         Like memory _like = Like(newLikeId, msg.sender, block.timestamp);
-        likesByPost[postId].push(_like);
+        _likesOnPost.push(_like);
         postById[postId].likesCount += 1;
     }
 
