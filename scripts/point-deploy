@@ -22,8 +22,15 @@ echo
 # Copy current Zapp folder to deployspace
 cp -r * $POINTNETWORK_DEPLOYSPACE
 
+#checks if --contract flag was passed for passing it for the deploy script
+if [ "$1" == "--contracts" ]; then
+    DEPLOY_CONTRACTS="--contracts"
+else
+    DEPLOY_CONTRACTS=""
+fi
+
 # Execute the deployspace script from inside the website owner container
-docker exec -it point_node /app/scripts/deploy-from-deployspace.sh
+docker exec -it point_node /app/scripts/deploy-from-deployspace.sh $DEPLOY_CONTRACTS
 
 # Finally, clean up and delete everything in deployspace
 rm -r $POINTNETWORK_DEPLOYSPACE/*
