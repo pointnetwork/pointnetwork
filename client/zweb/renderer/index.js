@@ -125,11 +125,30 @@ class Renderer {
                 return await this.renderer.ctx.web3bridge.sendToContract(host.replace('.z', ''), contractName, methodName, params);
             },
             contract_events: async function(host, contractName, event, filter = {}) {
+
+                //delete keys property inserted by twig
+                if(filter.hasOwnProperty('_keys'))
+                    delete filter['_keys'];
+
                 const options = { filter, fromBlock: 1, toBlock: 'latest' };
                 const events =  await this.renderer.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
-                // for(let ev of events) console.log(ev, ev.raw);
+                let eventData = []
+                for(let ev of events) {
+                    //console.log(ev, ev.raw);
+                    const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(ev.blockNumber);
 
-                const eventData = events.map((event) => (({ returnValues }) => ({ data: returnValues }))(event));
+                    eventData.push({
+                        data: ev.returnValues,
+                        timestamp: eventTimestamp
+                    })
+                }
+
+                //filter non-indexed properties from return value for convenience
+                if (filter != {}){
+                    for(let k in filter)
+                        eventData  = eventData.filter(e => e.data[k] == filter[k])
+                }
+                
                 return eventData;
             },
             default_wallet_address: async function(id, passcode) {

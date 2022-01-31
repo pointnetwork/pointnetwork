@@ -44,8 +44,13 @@ contract PointSocial {
     address private _owner;
     address private _migrator;
 
-    constructor(address migrator) {
+    constructor() {
         _owner = msg.sender;
+    }
+
+    function addMigrator(address migrator) public {
+        require(msg.sender == _owner, "Access Denied");
+        require(_migrator == address(0), "Access Denied");
         _migrator = migrator;
     }
 

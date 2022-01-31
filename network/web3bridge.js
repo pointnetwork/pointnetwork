@@ -188,6 +188,10 @@ class Web3Bridge {
         return await contract.getPastEvents(event, options);
     }
 
+    async getBlockTimestamp(blockNumber){
+        return (await this.web3.eth.getBlock(blockNumber)).timestamp;
+    }
+
     async subscribeContractEvent(target, contractName, event, onEvent, onStart, options={}) {
         const contract = await this.loadWebsiteContract(target, contractName);
 

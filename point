@@ -55,8 +55,13 @@ program.command('demo').description('dump demo configs to ~/.point').action(() =
 program.command('debug-destroy-everything').description('destroys everything in datadir: database and files. dangerous!').action(() => program.debug_destroy_everything = true);
 program.command('deploy <path>')
     .description('deploy a website')
-    .action((path, cmd) => { program.deploy = path; program.deploy_contracts = !!cmd.contracts; })
-    .option('--contracts', '(re)deploy contracts too', false);
+    .action((path, cmd) => { program.deploy = path; program.deploy_contracts = !!cmd.contracts; program.dev = !!cmd.dev; })
+    .option('--contracts', '(re)deploy contracts too', false)
+    .option('--dev', 'deploy zapp to dev too', false)
+
+program.command('migrate-contract <site>')
+    .description('migrates contracts genesis data')
+    .action((cmd) => { program.migrateContract = true; program.site = cmd});
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
 // program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
@@ -137,13 +142,24 @@ if (program.attach) {
     return;
 }
 
+// -------------------- Solidity Migrations --------------------- //
+
+if (program.migrateContract) {
+
+    if (program.site.length === 0) return ctx.die('error: missing site');
+    const Deploy = require('./core/deploy');
+    const deploy = new Deploy(ctx);
+    deploy.migrate(program.site);
+    return;
+}
+
 // -------------------- Deployer --------------------- //
 
 if (program.deploy) {
     if (program.deploy.length === 0) return ctx.die('error: missing path');
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
-    deploy.deploy(program.deploy, program.deploy_contracts);
+    deploy.deploy(program.deploy, program.deploy_contracts, program.dev);
     return;
 }
 
