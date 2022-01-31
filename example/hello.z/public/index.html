@@ -52,6 +52,19 @@
       <img id='storageImg'/>
       <br />
       <br />
+      <div>
+        <b>Try updating the value in contract!</b>
+      </div>
+      <br />
+      <div>
+        <input id="valueInput" type="text" name="valueInput" placeholder="Enter some text" />
+      </div>
+      <br />
+      <button id="btnStorageValueUpdate" onclick="updateStorageValue()">Update Value</button>
+      <p id="valueText"></p>
+      <br />
+      <br />
+      <br />
       <!-- <b>WebSocket Events</b>
       <ul id="wsevents"></ul> -->
       <b>API Responses</b>
@@ -247,6 +260,15 @@
         let value = document.getElementById('txtHelloWorld').value;
         await window.point.contract.send({contract: 'Hello', method: 'emitHelloWorldEvent', params: [value]});
         document.getElementById('btnEmitHelloWorld').innerText = 'Emit';
+      }
+
+      async function updateStorageValue() {
+        const input = document.getElementById('valueInput');
+        const display = document.getElementById('valueText');
+        display.innerHTML = `<p>Storing...</p>`;
+        await window.point.contract.send({contract:'Hello',method:'setValue',params:[input.value]});
+        display.innerHTML = `<p>Stored value: ${input.value}</p>`;
+        input.value = null;
       }
     </script>
   </body>
