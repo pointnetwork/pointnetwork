@@ -2,7 +2,7 @@ const PointSDKController = require('./PointSDKController');
 const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
 const DEFAULT_ENCODING = 'utf-8';
-const {getFile, uploadFile, DOWNLOAD_STATUS} = require("../../client/storage/index-new.js");
+const {getFile, uploadFile, DOWNLOAD_UPLOAD_STATUS} = require("../../client/storage/index-new.js");
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
@@ -34,21 +34,12 @@ class StorageController extends PointSDKController {
 
     // Returns all file metadata stored in the nodes leveldb
     async files() {
-        const allDownloadedFiles = await File.allBy('dl_status', DOWNLOAD_STATUS.COMPLETED);
-        // union all downloaded files to a unique list
-        const allFiles = Array.from(new Set(allDownloadedFiles));
-        // return a subset of the attributes to the client
-        const files = await Promise.all(allFiles.map((file) =>
-            (({id, originalPath, size}) => {
-                return {
-                    id,
-                    originalPath,
-                    size
-                };
-            })(file)
+        console.log("USING FILES");
+        const allFiles = await File.allBy('dl_status', DOWNLOAD_UPLOAD_STATUS.COMPLETED);
+        console.log(allFiles);
+        return this._response(allFiles.map(({id, originalPath, size}) =>
+            ({id, originalPath, size})
         ));
-
-        return this._response(files);
     }
 
     // Returns a single file metadata stored in the nodes leveldb

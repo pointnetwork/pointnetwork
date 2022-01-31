@@ -18,7 +18,7 @@ const qs = require('query-string');
 const Console = require('../../console');
 const utils = require('#utils');
 const {HttpNotFoundError} = require("../../core/exceptions");
-const {getFile, getJSON, uploadFile, getFileIdByPath} = require("../storage/index-new.js");
+const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require("../storage/index-new.js");
 
 class ZProxy {
     constructor(ctx) {
@@ -742,9 +742,9 @@ class ZProxy {
         for(let f of files) {
             let icon = "";
             switch(f.type) {
-                case 'fileptr':
+                case FILE_TYPE.fileptr:
                     icon += "&#128196; "; break; // https://www.compart.com/en/unicode/U+1F4C4
-                case 'dirptr':
+                case FILE_TYPE.dirptr:
                     icon += "&#128193; "; break; // https://www.compart.com/en/unicode/U+1F4C1
                 default:
                     icon += "&#10067; "; // https://www.compart.com/en/unicode/U+2753 - question mark
@@ -752,7 +752,7 @@ class ZProxy {
 
             const name = f.name;
             const ext = utils.escape( name.split('.').slice(-1) );
-            let link = '/_storage/' + f.id + ((f.type == 'fileptr') ? ('.'+ext) : '');
+            let link = '/_storage/' + f.id + ((f.type === FILE_TYPE.fileptr) ? ('.'+ext) : '');
 
             html += "<tr><td>"+icon+" <a href='"+link+"' target='_blank'>";
             html += utils.escape(f.name);
