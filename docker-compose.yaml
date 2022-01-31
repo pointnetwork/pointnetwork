@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   point_node:
-    image: pointnode-local
+    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: point_node
     deploy:
       restart_policy:
