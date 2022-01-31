@@ -120,10 +120,30 @@ contract PointSocial {
     }
 
     // Likes data functions
-    function addLikeToPost(uint256 postId) public {
-        Like[] memory _likesOnPost = likesByPost[postId];
+    function addLikeToPost(uint256 postId) public returns(bool) {
+        // Get the post and likes for the postId from the mapping
+        Like[] storage _likesOnPost = likesByPost[postId];
+        Post storage _post = postById[postId];
+
+        uint256 _removeIndex;
+        bool _isLiked = false;
+
+        // Check if msg.sender has already liked
         for (uint256 i = 0; i < _likesOnPost.length; i++) {
-            require(_likesOnPost[i].from != msg.sender,"You have already liked the post");
+            if(_likesOnPost[i].from == msg.sender) {
+                _isLiked = true;
+                _removeIndex = i;
+                break;
+            }
+        }
+        // If yes, then we remove that like and decrement the likesCount for the post
+        if(_isLiked) {
+            for (uint256 i = _removeIndex; i < _likesOnPost.length - 1; i++) {
+                _likesOnPost[i] = _likesOnPost[i+1];
+            }
+            _likesOnPost.pop();
+            _post.likesCount--;
+            return false;
         }
 
         _likeIds.increment();
@@ -131,6 +151,7 @@ contract PointSocial {
         Like memory _like = Like(newLikeId, msg.sender, block.timestamp);
         _likesOnPost.push(_like);
         postById[postId].likesCount += 1;
+        return true;
     }
 
     function add(
