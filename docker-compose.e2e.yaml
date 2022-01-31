@@ -122,7 +122,7 @@ services:
       - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
       - ./resources/demo-docker/mnemonic-website_owner.json:/data/keystore/key.json
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
-      - ./example:/app/example:ro
+      - ./example:/app/example
       - ./deployspace:/app/deployspace:ro
     environment:
       DATADIR: /data
