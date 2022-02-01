@@ -1,11 +1,8 @@
 let TwigLib = require('twig');
-const fs = require('fs');
-const path = require('path');
 const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
-const utils = require('#utils');
 const ethUtil = require("ethereumjs-util");
-const {getFile, getJSON, getFileIdByPath} = require("../../storage/index-new.js");
+const {getFile, getJSON, getFileIdByPath, uploadFile} = require("../../storage/index-new.js");
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -78,12 +75,7 @@ class Renderer {
                 return await getJSON(key);
             },
             storage_put: async function(content) {
-                const cache_dir = path.join(this.renderer.ctx.datadir, this.renderer.config.cache_path);
-                utils.makeSurePathExists(cache_dir);
-                const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(content));
-                fs.writeFileSync(tmpPostDataFilePath, content);
-                let uploaded = await this.renderer.ctx.client.storage.putFile(tmpPostDataFilePath);
-                return uploaded.id;
+                return uploadFile(content);
             },
             encrypt_data: async function(publicKey, data) {
                 let host = this.host;
@@ -132,7 +124,7 @@ class Renderer {
 
                 const options = { filter, fromBlock: 1, toBlock: 'latest' };
                 const events =  await this.renderer.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
-                let eventData = []
+                let eventData = [];
                 for(let ev of events) {
                     //console.log(ev, ev.raw);
                     const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(ev.blockNumber);
@@ -140,13 +132,13 @@ class Renderer {
                     eventData.push({
                         data: ev.returnValues,
                         timestamp: eventTimestamp
-                    })
+                    });
                 }
 
                 //filter non-indexed properties from return value for convenience
                 if (filter != {}){
                     for(let k in filter)
-                        eventData  = eventData.filter(e => e.data[k] == filter[k])
+                        eventData  = eventData.filter(e => e.data[k] == filter[k]);
                 }
                 
                 return eventData;

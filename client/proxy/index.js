@@ -339,12 +339,9 @@ class ZProxy {
                             // TODO: properly handle multiple file uploads
                             let uploadedFilePath = files[key].path;
                             let fileData = fs.readFileSync(uploadedFilePath);
-                            const cacheDir = path.join(this.ctx.datadir, this.config.cache_path);
-                            const tmpPostDataFilePath = path.join(cacheDir, utils.hashFnUtf8Hex(fileData));
-                            fs.copySync(uploadedFilePath, tmpPostDataFilePath);
-                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                            let uploadedId = await uploadFile(fileData);
 
-                            let response = { status: 200, data: uploaded.id};
+                            let response = { status: 200, data: uploadedId};
                             resolve(response);
                         }
                     } catch(e) {
@@ -607,17 +604,11 @@ class ZProxy {
                             redirect = v;
                             delete postData[k];
                         } else if (_.startsWith(k, 'storage[')) {
-                            // storage
-                            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                            utils.makeSurePathExists(cache_dir);
-                            const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
-                            fs.writeFileSync(tmpPostDataFilePath, v);
-                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                            let uploaded_id = uploaded.id;
-                            console.debug('Found storage[x], uploading file '+uploaded_id);
+                            let uploadedId = await uploadFile(v);
+                            console.debug('Found storage[x], uploading file '+uploadedId);
 
                             delete postData[k];
-                            postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                            postData[k.replace('storage[', '').replace(']', '')] = uploadedId;
                         }
                     }
 
