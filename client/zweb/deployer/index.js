@@ -195,15 +195,20 @@ class Deployer {
                 artifacts = compiledSources.contracts[contractFileName][_contractName];
             }
         }
-        const truffleContract = require('@truffle/contract');
-        const contract = truffleContract(artifacts);
 
-        contract.setProvider(this.ctx.web3.currentProvider);
+        const contract = new this.ctx.web3.eth.Contract(artifacts.abi);
 
-        let gasPrice = await this.ctx.web3.eth.getGasPrice();
-        let estimateGas = Math.floor(await contract.new.estimateGas() * 1.1);
-        let deployedContractInstance = await contract.new({ from: this.ctx.web3.eth.defaultAccount, gasPrice, gas: estimateGas });
-        let address = deployedContractInstance.address;
+        const deploy = contract.deploy({
+            data: artifacts.evm.bytecode.object
+        });
+        const gasPrice = await this.ctx.web3.eth.getGasPrice();
+        const estimate = await deploy.estimateGas();
+        const tx = await deploy.send({
+            from: this.ctx.web3.eth.defaultAccount,
+            gasPrice,
+            gas: Math.floor(estimate * 1.1)
+        });
+        const address = tx.options && tx.options.address;
 
         console.log('Deployed Contract Instance of '+contractName, address);
         this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');

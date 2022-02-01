@@ -2,16 +2,25 @@
     "pointnode1": {
         "dialect": "sqlite",
         "storage": "/data/pointdb.sqlite",
-        "transactionType": "IMMEDIATE"
+        "transactionType": "DEFERRED",
+        "retry": {
+            "max": 30
+        }
     },
     "pointnode2": {
         "dialect": "sqlite",
         "storage": "/data/pointdb.sqlite",
-        "transactionType": "IMMEDIATE"
+        "transactionType": "DEFERRED",
+        "retry": {
+            "max": 30
+        }
     },
     "pointnode3": {
         "dialect": "sqlite",
         "storage": "/data/pointdb.sqlite",
-        "transactionType": "IMMEDIATE"
+        "transactionType": "DEFERRED",
+        "retry": {
+            "max": 30
+        }
     }
 }

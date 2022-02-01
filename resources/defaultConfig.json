@@ -32,7 +32,7 @@
   },
   "client": {
     "storage": {
-      "engine": "normal",
+      "engine": "arweave",
       "cache_path": "data/client_storage_cache",
       "storage_provider_cache": "data/storage_provider_cache.json",
       "default_redundancy": 1,

@@ -7,7 +7,6 @@
     "@openzeppelin/contracts": "^4.3.0",
     "@pointnetwork/kadence": "^6.1.20",
     "@solana/web3.js": "^1.29.2",
-    "@truffle/contract": "^4.3.30",
     "@truffle/hdwallet-provider": "^1.5.0",
     "arbundles": "^0.2.9",
     "arweave": "^1.10.17",

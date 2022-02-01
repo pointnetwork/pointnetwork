@@ -13,6 +13,7 @@ FROM node:14.17.5-stretch-slim
 WORKDIR /app
 COPY --from=builder /app /app
 RUN mkdir -p /data/db
+RUN npm install -g npm
 
 ENTRYPOINT [ "./point" ]
 CMD [ "--datadir", "/data", "-v" ]
