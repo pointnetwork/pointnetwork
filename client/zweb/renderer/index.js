@@ -269,7 +269,7 @@ class Renderer {
 
                 await this.renderer.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
-                this.renderer.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
+                this.renderer.ctx.log.info({identity, owner, publicKey: publicKey.toString('hex')}, 'Successfully registered new identity');
 
                 return true;
             },

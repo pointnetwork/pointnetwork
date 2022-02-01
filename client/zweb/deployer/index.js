@@ -69,7 +69,7 @@ class Deployer {
                 
             await this.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
-            this.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
+            this.ctx.log.info({identity, owner, publicKey: publicKey.toString('hex')}, 'Successfully registered new identity');
         }
 
         // Deploy contracts
