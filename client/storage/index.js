@@ -115,7 +115,7 @@ const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
         // TODO: the URL should be in the config, not hardcoded
         const queryResult = await request('https://arweave.net/graphql', query);
         logger.debug(`Graphql request success for chunk ${chunk.id}`);
-        
+
         for (let edge of queryResult.transactions.edges) {
             const txid = edge.node.id;
             logger.debug(`Downloading data from arweave, chunk id: ${chunk.id}, txid: ${txid}`);
@@ -266,7 +266,7 @@ const uploadFile = async data => {
     for (let i=0; i<totalChunks; i++) {
         chunks.push(buf.slice(i * CHUNK_SIZE, (i+1) * CHUNK_SIZE));
     }
-    
+
     const chunkHashes = chunks.map(chunk => hashFn(chunk).toString('hex'));
     const merkleTree = merkle.merkle(chunkHashes.map(x => Buffer.from(x, 'hex')), hashFn);
     const chunkInfoContents = CHUNKINFO_PROLOGUE + JSON.stringify({
@@ -300,7 +300,7 @@ const uploadFile = async data => {
         // TODO: retry logic
         file.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
         await file.save();
-        
+
         const indexChunkId = await uploadChunk(chunkInfoBuffer);
         if (indexChunkId !== fileId) {
             throw new Error(`Unexpected different ids for file and it's index chunk: ${fileId}, ${indexChunkId}`);
@@ -456,7 +456,7 @@ const getFile = async (rawId, encoding = "utf8", useCache = true) => {
             chunkBuffers[chunkBuffers.length - 1]
                 .slice(0, filesize - ((chunkBuffers.length - 1) * config.chunk_size_bytes))
         ]);
-        
+
         logger.debug(`Successfully proceeded file chunks, file id: ${file.id}`);
 
         await fs.writeFile(filePath, fileBuffer);
