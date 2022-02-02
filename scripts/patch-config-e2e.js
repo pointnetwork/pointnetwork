@@ -75,12 +75,16 @@ if (!existsSync('/data/data')) {
 }
 
 if (!existsSync('/data/data/dht_peercache.db')) {
-    writeFileSync('{}', '/data/data/dht_peercache.db');
+    writeFileSync('/data/data/dht_peercache.db', '{}');
+}
+
+if (!existsSync('/data/keystore/arweave.json')) {
+    writeFileSync('/data/keystore/arweave.json', '{}');
 }
 
 console.info('Done.');
 
-;(async () => {
+(async () => {
     console.log('Awaiting for blockchain provider to start...');
 
     const web3 = new Web3(config.network.web3);
