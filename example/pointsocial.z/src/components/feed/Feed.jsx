@@ -1,12 +1,21 @@
 import "./feed.css";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAppContext } from '../../context/AppContext';
+import useInView from 'react-cool-inview'
 import Post from "../post/Post";
 import Share from "../share/Share";
 import Identity from "../identity/Identity";
 import LoadingSpinner from '../loading/LoadingSpinner';
 
 const Feed = ({account}) =>{
+  const {observe} = useInView({
+    onEnter: async({observe,unobserve}) => {
+      unobserve();
+      await getPosts();
+      observe();
+    }
+  })
+
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(undefined);
@@ -45,15 +54,11 @@ const Feed = ({account}) =>{
     setLoading(false);
   }
 
-  useEffect(() => {
-      getPosts()
-  }, [account])
-
   const fetchPosts = async () => {
     try {
       const response = account
         ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account]}) :
-        await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPosts', params:[posts.length,2]})
+        await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPosts', params:[posts.length,10]})
 
       console.log('response',response);
 
@@ -97,7 +102,9 @@ const Feed = ({account}) =>{
         {posts.map((p) => (
           <Post key={p.id} post={p} reloadPostLikesCount={reloadPostLikesCount} />
           ))}
+        <div ref={observe}>
         {loading && <LoadingSpinner />}
+        </div>
       </div>
     </div>
   );
