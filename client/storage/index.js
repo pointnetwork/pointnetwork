@@ -55,7 +55,7 @@ class Storage {
 
         // Setting `originalPath` to the `chunkify`ed version of `file`,
         // instead of the path where we find the original file source.
-        // todo: should we?
+        // This is necessary because if not done it brokes the ZApps after deployment.
         const original_path = path.join(this.getCacheDir(), 'chunk_'+throwAwayFile.id);
 
         const file = (await File.findByIdOrCreate(throwAwayFile.id, {original_path}));
@@ -64,6 +64,7 @@ class Storage {
         file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
         file.expires = Math.max(parseInt(file.expires)||0, parseInt(expires)||0);
         file.autorenew = (!!file.autorenew) ? !!file.autorenew : !!autorenew;
+        file.original_path = original_path;
         await file.save();
         await file.reconsiderUploadingStatus();
 
