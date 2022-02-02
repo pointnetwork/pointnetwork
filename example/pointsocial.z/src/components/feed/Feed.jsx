@@ -27,7 +27,7 @@ const Feed = ({account}) =>{
     setLoading(true);
     const posts = await fetchPosts()
     posts.sort(compareByTimestamp)
-    setPosts(posts);
+    setPosts(prev => [...prev,...posts]);
     console.log('posts',posts)
     setLoading(false);
   }
@@ -53,14 +53,16 @@ const Feed = ({account}) =>{
     try {
       const response = account
         ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account]}) :
-        await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'})
+        await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPosts', params:[posts.length,2]})
 
-      const posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
+      console.log('response',response);
+
+      const _posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
           {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
         )
       )
 
-      const postsContent = await Promise.all(posts.map(async (post) => {
+      const postsContent = await Promise.all(_posts.map(async (post) => {
         const {data: contents} = await window.point.storage.getString({ id: post.contents, encoding: 'utf-8' });
         const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: post.from});
         post.identity = identity;
@@ -87,14 +89,15 @@ const Feed = ({account}) =>{
 
   return (
     <div className="feed">
+      <button onClick={getPosts}>Fetch more posts</button>
       <div className="feedWrapper">
         {!account && <div><Identity /><Share renderPostsImmediate={renderPostsImmediate} getPosts={getPosts} /></div>}
-        {loading && <LoadingSpinner />}
         {(!loading && feedError) && <span className='error'>Error loading feed: {feedError.message}. Did you deploy the contract sucessfully?</span>}
         {(!loading && !feedError && posts.length === 0) && <span className='no-post-to-show'>No posts made yet!</span>}
         {posts.map((p) => (
           <Post key={p.id} post={p} reloadPostLikesCount={reloadPostLikesCount} />
-        ))}
+          ))}
+        {loading && <LoadingSpinner />}
       </div>
     </div>
   );

@@ -81,6 +81,19 @@ contract PointSocial {
         return _posts;
     }
 
+    function getPaginatedPosts(uint256 cursor, uint256 howMany) public view returns (Post[] memory) {
+        uint256 length = howMany;
+        if(length > posts.length - cursor) {
+            length = posts.length - cursor;
+        }
+        
+        Post[] memory _posts = new Post[](length);
+        for (uint256 i = length; i > 0; i--) {
+            _posts[length-i] = postById[posts[posts.length - cursor - i].id];
+        }
+        return _posts;
+    }
+
     function getAllPostsByOwner(address owner)
         public
         view
