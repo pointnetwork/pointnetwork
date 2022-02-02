@@ -5,12 +5,13 @@ const { checkRegisteredToken, registerToken } = require('../client/storage/payme
 class ApiServer {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'ApiServer'});
         this.config = ctx.config.api;
     }
 
     async start() {
         this.server = fastify({
-            logger: this.ctx.log,
+            logger: this.ctx.log.child({module: 'ApiServer.server'}),
             pluginTimeout: 20000
             // todo: more configuration?
         });
@@ -24,7 +25,7 @@ class ApiServer {
             this.connectRoutes();
 
             this.server.setErrorHandler(function (error, request, reply) {
-                request.log.warn(error);
+                request.log.error(error, 'ApiServer error handler');
 
                 const statusCode = error.statusCode >= 400 ? error.statusCode : 500;
                 reply
@@ -55,7 +56,7 @@ class ApiServer {
                 if (await checkRegisteredToken() === undefined) await registerToken();
             });
         } catch (err) {
-            this.server.log.error(err);
+            this.log.error(err);
         }
     }
 

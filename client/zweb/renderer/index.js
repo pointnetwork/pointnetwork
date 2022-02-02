@@ -12,6 +12,7 @@ class Renderer {
 
     constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Renderer'});
         this.config = ctx.config.client.zproxy;
         this.rootDirId = rootDirId;
         this.localDir = localDir;
@@ -67,7 +68,7 @@ class Renderer {
                 try {
                     return getFile(key);
                 } catch (e) {
-                    console.error('Twig.storage_get error:', e);
+                    this.log.error({error: e.message, stack: e.stack}, 'Twig.storage_get error:');
                     return 'Invalid Content';
                 }
             },
@@ -177,7 +178,7 @@ class Renderer {
             },
             identity_check_availability: async function(identity) {
                 const owner = await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
-                console.log({identity, owner});
+                this.log.debug({identity, owner}, 'identity_check_availability');
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
@@ -250,7 +251,7 @@ class Renderer {
                 const publicKey = ethUtil.privateToPublic(privateKey);
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
-                this.renderer.ctx.log.info({
+                this.log.info({
                     identity,
                     owner,
                     publicKey: publicKey.toString('hex'),
@@ -258,11 +259,11 @@ class Renderer {
                     parts: [
                         `0x${publicKey.slice(0, 32).toString('hex')}`,
                         `0x${publicKey.slice(32).toString('hex')}`
-                    ]}, 'Registering new identity');
+                    ]}, 'Registering a new identity');
 
                 await this.renderer.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
-                this.renderer.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
+                this.renderer.ctx.log.info({identity, owner, publicKey: publicKey.toString('hex')}, 'Successfully registered new identity');
 
                 return true;
             },
@@ -552,7 +553,6 @@ class Renderer {
 
     #registerPointStorageFsLoader(Twig) {
         Twig.Templates.registerLoader('fs', async(location, params, callback, error_callback/*todo*/) => {
-            // console.log({location, params});
             // ... load the template ...
             const src = await this.fetchTemplateByPath(params.path);
             params.data = src;

@@ -1,5 +1,4 @@
 const sequelize_lib = require('sequelize');
-const { Op } = require("sequelize");
 const _ = require("lodash");
 
 let addUnderscoreIdFields = {};
@@ -7,7 +6,8 @@ let addUnderscoreIdFields = {};
 class Model extends sequelize_lib.Model {
     constructor(...args) {
         super(...args);
-        this.ctx = Model.ctx;
+        this.ctx = this.sequelize.options.ctx;
+        this.log = this.ctx.log.child({module: 'Model', model: this.constructor.name});
 
         // Sequelize requires relations in JS to be in the form of 'ProviderId'
         // This creates proxy getters and setters allowing the same field to be aliased as 'provider_id' and 'providerId'

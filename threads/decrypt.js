@@ -42,10 +42,6 @@ function decryptFile(fileIn, fileOut, pubKey) {
 
     fs.closeSync(fe);
     fs.closeSync(fd);
-
-    // console.log({fileIn, fileOut, pubKey})
-    // console.log(fs.readFileSync(fileIn));
-    // console.log(fs.readFileSync(fileOut));
 }
 
 process.on('message', async (message) => {

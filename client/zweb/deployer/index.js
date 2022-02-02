@@ -9,6 +9,7 @@ let storage;
 class Deployer {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Deployer'});
         this.config = this.ctx.config.deployer;
         this.cache_uploaded = {}; // todo: unused? either remove or use
         storage = require("../../storage/index.js");
@@ -72,7 +73,7 @@ class Deployer {
                 
             await this.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
-            this.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
+            this.ctx.log.info({identity, owner, publicKey: publicKey.toString('hex')}, 'Successfully registered new identity');
         }
 
         // Deploy contracts
@@ -94,8 +95,7 @@ class Deployer {
         }
 
         // Upload public - root dir
-        console.log('uploading root directory...');
-
+        this.log.debug('Uploading root directory...');
         const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
         await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
 
@@ -104,7 +104,7 @@ class Deployer {
         let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         let routes = JSON.parse(routesFile);
 
-        console.log('uploading route file...', {routes});
+        this.log.debug({routes}, 'Uploading route file...');
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
         let routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
         this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploadedId}`);
@@ -112,7 +112,7 @@ class Deployer {
 
         await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts);
 
-        console.log('Deploy finished');
+        this.log.info('Deploy finished');
     }
 
     static async getPragmaVersion(source){
@@ -177,7 +177,7 @@ class Deployer {
             let msg = '';
             for(let e of compiledSources.errors) {
                 if (e.severity === 'warning') {
-                    console.warn(e);
+                    this.log.warn(e, 'Contract compilation warning');
                     continue;
                 }
                 found = true;
@@ -210,7 +210,7 @@ class Deployer {
         });
         const address = tx.options && tx.options.address;
 
-        console.log('Deployed Contract Instance of '+contractName, address);
+        this.log.debug({contractName, address}, 'Deployed Contract Instance');
         this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
         const artifactsJSON = JSON.stringify(artifacts);
@@ -224,12 +224,12 @@ class Deployer {
 
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`);
 
-        console.log(`Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`);
+        this.log.debug(`Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`);
     }
 
     async updateZDNS(host, id) {
         let target = host.replace('.z', '');
-        console.log('Updating ZDNS', {target, id});
+        this.log.info({target, id}, 'Updating ZDNS');
         await this.ctx.web3bridge.putZRecord(target, '0x'+id);
     }
 

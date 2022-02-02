@@ -7,6 +7,7 @@ const { fork } = require('child_process');
 class Provider {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Provider'});
         this.config = ctx.config.service_provider;
         this.node = this.ctx.network.kademlia.node;
 
@@ -58,7 +59,7 @@ class Provider {
     async announce() {
         // todo: see if already announced?
 
-        console.log('Announcing '+this.getConnectionString()+'...');
+        this.log.info('Announcing '+this.getConnectionString()+'...');
 
         let collateralSizeEth = "5"; // todo: magic number
         let cost_per_kb = "1"; // todo: magic numbers
@@ -66,8 +67,7 @@ class Provider {
         try {
             return await this.ctx.web3bridge.announceStorageProvider(this.getConnectionString(), collateralSizeEth, cost_per_kb);
         } catch(e) {
-            this.ctx.log.error(e);
-            console.log('\x07'); // bell
+            this.log.error({error: e, stack: e.stack}, 'Announcing error');
 
             // try again in 20 seconds
             setTimeout(this.announce.bind(this), 20000);
@@ -103,7 +103,7 @@ class Provider {
             try {
                 chunk.getData(); // We're calling this so that if the file with the encrypted chunk itself doesn't exist, it gets reassembled from the segments
             } catch(e) {
-                console.debug(e); // todo
+                this.log.error(e, 'STORE_CHUNK_SIGNATURE_REQUEST error'); // todo
                 return next(new Error('ECHUNKGETDATAERROR: Cannot get data'));
             }
             await this.decryptChunkAsync(chunk);
@@ -111,13 +111,14 @@ class Provider {
 
         let decrypted = await chunk.getDecryptedData();
         if (utils.hashFnHex(decrypted) !== real_id) {
-            console.error({ decryptedToString: decrypted.toString(), chunk_id, real_id, hashFn_of_Decrypted: utils.hashFnHex(decrypted), decryptedLen: decrypted.length }); // todo: delete
-            // console.log('INVALID ---------------------');
-            return next(new Error('EINVALIDCHUNKREALID: chunk.real_id does not match the decrypted data'));
-        } else {
-            // console.log('SUCCESS DECRYPTING BACK: ', decrypted.toString(), decrypted.toString('hex'), {chunk_id, real_id, decrypted_id:utils.hashFnHex(decrypted)});
-            // console.error(decrypted.toString(), decrypted.toString('hex'), chunk_id, real_id, utils.hashFnHex(decrypted)); // todo: delete
-            // console.log('YEP DECRYPTED FINE ---------------------');
+            const msg = 'EINVALIDCHUNKREALID: chunk.real_id does not match the decrypted data';
+            this.log.error({
+                decryptedToString: decrypted.toString(),
+                chunk_id,
+                real_id,
+                hashFn_of_Decrypted: utils.hashFnHex(decrypted),
+                decryptedLen: decrypted.length}, msg);
+            return next(new Error(msg));
         }
 
         chunk.real_id_verified = true;
@@ -127,7 +128,7 @@ class Provider {
         try {
             signature = utils.pointSign([ 'STORAGE', 'PLEDGE', chunk_id, 'time' ], this.privateKey, this.chainId);
         } catch(e) {
-            this.ctx.log.error(e);
+            this.log.error({error: e, stack: e.stack}, 'STORE_CHUNK_SIGNATURE_REQUEST error');
             return next(new Error('Error while trying to sign the pledge'));
         }
 
@@ -154,12 +155,11 @@ class Provider {
             try {
                 await chunk.setSegmentData(segment_data, segment_index);
             } catch(e) {
+                this.log.error({error: e, stack: e.stack}, 'STORE_CHUNK_DATA error');
                 if (/EINVALIDHASH/.test(e)) {
-                    this.ctx.log.debug(e); // todo: remove;
                     return next(new Error('Error while attempting to setSegmentData on a provider_chunk. Possible mismatch of the hash and the data.'));
                 } else {
-                    this.ctx.log.warn('Error while attempting to setSegmentData on a provider_chunk with id '+chunk_id+': '+e); // todo: remove explanation if not in debug mode
-                    this.ctx.log.debug(e.stack);
+                    this.log.debug('Error while attempting to setSegmentData on a provider_chunk with id '+chunk_id+': '+e); // todo: remove explanation if not in debug mode
                     return next(new Error('Error while attempting to setSegmentData on a provider_chunk.'));
                 }
             }
@@ -241,9 +241,15 @@ class Provider {
         let decrypted = await chunk.getDecryptedData();
 
         if (this.config.revalidate_decrypted_chunk) {
+            const msg = 'ECHUNKLOST: Sorry, can\'t decrypt it for some reason...';
             if (utils.hashFnHex(decrypted) !== chunk_real_id) {
-                console.error(decrypted.toString(), decrypted.toString('hex'), chunk_real_id, utils.hashFnHex(decrypted)); // todo: remove
-                return next(new Error('ECHUNKLOST: Sorry, can\'t decrypt it for some reason...')); // todo: uhm, maybe don't do that?
+                this.log.error({
+                    decrypted: decrypted.toString(),
+                    decryptedHex: decrypted.toString('hex'),
+                    chunk_real_id,
+                    decryptedHash: utils.hashFnHex(decrypted)}, msg); // todo: remove
+
+                return next(new Error(msg)); // todo: uhm, maybe don't do that?
             }
         }
 
@@ -266,14 +272,13 @@ class Provider {
 
                         resolve();
                     } else {
-                        // todo: don't die here
-                        console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', message);
-                        this.ctx.die();
+                        this.log.error({message, chunkId: chunk.id}, 'Chunk decryption failed');
+                        throw new Error(message);
                     }
                 });
                 // todo: do we need this?
                 chunk_decryptor.addListener("output", function (data) {
-                    console.log('Chunk Decryptor output: '+data);
+                    this.log.debug('Chunk Decryptor output: '+data);
                 });
                 // todo: two error listeners?
                 chunk_decryptor.addListener("error", async (data) => { // todo
@@ -281,21 +286,18 @@ class Provider {
                     // link.status = StorageLink.STATUS_FAILED;
                     // link.error = data;
                     // link.errored = true;
-                    // console.error('Chunk decryption FAILED:' + link.error);
                     // await link.save();
                     // todo: don't die here, reject promise
-                    console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', data);
-                    this.ctx.die();
+                    this.log.error({data, chunkId: chunk.id}, 'Chunk decryption failed');
+                    reject(data);
                 });
                 chunk_decryptor.on("error", async (data) => { // todo
-                    // todo: don't die here, reject promise
-                    console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned ', data);
-                    this.ctx.die();
+                    this.log.error({data, chunkId: chunk.id}, 'Chunk decryption failed');
+                    reject(data);
                     // await link.refresh();
                     // link.status = StorageLink.STATUS_FAILED;
                     // link.error = data;
                     // link.errored = true;
-                    // console.error('Chunk encryption FAILED:' + link.error);
                     // await link.save();
                 });
                 chunk_decryptor.on("exit", async (code) => {
@@ -304,11 +306,10 @@ class Provider {
                     }
                     else {
                         // todo: don't die here, reject promise
-                        console.warn('Something is wrong, decryptor for chunk '+chunk.id+' returned code', code);
-                        this.ctx.die();
+                        this.log.error({code, chunkId: chunk.id}, 'Chunk decryption failed');
+                        reject(code);
                         // // todo: figure out which one is failed
                         // link.status = StorageLink.STATUS_FAILED;
-                        // console.error('Chunk encryption FAILED, exit code', code);
                         // //link.error = data;
                         // await link.save();
                     }
