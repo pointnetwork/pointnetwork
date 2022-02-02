@@ -3,11 +3,13 @@ const path = require('path');
 const utils = require('#utils');
 
 class Directory {
-    constructor() {
+    constructor(ctx) {
         this.name = '';
         this.files = [];
         this.original_path = null;
         this.size = 0;
+        this.ctx = ctx;
+        this.log = ctx && ctx.log.child({module: 'Directory'});
         // todo: include 'version' and 'compat' fields
     }
 
@@ -29,15 +31,16 @@ class Directory {
                     return f.id;
                 } else if (f.type === 'dirptr') {
                     if (! f.downloaded) {
-                        let subdir = new Directory();
-                        console.log('ASKING FOR Directory.getFileIdByPath ',{filePath, subdir}, 'f.id', f.id);
+                        let subdir = new Directory(this.ctx);
+                        if (this.log) {
+                            this.log.debug({filePath, subdir, fileId: f.id}, 'Directory.getFileIdByPath');
+                        }
                         // TODO: this makes us to get the sqlite unique violation issue
                         // when we read multiple files from the same folder, as readFile triggers
                         // findOrCreate, and we run into the race condition
                         subdir.unserialize(await this.ctx.client.storage.readFile(f.id, 'utf-8')); // dir spec is always in utf-8
                         f.downloaded = true;
                         f.dirObj = subdir;
-                        f.dirObj.setCtx(this.ctx);
                     }
                     // fragments here are without the first item due to shift in the beginning
                     return f.dirObj.getFileIdByPath(fragments.join('/'));
@@ -49,7 +52,9 @@ class Directory {
 
     async readFileByPath(filePath, encoding = 'utf-8') {
         let id = await this.getFileIdByPath(filePath);
-        console.log('ASKING FOR Directory.readFileByPath ',{filePath}, id);
+        if (this.log) {
+            this.log.debug({filePath, id}, 'Directory.readFileByPath');
+        }
         return await this.ctx.client.storage.readFile(id, encoding);
     }
 
@@ -74,7 +79,7 @@ class Directory {
     addFile(filePath, name) {
         let size;
         if (fs.statSync(filePath).isDirectory()) {
-            let subdir = new Directory();
+            let subdir = new Directory(this.ctx);
             subdir.setOriginalPath(filePath);
             subdir.addFilesFromOriginalPath();
             size = subdir.size;

@@ -53,10 +53,6 @@ function encryptFile(filePath, toFile, privKey) { // chunkId and linkId are only
     }
     fs.closeSync(fd);
     fs.closeSync(fe);
-
-    // console.log({fromFile, toFile, privKey})
-    // console.log(fs.readFileSync(fromFile));
-    // console.log(fs.readFileSync(toFile));
 }
 
 process.on('message', async (message) => {

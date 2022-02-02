@@ -18,6 +18,7 @@ const SUBSCRIPTION_REQUEST_TYPES = {
 class ZProxySocketController {
     constructor(_ctx, _ws, _wss, _hostname) {
         this.ctx = _ctx;
+        this.log = _ctx.log.child({module: 'ZProxySocketController'});
         this.ws = _ws;
         this.wss = _wss;
         this.hostname = _hostname;
@@ -84,7 +85,7 @@ class ZProxySocketController {
     }
 
     pushSubscriptionEvent({type, subscriptionId, request, data}) {
-        this.ctx.log.info({type, subscriptionId, request, data}, 'Pushing subscription event');
+        this.log.info({type, subscriptionId, request, data}, 'Pushing subscription event');
 
         return this.pushToClients({type, subscriptionId, request, data});
     }

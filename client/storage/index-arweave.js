@@ -16,6 +16,7 @@ const axios = require('axios');
 class StorageArweave {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'StorageArweave'});
         this.config = ctx.config.client.storage;
         this.current_requests = {};
         this.queued_requests = {};
@@ -60,14 +61,14 @@ class StorageArweave {
 
     async init() {
         this.arweave = Arweave.init({
-            //    host: '127.0.0.1',
-            //    port: 1984,
-            //    protocol: 'http'
+            // host: '127.0.0.1',
+            // port: 1984,
+            // protocol: 'http'
             port: 443,
             protocol: 'https',
             host: 'arweave.net',
-            //timeout: 20000,     // Network request timeouts in milliseconds
-            //logging: false,     // Enable network request logging
+            // timeout: 20000,     // Network request timeouts in milliseconds
+            logging: this.ctx.log.child({module: 'Arweave.client'}),
         });
     }
 
@@ -110,17 +111,17 @@ class StorageArweave {
         expires = (new Date).getTime() + this.ctx.config.client.storage.default_expires_period_seconds,
         autorenew = this.ctx.config.client.storage.default_autorenew
     ) {
-        let directory = new Directory();
+        const directory = new Directory(this.ctx);
         directory.setOriginalPath(dirPath);
         directory.addFilesFromOriginalPath();
 
         // Now process every item
-        for(let f of directory.files) {
+        for(const f of directory.files) {
             if (f.type === 'fileptr') {
-                let uploaded = await this.putFile(f.original_path, redundancy, expires, autorenew);
+                const uploaded = await this.putFile(f.original_path, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else if (f.type === 'dirptr') {
-                let uploaded = await this.putDirectory(f.original_path, redundancy, expires, autorenew);
+                const uploaded = await this.putDirectory(f.original_path, redundancy, expires, autorenew);
                 f.id = uploaded.id;
             } else {
                 throw Error('invalid type: '+f.type);
@@ -181,9 +182,9 @@ class StorageArweave {
         expires = (new Date).getTime() + this.config.default_expires_period_seconds,
         autorenew = this.config.default_autorenew)
     {
-        console.log('enqueuing');
+        this.log.debug({filePath, redundancy, expires, autorenew}, 'Enqueuing file for upload');
         const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
-        console.log('enqueued');
+        this.log.debug({filePath, redundancy, expires, autorenew}, 'Enqueued file for upload');
         let waitUntilUpload = (resolve, reject) => {
             setTimeout(() => {
                 (async() => {
@@ -335,7 +336,7 @@ class StorageArweave {
 
             return provider;
 
-        } catch(e) {
+        } catch (e) {
             // Something went wrong. Maybe we ran into a race condition and the key was just now generated?
             // Try again but throw an error if it fails again
             if (recursive) {
@@ -361,7 +362,7 @@ class StorageArweave {
     async downloadChunk(chunk) {
         // todo todo todo: make it in the same way as chunkUploadingTick - ??
 
-        console.log('downloadChunk----', chunk.id);
+        this.log.debug({id: chunk.id}, 'chunkDownloadingTick');
 
         if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_READY_TO_DOWNLOAD) return;
 
@@ -403,10 +404,12 @@ class StorageArweave {
             return ret;
         };
 
-        const queryResult = await request('https://arweave.net/graphql', query);
-        console.log(ARW_LOG + '  arweave/graphql - DONE', chunk.id, elapsed());
+        this.log.debug({chunk: chunk.id}, 'ARW_LOG arweave/graphql');
 
-        console.log(ARW_LOG + '  iterations', elapsed());
+        const queryResult = await request('https://arweave.net/graphql', query);
+
+        this.log.debug({chunk: chunk.id, elapsed: elapsed(), query, queryResult}, 'ARW_LOG arweave/graphql - DONE');
+
         for(let edge of queryResult.transactions.edges) {
             const txid = edge.node.id;
 
@@ -427,15 +430,15 @@ class StorageArweave {
 
                 // const dl_url = `https://arweave.net/${txid}`;
                 // const result = await axios.get();
-                // console.log({dl_url, result});
+                // this.log.debug({dl_url, result});
                 // const data = result.data;
 
-                console.log(ARW_LOG + '  downloading getData from arweave - DONE', chunk.id, elapsed());
+                this.log.debug({chunk: chunk.id, elapsed: elapsed()}, 'ARW_LOG downloading getData from arweave - DONE');
 
                 const buf = Buffer.from(data);
 
                 if (utils.hashFnHex(buf) === chunk.id) {
-                    console.log(ARW_LOG + '  WORKED!', chunk.id, {txid}, elapsed());
+                    this.log.debug({chunk: chunk.id, elapsed: elapsed(), txid}, 'ARW_LOG WORKED!');
                     if (!Buffer.isBuffer(buf)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
                     chunk.setData(buf); // todo: what if it errors out?
                     chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
@@ -445,10 +448,9 @@ class StorageArweave {
                     return;
                 }
 
-                console.log(ARW_LOG + '  NOT WORKED! WRONG CHUNK', chunk.id, utils.hashFnHex(buf), {txid});
+                this.log.debug({chunk: chunk.id, hash: utils.hashFnHex(buf), txid}, 'ARW_LOG NOT WORKED! WRONG CHUNK');
             } catch (e) {
-                console.error(e);
-                console.log(ARW_LOG + '  NOT WORKED! FAILED TO GET DATA!', chunk.id);
+                this.log.error({chunk: chunk.id, txid}, 'ARW_LOG NOT WORKED! FAILED TO GET DATA!');
             }
         }
 
@@ -460,7 +462,11 @@ class StorageArweave {
     async SEND_STORE_CHUNK_REQUEST(chunk, link) {
         return new Promise((resolve, reject) => {
             const provider_id = link.provider_id;
-            if (!provider_id) { console.error('No provider id!'); process.exit(); }
+            if (!provider_id) {
+                const msg = 'Unable to identify provider';
+                this.log.error({chunkId: chunk.id, link: link.id}, msg);
+                throw new Error(msg);
+            }
             this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getSize(), chunk.expires], link.provider_id, async(err, result) => {
                 await link.refresh();
                 (!err) ? resolve(true) : reject(err); // machine will move to next state
@@ -489,7 +495,7 @@ class StorageArweave {
             let uploader = await this.arweave.transactions.getUploader(transaction);
             while (!uploader.isComplete) {
                 await uploader.uploadChunk();
-                // console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+                // this.log.debug(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
             }
 
             // return new Promise(async(resolve, reject) => {
@@ -509,7 +515,10 @@ class StorageArweave {
                 [this.__PN_TAG_VERSIONED_CHUNK_ID_KEY]: chunk.id
             };
 
-            console.debug('Signing '+this.config.arweave_airdrop_endpoint + '/sign'+' over data for chunk id '+chunk.id+'...');
+            this.log.debug({
+                arweave_airdrop_endpoint: this.config.arweave_airdrop_endpoint,
+                chunkId: chunk.id
+            }, 'Signing the chunk of data');
 
             const FormData = require('form-data'); // npm install --save form-data
 
@@ -537,26 +546,18 @@ class StorageArweave {
             if (response.data.status !== 'ok') {
                 throw Error('Arweave airdrop endpoint return error: '+JSON.stringify(response));
             } else {
-                console.debug('Chunk id '+chunk.id + ' uploaded, txid: '+response.data.txid);
+                this.log.debug({chunkId: chunk.id, txid: response.data.txid}, 'Chunk is uploaded');
             }
 
             return;
 
-
             // const key = this.getArweaveKey();
-            //
             // const signer = new ArweaveSigner(key);
             // const item = createData(rawData, signer);
             // await item.sign(signer);
-            //
             // // This transaction ID is guaranteed to be usable
-            // // console.log("item id", item.id);
             // const txid = item.id;
-            //
             // const response = await item.sendToBundler(this.BUNDLER_URL);
-            //
-            // console.log(["bundler response status", response.status]);
-            // console.log({'chunk_id': chunk.id, 'txid': txid, 'bundler_response_status': response.status });
         }
     }
 
@@ -583,7 +584,7 @@ class StorageArweave {
                     }
                     return resolve(false); // not done yet
                 } else {
-                    console.log('ERR', err); // todo: remove
+                    this.log.error({error: err, stack: err.stack}, 'SEND_STORE_CHUNK_DATA error'); // todo: remove
                     return reject(err);
                 }
             });
@@ -614,18 +615,18 @@ class StorageArweave {
                         signature
                     };
                     link.validatePledge();
-                    if (this.ctx.config.payments.enabled) {
-                        const provider = await link.provider;
-                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`);
-                        await makePayment(checksumAddress, 10); // todo: calculate amount using cost per kb for service provider
-                    }
+                    // if (this.ctx.config.payments.enabled) {
+                    //     const provider = await link.provider;
+                    //     const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`);
+                    //     await makePayment(checksumAddress, 10); // todo: calculate amount using cost per kb for service provider
+                    // }
                     // const chunk = await link.getChunk();
                     // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
 
                     return resolve(true);
                 } catch (e) {
                     // todo: don't just put this into the console, this is for debugging purposes
-                    console.debug('FAILED CHUNK', {err, result}, e);
+                    this.log.error({error: e.message, stack: e.stack, result}, 'Store chunk request has failed');
                     return reject(e);
                 }
             });
@@ -634,7 +635,7 @@ class StorageArweave {
 
     // todo: move to client/storage
     async chunkUploadingTick(chunk) {
-        console.log('this.uploadingChunksProcessing['+chunk.id+']', this.uploadingChunksProcessing[chunk.id]);
+        this.log.debug({chunk: chunk.id, status: this.uploadingChunksProcessing[chunk.id]}, 'Chunk uploading tick start');
 
         if (this.uploadingChunksProcessing[chunk.id]) return;
         this.uploadingChunksProcessing[chunk.id] = true;
@@ -653,7 +654,14 @@ class StorageArweave {
         const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
         const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
 
-        console.log({id: chunk.id, all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
+        this.log.debug({
+            id: chunk.id,
+            all,
+            candidates,
+            failed,
+            inProgressOrLiveCount,
+            candidatesRequiredCount,
+            additionalCandidatesRequired}, 'Chunk uploading tick after refresh'); // todo: remove
 
         if (failed.length > 0) {
             // for some reason this block of code doesn't get used anyway until the next simulation tick, we fail the file long before in the machine
@@ -685,7 +693,15 @@ class StorageArweave {
         for(let link of all) {
             const requests_length = (this.current_requests[link.provider_id]) ? this.current_requests[link.provider_id].length : 0;
             const queued_length = (this.queued_requests[link.provider_id]) ? this.queued_requests[link.provider_id].length : 0;
-            console.debug(chunk.id, link.id, Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number), link.segments_received, link.status, (link.status===StorageLink.STATUS_FAILED)?link.error:'', {requests_length, queued_length});
+            this.log.debug({
+                chunkId: chunk.id,
+                linkId: link.id,
+                linkSegmentsReceived: link.segments_received,
+                linkStatus: link.status,
+                lingSegmentsSent: Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number),
+                lingError: link.error || '',
+                requests_length,
+                queued_length}, 'StorageLink status');
         }
 
         // todo: what about expiring and renewing?

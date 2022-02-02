@@ -21,7 +21,7 @@ class StorageLink extends Model {
         }
         this._stateMachine = storageLinkMachine.createStateMachine(this, chunk);
 
-        this._storageLinkService = interpret(this._stateMachine);//.onTransition(state => console.log(`Current State: ${state.value}`))
+        this._storageLinkService = interpret(this._stateMachine);
 
         // start the storage link machine service
         this._storageLinkService.start();

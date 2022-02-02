@@ -3,8 +3,9 @@ const StorageLink = require('../../../db/models/storage_link');
 const _ = require('lodash');
 
 exports.createStateMachine = function createStateMachine(link, chunk) {
-    let ctx = link.ctx;
-    let storage = link.ctx.client.storage;
+    const ctx = link.ctx;
+    const log = link.ctx.log.child({module: 'StateMachine', storageLink: link.id});
+    const storage = link.ctx.client.storage;
 
     async function prepareChunkSegment() { // todo: rename! it's not a chunk segment, it's the whole segment map
         await link.refresh();
@@ -37,7 +38,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                 if (storage.config.retransmit_segments_timeout_seconds < 1) throw Error('storage.config.retransmit_segments_timeout_seconds is configured at value: '+storage.config.retransmit_segments_timeout_seconds);
 
                 if (!link.segments_received.includes(i) && link.segments_sent[i] && link.segments_sent[i] + storage.config.retransmit_segments_timeout_seconds < Math.floor(Date.now()/1000)) {
-                    console.log('retransmitting chunk', link.chunk_id, 'segment', i);
+                    log.debug({chunkId: link.chunk_id, segment: i}, 'Retransmitting chunk segment');
                     idx = i;
                     break;
                 }
@@ -231,8 +232,7 @@ exports.createStateMachine = function createStateMachine(link, chunk) {
                     link.status = link.state;
                 },
                 UPDATE_MODEL_ERR: async (context, event) => { // todo: how is .errored different from .status = FAILED?
-                    console.error({event, context});
-                    console.error(`UPDATE_MODEL_ERR: ${event.data}`);
+                    log.error({event, context}, `UPDATE_MODEL_ERR: ${event.data}`);
                     link.errored = true;
                     link.err = event.data;
                 },
