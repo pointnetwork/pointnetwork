@@ -4,7 +4,7 @@
   "description": "Point Network;",
   "main": "point",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.0",
+    "@openzeppelin/contracts": "^4.4.2",
     "@pointnetwork/kadence": "^6.1.20",
     "@solana/web3.js": "^1.29.2",
     "@truffle/hdwallet-provider": "^1.5.0",
