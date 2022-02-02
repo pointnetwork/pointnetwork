@@ -18,7 +18,7 @@ const qs = require('query-string');
 const Console = require('../../console');
 const utils = require('#utils');
 const {HttpNotFoundError} = require("../../core/exceptions");
-const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require("../storage/index-new.js");
+const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require("../storage/index.js");
 
 class ZProxy {
     constructor(ctx) {

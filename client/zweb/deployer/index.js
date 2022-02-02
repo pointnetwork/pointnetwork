@@ -11,7 +11,7 @@ class Deployer {
         this.ctx = ctx;
         this.config = this.ctx.config.deployer;
         this.cache_uploaded = {}; // todo: unused? either remove or use
-        storage = require("../../../client/storage/index-new.js");
+        storage = require("../../storage/index.js");
     }
 
     async start() {

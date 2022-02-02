@@ -2,7 +2,7 @@ let TwigLib = require('twig');
 const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
 const ethUtil = require("ethereumjs-util");
-const {getFile, getJSON, getFileIdByPath, uploadFile} = require("../../storage/index-new.js");
+const {getFile, getJSON, getFileIdByPath, uploadFile} = require("../../storage/index.js");
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
