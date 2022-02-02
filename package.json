@@ -38,7 +38,7 @@
     "mime-types": "^2.1.32",
     "mkdirp": "^1.0.4",
     "next": "^11.1.0",
-    "node-forge": "^0.10.0",
+    "node-forge": "^1.0.0",
     "node-match-path": "^0.6.3",
     "npid": "^0.4.0",
     "pg": "^8.7.1",
