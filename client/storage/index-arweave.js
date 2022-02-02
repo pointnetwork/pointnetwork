@@ -68,7 +68,7 @@ class StorageArweave {
             protocol: 'https',
             host: 'arweave.net',
             // timeout: 20000,     // Network request timeouts in milliseconds
-            logging: this.log.debug.bind(this.log), // Enable network request logging
+            logging: this.ctx.log.child({module: 'Arweave.client'}),
         });
     }
 
