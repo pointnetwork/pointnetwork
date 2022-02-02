@@ -249,7 +249,7 @@ class Web3Bridge {
             const method = identityContract.methods.getIdentityByOwner(owner);
             return await method.call();
         } catch(e) {
-            this.ctx.log.error('Error: identityByOwner', {owner});
+            this.ctx.log.error({owner}, 'Error: identityByOwner');
             throw e;
         }
     }
@@ -260,7 +260,7 @@ class Web3Bridge {
             const method = identityContract.methods.getOwnerByIdentity(identity);
             return await method.call();
         } catch(e) {
-            this.ctx.log.error('Error: identityByOwner', {identity});
+            this.ctx.log.error({identity}, 'Error: ownerByIdentity');
             throw e;
         }
     }
@@ -298,7 +298,7 @@ class Web3Bridge {
             let result = await contract.methods.ikvGet(identity, key).call();
             return result;
         } catch(e) {
-            this.ctx.log.error('getKeyValue error', {e, identity, key});
+            this.ctx.log.error({e, identity, key}, 'getKeyValue error');
             throw e;
         }
     }

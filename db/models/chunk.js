@@ -57,7 +57,7 @@ class Chunk extends Model {
         if (!Buffer.isBuffer(rawData)) throw Error('Chunk.findOrCreateByData: rawData must be a Buffer');
 
         let id = utils.hashFnHex(rawData);
-        let result = await this.findOrCreate(id);
+        let result = await this.findByIdOrCreate(id);
 
         result.setData(rawData);
 
@@ -112,21 +112,10 @@ class Chunk extends Model {
         return await StorageLink.byChunkIdAndStatus(this.id, status);
     }
 
-    async reconsiderDownloadingStatus(cascade = true) {
-        // todo todo todo
-
-        // Otherwise consider it live
-        // await this.changeDLStatus(Chunk.DOWNLOADING_STATUS_DOWNLOADED);
-
-        // todo: at least prefix it with IF chunk.dl_status === Chunk.DOWNLOADING_STATUS_DOWNLOADED then reconsider
-
-        if (cascade) {
-            for(let f of await this.getFiles()) {
-                await f.reconsiderDownloadingStatus(false);
-            }
+    async reconsiderDownloadingStatus() {
+        for(let f of await this.getFiles()) {
+            await f.reconsiderDownloadingStatus();
         }
-
-        // todo: immediately start downloading here? trigger the tick()?
     }
 
     async getFiles() {
@@ -225,6 +214,7 @@ Chunk.UPLOADING_STATUS_UPLOADING = 'us1';
 Chunk.UPLOADING_STATUS_FAILED = 'us2';
 Chunk.UPLOADING_STATUS_UPLOADED = 'us99';
 Chunk.DOWNLOADING_STATUS_CREATED = 'ds0';
+Chunk.DOWNLOADING_STATUS_READY_TO_DOWNLOAD = 'ds0';
 Chunk.DOWNLOADING_STATUS_DOWNLOADING = 'ds1';
 Chunk.DOWNLOADING_STATUS_DOWNLOADED = 'ds99';
 Chunk.DOWNLOADING_STATUS_FAILED = 'ds2';

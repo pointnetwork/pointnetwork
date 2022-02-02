@@ -5,6 +5,7 @@
 .nvmrc
 .vscode
 src/
+_local/
 
 deployspace/*
 !deployspace/README.md

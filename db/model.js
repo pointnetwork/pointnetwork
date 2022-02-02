@@ -49,13 +49,33 @@ class Model extends sequelize_lib.Model {
         super.init(attributes, options);
     }
 
-    static async findOrCreate(...args) {
-        if (args.length === 1 && !(typeof args[0] === 'object' && args[0] !== null && !Array.isArray(args[0]))) {
-            const returned = await super.findOrCreate({ where: { id: args[0] }});
-            return returned[0];
-        } else {
-            return await super.findOrCreate(...args);
+    static async findOrCreate({where, defaults}, retry = false) {
+        const res = await super.findOne({ where });
+        if (res) {
+            return res;
         }
+        try {
+            const created = await super.create({
+                ...where,
+                ...defaults
+            });
+            return created;
+        } catch (e) {
+            this.ctx.log.error(e, "Error in find or create");
+            if (!retry && e.name === "SequelizeUniqueConstraintError") {
+                // We are running into the race condition, caused by concurrent tries
+                // to findOrCreate the same directory. In this case, a single retry
+                // should work, since the entity is already created at this moment
+                this.ctx.log.debug("Retrying to find or create");
+                return this.findOrCreate({where, defaults}, true);
+            }
+            throw e;
+        }
+
+    }
+
+    static async findByIdOrCreate(id, defaults) {
+        return this.findOrCreate({where: {id}, defaults});
     }
 
     async refresh() {

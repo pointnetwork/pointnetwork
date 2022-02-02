@@ -170,7 +170,7 @@ class ZProxy {
         };
         response.writeHead(500, headers);
         response.write(this._errorMsgHtml(err, 500)); // better code
-        this.ctx.log.error(`ZProxy 500 Error: ${err}`); // write out to ctx.log
+        this.ctx.log.error(err, `ZProxy 500 Error`); // write out to ctx.log
         console.error(err); // for stack trace
         response.end();
     }

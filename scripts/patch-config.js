@@ -67,7 +67,6 @@ config.client = {
 };
 
 writeFileSync('/data/config.json', JSON.stringify(config, null, 2));
-copyFileSync('/app/resources/sequelizeConfig.docker.json', '/app/resources/sequelizeConfig.json');
 
 console.info('Config is successfully updated.');
 

@@ -1,26 +1,17 @@
 {
-  "development": {
-    "username": "pointuser",
-    "password": "pointpassword",
-    "database": "point",
-    "host": "pointnetwork_database",
-    "port": "5432",
-    "dialect": "postgres"
-  },
-  "test": {
-    "username": "pointuser",
-    "password": "pointpassword",
-    "database": "point_test",
-    "host": "pointnetwork_database",
-    "port": "5432",
-    "dialect": "postgres"
-  },
-  "production": {
-    "username": "pointuser",
-    "password": "pointpassword",
-    "database": "point",
-    "host": "pointnetwork_database",
-    "port": "5432",
-    "dialect": "postgres"
-  }
+    "development": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
+    },
+    "test": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
+    },
+    "production": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "IMMEDIATE"
+    }
 }
