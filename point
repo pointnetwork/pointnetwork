@@ -82,15 +82,15 @@ if (! fs.existsSync(ctx.datadir)) mkdirp.sync(ctx.datadir);
 
 ctx.config = require('./core/config');
 
-if (program.verbose) ctx.config.log.level = 'debug';
+if (program.verbose) ctx.config.log.level = 'trace';
 
 // ------------------- Init Logger ----------------- //
 
 ctx.log = logger.child({account: ctx.config.client.wallet.account});
 const log = ctx.log.child({module: 'point'});
 
-ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit() function here below. and why 1?
-ctx.die = (err) => { log.fatal(err); ctx.exit(1); };
+ctx.exit = (code) => (log.close(), process.exit(code));
+ctx.die = (err) => (log.fatal(err), ctx.exit(1));
 
 // ----------------- Console Mode -------------------- //
 
@@ -118,7 +118,7 @@ if (program.deploy) {
     if (program.deploy.length === 0) return ctx.die('error: missing path');
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
-    deploy.deploy(program.deploy, program.deploy_contracts, program.dev);
+    deploy.deploy(program.deploy, program.deploy_contracts, program.dev).then(ctx.exit);
     return;
 }
 

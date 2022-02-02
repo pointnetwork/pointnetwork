@@ -22,4 +22,12 @@ streams.push(
     {level: options.level, stream: createWriteStream(path.resolve(path.join(datadir, 'point.log')))}
 );
 
-module.exports = pino(options, multistream(streams));
+module.exports = Object.assign(pino(options, multistream(streams)), {
+    close() {
+        for (const {stream} in streams) {
+            if (stream && typeof stream.close === 'function') {
+                stream.close();
+            }
+        }
+    }
+});

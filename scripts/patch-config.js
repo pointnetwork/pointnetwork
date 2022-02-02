@@ -14,8 +14,8 @@ const contractAddresses = {
     StorageProviderRegistry: process.env.CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY,
 };
 
-console.info(
-    'Patching Subprovider rpc',
+log.debug(
+    'Patching Subprovider rpc: ' +
     execSync('sed -i \'s/timeout: 20000,/timeout: process.env.SUBPROVIDER_RPC_TIMEOUT || 120000,/g\' /app/node_modules/\\@trufflesuite/web3-provider-engine/subproviders/rpc.js').toString()
 );
 
