@@ -112,8 +112,7 @@ const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
             config.arweave_experiment_version_minor
         );
 
-        // TODO: the URL should be in the config, not hardcoded
-        const queryResult = await request('https://arweave.net/graphql', query);
+        const queryResult = await request(config.arweave_graphql_endpoint, query);
         logger.debug({chunkId}, "Graphql request success");
 
         for (let edge of queryResult.transactions.edges) {
