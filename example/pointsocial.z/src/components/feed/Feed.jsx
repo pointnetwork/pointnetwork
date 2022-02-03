@@ -7,6 +7,8 @@ import Share from "../share/Share";
 import Identity from "../identity/Identity";
 import LoadingSpinner from '../loading/LoadingSpinner';
 
+const NUM_POSTS_PER_CALL = 20;
+
 const Feed = ({account}) =>{
   const {observe} = useInView({
     onEnter: async({observe,unobserve}) => {
@@ -73,8 +75,8 @@ const Feed = ({account}) =>{
   const fetchPosts = async () => {
     try {
       const response = account
-        ? await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPostsByOwner', params: [account,posts.length,5]}) :
-        await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPosts', params:[posts.length,5]})
+        ? await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPostsByOwner', params: [account,posts.length,NUM_POSTS_PER_CALL]}) :
+        await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPosts', params:[posts.length,NUM_POSTS_PER_CALL]})
 
       const _posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
           {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
