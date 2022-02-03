@@ -6,6 +6,7 @@ const _ = require('lodash');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3HttpProvider = require('web3-providers-http');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
+const {getJSON} = require("../client/storage/index.js");
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {
     'ESOCKETTIMEDOUT': 1,
@@ -93,7 +94,7 @@ class Web3Bridge {
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
         let abi;
         try {
-            abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+            abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
             // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
 
             return new this.web3.eth.Contract(abi.abi, at);

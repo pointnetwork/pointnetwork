@@ -7,7 +7,6 @@ module.exports = [
     ['GET', '/v1/api/migrate', 'MigrateController@migrate'],
     ['GET', '/v1/api/storage/files', 'StorageController@files'],
     ['GET', '/v1/api/storage/files/:id', 'StorageController@fileById'],
-    ['GET', '/v1/api/storage/chunks', 'StorageController@chunks'],
     ['GET', '/v1/api/storage/chunks/:id', 'StorageController@chunkById'],
     ['GET', '/v1/api/storage/getString/:id', 'StorageController@getString'],
     ['POST', '/v1/api/storage/putString', 'StorageController@putString'],

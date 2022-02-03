@@ -1,10 +1,8 @@
 let TwigLib = require('twig');
-const fs = require('fs');
-const path = require('path');
 const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
-const utils = require('#utils');
 const ethUtil = require("ethereumjs-util");
+const {getFile, getJSON, getFileIdByPath, uploadFile} = require("../../storage/index.js");
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -12,11 +10,12 @@ class Renderer {
     #twigs = {};
     #twigs_use_counter = {};
 
-    constructor(ctx, rootDir) {
+    constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'Renderer'});
         this.config = ctx.config.client.zproxy;
-        this.rootDir = rootDir;
+        this.rootDirId = rootDirId;
+        this.localDir = localDir;
     }
 
     async render(template_id, template_contents, host, request_params = {}) {
@@ -63,26 +62,21 @@ class Renderer {
             },
             storage_get_by_ikv: async function(identity, key) {
                 const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
-                return await this.renderer.ctx.client.storage.readFile(fileKey, 'utf-8');
+                return getFile(fileKey);
             },
             storage_get: async function(key) {
                 try {
-                    return await this.renderer.ctx.client.storage.readFile(key, 'utf-8');
+                    return getFile(key);
                 } catch (e) {
                     this.log.error({error: e.message, stack: e.stack}, 'Twig.storage_get error:');
                     return 'Invalid Content';
                 }
             },
             storage_get_parsed: async function(key) {
-                return await this.renderer.ctx.client.storage.readJSON(key, 'utf-8');
+                return await getJSON(key);
             },
             storage_put: async function(content) {
-                const cache_dir = path.join(this.renderer.ctx.datadir, this.renderer.config.cache_path);
-                utils.makeSurePathExists(cache_dir);
-                const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(content));
-                fs.writeFileSync(tmpPostDataFilePath, content);
-                let uploaded = await this.renderer.ctx.client.storage.putFile(tmpPostDataFilePath);
-                return uploaded.id;
+                return uploadFile(content);
             },
             encrypt_data: async function(publicKey, data) {
                 let host = this.host;
@@ -145,7 +139,7 @@ class Renderer {
                 //filter non-indexed properties from return value for convenience
                 if (filter != {}){
                     for(let k in filter)
-                        eventData = eventData.filter(e => e.data[k] == filter[k]);
+                        eventData  = eventData.filter(e => e.data[k] == filter[k]);
                 }
                 
                 return eventData;
@@ -289,8 +283,15 @@ class Renderer {
         };
     }
 
+    // TODO: this is a temporary hack unless we are using LocalDirectory, but
+    // already got rid of Directory model
     async fetchTemplateByPath(templatePath) {
-        return await this.rootDir.readFileByPath(templatePath, 'utf-8');
+        if (this.rootDirId) {
+            const templateFileId = await getFileIdByPath(this.rootDirId, templatePath);
+            return getFile(templateFileId, "utf8");
+        } else {
+            return this.localDir.readFileByPath(templatePath, 'utf-8');
+        }
     }
 
     #getTwigForHost(host) {
