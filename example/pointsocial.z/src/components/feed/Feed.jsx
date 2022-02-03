@@ -1,5 +1,5 @@
 import "./feed.css";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useAppContext } from '../../context/AppContext';
 import useInView from 'react-cool-inview'
 import Post from "../post/Post";
@@ -32,17 +32,20 @@ const Feed = ({account}) =>{
     return 0;
   }
 
+  useEffect(()=>{
+    console.log('@@@@@@@@@@posts',posts)
+    console.log('@@@@@@@@@@account',account)
+  },[posts,account])
+
   const getPosts = async () => {
     setLoading(true);
     const posts = await fetchPosts()
     posts.sort(compareByTimestamp)
     setPosts(prev => [...prev,...posts]);
-    console.log('posts',posts)
     setLoading(false);
   }
 
   const renderPostsImmediate = ({contents,image}) => {
-    console.log('Using renderPostsImmediate function.')
     setLoading(true);
     let updatedPosts = [...posts];
     let newPostId = posts.length + 1;
@@ -50,17 +53,14 @@ const Feed = ({account}) =>{
     updatedPosts.push(newPost);
     updatedPosts.sort(compareByTimestamp)
     setPosts(updatedPosts);
-    console.log('posts',updatedPosts)
     setLoading(false);
   }
 
   const fetchPosts = async () => {
     try {
       const response = account
-        ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account]}) :
-        await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPosts', params:[posts.length,10]})
-
-      console.log('response',response);
+        ? await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPostsByOwner', params: [account,posts.length,5]}) :
+        await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPosts', params:[posts.length,5]})
 
       const _posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
           {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
@@ -94,7 +94,6 @@ const Feed = ({account}) =>{
 
   return (
     <div className="feed">
-      <button onClick={getPosts}>Fetch more posts</button>
       <div className="feedWrapper">
         {!account && <div><Identity /><Share renderPostsImmediate={renderPostsImmediate} getPosts={getPosts} /></div>}
         {(!loading && feedError) && <span className='error'>Error loading feed: {feedError.message}. Did you deploy the contract sucessfully?</span>}
