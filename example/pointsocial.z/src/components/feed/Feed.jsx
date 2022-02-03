@@ -10,6 +10,7 @@ import LoadingSpinner from '../loading/LoadingSpinner';
 const Feed = ({account}) =>{
   const {observe} = useInView({
     onEnter: async({observe,unobserve}) => {
+      if(numPosts === posts.length) return;
       unobserve();
       await getPosts();
       observe();
@@ -17,6 +18,7 @@ const Feed = ({account}) =>{
   })
 
   const [posts, setPosts] = useState([])
+  const [numPosts, setNumPosts] = useState()
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(undefined);
   const { walletAddress } = useAppContext();
@@ -36,6 +38,18 @@ const Feed = ({account}) =>{
     console.log('@@@@@@@@@@posts',posts)
     console.log('@@@@@@@@@@account',account)
   },[posts,account])
+
+  useEffect(()=>{
+    getPostsLength();
+  },[])
+
+  const getPostsLength = async() => {
+    const response = account
+    ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwnerLength', params: [account]}) :
+    await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsLength', params:[]})
+
+    setNumPosts(Number(response.data));
+  }
 
   const getPosts = async () => {
     setLoading(true);

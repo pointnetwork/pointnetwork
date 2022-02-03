@@ -81,6 +81,11 @@ contract PointSocial {
         return _posts;
     }
 
+    function getAllPostsLength() public view returns (uint256) {
+        return posts.length;
+    }
+
+
     function getPaginatedPosts(uint256 cursor, uint256 howMany) public view returns (Post[] memory) {
         uint256 length = howMany;
         if(length > posts.length - cursor) {
@@ -104,6 +109,10 @@ contract PointSocial {
             _posts[i] = postById[postsByOwner[owner][i].id];
         }
         return _posts;
+    }
+
+    function getAllPostsByOwnerLength(address owner) public view returns (uint256) {
+        return postsByOwner[owner].length;
     }
 
     function getPaginatedPostsByOwner(address owner, uint256 cursor, uint256 howMany) public view returns (Post[] memory) {
