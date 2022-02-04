@@ -1,8 +1,9 @@
 services:
   arweave:
     image: lucaarweave/arweave-node:0.0.4
+    hostname: arweave
     ports:
-      - "1984:1984"
+      - '1984:1984'
     environment:
       AR_RUNMODE: test
     volumes:
@@ -16,14 +17,14 @@ services:
       - gateway_db
       - arweave
     ports:
-      - "3000:3000"
+      - '3000:3000'
 
   gateway_db:
     image: postgres:12
     volumes:
       - gateway_db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_USER: arweave
       POSTGRES_PASSWORD: arweave
@@ -33,13 +34,47 @@ services:
   bundler:
     image: pointnetwork/arweave-bundler:v1.0.0
     volumes:
-      - $KEYSTORE/arweave.json:/app/keystore/key.json
+      - $POINT_KEYSTORE/arweave.json:/app/keystore/key.json
+    secrets:
+      - minio_test_user
+      - minio_test_pass
+    ports:
+      - '4040:80'
     environment:
-      AWS_HOST: https://test.com
-      AWS_KEY: test
-      AWS_SECRET: test
+      S3_HOST: bandler-cache
+      S3_PORT: 9000
+      S3_PROTOCOL: http
+      S3_KEY_FILE: /run/secrets/minio_test_user
+      S3_SECRET_FILE: /run/secrets/minio_test_pass
+      ARWEAVE_HOST: arweave
+      ARWEAVE_PORT: 1984
+      ARWEAVE_PROTOCOL: http
+      KEYSTORE: /app/keystore/key.json
+
+  cache:
+    image: minio/minio:RELEASE.2022-02-01T18-00-14Z
+    hostname: bundler-cache
+    command: server /data --console-address ':9001'
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - bundler_data:/data
+    secrets:
+      - minio_test_user
+      - minio_test_pass
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_test_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_test_pass
 
 volumes:
   arweave_data:
   gateway_data:
+  bundler_data:
   gateway_db_data:
+
+secrets:
+  minio_test_user:
+    file: ./resources/minio_test_user
+  minio_test_pass:
+    file: ./resources/minio_test_pass
