@@ -11,6 +11,7 @@ services:
 
   gateway:
     image: lucaarweave/arweave-gateway:0.0.1
+    hostname: gateway
     volumes:
       - gateway_data:/app
     links:
@@ -33,6 +34,7 @@ services:
 
   bundler:
     image: pointnetwork/arweave-bundler:v1.0.0
+    hostname: bundler
     volumes:
       - $POINT_KEYSTORE/arweave.json:/app/keystore/key.json
     secrets:
@@ -41,7 +43,7 @@ services:
     ports:
       - '4040:80'
     environment:
-      S3_HOST: bandler-cache
+      S3_HOST: bundler-cache
       S3_PORT: 9000
       S3_PROTOCOL: http
       S3_KEY_FILE: /run/secrets/minio_test_user

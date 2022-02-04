@@ -1,12 +1,6 @@
 const path = require('path');
 const {merge} = require('lodash');
 const {existsSync} = require('fs');
-
-const arweave_key = require('/data/keystore/arweave.json');
-if (typeof arweave_key !== 'object') {
-    throw new Error('Unable to parse arweave key');
-}
-
 const variables = {
     api: {
         address: process.env.POINT_API_HOST || undefined,
@@ -20,7 +14,8 @@ const variables = {
         },
         storage: {
             engine: process.env.POINT_STORAGE_ENGINE || undefined,
-            arweave_key,
+            arweave_bundler_url: process.env.ARWEAVE_BUNDLER_URL || undefined,
+            arweave_gateway_url: process.env.ARWEAVE_GATEWAY_URL || undefined,
             arweave_experiment_version_minor:
                 process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || undefined
         }
