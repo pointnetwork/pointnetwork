@@ -23,7 +23,11 @@ const action = process.argv[4];
 const contract = process.argv[5];
 
 async function main() {
-    action == '--download' ? await download(contract) : await upload(contract);
+    if (action === '--download') {
+        await download(contract);
+    } else {
+        await upload(contract);
+    }
 }
 
 async function upload(contract) {
@@ -68,7 +72,6 @@ async function upload(contract) {
 async function download(contract) {
     const artifact = artifacts.require('./Identity.sol');
     const sourceContract = new web3.eth.Contract(artifact.abi, contract);
-    const accounts = await web3.eth.getAccounts();
     const options = {fromBlock: 0, toBlock: 'latest'};
 
     const fileStructure = {

@@ -50,8 +50,6 @@ function encryptDecrypt(pubKey, privKey, plaintext) {
 
         encrypt.encryptFile(tmpFileNameFrom, tmpFileNameTo, privKey);
 
-        const encryptedBuf = fs.readFileSync(tmpFileNameTo);
-
         decrypt.decryptFile(tmpFileNameTo, tmpFileNameResult, pubKey);
 
         let result = fs.readFileSync(tmpFileNameResult);

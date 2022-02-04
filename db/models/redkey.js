@@ -5,7 +5,6 @@ const Sequelize = require('sequelize');
 
 const defaultConfig = require('../../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits; // todo: make it read from the actual config, not default
-const PUBEXP = defaultConfig.storage.redkey_public_exponent; // todo: make it read from the actual config, not default
 
 class Redkey extends Model {
     constructor(...args) {
@@ -14,7 +13,7 @@ class Redkey extends Model {
 
     // todo: store keys internally in binary format, not text
 
-    static async generateNewForProvider(provider, keyIndex) {
+    static async generateNewForProvider() {
         return new Promise((resolve, reject) => {
             crypto.generateKeyPair(
                 'rsa',
@@ -33,7 +32,7 @@ class Redkey extends Model {
                     }
                 },
                 async (err, publicKey, privateKey) => {
-                    if (err) reject('Error: ' + err);
+                    if (err) reject(err);
 
                     resolve({
                         publicKey,

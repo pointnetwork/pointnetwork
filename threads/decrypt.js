@@ -1,5 +1,5 @@
 #!/bin/env
-
+/* eslint-disable no-console */
 const fs = require('fs');
 const crypto = require('crypto');
 const utils = require('#utils');
@@ -14,7 +14,6 @@ function decryptFile(fileIn, fileOut, pubKey) {
 
     const fe = fs.openSync(fileIn, 'r');
     const fd = fs.openSync(fileOut, 'w+');
-    let c = 0;
     let previousReadBuffer = Buffer.alloc(readSize); // initial buffer for CBC mode
     while (true) {
         const readBuffer = Buffer.alloc(readSize);
@@ -39,8 +38,6 @@ function decryptFile(fileIn, fileOut, pubKey) {
         if (bytesRead !== readSize) break;
 
         previousReadBuffer = readBuffer;
-
-        c++;
     }
 
     fs.closeSync(fe);

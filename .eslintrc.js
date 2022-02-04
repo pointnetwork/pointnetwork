@@ -61,7 +61,7 @@ module.exports = {
         'object-curly-spacing': ['error', 'never'],
         'object-curly-newline': ['error', {multiline: true}],
         'array-bracket-spacing': ['error', 'never'],
-        'eqeqeq': ['error', 'always'],
+        'eqeqeq': ['error', 'always', {null: 'ignore'}],
         'no-useless-call': 'error',
         'prefer-promise-reject-errors': 'error',
         'no-underscore-dangle': 'off', // TODO: enable
@@ -103,7 +103,14 @@ module.exports = {
     },
     overrides: [
         {
-            files: ['scripts/**/*.js', 'truffle/scripts/*.js', 'point', 'web2server.js', 'resources/**/*.js'],
+            files: [
+                'scripts/**/*.js',
+                'truffle/scripts/*.js',
+                'point',
+                'web2server.js',
+                'resources/**/*.js',
+                'tests/**/*.js'
+            ],
             rules: {'no-console': 'off'}
         }
     ]

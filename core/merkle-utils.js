@@ -2,8 +2,6 @@
 // Modified to defend merkle trees from second preimage attack
 // todo: check the code properly again, not convinced it's working correctly. is it really impossible to just put a preimage into an odd position as data?
 
-const origMerkle = require('merkle-lib');
-
 const merkleUtils = {
     // returns the merkle tree
     merkle: function (values, digestFn) {

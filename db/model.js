@@ -8,25 +8,6 @@ class Model extends sequelize_lib.Model {
         super(...args);
         this.ctx = this.sequelize.options.ctx;
         this.log = this.ctx.log.child({module: 'Model', model: this.constructor.name});
-
-        // Sequelize requires relations in JS to be in the form of 'ProviderId'
-        // This creates proxy getters and setters allowing the same field to be aliased as 'provider_id' and 'providerId'
-        if (addUnderscoreIdFields[this.constructor.name]) {
-            for (const model of addUnderscoreIdFields[this.constructor.name]) {
-                const original_field = model + 'Id';
-                const underscore_field = _.snakeCase(original_field);
-                const misspelled_original_field = _.lowerFirst(original_field);
-
-                // Object.defineProperty(this, underscore_field, {
-                //     get: function() { return this[original_field]; },
-                //     set: function(newValue) { this[original_field] = newValue; }
-                // });
-                // Object.defineProperty(this, misspelled_original_field, {
-                //     get: function() { return this[original_field]; },
-                //     set: function(newValue) { this[original_field] = newValue; }
-                // });
-            }
-        }
     }
 
     static init(attributes, options) {

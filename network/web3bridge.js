@@ -4,7 +4,6 @@ const fs = require('fs');
 const utils = require('#utils');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
-const Web3HttpProvider = require('web3-providers-http');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
 const {getJSON} = require('../client/storage/index.js');
 const ZDNS_ROUTES_KEY = 'zdns/routes';

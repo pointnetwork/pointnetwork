@@ -29,13 +29,13 @@ async function getTransactionsByAccount(
     const txs = [];
 
     for (var i = startBlockNumber; i <= endBlockNumber; i++) {
-        if (i % 1000 == 0) {
+        if (i % 1000 === 0) {
             log.debug('Searching block ' + i);
         }
         var block = eth.getBlock(i, true);
         if (block != null && block.transactions != null) {
             block.transactions.forEach(function (e) {
-                if (myaccount == '*' || myaccount == e.from || myaccount == e.to) {
+                if (myaccount === '*' || myaccount === e.from || myaccount === e.to) {
                     txs.push(e);
                     // log.debug('   tx hash         : ' + e.hash + '\n'
                     //         + '   nonce           : ' + e.nonce + '\n'
@@ -108,7 +108,7 @@ class Wallet {
         const bip39 = require('bip39');
         const bip32 = require('bip32');
 
-        const derivePath = "m/44'/501'/0'/0'";
+        const derivePath = 'm/44\'/501\'/0\'/0\'';
         const mnemonic = this.getSecretPhrase();
 
         const seed = bip39.mnemonicToSeedSync(mnemonic); // Buffer
@@ -130,15 +130,15 @@ class Wallet {
 
     saveDefaultWalletToKeystore() {
         // use the hard coded wallet id, passcode, address and private key to save to the nodes keystore
-        let id = this.config.id;
-        let passcode = this.config.passcode;
-        let wallet = this.ctx.network.web3.eth.accounts.wallet[0];
-        let keystore = wallet.encrypt(passcode);
+        const id = this.config.id;
+        const passcode = this.config.passcode;
+        const wallet = this.ctx.network.web3.eth.accounts.wallet[0];
+        const keystore = wallet.encrypt(passcode);
         fs.writeFileSync(`${this.keystore_path}/${id}`, JSON.stringify(keystore));
     }
 
     async sendTransaction(from, to, value) {
-        let receipt = await this.web3.eth.sendTransaction({
+        const receipt = await this.web3.eth.sendTransaction({
             from: from,
             to: to,
             value: value,
@@ -154,9 +154,9 @@ class Wallet {
     }
 
     generate(passcode) {
-        let account = this.web3.eth.accounts.create(this.web3.utils.randomHex(32));
-        let wallet = this.web3.eth.accounts.wallet.add(account);
-        let keystore = this.saveWalletToKeystore(wallet, passcode);
+        const account = this.web3.eth.accounts.create(this.web3.utils.randomHex(32));
+        const wallet = this.web3.eth.accounts.wallet.add(account);
+        const keystore = this.saveWalletToKeystore(wallet, passcode);
 
         // TODO: remove
         this._fundWallet(account.address);
@@ -165,7 +165,7 @@ class Wallet {
     }
 
     saveWalletToKeystore(wallet, passcode) {
-        let keystore = wallet.encrypt(passcode);
+        const keystore = wallet.encrypt(passcode);
         fs.writeFileSync(`${this.keystore_path}/${keystore.id}`, JSON.stringify(keystore));
 
         return keystore;
@@ -174,13 +174,13 @@ class Wallet {
     loadWalletFromKeystore(walletId, passcode) {
         // todo what if it does not exist?
         if (fs.existsSync(`${this.keystore_path}/${walletId}`)) {
-            let keystoreBuffer = fs.readFileSync(`${this.keystore_path}/${walletId}`);
-            let keystore = JSON.parse(keystoreBuffer);
+            const keystoreBuffer = fs.readFileSync(`${this.keystore_path}/${walletId}`);
+            const keystore = JSON.parse(keystoreBuffer);
 
             // decrypt it using the passcode
-            let decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], passcode);
+            const decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], passcode);
 
-            let address = ethereumjs.addHexPrefix(keystore.address);
+            const address = ethereumjs.addHexPrefix(keystore.address);
             return decryptedWallets[address]; // return the wallet using the address in the loaded keystore
         } else {
             return null;
@@ -244,23 +244,23 @@ class Wallet {
         return new solana.PublicKey(this.getSolanaAccount());
     }
 
-    async #getSolanaBalanceInSOLWithConnection(connection) {
+    async getSolanaBalanceInSOLWithConnection(connection) {
         const solanaAddress = this.getSolanaPublicKey();
         const result = (await connection.getBalance(solanaAddress)) / 1e9;
         return result;
     }
     async getSolanaMainnetBalanceInSOL() {
-        return this.#getSolanaBalanceInSOLWithConnection(this.solanaMainConnection);
+        return this.getSolanaBalanceInSOLWithConnection(this.solanaMainConnection);
     }
     async getSolanaDevnetBalanceInSOL() {
-        return this.#getSolanaBalanceInSOLWithConnection(this.solanaDevConnection);
+        return this.getSolanaBalanceInSOLWithConnection(this.solanaDevConnection);
     }
 
     async initiateSolanaDevAirdrop() {
         const solanaAddress = this.getSolanaPublicKey();
         const signature = await this.solanaDevStandardConnection.requestAirdrop(
             solanaAddress,
-            1 * solana.LAMPORTS_PER_SOL
+            Number(solana.LAMPORTS_PER_SOL)
         );
         await this.solanaDevStandardConnection.confirmTransaction(signature);
     }

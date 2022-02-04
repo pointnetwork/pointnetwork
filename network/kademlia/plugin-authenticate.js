@@ -1,5 +1,4 @@
 const assert = require('assert');
-const secp256k1 = require('secp256k1');
 const kadUtils = require('@pointnetwork/kadence/lib/utils');
 const utils = require('#utils');
 const bsonrpc = require('./bson-rpc');
@@ -14,7 +13,7 @@ class AuthenticatePlugin {
     /**
      * Creates the plugin instance
      */
-    constructor(node, ctx, publicKey, privateKey, options = {}) {
+    constructor(node, ctx, publicKey, privateKey) {
         this.ctx = ctx;
 
         this.privateKey = privateKey;

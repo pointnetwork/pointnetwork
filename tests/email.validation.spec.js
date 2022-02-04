@@ -6,7 +6,7 @@ const MAX_EMAIL_LENGTH = 32;
 function _isValidEmail(str) {
     const bstr = bytes(str);
 
-    if (bstr.length > MAX_EMAIL_LENGTH || bstr[0] == bytes1(uint8(0x2e))) {
+    if (bstr.length > MAX_EMAIL_LENGTH || bstr[0] === bytes1(uint8(0x2e))) {
         // '.'
         return false;
     }
@@ -24,7 +24,7 @@ function _isValidEmail(str) {
 
         if (localPartComplete) {
             if (domainComplete) {
-                if (char == bytes1(uint8(0x5a)) || char == bytes1(uint8(0x7a))) {
+                if (char === bytes1(uint8(0x5a)) || char === bytes1(uint8(0x7a))) {
                     // 'z' or 'Z'
                     topLevelDomainComplete = true;
                 }
@@ -32,37 +32,37 @@ function _isValidEmail(str) {
                     return false;
                 }
                 topLevelDomainLength++;
-            } else if (char == bytes1(uint8(0x2e))) {
+            } else if (char === bytes1(uint8(0x2e))) {
                 // '.'
                 domainComplete = true;
             } else if (
                 !_isAlphaNumeric(char) &&
-                !(char == bytes1(uint8(0x5f))) && // '_'
-                !(char == bytes1(uint8(0x2d))) // '-'
+                !(char === bytes1(uint8(0x5f))) && // '_'
+                !(char === bytes1(uint8(0x2d))) // '-'
             ) {
                 return false;
             } else {
                 domainLength++;
             }
-        } else if (char == bytes1(uint8(0x40))) {
+        } else if (char === bytes1(uint8(0x40))) {
             // '@'
-            if (i == 0 || bstr[i - 1] == bytes1(uint8(0x2e))) {
+            if (i === 0 || bstr[i - 1] === bytes1(uint8(0x2e))) {
                 // '.'
                 return false;
             }
             localPartComplete = true;
         } else if (
             !_isAlphaNumeric(char) &&
-            !(char == bytes1(uint8(0x2e))) && // '.'
-            !(char == bytes1(uint8(0x2b))) && // '+'
-            !(char == bytes1(uint8(0x5f))) && // '_'
-            !(char == bytes1(uint8(0x2d))) // '-'
+            !(char === bytes1(uint8(0x2e))) && // '.'
+            !(char === bytes1(uint8(0x2b))) && // '+'
+            !(char === bytes1(uint8(0x5f))) && // '_'
+            !(char === bytes1(uint8(0x2d))) // '-'
         ) {
             return false;
         } else if (
             i > 0 &&
-            char == bytes1(uint8(0x2e)) && // '.'
-            bstr[i - 1] == bytes1(uint8(0x2e)) // '.'
+            char === bytes1(uint8(0x2e)) && // '.'
+            bstr[i - 1] === bytes1(uint8(0x2e)) // '.'
         ) {
             return false;
         } else {
@@ -76,7 +76,7 @@ function _isValidEmail(str) {
         domainComplete &&
         domainLength > 0 &&
         topLevelDomainComplete &&
-        topLevelDomainLength == 1
+        topLevelDomainLength === 1
     );
 }
 

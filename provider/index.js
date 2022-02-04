@@ -35,8 +35,6 @@ class Provider {
         this.privateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
         this.privateKey = Buffer.from(this.privateKeyHex, 'hex');
         this.publicKey = ethUtil.privateToPublic(this.privateKey); // todo: different source than networkPrivateKeyHex, cross validate them!
-        const address = ethUtil.publicToAddress(this.publicKey);
-        const identity = address;
 
         this.connectNode(this.node);
 
@@ -87,11 +85,9 @@ class Provider {
         node.use('GET_DECRYPTED_CHUNK', this.GET_DECRYPTED_CHUNK.bind(this));
     }
 
-    async STORE_CHUNK_REQUEST(request, response, next) {
+    async STORE_CHUNK_REQUEST(request, response) {
         // todo: shouldn't we use next properly instead of directly stopping here and sending response?
         const chunk_id = request.params[0]; // todo: validate
-        const length = request.params[1]; // todo: validate
-        const expires = request.params[2]; // todo: validate
         //await ProviderChunk.findOrCreate(chunk_id); // todo: enc or dec?
         // todo: validate/negotiate. also, write these things down, if length is invalid, you just stop there
         response.send([chunk_id]); // success

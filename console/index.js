@@ -1,6 +1,6 @@
 const readline = require('readline');
 const axios = require('axios');
-
+/* eslint-disable no-console */
 const PROMPT = '> ';
 
 class Console {

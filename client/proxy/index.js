@@ -10,7 +10,6 @@ const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
 const WebSocketServer = require('websocket').server;
 const ZProxySocketController = require('../../api/sockets/ZProxySocketController');
-const url = require('url');
 const certificates = require('./certificates');
 const LocalDirectory = require('../../db/models/local_directory');
 const qs = require('query-string');
@@ -340,7 +339,6 @@ class ZProxy {
             // If the request a multipart/form-data type then parse the file upload using formidable
             const formidable = require('formidable');
             const form = formidable({multiples: true});
-            let response;
 
             return new Promise((resolve, reject) => {
                 form.parse(request, async (err, fields, files) => {
@@ -395,7 +393,11 @@ class ZProxy {
 
     _parseApiCmd(cmdstr) {
         let [cmd, params] = cmdstr.split('?');
-        params ? (params = params.split('&')) : (params = '');
+        if (params) {
+            params = params.split('&');
+        } else {
+            params = '';
+        }
         return [cmd, params];
     }
 
@@ -677,7 +679,7 @@ class ZProxy {
                 }
             });
             request.on('error', e => {
-                reject('Error:', e);
+                reject(e);
             });
         });
     }
@@ -691,7 +693,7 @@ class ZProxy {
             request.on('end', async () => {
                 try {
                     if (request.method.toUpperCase() !== 'POST')
-                        return reject('Error: Must be POST');
+                        reject(new Error('Must be POST'));
 
                     let parsedUrl;
                     try {
@@ -732,11 +734,11 @@ class ZProxy {
                         if (paramName in postData) {
                             params.push(postData[paramName]);
                         } else {
-                            return reject(
-                                'Error: no ' +
+                            reject(
+                                new Error('Error: no ' +
                                     utils.escape(paramName) +
                                     ' param in the data, but exists as an argument to the contract call.'
-                            );
+                                ));
                         }
                     }
 
@@ -748,7 +750,7 @@ class ZProxy {
                             params
                         );
                     } catch (e) {
-                        reject('Error: ' + e);
+                        reject(e);
                     }
 
                     this.log.debug({host, redirect}, 'Redirecting after contractSend');
@@ -763,7 +765,7 @@ class ZProxy {
                 }
             });
             request.on('error', e => {
-                reject('Error: ' + e);
+                reject(e);
             });
         });
     }

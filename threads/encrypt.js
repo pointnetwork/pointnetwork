@@ -1,5 +1,5 @@
 #!/bin/env
-
+/* eslint-disable no-console */
 const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');

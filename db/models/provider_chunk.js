@@ -20,7 +20,7 @@ class ProviderChunk extends Model {
         utils.makeSurePathExists(cache_dir);
         return cache_dir + '/' + 'provider_chunk_' + id;
     }
-    static getSegmentStoragePath(segment_hash, chunk_id) {
+    static getSegmentStoragePath(segment_hash) {
         const cache_dir = path.join(
             this.ctx.datadir,
             this.ctx.config.service_provider.storage.cache_path
@@ -100,8 +100,6 @@ class ProviderChunk extends Model {
     }
 
     setSegmentData(rawData, segment_index) {
-        const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes; // todo: ?
-
         // todo: verify only using proof
 
         let segment_hash;

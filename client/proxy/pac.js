@@ -26,6 +26,7 @@ const local_cidrs = /^(?:127(?:\.(?:\d+)){1,3}|0+(?:\.0+){0,3})$/;
 // other notations for 0/8 and 127/8
 const localhosts = ['localhost', '::', '::1', '0x00.0', '0177.1', '0x7f.1'];
 
+// eslint-disable-next-line no-unused-vars
 function FindProxyForURL(url, host) {
     // check if localhost
     if (localhosts.includes(host) || host.match(local_cidrs)) {

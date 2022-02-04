@@ -83,7 +83,11 @@ class NodeSocketController {
 
     _parseCmd(cmdstr) {
         let [cmd, params] = cmdstr.split('?');
-        params ? (params = params.split('&')) : (params = '');
+        if (params) {
+            params = params.split('&');
+        } else {
+            params = '';
+        }
         return [cmd, params];
     }
 }

@@ -1,5 +1,4 @@
 const kadence = require('@pointnetwork/kadence');
-const kadenceConstants = require('@pointnetwork/kadence/lib/constants');
 const path = require('path');
 const fs = require('fs');
 const _async = require('async');

@@ -240,7 +240,7 @@ cleanup = () => {
     updateArchiveMeta(latestParsedBlockNumber, latestParsedTransactionIndex);
 };
 
-exitHandler = (options, exitCode) => {
+exitHandler = () => {
     console.log(
         'App is exiting. Time to clean up! Current Block Number: ',
         currentBlockNumber,
@@ -289,13 +289,13 @@ if (PARSE_BLOCKCHAIN) {
             for (currentBlockNumber; currentBlockNumber <= endBlockNumber; currentBlockNumber++) {
                 try {
                     const block = await web3.eth.getBlock(currentBlockNumber);
-                    currentBlockNumber % 1000 == 0 &&
+                    if (currentBlockNumber % 1000 === 0) {
                         console.log(
                             `Reached block: ${currentBlockNumber} (remaining blocks ${
                                 endBlockNumber - currentBlockNumber
                             })`
                         );
-                    // console.log('Block: ', block);
+                    }
                     if (
                         block != null &&
                         block.transactions != null &&

@@ -25,14 +25,14 @@ class Deployer {
         return cache_dir;
     }
 
-    async migrate(site) {
+    async migrate() {
         const privateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
         const privateKey = Buffer.from(privateKeyHex, 'hex');
         const publicKey = ethUtil.privateToPublic(privateKey);
 
-        console.log(privateKeyHex);
-        console.log(privateKey);
-        console.log(publicKey);
+        this.log.info(privateKeyHex);
+        this.log.info(privateKey);
+        this.log.info(publicKey);
     }
 
     async deploy(deployPath, deployContracts = false, dev = false) {
