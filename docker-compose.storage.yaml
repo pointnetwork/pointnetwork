@@ -30,6 +30,15 @@ services:
       POSTGRES_DB: arweave
     command: -p 5432
 
+  bundler:
+    image: pointnetwork/arweave-bundler:v1.0.0
+    volumes:
+      - $KEYSTORE/arweave.json:/app/keystore/key.json
+    environment:
+      AWS_HOST: https://test.com
+      AWS_KEY: test
+      AWS_SECRET: test
+
 volumes:
   arweave_data:
   gateway_data:
