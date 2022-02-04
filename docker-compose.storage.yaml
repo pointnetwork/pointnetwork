@@ -1,7 +1,8 @@
 services:
   arweave:
     image: lucaarweave/arweave-node:0.0.4
-    hostname: arweave
+    container_name: point_storage
+    hostname: arweave-node
     ports:
       - '1984:1984'
     environment:
@@ -11,6 +12,7 @@ services:
 
   gateway:
     image: lucaarweave/arweave-gateway:0.0.1
+    container_name: point_storage_gateway
     hostname: gateway
     volumes:
       - gateway_data:/app
@@ -19,13 +21,19 @@ services:
       - arweave
     ports:
       - '3000:3000'
+    environment:
+      DATABASE_HOST: gateway_db
+      DATABASE_PORT: 5432
+      POSTGRES_USER: arweave
+      POSTGRES_PASSWORD: arweave
+      POSTGRES_DB: arweave
 
   gateway_db:
     image: postgres:12
+    container_name: point_storage_gateway_db
+    hostname: gateway_db
     volumes:
       - gateway_db_data:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
     environment:
       POSTGRES_USER: arweave
       POSTGRES_PASSWORD: arweave
@@ -34,27 +42,27 @@ services:
 
   bundler:
     image: pointnetwork/arweave-bundler:v1.0.0
+    container_name: point_bundler
     hostname: bundler
     volumes:
       - $POINT_KEYSTORE/arweave.json:/app/keystore/key.json
     secrets:
       - minio_test_user
       - minio_test_pass
-    ports:
-      - '4040:80'
     environment:
       S3_HOST: bundler-cache
       S3_PORT: 9000
       S3_PROTOCOL: http
       S3_KEY_FILE: /run/secrets/minio_test_user
       S3_SECRET_FILE: /run/secrets/minio_test_pass
-      ARWEAVE_HOST: arweave
+      ARWEAVE_HOST: arweave-node
       ARWEAVE_PORT: 1984
       ARWEAVE_PROTOCOL: http
       KEYSTORE: /app/keystore/key.json
 
   cache:
     image: minio/minio:RELEASE.2022-02-01T18-00-14Z
+    container_name: point_storage_cache
     hostname: bundler-cache
     command: server /data --console-address ':9001'
     ports:
