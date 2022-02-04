@@ -58,6 +58,9 @@ let config;
 let logger;
 let cacheDir;
 let filesDir;
+let wallet;
+let walletAddress;
+
 const init = async ctx => {
     // TODO: ambiguous stuff, config is spread between storage and client.storage
     config = {
@@ -78,12 +81,24 @@ const init = async ctx => {
         makeSurePathExistsAsync(cacheDir),
         makeSurePathExistsAsync(filesDir)
     ]);
+
+    wallet = await arweave.wallets.generate();
+    walletAddress = await arweave.wallets.jwkToAddress(wallet);
+    console.log('TEST WALLET ADDRESS: ', walletAddress);
+    console.log('TEST WALLET KEY: ', wallet);
+    
+    // Mint some test tokens https://github.com/textury/arlocal#sending-transactions
+    await axios.get(`http://arlocal:1984/mint/${walletAddress}/100000000000000000000`);
+
+
 };
 
 const arweave = Arweave.init({
-    port: 443,
-    protocol: 'https',
-    host: 'arweave.net'
+    host: 'arlocal',
+    port: 1984,
+    protocol: 'http',
+    timeout: 20000,
+    logging: false,
 });
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
@@ -147,6 +162,31 @@ const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
     }
 };
 
+const signTx = async (data, tags) => {
+    // Real 'AR' mode
+    let transaction = await arweave.createTransaction({ data }, wallet);
+
+    // transaction.addTag('keccak256hex', hash);
+    // transaction.addTag('pn_experiment', '1');
+    for(let k in tags) {
+      let v = tags[k];
+      transaction.addTag(k, v);
+    }
+
+    // Sign
+    await arweave.transactions.sign(transaction, wallet);
+
+    return transaction;
+}
+
+const broadcastTx = async (transaction) => {
+    let uploader = await arweave.transactions.getUploader(transaction);
+    while (!uploader.isComplete) { await uploader.uploadChunk(); }
+
+    return transaction;
+  }
+
+
 const uploadChunk = async data => {
     const chunkId = hashFn(data).toString('hex');
 
@@ -176,21 +216,35 @@ const uploadChunk = async data => {
             chunkId
         );
 
-        const response = await axios.post(
-            `${config.arweave_airdrop_endpoint}/signPOST`,
-            formData,
-            {
-                headers: {
-                    ...formData.getHeaders()
-                }
-            }
-        );
+        // const response = await axios.post(
+        //     `${config.arweave_airdrop_endpoint}/signPOST`,
+        //     formData,
+        //     {
+        //         headers: {
+        //             ...formData.getHeaders()
+        //         }
+        //     }
+        // );
+        const temp = `__pn_chunk_${config.arweave_experiment_version_major}.${config.arweave_experiment_version_minor}_id`;
+        console.log("######## data ############");
+        console.log(data);
+        let transaction = await signTx(data, {
+            "__pn_integration_version_major": config.arweave_experiment_version_major,
+            "__pn_integration_version_minor": config.arweave_experiment_version_minor,
+            "__pn_chunk_id": chunkId,
+            [temp]: chunkId
+        });
+        console.log("######## transaction ############");
+        console.log(transaction);
+        transaction = await broadcastTx(transaction);
+        const txid = transaction.id;
+        logger.debug({txid}, "Transaction id successfully generated");
 
         // TODO: check status from bundler
-        if (response.data.status !== 'ok') {
-            throw new Error(`Chunk ${chunkId} uploading failed: arweave airdrop endpoint error: ${
-                JSON.stringify(response, null , 2)}`);
-        }
+        // if (response.data.status !== 'ok') {
+        //     throw new Error(`Chunk ${chunkId} uploading failed: arweave airdrop endpoint error: ${
+        //         JSON.stringify(response, null , 2)}`);
+        // }
 
         logger.debug({chunkId}, "Chunk successfully uploaded, saving to disk");
 
