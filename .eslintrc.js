@@ -15,7 +15,14 @@ module.exports = {
         'filenames',
         'prefer-arrow'
     ],
-    ignorePatterns: ['node_modules', '*.min.js', 'example/*', '**/public/**/*', 'db/migrations'],
+    ignorePatterns: [
+        'node_modules',
+        '*.min.js',
+        'example/*',
+        '**/public/**/*',
+        'db/migrations',
+        'api/web/' // TODO: default parser doesn't handle them
+    ],
     rules: {
         'no-implicit-coercion': ['error'],
         'indent': [
