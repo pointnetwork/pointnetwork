@@ -1,5 +1,4 @@
 'use strict';
-
 //command: truffle exec scripts/identityMigrator.js --config truffle-config-neon.js  --network ynet
 
 const migrationData = [

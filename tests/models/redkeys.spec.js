@@ -6,11 +6,12 @@ const {v4: uuid} = require('uuid');
 
 let Provider;
 
-const generateProvider = async () => await Provider.create({
-    id: uuid(),
-    address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
-    connection: `http://localhost:12345/#${this.address}`
-});
+const generateProvider = async () =>
+    await Provider.create({
+        id: uuid(),
+        address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
+        connection: `http://localhost:12345/#${this.address}`
+    });
 
 describe('RedKey model', () => {
     let RedKey;

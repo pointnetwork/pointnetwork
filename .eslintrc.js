@@ -100,5 +100,11 @@ module.exports = {
         // 'import/imports-first': ['error', 'absolute-first'],
         // 'import/extensions': ['error', 'never'],
         // 'import/no-unresolved': 'off',
-    }
+    },
+    overrides: [
+        {
+            files: ['scripts/**/*.js', 'truffle/scripts/*.js', 'point', 'web2server.js', 'resources/**/*.js'],
+            rules: {'no-console': 'off'}
+        }
+    ]
 };

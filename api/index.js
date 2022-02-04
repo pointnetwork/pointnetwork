@@ -69,7 +69,7 @@ class ApiServer {
                 url: apiRoute[1],
 
                 // this function is executed for every request before the handler is executed
-                preHandler: async (request, reply) => {
+                preHandler: async () => {
                     // E.g. check authentication
                 },
                 handler: async (request, reply) => {
@@ -94,15 +94,13 @@ class ApiServer {
             this.server.route({
                 method: wsRoute[0],
                 url: wsRoute[1],
-
-                handler: async (request, reply) => 
-                    undefined // needed otherwise 'handler not defined error' is thrown by fastify
-                ,
-                wsHandler: async (conn, req) => new (require('./sockets/' + socketName))(
-                    this.ctx,
-                    conn.socket,
-                    this.server.websocketServer
-                )
+                handler: async () => undefined, // needed otherwise 'handler not defined error' is thrown by fastify
+                wsHandler: async conn =>
+                    new (require('./sockets/' + socketName))(
+                        this.ctx,
+                        conn.socket,
+                        this.server.websocketServer
+                    )
             });
         }
     }

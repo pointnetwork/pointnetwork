@@ -54,7 +54,9 @@ async function upload(contract) {
 
     for (const ikv of data.ikv) {
         console.log('Migrating IKV value for: ' + ikv.handle);
-        await targetContract.methods.ikvImportKV(ikv.handle, ikv.key, ikv.value).send({from: accounts[0]});
+        await targetContract.methods
+            .ikvImportKV(ikv.handle, ikv.key, ikv.value)
+            .send({from: accounts[0]});
     }
 
     console.log('Closing migrations');

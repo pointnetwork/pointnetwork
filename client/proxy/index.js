@@ -5,7 +5,6 @@ const tls = require('tls');
 const _ = require('lodash');
 const fs = require('fs-extra');
 const Renderer = require('../zweb/renderer');
-const path = require('path');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
 const sanitizingConfig = require('./sanitizing-config');
@@ -145,8 +144,6 @@ class ZProxy {
         this.doubleServer.http.on('error', err => this.log.error(err, 'Double Server HTTP error'));
         this.doubleServer.http.on('connect', (req, cltSocket, head) => {
             // connect to an origin server
-            const srvUrl = url.parse(`https://${req.url}`);
-            // const srvSocket = net.connect(srvUrl.port, srvUrl.hostname, () => {
             const srvSocket = net.connect(this.port, 'localhost', () => {
                 cltSocket.write(
                     'HTTP/1.1 200 Connection Established\r\n' +
@@ -182,7 +179,7 @@ class ZProxy {
 
     async request(request, response) {
         const host = request.headers.host;
-        if (host != 'point' && !_.endsWith(host, '.z')) return this.abort404(response);
+        if (host !== 'point' && !_.endsWith(host, '.z')) return this.abort404(response);
         try {
             let rendered;
             let parsedUrl;
@@ -345,7 +342,7 @@ class ZProxy {
             const form = formidable({multiples: true});
             let response;
 
-            const promise = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 form.parse(request, async (err, fields, files) => {
                     try {
                         for (const key in files) {
@@ -362,8 +359,6 @@ class ZProxy {
                     }
                 });
             });
-            response = await promise;
-            return response;
         } // TODO what if its not a multipart/form-data request?
     }
 
@@ -550,7 +545,10 @@ class ZProxy {
                         }
                     }
                     if (template_filename) {
-                        const template_file_id = await getFileIdByPath(rootDirId, template_filename);
+                        const template_file_id = await getFileIdByPath(
+                            rootDirId,
+                            template_filename
+                        );
                         this.log.debug(
                             {template_filename, template_file_id},
                             'ZProxy.processRequest getFileIdByPath result'

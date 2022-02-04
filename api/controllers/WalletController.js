@@ -1,7 +1,5 @@
 const PointSDKController = require('./PointSDKController');
-const fs = require('fs');
 const ethereumjs = require('ethereumjs-util');
-const helpers = require('./helpers/WalletHelpers');
 
 let web3;
 

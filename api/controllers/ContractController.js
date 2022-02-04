@@ -1,5 +1,4 @@
 const PointSDKController = require('./PointSDKController');
-const helpers = require('./helpers/WalletHelpers');
 const _ = require('lodash');
 
 class ContractController extends PointSDKController {

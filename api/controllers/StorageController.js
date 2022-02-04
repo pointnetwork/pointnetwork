@@ -34,9 +34,7 @@ class StorageController extends PointSDKController {
 
     // Returns all file metadata stored in the nodes leveldb
     async files() {
-        console.log('USING FILES');
         const allFiles = await File.allBy('dl_status', DOWNLOAD_UPLOAD_STATUS.COMPLETED);
-        console.log(allFiles);
         return this._response(
             allFiles.map(({id, originalPath, size}) => ({id, originalPath, size}))
         );
