@@ -63,16 +63,29 @@ services:
     depends_on:
       blockchain_node:
         condition: service_healthy
-      database:
-        condition: service_healthy
     entrypoint: 'npm'
     command: 'run start:docker:e2e'
     volumes:
       - storage_provider_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
       - ./resources/demo-docker/mnemonic-storage_provider.json:/data/keystore/key.json
+      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
     ports:
       - '12345:9685'
       - '65500:8666'
@@ -84,15 +97,12 @@ services:
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
       BLOCKCHAIN_URL: $BLOCKCHAIN_URL
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
 
   website_owner:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: point_node
     depends_on:
       blockchain_node:
-        condition: service_healthy
-      database:
         condition: service_healthy
     ports:
       - '12346:9685'
@@ -102,37 +112,33 @@ services:
     command: 'run start:docker:e2e'
     volumes:
       - website_owner_data:/data:rw
+      - ./resources/demo-docker/mnemonic-website_owner.json:/data/keystore/key.json
+      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
+      - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
       - shared_contracts:/app/truffle/build/contracts:ro
       - ./api:/app/api:ro
       - ./client:/app/client:ro
       - ./console:/app/console:ro
       - ./core:/app/core:ro
       - ./db:/app/db:ro
+      - ./example:/app/example:ro
       - ./internal:/app/internal:ro
       - ./network:/app/network:ro
       - ./provider:/app/provider:ro
-      # - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
       - ./tests:/app/tests:ro
       - ./threads:/app/threads:ro
-      # - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
       - ./package.json:/app/package.json:ro
       - ./point:/app/point:ro
-      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
-      - ./resources/demo-docker/mnemonic-website_owner.json:/data/keystore/key.json
-      - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
-      - ./example:/app/example:ro
-      - ./deployspace:/app/deployspace:ro
     environment:
       DATADIR: /data
+      MODE: e2e
       DB_ENV: pointnode2
-      DEV_ZAPP_HOST: $DEV_ZAPP_HOST
       BLOCKCHAIN_URL: $BLOCKCHAIN_URL
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
 
   website_visitor:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
@@ -146,8 +152,6 @@ services:
     depends_on:
       blockchain_node:
         condition: service_healthy
-      database:
-        condition: service_healthy
     ports:
       - '12347:9685'
       - '65502:8666'
@@ -156,10 +160,25 @@ services:
     command: 'run start:docker:e2e'
     volumes:
       - website_visitor_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
       - ./resources/demo-docker/mnemonic-website_visitor.json:/data/keystore/key.json
+      - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
       - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
+      - shared_contracts:/app/truffle/build/contracts:ro
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
+      - ./network:/app/network:ro
+      - ./provider:/app/provider:ro
+      - ./scripts:/app/scripts:ro
+      - ./tests:/app/tests:ro
+      - ./threads:/app/threads:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
     environment:
       DATADIR: /data
       DB_ENV: pointnode3
@@ -167,25 +186,6 @@ services:
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
-
-  database:
-    image: postgres:13.4
-    container_name: pointnetwork_database
-    healthcheck:
-      test: pg_isready -U $DB_USERNAME
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    environment:
-      POSTGRES_USER: $DB_USERNAME
-      POSTGRES_PASSWORD: $DB_PASSWORD
-      POSTGRES_DB: $DB_USERNAME
-      DATABASE: $DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
-    volumes:
-      - database_data:/var/lib/postgresql/data/
-      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
 
 volumes:
   blockchain_data:
@@ -193,4 +193,3 @@ volumes:
   storage_provider_data:
   website_owner_data:
   website_visitor_data:
-  database_data:

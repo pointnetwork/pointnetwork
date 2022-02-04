@@ -13,16 +13,17 @@ const WebSocketServer = require('websocket').server;
 const ZProxySocketController = require('../../api/sockets/ZProxySocketController');
 const url = require('url');
 const certificates = require('./certificates');
-const Directory = require('../../db/models/directory');
 const LocalDirectory = require('../../db/models/local_directory');
 const qs = require('query-string');
 const Console = require('../../console');
 const utils = require('#utils');
 const {HttpNotFoundError} = require("../../core/exceptions");
+const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require("../storage/index.js");
 
 class ZProxy {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'ZProxy'});
         this.config = ctx.config.client.zproxy;
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
@@ -31,9 +32,9 @@ class ZProxy {
     }
 
     async start() {
-        let server = this.httpx();
-        let ws = this.wsServer(server);
-        server.listen(this.port, () => console.log(`ZProxy server listening on localhost:${ this.port }`));
+        const server = this.httpx();
+        this.wsServer(server);
+        server.listen(this.port, () => this.log.info({host: this.host, port: this.port}, 'ZProxy server is started'));
     }
 
     wsServer(server) {
@@ -49,18 +50,16 @@ class ZProxy {
                 new ZProxySocketController(this.ctx, socket, wss, parsedUrl.host);
 
                 socket.on('close', () => {
-                    console.log('WS Client disconnected.');
+                    this.log.debug('WS Client disconnected');
                 });
 
-                socket.on('error', (e) => {
-                    console.error('Error from WebSocket: ', e);
-                    this.ctx.log.error(e);
+                socket.on('error', (error) => {
+                    this.log.error(error, 'Error from WebSocket');
                 });
             });
 
-            wss.on('error', (e) => {
-                console.error('Error from WebSocketServer: ', e);
-                this.ctx.log.error(e);
+            wss.on('error', (error) => {
+                this.log.error(error, 'Error from WebSocket');
             });
 
             server.http.on('upgrade', (request, socket, head) => {
@@ -70,10 +69,9 @@ class ZProxy {
             });
 
             return wss;
-        } catch(e) {
-            console.log('UNCAUGHT EXCEPTION IN ZPROXY:');
-            console.log(e);
-            throw e;
+        } catch (error) {
+            this.log.error(error, 'ZProxy.wsServer error');
+            throw error;
         }
     }
 
@@ -84,11 +82,17 @@ class ZProxy {
                 const certData = certificates.getCertificate(servername);
                 const ctx = tls.createSecureContext(certData);
 
-                if (!ctx) this.ctx.log.debug(`Not found SSL certificate for host: ${servername}`);
-                else this.ctx.log.debug(`SSL certificate has been found and assigned to ${servername}`);
+                if (!ctx) {
+                    this.log.debug({servername}, `Not found SSL certificate for host`);
+                } else {
+                    this.log.debug({servername}, `SSL certificate has been found and assigned`);
+                }
 
-                if (cb) cb(null, ctx);
-                else return ctx;
+                if (typeof cb !== 'function') {
+                    return ctx;
+                }
+
+                cb(null, ctx);
             },
         };
 
@@ -106,7 +110,7 @@ class ZProxy {
                 } else if (32 < byte && byte < 127) {
                     protocol = 'http';
                 } else {
-                    console.error('Access Runtime Error! Protocol: not http, not https!');
+                    this.log.error({byte}, 'Access Runtime Error! Protocol: not http, not https!');
                     protocol = 'error'; // todo: !
                 }
 
@@ -136,7 +140,7 @@ class ZProxy {
             response.end();
         };
         this.doubleServer.http = http.createServer((this.config.redirect_to_https) ? redirectToHttpsHandler : this.request.bind(this));
-        this.doubleServer.http.on('error', (err) => this.ctx.log.error(err));
+        this.doubleServer.http.on('error', (err) => this.log.error(err, 'Double Server HTTP error'));
         this.doubleServer.http.on('connect', (req, cltSocket, head) => {
             // connect to an origin server
             const srvUrl = url.parse(`https://${req.url}`);
@@ -151,7 +155,7 @@ class ZProxy {
             });
         });
         this.doubleServer.https = https.createServer(credentials, this.request.bind(this));
-        this.doubleServer.https.on('error', (err) => this.ctx.log.error(err));
+        this.doubleServer.https.on('error', (err) => this.log.error(err, 'Double Server HTTPS error'));
         return this.doubleServer;
     }
 
@@ -170,15 +174,13 @@ class ZProxy {
         };
         response.writeHead(500, headers);
         response.write(this._errorMsgHtml(err, 500)); // better code
-        this.ctx.log.error(`ZProxy 500 Error: ${err}`); // write out to ctx.log
-        console.error(err); // for stack trace
+        this.log.error({err, stack: err.stack}, `ZProxy 500 Error`);
         response.end();
     }
 
     async request(request, response) {
         let host = request.headers.host;
         if ( host != 'point' && ! _.endsWith(host, '.z')) return this.abort404(response);
-
         try {
             let rendered;
             let parsedUrl;
@@ -214,8 +216,8 @@ class ZProxy {
                     if (ext === 'zhtml') contentType = 'text/plain';
 
                     try {
-                        console.log('ZPROXY /_storage/: ASKING FOR '+hash);
-                        rendered = await this.ctx.client.storage.readFile(hashWithoutExt);
+                        this.log.debug({hash}, 'Reading file from storage');
+                        rendered = await getFile(hashWithoutExt);
                     } catch(e) {
                         return this.abortError(response, e);
                     }
@@ -251,9 +253,11 @@ class ZProxy {
                 let localPath = 'internal/explorer.z/public'; // hardcode to render explorer.z
                 rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
                 contentType = response._contentType;
-            } else if (host === process.env.DEV_ZAPP_HOST) {
-                // when DEV_ZAPP_HOST is set this site will be loaded directly from the local system - useful for Zapp developers :)
-                let localPath = `example/${process.env.DEV_ZAPP_HOST}/public`; // hardcode to render the zapp host stated in DEV_ZAPP_HOST local env
+            } else if (process.env.MODE === 'e2e') {
+                // when MODE=e2e is set this site will be loaded directly from the local system - useful for Zapp developers :)
+                // If host contains `dev`, then we slice the zapp name out of the host to serve from local example folder
+                const zappName = host.includes('dev') ? `${host.split('dev')[0]}.z` : host;
+                let localPath = `example/${zappName}/public`; // hardcode to render the zapp host
                 rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
                 contentType = response._contentType;
             }  else {
@@ -280,26 +284,22 @@ class ZProxy {
                 'Content-Type': contentType
             };
             response.writeHead(status, headers);
-            response.write(sanitized, {encoding: null}/*, 'utf-8'*/);
+            response.write(sanitized, {encoding: null});
             response.end();
 
-        } catch(e) {
+        } catch(error) {
             // throw 'ZProxy Error: '+e; // todo: remove
-            console.log('ZProxy Error:', e); // todo: this one can be important for debugging, but maybe use ctx.log not console
+            this.log.error({host, error: error.message, stack: error.stack}, 'ZProxy.request Error');
 
-            if (e instanceof HttpNotFoundError) {
-                return this.abort404(response, e.message);
+            if (error instanceof HttpNotFoundError) {
+                return this.abort404(response, error.message);
             } else {
-                return this.abortError(response, 'ZProxy: '+e);
+                return this.abortError(response, 'ZProxy: '+error);
             }
 
         }
 
         // todo:?
-        // console.log(request.headers.host);
-        // console.log(request.port);
-        // console.log(request.method);
-        // console.log(request.url);
     }
 
     _isThisDirectoryJson(text) {
@@ -337,12 +337,9 @@ class ZProxy {
                             // TODO: properly handle multiple file uploads
                             let uploadedFilePath = files[key].path;
                             let fileData = fs.readFileSync(uploadedFilePath);
-                            const cacheDir = path.join(this.ctx.datadir, this.config.cache_path);
-                            const tmpPostDataFilePath = path.join(cacheDir, utils.hashFnUtf8Hex(fileData));
-                            fs.copySync(uploadedFilePath, tmpPostDataFilePath);
-                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
+                            let uploadedId = await uploadFile(fileData);
 
-                            let response = { status: 200, data: uploaded.id};
+                            let response = { status: 200, data: uploadedId};
                             resolve(response);
                         }
                     } catch(e) {
@@ -365,7 +362,7 @@ class ZProxy {
         let host = request.headers.host;
 
         if (request.method.toUpperCase() === 'POST') {
-            let apiPromise = new Promise(async(resolve, reject) => {
+            let apiPromise = new Promise((resolve, reject) => {
                 try {
                     request.on('data', (chunk) => {
                         body += chunk;
@@ -410,7 +407,7 @@ class ZProxy {
     }
 
     processLocalRequest(host, filePath, request, response, parsedUrl) {
-        return new Promise(async(resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
                 body += chunk;
@@ -434,13 +431,13 @@ class ZProxy {
 
                     if (template_filename) {
                         // Use a LocalDirectory object since we are rendering locally
-                        let directory = new LocalDirectory();
+                        let directory = new LocalDirectory(this.ctx);
                         directory.setLocalRoot(filePath);
 
                         // const template_file_path = `${filePath}/${template_filename}`;
                         const template_file_contents = await directory.readFileByPath(`${template_filename}`, 'utf-8');
 
-                        let renderer = new Renderer(this.ctx, directory);
+                        let renderer = new Renderer(this.ctx, {localDir: directory});
                         let request_params = {};
 
                         // Add params from route matching
@@ -465,7 +462,7 @@ class ZProxy {
                         // in parsedUrl.pathname will be something like "/index.css"
 
                         // Use a LocalDirectory object since we are rendering locally
-                        let directory = new LocalDirectory();
+                        let directory = new LocalDirectory(this.ctx);
                         directory.setLocalRoot(filePath);
 
                         let rendered = await directory.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
@@ -483,7 +480,7 @@ class ZProxy {
     }
 
     processRequest(host, request, response, parsedUrl) {
-        return new Promise(async(resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
                 body += chunk;
@@ -492,16 +489,16 @@ class ZProxy {
                 try {
                     // First try route file (and check if this domain even exists)
                     let zroute_id = await this.getZRouteIdFromDomain(host);
-                    if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") return this.abort404(response, 'Domain not found (Route file not specified for this domain)'); // todo: replace with is_valid_id
+                    if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") {
+                        return this.abort404(response, 'Domain not found (Route file not specified for this domain)'); // todo: replace with is_valid_id
+                    }
 
-                    console.log('ASKING FOR zroute id for domain '+host+' - '+zroute_id);
-                    let routes = await this.ctx.client.storage.readJSON(zroute_id); // todo: check result
+                    this.log.debug({host, zroute_id}, 'Requesting ZRoute id for domain');
+                    let routes = await getJSON(zroute_id); // todo: check result
                     if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
 
                     // Download info about root dir
-                    let rootDir = await this.getRootDirectoryForDomain(host);
-                    rootDir.setCtx(this.ctx);
-                    rootDir.setHost(host);
+                    const rootDirId = await this.getRootDirectoryIdForDomain(host);
 
                     let route_params = {};
                     let template_filename = null;
@@ -515,11 +512,11 @@ class ZProxy {
                         }
                     }
                     if (template_filename) {
-                        let template_file_id = await rootDir.getFileIdByPath(template_filename);
-                        console.log('ASKING FOR getFileIdByPath '+template_filename+' - '+template_file_id);
-                        let template_file_contents = await this.ctx.client.storage.readFile(template_file_id, 'utf-8');
+                        let template_file_id = await getFileIdByPath(rootDirId, template_filename);
+                        this.log.debug({template_filename, template_file_id}, 'ZProxy.processRequest getFileIdByPath result');
+                        let template_file_contents = await getFile(template_file_id);
 
-                        let renderer = new Renderer(this.ctx, rootDir);
+                        let renderer = new Renderer(this.ctx, {rootDirId});
                         let request_params = {};
                         // GET
                         for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
@@ -543,14 +540,21 @@ class ZProxy {
                         // managed routes and not part of ZProxy managed routes. In this case, simple solution is
                         // to redirect the user back to the site home page.
                         if(request.headers.referer === undefined) {
-                            const redirect = '/'
-                            console.log('Page reload detected from unknown referer. Redirecting to '+redirect+'...');
+                            const redirect = '/';
+                            this.log.debug({redirect}, 'Page reload detected from unknown referer. Redirecting to');
                             response._contentType = 'text/html';
                             const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
-                            resolve(redirectHtml)
+                            resolve(redirectHtml);
                         }
 
-                        let rendered = await rootDir.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
+                        const renderedId = await getFileIdByPath(
+                            rootDirId,
+                            parsedUrl.pathname
+                        );
+                        const rendered = await getFile(
+                            renderedId,
+                            null
+                        );
 
                         response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
                         if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
@@ -567,7 +571,7 @@ class ZProxy {
     }
 
     keyValueAppend(host, request) {
-        return new Promise(async(resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
                 body += chunk;
@@ -600,17 +604,11 @@ class ZProxy {
                             redirect = v;
                             delete postData[k];
                         } else if (_.startsWith(k, 'storage[')) {
-                            // storage
-                            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                            utils.makeSurePathExists(cache_dir);
-                            const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
-                            fs.writeFileSync(tmpPostDataFilePath, v);
-                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                            let uploaded_id = uploaded.id;
-                            console.debug('Found storage[x], uploading file '+uploaded_id);
+                            let uploadedId = await uploadFile(v);
+                            this.log.debug({uploaded_id}, 'Found storage[x], uploading file');
 
                             delete postData[k];
-                            postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
+                            postData[k.replace('storage[', '').replace(']', '')] = uploadedId;
                         }
                     }
 
@@ -620,7 +618,7 @@ class ZProxy {
 
                     await this.ctx.keyvalue.propagate(host, newKey, data);
 
-                    console.log('Redirecting to '+redirect+'...');
+                    this.log.debug({host, redirect}, 'Redirecting after keyValueAppend');
                     const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
                     resolve(redirectHtml);
                 } catch(e) {
@@ -634,7 +632,7 @@ class ZProxy {
     }
 
     contractSend(host, request) {
-        return new Promise(async(resolve, reject) => {
+        return new Promise((resolve, reject) => {
             let body = '';
             request.on('data', (chunk) => {
                 body += chunk;
@@ -670,13 +668,7 @@ class ZProxy {
                             redirect = v;
                             delete postData[k];
                         } else if (_.startsWith(k, 'storage[')) {
-                            // storage
-                            const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-                            utils.makeSurePathExists(cache_dir);
-                            const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(v)); // todo: are you sure it's utf8?
-                            fs.writeFileSync(tmpPostDataFilePath, v);
-                            let uploaded = await this.ctx.client.storage.putFile(tmpPostDataFilePath);
-                            let uploaded_id = uploaded.id;
+                            const uploaded_id = await uploadFile(v);
 
                             delete postData[k];
                             postData[k.replace('storage[', '').replace(']', '')] = uploaded_id;
@@ -698,7 +690,8 @@ class ZProxy {
                         reject('Error: ' + e);
                     }
 
-                    console.log('Redirecting to '+redirect+'...');
+                    this.log.debug({host, redirect}, 'Redirecting after contractSend');
+
                     const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
                     resolve(redirectHtml); // todo: sanitize! don't trust it
                 } catch(e) {
@@ -711,16 +704,11 @@ class ZProxy {
         });
     }
 
-    async getRootDirectoryForDomain(host) {
+    async getRootDirectoryIdForDomain(host) {
         const key = '::rootDir';
         const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
-        if (!rootDirId) throw Error('getRootDirectoryForDomain failed: key '+key+' returned empty: '+rootDirId);
-        console.log('ASKING FOR getRootDirectoryForDomain '+host+' - '+rootDirId);
-        const dirJsonString = await this.ctx.client.storage.readFile(rootDirId, 'utf-8');
-        let directory = new Directory(); // todo: cache it, don't download/recreate each time?
-        directory.unserialize(dirJsonString);
-        directory.id = rootDirId;
-        return directory;
+        if (!rootDirId) throw Error('getRootDirectoryIdForDomain failed: key '+key+' returned empty: '+rootDirId);
+        return rootDirId;
     }
 
     async getZRouteIdFromDomain(host) {
@@ -748,9 +736,9 @@ class ZProxy {
         for(let f of files) {
             let icon = "";
             switch(f.type) {
-                case 'fileptr':
+                case FILE_TYPE.fileptr:
                     icon += "&#128196; "; break; // https://www.compart.com/en/unicode/U+1F4C4
-                case 'dirptr':
+                case FILE_TYPE.dirptr:
                     icon += "&#128193; "; break; // https://www.compart.com/en/unicode/U+1F4C1
                 default:
                     icon += "&#10067; "; // https://www.compart.com/en/unicode/U+2753 - question mark
@@ -758,7 +746,7 @@ class ZProxy {
 
             const name = f.name;
             const ext = utils.escape( name.split('.').slice(-1) );
-            let link = '/_storage/' + f.id + ((f.type == 'fileptr') ? ('.'+ext) : '');
+            let link = '/_storage/' + f.id + ((f.type === FILE_TYPE.fileptr) ? ('.'+ext) : '');
 
             html += "<tr><td>"+icon+" <a href='"+link+"' target='_blank'>";
             html += utils.escape(f.name);

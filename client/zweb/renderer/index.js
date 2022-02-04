@@ -1,10 +1,8 @@
 let TwigLib = require('twig');
-const fs = require('fs');
-const path = require('path');
 const _ = require('lodash');
 let { encryptData, decryptData } = require('../../encryptIdentityUtils');
-const utils = require('#utils');
 const ethUtil = require("ethereumjs-util");
+const {getFile, getJSON, getFileIdByPath, uploadFile} = require("../../storage/index.js");
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -12,10 +10,12 @@ class Renderer {
     #twigs = {};
     #twigs_use_counter = {};
 
-    constructor(ctx, rootDir) {
+    constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Renderer'});
         this.config = ctx.config.client.zproxy;
-        this.rootDir = rootDir;
+        this.rootDirId = rootDirId;
+        this.localDir = localDir;
     }
 
     async render(template_id, template_contents, host, request_params = {}) {
@@ -62,26 +62,21 @@ class Renderer {
             },
             storage_get_by_ikv: async function(identity, key) {
                 const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
-                return await this.renderer.ctx.client.storage.readFile(fileKey, 'utf-8');
+                return getFile(fileKey);
             },
             storage_get: async function(key) {
                 try {
-                    return await this.renderer.ctx.client.storage.readFile(key, 'utf-8');
+                    return getFile(key);
                 } catch (e) {
-                    console.error('Twig.storage_get error:', e);
+                    this.log.error({error: e.message, stack: e.stack}, 'Twig.storage_get error:');
                     return 'Invalid Content';
                 }
             },
             storage_get_parsed: async function(key) {
-                return await this.renderer.ctx.client.storage.readJSON(key, 'utf-8');
+                return await getJSON(key);
             },
             storage_put: async function(content) {
-                const cache_dir = path.join(this.renderer.ctx.datadir, this.renderer.config.cache_path);
-                utils.makeSurePathExists(cache_dir);
-                const tmpPostDataFilePath = path.join(cache_dir, utils.hashFnUtf8Hex(content));
-                fs.writeFileSync(tmpPostDataFilePath, content);
-                let uploaded = await this.renderer.ctx.client.storage.putFile(tmpPostDataFilePath);
-                return uploaded.id;
+                return uploadFile(content);
             },
             encrypt_data: async function(publicKey, data) {
                 let host = this.host;
@@ -123,11 +118,30 @@ class Renderer {
                 return await this.renderer.ctx.web3bridge.sendToContract(host.replace('.z', ''), contractName, methodName, params);
             },
             contract_events: async function(host, contractName, event, filter = {}) {
+
+                //delete keys property inserted by twig
+                if(filter.hasOwnProperty('_keys'))
+                    delete filter['_keys'];
+
                 const options = { filter, fromBlock: 1, toBlock: 'latest' };
                 const events =  await this.renderer.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
-                // for(let ev of events) console.log(ev, ev.raw);
+                let eventData = [];
+                for(let ev of events) {
+                    //console.log(ev, ev.raw);
+                    const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(ev.blockNumber);
 
-                const eventData = events.map((event) => (({ returnValues }) => ({ data: returnValues }))(event));
+                    eventData.push({
+                        data: ev.returnValues,
+                        timestamp: eventTimestamp
+                    });
+                }
+
+                //filter non-indexed properties from return value for convenience
+                if (filter != {}){
+                    for(let k in filter)
+                        eventData  = eventData.filter(e => e.data[k] == filter[k]);
+                }
+                
                 return eventData;
             },
             default_wallet_address: async function(id, passcode) {
@@ -164,7 +178,7 @@ class Renderer {
             },
             identity_check_availability: async function(identity) {
                 const owner = await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
-                console.log({identity, owner});
+                this.log.debug({identity, owner}, 'identity_check_availability');
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
@@ -237,7 +251,7 @@ class Renderer {
                 const publicKey = ethUtil.privateToPublic(privateKey);
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
-                this.renderer.ctx.log.info({
+                this.log.info({
                     identity,
                     owner,
                     publicKey: publicKey.toString('hex'),
@@ -245,11 +259,11 @@ class Renderer {
                     parts: [
                         `0x${publicKey.slice(0, 32).toString('hex')}`,
                         `0x${publicKey.slice(32).toString('hex')}`
-                    ]}, 'Registering new identity');
+                    ]}, 'Registering a new identity');
 
                 await this.renderer.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
-                this.renderer.ctx.log.info({identity, owner, publicKey}, 'Successfully registered new identity');
+                this.renderer.ctx.log.info({identity, owner, publicKey: publicKey.toString('hex')}, 'Successfully registered new identity');
 
                 return true;
             },
@@ -269,8 +283,15 @@ class Renderer {
         };
     }
 
+    // TODO: this is a temporary hack unless we are using LocalDirectory, but
+    // already got rid of Directory model
     async fetchTemplateByPath(templatePath) {
-        return await this.rootDir.readFileByPath(templatePath, 'utf-8');
+        if (this.rootDirId) {
+            const templateFileId = await getFileIdByPath(this.rootDirId, templatePath);
+            return getFile(templateFileId, "utf8");
+        } else {
+            return this.localDir.readFileByPath(templatePath, 'utf-8');
+        }
     }
 
     #getTwigForHost(host) {
@@ -532,7 +553,6 @@ class Renderer {
 
     #registerPointStorageFsLoader(Twig) {
         Twig.Templates.registerLoader('fs', async(location, params, callback, error_callback/*todo*/) => {
-            // console.log({location, params});
             // ... load the template ...
             const src = await this.fetchTemplateByPath(params.path);
             params.data = src;

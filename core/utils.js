@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const mkdirp = require('mkdirp');
 const ethUtil = require('ethereumjs-util');
+const {promises: fs} = require("fs");
 const kadUtils = require('@pointnetwork/kadence').utils;
 
 const utils = {
@@ -133,6 +134,21 @@ const utils = {
     nl2br: function(text) {
         return text.replace(/\n/g, '<br>');
     },
+
+    delay: ms => new Promise(resolve => {setTimeout(resolve, ms);}),
+
+    // TODO: replace the old func
+    makeSurePathExistsAsync: async folderPath => {
+        try {
+            await fs.stat(folderPath);
+        } catch (e) {
+            if (e.code === "ENOENT") {
+                await fs.mkdir(folderPath, {recursive: true});
+            } else {
+                throw e;
+            }
+        }
+    }
 };
 
 utils.merkle = require('./merkle-utils');

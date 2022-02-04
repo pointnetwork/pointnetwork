@@ -1,6 +1,7 @@
 class KeyValue {
     constructor(ctx, network) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'KeyValue'});
         this.network = network;
         this.data = {};
     }
@@ -10,17 +11,17 @@ class KeyValue {
     }
 
     update(identity, key, value) {
-        console.log('KeyValue locally updated:', key, '=', value);
+        this.log.debug('KeyValue locally updated:', key, '=', value);
         this.data[ identity + '/' + key ] = value;
     }
 
     async get(identity, key, recursive = true, alwaysUpdate = false) {
-        console.log('getting keyvalue', identity+'/'+key);
+        this.log.debug('getting keyvalue', identity+'/'+key);
         if (identity+'/'+key in this.data && ! alwaysUpdate) {
             return this.data[ identity+'/'+key ];
         } else if (recursive) {
             let result = await this.ask(identity, key);
-            console.log('ask for key '+key+' returned ',result);
+            this.log.debug('ask for key '+key+' returned ',result);
             if (result) {
                 this.data[identity+'/'+key] = result;
                 return result;
@@ -33,9 +34,9 @@ class KeyValue {
     }
 
     async ask(identity, key) {
-        console.log('asking keyvalue', identity+'/'+key);
+        this.log.debug('asking keyvalue', identity+'/'+key);
         const result = await this.ctx.web3bridge.getKeyValue(identity, key);
-        console.log('result:', result);
+        this.log.debug('result:', result);
         return result;
     }
 
@@ -54,7 +55,7 @@ class KeyValue {
     }
 
     async propagate(identity, key, value) {
-        console.log('propagating keyvalue', identity+'/'+key, '=', value);
+        this.log.debug('propagating keyvalue', identity+'/'+key, '=', value);
         await this.update(identity, key, value);
         return await this.ctx.web3bridge.putKeyValue(identity, key, value);
     }

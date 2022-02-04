@@ -1,0 +1,9 @@
+version: '3.9'
+services:
+  point_node:
+    logging:
+      driver: gelf
+      options:
+        gelf-address: udp://znet.pointspace.io:12201
+        tag: znet
+        labels: point_node,znet,$PUBLIC_ADDRESS

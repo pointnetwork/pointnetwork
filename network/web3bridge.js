@@ -6,6 +6,7 @@ const _ = require('lodash');
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const Web3HttpProvider = require('web3-providers-http');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
+const {getJSON} = require("../client/storage/index.js");
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {
     'ESOCKETTIMEDOUT': 1,
@@ -13,7 +14,6 @@ const retryableErrors = {
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
-        console.log({code, codeRegExp: RegExp(code), message, test: RegExp(code).test(message)});
         if (RegExp(code).test(message)) {
             return true;
         }
@@ -23,12 +23,8 @@ function isRetryableError({message}) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function createWeb3Instance({blockchainUrl, datadir}) {
-    const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
-    const mnemonic = require(path.resolve(datadir, 'keystore', 'key.json'));
-    const privateKeyProvider = new HDWalletProvider({mnemonic, providerOrUrl: httpProvider});
-    const privateKey = `0x${privateKeyProvider.hdwallet._hdkey._privateKey.toString('hex')}`;
-    const hdWalletProvider = new HDWalletProvider({privateKeys: [privateKey], providerOrUrl: blockchainUrl});
+function createWeb3Instance({blockchainUrl, privateKey}) {
+    const hdWalletProvider = new HDWalletProvider(privateKey, blockchainUrl);
     const nonceTracker = new NonceTrackerSubprovider();
 
     hdWalletProvider.engine._providers.unshift(nonceTracker);
@@ -46,13 +42,14 @@ function createWeb3Instance({blockchainUrl, datadir}) {
 class Web3Bridge {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Web3Bridge'});
         this.connectionString = this.ctx.config.network.web3;
         this.network_id = this.ctx.config.network.web3_network_id;
         this.chain_id = this.ctx.config.network.web3_chain_id;
         this.address = this.ctx.config.client.wallet.account;
         this.web3_call_retry_limit = this.ctx.config.network.web3_call_retry_limit || 4;
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
-        this.ctx.log.debug('Successfully created a web3 instance');
+        this.log.debug('Successfully created a web3 instance');
         this.ctx.web3bridge = this;
         this.start();
     }
@@ -60,7 +57,7 @@ class Web3Bridge {
     createWeb3Instance() {
         return createWeb3Instance({
             blockchainUrl: this.ctx.config.network.web3,
-            datadir: this.ctx.datadir
+            privateKey: '0x' + this.ctx.config.client.wallet.privateKey
         });
     }
 
@@ -97,7 +94,7 @@ class Web3Bridge {
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
         let abi;
         try {
-            abi = await this.ctx.client.storage.readJSON(abi_storage_id); // todo: verify result, security, what if fails
+            abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
             // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
 
             return new this.web3.eth.Contract(abi.abi, at);
@@ -116,15 +113,15 @@ class Web3Bridge {
             try {
                 account = this.web3.eth.defaultAccount;
                 gasPrice = await this.web3.eth.getGasPrice();
-                this.ctx.log.debug({gasLimit, gasPrice, account}, 'Prepared to send tx to contract method');
+                this.log.debug({gasLimit, gasPrice, account}, 'Prepared to send tx to contract method');
                 // if (!gasLimit) {
                 gasLimit = await method.estimateGas({ from: account, value: amountInWei });
-                this.ctx.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
+                this.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
                 // }
                 requestStart = Date.now();
                 return await method.send({from: account, gasPrice, gas: gasLimit, value: amountInWei});
             } catch (error) {
-                this.ctx.log.error({
+                this.log.error({
                     method: method._method.name,
                     account,
                     gasPrice,
@@ -135,7 +132,7 @@ class Web3Bridge {
                     timePassedSinceRequestStart: Date.now() - requestStart
                 }, 'Web3 Contract Send error:');
                 if (isRetryableError(error) && (this.web3_call_retry_limit - ++attempt > 0)) {
-                    this.ctx.log.debug({attempt}, 'Retrying Web3 Contract Send');
+                    this.log.debug({attempt}, 'Retrying Web3 Contract Send');
                     await sleep(attempt * 1000);
                     continue;
                 }
@@ -164,7 +161,7 @@ class Web3Bridge {
                 let result = await contract.methods[ method ]( ...params ).call();
                 return result;
             } catch (error) {
-                this.ctx.log.error({
+                this.log.error({
                     contractName,
                     method,
                     params,
@@ -173,7 +170,7 @@ class Web3Bridge {
                     stack: error.stack
                 }, 'Web3 Contract Call error:');
                 if (isRetryableError(error) && (this.web3_call_retry_limit - ++attempt > 0)) {
-                    this.ctx.log.debug({attempt}, 'Retrying Web3 Contract Call');
+                    this.log.debug({attempt}, 'Retrying Web3 Contract Call');
                     await sleep(attempt * 1000);
                     continue;
                 }
@@ -185,6 +182,10 @@ class Web3Bridge {
     async getPastEvents(target, contractName, event, options={fromBlock: 0, toBlock: 'latest'}) {
         const contract = await this.loadWebsiteContract(target, contractName);
         return await contract.getPastEvents(event, options);
+    }
+
+    async getBlockTimestamp(blockNumber){
+        return (await this.web3.eth.getBlock(blockNumber)).timestamp;
     }
 
     async subscribeContractEvent(target, contractName, event, onEvent, onStart, options={}) {
@@ -236,7 +237,7 @@ class Web3Bridge {
 
         // Now call the method
         const method = contract.methods[ methodName ](...params);
-        console.log(await this.web3send(method, options)); // todo: remove console.log
+        await this.web3send(method, options);
     }
 
     async identityByOwner(owner) {
@@ -245,7 +246,7 @@ class Web3Bridge {
             const method = identityContract.methods.getIdentityByOwner(owner);
             return await method.call();
         } catch(e) {
-            this.ctx.log.error('Error: identityByOwner', {owner});
+            this.log.error({owner}, 'Error: identityByOwner');
             throw e;
         }
     }
@@ -256,7 +257,7 @@ class Web3Bridge {
             const method = identityContract.methods.getOwnerByIdentity(identity);
             return await method.call();
         } catch(e) {
-            this.ctx.log.error('Error: identityByOwner', {identity});
+            this.log.error({identity}, 'Error: ownerByIdentity');
             throw e;
         }
     }
@@ -269,7 +270,7 @@ class Web3Bridge {
             return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
             // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
         } catch(e) {
-            this.ctx.log.error('Error: commPublicKeyByIdentity', {identity});
+            this.log.error('Error: commPublicKeyByIdentity', {identity});
         }
     }
 
@@ -294,7 +295,7 @@ class Web3Bridge {
             let result = await contract.methods.ikvGet(identity, key).call();
             return result;
         } catch(e) {
-            this.ctx.log.error('getKeyValue error', {e, identity, key});
+            this.log.error({error: e, stack: e.stack, identity, key}, 'getKeyValue error');
             throw e;
         }
     }
@@ -304,10 +305,10 @@ class Web3Bridge {
             identity = identity.replace('.z', ''); // todo: rtrim instead
             const contract = await this.loadIdentityContract();
             const method = contract.methods.ikvPut(identity, key, value);
-            this.ctx.log.debug({identity, key, value}, 'Ready to put key value');
-            await this.web3send(method); // todo: remove console.log
+            this.log.debug({identity, key, value}, 'Ready to put key value');
+            await this.web3send(method);
         } catch(e) {
-            this.ctx.log.error({e, identity, key, value}, 'putKeyValue error');
+            this.log.error({error: e, stack: e.stack, identity, key, value}, 'putKeyValue error');
             throw e;
         }
     }
@@ -325,12 +326,11 @@ class Web3Bridge {
                 `0x${commPublicKey.slice(32).toString('hex')}`);
 
             const result = await this.web3send(method);
-            this.ctx.log.info(result, 'Identity registration result'); // todo: remove console.log
+            this.log.info(result, 'Identity registration result');
 
             return result;
         } catch(e) {
-            this.ctx.log.error({e, identity, address, commPublicKey}, 'Identity registration error');
-            this.ctx.log.error(e.stack);
+            this.log.error({error: e, stack: e.stack, identity, address, commPublicKey}, 'Identity registration error');
             throw e;
         }
     }
@@ -360,8 +360,15 @@ class Web3Bridge {
             gasPrice = await this.web3.eth.getGasPrice();
             return await method.send({ from: account, gasPrice, gas: 2000000, value: 0.000001e18});
         } catch (e) {
-            console.info({ method, gasPrice, account, collateral_lock_period, cost_per_kb });
-            console.error('announceStorageProvider error:', e);
+            this.log.error({
+                method,
+                gasPrice,
+                account,
+                collateral_lock_period,
+                cost_per_kb,
+                error: e.message,
+                stack: e.stack}, 'announceStorageProvider error');
+
             throw e;
         }
     }
@@ -370,7 +377,7 @@ class Web3Bridge {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getCheapestProvider().call();
         } catch(e) {
-            this.ctx.log.error('getCheapestStorageProvider error');
+            this.log.error({error: e, stack: e.stack}, 'getCheapestStorageProvider error');
             throw e;
         }
     }
@@ -379,7 +386,7 @@ class Web3Bridge {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
         } catch(e) {
-            this.ctx.log.error('getAllStorageProviders error');
+            this.log.error({error: e, stack: e.stack}, 'getAllStorageProviders error');
             throw e;
         }
     }
@@ -388,7 +395,7 @@ class Web3Bridge {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getProvider(address).call();
         } catch(e) {
-            this.ctx.log.error('getSingleProvider error', {address});
+            this.log.error({error: e, stack: e.stack, address}, 'getSingleProvider error');
             throw e;
         }
     }

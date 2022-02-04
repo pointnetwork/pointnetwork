@@ -15,6 +15,7 @@ const level = require('level');
 class Kademlia {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Kademlia'});
         this.config = this.ctx.config.network;
     }
 
@@ -31,7 +32,7 @@ class Kademlia {
         const address = ethUtil.privateToAddress(networkPrivateKey);
         const identity = address;
 
-        this.ctx.log.info('Starting kadence DHT network...');
+        this.log.info('Starting kadence DHT network...');
 
         // Initialize public contact data
         const contact = {
@@ -50,7 +51,7 @@ class Kademlia {
             identity,
             storage,
             messenger,
-            logger: this.ctx.log,
+            logger: this.ctx.log.child({module: 'Kademlia'}),
             transport: new kadence.HTTPTransport(),
             contact
         });
@@ -166,14 +167,13 @@ class Kademlia {
 
         // Handle any fatal errors
         node.on('error', (err) => {
-            this.ctx.log.error(err.message);
-            this.ctx.log.debug(err.stack);
+            this.log.error({error: err.message, stack: err.stack}, 'Kademlia Node error');
             // todo: more than just log?
         });
 
         // Use verbose logging if enabled
         if (this.ctx.log.levelVal <= pino.levels.values.debug) {
-            node.plugin(kadence.logger(this.log));
+            node.plugin(kadence.logger(this.ctx.log));
         }
 
         const bootstrapNodes = this.config.bootstrap_nodes || (
@@ -186,8 +186,7 @@ class Kademlia {
             );
 
             if (peers.length === 0) {
-                this.ctx.log.info('No bootstrap seeds provided and no known profiles');
-                this.ctx.log.info('Running in seed mode (waiting for connections)');
+                this.log.info('No bootstrap seeds provided and no known profiles. Running in seed mode (waiting for connections).');
 
                 return node.router.events.once('add', (identity) => {
                     this.config.bootstrap_nodes = [ // todo: i think the intention here was to persist this data?
@@ -199,7 +198,7 @@ class Kademlia {
                     joinNetwork(callback);
                 });
             }
-            this.ctx.log.info(`joining network from ${peers.length} seeds`);
+            this.log.info(`Joining network from ${peers.length} seeds`);
             _async.detectSeries(peers, (url, done) => {
                 const contact = kadence.utils.parseContactURL(url);
                 node.join(contact, (err) => {
@@ -207,7 +206,7 @@ class Kademlia {
                 });
             }, (err, result) => {
                 if (!result) {
-                    this.ctx.log.error('Failed to join network, will retry in 1 minute');
+                    this.log.error('Failed to join network, will retry in 1 minute');
                     callback(new Error('Failed to join network'));
                 } else {
                     callback(null, result);
@@ -216,7 +215,7 @@ class Kademlia {
         };
 
         node.listen(parseInt(this.config.communication_port), () => {
-            this.ctx.log.info(
+            this.log.info(
                 `node listening on local port ${parseInt(this.config.communication_port)} ` +
                 `and exposed at https://${node.contact.hostname}:${node.contact.port}`
             );
@@ -227,12 +226,11 @@ class Kademlia {
                 interval: 60000
             }, done => joinNetwork(done), (err, entry) => {
                 if (err) {
-                    this.ctx.log.error(err.message);
-                    this.ctx.log.debug(err.stack);
+                    this.log.error({error: err.message, stack: err.stack}, 'Unable to join Kadence DHT network');
                     process.exit(1);
                 }
-                this.ctx.log.info(`Connected to Kadence DHT network via ${entry}`);
-                this.ctx.log.info(`Discovered ${node.router.size} peers from seed`);
+                this.log.info(`Connected to Kadence DHT network via ${entry}`);
+                this.log.info(`Discovered ${node.router.size} peers from seed`);
 
                 this.ctx.network.peersCount = node.router.size;
             });
