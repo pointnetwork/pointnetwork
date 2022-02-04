@@ -1,0 +1,36 @@
+services:
+  arweave:
+    image: lucaarweave/arweave-node:0.0.4
+    ports:
+      - "1984:1984"
+    environment:
+      AR_RUNMODE: test
+    volumes:
+      - arweave_data:/mnt/arweave-data
+
+  gateway:
+    image: lucaarweave/arweave-gateway:0.0.1
+    volumes:
+      - gateway_data:/app
+    links:
+      - gateway_db
+      - arweave
+    ports:
+      - "3000:3000"
+
+  gateway_db:
+    image: postgres:12
+    volumes:
+      - gateway_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: arweave
+      POSTGRES_PASSWORD: arweave
+      POSTGRES_DB: arweave
+    command: -p 5432
+
+volumes:
+  arweave_data:
+  gateway_data:
+  gateway_db_data:
