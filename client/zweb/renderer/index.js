@@ -302,7 +302,7 @@ class Renderer {
                 const publicKey = ethUtil.privateToPublic(privateKey);
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
-                this.log.info(
+                this.renderer.ctx.log.info(
                     {
                         identity,
                         owner,
