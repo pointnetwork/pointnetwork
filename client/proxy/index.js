@@ -692,8 +692,7 @@ class ZProxy {
             });
             request.on('end', async () => {
                 try {
-                    if (request.method.toUpperCase() !== 'POST')
-                        reject(new Error('Must be POST'));
+                    if (request.method.toUpperCase() !== 'POST') reject(new Error('Must be POST'));
 
                     let parsedUrl;
                     try {
@@ -735,10 +734,12 @@ class ZProxy {
                             params.push(postData[paramName]);
                         } else {
                             reject(
-                                new Error('Error: no ' +
-                                    utils.escape(paramName) +
-                                    ' param in the data, but exists as an argument to the contract call.'
-                                ));
+                                new Error(
+                                    'Error: no ' +
+                                        utils.escape(paramName) +
+                                        ' param in the data, but exists as an argument to the contract call.'
+                                )
+                            );
                         }
                     }
 

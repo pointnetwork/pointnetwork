@@ -1,28 +1,27 @@
-let TwigLib = require('twig');
+const TwigLib = require('twig');
 const _ = require('lodash');
-let {encryptData, decryptData} = require('../../encryptIdentityUtils');
+const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const ethUtil = require('ethereumjs-util');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage/index.js');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
 class Renderer {
-    #twigs = {};
-    #twigs_use_counter = {};
-
     constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'Renderer'});
         this.config = ctx.config.client.zproxy;
         this.rootDirId = rootDirId;
         this.localDir = localDir;
+        this.twigs = {};
+        this.twigs_use_counter = {};
     }
 
     async render(template_id, template_contents, host, request_params = {}) {
         try {
-            const Twig = this.#getTwigForHost(host);
+            const Twig = this.getTwigForHost(host);
 
-            let template = Twig.twig({
+            const template = Twig.twig({
                 id: host + '/' + template_id,
                 allowInlineIncludes: true,
                 autoescape: true,
@@ -33,25 +32,23 @@ class Renderer {
             });
 
             // Here we can specify global variables to pass into twig
-            let variables = {
-                host
-            };
+            let variables = {host};
             variables = Object.assign({}, variables, {request: request_params});
 
-            let result = await template.renderAsync(variables);
+            const result = await template.renderAsync(variables);
 
             // Okay, we shouldn't be nuking our Twig cache each time, but I figured it's better if we suffer on performance a bit,
             // than have a memory leak with thousands of Twig objects in memory waiting
-            this.#removeTwigForHost(host);
+            this.removeTwigForHost(host);
 
             return result.toString();
         } catch (e) {
-            this.#removeTwigForHost(host);
+            this.removeTwigForHost(host);
             throw e;
         }
     }
 
-    #defineAvailableFunctions() {
+    defineAvailableFunctions() {
         // These functions will be available for zApps to call in ZHTML
         return {
             keyvalue_list: async function (host, key) {
@@ -79,11 +76,11 @@ class Renderer {
                 return uploadFile(content);
             },
             encrypt_data: async function (publicKey, data) {
-                let host = this.host;
+                const host = this.host;
                 return await encryptData(host, data, publicKey); // todo: make sure you're not encrypting on something stupid like 0x0 public key
             },
             decrypt_data: async function (encryptedData, unparsedEncryptedSymmetricObjJSON) {
-                let host = this.host;
+                const host = this.host;
                 const {privateKey} = this.renderer.ctx.wallet.config;
 
                 const encryptedSymmetricObjJS = JSON.parse(unparsedEncryptedSymmetricObjJSON);
@@ -144,7 +141,7 @@ class Renderer {
                     options
                 );
                 let eventData = [];
-                for (let ev of events) {
+                for (const ev of events) {
                     //console.log(ev, ev.raw);
                     const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(
                         ev.blockNumber
@@ -157,13 +154,15 @@ class Renderer {
                 }
 
                 //filter non-indexed properties from return value for convenience
-                if (filter != {}) {
-                    for (let k in filter) eventData = eventData.filter(e => e.data[k] == filter[k]);
+                if (Object.keys(filter).length > 0) {
+                    for (const k in filter) {
+                        eventData = eventData.filter(e => e.data[k] === filter[k]);
+                    }
                 }
 
                 return eventData;
             },
-            default_wallet_address: async function (id, passcode) {
+            default_wallet_address: async function () {
                 return this.renderer.ctx.config.client.wallet.account;
             },
             is_authenticated: async function (auth) {
@@ -171,7 +170,7 @@ class Renderer {
             },
             contract_list: async function (target, contractName, method, params = []) {
                 let i = 0;
-                let results = [];
+                const results = [];
                 while (true) {
                     try {
                         results.push(
@@ -226,7 +225,7 @@ class Renderer {
                         .randomBytes(64)
                         .toString('hex');
                 return (
-                    "<input name='_csrf' value='" + this.renderer.ctx.csrf_tokens[this.host] + ' />'
+                    '<input name=\'_csrf\' value=\'' + this.renderer.ctx.csrf_tokens[this.host] + ' />'
                 );
             },
             csrf_guard: async function (submitted_token) {
@@ -246,11 +245,11 @@ class Renderer {
             // Privileged access functions (only scoped to https://point domain)
 
             get_wallet_info: async function () {
-                this.renderer.#ensurePrivilegedAccess();
+                this.renderer.ensurePrivilegedAccess();
 
                 const walletService = this.renderer.ctx.wallet;
 
-                let wallets = [];
+                const wallets = [];
                 wallets.push({
                     currency_name: 'Point',
                     currency_code: 'POINT',
@@ -284,19 +283,19 @@ class Renderer {
                 return wallets;
             },
             get_wallet_history: async function (code) {
-                this.renderer.#ensurePrivilegedAccess();
+                this.renderer.ensurePrivilegedAccess();
                 return await this.renderer.ctx.wallet.getHistoryForCurrency(code);
             },
             wallet_request_dev_sol: async function () {
-                this.renderer.#ensurePrivilegedAccess();
+                this.renderer.ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.initiateSolanaDevAirdrop();
             },
             wallet_send: async function (code, recipient, amount) {
-                this.renderer.#ensurePrivilegedAccess();
+                this.renderer.ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
             },
             identity_register: async function (identity) {
-                this.renderer.#ensurePrivilegedAccess();
+                this.renderer.ensurePrivilegedAccess();
 
                 const privateKeyHex = this.renderer.ctx.wallet.getNetworkAccountPrivateKey();
                 const privateKey = Buffer.from(privateKeyHex, 'hex');
@@ -329,12 +328,12 @@ class Renderer {
         };
     }
 
-    #ensurePrivilegedAccess() {
+    ensurePrivilegedAccess() {
         if (this.host !== 'point')
             throw new Error('This function requires privileged access, host is not supported');
     }
 
-    #defineAvailableFilters() {
+    defineAvailableFilters() {
         return {
             unjson: function (value) {
                 return JSON.parse(value);
@@ -353,13 +352,13 @@ class Renderer {
         }
     }
 
-    #getTwigForHost(host) {
+    getTwigForHost(host) {
         // Increment use counter
-        this.#twigs_use_counter[host] = this.#twigs_use_counter[host] + 1 || 0;
+        this.twigs_use_counter[host] = this.twigs_use_counter[host] + 1 || 0;
 
         // Look in cache first
-        if (this.#twigs[host]) {
-            return this.#twigs[host];
+        if (this.twigs[host]) {
+            return this.twigs[host];
         }
 
         // Spawning a new Twig object
@@ -372,33 +371,33 @@ class Renderer {
             ExtTwig.renderer = this;
             ExtTwig.renderer.host = host;
 
-            this.#connectExtendsTagToPointStorage(ExtTwig);
-            this.#connectIncludeTagToPointStorage(ExtTwig);
+            this.connectExtendsTagToPointStorage(ExtTwig);
+            this.connectIncludeTagToPointStorage(ExtTwig);
 
-            for (let [name, fn] of Object.entries(this.#defineAvailableFunctions()))
+            for (const [name, fn] of Object.entries(this.defineAvailableFunctions()))
                 ExtTwig.exports.extendFunction(name, fn.bind(ExtTwig));
 
-            for (let [name, fn] of Object.entries(this.#defineAvailableFilters()))
+            for (const [name, fn] of Object.entries(this.defineAvailableFilters()))
                 ExtTwig.exports.extendFilter(name, fn.bind(ExtTwig));
 
-            this.#registerPointStorageFsLoader(ExtTwig);
+            this.registerPointStorageFsLoader(ExtTwig);
         });
 
         // Save to our cache
-        this.#twigs[host] = Twig;
+        this.twigs[host] = Twig;
 
         return Twig;
     }
 
-    #removeTwigForHost(host) {
-        this.#twigs_use_counter[host]--;
+    removeTwigForHost(host) {
+        this.twigs_use_counter[host]--;
 
-        if (this.#twigs_use_counter[host] === 0) {
-            delete this.#twigs[host];
+        if (this.twigs_use_counter[host] === 0) {
+            delete this.twigs[host];
         }
     }
 
-    #connectExtendsTagToPointStorage(Twig) {
+    connectExtendsTagToPointStorage(Twig) {
         Twig.exports.extendTag({
             /**
              * Block logic tokens.
@@ -421,8 +420,6 @@ class Renderer {
             parse: function (token, context, chain) {
                 var template,
                     that = this;
-
-                var host = context.host;
 
                 //innerContext = Twig.ChildContext(context);
                 // Twig.lib.copy = function (src) {
@@ -454,7 +451,7 @@ class Renderer {
                     .then(function (template) {
                         return template.renderAsync(innerContext);
                     })
-                    .then(function (renderedTemplate) {
+                    .then(function () {
                         // Extend the parent context with the extended context
                         context = {
                             ...context,
@@ -471,7 +468,7 @@ class Renderer {
         });
     }
 
-    #connectIncludeTagToPointStorage(Twig) {
+    connectIncludeTagToPointStorage(Twig) {
         // Include tag - use Point Storage
         Twig.exports.extendTag({
             /**
@@ -531,9 +528,7 @@ class Renderer {
                 }
 
                 return promise
-                    .then(() => {
-                        return Twig.expression.parseAsync.call(state, token.stack, context);
-                    })
+                    .then(() => Twig.expression.parseAsync.call(state, token.stack, context))
                     .then(file => {
                         let files;
                         if (Array.isArray(file)) {
@@ -543,18 +538,19 @@ class Renderer {
                         }
                         return files;
                     })
-                    .then(files => {
-                        return files.reduce(
+                    .then(files =>
+                        files.reduce(
                             async (previousPromise, file) => {
-                                let acc = await previousPromise;
+                                const acc = await previousPromise;
 
-                                let tryToRender = async file => {
+                                const tryToRender = async file => {
                                     if (acc.render === null) {
                                         if (file instanceof Twig.Template) {
                                             const res = {
-                                                render: await file.renderAsync(innerContext, {
-                                                    isInclude: true
-                                                }),
+                                                render: await file.renderAsync(
+                                                    innerContext,
+                                                    {isInclude: true}
+                                                ),
                                                 lastError: null
                                             };
                                             return res;
@@ -564,9 +560,7 @@ class Renderer {
                                             const res = {
                                                 render: await (
                                                     await state.template.importFile(file)
-                                                ).renderAsync(innerContext, {
-                                                    isInclude: true
-                                                }),
+                                                ).renderAsync(innerContext, {isInclude: true}),
                                                 lastError: null
                                             };
                                             return res;
@@ -584,8 +578,8 @@ class Renderer {
                                 return await tryToRender(file);
                             },
                             {render: null, lastError: null}
-                        );
-                    })
+                        )
+                    )
                     .then(finalResultReduce => {
                         if (finalResultReduce.render !== null) {
                             return finalResultReduce.render;
@@ -608,10 +602,10 @@ class Renderer {
         });
     }
 
-    #registerPointStorageFsLoader(Twig) {
+    registerPointStorageFsLoader(Twig) {
         Twig.Templates.registerLoader(
             'fs',
-            async (location, params, callback, error_callback /*todo*/) => {
+            async (location, params, callback) => {
                 // ... load the template ...
                 const src = await this.fetchTemplateByPath(params.path);
                 params.data = src;

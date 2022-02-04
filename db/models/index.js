@@ -8,13 +8,12 @@ const basename = path.basename(__filename);
 // const config = require(__dirname + '/../config/config.json')[env];
 
 class SequelizeFactory {
-    ctx = null;
-    Sequelize = Sequelize; // Needed for export!
-    init = ctx => {
+    init(ctx) {
         this.ctx = ctx;
         this.config = this.ctx.config.db;
         this.log = this.ctx.log.child({module: 'Sequelize'});
 
+        this.Sequelize = Sequelize; // Needed for export!
         this.sequelize = new Sequelize(
             this.config.database,
             this.config.username,
@@ -24,9 +23,7 @@ class SequelizeFactory {
                 define: this.config.define,
                 storage: this.config.storage,
                 transactionType: this.config.transactionType,
-                retry: {
-                    max: this.config.retry.max
-                },
+                retry: {max: this.config.retry.max},
                 logQueryParameters: true,
                 logging: this.log.debug.bind(this.log),
                 ctx
@@ -50,7 +47,7 @@ class SequelizeFactory {
         //         this.sequelize.models[modelName].associate(this.sequelize.models);
         //     }
         // });
-    };
+    }
 }
 
 module.exports = new SequelizeFactory();

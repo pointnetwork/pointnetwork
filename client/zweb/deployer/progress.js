@@ -24,7 +24,7 @@ class DeployerProgress {
     _updateProgress(_filename, _progress, _status) {
         const inputs = this._formatInputs(_filename, _progress, _status);
         const existingRow = this._fetchExistingRow(inputs.filename);
-        if(existingRow) {
+        if (existingRow) {
             this._updateExistingRow(existingRow, inputs);
         } else {
             this._createNewRow(inputs);
