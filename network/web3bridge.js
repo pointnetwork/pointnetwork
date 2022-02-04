@@ -3,14 +3,12 @@ const Web3 = require('web3');
 const fs = require('fs');
 const utils = require('#utils');
 const _ = require('lodash');
-const HDWalletProvider = require("@truffle/hdwallet-provider");
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 const Web3HttpProvider = require('web3-providers-http');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
-const {getJSON} = require("../client/storage/index.js");
+const {getJSON} = require('../client/storage/index.js');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
-const retryableErrors = {
-    'ESOCKETTIMEDOUT': 1,
-};
+const retryableErrors = {ESOCKETTIMEDOUT: 1};
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -21,7 +19,7 @@ function isRetryableError({message}) {
     return false;
 }
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function createWeb3Instance({blockchainUrl, privateKey}) {
     const hdWalletProvider = new HDWalletProvider(privateKey, blockchainUrl);
@@ -61,11 +59,13 @@ class Web3Bridge {
         });
     }
 
-    async start() {
-    }
+    async start() {}
 
     async loadPointContract(contractName, at) {
-        const abiFileName = path.join(this.ctx.basepath, 'truffle/build/contracts/'+contractName+'.json');
+        const abiFileName = path.join(
+            this.ctx.basepath,
+            'truffle/build/contracts/' + contractName + '.json'
+        );
         const abiFile = JSON.parse(fs.readFileSync(abiFileName));
         const abi = abiFile.abi;
         // const bytecode = abiFile.bytecode;
@@ -90,22 +90,34 @@ class Web3Bridge {
             return this.loadIdentityContract();
         }
 
-        const at = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/address/'+contractName);
-        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(target, 'zweb/contracts/abi/'+contractName);
+        const at = await this.ctx.web3bridge.getKeyValue(
+            target,
+            'zweb/contracts/address/' + contractName
+        );
+        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
+            target,
+            'zweb/contracts/abi/' + contractName
+        );
         let abi;
         try {
             abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
             // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
 
             return new this.web3.eth.Contract(abi.abi, at);
-        } catch(e) {
-            throw Error('Could not read abi of the contract '+utils.escape(contractName)+'. Reason: '+e+'. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?');
+        } catch (e) {
+            throw Error(
+                'Could not read abi of the contract ' +
+                    utils.escape(contractName) +
+                    '. Reason: ' +
+                    e +
+                    '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'
+            );
         }
     }
 
-    async web3send(method, optons={}) {
+    async web3send(method, optons = {}) {
         let account, gasPrice;
-        let { gasLimit, amountInWei } = optons;
+        let {gasLimit, amountInWei} = optons;
         let attempt = 0;
         let requestStart;
 
@@ -113,25 +125,36 @@ class Web3Bridge {
             try {
                 account = this.web3.eth.defaultAccount;
                 gasPrice = await this.web3.eth.getGasPrice();
-                this.log.debug({gasLimit, gasPrice, account}, 'Prepared to send tx to contract method');
+                this.log.debug(
+                    {gasLimit, gasPrice, account},
+                    'Prepared to send tx to contract method'
+                );
                 // if (!gasLimit) {
-                gasLimit = await method.estimateGas({ from: account, value: amountInWei });
+                gasLimit = await method.estimateGas({from: account, value: amountInWei});
                 this.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
                 // }
                 requestStart = Date.now();
-                return await method.send({from: account, gasPrice, gas: gasLimit, value: amountInWei});
-            } catch (error) {
-                this.log.error({
-                    method: method._method.name,
-                    account,
+                return await method.send({
+                    from: account,
                     gasPrice,
-                    gasLimit,
-                    optons,
-                    error,
-                    stack: error.stack,
-                    timePassedSinceRequestStart: Date.now() - requestStart
-                }, 'Web3 Contract Send error:');
-                if (isRetryableError(error) && (this.web3_call_retry_limit - ++attempt > 0)) {
+                    gas: gasLimit,
+                    value: amountInWei
+                });
+            } catch (error) {
+                this.log.error(
+                    {
+                        method: method._method.name,
+                        account,
+                        gasPrice,
+                        gasLimit,
+                        optons,
+                        error,
+                        stack: error.stack,
+                        timePassedSinceRequestStart: Date.now() - requestStart
+                    },
+                    'Web3 Contract Send error:'
+                );
+                if (isRetryableError(error) && this.web3_call_retry_limit - ++attempt > 0) {
                     this.log.debug({attempt}, 'Retrying Web3 Contract Send');
                     await sleep(attempt * 1000);
                     continue;
@@ -151,25 +174,31 @@ class Web3Bridge {
          */
     }
 
-    async callContract(target, contractName, method, params) { // todo: multiple arguments, but check existing usage // huh?
+    async callContract(target, contractName, method, params) {
+        // todo: multiple arguments, but check existing usage // huh?
         let attempt = 0;
         while (true) {
             try {
                 const contract = await this.loadWebsiteContract(target, contractName);
-                if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
-                if (! contract.methods[ method ]) throw Error('Method '+method+' does not exist on contract '+contractName); // todo: sanitize
-                let result = await contract.methods[ method ]( ...params ).call();
+                if (!Array.isArray(params))
+                    throw Error('Params sent to callContract is not an array');
+                if (!contract.methods[method])
+                    throw Error('Method ' + method + ' does not exist on contract ' + contractName); // todo: sanitize
+                const result = await contract.methods[method](...params).call();
                 return result;
             } catch (error) {
-                this.log.error({
-                    contractName,
-                    method,
-                    params,
-                    target,
-                    error,
-                    stack: error.stack
-                }, 'Web3 Contract Call error:');
-                if (isRetryableError(error) && (this.web3_call_retry_limit - ++attempt > 0)) {
+                this.log.error(
+                    {
+                        contractName,
+                        method,
+                        params,
+                        target,
+                        error,
+                        stack: error.stack
+                    },
+                    'Web3 Contract Call error:'
+                );
+                if (isRetryableError(error) && this.web3_call_retry_limit - ++attempt > 0) {
                     this.log.debug({attempt}, 'Retrying Web3 Contract Call');
                     await sleep(attempt * 1000);
                     continue;
@@ -179,55 +208,63 @@ class Web3Bridge {
         }
     }
 
-    async getPastEvents(target, contractName, event, options={fromBlock: 0, toBlock: 'latest'}) {
+    async getPastEvents(target, contractName, event, options = {fromBlock: 0, toBlock: 'latest'}) {
         const contract = await this.loadWebsiteContract(target, contractName);
         return await contract.getPastEvents(event, options);
     }
 
-    async getBlockTimestamp(blockNumber){
+    async getBlockTimestamp(blockNumber) {
         return (await this.web3.eth.getBlock(blockNumber)).timestamp;
     }
 
-    async subscribeContractEvent(target, contractName, event, onEvent, onStart, options={}) {
+    async subscribeContractEvent(target, contractName, event, onEvent, onStart, options = {}) {
         const contract = await this.loadWebsiteContract(target, contractName);
 
         let subscriptionId;
         const subscription = await contract.events[event](options)
-            .on('data', data => onEvent({ subscriptionId, data }))
-            .on('connected', id => onStart({
-                subscriptionId: subscriptionId = id,
-                data: {
-                    message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`
-                }
-            }));
+            .on('data', data => onEvent({subscriptionId, data}))
+            .on('connected', id =>
+                onStart({
+                    subscriptionId: (subscriptionId = id),
+                    data: {message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`}
+                })
+            );
 
         return subscription;
     }
 
     async removeSubscriptionById(subscriptionId, onRemove) {
         await this.web3.eth.removeSubscriptionById(subscriptionId);
-        return onRemove({ subscriptionId, data: {
-            message: `Unsubscribed from subscription id: ${subscriptionId}`
-        }});
+        return onRemove({
+            subscriptionId,
+            data: {message: `Unsubscribed from subscription id: ${subscriptionId}`}
+        });
     }
 
-    async sendToContract(target, contractName, methodName, params, options={}) { // todo: multiple arguments, but check existing usage // huh?
+    async sendToContract(target, contractName, methodName, params, options = {}) {
+        // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
 
-        if (! Array.isArray(params)) throw Error('Params sent to callContract is not an array');
+        if (!Array.isArray(params)) throw Error('Params sent to callContract is not an array');
 
         // storage id: convert string -> bytes32
-        for(let k in contract.methods) {
-            if (k.split('(')[0] === methodName && k.includes('(')) { // example of k: send(address,bytes32,string)
+        for (const k in contract.methods) {
+            if (k.split('(')[0] === methodName && k.includes('(')) {
+                // example of k: send(address,bytes32,string)
                 let paramIdx = 0;
-                let kArgTypes = k.split('(')[1].replace(')','').split(',');
-                for(let kArgType of kArgTypes) {
+                const kArgTypes = k.split('(')[1].replace(')', '').split(',');
+                for (const kArgType of kArgTypes) {
                     if (kArgType === 'bytes32') {
                         // Potential candidate for conversion
-                        let param_value = params[paramIdx];
-                        if (typeof param_value === "string" && param_value.replace('0x','').length === 32*2) { // 256 bit
+                        const param_value = params[paramIdx];
+                        if (
+                            typeof param_value === 'string' &&
+                            param_value.replace('0x', '').length === 32 * 2
+                        ) {
+                            // 256 bit
                             // Turns out, you only need to add 0x
-                            if (!_.startsWith(param_value, '0x')) params[paramIdx] = '0x'+param_value;
+                            if (!_.startsWith(param_value, '0x'))
+                                params[paramIdx] = '0x' + param_value;
                         }
                     }
                     paramIdx++;
@@ -236,7 +273,7 @@ class Web3Bridge {
         }
 
         // Now call the method
-        const method = contract.methods[ methodName ](...params);
+        const method = contract.methods[methodName](...params);
         await this.web3send(method, options);
     }
 
@@ -245,7 +282,7 @@ class Web3Bridge {
             const identityContract = await this.loadIdentityContract();
             const method = identityContract.methods.getIdentityByOwner(owner);
             return await method.call();
-        } catch(e) {
+        } catch (e) {
             this.log.error({owner}, 'Error: identityByOwner');
             throw e;
         }
@@ -256,7 +293,7 @@ class Web3Bridge {
             const identityContract = await this.loadIdentityContract();
             const method = identityContract.methods.getOwnerByIdentity(identity);
             return await method.call();
-        } catch(e) {
+        } catch (e) {
             this.log.error({identity}, 'Error: ownerByIdentity');
             throw e;
         }
@@ -269,7 +306,7 @@ class Web3Bridge {
             const parts = await method.call();
             return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
             // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
-        } catch(e) {
+        } catch (e) {
             this.log.error('Error: commPublicKeyByIdentity', {identity});
         }
     }
@@ -288,13 +325,15 @@ class Web3Bridge {
 
     async getKeyValue(identity, key) {
         try {
-            if (typeof identity !== 'string') throw Error('web3bridge.getKeyValue(): identity must be a string');
-            if (typeof key !== 'string') throw Error('web3bridge.getKeyValue(): key must be a string');
+            if (typeof identity !== 'string')
+                throw Error('web3bridge.getKeyValue(): identity must be a string');
+            if (typeof key !== 'string')
+                throw Error('web3bridge.getKeyValue(): key must be a string');
             identity = identity.replace('.z', ''); // todo: rtrim instead
             const contract = await this.loadIdentityContract();
-            let result = await contract.methods.ikvGet(identity, key).call();
+            const result = await contract.methods.ikvGet(identity, key).call();
             return result;
-        } catch(e) {
+        } catch (e) {
             this.log.error({error: e, stack: e.stack, identity, key}, 'getKeyValue error');
             throw e;
         }
@@ -307,7 +346,7 @@ class Web3Bridge {
             const method = contract.methods.ikvPut(identity, key, value);
             this.log.debug({identity, key, value}, 'Ready to put key value');
             await this.web3send(method);
-        } catch(e) {
+        } catch (e) {
             this.log.error({error: e, stack: e.stack, identity, key, value}, 'putKeyValue error');
             throw e;
         }
@@ -315,22 +354,30 @@ class Web3Bridge {
 
     async registerIdentity(identity, address, commPublicKey) {
         try {
-            if (! Buffer.isBuffer(commPublicKey)) throw Error('registerIdentity: commPublicKey must be a buffer');
-            if (Buffer.byteLength(commPublicKey) !== 64) throw Error('registerIdentity: commPublicKey must be 64 bytes');
+            if (!Buffer.isBuffer(commPublicKey))
+                throw Error('registerIdentity: commPublicKey must be a buffer');
+            if (Buffer.byteLength(commPublicKey) !== 64)
+                throw Error('registerIdentity: commPublicKey must be 64 bytes');
             // todo: validate identity and address
 
             identity = identity.replace('.z', ''); // todo: rtrim instead
             const contract = await this.loadIdentityContract();
-            const method = contract.methods.register(identity, address,
+            const method = contract.methods.register(
+                identity,
+                address,
                 `0x${commPublicKey.slice(0, 32).toString('hex')}`,
-                `0x${commPublicKey.slice(32).toString('hex')}`);
+                `0x${commPublicKey.slice(32).toString('hex')}`
+            );
 
             const result = await this.web3send(method);
             this.log.info(result, 'Identity registration result');
 
             return result;
-        } catch(e) {
-            this.log.error({error: e, stack: e.stack, identity, address, commPublicKey}, 'Identity registration error');
+        } catch (e) {
+            this.log.error(
+                {error: e, stack: e.stack, identity, address, commPublicKey},
+                'Identity registration error'
+            );
             throw e;
         }
     }
@@ -338,7 +385,11 @@ class Web3Bridge {
     async isCurrentIdentityRegistered() {
         const address = this.ctx.wallet.getNetworkAccount();
         const identity = await this.identityByOwner(address);
-        if (!identity || identity.replace('0x','').toLowerCase() === address.replace('0x','').toLowerCase()) return false;
+        if (
+            !identity ||
+            identity.replace('0x', '').toLowerCase() === address.replace('0x', '').toLowerCase()
+        )
+            return false;
         return true;
     }
 
@@ -358,25 +409,30 @@ class Web3Bridge {
             method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
             account = this.ctx.config.hardcode_default_provider;
             gasPrice = await this.web3.eth.getGasPrice();
-            return await method.send({ from: account, gasPrice, gas: 2000000, value: 0.000001e18});
+            return await method.send({from: account, gasPrice, gas: 2000000, value: 0.000001e18});
         } catch (e) {
-            this.log.error({
-                method,
-                gasPrice,
-                account,
-                collateral_lock_period,
-                cost_per_kb,
-                error: e.message,
-                stack: e.stack}, 'announceStorageProvider error');
+            this.log.error(
+                {
+                    method,
+                    gasPrice,
+                    account,
+                    collateral_lock_period,
+                    cost_per_kb,
+                    error: e.message,
+                    stack: e.stack
+                },
+                'announceStorageProvider error'
+            );
 
             throw e;
         }
     }
-    async getCheapestStorageProvider() { //todo: unused?
+    async getCheapestStorageProvider() {
+        //todo: unused?
         try {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getCheapestProvider().call();
-        } catch(e) {
+        } catch (e) {
             this.log.error({error: e, stack: e.stack}, 'getCheapestStorageProvider error');
             throw e;
         }
@@ -385,7 +441,7 @@ class Web3Bridge {
         try {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
-        } catch(e) {
+        } catch (e) {
             this.log.error({error: e, stack: e.stack}, 'getAllStorageProviders error');
             throw e;
         }
@@ -394,7 +450,7 @@ class Web3Bridge {
         try {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getProvider(address).call();
-        } catch(e) {
+        } catch (e) {
             this.log.error({error: e, stack: e.stack, address}, 'getSingleProvider error');
             throw e;
         }

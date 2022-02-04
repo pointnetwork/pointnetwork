@@ -6,7 +6,7 @@ const origMerkle = require('merkle-lib');
 
 const merkleUtils = {
     // returns the merkle tree
-    merkle: function(values, digestFn) {
+    merkle: function (values, digestFn) {
         if (!Array.isArray(values)) throw TypeError('Expected values Array');
         if (typeof digestFn !== 'function') throw TypeError('Expected digest Function');
 
@@ -33,7 +33,9 @@ const merkleUtils = {
         for (let i = 0; i < length; i += 2) {
             const left = values[i];
             const right = i + 1 === length ? left : values[i + 1];
-            const data = (initial_iteration) ? Buffer.concat([Buffer.from([0x00]), left, right]) : Buffer.concat([left, right]);
+            const data = initial_iteration
+                ? Buffer.concat([Buffer.from([0x00]), left, right])
+                : Buffer.concat([left, right]);
 
             results.push(digestFn(data));
         }

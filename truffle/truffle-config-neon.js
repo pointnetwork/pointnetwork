@@ -22,7 +22,7 @@ module.exports = {
             from: address,
             network_id: '*',
             gas: 3000000,
-            gasPrice: 1000000000,
+            gasPrice: 1000000000
         }
     },
 
@@ -40,8 +40,8 @@ module.exports = {
                 optimizer: {
                     enabled: true,
                     runs: 200
-                },
-            },
-        },
-    },
+                }
+            }
+        }
+    }
 };

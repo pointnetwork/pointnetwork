@@ -6,7 +6,13 @@ const ethereumjs = require('ethereumjs-util');
 const solana = require('@solana/web3.js');
 
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
-async function getTransactionsByAccount(eth, myaccount, startBlockNumber, endBlockNumber, log = console) {
+async function getTransactionsByAccount(
+    eth,
+    myaccount,
+    startBlockNumber,
+    endBlockNumber,
+    log = console
+) {
     if (endBlockNumber == null) {
         endBlockNumber = await eth.getBlockNumber();
         log.debug({endBlockNumber}, 'Using endBlockNumber');
@@ -15,7 +21,10 @@ async function getTransactionsByAccount(eth, myaccount, startBlockNumber, endBlo
         startBlockNumber = Math.max(0, endBlockNumber - 1000000);
         log.debug({startBlockNumber}, 'Using startBlockNumber');
     }
-    log.debug({myaccount, startBlockNumber, endBlockNumber, ethblocknumber: eth.blockNumber}, 'Searching for transactions');
+    log.debug(
+        {myaccount, startBlockNumber, endBlockNumber, ethblocknumber: eth.blockNumber},
+        'Searching for transactions'
+    );
 
     const txs = [];
 
@@ -25,7 +34,7 @@ async function getTransactionsByAccount(eth, myaccount, startBlockNumber, endBlo
         }
         var block = eth.getBlock(i, true);
         if (block != null && block.transactions != null) {
-            block.transactions.forEach( function(e) {
+            block.transactions.forEach(function (e) {
                 if (myaccount == '*' || myaccount == e.from || myaccount == e.to) {
                     txs.push(e);
                     // log.debug('   tx hash         : ' + e.hash + '\n'
@@ -51,7 +60,9 @@ async function getTransactionsByAccount(eth, myaccount, startBlockNumber, endBlo
 }
 
 class Wallet {
-    static get TRANSACTION_EVENT() { return 'TRANSACTION_EVENT'; }
+    static get TRANSACTION_EVENT() {
+        return 'TRANSACTION_EVENT';
+    }
 
     constructor(ctx) {
         this.ctx = ctx;
@@ -66,14 +77,26 @@ class Wallet {
 
     async start() {
         this.keystore_path = path.join(this.ctx.datadir, this.config.keystore_path);
-        if (! fs.existsSync(this.keystore_path)) {
+        if (!fs.existsSync(this.keystore_path)) {
             mkdirp.sync(this.keystore_path);
         }
 
-        this.solanaMainConnection = new solana.Connection(this.ctx.config.client.storage.solana_main_endpoint, 'confirmed');
-        this.solanaDevConnection = new solana.Connection(this.ctx.config.client.storage.solana_dev_endpoint, 'confirmed');
-        this.solanaDevStandardConnection = new solana.Connection(this.ctx.config.client.storage.solana_dev_standard_endpoint, 'confirmed');
-        this.solanaTestConnection = new solana.Connection(this.ctx.config.client.storage.solana_test_endpoint, 'confirmed');
+        this.solanaMainConnection = new solana.Connection(
+            this.ctx.config.client.storage.solana_main_endpoint,
+            'confirmed'
+        );
+        this.solanaDevConnection = new solana.Connection(
+            this.ctx.config.client.storage.solana_dev_endpoint,
+            'confirmed'
+        );
+        this.solanaDevStandardConnection = new solana.Connection(
+            this.ctx.config.client.storage.solana_dev_standard_endpoint,
+            'confirmed'
+        );
+        this.solanaTestConnection = new solana.Connection(
+            this.ctx.config.client.storage.solana_test_endpoint,
+            'confirmed'
+        );
 
         this.initSolanaWallet();
 
@@ -81,7 +104,7 @@ class Wallet {
     }
 
     initSolanaWallet() {
-        const { Keypair } = require('@solana/web3.js');
+        const {Keypair} = require('@solana/web3.js');
         const bip39 = require('bip39');
         const bip32 = require('bip32');
 
@@ -115,8 +138,18 @@ class Wallet {
     }
 
     async sendTransaction(from, to, value) {
-        let receipt = await this.web3.eth.sendTransaction({from: from, to: to, value: value, gas: 21000});
-        this.transactionEventEmitter.emit(Wallet.TRANSACTION_EVENT, {transactionHash: receipt.transactionHash, from, to, value});
+        let receipt = await this.web3.eth.sendTransaction({
+            from: from,
+            to: to,
+            value: value,
+            gas: 21000
+        });
+        this.transactionEventEmitter.emit(Wallet.TRANSACTION_EVENT, {
+            transactionHash: receipt.transactionHash,
+            from,
+            to,
+            value
+        });
         return receipt;
     }
 
@@ -140,7 +173,7 @@ class Wallet {
 
     loadWalletFromKeystore(walletId, passcode) {
         // todo what if it does not exist?
-        if(fs.existsSync(`${this.keystore_path}/${walletId}`)) {
+        if (fs.existsSync(`${this.keystore_path}/${walletId}`)) {
             let keystoreBuffer = fs.readFileSync(`${this.keystore_path}/${walletId}`);
             let keystore = JSON.parse(keystoreBuffer);
 
@@ -164,9 +197,15 @@ class Wallet {
     async getHistoryForCurrency(code) {
         switch (code) {
             case 'NEON':
-                return getTransactionsByAccount(this.web3.eth, this.getNetworkAccount(), null, null, this.log);
+                return getTransactionsByAccount(
+                    this.web3.eth,
+                    this.getNetworkAccount(),
+                    null,
+                    null,
+                    this.log
+                );
             default:
-                throw Error('Unsupported currency: '+code);
+                throw Error('Unsupported currency: ' + code);
         }
     }
 
@@ -207,7 +246,7 @@ class Wallet {
 
     async #getSolanaBalanceInSOLWithConnection(connection) {
         const solanaAddress = this.getSolanaPublicKey();
-        const result = await connection.getBalance(solanaAddress) / 1e9;
+        const result = (await connection.getBalance(solanaAddress)) / 1e9;
         return result;
     }
     async getSolanaMainnetBalanceInSOL() {
@@ -219,7 +258,10 @@ class Wallet {
 
     async initiateSolanaDevAirdrop() {
         const solanaAddress = this.getSolanaPublicKey();
-        const signature = await this.solanaDevStandardConnection.requestAirdrop(solanaAddress, 1 * solana.LAMPORTS_PER_SOL);
+        const signature = await this.solanaDevStandardConnection.requestAirdrop(
+            solanaAddress,
+            1 * solana.LAMPORTS_PER_SOL
+        );
         await this.solanaDevStandardConnection.confirmTransaction(signature);
     }
 
@@ -231,22 +273,35 @@ class Wallet {
                     solana.SystemProgram.transfer({
                         fromPubkey: this.getSolanaPublicKey(),
                         toPubkey: new solana.PublicKey(this.getSolanaAccount()),
-                        lamports: amount / solana.LAMPORTS_PER_SOL,
-                    }),
+                        lamports: amount / solana.LAMPORTS_PER_SOL
+                    })
                 );
 
                 // Sign transaction, broadcast, and confirm
                 await solana.sendAndConfirmTransaction(
-                    (code === 'SOL') ? this.solanaMainConnection : this.solanaDevConnection,
+                    code === 'SOL' ? this.solanaMainConnection : this.solanaDevConnection,
                     transaction,
-                    [ this.solanaKeyPair ],
+                    [this.solanaKeyPair]
                 );
 
                 break;
             }
             case 'NEON':
-                this.log.debug({from: this.getNetworkAccount(), to: recipient, value: amount * 1e18, gas: 21000}, 'Sending Neon tx');
-                await this.ctx.web3.eth.sendTransaction({from: this.getNetworkAccount(), to: recipient, value: amount * 1e18, gas: 21000});
+                this.log.debug(
+                    {
+                        from: this.getNetworkAccount(),
+                        to: recipient,
+                        value: amount * 1e18,
+                        gas: 21000
+                    },
+                    'Sending Neon tx'
+                );
+                await this.ctx.web3.eth.sendTransaction({
+                    from: this.getNetworkAccount(),
+                    to: recipient,
+                    value: amount * 1e18,
+                    gas: 21000
+                });
                 break;
             default:
                 throw Error('This currency is not supported yet');
@@ -255,7 +310,12 @@ class Wallet {
 
     // todo: remove
     _fundWallet(_address) {
-        this.web3.eth.sendTransaction({from: this.network_account, to: _address, value: 1e18, gas: 21000});
+        this.web3.eth.sendTransaction({
+            from: this.network_account,
+            to: _address,
+            value: 1e18,
+            gas: 21000
+        });
     }
 }
 

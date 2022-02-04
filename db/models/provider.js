@@ -7,14 +7,13 @@ class Provider extends Model {
     }
 }
 
-Provider.init({
-    id: { type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true },
-    connection: { type: Sequelize.DataTypes.STRING },
-    address: { type: Sequelize.DataTypes.STRING },
-}, {
-    indexes: [
-        { fields: ['address'] }
-    ]
-});
+Provider.init(
+    {
+        id: {type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true},
+        connection: {type: Sequelize.DataTypes.STRING},
+        address: {type: Sequelize.DataTypes.STRING}
+    },
+    {indexes: [{fields: ['address']}]}
+);
 
 module.exports = Provider;

@@ -18,12 +18,12 @@ class Console {
         });
 
         this._console.prompt();
-        this._console.on('line', async (line) => {
-            let [cmd, ...args] = line.trim().split(' ');
+        this._console.on('line', async line => {
+            const [cmd, ...args] = line.trim().split(' ');
 
-            if (cmd === "exit") this._console.close();
+            if (cmd === 'exit') this._console.close();
 
-            const method = "cmd_"+cmd.replace('.', '_');
+            const method = 'cmd_' + cmd.replace('.', '_');
 
             if (this[method] && typeof this[method] === 'function') {
                 await this[method](...args);
@@ -45,7 +45,7 @@ class Console {
     }
 
     async cmd_api_get(_host, cmd, ...args) {
-        _host = (_host === 'localhost') ? this.host : _host;
+        _host = _host === 'localhost' ? this.host : _host;
         try {
             const params = this.buildURLParams(args);
             const url = this.buildApiBaseUrl() + cmd + '?' + params;
@@ -62,7 +62,7 @@ class Console {
     }
 
     async cmd_api_post(_host, cmd, body) {
-        _host = (_host === 'localhost') ? this.host : _host;
+        _host = _host === 'localhost' ? this.host : _host;
         const api_base_url = this.buildApiBaseUrl();
         try {
             const url = api_base_url + cmd;
@@ -87,11 +87,11 @@ class Console {
     buildURLParams(args) {
         // Note: args must be "="-delimited strings, or just strings, e.g. ["a=b", "c=d"] or ["b", "d"]
         // Don't send an array or object! Use function arguments
-        let params = "";
+        let params = '';
 
-        for(let p of args) {
-            if ((typeof p) !== 'string') {
-                throw Error('Invalid type of parameter sent to cmd_api: '+typeof p);
+        for (const p of args) {
+            if (typeof p !== 'string') {
+                throw Error('Invalid type of parameter sent to cmd_api: ' + typeof p);
             }
             if (p.split('=').length === 2) {
                 params += p;

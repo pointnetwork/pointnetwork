@@ -11,12 +11,16 @@ const BSON = require('./good-bson');
 const undef = void 0;
 const toString = Object.prototype.toString;
 const hasOwnProperty = Object.prototype.hasOwnProperty;
-const isArray = Array.isArray || function (obj) {
-    return toString.call(obj) === '[object Array]';
-};
-const isInteger = Number.isSafeInteger || function (num) {
-    return num === Math.floor(num);
-};
+const isArray =
+    Array.isArray ||
+    function (obj) {
+        return toString.call(obj) === '[object Array]';
+    };
+const isInteger =
+    Number.isSafeInteger ||
+    function (num) {
+        return num === Math.floor(num);
+    };
 
 /**
  * JsonRpc Class
@@ -25,10 +29,10 @@ const isInteger = Number.isSafeInteger || function (num) {
  * @api public
  */
 class JsonRpc {
-    constructor () {
+    constructor() {
         this.jsonrpc = '2.0';
     }
-    serialize () {
+    serialize() {
         return BSON.serialize(this);
     }
 }
@@ -37,7 +41,7 @@ JsonRpc.VERSION = '2.0';
 JsonRpc.prototype.toString = JsonRpc.prototype.serialize;
 
 class RequestObject extends JsonRpc {
-    constructor (id, method, params) {
+    constructor(id, method, params) {
         super();
 
         this.id = id;
@@ -48,7 +52,7 @@ class RequestObject extends JsonRpc {
 RequestObject.prototype.name = 'request';
 
 class NotificationObject extends JsonRpc {
-    constructor (method, params) {
+    constructor(method, params) {
         super();
 
         this.method = method;
@@ -58,7 +62,7 @@ class NotificationObject extends JsonRpc {
 NotificationObject.prototype.name = 'notification';
 
 class SuccessObject extends JsonRpc {
-    constructor (id, result) {
+    constructor(id, result) {
         super();
 
         this.id = id;
@@ -68,7 +72,7 @@ class SuccessObject extends JsonRpc {
 SuccessObject.prototype.name = 'success';
 
 class ErrorObject extends JsonRpc {
-    constructor (id, error) {
+    constructor(id, error) {
         super();
         this.id = id;
         this.error = error;
@@ -85,7 +89,7 @@ ErrorObject.prototype.name = 'error';
  * @api public
  */
 
-function JsonRpcParsed (payload, type) {
+function JsonRpcParsed(payload, type) {
     this.payload = payload;
     this.type = type || payload.name;
 }
@@ -99,7 +103,7 @@ function JsonRpcParsed (payload, type) {
  * @api public
  */
 class JsonRpcError extends Error {
-    constructor (message, code, data) {
+    constructor(message, code, data) {
         super();
 
         this.message = message === undef ? '' : String(message);
@@ -144,7 +148,7 @@ const jsonrpc = {
  * @api public
  */
 jsonrpc.request = function (id, method, params) {
-    let object = new RequestObject(id, method, params);
+    const object = new RequestObject(id, method, params);
     validateMessage(object, true);
     return object;
 };
@@ -158,7 +162,7 @@ jsonrpc.request = function (id, method, params) {
  * @api public
  */
 jsonrpc.notification = function (method, params) {
-    let object = new NotificationObject(method, params);
+    const object = new NotificationObject(method, params);
     validateMessage(object, true);
     return object;
 };
@@ -172,7 +176,7 @@ jsonrpc.notification = function (method, params) {
  * @api public
  */
 jsonrpc.success = function (id, result) {
-    let object = new SuccessObject(id, result);
+    const object = new SuccessObject(id, result);
     validateMessage(object, true);
     return object;
 };
@@ -186,7 +190,7 @@ jsonrpc.success = function (id, result) {
  * @api public
  */
 jsonrpc.error = function (id, error) {
-    let object = new ErrorObject(id, error);
+    const object = new ErrorObject(id, error);
     validateMessage(object, true);
     return object;
 };
@@ -218,7 +222,7 @@ jsonrpc.parse = function (message) {
     try {
         message = BSON.deserialize(message);
     } catch (err) {
-        return new JsonRpcParsed(JsonRpcError.parseError(err+message), 'invalid');
+        return new JsonRpcParsed(JsonRpcError.parseError(err + message), 'invalid');
     }
 
     if (!isArray(message)) return parseObject(message);
@@ -246,7 +250,7 @@ jsonrpc.parse = function (message) {
  * @api public
  */
 jsonrpc.parseObject = parseObject;
-function parseObject (obj) {
+function parseObject(obj) {
     let error = null;
     let payload = null;
 
@@ -264,7 +268,7 @@ function parseObject (obj) {
         if (!obj.error) {
             error = JsonRpcError.internalError(obj);
         } else {
-            let err = new JsonRpcError(obj.error.message, obj.error.code, obj.error.data);
+            const err = new JsonRpcError(obj.error.message, obj.error.code, obj.error.data);
             if (err.message !== obj.error.message || err.code !== obj.error.code) {
                 error = JsonRpcError.internalError(obj);
             } else {
@@ -279,7 +283,7 @@ function parseObject (obj) {
 }
 
 // if error, return error, else return null
-function validateMessage (data, throwIt) {
+function validateMessage(data, throwIt) {
     let error = null;
     switch (data.name) {
         case RequestObject.prototype.name:
@@ -299,20 +303,24 @@ function validateMessage (data, throwIt) {
     return error;
 }
 
-function checkId (id, maybeNull) {
+function checkId(id, maybeNull) {
     if (maybeNull && id === null) return null;
-    return (isString(id) || isInteger(id)) ? null : JsonRpcError.internalError('"id" must be provided, a string or an integer.');
+    return isString(id) || isInteger(id)
+        ? null
+        : JsonRpcError.internalError('"id" must be provided, a string or an integer.');
 }
 
-function checkMethod (method) {
+function checkMethod(method) {
     return isString(method) ? null : JsonRpcError.methodNotFound(method);
 }
 
-function checkResult (result) {
-    return result === undef ? JsonRpcError.internalError('Result must exist for success Response objects') : null;
+function checkResult(result) {
+    return result === undef
+        ? JsonRpcError.internalError('Result must exist for success Response objects')
+        : null;
 }
 
-function checkParams (params) {
+function checkParams(params) {
     if (params === undef) return null;
     if (isArray(params) || isObject(params)) {
         // ensure params can be stringify.
@@ -326,7 +334,7 @@ function checkParams (params) {
     return JsonRpcError.invalidParams(params);
 }
 
-function checkError (error) {
+function checkError(error) {
     if (!(error instanceof JsonRpcError)) {
         return JsonRpcError.internalError('Error must be an instance of JsonRpcError.');
     }
@@ -342,13 +350,13 @@ function checkError (error) {
     return null;
 }
 
-function isString (obj) {
+function isString(obj) {
     return obj && typeof obj === 'string';
 }
 
-function isObject (obj) {
+function isObject(obj) {
     return obj && typeof obj === 'object' && !isArray(obj);
 }
 
-module.exports = { JsonRpc, JsonRpcError, jsonrpc };
+module.exports = {JsonRpc, JsonRpcError, jsonrpc};
 module.exports = jsonrpc;

@@ -49,9 +49,9 @@ module.exports = {
         // options below to some value.
         //
         development: {
-            host,        // Localhost (default: none)
-            port,        // Standard Ethereum port (default: none)
-            network_id,  // Any network (default: none)
+            host, // Localhost (default: none)
+            port, // Standard Ethereum port (default: none)
+            network_id // Any network (default: none)
             // from: '0xe9E2746F42bFF9f0B8cAB18E183dF87bDFb7FFC9',
             // provider: new HDWalletProvider(
             //    'observe valid excite index skill drink argue envelope domain second ten hybrid',
@@ -59,7 +59,7 @@ module.exports = {
             // ),
             // gas: 4500000,
             // gasPrice: 10000000000,
-        },
+        }
 
         // Another network with more advanced options...
         // advanced: {
@@ -105,8 +105,8 @@ module.exports = {
                 optimizer: {
                     enabled: true,
                     runs: 200
-                },
-            },
-        },
-    },
+                }
+            }
+        }
+    }
 };

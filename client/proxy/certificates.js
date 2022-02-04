@@ -2,8 +2,7 @@ const forge = require('node-forge');
 const _ = require('lodash');
 const fs = require('fs');
 
-
-let certCache = {};
+const certCache = {};
 
 function getCertificate(servername) {
     // if (!_.endsWith(servername, '.z') && !_.endsWith(servername, '.point')) return null;
@@ -30,15 +29,15 @@ function generateCertificate(servername) {
     cert.serialNumber = md5(servername + Date.now());
     cert.validity.notBefore = new Date();
     cert.validity.notAfter = new Date();
-    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear()+10);
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 10);
 
     const attrs = [
-        {name:'commonName',value:servername}
-        ,{name:'countryName',value:'US'}
-        ,{shortName:'ST',value:'Virginia'}
-        ,{name:'localityName',value:'Blacksburg'}
-        ,{name:'organizationName',value:'Test'}
-        ,{shortName:'OU',value:'Test'}
+        {name: 'commonName', value: servername},
+        {name: 'countryName', value: 'US'},
+        {shortName: 'ST', value: 'Virginia'},
+        {name: 'localityName', value: 'Blacksburg'},
+        {name: 'organizationName', value: 'Test'},
+        {shortName: 'OU', value: 'Test'}
     ];
     cert.setSubject(attrs);
     cert.setIssuer(caCert.subject.attributes);
@@ -54,11 +53,11 @@ function generateCertificate(servername) {
 
     return {
         key: pem.privateKey,
-        cert: pem.certificate,
+        cert: pem.certificate
         // ca: appCert.ca ? sslCADecode(
         //     fs.readFileSync(appCert.ca, "utf8"),
         // ) : null,
     };
 }
 
-module.exports = { getCertificate };
+module.exports = {getCertificate};

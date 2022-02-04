@@ -18,8 +18,8 @@ class StorageProviderPlugin {
 /**
  * Registers the plugin with a node
  */
-module.exports = function(ctx, publicKey, privateKey, options) {
-    return function(node) {
+module.exports = function (ctx, publicKey, privateKey, options) {
+    return function (node) {
         return new StorageProviderPlugin(node, ctx, publicKey, privateKey, options);
     };
 };

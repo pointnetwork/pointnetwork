@@ -17,8 +17,8 @@ const LocalDirectory = require('../../db/models/local_directory');
 const qs = require('query-string');
 const Console = require('../../console');
 const utils = require('#utils');
-const {HttpNotFoundError} = require("../../core/exceptions");
-const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require("../storage/index.js");
+const {HttpNotFoundError} = require('../../core/exceptions');
+const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require('../storage/index.js');
 
 class ZProxy {
     constructor(ctx) {
@@ -34,18 +34,18 @@ class ZProxy {
     async start() {
         const server = this.httpx();
         this.wsServer(server);
-        server.listen(this.port, () => this.log.info({host: this.host, port: this.port}, 'ZProxy server is started'));
+        server.listen(this.port, () =>
+            this.log.info({host: this.host, port: this.port}, 'ZProxy server is started')
+        );
     }
 
     wsServer(server) {
         try {
-            const wss = new WebSocketServer({
-                httpServer: server.https
-            });
+            const wss = new WebSocketServer({httpServer: server.https});
 
-            wss.on('request', (request) => {
-                let socket = request.accept(null, request.origin);
-                let parsedUrl = new URL(request.origin);
+            wss.on('request', request => {
+                const socket = request.accept(null, request.origin);
+                const parsedUrl = new URL(request.origin);
 
                 new ZProxySocketController(this.ctx, socket, wss, parsedUrl.host);
 
@@ -53,17 +53,17 @@ class ZProxy {
                     this.log.debug('WS Client disconnected');
                 });
 
-                socket.on('error', (error) => {
+                socket.on('error', error => {
                     this.log.error(error, 'Error from WebSocket');
                 });
             });
 
-            wss.on('error', (error) => {
+            wss.on('error', error => {
                 this.log.error(error, 'Error from WebSocket');
             });
 
             server.http.on('upgrade', (request, socket, head) => {
-                wss.handleUpgrade(request, socket, head, (ws) => {
+                wss.handleUpgrade(request, socket, head, ws => {
                     wss.emit('connection', ws, request);
                 });
             });
@@ -93,7 +93,7 @@ class ZProxy {
                 }
 
                 cb(null, ctx);
-            },
+            }
         };
 
         this.doubleServer = net.createServer(socket => {
@@ -102,7 +102,7 @@ class ZProxy {
                 socket.pause();
 
                 // Determine if this is an HTTP(s) request
-                let byte = buffer[0];
+                const byte = buffer[0];
 
                 let protocol;
                 if (byte === 22) {
@@ -114,7 +114,7 @@ class ZProxy {
                     protocol = 'error'; // todo: !
                 }
 
-                let proxy = this.doubleServer[protocol];
+                const proxy = this.doubleServer[protocol];
                 if (proxy) {
                     // Push the buffer back onto the front of the data stream
                     socket.unshift(buffer);
@@ -132,46 +132,48 @@ class ZProxy {
             });
         });
 
-        const redirectToHttpsHandler = function(request, response) {
+        const redirectToHttpsHandler = function (request, response) {
             // Redirect to https
             const reqUrl = request.url;
-            const httpsUrl = reqUrl.replace(/^(http:\/\/)/,"https://");
-            response.writeHead(301, {'Location': httpsUrl});
+            const httpsUrl = reqUrl.replace(/^(http:\/\/)/, 'https://');
+            response.writeHead(301, {Location: httpsUrl});
             response.end();
         };
-        this.doubleServer.http = http.createServer((this.config.redirect_to_https) ? redirectToHttpsHandler : this.request.bind(this));
-        this.doubleServer.http.on('error', (err) => this.log.error(err, 'Double Server HTTP error'));
+        this.doubleServer.http = http.createServer(
+            this.config.redirect_to_https ? redirectToHttpsHandler : this.request.bind(this)
+        );
+        this.doubleServer.http.on('error', err => this.log.error(err, 'Double Server HTTP error'));
         this.doubleServer.http.on('connect', (req, cltSocket, head) => {
             // connect to an origin server
             const srvUrl = url.parse(`https://${req.url}`);
             // const srvSocket = net.connect(srvUrl.port, srvUrl.hostname, () => {
             const srvSocket = net.connect(this.port, 'localhost', () => {
-                cltSocket.write('HTTP/1.1 200 Connection Established\r\n' +
-                    'Proxy-agent: Node.js-Proxy\r\n' +
-                    '\r\n');
+                cltSocket.write(
+                    'HTTP/1.1 200 Connection Established\r\n' +
+                        'Proxy-agent: Node.js-Proxy\r\n' +
+                        '\r\n'
+                );
                 srvSocket.write(head);
                 srvSocket.pipe(cltSocket);
                 cltSocket.pipe(srvSocket);
             });
         });
         this.doubleServer.https = https.createServer(credentials, this.request.bind(this));
-        this.doubleServer.https.on('error', (err) => this.log.error(err, 'Double Server HTTPS error'));
+        this.doubleServer.https.on('error', err =>
+            this.log.error(err, 'Double Server HTTPS error')
+        );
         return this.doubleServer;
     }
 
     abort404(response, message = 'domain not found') {
-        const headers = {
-            'Content-Type': 'text/html;charset=UTF-8',
-        };
+        const headers = {'Content-Type': 'text/html;charset=UTF-8'};
         response.writeHead(404, headers);
         response.write(this._errorMsgHtml(message, 404));
         response.end();
     }
 
     abortError(response, err) {
-        const headers = {
-            'Content-Type': 'text/html;charset=UTF-8',
-        };
+        const headers = {'Content-Type': 'text/html;charset=UTF-8'};
         response.writeHead(500, headers);
         response.write(this._errorMsgHtml(err, 500)); // better code
         this.log.error({err, stack: err.stack}, `ZProxy 500 Error`);
@@ -179,35 +181,37 @@ class ZProxy {
     }
 
     async request(request, response) {
-        let host = request.headers.host;
-        if ( host != 'point' && ! _.endsWith(host, '.z')) return this.abort404(response);
+        const host = request.headers.host;
+        if (host != 'point' && !_.endsWith(host, '.z')) return this.abort404(response);
         try {
             let rendered;
             let parsedUrl;
             try {
                 parsedUrl = new URL(request.url, `http://${request.headers.host}`);
-            } catch(e) {
-                parsedUrl = { pathname: '/error' }; // todo
+            } catch (e) {
+                parsedUrl = {pathname: '/error'}; // todo
             }
 
             let contentType = 'text/html';
             let status = 200;
             if (_.startsWith(parsedUrl.pathname, '/_storage/')) {
-                if(request.method.toUpperCase() === 'POST') { // user is posting content to storage layer
+                if (request.method.toUpperCase() === 'POST') {
+                    // user is posting content to storage layer
                     try {
-                        let response = await this.storagePostFile(request);
+                        const response = await this.storagePostFile(request);
                         status = response.status ? response.status : status;
                         contentType = 'application/json';
                         rendered = JSON.stringify(response);
-                    } catch(e) {
+                    } catch (e) {
                         return this.abortError(response, e);
                     }
                 } else {
-                    let hash = parsedUrl.pathname.replace('/_storage/', '');
-                    let hashWithoutExt = (hash.split('.').length > 1) ? hash.split('.').slice(0, -1).join('.') : hash;
-                    let ext = hash.split('.').slice(-1)[0];
+                    const hash = parsedUrl.pathname.replace('/_storage/', '');
+                    const hashWithoutExt =
+                        hash.split('.').length > 1 ? hash.split('.').slice(0, -1).join('.') : hash;
+                    const ext = hash.split('.').slice(-1)[0];
 
-                    let noExt = (ext === hashWithoutExt) || (hash.split('.').length === 1);
+                    const noExt = ext === hashWithoutExt || hash.split('.').length === 1;
                     if (noExt) contentType = 'text/plain'; // just in case
                     if (!noExt) {
                         contentType = this.getContentTypeFromExt(ext);
@@ -218,7 +222,7 @@ class ZProxy {
                     try {
                         this.log.debug({hash}, 'Reading file from storage');
                         rendered = await getFile(hashWithoutExt);
-                    } catch(e) {
+                    } catch (e) {
                         return this.abortError(response, e);
                     }
 
@@ -230,41 +234,53 @@ class ZProxy {
             } else if (_.startsWith(parsedUrl.pathname, '/_keyvalue_append/')) {
                 try {
                     rendered = await this.keyValueAppend(host, request);
-                } catch(e) {
+                } catch (e) {
                     return this.abortError(response, e);
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/_contract_send/')) {
                 try {
                     rendered = await this.contractSend(host, request);
-                } catch(e) {
+                } catch (e) {
                     return this.abortError(response, e);
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/v1/api/')) {
                 try {
-                    let apiResponse = await this.apiResponseFor(parsedUrl.pathname, request);
+                    const apiResponse = await this.apiResponseFor(parsedUrl.pathname, request);
                     status = apiResponse.status ? apiResponse.status : status;
                     contentType = 'application/json';
                     rendered = JSON.stringify(apiResponse);
-                } catch(e) {
+                } catch (e) {
                     return this.abortError(response, e);
                 }
             } else if (host === 'point') {
                 // handle the point welcome page by rendering explorer.z
-                let localPath = 'internal/explorer.z/public'; // hardcode to render explorer.z
-                rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
+                const localPath = 'internal/explorer.z/public'; // hardcode to render explorer.z
+                rendered = await this.processLocalRequest(
+                    host,
+                    localPath,
+                    request,
+                    response,
+                    parsedUrl
+                );
                 contentType = response._contentType;
             } else if (process.env.MODE === 'e2e') {
                 // when MODE=e2e is set this site will be loaded directly from the local system - useful for Zapp developers :)
                 // If host contains `dev`, then we slice the zapp name out of the host to serve from local example folder
                 const zappName = host.includes('dev') ? `${host.split('dev')[0]}.z` : host;
-                let localPath = `example/${zappName}/public`; // hardcode to render the zapp host
-                rendered = await this.processLocalRequest(host, localPath, request, response, parsedUrl);
+                const localPath = `example/${zappName}/public`; // hardcode to render the zapp host
+                rendered = await this.processLocalRequest(
+                    host,
+                    localPath,
+                    request,
+                    response,
+                    parsedUrl
+                );
                 contentType = response._contentType;
-            }  else {
+            } else {
                 try {
                     rendered = await this.processRequest(host, request, response, parsedUrl);
                     contentType = response._contentType;
-                } catch(e) {
+                } catch (e) {
                     return this.abortError(response, e);
                 }
             }
@@ -280,23 +296,22 @@ class ZProxy {
 
             if (typeof sanitized === 'undefined') sanitized = ''; // to avoid "response expected a string but got undefined"
 
-            const headers = {
-                'Content-Type': contentType
-            };
+            const headers = {'Content-Type': contentType};
             response.writeHead(status, headers);
             response.write(sanitized, {encoding: null});
             response.end();
-
-        } catch(error) {
+        } catch (error) {
             // throw 'ZProxy Error: '+e; // todo: remove
-            this.log.error({host, error: error.message, stack: error.stack}, 'ZProxy.request Error');
+            this.log.error(
+                {host, error: error.message, stack: error.stack},
+                'ZProxy.request Error'
+            );
 
             if (error instanceof HttpNotFoundError) {
                 return this.abort404(response, error.message);
             } else {
-                return this.abortError(response, 'ZProxy: '+error);
+                return this.abortError(response, 'ZProxy: ' + error);
             }
-
         }
 
         // todo:?
@@ -310,7 +325,7 @@ class ZProxy {
             } else {
                 return false;
             }
-        } catch(e) {
+        } catch (e) {
             return false;
         }
     }
@@ -324,25 +339,25 @@ class ZProxy {
     }
 
     async storagePostFile(request) {
-        if(request.headers['content-type'].startsWith('multipart/form-data')) {
+        if (request.headers['content-type'].startsWith('multipart/form-data')) {
             // If the request a multipart/form-data type then parse the file upload using formidable
             const formidable = require('formidable');
-            const form = formidable({ multiples: true });
+            const form = formidable({multiples: true});
             let response;
 
-            let promise = new Promise((resolve, reject) => {
+            const promise = new Promise((resolve, reject) => {
                 form.parse(request, async (err, fields, files) => {
                     try {
-                        for(const key in files) {
+                        for (const key in files) {
                             // TODO: properly handle multiple file uploads
-                            let uploadedFilePath = files[key].path;
-                            let fileData = fs.readFileSync(uploadedFilePath);
-                            let uploadedId = await uploadFile(fileData);
+                            const uploadedFilePath = files[key].path;
+                            const fileData = fs.readFileSync(uploadedFilePath);
+                            const uploadedId = await uploadFile(fileData);
 
-                            let response = { status: 200, data: uploadedId};
+                            const response = {status: 200, data: uploadedId};
                             resolve(response);
                         }
-                    } catch(e) {
+                    } catch (e) {
                         reject(e);
                     }
                 });
@@ -354,24 +369,24 @@ class ZProxy {
 
     async apiResponseFor(cmdstr, request) {
         cmdstr = cmdstr.replace('/v1/api/', '');
-        cmdstr = cmdstr.replace(/\/$/, "");
+        cmdstr = cmdstr.replace(/\/$/, '');
 
-        let [cmd, params] = this._parseApiCmd(cmdstr);
+        const [cmd, params] = this._parseApiCmd(cmdstr);
         let response = {};
         let body = '';
-        let host = request.headers.host;
+        const host = request.headers.host;
 
         if (request.method.toUpperCase() === 'POST') {
-            let apiPromise = new Promise((resolve, reject) => {
+            const apiPromise = new Promise((resolve, reject) => {
                 try {
-                    request.on('data', (chunk) => {
+                    request.on('data', chunk => {
                         body += chunk;
                     });
                     request.on('end', async () => {
                         response = await this.console.cmd_api_post(host, cmd, body);
                         resolve(response);
                     });
-                } catch(e) {
+                } catch (e) {
                     reject(e);
                 }
             });
@@ -385,7 +400,7 @@ class ZProxy {
 
     _parseApiCmd(cmdstr) {
         let [cmd, params] = cmdstr.split('?');
-        params ? params = params.split('&') : params = '';
+        params ? (params = params.split('&')) : (params = '');
         return [cmd, params];
     }
 
@@ -398,7 +413,7 @@ class ZProxy {
         if (ext === 'zhtml') {
             ext = 'html';
         }
-        return mime.lookup('.'+ext) || 'application/octet-stream';
+        return mime.lookup('.' + ext) || 'application/octet-stream';
     }
 
     getExtFromFilename(filename) {
@@ -409,50 +424,59 @@ class ZProxy {
     processLocalRequest(host, filePath, request, response, parsedUrl) {
         return new Promise((resolve, reject) => {
             let body = '';
-            request.on('data', (chunk) => {
+            request.on('data', chunk => {
                 body += chunk;
             });
-            request.on('end', async() => {
+            request.on('end', async () => {
                 try {
-                    let routesJsonPath = `${filePath}/../routes.json`;
-                    let routes = fs.readJSONSync(routesJsonPath);
+                    const routesJsonPath = `${filePath}/../routes.json`;
+                    const routes = fs.readJSONSync(routesJsonPath);
 
                     let route_params = {};
                     let template_filename = null;
-                    const { match } = require('node-match-path');
-                    for(const k in routes) {
+                    const {match} = require('node-match-path');
+                    for (const k in routes) {
                         const matched = match(k, parsedUrl.pathname);
                         if (matched.matches) {
                             route_params = matched.params;
-                            template_filename = routes[ k ];
+                            template_filename = routes[k];
                             break;
                         }
                     }
 
                     if (template_filename) {
                         // Use a LocalDirectory object since we are rendering locally
-                        let directory = new LocalDirectory(this.ctx);
+                        const directory = new LocalDirectory(this.ctx);
                         directory.setLocalRoot(filePath);
 
                         // const template_file_path = `${filePath}/${template_filename}`;
-                        const template_file_contents = await directory.readFileByPath(`${template_filename}`, 'utf-8');
+                        const template_file_contents = await directory.readFileByPath(
+                            `${template_filename}`,
+                            'utf-8'
+                        );
 
-                        let renderer = new Renderer(this.ctx, {localDir: directory});
+                        const renderer = new Renderer(this.ctx, {localDir: directory});
                         let request_params = {};
 
                         // Add params from route matching
                         request_params = Object.assign({}, request_params, route_params);
 
                         // GET
-                        for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
+                        for (const k of parsedUrl.searchParams.entries())
+                            request_params[k[0]] = k[1];
                         // POST takes priority, rewrites if needed
-                        let bodyParsed = qs.parse(body);
+                        const bodyParsed = qs.parse(body);
                         for (const k in bodyParsed) request_params[k] = bodyParsed[k];
 
                         // // Add params from route matching
                         request_params = Object.assign({}, request_params, route_params);
 
-                        let rendered = await renderer.render(template_filename, template_file_contents, host, request_params); // todo: sanitize
+                        const rendered = await renderer.render(
+                            template_filename,
+                            template_file_contents,
+                            host,
+                            request_params
+                        ); // todo: sanitize
 
                         response._contentType = 'text/html';
 
@@ -462,17 +486,20 @@ class ZProxy {
                         // in parsedUrl.pathname will be something like "/index.css"
 
                         // Use a LocalDirectory object since we are rendering locally
-                        let directory = new LocalDirectory(this.ctx);
+                        const directory = new LocalDirectory(this.ctx);
                         directory.setLocalRoot(filePath);
 
-                        let rendered = await directory.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
+                        const rendered = await directory.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
 
-                        response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
-                        if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
+                        response._contentType = this.getContentTypeFromExt(
+                            this.getExtFromFilename(parsedUrl.pathname)
+                        );
+                        if (response._contentType.includes('html'))
+                            response._contentType = 'text/html'; // just in case
 
                         resolve(rendered);
                     }
-                } catch(e) {
+                } catch (e) {
                     reject(e); // todo: sanitize?
                 }
             });
@@ -482,52 +509,72 @@ class ZProxy {
     processRequest(host, request, response, parsedUrl) {
         return new Promise((resolve, reject) => {
             let body = '';
-            request.on('data', (chunk) => {
+            request.on('data', chunk => {
                 body += chunk;
             });
-            request.on('end', async() => {
+            request.on('end', async () => {
                 try {
                     // First try route file (and check if this domain even exists)
-                    let zroute_id = await this.getZRouteIdFromDomain(host);
-                    if (zroute_id === null || zroute_id === '' || typeof zroute_id === "undefined") {
-                        return this.abort404(response, 'Domain not found (Route file not specified for this domain)'); // todo: replace with is_valid_id
+                    const zroute_id = await this.getZRouteIdFromDomain(host);
+                    if (
+                        zroute_id === null ||
+                        zroute_id === '' ||
+                        typeof zroute_id === 'undefined'
+                    ) {
+                        return this.abort404(
+                            response,
+                            'Domain not found (Route file not specified for this domain)'
+                        ); // todo: replace with is_valid_id
                     }
 
                     this.log.debug({host, zroute_id}, 'Requesting ZRoute id for domain');
-                    let routes = await getJSON(zroute_id); // todo: check result
-                    if (!routes) return this.abort404(response, 'cannot parse json of zroute_id '+zroute_id);
+                    const routes = await getJSON(zroute_id); // todo: check result
+                    if (!routes)
+                        return this.abort404(
+                            response,
+                            'cannot parse json of zroute_id ' + zroute_id
+                        );
 
                     // Download info about root dir
                     const rootDirId = await this.getRootDirectoryIdForDomain(host);
 
                     let route_params = {};
                     let template_filename = null;
-                    const { match } = require('node-match-path');
-                    for(const k in routes) {
+                    const {match} = require('node-match-path');
+                    for (const k in routes) {
                         const matched = match(k, parsedUrl.pathname);
                         if (matched.matches) {
                             route_params = matched.params;
-                            template_filename = routes[ k ];
+                            template_filename = routes[k];
                             break;
                         }
                     }
                     if (template_filename) {
-                        let template_file_id = await getFileIdByPath(rootDirId, template_filename);
-                        this.log.debug({template_filename, template_file_id}, 'ZProxy.processRequest getFileIdByPath result');
-                        let template_file_contents = await getFile(template_file_id);
+                        const template_file_id = await getFileIdByPath(rootDirId, template_filename);
+                        this.log.debug(
+                            {template_filename, template_file_id},
+                            'ZProxy.processRequest getFileIdByPath result'
+                        );
+                        const template_file_contents = await getFile(template_file_id);
 
-                        let renderer = new Renderer(this.ctx, {rootDirId});
+                        const renderer = new Renderer(this.ctx, {rootDirId});
                         let request_params = {};
                         // GET
-                        for (const k of parsedUrl.searchParams.entries()) request_params[k[0]] = k[1];
+                        for (const k of parsedUrl.searchParams.entries())
+                            request_params[k[0]] = k[1];
                         // POST takes priority, rewrites if needed
-                        let bodyParsed = qs.parse(body);
+                        const bodyParsed = qs.parse(body);
                         for (const k in bodyParsed) request_params[k] = bodyParsed[k];
 
                         // Add params from route matching
                         request_params = Object.assign({}, request_params, route_params);
 
-                        let rendered = await renderer.render(template_file_id, template_file_contents, host, request_params); // todo: sanitize
+                        const rendered = await renderer.render(
+                            template_file_id,
+                            template_file_contents,
+                            host,
+                            request_params
+                        ); // todo: sanitize
 
                         response._contentType = 'text/html';
 
@@ -539,31 +586,34 @@ class ZProxy {
                         // This condition is when a user of a SPA hits refresh and the url is part of the SPA
                         // managed routes and not part of ZProxy managed routes. In this case, simple solution is
                         // to redirect the user back to the site home page.
-                        if(request.headers.referer === undefined) {
+                        if (request.headers.referer === undefined) {
                             const redirect = '/';
-                            this.log.debug({redirect}, 'Page reload detected from unknown referer. Redirecting to');
+                            this.log.debug(
+                                {redirect},
+                                'Page reload detected from unknown referer. Redirecting to'
+                            );
                             response._contentType = 'text/html';
-                            const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
+                            const redirectHtml =
+                                '<html><head><meta http-equiv="refresh" content="0;url=' +
+                                redirect +
+                                '" /></head></html>';
                             resolve(redirectHtml);
                         }
 
-                        const renderedId = await getFileIdByPath(
-                            rootDirId,
-                            parsedUrl.pathname
-                        );
-                        const rendered = await getFile(
-                            renderedId,
-                            null
-                        );
+                        const renderedId = await getFileIdByPath(rootDirId, parsedUrl.pathname);
+                        const rendered = await getFile(renderedId, null);
 
-                        response._contentType = this.getContentTypeFromExt(this.getExtFromFilename(parsedUrl.pathname));
-                        if (response._contentType.includes('html')) response._contentType = 'text/html'; // just in case
+                        response._contentType = this.getContentTypeFromExt(
+                            this.getExtFromFilename(parsedUrl.pathname)
+                        );
+                        if (response._contentType.includes('html'))
+                            response._contentType = 'text/html'; // just in case
 
                         resolve(rendered);
 
                         // return this.abort404(response, 'route not found'); // todo: write a better msg // todo: remove, it's automatic
                     }
-                } catch(e) {
+                } catch (e) {
                     reject(e); // todo: sanitize?
                 }
             });
@@ -573,38 +623,38 @@ class ZProxy {
     keyValueAppend(host, request) {
         return new Promise((resolve, reject) => {
             let body = '';
-            request.on('data', (chunk) => {
+            request.on('data', chunk => {
                 body += chunk;
             });
-            request.on('end', async() => {
+            request.on('end', async () => {
                 try {
                     if (request.method.toUpperCase() !== 'POST') return 'Error: Must be POST';
 
                     let parsedUrl;
                     try {
                         parsedUrl = new URL(request.url, `http://${request.headers.host}`);
-                    } catch(e) {
-                        parsedUrl = { pathname: '/error' }; // todo
+                    } catch (e) {
+                        parsedUrl = {pathname: '/error'}; // todo
                     }
-                    let key = parsedUrl.pathname.split('/_keyvalue_append/')[1];
-                    let currentList = await this.ctx.keyvalue.list(host, key);
-                    let newIdx = currentList.length;
-                    let newKey = key + newIdx;
+                    const key = parsedUrl.pathname.split('/_keyvalue_append/')[1];
+                    const currentList = await this.ctx.keyvalue.list(host, key);
+                    const newIdx = currentList.length;
+                    const newKey = key + newIdx;
 
-                    let entries = new URL('http://localhost/?'+body).searchParams.entries();
-                    let postData = {};
-                    for(let entry of entries){
-                        postData[ entry[0] ] = entry[1];
+                    const entries = new URL('http://localhost/?' + body).searchParams.entries();
+                    const postData = {};
+                    for (const entry of entries) {
+                        postData[entry[0]] = entry[1];
                     }
 
                     let redirect = request.headers.referer;
-                    for(let k in postData) {
-                        let v = postData[k];
+                    for (const k in postData) {
+                        const v = postData[k];
                         if (k === '__redirect') {
                             redirect = v;
                             delete postData[k];
                         } else if (_.startsWith(k, 'storage[')) {
-                            let uploadedId = await uploadFile(v);
+                            const uploadedId = await uploadFile(v);
                             this.log.debug({uploaded_id}, 'Found storage[x], uploading file');
 
                             delete postData[k];
@@ -614,18 +664,21 @@ class ZProxy {
 
                     postData.__from = this.ctx.config.client.wallet.account;
                     postData.__time = Math.floor(Date.now() / 1000);
-                    let data = JSON.stringify(postData);
+                    const data = JSON.stringify(postData);
 
                     await this.ctx.keyvalue.propagate(host, newKey, data);
 
                     this.log.debug({host, redirect}, 'Redirecting after keyValueAppend');
-                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';  // todo: sanitize! don't trust it
+                    const redirectHtml =
+                        '<html><head><meta http-equiv="refresh" content="0;url=' +
+                        redirect +
+                        '" /></head></html>'; // todo: sanitize! don't trust it
                     resolve(redirectHtml);
-                } catch(e) {
+                } catch (e) {
                     reject(e);
                 }
             });
-            request.on('error', (e) => {
+            request.on('error', e => {
                 reject('Error:', e);
             });
         });
@@ -634,36 +687,37 @@ class ZProxy {
     contractSend(host, request) {
         return new Promise((resolve, reject) => {
             let body = '';
-            request.on('data', (chunk) => {
+            request.on('data', chunk => {
                 body += chunk;
             });
-            request.on('end', async() => {
+            request.on('end', async () => {
                 try {
-                    if (request.method.toUpperCase() !== 'POST') return reject('Error: Must be POST');
+                    if (request.method.toUpperCase() !== 'POST')
+                        return reject('Error: Must be POST');
 
                     let parsedUrl;
                     try {
                         parsedUrl = new URL(request.url, `http://${request.headers.host}`);
-                    } catch(e) {
-                        parsedUrl = { pathname: '/error' }; // todo
+                    } catch (e) {
+                        parsedUrl = {pathname: '/error'}; // todo
                     }
-                    let contractAndMethod = parsedUrl.pathname.split('/_contract_send/')[1];
-                    let [contractName, methodNameAndParams] = contractAndMethod.split('.');
+                    const contractAndMethod = parsedUrl.pathname.split('/_contract_send/')[1];
+                    const [contractName, methodNameAndParams] = contractAndMethod.split('.');
                     let [methodName, paramsTogether] = methodNameAndParams.split('(');
                     paramsTogether = decodeURI(paramsTogether);
                     paramsTogether = paramsTogether.replace(')', '');
-                    let paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
+                    const paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
 
-                    let entries = new URL('http://localhost/?'+body).searchParams.entries();
-                    let postData = {};
-                    for(let entry of entries){
-                        postData[ entry[0] ] = entry[1];
+                    const entries = new URL('http://localhost/?' + body).searchParams.entries();
+                    const postData = {};
+                    for (const entry of entries) {
+                        postData[entry[0]] = entry[1];
                     }
 
                     let redirect = request.headers.referer;
 
-                    for(let k in postData) {
-                        let v = postData[k];
+                    for (const k in postData) {
+                        const v = postData[k];
                         if (k === '__redirect') {
                             redirect = v;
                             delete postData[k];
@@ -675,30 +729,42 @@ class ZProxy {
                         }
                     }
 
-                    let params = [];
-                    for(let paramName of paramNames) {
+                    const params = [];
+                    for (const paramName of paramNames) {
                         if (paramName in postData) {
                             params.push(postData[paramName]);
                         } else {
-                            return reject('Error: no '+utils.escape(paramName)+' param in the data, but exists as an argument to the contract call.');
+                            return reject(
+                                'Error: no ' +
+                                    utils.escape(paramName) +
+                                    ' param in the data, but exists as an argument to the contract call.'
+                            );
                         }
                     }
 
                     try {
-                        await this.ctx.web3bridge.sendToContract(host, contractName, methodName, params);
-                    } catch(e) {
+                        await this.ctx.web3bridge.sendToContract(
+                            host,
+                            contractName,
+                            methodName,
+                            params
+                        );
+                    } catch (e) {
                         reject('Error: ' + e);
                     }
 
                     this.log.debug({host, redirect}, 'Redirecting after contractSend');
 
-                    const redirectHtml = '<html><head><meta http-equiv="refresh" content="0;url='+redirect+'" /></head></html>';
+                    const redirectHtml =
+                        '<html><head><meta http-equiv="refresh" content="0;url=' +
+                        redirect +
+                        '" /></head></html>';
                     resolve(redirectHtml); // todo: sanitize! don't trust it
-                } catch(e) {
+                } catch (e) {
                     reject(e);
                 }
             });
-            request.on('error', (e) => {
+            request.on('error', e => {
                 reject('Error: ' + e);
             });
         });
@@ -707,7 +773,10 @@ class ZProxy {
     async getRootDirectoryIdForDomain(host) {
         const key = '::rootDir';
         const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
-        if (!rootDirId) throw Error('getRootDirectoryIdForDomain failed: key '+key+' returned empty: '+rootDirId);
+        if (!rootDirId)
+            throw Error(
+                'getRootDirectoryIdForDomain failed: key ' + key + ' returned empty: ' + rootDirId
+            );
         return rootDirId;
     }
 
@@ -728,59 +797,68 @@ class ZProxy {
     }
 
     _directoryHtml(id, files) {
-        let html = "<html><body style='background-color: #fafaff; padding: 20px;'>";
-        html += "<style>th {text-align: left;}</style>";
-        html += "<h1>Index of "+utils.escape(id)+"</h1>";
-        html += "<hr><table style='width: 100%;'>";
-        html += "<tr><th>File</th><th style='text-align: right;'>Size</th><th style='text-align: right;'>Hash</th></tr>";
-        for(let f of files) {
-            let icon = "";
-            switch(f.type) {
+        let html = '<html><body style=\'background-color: #fafaff; padding: 20px;\'>';
+        html += '<style>th {text-align: left;}</style>';
+        html += '<h1>Index of ' + utils.escape(id) + '</h1>';
+        html += '<hr><table style=\'width: 100%;\'>';
+        html +=
+            '<tr><th>File</th><th style=\'text-align: right;\'>Size</th><th style=\'text-align: right;\'>Hash</th></tr>';
+        for (const f of files) {
+            let icon = '';
+            switch (f.type) {
                 case FILE_TYPE.fileptr:
-                    icon += "&#128196; "; break; // https://www.compart.com/en/unicode/U+1F4C4
+                    icon += '&#128196; ';
+                    break; // https://www.compart.com/en/unicode/U+1F4C4
                 case FILE_TYPE.dirptr:
-                    icon += "&#128193; "; break; // https://www.compart.com/en/unicode/U+1F4C1
+                    icon += '&#128193; ';
+                    break; // https://www.compart.com/en/unicode/U+1F4C1
                 default:
-                    icon += "&#10067; "; // https://www.compart.com/en/unicode/U+2753 - question mark
+                    icon += '&#10067; '; // https://www.compart.com/en/unicode/U+2753 - question mark
             }
 
             const name = f.name;
-            const ext = utils.escape( name.split('.').slice(-1) );
-            let link = '/_storage/' + f.id + ((f.type === FILE_TYPE.fileptr) ? ('.'+ext) : '');
+            const ext = utils.escape(name.split('.').slice(-1));
+            const link = '/_storage/' + f.id + (f.type === FILE_TYPE.fileptr ? '.' + ext : '');
 
-            html += "<tr><td>"+icon+" <a href='"+link+"' target='_blank'>";
+            html += '<tr><td>' + icon + ' <a href=\'' + link + '\' target=\'_blank\'>';
             html += utils.escape(f.name);
-            html += "</a></td>";
+            html += '</a></td>';
 
-            html += "<td style='text-align: right;'>"+f.size+"</td>";
-            html += "<td style='text-align: right;'><em>"+f.id+"</em></td>";
+            html += '<td style=\'text-align: right;\'>' + f.size + '</td>';
+            html += '<td style=\'text-align: right;\'><em>' + f.id + '</em></td>';
 
-            html += "</tr>";
+            html += '</tr>';
         }
-        html += "</table></body></html>";
+        html += '</table></body></html>';
         return html;
     }
 
     _errorMsgHtml(message, code = 500) {
         let formattedMsg;
-        if (typeof message==='string') {
+        if (typeof message === 'string') {
             formattedMsg = utils.escape(message);
         } else if (message instanceof Error) {
-            formattedMsg = utils.escape(message.name+": "+message.message)
-                + "<br><br>"
-                + "<div style='text-align: left; opacity: 70%; font-size: 80%;'>"
-                + utils.nl2br(utils.escape(message.stack)) // todo: careful, stack might give some info about the username and folders etc. to the ajax app. maybe better remove it and only leave in dev mode
-                + "</div>";
+            formattedMsg =
+                utils.escape(message.name + ': ' + message.message) +
+                '<br><br>' +
+                '<div style=\'text-align: left; opacity: 70%; font-size: 80%;\'>' +
+                utils.nl2br(utils.escape(message.stack)) + // todo: careful, stack might give some info about the username and folders etc. to the ajax app. maybe better remove it and only leave in dev mode
+                '</div>';
         } else {
             formattedMsg = JSON.stringify(message);
         }
 
-        return "<html><body style='background-color: #222233;'>" +
-            "<div style='text-align:center; margin-top: 20%;'>" +
-            "<h1 style='font-size: 300px; color: #ccc; margin: 0; padding: 0;'>"+code+"</h1>" +
-            "<div style='padding: 0 20%; color: #e8e8e8; margin-top: 10px; font-family: sans-serif;'><strong>Error: </strong>"+formattedMsg+
-            "</div></div>" +
-            "</body></html>";
+        return (
+            '<html><body style=\'background-color: #222233;\'>' +
+            '<div style=\'text-align:center; margin-top: 20%;\'>' +
+            '<h1 style=\'font-size: 300px; color: #ccc; margin: 0; padding: 0;\'>' +
+            code +
+            '</h1>' +
+            '<div style=\'padding: 0 20%; color: #e8e8e8; margin-top: 10px; font-family: sans-serif;\'><strong>Error: </strong>' +
+            formattedMsg +
+            '</div></div>' +
+            '</body></html>'
+        );
     }
 }
 

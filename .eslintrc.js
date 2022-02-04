@@ -15,32 +15,39 @@ module.exports = {
         'filenames',
         'prefer-arrow'
     ],
-    ignorePatterns: [],
+    ignorePatterns: ['node_modules', '*.min.js', 'example/*', '**/public/**/*', 'db/migrations'],
     rules: {
         'no-implicit-coercion': ['error'],
-        'indent': ['error', 4, {
-            SwitchCase: 1,
-            MemberExpression: 1,
-            ArrayExpression: 1,
-            ObjectExpression: 1,
-            VariableDeclarator: 1,
-            CallExpression: {arguments: 1},
-            offsetTernaryExpressions: true
-        }],
+        'indent': [
+            'error',
+            4,
+            {
+                SwitchCase: 1,
+                MemberExpression: 1,
+                ArrayExpression: 1,
+                ObjectExpression: 1,
+                VariableDeclarator: 1,
+                CallExpression: {arguments: 1},
+                offsetTernaryExpressions: true
+            }
+        ],
         'semi': ['error', 'always'],
         'linebreak-style': ['error', 'unix'],
         'no-fallthrough': 'off',
         'no-console': 'error',
         'no-debugger': 'error',
         'no-unused-vars': 'error',
-        'max-len': ['warn', {
-            code: 100,
-            ignoreStrings: true,
-            ignoreRegExpLiterals: true,
-            ignoreTemplateLiterals: true,
-            tabWidth: 4,
-            ignoreComments: false
-        }],
+        'max-len': [
+            'warn',
+            {
+                code: 100,
+                ignoreStrings: true,
+                ignoreRegExpLiterals: true,
+                ignoreTemplateLiterals: true,
+                tabWidth: 4,
+                ignoreComments: true // TODO: set to false
+            }
+        ],
         'comma-dangle': ['error', 'never'],
         'space-in-parens': ['error', 'never'],
         'comma-spacing': 'error',
@@ -50,7 +57,7 @@ module.exports = {
         'eqeqeq': ['error', 'always'],
         'no-useless-call': 'error',
         'prefer-promise-reject-errors': 'error',
-        'no-underscore-dangle': 'error',
+        'no-underscore-dangle': 'off', // TODO: enable
         'prefer-const': ['error', {destructuring: 'all', ignoreReadBeforeAssign: false}],
         // 'filenames/match-regex': 'error',
         // 'filenames/match-exported': 'error',
@@ -60,11 +67,15 @@ module.exports = {
         'no-duplicate-imports': 'error',
         'no-unused-expressions': 'error',
         'arrow-body-style': ['error', 'as-needed'],
-        'prefer-arrow/prefer-arrow-functions': ['error', {
-            disallowPrototype: true,
-            singleReturnOnly: false,
-            classPropertiesAllowed: false
-        }],
+        'prefer-arrow/prefer-arrow-functions': [
+            'off',
+            {
+                // TODO: enable
+                disallowPrototype: true,
+                singleReturnOnly: false,
+                classPropertiesAllowed: false
+            }
+        ],
         'brace-style': ['error', '1tbs', {allowSingleLine: true}],
         'space-infix-ops': ['error'],
         'quote-props': ['error', 'consistent-as-needed'],
