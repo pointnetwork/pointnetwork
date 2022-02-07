@@ -1,707 +1,523 @@
-const Chunk = require('../../db/models/chunk');
-const File = require('../../db/models/file');
-const Redkey = require('../../db/models/redkey');
-const Directory = require('../../db/models/directory');
-const Provider = require('../../db/models/provider');
-const StorageLink = require('../../db/models/storage_link');
-const Model = require('../../db/model');
-const path = require('path');
-const { fork } = require('child_process');
-const _ = require('lodash');
-const fs = require('fs');
-const utils = require('#utils');
+const File = require('../../db/models/file.js');
+const Chunk = require('../../db/models/chunk.js');
+const {request, gql} = require('graphql-request');
 const {
-    checkExistingChannel,
-    createChannel,
-    makePayment,
-} = require('./payments');
+    hashFn,
+    merkle,
+    makeSurePathExistsAsync,
+    delay,
+    areScalarArraysEqual,
+    escape
+} = require('#utils');
+const Arweave = require('arweave');
+const {promises: fs} = require('fs');
+const path = require('path');
+const FormData = require('form-data');
+const axios = require('axios');
 
-class Storage {
-    constructor(ctx) {
-        this.ctx = ctx;
-        this.config = ctx.config.client.storage;
-        this.current_requests = {};
-        this.queued_requests = {};
-        this.uploadingChunksProcessing = {};
+// TODO: for some reason docker fails to resolve module if I move it to another file
+const getDownloadQuery = (chunkId, majorVersion, minorVersion) =>
+    gql`{
+      transactions(
+        tags: [
+          {
+            name: "__pn_chunk_${majorVersion}.${minorVersion}_id",
+            values: ["${chunkId}"]
+          }
+        ]
+      ) {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }`;
+
+// We are using one status for both upload and download, because, since file's id is its
+// data hash, if file is downloaded, then it's also uploaded, and vice versa
+// TODO: apply migration and rename dl_status to status to avoid confusion
+const DOWNLOAD_UPLOAD_STATUS = {
+    NOT_STARTED: 'NOT_STARTED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED'
+};
+
+const FILE_TYPE = {
+    fileptr: 'fileptr', // File
+    dirptr: 'dirptr' // Directory
+};
+
+const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
+const CONCURRENT_DOWNLOAD_DELAY = 100;
+
+// TODO: get rid of this and read config directly.
+// TODO: possibly split this file into several ones after refactoring config
+let config;
+let logger;
+let cacheDir;
+let filesDir;
+const init = async ctx => {
+    // TODO: ambiguous stuff, config is spread between storage and client.storage
+    config = {
+        ...ctx.config.storage,
+        ...ctx.config.client.storage
+    };
+    if (!config.arweave_experiment_version_major) {
+        throw new Error('arweave_experiment_version_major not set or is 0');
+    }
+    if (!config.arweave_experiment_version_minor) {
+        throw new Error('arweave_experiment_version_minor not set or is 0');
+    }
+    logger = ctx.log.child({module: 'Storage'});
+    cacheDir = path.join(ctx.datadir, ctx.config.client.storage.cache_path);
+    // TODO: this should also come from config, but we don't have such a property
+    filesDir = path.join(ctx.datadir, 'files');
+    await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
+};
+
+const arweave = Arweave.init({
+    port: 443,
+    protocol: 'https',
+    host: 'arweave.net'
+});
+
+// TODO: add better error handling with custom errors and keeping error messages in DB
+const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
+    const chunk = await Chunk.findByIdOrCreate(chunkId);
+    const chunkPath = path.join(cacheDir, `chunk_${chunkId}`);
+
+    if (useCache && chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+        logger.debug({chunkId}, 'Returning chunk from cache');
+        return fs.readFile(chunkPath, {encoding});
+    }
+    if (chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+        logger.debug({chunkId}, 'Chunk download already in progress, waiting');
+        await delay(CONCURRENT_DOWNLOAD_DELAY);
+        return getChunk(chunkId, encoding); // use cache should be true in this case
     }
 
-    async start() {
-        await this.init();
+    logger.debug({chunkId}, 'Downloading chunk');
+    try {
+        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+        await chunk.save();
 
-        // todo: rewrite with threads!
-        this.timeout = this.ctx.config.simulation_delay;
-        this.timerFn = null;
-        this.timerFn = async() => {
-            await this.tick();
-            setTimeout(this.timerFn, this.timeout);
-        };
-        this.timerFn();
-    }
+        const query = getDownloadQuery(
+            chunkId,
+            config.arweave_experiment_version_major,
+            config.arweave_experiment_version_minor
+        );
 
-    async init() {
-        // todo
-    }
+        const queryResult = await request(config.arweave_graphql_endpoint, query);
+        logger.debug({chunkId}, 'Graphql request success');
 
-    async enqueueFileForUpload(
-        filePath,
-        redundancy = this.ctx.config.client.storage.default_redundancy,
-        expires = (new Date).getTime() + this.ctx.config.client.storage.default_expires_period_seconds,
-        autorenew = this.ctx.config.client.storage.default_autorenew
-    ) {
-        // Create at first to be able to chunkify and get the file id (hash), later we'll try to load it if it already exists
-        let throwAwayFile = File.build();
-        throwAwayFile.original_path = filePath; // todo: should we rename it to lastoriginalPath or something? or store somewhere // todo: validate it exists
-        await throwAwayFile.chunkify(); // to receive an id (hash) // Note: this will .save() it!
+        for (const edge of queryResult.transactions.edges) {
+            const txid = edge.node.id;
+            logger.debug({chunkId, txid}, 'Downloading data from arweave');
 
-        // Setting `originalPath` to the `chunkify`ed version of `file`,
-        // instead of the path where we find the original file source.
-        // todo: should we?
-        const original_path = path.join(this.getCacheDir(), 'chunk_'+throwAwayFile.id);
+            const data = await arweave.transactions.getData(txid, {decode: true});
+            logger.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
 
-        const file = (await File.findOrCreate({ where: { id: throwAwayFile.id }, defaults: { original_path } })) [0];
+            const buf = Buffer.from(data);
 
-        // todo: validate redundancy, expires and autorenew fields. merge them if they're already there
-        file.redundancy = Math.max(parseInt(file.redundancy)||0, parseInt(redundancy)||0);
-        file.expires = Math.max(parseInt(file.expires)||0, parseInt(expires)||0);
-        file.autorenew = (!!file.autorenew) ? !!file.autorenew : !!autorenew;
-        await file.save();
-        await file.reconsiderUploadingStatus();
-
-        // We don't wait for the file to be uploaded, we just return the file id, using which we can query its upload status
-
-        // todo: when do we update expires and save again?
-
-        return file.id;
-    }
-
-    async enqueueDirectoryForUpload(
-        dirPath,
-        redundancy = this.ctx.config.client.storage.default_redundancy,
-        expires = (new Date).getTime() + this.ctx.config.client.storage.default_expires_period_seconds,
-        autorenew = this.ctx.config.client.storage.default_autorenew
-    ) {
-        let directory = new Directory();
-        directory.setOriginalPath(dirPath);
-        directory.addFilesFromOriginalPath();
-
-        // Now process every item
-        for(let f of directory.files) {
-            if (f.type === 'fileptr') {
-                let uploaded = await this.putFile(f.original_path, redundancy, expires, autorenew);
-                f.id = uploaded.id;
-            } else if (f.type === 'dirptr') {
-                let uploaded = await this.putDirectory(f.original_path, redundancy, expires, autorenew);
-                f.id = uploaded.id;
-            } else {
-                throw Error('invalid type: '+f.type);
+            const hash = hashFn(buf).toString('hex');
+            if (hash !== chunk.id) {
+                logger.warn({chunkId, hash}, 'Chunk id and data do not match, chunk id');
+                continue;
             }
-        }
 
-        // Get an id here:
+            await fs.writeFile(chunkPath, buf);
 
-        const tmpFilePath = path.join(this.getCacheDir(), 'dir-tmp-'+utils.hashFnUtf8Hex(dirPath));
-        directory.serializeToFile(tmpFilePath);
-
-        let uploadedDirSpec = await this.putFile(tmpFilePath, redundancy, expires, autorenew);
-        let uploadedDirSpecId = uploadedDirSpec.id;
-
-        // We don't wait for the dir to be uploaded, we just return the dir id, using which we can query its upload status
-
-        // todo: when do we update expires and save again?
-
-        return uploadedDirSpecId;
-    }
-
-    async putDirectory(
-        dirPath,
-        redundancy = this.config.default_redundancy,
-        expires = (new Date).getTime() + this.config.default_expires_period_seconds,
-        autorenew = this.config.default_autorenew)
-    {
-        if (!fs.existsSync(dirPath)) throw Error('client/storage/index.js: Directory '+utils.escape(dirPath)+' does not exist');
-        if (!fs.statSync(dirPath).isDirectory()) throw Error('dirPath '+utils.escape(dirPath)+' is not a directory');
-
-        const directory_id = await this.enqueueDirectoryForUpload(dirPath, redundancy, expires, autorenew);
-        let waitUntilUpload = (resolve, reject) => {
-            setTimeout(async() => {
-                let file = await File.findOrFail(directory_id);
-                if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
-                    resolve(file);
-                } else {
-                    waitUntilUpload(resolve, reject);
-                }
-            }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
-        };
-
-        setTimeout(() => {
-            this.tick('uploading');
-        }, 0);
-
-        return new Promise(waitUntilUpload);
-    }
-
-    // todo: make sure the network is properly initialized etc.
-    async putFile(
-        filePath,
-        redundancy = this.config.default_redundancy,
-        expires = (new Date).getTime() + this.config.default_expires_period_seconds,
-        autorenew = this.config.default_autorenew)
-    {
-        const file_id = await this.enqueueFileForUpload(filePath, redundancy, expires, autorenew);
-        let waitUntilUpload = (resolve, reject) => {
-            setTimeout(async() => {
-                let file = await File.findOrFail(file_id);
-                if (file.ul_status === File.UPLOADING_STATUS_UPLOADED) {
-                    resolve(file);
-                } else {
-                    waitUntilUpload(resolve, reject);
-                }
-            }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
-        };
-
-        setTimeout(() => {
-            this.tick('uploading');
-        }, 0);
-
-        return new Promise(waitUntilUpload);
-    }
-
-    async enqueueFileForDownload(id, originalPath) {
-        if (!id) throw new Error('undefined or null id passed to storage.enqueueFileForDownload');
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
-        // if (! file.original_path) file.original_path = '/tmp/'+id; // todo: put inside file? use cache folder?
-        // if (! file.original_path) file.original_path = originalPath; // todo: put inside file? use cache folder? // todo: what if multiple duplicate files with the same id?
-        if (file.dl_status !== File.DOWNLOADING_STATUS_DOWNLOADED) {
-            file.dl_status = File.DOWNLOADING_STATUS_DOWNLOADING_CHUNKINFO;
-            await file.save();
-            await file.reconsiderDownloadingStatus();
-        }
-
-        return file.id;
-    }
-
-    async getFile(id /*, originalPath */) {
-        if (!id) throw new Error('undefined or null id passed to storage.getFile');
-
-        // already downloaded?
-        const originalPath = File.getStoragePathForId(id);
-        const file = (await File.findOrCreate({ where: { id }, defaults: { original_path: originalPath } })) [0];
-        if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
-            return file;
-        }
-
-        await this.enqueueFileForDownload(id);
-
-        let waitUntilRetrieval = (resolve, reject) => {
-            setTimeout(async() => {
-                let file = await File.findOrFail(id);
-                if (file.dl_status === File.DOWNLOADING_STATUS_DOWNLOADED) {
-                    setTimeout(() => {
-                        this.tick('downloading');
-                    }, 0);
-
-                    resolve(file);
-                } else if (file.dl_status === File.DOWNLOADING_STATUS_FAILED) {
-                    reject('File '+id+' could not be downloaded: dl_status==DOWNLOADING_STATUS_FAILED'); // todo: sanitize
-                } else {
-                    waitUntilRetrieval(resolve, reject);
-                }
-            }, 100); // todo: change interval? // todo: make it event-based rather than have thousands of callbacks waiting every 100ms
-        };
-
-        setTimeout(() => {
-            this.tick('downloading');
-        }, 0);
-
-        return new Promise(waitUntilRetrieval);
-    }
-
-    async readFile(id, encoding = null) {
-        if (!id) throw new Error('undefined or null id passed to storage.readFile');
-        id = id.replace('0x', '').toLowerCase();
-        // const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        // utils.makeSurePathExists(cache_dir);
-        // const tmpFileName = path.join(cache_dir, 'file_' + id);
-        const file = await this.getFile(id);
-        return file.getData(encoding);
-    }
-
-    async readJSON(id) {
-        let contents = await this.readFile(id, 'utf-8'); // todo: check fsize sanity check if routes or something
-        try {
-            return JSON.parse(contents); // todo: what if error? SyntaxError: Unexpected token < in JSON at position 0
-        } catch(e) {
-            return undefined;
-        }
-    }
-
-    async tick(mode = 'all') {
-        // todo
-
-        // todo:  you should queue the commands you are given
-        // todo:  join the network from the raiden wallet
-        // todo:  .get(data_id)
-        // todo:  .put(data, ) returns data_id
-        if (mode === 'all' || mode === 'uploading') {
-            let uploadingChunks = await Chunk.allBy('ul_status', Chunk.UPLOADING_STATUS_UPLOADING);
-            uploadingChunks.forEach((chunk) => {
-                setImmediate(async() => { // not waiting, just queueing for execution
-                    await this.chunkUploadingTick(chunk);
-                });
-            });
-        }
-
-        if (mode === 'all' || mode === 'downloading') {
-            let downloadingChunks = await Chunk.allBy('dl_status', Chunk.DOWNLOADING_STATUS_DOWNLOADING);
-            downloadingChunks.forEach((chunk) => { // not waiting, just queueing for execution
-                setImmediate(async() => {
-                    await this.chunkDownloadingTick(chunk);
-                });
-            });
-        }
-    }
-
-    async chooseProviderCandidate(recursive = true) {
-        try {
-            // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
-            const provider = await Model.transaction(async(t) => {
-                const storageProviders = await this.ctx.web3bridge.getAllStorageProviders();
-                // console.log({storageProviders})
-                const randomProvider = storageProviders[storageProviders.length * Math.random() | 0];
-                const getProviderDetails = await this.ctx.web3bridge.getSingleProvider(randomProvider);
-                const id = getProviderDetails['0'];
-
-                // old: const provider = await Provider.findOrCreate(id);
-                let provider, isNew;
-                let existingProviders = await Provider.findAll({
-                    where: { id: id },
-                    lock: t.LOCK.UPDATE,
-                    transaction: t,
-                    limit: 1,
-                });
-                if (existingProviders.length > 0) {
-                    provider = existingProviders[0];
-                    isNew = false;
-                    // todo: what if connectionstring changed on blockchain?
-                } else {
-                    provider = await Provider.create({
-                        id: id,
-                        address: ('0x' + id.split('#').pop()).slice(-42),
-                        connection: id,
-                    }, { transaction: t });
-                    isNew = true;
-                }
-
-                return provider;
-
-                // todo: remove blacklist from options
-                // todo: remove those already in progress or failed in this chunk
-            });
-
-            return provider;
-
-        } catch(e) {
-            // Something went wrong. Maybe we ran into a race condition and the key was just now generated?
-            // Try again but throw an error if it fails again
-            if (recursive) {
-                return this.chooseProviderCandidate(false);
-            } else {
-                this.ctx.log.error('chooseProviderCandidate error');
-                throw e;
-            }
-        }
-    }
-    async pickProviderToStoreWith() {
-        // todo: pick the cheapest, closest storage providers somehow (do whatever's easy at first)
-        // todo: don't pick the one you already store it with
-        // conditions:
-        // - it has cheapest fees
-        // - it's online - ping it (remote ping possible?)
-        // - you have a financial connection
-        // - cycle until you find one
-        // return ['989695771d51de19e9ccb943d32e58f872267fcc', {'protocol':'http:', 'hostname':'127.0.0.1', 'port':'12345'}];
-        return this.utils.urlToContact( await this.chooseProviderCandidate() );
-        // return 'http://127.0.0.1:12345/#989695771d51de19e9ccb943d32e58f872267fcc'; // test1 // TODO!
-    }
-
-    async chunkDownloadingTick(chunk) {
-        // todo todo todo: make it in the same way as chunkUploadingTick - ??
-
-        if (chunk.dl_status !== Chunk.DOWNLOADING_STATUS_DOWNLOADING) return;
-
-        let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed
-
-        this.send('GET_DECRYPTED_CHUNK', [chunk.id], provider.id, async(err, result) => { // todo: also send conditions
-            if (err) {
-                if (err.message && err.message.includes('ECHUNKNOTFOUND')) {
-                    chunk.dl_status = Chunk.DOWNLOADING_STATUS_FAILED;
-                    await chunk.save();
-                    await chunk.reconsiderDownloadingStatus(true);
-                    return;
-                } else {
-                    console.log({err, result}); // todo: for some reason, throw err doesn't display the error
-                    throw err;
-                } // todo: don't die
-            } // todo
-
-            const chunk_id = result[0]; // todo: validate
-            const data = result[1]; // todo: validate that it's buffer
-
-            if (!Buffer.isBuffer(data)) throw Error('Error: chunkDownloadingTick GET_DECRYPTED_CHUNK response: data must be a Buffer');
-            chunk.setData(data); // todo: what if it errors out?
-            chunk.dl_status = Chunk.DOWNLOADING_STATUS_DOWNLOADED;
+            chunk.size = buf.length;
+            chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
             await chunk.save();
-            await chunk.reconsiderDownloadingStatus(true);
-        });
-    }
-
-    async SEND_STORE_CHUNK_REQUEST(chunk, link) {
-        return new Promise((resolve, reject) => {
-            const provider_id = link.provider_id;
-            if (!provider_id) { console.error('No provider id!'); process.exit(); }
-            this.send('STORE_CHUNK_REQUEST', [chunk.id, chunk.getSize(), chunk.expires], link.provider_id, async(err, result) => {
-                await link.refresh();
-                (!err) ? resolve(true) : reject(err); // machine will move to next state
-            });
-        });
-    }
-
-    async CREATE_PAYMENT_CHANNEL(link) {
-        // Create raiden channel for providers without without open channel
-        let previousProviders = [];
-
-        return new Promise(async(resolve, reject) => {
-            try{
-                const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${link.provider_id.split('#')[1]}`);
-                const channelExists = await checkExistingChannel(checksumAddress);
-
-                if (channelExists === undefined) {
-                    let currentProvider = link.provider_id;
-                    const storage_provider_cache = path.join(this.ctx.datadir, this.config.storage_provider_cache);
-                    let sent_providers = '[]';
-                    if (fs.existsSync(storage_provider_cache)) {
-                        sent_providers = fs.readFileSync(storage_provider_cache);
-                    }
-                    const parsed_sent_providers = JSON.parse(sent_providers);
-                    fs.writeFileSync(storage_provider_cache, JSON.stringify([...new Set([...parsed_sent_providers, currentProvider])]));
-                    if (!previousProviders.includes(currentProvider) && !parsed_sent_providers.includes(currentProvider)) {
-                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${currentProvider.split('#')[1]}`);
-                        await createChannel(checksumAddress, 1000);  // todo:wvxshhvcsxhbcvhcsmjhjhsbc make channel deposit amount dynamic
-                    }
-                    previousProviders.push(currentProvider);
-                }
-
-                // channel exists
-                return resolve(true);
-            } catch (e) {
-                console.log(`CREATE_PAYMENT_CHANNEL ERROR: ${e}`);
-                // error creating channel so reject
-                return reject(e);
-            }
-        });
-    }
-
-    async ENCRYPT_CHUNK(chunk, link) {
-        if (!this.chunk_encryptors) {
-            this.chunk_encryptors = {};
-        }
-        return new Promise(async(resolve, reject) => {
-            let chunk_encryptor = fork(path.join(this.ctx.basepath, 'threads/encrypt.js'));
-            this.chunk_encryptors[chunk.id + link.id] = chunk_encryptor;
-
-            chunk_encryptor.on('message', async (message) => {
-                if (message.command === 'encrypt' && message.success === true) {
-                    const { chunkId, linkId } = message;
-                    if (chunkId !== chunk.id || linkId !== link.id) throw Error('ENCRYPT_CHUNK: chunkId/linkId returned from the encryptor thread do not match the original ones'); // Sanity check
-
-                    // Let's calculate merkle tree
-                    const SEGMENT_SIZE_BYTES = this.ctx.config.storage.segment_size_bytes; // todo: check that it's not 0/null or some weird value
-                    const data = link.getEncryptedData();
-                    const data_length = Buffer.byteLength(data);
-                    let segment_hashes = [];
-                    for (let i = 0; i < Math.ceil(data_length / SEGMENT_SIZE_BYTES); i++) { // todo: separate into encryption section
-                        // Note: Buffer.slice is (start, end) not (start, length)
-                        segment_hashes.push(utils.hashFn(data.slice(i * SEGMENT_SIZE_BYTES, i * SEGMENT_SIZE_BYTES + SEGMENT_SIZE_BYTES)));
-                    }
-
-                    const merkleTree = utils.merkle.merkle(segment_hashes, utils.hashFn);
-
-                    await link.refresh();
-                    // link.encrypted_hash = message.hash;
-                    link.encrypted_length = data_length;
-                    link.segment_hashes = segment_hashes.map(x => x.toString('hex'));
-                    link.merkle_tree = merkleTree.map(x => x.toString('hex'));
-                    link.merkle_root = link.merkle_tree[link.merkle_tree.length - 1].toString('hex');
-                    // cleanup chunk encryptor
-                    let chunk_encryptor = this.chunk_encryptors[chunk.id + link.id];
-                    chunk_encryptor.kill('SIGINT'); // todo: killing each time?
-                    delete this.chunk_encryptors[chunk.id + link.id];
-
-                    return resolve(true); // machine will move to next state
-                } else {
-                    console.warn('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ', message);
-                    this.ctx.die();
-                    return reject('Something is wrong, encryptor for chunk ' + chunk.id + ' returned ' + message);
-                }
-            });
-            // todo: do we need this?
-            chunk_encryptor.addListener("output", function (data) {
-                console.log('Chunk Encryptor output: ' + data);
-            });
-            // todo: two error listeners?
-            chunk_encryptor.addListener("error", async (data) => { // todo
-                reject('Chunk encryption FAILED:' + link.error); // todo: not data, link.error???
-            });
-            chunk_encryptor.on("error", async (data) => { // todo
-                reject('Chunk encryption FAILED:' + link.error); // todo: not data, link.error???
-            });
-            chunk_encryptor.on("exit", async (code) => {
-                if (code === 0 || code === null) {
-                    // do nothing
-                } else {
-                    reject('Chunk encryption FAILED, exit code' + code);
-                }
-            });
-
-            await link.refresh();
-            const redKey = await link.getRedkeyOrFail();
-            const privKey = redKey.private_key;
-
-            chunk_encryptor.send({
-                command: 'encrypt',
-                filePath: Chunk.getChunkStoragePath(chunk.id),
-                privKey: privKey,
-                chunkId: chunk.id,
-                linkId: link.id
-            });
-        });
-    }
-
-    async SEND_STORE_CHUNK_SEGMENTS(data, link) {
-        return new Promise(async(resolve, reject) => {
-            this.send('STORE_CHUNK_SEGMENTS', data, link.provider_id, async (err, result) => {
-                await link.refresh();
-                (!err) ? resolve(true) : reject(err); // machine will move to next state
-            });
-        });
-    }
-
-    async SEND_STORE_CHUNK_DATA(data, link) {
-        return new Promise((resolve, reject) => {
-            this.send('STORE_CHUNK_DATA', data, link.provider_id, async (err, result) => {
-                await link.refresh();
-                let idx = data[1];
-                const totalSegments = link.segment_hashes.length;
-                if (!err) {
-                    // todo: use the clues server gives you about which segments it already received (helps in case of duplication?)
-
-                    // Mark this segment as received, because the provider node just acknowledged it
-                    if (!link.segments_received) link.segments_received = [];
-                    link.segments_received = _.uniq([...link.segments_received, idx]);
-                    await link.save();
-
-                    // If everything is received, then we are done
-                    if (Object.keys(link.segments_received).length >= totalSegments) {
-                        link.segments_received = null;
-                        link.segments_sent = null;
-                        await link.save();
-                        return resolve(true);
-                    }
-                    return resolve(false); // not done yet
-                } else {
-                    console.log('ERR', err); // todo: remove
-                    return reject(err);
-                }
-            });
-        });
-    }
-
-    async SEND_STORE_CHUNK_SIGNATURE_REQUEST(link) {
-        return new Promise((resolve, reject) => {
-            this.send('STORE_CHUNK_SIGNATURE_REQUEST', [link.merkle_root], link.provider_id, async (err, result) => {
-                await link.refresh();
-                try {
-                    if (err) return reject('Provider responded with: ' + err); // todo
-                    if (!result) return reject('STORE_CHUNK_SIGNATURE_REQUEST: Result is empty!'); // todo
-
-                    // Verify the signature
-                    const chunk_id = result[0]; // todo: validate
-                    const signature = result[1];
-
-                    // todo: now count the debt
-                    // todo: and finally pay it before your next request
-
-                    let conditions = {
-                        chunk_id: link.merkle_root
-                    }; // todo // also todo combined pledge?
-
-                    link.pledge = {
-                        conditions,
-                        signature
-                    };
-                    link.validatePledge();
-                    if (this.ctx.config.payments.enabled) {
-                        const provider = await link.provider;
-                        const checksumAddress = await this.ctx.web3bridge.toChecksumAddress(`0x${provider.id.split('#')[1]}`);
-                        await makePayment(checksumAddress, 10); // todo: calculate amount using cost per kb for service provider
-                    }
-                    // const chunk = await link.getChunk();
-                    // await chunk.reconsiderUploadingStatus(true); <-- already being done after this function is over, if all is good, remove this block
-
-                    return resolve(true);
-                } catch (e) {
-                    // todo: don't just put this into the console, this is for debugging purposes
-                    console.debug('FAILED CHUNK', {err, result}, e);
-                    return reject(e);
-                }
-            });
-        });
-    }
-
-    // todo: move to client/storage
-    async chunkUploadingTick(chunk) {
-        if (this.uploadingChunksProcessing[chunk.id]) return;
-        this.uploadingChunksProcessing[chunk.id] = true;
-
-        await chunk.refresh();
-        if (chunk.ul_status !== Chunk.UPLOADING_STATUS_UPLOADING) return;
-
-        // Remove candidates that didn't respond within timeout period
-        // todo
-
-        // Push some candidates if not enough
-        const all = await chunk.getLinksWithStatus( StorageLink.STATUS_ALL );
-        const candidates = await chunk.getLinksWithStatus( StorageLink.STATUS_CREATED );
-        const failed = await chunk.getLinksWithStatus( StorageLink.STATUS_FAILED );
-        const inProgressOrLiveCount = all.length - failed.length;
-        const candidatesRequiredCount = chunk.redundancy - inProgressOrLiveCount;
-        const additionalCandidatesRequired = candidatesRequiredCount - candidates.length;
-
-        console.log({id: chunk.id, all, candidates, failed, inProgressOrLiveCount, candidatesRequiredCount, additionalCandidatesRequired}); // todo: remove
-
-        if (additionalCandidatesRequired > 0) {
-            // for(let i=0; i < additionalCandidatesRequired; i++) { // todo when you implement real provider choice & sort out the situation when no candidates available
-            let link = StorageLink.build();
-            let provider = await this.chooseProviderCandidate(); // todo: what if no candidates available? this case should be processed // todo optimize: maybe only supply id
-            // link.id = DB.generateRandomIdForNewRecord();
-            link.provider_id = provider.id;
-            link.redkey_id = await this.getOrGenerateRedkeyId(provider);
-            link.chunk_id = chunk.id;
-            link.initStateMachine(chunk, this.config.engine);
-            // use storage link state machine to sent CREATE event
-            link.machine.send('CREATE');
+            return buf;
         }
 
-        for(let link of all) {
-            const requests_length = (this.current_requests[link.provider_id]) ? this.current_requests[link.provider_id].length : 0;
-            const queued_length = (this.queued_requests[link.provider_id]) ? this.queued_requests[link.provider_id].length : 0;
-            console.debug(chunk.id, link.id, Object.keys(link.segments_sent ? link.segments_sent : {}).map(Number), link.segments_received, link.status, (link.status===StorageLink.STATUS_FAILED)?link.error:'', {requests_length, queued_length});
+        throw new Error('No mathing hash found in arweave');
+    } catch (e) {
+        logger.error({chunkId, message: e.message, stack: e.stack}, 'Chunk download failed');
+        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+        await chunk.save();
+        throw e;
+    }
+};
+
+const uploadChunk = async data => {
+    const chunkId = hashFn(data).toString('hex');
+
+    const chunk = await Chunk.findByIdOrCreate(chunkId);
+    if (chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+        logger.debug({chunkId}, 'Chunk already exists, cancelling upload');
+        return chunkId;
+    }
+    if (chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+        logger.debug({chunkId}, 'Chunk upload already in progress, waiting');
+        await delay(CONCURRENT_DOWNLOAD_DELAY);
+        return uploadChunk(data);
+    }
+
+    logger.debug({chunkId}, 'Starting chunk upload');
+    try {
+        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+        await chunk.save();
+
+        const formData = new FormData();
+        formData.append('file', data);
+        formData.append('__pn_integration_version_major', config.arweave_experiment_version_major);
+        formData.append('__pn_integration_version_minor', config.arweave_experiment_version_minor);
+        formData.append('__pn_chunk_id', chunkId);
+        formData.append(
+            `__pn_chunk_${config.arweave_experiment_version_major}.${config.arweave_experiment_version_minor}_id`,
+            chunkId
+        );
+
+        const response = await axios.post(
+            `${config.arweave_airdrop_endpoint}/signPOST`,
+            formData,
+            {headers: {...formData.getHeaders()}}
+        );
+
+        // TODO: check status from bundler
+        if (response.data.status !== 'ok') {
+            throw new Error(
+                `Chunk ${chunkId} uploading failed: arweave airdrop endpoint error: ${JSON.stringify(
+                    response,
+                    null,
+                    2
+                )}`
+            );
         }
 
-        // todo: what about expiring and renewing?
+        logger.debug({chunkId}, 'Chunk successfully uploaded, saving to disk');
+
+        await fs.writeFile(path.join(cacheDir, `chunk_${chunkId}`), data);
+        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+        chunk.size = data.length;
+        await chunk.save();
+
+        logger.debug({chunkId}, 'Chunk successfully uploaded and saved');
+
+        return chunkId;
+    } catch (e) {
+        logger.error({chunkId, message: e.message, stack: e.stack}, 'Chunk upload failed');
+        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+        await chunk.save();
+        throw e;
     }
+};
 
-    send(cmd, data, contact, callback) {
-        const request = {
-            'internal_id': (new Date).getTime().toString() + Math.random().toString(),
-            cmd, data, contact, callback
-        };
-        if (!this.queued_requests[contact]) this.queued_requests[contact] = [];
-        this.queued_requests[contact].push(request);
+const uploadFile = async data => {
+    const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
 
-        this.sendQueued(contact);
-    }
+    const CHUNK_SIZE = config.chunk_size_bytes;
+    const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
 
-    sendQueued(contact) {
-        const MAX_PARALLEL_PER_PROVIDER = this.ctx.config.client.max_parallel_requests_per_provider;
-        const requests_length = (this.current_requests[contact]) ? this.current_requests[contact].length : 0;
-        if (requests_length < MAX_PARALLEL_PER_PROVIDER && this.queued_requests[contact] && this.queued_requests[contact].length > 0) {
-            const req = this.queued_requests[contact].shift();
-            if (!this.current_requests[contact]) this.current_requests[contact] = [];
-            this.current_requests[contact].push(req);
-            return this.ctx.network.kademlia.node.send(req.cmd, req.data, utils.urlToContact(contact), (err, result) => {
-                this.current_requests = _.remove(this.current_requests, function(n) {
-                    return n.internal_id === req.internal_id;
-                });
-                this.sendQueued(contact);
-                req.callback(err, result);
-            });
+    if (totalChunks === 1) {
+        const fileId = hashFn(buf).toString('hex');
+        logger.debug({fileId}, 'File to be uploaded and consists only from 1 chunk');
+
+        const filePath = path.join(filesDir, `file_${fileId}`);
+        const file = await File.findByIdOrCreate(fileId, {original_path: filePath});
+        if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+            logger.debug({fileId}, 'File already exists, cancelling upload');
+            return fileId;
         }
-    }
+        if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+            logger.debug({fileId}, 'File  upload already in progress, waiting');
+            await delay(CONCURRENT_DOWNLOAD_DELAY);
+            return uploadFile(data);
+        }
 
-    isProviderQueueFull(contact) {
-        const MAX_PARALLEL_PER_PROVIDER = this.ctx.config.client.max_parallel_requests_per_provider;
-        const requests_length = (this.current_requests[contact]) ? this.current_requests[contact].length : 0;
-        const queued_length = (this.queued_requests[contact]) ? this.queued_requests[contact].length : 0;
-        return (requests_length+queued_length >= MAX_PARALLEL_PER_PROVIDER);
-    }
-
-    async ___getChunk(chunk_id) {
-        // FIND_NODE / FIND_VALUE / STORE should not be paid for for now
-        // You have to change FIND_VALUE to turn it into array
-        // 1. iterativeFindValues - get results
-        // filter out banned nodes
-        // 2. see whether you have financial connections to those nodes (and channel with enough funds), filter out everybody else
-        // as per raiden docs:
-        // POST /api/v1/payments/0x0f114A1E9Db192502E7856309cc899952b3db1ED/0x61C808D82A3Ac53231750daDc13c777b59310bD9 HTTP/1.1
-        // + the nodes that are online todo: remote ping? possible?
-        // + take the closest ones
-        // 3. poll nodes (even distant ones) and ask them if they still have the chunk and if they're online, and already offer them to pay for the chunk
-        // 4. start paying as soon as they send you first data. ban each other if the deal goes wrong after payment
-        // todo: what if they send you invalid data? you can only check integrity after you receive the whole chunk, right? maybe the chunk should be the merkle tree as well?
-    }
-
-    async removeChunk() { /*todo*/ }
-
-    async getOrGenerateRedkeyId(provider, recursive = true) {
-        // Note: locking here is important because of concurrency issues. I've spent hours debugging random errors in
-        // encryption when it turned out that several keys were generated for the same provider at once and they were
-        // all mixed up when they were actually sent to the service provider, which made for invalid decryption
-
+        logger.debug({fileId}, 'Starting file upload');
         try {
-            const redkey = await Model.transaction(async(t) => { // todo: t.LOCK.UPDATE doesn't work on empty rows!!! use findOrCreate with locking
-                let existingProviderKeys = await Redkey.findAll({
-                    where: { provider_id: provider.id },
-                    lock: t.LOCK.UPDATE,
-                    transaction: t,
-                    limit: 1,
-                });
+            file.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+            await file.save();
 
-                if (existingProviderKeys.length > 0) return existingProviderKeys[0];
-
-                const keyIndex = 0;
-
-                // If no keys, generate one
-                let { privateKey, publicKey } = await Redkey.generateNewForProvider(provider, keyIndex);
-
-                return await Redkey.create({
-                    public_key: publicKey,
-                    private_key: privateKey,
-                    provider_id: provider.id,
-                    index: keyIndex,
-                }, { transaction: t });
-            });
-
-            return redkey.id;
-
-        } catch(e) {
-            // Something went wrong. Maybe we ran into a race condition and the key was just now generated?
-            // Try again but throw an error if it fails again
-            if (recursive) {
-                return this.getOrGenerateRedkeyId(provider, false);
-            } else {
-                throw e;
+            const chunkId = await uploadChunk(buf);
+            if (chunkId !== fileId) {
+                throw new Error(
+                    `Unexpected different ids for file and it's only chunk: ${fileId}, ${chunkId}`
+                );
             }
+
+            await fs.writeFile(filePath, buf);
+            file.size = buf.length;
+            file.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+            await file.save();
+
+            logger.debug({fileId}, 'File successfully uploaded');
+
+            return fileId;
+        } catch (e) {
+            logger.error({fileId, message: e.message, stack: e.stack}, 'File upload failed');
+            file.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+            await file.save();
+            throw e;
+        }
+    }
+
+    const chunks = [];
+    for (let i = 0; i < totalChunks; i++) {
+        chunks.push(buf.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));
+    }
+
+    const chunkHashes = chunks.map(chunk => hashFn(chunk).toString('hex'));
+    const merkleTree = merkle.merkle(
+        chunkHashes.map(x => Buffer.from(x, 'hex')),
+        hashFn
+    );
+    const chunkInfoContents =
+        CHUNKINFO_PROLOGUE +
+        JSON.stringify({
+            type: 'file',
+            chunks: chunkHashes,
+            hash: 'keccak256',
+            filesize: buf.length,
+            merkle: merkleTree.map(x => x.toString('hex'))
+        });
+    const chunkInfoBuffer = Buffer.from(chunkInfoContents, 'utf-8');
+
+    // File id always matches it's index chunk id
+    const fileId = hashFn(chunkInfoBuffer).toString('hex');
+
+    logger.debug({fileId}, 'Successfully chunkified file');
+    const filePath = path.join(filesDir, `file_${fileId}`);
+
+    const file = await File.findByIdOrCreate(fileId, {original_path: filePath});
+    if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+        logger.debug({fileId}, 'File already exists, cancelling upload');
+        return fileId;
+    }
+    if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+        logger.debug({fileId}, 'File upload already in progress, waiting');
+        await delay(CONCURRENT_DOWNLOAD_DELAY);
+        return uploadFile(data);
+    }
+
+    logger.debug({fileId}, 'Uploading file');
+    try {
+        // TODO: retry logic
+        file.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+        await file.save();
+
+        const indexChunkId = await uploadChunk(chunkInfoBuffer);
+        if (indexChunkId !== fileId) {
+            throw new Error(
+                `Unexpected different ids for file and it's index chunk: ${fileId}, ${indexChunkId}`
+            );
+        }
+        const chunkIds = await Promise.all(chunks.map(chunk => uploadChunk(chunk)));
+        chunkIds.forEach((chunkId, index) => {
+            if (chunkId !== chunkHashes[index]) {
+                throw new Error(
+                    `Unexpected different chunks ids, should be same: ${
+                        (chunkId, chunkHashes[index])
+                    }`
+                );
+            }
+        });
+
+        logger.debug({fileId}, 'File successfully uploaded, saving to disk');
+
+        await fs.writeFile(filePath, buf);
+        file.size = buf.length;
+        file.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+        await file.save();
+
+        logger.debug({fileId}, 'File successfully uploaded and saved');
+        return fileId;
+    } catch (e) {
+        logger.error({fileId, message: e.message, stack: e.stack}, 'File upload failed');
+        file.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+        await file.save();
+        throw e;
+    }
+};
+
+const uploadDir = async dirPath => {
+    try {
+        const stat = await fs.stat(dirPath);
+        const isDir = stat.isDirectory();
+        if (!isDir) {
+            throw new Error(`Path ${escape(dirPath)} is not a directory`);
+        }
+    } catch (e) {
+        if (e.code === 'ENOENT') {
+            throw new Error(`Directory ${escape(dirPath)} does not exist`);
+        }
+        throw e;
+    }
+
+    logger.debug({dirPath: escape(dirPath)}, 'Uploading directory');
+
+    const files = await fs.readdir(dirPath);
+    const dirInfo = {
+        type: 'dir',
+        files: []
+    };
+
+    await Promise.all(
+        files.map(async fileName => {
+            const filePath = path.join(dirPath, fileName);
+            const stat = await fs.stat(filePath);
+
+            if (stat.isDirectory()) {
+                const dirId = await uploadDir(filePath);
+                dirInfo.files.push({
+                    type: FILE_TYPE.dirptr,
+                    name: fileName,
+                    original_path: filePath,
+                    size: stat.size,
+                    id: dirId
+                });
+            } else {
+                const file = await fs.readFile(filePath);
+                const fileId = await uploadFile(file);
+                dirInfo.files.push({
+                    type: FILE_TYPE.fileptr,
+                    name: fileName,
+                    original_path: filePath,
+                    size: stat.size,
+                    id: fileId
+                });
+            }
+        })
+    );
+
+    const id = await uploadFile(JSON.stringify(dirInfo));
+
+    logger.debug({dirPath: escape(dirPath)}, 'Successfully uploaded directory');
+
+    return id;
+};
+
+const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
+    const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
+
+    const filePath = path.join(filesDir, `file_${id}`);
+    const file = await File.findByIdOrCreate(id, {original_path: filePath});
+    if (useCache && file.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+        logger.debug({fileId: file.id}, 'Returning file from cache');
+        return await fs.readFile(filePath, {encoding});
+    }
+    if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+        logger.debug({fileId: file.id}, 'File download already in progress, waiting');
+        await delay(CONCURRENT_DOWNLOAD_DELAY);
+        return getFile(id, encoding); // use cache should be true in this case
+    }
+
+    logger.debug({fileId: file.id}, 'Downloading file');
+    try {
+        file.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+        await file.save();
+
+        logger.debug({fileId: file.id}, 'Getting info chunk');
+
+        // TODO: retry logic
+        const chunkInfo = await getChunk(file.id, encoding);
+        const chunkInfoString = chunkInfo.toString();
+        if (!chunkInfoString.startsWith(CHUNKINFO_PROLOGUE)) {
+            logger.debug({fileId: file.id}, 'File consists of a single chunk, returning it');
+            await fs.writeFile(filePath, chunkInfo);
+
+            file.size = chunkInfo.length;
+            file.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+            await file.save();
+
+            return encoding === null ? chunkInfo : chunkInfo.toString(encoding);
         }
 
-        // todo: multiple?
-    }
+        logger.debug({fileId: file.id}, 'Processing chunk info');
 
-    getCacheDir() {
-        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
-        utils.makeSurePathExists(cache_dir);
-        return cache_dir;
-    }
-}
+        const {
+            type,
+            hash,
+            chunks,
+            filesize,
+            merkle: merkleHash
+        } = JSON.parse(chunkInfo.slice(CHUNKINFO_PROLOGUE.length + 1));
 
-module.exports = Storage;
+        if (type !== 'file') {
+            throw new Error('Bad file type');
+        }
+
+        if (hash !== 'keccak256') {
+            throw new Error('Bad hash type');
+        }
+        const merkleReassembled = merkle
+            .merkle(
+                chunks.map(x => Buffer.from(x, 'hex')),
+                hashFn
+            )
+            .map(x => x.toString('hex'));
+        if (!areScalarArraysEqual(merkleReassembled, merkleHash)) {
+            throw new Error('Incorrect Merkle hash');
+        }
+
+        logger.debug({fileId: file.id}, 'Chunk info for file processed, getting chunks');
+
+        // TODO: retry logic
+        const chunkBuffers = await Promise.all(chunks.map(chunkId => getChunk(chunkId, encoding)));
+        const fileBuffer = Buffer.concat([
+            ...chunkBuffers.slice(0, -1),
+            // We should trim the trailing zeros from the last chunk
+            chunkBuffers[chunkBuffers.length - 1].slice(
+                0,
+                filesize - (chunkBuffers.length - 1) * config.chunk_size_bytes
+            )
+        ]);
+
+        logger.debug({fileId: file.id}, 'Successfully proceeded file chunks');
+
+        await fs.writeFile(filePath, fileBuffer);
+
+        file.size = filesize;
+        file.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+        await file.save();
+
+        return encoding === null ? fileBuffer : fileBuffer.toString(encoding);
+    } catch (e) {
+        logger.error({fileId: file.id, message: e.message, stack: e.stack}, 'File download failed');
+        file.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+        await file.save();
+        throw e;
+    }
+};
+
+const getJSON = async (id, useCache = true) => {
+    logger.debug({id}, 'Getting JSON');
+    const file = await getFile(id, 'utf8', useCache);
+    return JSON.parse(file.toString('utf-8'));
+};
+
+const getFileIdByPath = async (dirId, filePath) => {
+    const directory = await getJSON(dirId);
+    const segments = filePath.split(/[/\\]/).filter(s => s !== '');
+    const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
+    if (!nextFileOrDir) {
+        throw new Error(`Failed to find file ${filePath} in directory ${dirId}: not found`);
+    }
+    if (segments.length === 1) {
+        return nextFileOrDir.id;
+    }
+    if (nextFileOrDir.type === FILE_TYPE.fileptr) {
+        throw new Error(
+            `Failed to find file ${filePath} in directory ${dirId}: ${segments[0]} is not a directory`
+        );
+    } else {
+        return getFileIdByPath(nextFileOrDir.id, path.join(...segments.slice(1)));
+    }
+};
+
+module.exports = {
+    DOWNLOAD_UPLOAD_STATUS,
+    FILE_TYPE,
+    init,
+    getFile,
+    getJSON,
+    uploadFile,
+    uploadDir,
+    getFileIdByPath
+};

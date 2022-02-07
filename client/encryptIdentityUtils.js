@@ -1,7 +1,7 @@
 const crypto = require('crypto');
-const eccrypto = require("eccrypto");
+const eccrypto = require('eccrypto');
 
-module.exports.encryptData = async(host, plaintext, publicKey) => {
+module.exports.encryptData = async (host, plaintext, publicKey) => {
     // Secret symmetric key, generated randomly
     const symmetricKey = crypto.randomBytes(24);
 
@@ -24,8 +24,13 @@ module.exports.encryptData = async(host, plaintext, publicKey) => {
     const hostNameHashHex = crypto.createHash('sha256').update(host).digest('hex');
 
     // Encrypt secret information for the recipient with their public key
-    const messageForPublicKeyEncryption = `|${hostNameHashHex}|${symmetricKey.toString('hex')}|${iv.toString('hex')}|`;
-    const encryptedSymmetricObj = await eccrypto.encrypt(publicKeyBuffer, Buffer.from(messageForPublicKeyEncryption));
+    const messageForPublicKeyEncryption = `|${hostNameHashHex}|${symmetricKey.toString(
+        'hex'
+    )}|${iv.toString('hex')}|`;
+    const encryptedSymmetricObj = await eccrypto.encrypt(
+        publicKeyBuffer,
+        Buffer.from(messageForPublicKeyEncryption)
+    );
 
     //
     const encryptedSymmetricObjChunks = {};
@@ -41,15 +46,21 @@ module.exports.encryptData = async(host, plaintext, publicKey) => {
 };
 
 module.exports.decryptData = async (host, cyphertext, encryptedSymmetricObj, privateKey) => {
-    // console.log({host, cyphertext, encryptedSymmetricObj, privateKey});
     const decryptHostNameHash = crypto.createHash('sha256');
     decryptHostNameHash.update(host);
-    const symmetricObj = await eccrypto.decrypt(Buffer.from(privateKey, 'hex'), encryptedSymmetricObj);
+    const symmetricObj = await eccrypto.decrypt(
+        Buffer.from(privateKey, 'hex'),
+        encryptedSymmetricObj
+    );
     const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|');
-    if (decryptHostNameHash.digest('hex') !== hostNameHash){
+    if (decryptHostNameHash.digest('hex') !== hostNameHash) {
         throw new Error('Host is invalid');
     }
-    const decipher = crypto.createDecipheriv('aes192', Buffer.from(symmetricKey, 'hex'), Buffer.from(iv, 'hex'));
+    const decipher = crypto.createDecipheriv(
+        'aes192',
+        Buffer.from(symmetricKey, 'hex'),
+        Buffer.from(iv, 'hex')
+    );
     const plaintext = Buffer.concat([decipher.update(cyphertext), decipher.final()]);
 
     return {plaintext, hostNameHash, symmetricKey, iv};

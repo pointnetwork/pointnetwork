@@ -14,84 +14,83 @@ On startup it will run the pingExample, walletSubscriptionExample and deployerSu
 const WebSocket = require('ws');
 const readline = require('readline');
 
-const configPath = '../../resources/demo/config.test2.json' // change the file to connect to a different node
-const config = require(configPath)
+const configPath = '../../resources/demo/config.test2.json'; // change the file to connect to a different node
+const config = require(configPath);
 
 const ws = new WebSocket(`ws://localhost:${config.api.port}/`);
 
 let _console;
 const PROMPT = 'ws> ';
 
-const pingExample={
-  type: 'api',
-  params: {
-    path: 'status/ping'
-  }
-}
+const pingExample = {
+    type: 'api',
+    params: {path: 'status/ping'}
+};
 
-const walletSubscriptionExample={
-  type: 'walletSubscription',
-  params: {}
-}
+const walletSubscriptionExample = {
+    type: 'walletSubscription',
+    params: {}
+};
 
-const deployerSubscriptionExample={
-  type: 'deployerSubscription',
-  params: {}
-}
+const deployerSubscriptionExample = {
+    type: 'deployerSubscription',
+    params: {}
+};
 
 ws.on('open', () => {
-  ws.send(JSON.stringify(pingExample))
-  ws.send(JSON.stringify(walletSubscriptionExample))
-  ws.send(JSON.stringify(deployerSubscriptionExample))
-  _console.prompt();
+    ws.send(JSON.stringify(pingExample));
+    ws.send(JSON.stringify(walletSubscriptionExample));
+    ws.send(JSON.stringify(deployerSubscriptionExample));
+    _console.prompt();
 });
 
-ws.on('message', (data) => {
-  console.log(JSON.parse(data))
-  console.log("%O", data)
-  _console.prompt();
+ws.on('message', data => {
+    console.log(JSON.parse(data));
+    console.log('%O', data);
+    _console.prompt();
 });
 
 function createWsConsole() {
-  console.log('***********************************************')
-  console.log('Welcome to the Point Network WebSocket Console!')
-  console.log()
-  console.log('Call any API route via this interface:')
-  console.log('Example: Call the status/ping API endpoint')
-  console.log(`${PROMPT} {"type":"api","params":{"path":"status/ping"}}`)
-  console.log()
-  console.log('Example: Deploy a site via the API')
-  console.log(`${PROMPT} {"type":"api","params":{"path":"deploy?deploy_path=./example/hello.z"}}`)
-  console.log()
-  console.log('Example: Wallet transactions are streamed via this socket')
-  console.log(`${PROMPT} {"type":"walletSubscription","params":{}}`)
-  console.log()
-  console.log('Example: Deployer progress can be streamed via this socket')
-  console.log(`${PROMPT} {"type":"deployerSubscription","params":{}}`)
-  console.log()
-  console.log('***********************************************')
-  console.log()
-  process.stdin.setEncoding('utf8');
-  _console = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: PROMPT
-  });
-  _console.prompt();
-  // define console event handlers
-  _console.on('line', async (line) => {
-    let cmd = line.trim();
-    if (cmd === "exit") _console.close();
-    if (cmd === "") {
-      _console.prompt();
-    } else {
-      ws.send(cmd)
-    }
-
-  });
-  _console.on('close', () => {
-    process.exit(1);
-  })
+    console.log('***********************************************');
+    console.log('Welcome to the Point Network WebSocket Console!');
+    console.log();
+    console.log('Call any API route via this interface:');
+    console.log('Example: Call the status/ping API endpoint');
+    console.log(`${PROMPT} {"type":"api","params":{"path":"status/ping"}}`);
+    console.log();
+    console.log('Example: Deploy a site via the API');
+    console.log(
+        `${PROMPT} {"type":"api","params":{"path":"deploy?deploy_path=./example/hello.z"}}`
+    );
+    console.log();
+    console.log('Example: Wallet transactions are streamed via this socket');
+    console.log(`${PROMPT} {"type":"walletSubscription","params":{}}`);
+    console.log();
+    console.log('Example: Deployer progress can be streamed via this socket');
+    console.log(`${PROMPT} {"type":"deployerSubscription","params":{}}`);
+    console.log();
+    console.log('***********************************************');
+    console.log();
+    process.stdin.setEncoding('utf8');
+    _console = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        prompt: PROMPT
+    });
+    _console.prompt();
+    // define console event handlers
+    _console.on('line', async line => {
+        const cmd = line.trim();
+        if (cmd === 'exit') _console.close();
+        if (cmd === '') {
+            _console.prompt();
+        } else {
+            ws.send(cmd);
+        }
+    });
+    _console.on('close', () => {
+        process.exit(1);
+    });
 }
 
 createWsConsole();

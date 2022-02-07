@@ -1,26 +1,15 @@
 #!/usr/bin/env node
-
-// Check Node.js version
-const m = process.version.match(/(\d+)\.(\d+)\.(\d+)/);
-const [major, minor, patch] = m.slice(1).map(_ => parseInt(_));
-if (major < 14) {
-    console.error('\x1b[41m%s\x1b[0m', "You are not using the latest Node.JS version supported by this application. Execute `nvm use` to switch to the app's version.");
-    process.exit(1);
-}
-
 // Load first dependencies
 const { Command } = require('commander');
 const { homedir } = require('os');
 const { exec } = require("child_process");
 const path = require('path');
 const fs = require('fs');
-const _ = require('lodash');
-const pino = require('pino');
-const multistream = require('pino-multi-stream').multistream;
 const npid = require('npid');
 const mkdirp = require('mkdirp');
 const DB = require('./db');
 const program = new Command();
+const logger = require('./core/log');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -75,10 +64,7 @@ if (! program.config) {
 const ctx = {};
 
 ctx.datadir = ctx.datapath = program.datadir;
-ctx.configPath = program.config;
 ctx.basepath = __dirname;
-ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit() function here below. and why 1?
-ctx.die = (err) => { ctx.log.fatal(err); ctx.exit(1); };
 
 // --------------- Dump Demo Configs ----------------- //
 // Must be placed before we're checking for existence of any configs!
@@ -90,51 +76,24 @@ if (program.demo) {
 // ------------------- Init Config ----------------- //
 
 if (! fs.existsSync(ctx.datadir)) mkdirp.sync(ctx.datadir);
-if (! fs.existsSync(ctx.configPath)) throw Error('Cannot find configuration file '+ctx.configPath);
 
-const environment = process.env.DB_ENV || 'development';
+ctx.config = require('./core/config');
 
-const config = JSON.parse(fs.readFileSync(ctx.configPath, 'utf-8'));
-const defaultConfig = require(path.resolve(__dirname, 'resources', 'defaultConfig.json'));
-const dbConfig = { "db": require(path.resolve(__dirname, 'resources', 'sequelizeConfig.json'))[environment] }; // todo: the todo is about 'development' part
-ctx.config = _.merge(defaultConfig, dbConfig, config);
-if (program.verbose) ctx.config.log.level = 'debug';
+if (program.verbose) ctx.config.log.level = 'trace';
 
 // ------------------- Init Logger ----------------- //
 
-const logFilePath = path.join(ctx.datadir, 'point.log');
+ctx.log = logger.child({account: ctx.config.client.wallet.account});
+const log = ctx.log.child({module: 'point'});
 
-const level = pino.levels.values[ ctx.config.log.level ];
-const formatters = {
-    level: (label) => {
-        return { level: label };
-    },
-};
-
-const options = {
-    enabled: ctx.config.log.enabled,
-    formatters,
-    level
-};
-
-let streams = [];
-const outStream = pino({ prettyPrint: { colorize: true } });
-streams.push({
-    level: options.level,
-    stream: outStream[pino.symbols.streamSym]
-});
-streams.push({
-    level: options.level,
-    stream: fs.createWriteStream(path.resolve(logFilePath))
-});
-
-ctx.log = pino(options, multistream(streams));
+ctx.exit = (code) => (log.close(), process.exit(code));
+ctx.die = (err) => (log.fatal(err), ctx.exit(1));
 
 // ----------------- Console Mode -------------------- //
 
 if (program.attach) {
     const Console = require('./console');
-    const console = new Console();
+    const console = new Console(ctx);
     console.start();
     return;
 }
@@ -145,7 +104,7 @@ if (program.deploy) {
     if (program.deploy.length === 0) return ctx.die('error: missing path');
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
-    deploy.deploy(program.deploy, program.deploy_contracts, program.dev);
+    deploy.deploy(program.deploy, program.deploy_contracts, program.dev).then(ctx.exit);
     return;
 }
 
@@ -164,9 +123,13 @@ if (program.migrate) {
     const seq_cmd = (program.migrate_undo) ? 'db:migrate:undo' : 'db:migrate';
     exec(`npx sequelize-cli ${seq_cmd} --config resources/sequelizeConfig.json --env ${process.env.DB_ENV || ctx.config.db.database}`,
         (error, stdout, stderr) => {
-            if (error) return console.log(`error: ${error.message}`);
-            if (stderr) return console.log(`stderr: ${stderr}`);
-            console.log(`${stdout}`);
+            if (error) {
+                return log.error(error, 'Migration error');
+            }
+            if (stderr) {
+                return log.error(`Migration stderr: ${stderr}`);
+            }
+            log.debug(`Migration result: ${stdout}`);
         }
     );
     return;
@@ -205,7 +168,7 @@ async function _exit(sig) {
 
     let errors = [];
 
-    ctx.log.info('Received signal '+sig+', shutting down...');
+    log.info('Received signal '+sig+', shutting down...');
 
     try {
         if (ctx.db && ctx.db.shutdown) await ctx.db.shutdown();
@@ -214,9 +177,11 @@ async function _exit(sig) {
     }
 
     if (errors.length) {
-        for (let e of errors) ctx.log.error(e);
+        for (let e of errors) {
+            log.error(e);
+        }
     } else {
-        ctx.log.info('Successfully shut down.');
+        log.info('Successfully shut down.');
     }
 
     process.exit(1);

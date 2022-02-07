@@ -1,18 +1,16 @@
-let originalBSON = require('bson');
+const originalBSON = require('bson');
 
-let BSON = {};
+const BSON = {};
 
-for(let i in originalBSON) {
+for (const i in originalBSON) {
     BSON[i] = originalBSON[i];
 }
 
-BSON.serialize = (a, ...b) => {
-    return originalBSON.serialize({"_":a}, b);
-};
+BSON.serialize = (a, ...b) => originalBSON.serialize({_: a}, b);
 
 BSON.deserialize = (...a) => {
     const deserialized = originalBSON.deserialize(...a, {promoteBuffers: true});
-    return deserialized["_"];
+    return deserialized['_'];
 };
 
 module.exports = BSON;

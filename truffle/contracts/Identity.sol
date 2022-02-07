@@ -81,8 +81,8 @@ contract Identity {
     function ikvPut(string memory identity, string memory key, string memory value) public onlyIdentityOwner(identity) {
         ikvSet(identity,key,value);
     }
-
-    function ikvMigrate(string memory identity, string memory key, string memory value) public onlyBeforeMigrations() {
+    
+    function ikvImportKV(string memory identity, string memory key, string memory value) public onlyBeforeMigrations() {
         ikvSet(identity,key,value);
     }
 
