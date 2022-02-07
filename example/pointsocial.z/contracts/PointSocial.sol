@@ -133,9 +133,7 @@ contract PointSocial {
         address author,
         bytes32 contents,
         bytes32 image,
-        uint256 createdAt,
-        uint16 likesCounts,
-        uint16 commentsCounts
+        uint256 createdAt
     ) public {
         require(msg.sender == _migrator, "Access Denied");
 
@@ -145,8 +143,8 @@ contract PointSocial {
                 contents: contents,
                 image: image,
                 createdAt: createdAt,
-                likesCount: likesCounts,
-                commentsCount: commentsCounts
+                likesCount: 0,
+                commentsCount: 0
             });
 
             posts.push(_post);
@@ -175,5 +173,6 @@ contract PointSocial {
             commentById[_comment.id] = _comment;
             commentsByOwner[_comment.from].push(_comment);
             _commentIds.increment();
+            postById[postId].commentsCount += 1;
     }
 }

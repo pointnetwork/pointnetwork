@@ -1,17 +1,16 @@
 'use strict';
 
-//truffle exec scripts/blogImporter.js <action> <contract> <migration_file>
+//truffle exec scripts/pointSocialImporter.js <action> <contract> <migration_file>
 
-//BEWARE: upload function uses target deployed blog contract
-//truffle exec scripts/blogImporter.js --upload 0xa4C69e06Cdb629Cd20DC813517cb9a2f279cD0A7 1643656897-blog.json
+//BEWARE: upload function uses target deployed PointSocial contract
+//truffle exec scripts/pointSocialImporter.js --upload 0x9AFE3DfB2920d669579B6780eb858A36dAA576b8 1644243059-pointsocial.json
 
 //BEWARE: download function uses current deployed identity contract
-//truffle exec scripts/blogImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 
+//truffle exec scripts/pointSocialImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 
 const fs = require('fs');
 const { exit } = require('process');
 
 
-//truffle exec scripts/blogImporter.js --upload 0xa4C69e06Cdb629Cd20DC813517cb9a2f279cD0A7 1643656897-blog.json --config truffle-config-neon.js --network ynet
 
 global.artifacts = artifacts;
 global.web3 = web3;
@@ -44,48 +43,48 @@ function loadMigrationFile() {
 }
 
 async function download(contract) {
-    const blogArtifacts = artifacts.require("./Blog.sol");
+    const pointSocialArtifacts = artifacts.require("./PointSocial.sol");
     const artifact = artifacts.require("./Identity.sol");
     const identityContract = new web3.eth.Contract(artifact.abi, contract);
-    const handle = 'blog';
+    const handle = 'pointsocial';
 
     let fileStructure = {
-        "articles":[],
+        "posts":[],
     };
 
     //0x16A9d233278075bf6EC4dC52BA70EF3E6ea9d182
-    // assuming that the contract address is the first key in the ikvList
+    //assuming that the contract address is the first key in the ikvList
     const contractAddressKey = await identityContract.methods.ikvList(handle, 0).call();
     const contractAddress = await identityContract.methods.ikvGet(handle, contractAddressKey).call();
-    const blogContract = new web3.eth.Contract(blogArtifacts.abi, contractAddress);
-    const data = await blogContract.methods.getArticles().call();
-    const articles  = [];
+    const pointSocialContract = new web3.eth.Contract(pointSocialArtifacts.abi, contractAddress);
+    const data = await pointSocialContract.methods.getAllPosts().call();
+    const posts  = [];
 
     for (const item of data) {
-        const {id, author, title, contents, timestamp} = item;
-
+        console.log(item);
+        const {id, from, contents, image, createdAt} = item;
         console.log('Fetching post:'+id);
 
-        let comments = await blogContract.methods.getCommentsByArticle(id).call();
+        let comments = await pointSocialContract.methods.getAllCommentsForPost(id).call();
         
-        let article = {
+        let post = {
             id, 
-            author, 
-            title, 
+            from, 
             contents, 
-            timestamp,
+            image, 
+            createdAt,
             comments
         }
 
-        articles.push(article);
+        posts.push(post);
     }
 
-    fileStructure.articles = articles;
+    fileStructure.posts = posts;
 
     const timestamp = Math.round(+new Date()/1000); 
 
     fs.writeFileSync(
-        '../resources/migrations/'+timestamp+'-blog.json', 
+        '../resources/migrations/'+timestamp+'-pointsocial.json', 
         JSON.stringify(fileStructure, null, 4)
     );
 
@@ -95,58 +94,61 @@ async function download(contract) {
 
 async function upload(contract) {
     const migrationFile = '../resources/migrations/'+process.argv[6];
-
+    
     if (!fs.existsSync(migrationFile)) {
         console.log("Migration not found");
         exit(0);
     }
 
-    const blogArtifacts = artifacts.require("./Blog.sol");
-    const blogContract = new web3.eth.Contract(blogArtifacts.abi, contract);
+    const pointSocialArtifacts = artifacts.require("./PointSocial.sol");
+    const pointSocialContract = new web3.eth.Contract(pointSocialArtifacts.abi, contract);
     let accounts = await web3.eth.getAccounts();
 
     let data = JSON.parse(fs.readFileSync(migrationFile));
-    
-    await blogContract.methods.addMigrator(accounts[0]).send({
+
+    await pointSocialContract.methods.addMigrator(accounts[0]).send({
         from:accounts[0]
     });
-    
-    let articleComments = [];
 
-    for (const article of data.articles) {
-        console.log('Migrating: Blog post from '+article.author+' contents '+article.contents);
+    let postComments = [];
+
+    for (const post of data.posts) {
+        console.log('Migrating: PointSocial post from '+post.from+' contents '+post.contents);
+    
         
-        await blogContract.methods.add(
-            article.id,
-            article.author, 
-            article.title, 
-            article.contents, 
-            article.timestamp
+        await pointSocialContract.methods.add(
+            post.id,
+            post.from, 
+            post.contents, 
+            post.image, 
+            post.createdAt
         ).send({
             from: accounts[0]
         });
-    
-        articleComments[article.id] = article.comments;
+        
+        postComments[post.id] = post.comments;
     }
 
-    for (let postId in articleComments){
-        for(let comment of articleComments[postId]) {
-            let author = comment[0];
-            let contents = comment[1];
-            let timestamp = comment[2];
+    for (let postId in postComments){
+        for(let comment of postComments[postId]) {
+            let id = comment[0];
+            let from = comment[1];
+            let contents = comment[2];
+            let createdAt = comment[3];
     
-            console.log('Migrating: Blog comment post id:'+postId+' from:'+author);
-            await blogContract.methods.addComment(
-                postId,
-                author, 
+            console.log('Migrating: PointSocial comment post id:'+postId+' from:'+from);
+            await pointSocialContract.methods.addComment(
+                id,
+                postId, 
+                from, 
                 contents, 
-                timestamp 
+                createdAt 
             ).send({
                 from: accounts[0]
             });
         }
     }
-
+    
     console.log('Done');
     exit(0);
 }
