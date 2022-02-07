@@ -82,7 +82,7 @@ const init = async ctx => {
         makeSurePathExistsAsync(filesDir)
     ]);
 
-    if (process.env.MODE === 'e2e') {
+    if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
         wallet = await arweave.wallets.generate();
         walletAddress = await arweave.wallets.jwkToAddress(wallet);
         // console.log('TEST WALLET ADDRESS: ', walletAddress);
@@ -93,7 +93,7 @@ const init = async ctx => {
     }
 };
 
-const arweave = (process.env.MODE === 'e2e') ? Arweave.init({
+const arweave = (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') ? Arweave.init({
     host: 'arlocal',
     port: 1984,
     protocol: 'http',
@@ -181,6 +181,13 @@ const signTx = async (data, tags) => {
     return transaction;
 };
 
+const broadcastTx = async (transaction) => {
+    let uploader = await arweave.transactions.getUploader(transaction);
+    while (!uploader.isComplete) { await uploader.uploadChunk(); }
+
+    return transaction;
+}
+
 const uploadChunk = async data => {
     const chunkId = hashFn(data).toString('hex');
 
@@ -209,9 +216,12 @@ const uploadChunk = async data => {
             [chunkIdVersioned]: chunkId
         };
 
-        if (process.env.MODE === 'e2e') {
+        if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
             // upload to areweave directly without using bundler
-            signTx(data, tags);
+            let transaction = await signTx(data, tags);
+            transaction = await broadcastTx(transaction);
+            const txid = transaction.id;
+            logger.debug({txid}, "Transaction id successfully generated");
         } else {
             // upload to point bundler to forward to arweave
             const formData = new FormData();
