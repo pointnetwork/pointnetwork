@@ -30,17 +30,21 @@ class DB {
         // todo: remove
 
         // Clear storage data files
-        let dirs = [ctx.config.client.storage.cache_path, ctx.config.service_provider.storage.cache_path, ctx.config.client.zproxy.cache_path];
-        for(let dir of dirs) {
+        const dirs = [
+            ctx.config.client.storage.cache_path,
+            ctx.config.service_provider.storage.cache_path,
+            ctx.config.client.zproxy.cache_path
+        ];
+        for (const dir of dirs) {
             if (typeof dir !== 'string' || dir.length < 5) {
-                this.log.error('Trying to delete files from '+dir+'/**/*');
-                throw new Error('Trying to delete files from '+dir+'/**/*');
+                this.log.error('Trying to delete files from ' + dir + '/**/*');
+                throw new Error('Trying to delete files from ' + dir + '/**/*');
             }
 
-            let cache_dir = path.join(ctx.datadir, dir);
+            const cache_dir = path.join(ctx.datadir, dir);
 
             if (fs.existsSync(cache_dir)) {
-                let files = fs.readdirSync(cache_dir);
+                const files = fs.readdirSync(cache_dir);
                 for (const file of files) {
                     fs.unlinkSync(path.join(cache_dir, file));
                 }
@@ -49,9 +53,12 @@ class DB {
 
         // Clear postgres db
         await ctx.db.init();
-        let sql = "DROP OWNED BY "+ctx.config.db.username+" CASCADE"; // todo: sqli, sanitize
+        const sql = 'DROP OWNED BY ' + ctx.config.db.username + ' CASCADE'; // todo: sqli, sanitize
         this.log.debug({sql}, 'Executing Drop SQL');
-        this.log.debug({sql, result: await Model.connection.query(sql, { raw: true })}, '__debugClearCompletely executed.');
+        this.log.debug(
+            {sql, result: await Model.connection.query(sql, {raw: true})},
+            '__debugClearCompletely executed.'
+        );
 
         ctx.die();
     }

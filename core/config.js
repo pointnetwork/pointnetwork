@@ -21,20 +21,19 @@ if (typeof arweave_key !== 'object') {
 const variables = {
     api: {
         address: process.env.POINT_API_HOST || undefined,
-        port: process.env.POINT_API_PORT || undefined,
+        port: process.env.POINT_API_PORT || undefined
     },
-    log: {
-        sendLogsTo: process.env.SEND_LOGS_TO || undefined,
-    },
+    log: {sendLogsTo: process.env.SEND_LOGS_TO || undefined},
     client: {
         zproxy: {
             host: process.env.POINT_ZPROXY_HOST || undefined,
-            port: process.env.POINT_ZPROXY_PORT || undefined,
+            port: process.env.POINT_ZPROXY_PORT || undefined
         },
         storage: {
             engine: process.env.POINT_STORAGE_ENGINE || undefined,
             arweave_key,
-            arweave_experiment_version_minor: process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || undefined
+            arweave_experiment_version_minor:
+                process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || undefined
         },
         wallet: {
             account: '0x' + wallet.getAddress().toString('hex'),
@@ -50,8 +49,9 @@ const variables = {
         bootstrap_nodes: process.env.POINT_NODE_BOOTSTRAP_NODES || [],
         identity_contract_address: process.env.CONTRACT_ADDRESS_IDENTITY || undefined,
         migrations_contract_address: process.env.CONTRACT_ADDRESS_MIGRATIONS || undefined,
-        storage_provider_registry_contract_address: process.env.CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY || undefined,
-    },
+        storage_provider_registry_contract_address:
+            process.env.CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY || undefined
+    }
 };
 
 const datadir = process.env.DATADIR;

@@ -1,5 +1,5 @@
-let events = require('events');
-let path = require('path');
+const events = require('events');
+const path = require('path');
 
 class DeployerProgress {
     static get PROGRESS_UPDATED() {
@@ -13,14 +13,22 @@ class DeployerProgress {
 
     update(filename, progress = 0, status = 'UNKNOWN') {
         // forward this onto the event handler function
-        this.progressEventEmitter.emit(DeployerProgress.PROGRESS_UPDATED, {filename, progress, status});
+        this.progressEventEmitter.emit(DeployerProgress.PROGRESS_UPDATED, {
+            filename,
+            progress,
+            status
+        });
     }
 
     // private functions
     _updateProgress(_filename, _progress, _status) {
-        let inputs = this._formatInputs(_filename, _progress, _status);
-        let existingRow = this._fetchExistingRow(inputs.filename);
-        existingRow ? this._updateExistingRow(existingRow, inputs) : this._createNewRow(inputs);
+        const inputs = this._formatInputs(_filename, _progress, _status);
+        const existingRow = this._fetchExistingRow(inputs.filename);
+        if (existingRow) {
+            this._updateExistingRow(existingRow, inputs);
+        } else {
+            this._createNewRow(inputs);
+        }
     }
 
     _updateExistingRow(existingRow, inputs) {
@@ -33,9 +41,9 @@ class DeployerProgress {
     }
 
     _formatInputs(_filename, _progress, _status) {
-        let filename = path.basename(_filename);
-        let status = _status.toUpperCase();
-        let progress = _progress;
+        const filename = path.basename(_filename);
+        const status = _status.toUpperCase();
+        const progress = _progress;
         return {filename, progress, status};
     }
 

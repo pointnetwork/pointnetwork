@@ -1,7 +1,5 @@
 const PointSDKController = require('./PointSDKController');
-const fs = require('fs');
 const ethereumjs = require('ethereumjs-util');
-const helpers = require('./helpers/WalletHelpers');
 
 let web3;
 
@@ -16,54 +14,44 @@ class WalletController extends PointSDKController {
     }
 
     async tx() {
-        let from = this.defaultWallet.address;
-        let to = this.payload.to;
-        let value = this.payload.value;
+        const from = this.defaultWallet.address;
+        const to = this.payload.to;
+        const value = this.payload.value;
 
-        let receipt = await this.ctx.wallet.sendTransaction(from, to, value);
-        let transactionHash = receipt.transactionHash;
+        const receipt = await this.ctx.wallet.sendTransaction(from, to, value);
+        const transactionHash = receipt.transactionHash;
 
-        return this._response({
-            transactionHash
-        });
+        return this._response({transactionHash});
     }
 
     publicKey() {
-        let publicKeyBuffer = ethereumjs.privateToPublic(this.defaultWallet.privateKey);
-        let publicKey = ethereumjs.bufferToHex(publicKeyBuffer);
+        const publicKeyBuffer = ethereumjs.privateToPublic(this.defaultWallet.privateKey);
+        const publicKey = ethereumjs.bufferToHex(publicKeyBuffer);
 
         // return the public key
-        return this._response({
-            publicKey
-        });
+        return this._response({publicKey});
     }
 
     address() {
-        let address = this.defaultWallet.address;
+        const address = this.defaultWallet.address;
 
         // return the public key
-        return this._response({
-            address
-        });
+        return this._response({address});
     }
 
     async balance() {
-        let balance = (await this.web3.eth.getBalance(this.defaultWallet.address)).toString();
+        const balance = (await this.web3.eth.getBalance(this.defaultWallet.address)).toString();
 
         // return the wallet balance
-        return this._response({
-            balance
-        });
+        return this._response({balance});
     }
 
     hash() {
-        let partialPK = this.defaultWallet.privateKey.substr(0, 33);
-        let hashBuffer = ethereumjs.sha256(Buffer.from(partialPK));
-        let hash = ethereumjs.bufferToHex(hashBuffer);
+        const partialPK = this.defaultWallet.privateKey.substr(0, 33);
+        const hashBuffer = ethereumjs.sha256(Buffer.from(partialPK));
+        const hash = ethereumjs.bufferToHex(hashBuffer);
 
-        return this._response({
-            hash
-        });
+        return this._response({hash});
     }
 }
 

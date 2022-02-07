@@ -28,7 +28,7 @@ class Core {
     async postInit() {
         await this.ctx.wallet.saveDefaultWalletToKeystore();
 
-        setTimeout(async() => {
+        setTimeout(async () => {
             // Here we can put something that will run at each node start, but better not to
         }, 0);
     }
@@ -49,7 +49,8 @@ class Core {
         await this.ctx.client.start();
     }
 
-    async initWallet() { // todo: rename to keychain?
+    async initWallet() {
+        // todo: rename to keychain?
         this.ctx.wallet = new Wallet(this.ctx);
         await this.ctx.wallet.start();
     }
@@ -58,7 +59,6 @@ class Core {
         this.ctx.provider = new Provider(this.ctx);
         await this.ctx.provider.start();
     }
-
 }
 
 module.exports = Core;

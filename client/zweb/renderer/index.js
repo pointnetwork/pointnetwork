@@ -1,8 +1,8 @@
-let TwigLib = require('twig');
+const TwigLib = require('twig');
 const _ = require('lodash');
-let { encryptData, decryptData } = require('../../encryptIdentityUtils');
-const ethUtil = require("ethereumjs-util");
-const {getFile, getJSON, getFileIdByPath, uploadFile} = require("../../storage/index.js");
+const {encryptData, decryptData} = require('../../encryptIdentityUtils');
+const ethUtil = require('ethereumjs-util');
+const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage/index.js');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -22,23 +22,21 @@ class Renderer {
         try {
             const Twig = this.#getTwigForHost(host);
 
-            let template = Twig.twig({
+            const template = Twig.twig({
                 id: host + '/' + template_id,
                 allowInlineIncludes: true,
                 autoescape: true,
                 strict_variables: true,
                 data: template_contents,
                 async: true, // todo
-                rethrow: true, // makes twig stop and dump full message to us, and from us into the browser instead of just logging it into the console
+                rethrow: true // makes twig stop and dump full message to us, and from us into the browser instead of just logging it into the console
             });
 
             // Here we can specify global variables to pass into twig
-            let variables = {
-                host
-            };
+            let variables = {host};
             variables = Object.assign({}, variables, {request: request_params});
 
-            let result = await template.renderAsync(variables);
+            const result = await template.renderAsync(variables);
 
             // Okay, we shouldn't be nuking our Twig cache each time, but I figured it's better if we suffer on performance a bit,
             // than have a memory leak with thousands of Twig objects in memory waiting
@@ -54,17 +52,17 @@ class Renderer {
     #defineAvailableFunctions() {
         // These functions will be available for zApps to call in ZHTML
         return {
-            keyvalue_list: async function(host, key) {
+            keyvalue_list: async function (host, key) {
                 return await this.renderer.ctx.keyvalue.list(host, key);
             },
-            keyvalue_get: async function(host, key) {
+            keyvalue_get: async function (host, key) {
                 return await this.renderer.ctx.keyvalue.get(host, key);
             },
-            storage_get_by_ikv: async function(identity, key) {
+            storage_get_by_ikv: async function (identity, key) {
                 const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
                 return getFile(fileKey);
             },
-            storage_get: async function(key) {
+            storage_get: async function (key) {
                 try {
                     return getFile(key);
                 } catch (e) {
@@ -72,63 +70,83 @@ class Renderer {
                     return 'Invalid Content';
                 }
             },
-            storage_get_parsed: async function(key) {
+            storage_get_parsed: async function (key) {
                 return await getJSON(key);
             },
-            storage_put: async function(content) {
+            storage_put: async function (content) {
                 return uploadFile(content);
             },
-            encrypt_data: async function(publicKey, data) {
-                let host = this.host;
+            encrypt_data: async function (publicKey, data) {
+                const host = this.host;
                 return await encryptData(host, data, publicKey); // todo: make sure you're not encrypting on something stupid like 0x0 public key
             },
-            decrypt_data: async function(encryptedData, unparsedEncryptedSymmetricObjJSON) {
-                let host = this.host;
-                const { privateKey } = this.renderer.ctx.wallet.config;
+            decrypt_data: async function (encryptedData, unparsedEncryptedSymmetricObjJSON) {
+                const host = this.host;
+                const {privateKey} = this.renderer.ctx.wallet.config;
 
                 const encryptedSymmetricObjJS = JSON.parse(unparsedEncryptedSymmetricObjJSON);
                 const encryptedSymmetricObj = {};
                 for (const k in encryptedSymmetricObjJS) {
                     encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricObjJS[k], 'hex');
                 }
-                const decryptedData = await decryptData(host, Buffer.from(encryptedData, 'hex'), encryptedSymmetricObj, privateKey);
+                const decryptedData = await decryptData(
+                    host,
+                    Buffer.from(encryptedData, 'hex'),
+                    encryptedSymmetricObj,
+                    privateKey
+                );
                 return decryptedData.plaintext.toString();
             },
-            isHash: async function(str) {
-                const s = (_.startsWith(str, '0x')) ? str.substr(2) : str;
+            isHash: async function (str) {
+                const s = _.startsWith(str, '0x') ? str.substr(2) : str;
                 if (s.length !== 64) return false;
-                return ((new RegExp("^[0-9a-fA-F]+$")).test(s));
+                return new RegExp('^[0-9a-fA-F]+$').test(s);
             },
-            identity_by_owner: async function(owner) {
+            identity_by_owner: async function (owner) {
                 return await this.renderer.ctx.web3bridge.identityByOwner(owner);
             },
-            owner_by_identity: async function(identity) {
+            owner_by_identity: async function (identity) {
                 return await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
             },
-            public_key_by_identity: async function(identity) {
+            public_key_by_identity: async function (identity) {
                 return await this.renderer.ctx.web3bridge.commPublicKeyByIdentity(identity);
             },
-            identity_ikv_get: async function(identity, key) {
+            identity_ikv_get: async function (identity, key) {
                 return await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
             },
-            contract_get: async function(target, contractName, method, params) {
-                return await this.renderer.ctx.web3bridge.callContract(target, contractName, method, params);
+            contract_get: async function (target, contractName, method, params) {
+                return await this.renderer.ctx.web3bridge.callContract(
+                    target,
+                    contractName,
+                    method,
+                    params
+                );
             },
-            contract_call: async function(host, contractName, methodName, params) {
-                return await this.renderer.ctx.web3bridge.sendToContract(host.replace('.z', ''), contractName, methodName, params);
+            contract_call: async function (host, contractName, methodName, params) {
+                return await this.renderer.ctx.web3bridge.sendToContract(
+                    host.replace('.z', ''),
+                    contractName,
+                    methodName,
+                    params
+                );
             },
-            contract_events: async function(host, contractName, event, filter = {}) {
-
+            contract_events: async function (host, contractName, event, filter = {}) {
                 //delete keys property inserted by twig
-                if(filter.hasOwnProperty('_keys'))
-                    delete filter['_keys'];
+                if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
 
-                const options = { filter, fromBlock: 1, toBlock: 'latest' };
-                const events =  await this.renderer.ctx.web3bridge.getPastEvents(host.replace('.z', ''), contractName, event, options);
+                const options = {filter, fromBlock: 1, toBlock: 'latest'};
+                const events = await this.renderer.ctx.web3bridge.getPastEvents(
+                    host.replace('.z', ''),
+                    contractName,
+                    event,
+                    options
+                );
                 let eventData = [];
-                for(let ev of events) {
+                for (const ev of events) {
                     //console.log(ev, ev.raw);
-                    const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(ev.blockNumber);
+                    const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(
+                        ev.blockNumber
+                    );
 
                     eventData.push({
                         data: ev.returnValues,
@@ -137,26 +155,34 @@ class Renderer {
                 }
 
                 //filter non-indexed properties from return value for convenience
-                if (filter != {}){
-                    for(let k in filter)
-                        eventData  = eventData.filter(e => e.data[k] == filter[k]);
+                if (Object.keys(filter).length > 0) {
+                    for (const k in filter) {
+                        eventData = eventData.filter(e => e.data[k] === filter[k]);
+                    }
                 }
-                
+
                 return eventData;
             },
-            default_wallet_address: async function(id, passcode) {
+            default_wallet_address: async function () {
                 return this.renderer.ctx.config.client.wallet.account;
             },
-            is_authenticated: async function(auth) {
+            is_authenticated: async function (auth) {
                 return auth.walletid !== undefined;
             },
-            contract_list: async function(target, contractName, method, params = []) {
+            contract_list: async function (target, contractName, method, params = []) {
                 let i = 0;
-                let results = [];
-                while(true) {
+                const results = [];
+                while (true) {
                     try {
-                        results.push(await this.renderer.ctx.web3bridge.callContract(target, contractName, method, params.concat([i])));
-                    } catch(e) {
+                        results.push(
+                            await this.renderer.ctx.web3bridge.callContract(
+                                target,
+                                contractName,
+                                method,
+                                params.concat([i])
+                            )
+                        );
+                    } catch (e) {
                         // todo: only if the error is related to the array bound? how can we standardize this.renderer?
                         break;
                     }
@@ -170,34 +196,46 @@ class Renderer {
                 return results;
             },
 
-            is_identity_registered: async function() {
+            is_identity_registered: async function () {
                 return await this.renderer.ctx.web3bridge.isCurrentIdentityRegistered();
             },
-            get_current_identity: async function() {
+            get_current_identity: async function () {
                 return await this.renderer.ctx.web3bridge.getCurrentIdentity();
             },
-            identity_check_availability: async function(identity) {
+            identity_check_availability: async function (identity) {
                 const owner = await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
                 this.log.debug({identity, owner}, 'identity_check_availability');
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
 
-            csrf_value: async function() {
+            csrf_value: async function () {
                 // todo: regenerate per session, or maybe store more permanently?
-                if (! this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
-                if (! this.renderer.ctx.csrf_tokens[this.host]) this.renderer.ctx.csrf_tokens[this.host] = require("crypto").randomBytes(64).toString('hex');
+                if (!this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
+                if (!this.renderer.ctx.csrf_tokens[this.host])
+                    this.renderer.ctx.csrf_tokens[this.host] = require('crypto')
+                        .randomBytes(64)
+                        .toString('hex');
                 return this.renderer.ctx.csrf_tokens[this.host];
             },
-            csrf_field: async function() {
+            csrf_field: async function () {
                 // todo: regenerate per session, or maybe store more permanently?
-                if (! this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
-                if (! this.renderer.ctx.csrf_tokens[this.host]) this.renderer.ctx.csrf_tokens[this.host] = require("crypto").randomBytes(64).toString('hex');
-                return "<input name='_csrf' value='" + this.renderer.ctx.csrf_tokens[this.host] + " />";
+                if (!this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
+                if (!this.renderer.ctx.csrf_tokens[this.host])
+                    this.renderer.ctx.csrf_tokens[this.host] = require('crypto')
+                        .randomBytes(64)
+                        .toString('hex');
+                return (
+                    '<input name=\'_csrf\' value=\'' + this.renderer.ctx.csrf_tokens[this.host] + ' />'
+                );
             },
-            csrf_guard: async function(submitted_token) {
-                if (! this.renderer.ctx.csrf_tokens) throw new Error('No csrf token generated for this host (rather, no tokens at all)');
-                if (! this.renderer.ctx.csrf_tokens[this.host]) throw new Error('No csrf token generated for this host');
+            csrf_guard: async function (submitted_token) {
+                if (!this.renderer.ctx.csrf_tokens)
+                    throw new Error(
+                        'No csrf token generated for this host (rather, no tokens at all)'
+                    );
+                if (!this.renderer.ctx.csrf_tokens[this.host])
+                    throw new Error('No csrf token generated for this host');
                 const real_token = this.renderer.ctx.csrf_tokens[this.host];
                 if (real_token !== submitted_token) {
                     throw new Error('Invalid csrf token submitted');
@@ -212,19 +250,33 @@ class Renderer {
 
                 const walletService = this.renderer.ctx.wallet;
 
-                let wallets = [];
-                wallets.push(
-                    { currency_name: 'Point', currency_code: 'POINT', address: (await this.renderer.ctx.web3bridge.getCurrentIdentity()+'.point') || 'N/A', balance: 0 },
-                );
-                wallets.push(
-                    { currency_name: 'Solana', currency_code: 'SOL', address: walletService.getSolanaAccount(), balance: await walletService.getSolanaMainnetBalanceInSOL() },
-                );
-                wallets.push(
-                    { currency_name: 'Solana - Devnet', currency_code: 'devSOL', address: walletService.getSolanaAccount(), balance: await walletService.getSolanaDevnetBalanceInSOL() },
-                );
-                wallets.push(
-                    { currency_name: 'Neon', currency_code: 'NEON', address: walletService.getNetworkAccount(), balance: await walletService.getNetworkAccountBalanceInEth() },
-                );
+                const wallets = [];
+                wallets.push({
+                    currency_name: 'Point',
+                    currency_code: 'POINT',
+                    address:
+                        (await this.renderer.ctx.web3bridge.getCurrentIdentity()) + '.point' ||
+                        'N/A',
+                    balance: 0
+                });
+                wallets.push({
+                    currency_name: 'Solana',
+                    currency_code: 'SOL',
+                    address: walletService.getSolanaAccount(),
+                    balance: await walletService.getSolanaMainnetBalanceInSOL()
+                });
+                wallets.push({
+                    currency_name: 'Solana - Devnet',
+                    currency_code: 'devSOL',
+                    address: walletService.getSolanaAccount(),
+                    balance: await walletService.getSolanaDevnetBalanceInSOL()
+                });
+                wallets.push({
+                    currency_name: 'Neon',
+                    currency_code: 'NEON',
+                    address: walletService.getNetworkAccount(),
+                    balance: await walletService.getNetworkAccountBalanceInEth()
+                });
                 // wallets.push(
                 //     { currency_name: 'Arweave', currency_code: 'AR', address: this.renderer.ctx.config.client.storage.arweave_key /*this.renderer.ctx.wallet.getArweaveAccount()*/, balance: (await this.renderer.ctx.wallet.getArweaveBalanceInAR()) }
                 // );
@@ -251,33 +303,40 @@ class Renderer {
                 const publicKey = ethUtil.privateToPublic(privateKey);
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
-                this.log.info({
-                    identity,
-                    owner,
-                    publicKey: publicKey.toString('hex'),
-                    len: Buffer.byteLength(publicKey, 'utf-8'),
-                    parts: [
-                        `0x${publicKey.slice(0, 32).toString('hex')}`,
-                        `0x${publicKey.slice(32).toString('hex')}`
-                    ]}, 'Registering a new identity');
+                this.renderer.ctx.log.info(
+                    {
+                        identity,
+                        owner,
+                        publicKey: publicKey.toString('hex'),
+                        len: Buffer.byteLength(publicKey, 'utf-8'),
+                        parts: [
+                            `0x${publicKey.slice(0, 32).toString('hex')}`,
+                            `0x${publicKey.slice(32).toString('hex')}`
+                        ]
+                    },
+                    'Registering a new identity'
+                );
 
                 await this.renderer.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
-                this.renderer.ctx.log.info({identity, owner, publicKey: publicKey.toString('hex')}, 'Successfully registered new identity');
+                this.renderer.ctx.log.info(
+                    {identity, owner, publicKey: publicKey.toString('hex')},
+                    'Successfully registered new identity'
+                );
 
                 return true;
-            },
-
+            }
         };
     }
 
     #ensurePrivilegedAccess() {
-        if (this.host !== 'point') throw new Error('This function requires privileged access, host is not supported');
+        if (this.host !== 'point')
+            throw new Error('This function requires privileged access, host is not supported');
     }
 
     #defineAvailableFilters() {
         return {
-            unjson: function(value) {
+            unjson: function (value) {
                 return JSON.parse(value);
             }
         };
@@ -288,7 +347,7 @@ class Renderer {
     async fetchTemplateByPath(templatePath) {
         if (this.rootDirId) {
             const templateFileId = await getFileIdByPath(this.rootDirId, templatePath);
-            return getFile(templateFileId, "utf8");
+            return getFile(templateFileId, 'utf8');
         } else {
             return this.localDir.readFileByPath(templatePath, 'utf-8');
         }
@@ -308,18 +367,18 @@ class Renderer {
 
         Twig.host = host;
 
-        Twig.extend((ExtTwig) => {
+        Twig.extend(ExtTwig => {
             ExtTwig.host = host;
             ExtTwig.renderer = this;
             ExtTwig.renderer.host = host;
 
             this.#connectExtendsTagToPointStorage(ExtTwig);
             this.#connectIncludeTagToPointStorage(ExtTwig);
-            
-            for(let [name, fn] of Object.entries( this.#defineAvailableFunctions() ))
+
+            for (const [name, fn] of Object.entries(this.#defineAvailableFunctions()))
                 ExtTwig.exports.extendFunction(name, fn.bind(ExtTwig));
 
-            for(let [name, fn] of Object.entries( this.#defineAvailableFilters() ))
+            for (const [name, fn] of Object.entries(this.#defineAvailableFilters()))
                 ExtTwig.exports.extendFilter(name, fn.bind(ExtTwig));
 
             this.#registerPointStorageFsLoader(ExtTwig);
@@ -348,13 +407,13 @@ class Renderer {
              */
             type: Twig.logic.type.extends_,
             regex: /^extends\s+(.+)$/,
-            next: [ ],
+            next: [],
             open: true,
             compile: function (token) {
                 var expression = token.match[1].trim();
                 delete token.match;
                 token.stack = Twig.expression.compile.call(this, {
-                    type:  Twig.expression.type.expression,
+                    type: Twig.expression.type.expression,
                     value: expression
                 }).stack;
                 return token;
@@ -362,8 +421,6 @@ class Renderer {
             parse: function (token, context, chain) {
                 var template,
                     that = this;
-
-                var host = context.host;
 
                 //innerContext = Twig.ChildContext(context);
                 // Twig.lib.copy = function (src) {
@@ -376,8 +433,9 @@ class Renderer {
                 }
 
                 // Resolve filename
-                return Twig.expression.parseAsync.call(that, token.stack, context)
-                    .then(function(file) {
+                return Twig.expression.parseAsync
+                    .call(that, token.stack, context)
+                    .then(function (file) {
                         if (file instanceof Twig.Template) {
                             template = file;
                         } else {
@@ -391,11 +449,10 @@ class Renderer {
                         // Render the template in case it puts anything in its context
                         return template;
                     })
-                    .then(function(template) {
+                    .then(function (template) {
                         return template.renderAsync(innerContext);
                     })
-                    .then(function(renderedTemplate) {
-
+                    .then(function () {
                         // Extend the parent context with the extended context
                         context = {
                             ...context,
@@ -429,7 +486,7 @@ class Renderer {
                 const expression = match[1].trim();
                 const ignoreMissing = match[2] !== undefined;
                 const withContext = match[3];
-                const only = ((match[4] !== undefined) && match[4].length);
+                const only = match[4] !== undefined && match[4].length;
 
                 delete token.match;
 
@@ -461,7 +518,8 @@ class Renderer {
                 if (typeof token.withStack === 'undefined') {
                     promise = Twig.Promise.resolve();
                 } else {
-                    promise = Twig.expression.parseAsync.call(state, token.withStack, context)
+                    promise = Twig.expression.parseAsync
+                        .call(state, token.withStack, context)
                         .then(withContext => {
                             innerContext = {
                                 ...innerContext,
@@ -471,9 +529,7 @@ class Renderer {
                 }
 
                 return promise
-                    .then(() => {
-                        return Twig.expression.parseAsync.call(state, token.stack, context);
-                    })
+                    .then(() => Twig.expression.parseAsync.call(state, token.stack, context))
                     .then(file => {
                         let files;
                         if (Array.isArray(file)) {
@@ -483,53 +539,44 @@ class Renderer {
                         }
                         return files;
                     })
-                    .then(files => {
-                        return files.reduce(async(previousPromise, file) => {
-                            let acc = await previousPromise;
+                    .then(files => files.reduce(async (previousPromise, file) => {
+                        const acc = await previousPromise;
 
-                            let tryToRender = async(file) => {
-                                if (acc.render === null) {
-                                    if (file instanceof Twig.Template) {
-                                        const res = {
-                                            render: await file.renderAsync(
-                                                innerContext,
-                                                {
-                                                    isInclude: true
-                                                }
-                                            ),
-                                            lastError: null
-                                        };
-                                        return res;
-                                    }
-
-                                    try {
-                                        const res = {
-                                            render: await (await state.template.importFile(file)).renderAsync(
-                                                innerContext,
-                                                {
-                                                    isInclude: true
-                                                }
-                                            ),
-                                            lastError: null
-                                        };
-                                        return res;
-                                    } catch (error) {
-                                        return {
-                                            render: null,
-                                            lastError: error
-                                        };
-                                    }
+                        const tryToRender = async file => {
+                            if (acc.render === null) {
+                                if (file instanceof Twig.Template) {
+                                    const res = {
+                                        render: await file.renderAsync(
+                                            innerContext,
+                                            {isInclude: true}
+                                        ),
+                                        lastError: null
+                                    };
+                                    return res;
                                 }
 
-                                return acc;
-                            };
+                                try {
+                                    const res = {
+                                        render: await (
+                                            await state.template.importFile(file)
+                                        ).renderAsync(innerContext, {isInclude: true}),
+                                        lastError: null
+                                    };
+                                    return res;
+                                } catch (error) {
+                                    return {
+                                        render: null,
+                                        lastError: error
+                                    };
+                                }
+                            }
 
-                            return await tryToRender(file);
+                            return acc;
+                        };
 
-                        }, {render: null, lastError: null});
-                    })
+                        return await tryToRender(file);
+                    }, {render: null, lastError: null}))
                     .then(finalResultReduce => {
-
                         if (finalResultReduce.render !== null) {
                             return finalResultReduce.render;
                         }
@@ -552,20 +599,22 @@ class Renderer {
     }
 
     #registerPointStorageFsLoader(Twig) {
-        Twig.Templates.registerLoader('fs', async(location, params, callback, error_callback/*todo*/) => {
-            // ... load the template ...
-            const src = await this.fetchTemplateByPath(params.path);
-            params.data = src;
-            params.allowInlineIncludes = true;
-            // create and return the template
-            var template = new Twig.Template(params);
-            if (typeof callback === 'function') {
-                callback(template);
+        Twig.Templates.registerLoader(
+            'fs',
+            async (location, params, callback) => {
+                // ... load the template ...
+                const src = await this.fetchTemplateByPath(params.path);
+                params.data = src;
+                params.allowInlineIncludes = true;
+                // create and return the template
+                var template = new Twig.Template(params);
+                if (typeof callback === 'function') {
+                    callback(template);
+                }
+                return template;
             }
-            return template;
-        });
+        );
     }
-
 }
 
 module.exports = Renderer;
