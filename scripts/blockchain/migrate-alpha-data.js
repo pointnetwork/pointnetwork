@@ -61,7 +61,7 @@ const minimal_contract_abi = [
      }
 ]
 
-init = () => {
+const init = () => {
     if(process.argv[2] === undefined){
         console.log(`Please inform the zapp to migrate eg: blog.z`);
         return;
@@ -81,7 +81,7 @@ init = () => {
     startMigration(site);
 }
 
-startMigration = async(site) => {
+const startMigration = async(site) => {
     const handle = allowedSites[site].handle;
     const migrationAddress = allowedSites[site].contract;
     const migrationgAbi = loadSiteMigrationsAbi(allowedSites[site].abi);
@@ -124,17 +124,18 @@ startMigration = async(site) => {
     exit(0);
 }
 
-loadNodeConfig = () => {
+const loadNodeConfig = () => {
     return JSON.parse(readFileSync(nodeConfigFile));
 }
 
-loadIdentityAbi = () => {
+const loadIdentityAbi = () => {
     const abiFileName = `${pointNodePath}/truffle/build/contracts/Identity.json`;
     return JSON.parse(readFileSync(abiFileName));
 }
 
-loadSiteMigrationsAbi = (migrationAbi) => {
+const loadSiteMigrationsAbi = (migrationAbi) => {
     return JSON.parse(readFileSync(migrationAbi));
 }
+
 
 init();
