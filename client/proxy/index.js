@@ -733,13 +733,11 @@ class ZProxy {
                         if (paramName in postData) {
                             params.push(postData[paramName]);
                         } else {
-                            reject(
-                                new Error(
-                                    'Error: no ' +
-                                        utils.escape(paramName) +
-                                        ' param in the data, but exists as an argument to the contract call.'
-                                )
-                            );
+                            reject(new Error(
+                                'Error: no ' +
+                                utils.escape(paramName) +
+                                ' param in the data, but exists as an argument to the contract call.'
+                            ));
                         }
                     }
 

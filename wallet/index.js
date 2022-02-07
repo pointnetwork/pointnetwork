@@ -244,16 +244,16 @@ class Wallet {
         return new solana.PublicKey(this.getSolanaAccount());
     }
 
-    async getSolanaBalanceInSOLWithConnection(connection) {
+    async #getSolanaBalanceInSOLWithConnection(connection) {
         const solanaAddress = this.getSolanaPublicKey();
         const result = (await connection.getBalance(solanaAddress)) / 1e9;
         return result;
     }
     async getSolanaMainnetBalanceInSOL() {
-        return this.getSolanaBalanceInSOLWithConnection(this.solanaMainConnection);
+        return this.#getSolanaBalanceInSOLWithConnection(this.solanaMainConnection);
     }
     async getSolanaDevnetBalanceInSOL() {
-        return this.getSolanaBalanceInSOLWithConnection(this.solanaDevConnection);
+        return this.#getSolanaBalanceInSOLWithConnection(this.solanaDevConnection);
     }
 
     async initiateSolanaDevAirdrop() {

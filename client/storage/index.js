@@ -173,7 +173,11 @@ const uploadChunk = async data => {
             chunkId
         );
 
-        const response = await axios.post(`${config.arweave_airdrop_endpoint}/signPOST`, formData, {headers: {...formData.getHeaders()}});
+        const response = await axios.post(
+            `${config.arweave_airdrop_endpoint}/signPOST`,
+            formData,
+            {headers: {...formData.getHeaders()}}
+        );
 
         // TODO: check status from bundler
         if (response.data.status !== 'ok') {

@@ -220,16 +220,12 @@ class Web3Bridge {
         const contract = await this.loadWebsiteContract(target, contractName);
 
         let subscriptionId;
-        const subscription = await contract.events[event](options)
+        return contract.events[event](options)
             .on('data', data => onEvent({subscriptionId, data}))
-            .on('connected', id =>
-                onStart({
-                    subscriptionId: (subscriptionId = id),
-                    data: {message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`}
-                })
-            );
-
-        return subscription;
+            .on('connected', id => onStart({
+                subscriptionId: (subscriptionId = id),
+                data: {message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`}
+            }));
     }
 
     async removeSubscriptionById(subscriptionId, onRemove) {

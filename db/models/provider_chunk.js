@@ -91,10 +91,8 @@ class ProviderChunk extends Model {
         );
         if (merkleTree[merkleTree.length - 1].toString('hex') !== this.id) {
             throw Error(
-                'EINVALIDHASH: Provider Chunk ID and merkle root don\'t match: ' +
-                    this.id +
-                    ' vs ' +
-                    merkleTree[merkleTree.length - 1].toString('hex')
+                `EINVALIDHASH: Provider Chunk ID and merkle root don't match: ${
+                    this.id} vs merkleTree[merkleTree.length - 1].toString('hex')`
             );
         }
     }

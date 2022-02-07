@@ -66,19 +66,16 @@ class Deployer {
             const privateKey = Buffer.from(privateKeyHex, 'hex');
             const publicKey = ethUtil.privateToPublic(privateKey);
 
-            this.ctx.log.info(
-                {
-                    identity,
-                    owner,
-                    publicKey: publicKey.toString('hex'),
-                    len: Buffer.byteLength(publicKey, 'utf-8'),
-                    parts: [
-                        `0x${publicKey.slice(0, 32).toString('hex')}`,
-                        `0x${publicKey.slice(32).toString('hex')}`
-                    ]
-                },
-                'Registring new identity'
-            );
+            this.ctx.log.info({
+                identity,
+                owner,
+                publicKey: publicKey.toString('hex'),
+                len: Buffer.byteLength(publicKey, 'utf-8'),
+                parts: [
+                    `0x${publicKey.slice(0, 32).toString('hex')}`,
+                    `0x${publicKey.slice(32).toString('hex')}`
+                ]
+            }, 'Registring new identity');
 
             await this.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 

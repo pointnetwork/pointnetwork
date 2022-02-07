@@ -32,20 +32,16 @@ class AuthenticatePlugin {
 
         node.identity = node.router.identity = this.identity;
 
-        node.rpc.serializer.append(
-            () =>
-                new Transform({
-                    transform: this.serialize.bind(this),
-                    objectMode: true
-                })
-        );
-        node.rpc.deserializer.prepend(
-            () =>
-                new Transform({
-                    transform: this.deserialize.bind(this),
-                    objectMode: true
-                })
-        );
+        node.rpc.serializer.append(() =>
+            new Transform({
+                transform: this.serialize.bind(this),
+                objectMode: true
+            }));
+        node.rpc.deserializer.prepend(() =>
+            new Transform({
+                transform: this.deserialize.bind(this),
+                objectMode: true
+            }));
         node.use((req, res, next) => this.validate(node, req, res, next));
         this.setValidationPeriod();
     }

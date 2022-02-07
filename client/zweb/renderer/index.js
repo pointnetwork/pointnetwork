@@ -7,19 +7,20 @@ const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage/i
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
 class Renderer {
+    #twigs = {};
+    #twigs_use_counter = {};
+
     constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'Renderer'});
         this.config = ctx.config.client.zproxy;
         this.rootDirId = rootDirId;
         this.localDir = localDir;
-        this.twigs = {};
-        this.twigs_use_counter = {};
     }
 
     async render(template_id, template_contents, host, request_params = {}) {
         try {
-            const Twig = this.getTwigForHost(host);
+            const Twig = this.#getTwigForHost(host);
 
             const template = Twig.twig({
                 id: host + '/' + template_id,
@@ -39,16 +40,16 @@ class Renderer {
 
             // Okay, we shouldn't be nuking our Twig cache each time, but I figured it's better if we suffer on performance a bit,
             // than have a memory leak with thousands of Twig objects in memory waiting
-            this.removeTwigForHost(host);
+            this.#removeTwigForHost(host);
 
             return result.toString();
         } catch (e) {
-            this.removeTwigForHost(host);
+            this.#removeTwigForHost(host);
             throw e;
         }
     }
 
-    defineAvailableFunctions() {
+    #defineAvailableFunctions() {
         // These functions will be available for zApps to call in ZHTML
         return {
             keyvalue_list: async function (host, key) {
@@ -244,8 +245,8 @@ class Renderer {
 
             // Privileged access functions (only scoped to https://point domain)
 
-            get_wallet_info: async function () {
-                this.renderer.ensurePrivilegedAccess();
+            get_wallet_info: async function() {
+                this.renderer.#ensurePrivilegedAccess();
 
                 const walletService = this.renderer.ctx.wallet;
 
@@ -282,20 +283,20 @@ class Renderer {
 
                 return wallets;
             },
-            get_wallet_history: async function (code) {
-                this.renderer.ensurePrivilegedAccess();
+            get_wallet_history: async function(code) {
+                this.renderer.#ensurePrivilegedAccess();
                 return await this.renderer.ctx.wallet.getHistoryForCurrency(code);
             },
-            wallet_request_dev_sol: async function () {
-                this.renderer.ensurePrivilegedAccess();
+            wallet_request_dev_sol: async function() {
+                this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.initiateSolanaDevAirdrop();
             },
-            wallet_send: async function (code, recipient, amount) {
-                this.renderer.ensurePrivilegedAccess();
+            wallet_send: async function(code, recipient, amount) {
+                this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
             },
-            identity_register: async function (identity) {
-                this.renderer.ensurePrivilegedAccess();
+            identity_register: async function(identity) {
+                this.renderer.#ensurePrivilegedAccess();
 
                 const privateKeyHex = this.renderer.ctx.wallet.getNetworkAccountPrivateKey();
                 const privateKey = Buffer.from(privateKeyHex, 'hex');
@@ -328,12 +329,12 @@ class Renderer {
         };
     }
 
-    ensurePrivilegedAccess() {
+    #ensurePrivilegedAccess() {
         if (this.host !== 'point')
             throw new Error('This function requires privileged access, host is not supported');
     }
 
-    defineAvailableFilters() {
+    #defineAvailableFilters() {
         return {
             unjson: function (value) {
                 return JSON.parse(value);
@@ -352,13 +353,13 @@ class Renderer {
         }
     }
 
-    getTwigForHost(host) {
+    #getTwigForHost(host) {
         // Increment use counter
-        this.twigs_use_counter[host] = this.twigs_use_counter[host] + 1 || 0;
+        this.#twigs_use_counter[host] = this.#twigs_use_counter[host] + 1 || 0;
 
         // Look in cache first
-        if (this.twigs[host]) {
-            return this.twigs[host];
+        if (this.#twigs[host]) {
+            return this.#twigs[host];
         }
 
         // Spawning a new Twig object
@@ -371,33 +372,33 @@ class Renderer {
             ExtTwig.renderer = this;
             ExtTwig.renderer.host = host;
 
-            this.connectExtendsTagToPointStorage(ExtTwig);
-            this.connectIncludeTagToPointStorage(ExtTwig);
+            this.#connectExtendsTagToPointStorage(ExtTwig);
+            this.#connectIncludeTagToPointStorage(ExtTwig);
 
-            for (const [name, fn] of Object.entries(this.defineAvailableFunctions()))
+            for (const [name, fn] of Object.entries(this.#defineAvailableFunctions()))
                 ExtTwig.exports.extendFunction(name, fn.bind(ExtTwig));
 
-            for (const [name, fn] of Object.entries(this.defineAvailableFilters()))
+            for (const [name, fn] of Object.entries(this.#defineAvailableFilters()))
                 ExtTwig.exports.extendFilter(name, fn.bind(ExtTwig));
 
-            this.registerPointStorageFsLoader(ExtTwig);
+            this.#registerPointStorageFsLoader(ExtTwig);
         });
 
         // Save to our cache
-        this.twigs[host] = Twig;
+        this.#twigs[host] = Twig;
 
         return Twig;
     }
 
-    removeTwigForHost(host) {
-        this.twigs_use_counter[host]--;
+    #removeTwigForHost(host) {
+        this.#twigs_use_counter[host]--;
 
-        if (this.twigs_use_counter[host] === 0) {
-            delete this.twigs[host];
+        if (this.#twigs_use_counter[host] === 0) {
+            delete this.#twigs[host];
         }
     }
 
-    connectExtendsTagToPointStorage(Twig) {
+    #connectExtendsTagToPointStorage(Twig) {
         Twig.exports.extendTag({
             /**
              * Block logic tokens.
@@ -468,7 +469,7 @@ class Renderer {
         });
     }
 
-    connectIncludeTagToPointStorage(Twig) {
+    #connectIncludeTagToPointStorage(Twig) {
         // Include tag - use Point Storage
         Twig.exports.extendTag({
             /**
@@ -538,48 +539,43 @@ class Renderer {
                         }
                         return files;
                     })
-                    .then(files =>
-                        files.reduce(
-                            async (previousPromise, file) => {
-                                const acc = await previousPromise;
+                    .then(files => files.reduce(async (previousPromise, file) => {
+                        const acc = await previousPromise;
 
-                                const tryToRender = async file => {
-                                    if (acc.render === null) {
-                                        if (file instanceof Twig.Template) {
-                                            const res = {
-                                                render: await file.renderAsync(
-                                                    innerContext,
-                                                    {isInclude: true}
-                                                ),
-                                                lastError: null
-                                            };
-                                            return res;
-                                        }
+                        const tryToRender = async file => {
+                            if (acc.render === null) {
+                                if (file instanceof Twig.Template) {
+                                    const res = {
+                                        render: await file.renderAsync(
+                                            innerContext,
+                                            {isInclude: true}
+                                        ),
+                                        lastError: null
+                                    };
+                                    return res;
+                                }
 
-                                        try {
-                                            const res = {
-                                                render: await (
-                                                    await state.template.importFile(file)
-                                                ).renderAsync(innerContext, {isInclude: true}),
-                                                lastError: null
-                                            };
-                                            return res;
-                                        } catch (error) {
-                                            return {
-                                                render: null,
-                                                lastError: error
-                                            };
-                                        }
-                                    }
+                                try {
+                                    const res = {
+                                        render: await (
+                                            await state.template.importFile(file)
+                                        ).renderAsync(innerContext, {isInclude: true}),
+                                        lastError: null
+                                    };
+                                    return res;
+                                } catch (error) {
+                                    return {
+                                        render: null,
+                                        lastError: error
+                                    };
+                                }
+                            }
 
-                                    return acc;
-                                };
+                            return acc;
+                        };
 
-                                return await tryToRender(file);
-                            },
-                            {render: null, lastError: null}
-                        )
-                    )
+                        return await tryToRender(file);
+                    }, {render: null, lastError: null}))
                     .then(finalResultReduce => {
                         if (finalResultReduce.render !== null) {
                             return finalResultReduce.render;
@@ -602,7 +598,7 @@ class Renderer {
         });
     }
 
-    registerPointStorageFsLoader(Twig) {
+    #registerPointStorageFsLoader(Twig) {
         Twig.Templates.registerLoader(
             'fs',
             async (location, params, callback) => {

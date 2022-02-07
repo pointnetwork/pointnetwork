@@ -11,16 +11,12 @@ const BSON = require('./good-bson');
 const undef = void 0;
 const toString = Object.prototype.toString;
 const hasOwnProperty = Object.prototype.hasOwnProperty;
-const isArray =
-    Array.isArray ||
-    function (obj) {
-        return toString.call(obj) === '[object Array]';
-    };
-const isInteger =
-    Number.isSafeInteger ||
-    function (num) {
-        return num === Math.floor(num);
-    };
+const isArray = Array.isArray || function (obj) {
+    return toString.call(obj) === '[object Array]';
+};
+const isInteger = Number.isSafeInteger || function (num) {
+    return num === Math.floor(num);
+};
 
 /**
  * JsonRpc Class
