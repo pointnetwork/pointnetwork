@@ -58,15 +58,15 @@ let config;
 let logger;
 let cacheDir;
 let filesDir;
-let wallet;
-let walletAddress;
+let arweave;
 
 const init = async ctx => {
     // TODO: ambiguous stuff, config is spread between storage and client.storage
     config = {
         ...ctx.config.storage,
-        ...ctx.config.client.storage
+        ...ctx.config.client.storage,
     };
+    console.log(config);
     if (!config.arweave_experiment_version_major) {
         throw new Error('arweave_experiment_version_major not set or is 0');
     }
@@ -82,28 +82,17 @@ const init = async ctx => {
         makeSurePathExistsAsync(filesDir)
     ]);
 
-    if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
-        wallet = await arweave.wallets.generate();
-        walletAddress = await arweave.wallets.jwkToAddress(wallet);
-        // console.log('TEST WALLET ADDRESS: ', walletAddress);
-        // console.log('TEST WALLET KEY: ', wallet);
+    console.log(config.arweave_port)
+    console.log(config.arweave_protocol)
+    console.log(config.arweave_host)
+    arweave =  Arweave.init({
+        port: config.arweave_port,
+        protocol: config.arweave_protocol,
+        host: config.arweave_host,
+    });
 
-        // Mint some test tokens https://github.com/textury/arlocal#sending-transactions
-        await axios.get(`http://arlocal:1984/mint/${walletAddress}/100000000000000000000`);
-    }
 };
 
-const arweave = (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') ? Arweave.init({
-    host: 'arlocal',
-    port: 1984,
-    protocol: 'http',
-    timeout: 20000,
-    logging: false,
-}) : Arweave.init({
-    port: 443,
-    protocol: 'https',
-    host: 'arweave.net'
-});
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
 const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
@@ -168,7 +157,8 @@ const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
 
 const signTx = async (data, tags) => {
     // Real 'AR' mode
-    let transaction = await arweave.createTransaction({ data }, wallet);
+    console.log(config.arweave_key);
+    let transaction = await arweave.createTransaction({ data }, config.arweave_key);
 
     for(let k in tags) {
         let v = tags[k];
@@ -176,7 +166,7 @@ const signTx = async (data, tags) => {
     }
 
     // Sign
-    await arweave.transactions.sign(transaction, wallet);
+    await arweave.transactions.sign(transaction, config.arweave_key);
 
     return transaction;
 };
@@ -186,6 +176,38 @@ const broadcastTx = async (transaction) => {
     while (!uploader.isComplete) { await uploader.uploadChunk(); }
 
     return transaction;
+}
+
+async function uploadLocalCall (data, tags) {
+    // upload to areweave directly without using bundler
+    let transaction = await signTx(data, tags);
+    transaction = await broadcastTx(transaction);
+    const txid = transaction.id;
+    logger.debug({txid}, "Transaction id successfully generated");
+    const response = {data: {status: 'ok'}};
+    return response;
+}
+
+const uploadRemoteCall = async (data, tags) => {
+    // upload to point bundler to forward to arweave
+    const formData = new FormData();
+    formData.append("file", data);
+    // add tags
+    for(let k in tags) {
+        let v = tags[k];
+        formData.append(k, v);
+    }
+
+    const response = await axios.post(
+        `${config.arweave_airdrop_endpoint}/signPOST`,
+        formData,
+        {
+            headers: {
+                ...formData.getHeaders()
+            }
+        }
+    );
+    return response;
 }
 
 const uploadChunk = async data => {
@@ -216,38 +238,20 @@ const uploadChunk = async data => {
             [chunkIdVersioned]: chunkId
         };
 
-        if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
-            // upload to areweave directly without using bundler
-            let transaction = await signTx(data, tags);
-            transaction = await broadcastTx(transaction);
-            const txid = transaction.id;
-            logger.debug({txid}, "Transaction id successfully generated");
-        } else {
-            // upload to point bundler to forward to arweave
-            const formData = new FormData();
-            formData.append("file", data);
-            // add tags
-            for(let k in tags) {
-                let v = tags[k];
-                formData.append(k, v);
-            }
-
-            const response = await axios.post(
-                `${config.arweave_airdrop_endpoint}/signPOST`,
-                formData,
-                {
-                    headers: {
-                        ...formData.getHeaders()
-                    }
-                }
-            );
-
-            //TODO: check status from bundler
-            if (response.data.status !== 'ok') {
-                throw new Error(`Chunk ${chunkId} uploading failed: arweave airdrop endpoint error: ${
-                    JSON.stringify(response, null , 2)}`);
-            }
+        //it calls uploadLocalCall or uploadRemoteCall depending of env variable configured.
+        let response;
+        if (process.env.MODE === "zappdev")
+            response = await uploadLocalCall(data, tags);
+        else
+            response = await uploadRemoteCall(data, tags);
+        
+        
+        //TODO: check status from bundler
+        if (response.data.status !== 'ok') {
+            throw new Error(`Chunk ${chunkId} uploading failed: arweave airdrop endpoint error: ${
+                JSON.stringify(response, null , 2)}`);
         }
+    
 
         logger.debug({chunkId}, "Chunk successfully uploaded, saving to disk");
 

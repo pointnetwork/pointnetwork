@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
-const {existsSync, writeFileSync, unlinkSync, mkdirSync} = require('fs');
+const {existsSync, writeFileSync, readFileSync, unlinkSync, mkdirSync} = require('fs');
 const Web3 = require('web3');
+const Arweave = require("arweave");
+const axios = require("axios");
+
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
 const templateConfig = '/nodeConfig.json';
 const targetConfig = '/data/config.json';
@@ -67,6 +70,38 @@ config.network = {
 if (process.env.BLOCKCHAIN_NETWORK_ID) {
     config.network.web3_network_id = process.env.BLOCKCHAIN_NETWORK_ID;
 }
+const arweave_init_params = {
+    host: process.env.ARWEAVE_HOST,
+    port: process.env.ARWEAVE_PORT,
+    protocol: process.env.ARWEAVE_PROTOCOL,
+    timeout: 20000,
+    logging: false,
+};
+
+let arweave = Arweave.init(arweave_init_params);
+
+if (!existsSync('/data/keystore/arweave.json')) {
+    //generate the wallet for arlocal and mint some tokents
+    //only if the key does not exists
+    arweave.wallets.generate().then((key) => {
+        console.log("Generating key for ArLocal:")
+        console.log(key);
+
+        //write the key to the filesystem
+        writeFileSync('/data/keystore/arweave.json', JSON.stringify(key, null, 2), 'utf-8');
+
+        //mint some tokens
+        arweave.wallets.jwkToAddress(key).then((address) => {
+            console.log(address);
+            //1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY
+            axios.get(`http://arlocal:1984/mint/${address}/100000000000000000000`);
+        });
+    });
+}
+
+//sync
+sleepSync(2048);
+
 
 writeFileSync(targetConfig, JSON.stringify(config, null, 2));
 
@@ -76,10 +111,6 @@ if (!existsSync('/data/data')) {
 
 if (!existsSync('/data/data/dht_peercache.db')) {
     writeFileSync('/data/data/dht_peercache.db', '{}');
-}
-
-if (!existsSync('/data/keystore/arweave.json')) {
-    writeFileSync('/data/keystore/arweave.json', '{}');
 }
 
 console.info('Done.');

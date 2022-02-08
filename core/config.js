@@ -34,7 +34,10 @@ const variables = {
         storage: {
             engine: process.env.POINT_STORAGE_ENGINE || undefined,
             arweave_key,
-            arweave_experiment_version_minor: process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || undefined
+            arweave_experiment_version_minor: process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || undefined,
+            arweave_port: process.env.ARWEAVE_PORT || undefined,
+            arweave_protocol: process.env.ARWEAVE_PROTOCOL || undefined,
+            arweave_host: process.env.ARWEAVE_HOST || undefined,
         },
         wallet: {
             account: '0x' + wallet.getAddress().toString('hex'),
