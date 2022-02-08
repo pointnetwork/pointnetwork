@@ -4,10 +4,7 @@ const {existsSync, writeFileSync, unlinkSync, mkdirSync, readFileSync} = require
 const {execSync} = require('child_process');
 const path = require('path');
 const config = require('../core/config');
-const log = require('../core/log').child({
-    module: __filename,
-    account: config.client.wallet.account
-});
+const log = require('../core/log').child({module: __filename}); // TODO: address
 const Web3 = require('web3');
 const Deployer = require('../client/zweb/deployer');
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 5000;

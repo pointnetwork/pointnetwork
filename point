@@ -86,7 +86,7 @@ if (program.verbose) ctx.config.log.level = 'trace';
 
 // ------------------- Init Logger ----------------- //
 
-ctx.log = logger.child({account: ctx.config.client.wallet.account});
+ctx.log = logger.child({module: "main"}); // TODO: account
 const log = ctx.log.child({module: 'point'});
 
 ctx.exit = (code) => (log.close(), process.exit(code));
@@ -211,12 +211,12 @@ sigs.forEach(function (sig) {
 });
 
 process.on('uncaughtException', (err) => {
-    ctx.log.error(err, "Error: uncaught exception");
+    ctx.log.error({message: err.message, stack: err.stack}, "Error: uncaught exception");
 });
 
 process.on('unhandledRejection', (err, second) => {
     ctx.log.debug(err, second);
-    ctx.log.error(err, "Error: unhandled rejection");
+    ctx.log.error({message: err.message, stack: err.stack}, "Error: unhandled rejection");
 });
 
 // -------------------- Init DB ---------------------- //
