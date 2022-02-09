@@ -95,12 +95,13 @@ contract Identity {
         migrationApplied = true;
     }
 
-    function transferIdentityOwnership(string memory identity, address newOwner) public onlyIdentityOwner(identity) {
+    function transferIdentityOwnership(string memory handle, address newOwner) public onlyIdentityOwner(handle) {
         address oldOwner = msg.sender;
         
         delete ownerToIdentity[oldOwner];
 
-        ownerToIdentity[newOwner] = identity;
+        identityToOwner[handle] = newOwner;
+        ownerToIdentity[newOwner] = handle;
 
         emit IdentityOwnershipTransferred(oldOwner, newOwner, block.timestamp);
     }
