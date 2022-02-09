@@ -23,7 +23,7 @@ contract Identity {
     uint public constant MAX_HANDLE_LENGTH = 16;
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
-    event IdentityOwnershipTransferred(string indexed handle, address indexed oldOwner,address indexed newOwner, uint256 date);
+    event IdentityOwnershipTransferred(string indexed handle, address indexed oldOwner, address indexed newOwner, uint256 date);
     event IKVSet(string identity, string key, string value);
 
     modifier onlyIdentityOwner(string memory identity) {
