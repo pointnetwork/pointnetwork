@@ -58,15 +58,20 @@ class Renderer {
             keyvalue_get: async function (host, key) {
                 return await this.renderer.ctx.keyvalue.get(host, key);
             },
-            storage_get_by_ikv: async function (identity, key) {
-                const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
-                return getFile(fileKey);
+            storage_get_by_ikv: async function(identity, key) {
+                try {
+                    const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
+                    this.log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
+                    return await getFile(fileKey);
+                } catch (e) {
+                    this.log.error({identity, key, ...e}, 'storage_get_by_ikv error');
+                    return 'Invalid Content';
+                }
             },
             storage_get: async function (key) {
                 try {
-                    return getFile(key);
+                    return await getFile(key);
                 } catch (e) {
-                    this.log.error({error: e.message, stack: e.stack}, 'Twig.storage_get error:');
                     return 'Invalid Content';
                 }
             },
