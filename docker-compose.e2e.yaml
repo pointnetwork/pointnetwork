@@ -14,7 +14,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 5s
     ports:
       - '7545:7545'
     volumes:
@@ -92,6 +92,9 @@ services:
     extends:
       file: docker-compose.storage.yaml
       service: bundler
+    depends_on:
+      arweave:
+        condition: service_healthy
 
   cache:
     extends:
