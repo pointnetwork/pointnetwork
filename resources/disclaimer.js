@@ -1,6 +1,6 @@
 // Note: Don't worry about line width, it will get formatted properly
 
-let disclaimer = `
+const disclaimer = `
   
     DISCLAIMER: This is an alpha version of an experimental open source software released under the MIT license
     and may contain errors and/or bugs.
@@ -23,18 +23,23 @@ let disclaimer = `
 
 // From: https://stackoverflow.com/a/51506718/5380330
 // Dynamic Width (Build Regex)
-const wrap = (s, w, indent_h, indent_v) => ' '.repeat(indent_h) + "\n".repeat(indent_v) + s.replace(
-    new RegExp(`(?![^\\n]{1,${w}}$)([^\\n]{1,${w}})\\s`, 'g'), '$1\n'+' '.repeat(indent_h)
-) + "\n".repeat(indent_v);
+const wrap = (s, w, indent_h, indent_v) =>
+    ' '.repeat(indent_h) +
+    '\n'.repeat(indent_v) +
+    s.replace(
+        new RegExp(`(?![^\\n]{1,${w}}$)([^\\n]{1,${w}})\\s`, 'g'),
+        '$1\n' + ' '.repeat(indent_h)
+    ) +
+    '\n'.repeat(indent_v);
 
-const no_new_lines = (s) => s.replace(/[\s\t\r\n]+/g, ' ');
+const no_new_lines = s => s.replace(/[\s\t\r\n]+/g, ' ');
 
 const terminal_width = process.stdout.columns;
 const wrap_length = terminal_width - 10;
 const indent_h = 4;
 const indent_v = 3;
 
-const text = wrap( no_new_lines( disclaimer ), wrap_length, indent_h, indent_v );
+const text = wrap(no_new_lines(disclaimer), wrap_length, indent_h, indent_v);
 
 module.exports = {
     text,

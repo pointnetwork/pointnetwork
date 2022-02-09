@@ -1,14 +1,12 @@
 const bsonRPC = require('./bson-rpc');
 const merge = require('merge');
 const BSON = require('./good-bson');
-const { v4: uuid } = require('uuid');
+const {v4: uuid} = require('uuid');
 
 class SerializerBSON {
     static serializer([object, sender, receiver], callback) {
-        let message = bsonRPC.parseObject(
-            merge({ jsonrpc: '2.0', id: uuid() }, object)
-        );
-        let notification = bsonRPC.notification('IDENTIFY', sender);
+        const message = bsonRPC.parseObject(merge({jsonrpc: '2.0', id: uuid()}, object));
+        const notification = bsonRPC.notification('IDENTIFY', sender);
 
         switch (message.type) {
             case 'request':
@@ -16,10 +14,7 @@ class SerializerBSON {
             case 'success':
                 return callback(null, [
                     message.payload.id,
-                    BSON.serialize([
-                        message.payload,
-                        notification
-                    ]),
+                    BSON.serialize([message.payload, notification]),
                     receiver
                 ]);
             case 'invalid':
@@ -29,7 +24,7 @@ class SerializerBSON {
         }
     }
     static deserializer(buffer, callback) {
-        let [message, notification] = bsonRPC.parse(buffer);
+        const [message, notification] = bsonRPC.parse(buffer);
 
         switch (message.type) {
             case 'request':

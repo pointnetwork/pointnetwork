@@ -1,10 +1,9 @@
 const assert = require('assert');
-const secp256k1 = require('secp256k1');
 const kadUtils = require('@pointnetwork/kadence/lib/utils');
 const utils = require('#utils');
 const bsonrpc = require('./bson-rpc');
 const BSON = require('./good-bson');
-const { Transform } = require('stream');
+const {Transform} = require('stream');
 const ethUtil = require('ethereumjs-util');
 
 /**
@@ -14,13 +13,15 @@ class AuthenticatePlugin {
     /**
      * Creates the plugin instance
      */
-    constructor(node, ctx, publicKey, privateKey, options = {}) {
+    constructor(node, ctx, publicKey, privateKey) {
         this.ctx = ctx;
 
         this.privateKey = privateKey;
-        if (! this.privateKey) throw new Error('privateKey is not set or not passed for authenticate plugin');
+        if (!this.privateKey)
+            throw new Error('privateKey is not set or not passed for authenticate plugin');
         this.publicKey = publicKey;
-        if (! this.publicKey) throw new Error('publicKey is not set or not passed for authenticate plugin');
+        if (!this.publicKey)
+            throw new Error('publicKey is not set or not passed for authenticate plugin');
 
         this._validatedContacts = new Map();
         this._pendingValidators = new Map();
@@ -31,14 +32,16 @@ class AuthenticatePlugin {
 
         node.identity = node.router.identity = this.identity;
 
-        node.rpc.serializer.append(() => new Transform({
-            transform: this.serialize.bind(this),
-            objectMode: true
-        }));
-        node.rpc.deserializer.prepend(() => new Transform({
-            transform: this.deserialize.bind(this),
-            objectMode: true
-        }));
+        node.rpc.serializer.append(() =>
+            new Transform({
+                transform: this.serialize.bind(this),
+                objectMode: true
+            }));
+        node.rpc.deserializer.prepend(() =>
+            new Transform({
+                transform: this.deserialize.bind(this),
+                objectMode: true
+            }));
         node.use((req, res, next) => this.validate(node, req, res, next));
         this.setValidationPeriod();
     }
@@ -65,7 +68,7 @@ class AuthenticatePlugin {
         const period = this._validationPeriod;
         const record = this._validatedContacts.get(req.contact[0]);
         const validated = record && record.validated;
-        const fresh = validated && ((Date.now() - record.timestamp) < period);
+        const fresh = validated && Date.now() - record.timestamp < period;
 
         if (this._pendingValidators.get(req.contact[0])) {
             return next(); // NB: Let's not get into an infinte validation loop
@@ -76,7 +79,7 @@ class AuthenticatePlugin {
         }
 
         this._pendingValidators.set(req.contact[0], req.contact[1]);
-        node.ping(req.contact, (err) => {
+        node.ping(req.contact, err => {
             this._pendingValidators.delete(req.contact[0]);
 
             if (err) {
@@ -101,26 +104,23 @@ class AuthenticatePlugin {
      */
     // todo: check if everytning is okay security wise here, signing arbitrary stuff could be dangerous
     serialize(data, encoding, callback) {
-        let [id, buffer, target] = data;
+        const [id, buffer, target] = data;
         let parsed = bsonrpc.parse(buffer);
-        if (!Array.isArray(parsed)) parsed = [ parsed ]; // todo: investigate
-        let payload = parsed.map((obj) => {
-            return obj.payload;
-        });
-        let vrs = ethUtil.ecsign(
+        if (!Array.isArray(parsed)) parsed = [parsed]; // todo: investigate
+        const payload = parsed.map(obj => obj.payload);
+        const vrs = ethUtil.ecsign(
             // todo: why not use keccak256 instead for full compatibility?
             kadUtils._sha256(buffer),
             this.privateKey,
             this.chainId
         );
-        let authenticate = bsonrpc.notification('AUTHENTICATE', [ utils.serializeSignature(vrs), this.publicKey.toString('hex') ]);
+        const authenticate = bsonrpc.notification('AUTHENTICATE', [
+            utils.serializeSignature(vrs),
+            this.publicKey.toString('hex')
+        ]);
 
         payload.push(authenticate);
-        callback(null, [
-            id,
-            BSON.serialize(payload),
-            target
-        ]);
+        callback(null, [id, BSON.serialize(payload), target]);
     }
 
     /**
@@ -142,17 +142,17 @@ class AuthenticatePlugin {
             return callback(new Error('Failed to parse received payload'));
         }
 
-        let [, identify] = payload;
-        let authenticate = payload.filter(m => m.method === 'AUTHENTICATE').pop();
+        const [, identify] = payload;
+        const authenticate = payload.filter(m => m.method === 'AUTHENTICATE').pop();
 
         if (typeof authenticate === 'undefined') {
             return callback(new Error('Missing authentication payload in message'));
         }
 
-        let identity = Buffer.from(identify.params[0], 'hex');
-        let [signature, publicKey] = authenticate.params;
+        const identity = Buffer.from(identify.params[0], 'hex');
+        const [signature, publicKey] = authenticate.params;
 
-        const {v,r,s} = utils.deserializeSignature(signature);
+        const {v, r, s} = utils.deserializeSignature(signature);
 
         let signedPayload = [];
 
@@ -164,11 +164,9 @@ class AuthenticatePlugin {
             }
         }
 
-        signedPayload = kadUtils._sha256(
-            BSON.serialize(signedPayload)
-        );
+        signedPayload = kadUtils._sha256(BSON.serialize(signedPayload));
 
-        let publicKeyHash = kadUtils.toPublicKeyHash(Buffer.from(publicKey, 'hex'));
+        const publicKeyHash = kadUtils.toPublicKeyHash(Buffer.from(publicKey, 'hex'));
 
         if (publicKeyHash.compare(identity) !== 0) {
             return callback(new Error('Identity does not match public key'));
@@ -180,19 +178,18 @@ class AuthenticatePlugin {
                 throw new Error('recovered public key does not match provided one');
             }
         } catch (err) {
-            return callback(new Error('Message includes invalid signature, error message: '+err)); // todo: delete error message, don't send it to the node
+            return callback(new Error('Message includes invalid signature, error message: ' + err)); // todo: delete error message, don't send it to the node
         }
 
         callback(null, buffer);
     }
-
 }
 
 /**
  * Registers the plugin with a node
  */
-module.exports = function(ctx, publicKey, privateKey, options) {
-    return function(node) {
+module.exports = function (ctx, publicKey, privateKey, options) {
+    return function (node) {
         return new AuthenticatePlugin(node, ctx, publicKey, privateKey, options);
     };
 };

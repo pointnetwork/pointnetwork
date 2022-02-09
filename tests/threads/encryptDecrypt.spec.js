@@ -15,32 +15,40 @@ const fs = require('fs');
 const defaultConfig = require('../../resources/defaultConfig.json');
 const BITS = defaultConfig.storage.redkey_encryption_bits; // todo: make it read from the actual config, not default
 
-describe("Thread/{Encrypt,Decrypt}", () => {
-    test("D(E(plaintext)) should return plaintext", () => {
-        const alicePrivateKey = fs.readFileSync('./tests/_helpers/keys/alice-'+BITS+'.key');
-        const alicePublicKey  = fs.readFileSync('./tests/_helpers/keys/alice-'+BITS+'.pub');
+describe('Thread/{Encrypt,Decrypt}', () => {
+    test('D(E(plaintext)) should return plaintext', () => {
+        const alicePrivateKey = fs.readFileSync('./tests/_helpers/keys/alice-' + BITS + '.key');
+        const alicePublicKey = fs.readFileSync('./tests/_helpers/keys/alice-' + BITS + '.pub');
 
         // todo: rewrite both the files and the test so that they support streams, not just files
-        let filesToTest = ['simple-numbers.txt', 'moby-dick.txt', 'tree-unsplash.jpg', 'test1.css', 'test1.json'];
+        const filesToTest = [
+            'simple-numbers.txt',
+            'moby-dick.txt',
+            'tree-unsplash.jpg',
+            'test1.css',
+            'test1.json'
+        ];
 
-        for(let file of filesToTest) {
-            encryptDecrypt(alicePublicKey, alicePrivateKey, fs.readFileSync('./tests/_helpers/encryptDecrypt/'+file));
+        for (const file of filesToTest) {
+            encryptDecrypt(
+                alicePublicKey,
+                alicePrivateKey,
+                fs.readFileSync('./tests/_helpers/encryptDecrypt/' + file)
+            );
         }
     });
 });
 
 function encryptDecrypt(pubKey, privKey, plaintext) {
-    const tmpFileNameFrom   = randomTempFileName();
-    const tmpFileNameTo     = randomTempFileName();
+    const tmpFileNameFrom = randomTempFileName();
+    const tmpFileNameTo = randomTempFileName();
     const tmpFileNameResult = randomTempFileName();
     try {
-        let plaintextBuf = (Buffer.isBuffer(plaintext)) ? plaintext : Buffer.from(plaintext);
+        const plaintextBuf = Buffer.isBuffer(plaintext) ? plaintext : Buffer.from(plaintext);
 
         fs.writeFileSync(tmpFileNameFrom, plaintextBuf);
 
         encrypt.encryptFile(tmpFileNameFrom, tmpFileNameTo, privKey);
-
-        let encryptedBuf = fs.readFileSync(tmpFileNameTo);
 
         decrypt.decryptFile(tmpFileNameTo, tmpFileNameResult, pubKey);
 
@@ -51,17 +59,17 @@ function encryptDecrypt(pubKey, privKey, plaintext) {
         expect(result).toEqual(plaintextBuf);
 
         removeTempFiles(tmpFileNameFrom, tmpFileNameTo, tmpFileNameResult);
-    } catch(e) {
+    } catch (e) {
         removeTempFiles(tmpFileNameFrom, tmpFileNameTo, tmpFileNameResult);
         throw e;
     }
 }
 
 function randomTempFileName() {
-    return '/tmp/pointnetwork_test_random_'+Math.random().toString(36).substring(7);
+    return '/tmp/pointnetwork_test_random_' + Math.random().toString(36).substring(7);
 }
 function removeTempFiles(...files) {
-    for(let file of files) {
+    for (const file of files) {
         if (fs.existsSync(file)) {
             fs.unlinkSync(file);
         }
