@@ -116,18 +116,16 @@ async function upload(contract) {
             article.title, 
             article.contents, 
             article.timestamp
-        ).send({
-            from: accounts[0]
-        });
+        ).send({from: accounts[0]});
     
         articleComments[article.id] = article.comments;
     }
 
-    for (let postId in articleComments){
-        for(let comment of articleComments[postId]) {
-            let author = comment[0];
-            let contents = comment[1];
-            let timestamp = comment[2];
+    for (const postId in articleComments){
+        for(const comment of articleComments[postId]) {
+            const author = comment[0];
+            const contents = comment[1];
+            const timestamp = comment[2];
     
             console.log('Migrating: Blog comment post id:' + postId + ' from:' + author);
             await blogContract.methods.addComment(
@@ -135,9 +133,7 @@ async function upload(contract) {
                 author, 
                 contents, 
                 timestamp 
-            ).send({
-                from: accounts[0]
-            });
+            ).send({from: accounts[0]});
         }
     }
 
