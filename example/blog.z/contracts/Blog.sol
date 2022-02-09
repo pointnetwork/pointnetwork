@@ -83,7 +83,7 @@ contract Blog {
         articles.push(_article);
     }
 
-    function addComments(uint256 postId,address author ,bytes32 contents,uint256 timestamp) public {
+    function addComment(uint256 postId,address author ,bytes32 contents,uint256 timestamp) public {
         require(msg.sender == _migrator, "Access Denied");
         require(articles[postId].id != 0, "Invalid article");
         

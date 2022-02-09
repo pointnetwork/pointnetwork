@@ -81,6 +81,24 @@ contract PointSocial {
         return _posts;
     }
 
+    function getAllPostsLength() public view returns (uint256) {
+        return posts.length;
+    }
+
+
+    function getPaginatedPosts(uint256 cursor, uint256 howMany) public view returns (Post[] memory) {
+        uint256 length = howMany;
+        if(length > posts.length - cursor) {
+            length = posts.length - cursor;
+        }
+        
+        Post[] memory _posts = new Post[](length);
+        for (uint256 i = length; i > 0; i--) {
+            _posts[length-i] = postById[posts[posts.length - cursor - i].id];
+        }
+        return _posts;
+    }
+
     function getAllPostsByOwner(address owner)
         public
         view
@@ -89,6 +107,25 @@ contract PointSocial {
         Post[] memory _posts = new Post[](postsByOwner[owner].length);
         for (uint256 i = 0; i < postsByOwner[owner].length; i++) {
             _posts[i] = postById[postsByOwner[owner][i].id];
+        }
+        return _posts;
+    }
+
+    function getAllPostsByOwnerLength(address owner) public view returns (uint256) {
+        return postsByOwner[owner].length;
+    }
+
+    function getPaginatedPostsByOwner(address owner, uint256 cursor, uint256 howMany) public view returns (Post[] memory) {
+        uint256 _ownerPostLength = postsByOwner[owner].length;
+
+        uint256 length = howMany;
+        if(length > _ownerPostLength - cursor) {
+            length = _ownerPostLength - cursor;
+        }
+        
+        Post[] memory _posts = new Post[](length);
+        for (uint256 i = length; i > 0; i--) {
+            _posts[length-i] = postById[postsByOwner[owner][_ownerPostLength - cursor - i].id];
         }
         return _posts;
     }
@@ -159,9 +196,7 @@ contract PointSocial {
         address author,
         bytes32 contents,
         bytes32 image,
-        uint256 createdAt,
-        uint16 likesCounts,
-        uint16 commentsCounts
+        uint256 createdAt
     ) public {
         require(msg.sender == _migrator, "Access Denied");
 
@@ -171,8 +206,8 @@ contract PointSocial {
                 contents: contents,
                 image: image,
                 createdAt: createdAt,
-                likesCount: likesCounts,
-                commentsCount: commentsCounts
+                likesCount: 0,
+                commentsCount: 0
             });
 
             posts.push(_post);
@@ -201,5 +236,6 @@ contract PointSocial {
             commentById[_comment.id] = _comment;
             commentsByOwner[_comment.from].push(_comment);
             _commentIds.increment();
+            postById[postId].commentsCount += 1;
     }
 }
