@@ -69,13 +69,13 @@ async function download(contract) {
                     contents,
                     timestamp, 
                     likes
-                    } = await twitterContract.methods.getTweetByOwner(identity.owner, tweetCounter).call();
+                } = await twitterContract.methods.getTweetByOwner(identity.owner, tweetCounter).call();
                
                 const tweet = {
                     from,
                     contents,
                     timestamp,
-                    likes,
+                    likes
                 };
 
                 tweets.push(tweet);
@@ -119,9 +119,7 @@ async function upload(contract) {
 
     console.log('Adding migrator');
     
-    await twitterContract.methods.addMigrator(accounts[0]).send({
-        from:accounts[0]
-    });
+    await twitterContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
 
     for (const tweet of data.tweets) {
         console.log('Migrating: tweet from ' + tweet.from + ' contents ' + tweet.contents);
