@@ -23,7 +23,7 @@ contract Identity {
     uint public constant MAX_HANDLE_LENGTH = 16;
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
-    event IdentityOwnershipTransferred(address indexed oldOwner,address indexed newOwner, uint256 date);
+    event IdentityOwnershipTransferred(string indexed handle, address indexed oldOwner,address indexed newOwner, uint256 date);
     event IKVSet(string identity, string key, string value);
 
     modifier onlyIdentityOwner(string memory identity) {
@@ -96,6 +96,7 @@ contract Identity {
     }
 
     function transferIdentityOwnership(string memory handle, address newOwner) public onlyIdentityOwner(handle) {
+      
         address oldOwner = msg.sender;
         
         delete ownerToIdentity[oldOwner];
@@ -103,7 +104,7 @@ contract Identity {
         identityToOwner[handle] = newOwner;
         ownerToIdentity[newOwner] = handle;
 
-        emit IdentityOwnershipTransferred(oldOwner, newOwner, block.timestamp);
+        emit IdentityOwnershipTransferred(handle, oldOwner, newOwner, block.timestamp);
     }
 
     //*** Internal functions ***//
