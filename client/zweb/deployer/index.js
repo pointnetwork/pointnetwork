@@ -12,7 +12,7 @@ class Deployer {
         this.log = ctx.log.child({module: 'Deployer'});
         this.config = this.ctx.config.deployer;
         this.cache_uploaded = {}; // todo: unused? either remove or use
-        storage = require("../../storage/index.js");
+        storage = require('../../storage/index.js');
     }
 
     async start() {
@@ -25,35 +25,40 @@ class Deployer {
         return cache_dir;
     }
 
-    async migrate(site) {
+    async migrate() {
         const privateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
         const privateKey = Buffer.from(privateKeyHex, 'hex');
         const publicKey = ethUtil.privateToPublic(privateKey);
-        
 
-        console.log(privateKeyHex);
-        console.log(privateKey);
-        console.log(publicKey);
+        this.log.info(privateKeyHex);
+        this.log.info(privateKey);
+        this.log.info(publicKey);
     }
 
     async deploy(deployPath, deployContracts = false, dev = false) {
         // todo: error handling, as usual
-        let deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
-        let deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
-        let deployConfig = JSON.parse(deployConfigFile);
+        const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
+        const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
+        const deployConfig = JSON.parse(deployConfigFile);
 
         // assert(deployConfig.version === 1); // todo: msg
 
-        const target = dev ? `${deployConfig.target.replace('.z','dev')}.z`: deployConfig.target;
+        const target = dev ? `${deployConfig.target.replace('.z', 'dev')}.z` : deployConfig.target;
         const identity = target.replace(/\.z$/, '');
         const {defaultAccount: owner} = this.ctx.web3.eth;
 
         const registeredOwner = await this.ctx.web3bridge.ownerByIdentity(identity);
-        const identityIsRegistered = registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
+        const identityIsRegistered =
+            registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
         if (identityIsRegistered && registeredOwner !== owner) {
-            this.ctx.log.error({identity, registeredOwner, owner}, 'Identity is already registered');
-            throw new Error(`Identity ${identity} is already registered, please choose a new one and try again`);
+            this.ctx.log.error(
+                {identity, registeredOwner, owner},
+                'Identity is already registered'
+            );
+            throw new Error(
+                `Identity ${identity} is already registered, please choose a new one and try again`
+            );
         }
 
         if (!identityIsRegistered) {
@@ -69,26 +74,33 @@ class Deployer {
                 parts: [
                     `0x${publicKey.slice(0, 32).toString('hex')}`,
                     `0x${publicKey.slice(32).toString('hex')}`
-                ]}, 'Registring new identity');
-                
+                ]
+            }, 'Registring new identity');
+
             await this.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
 
-            this.ctx.log.info({identity, owner, publicKey: publicKey.toString('hex')}, 'Successfully registered new identity');
+            this.ctx.log.info(
+                {identity, owner, publicKey: publicKey.toString('hex')},
+                'Successfully registered new identity'
+            );
         }
 
         // Deploy contracts
         if (deployContracts) {
             let contractNames = deployConfig.contracts;
             if (!contractNames) contractNames = [];
-            for(let contractName of contractNames) {
-                let fileName = path.join(deployPath, 'contracts', contractName+'.sol');
+            for (const contractName of contractNames) {
+                const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
                 try {
                     await this.deployContract(target, contractName, fileName, deployPath);
-                } catch(e) {
-                    this.ctx.log.error({
-                        message: e.message,
-                        stack: e.stack
-                    }, 'Zapp contract deployment error');
+                } catch (e) {
+                    this.ctx.log.error(
+                        {
+                            message: e.message,
+                            stack: e.stack
+                        },
+                        'Zapp contract deployment error'
+                    );
                     throw e;
                 }
             }
@@ -100,14 +112,18 @@ class Deployer {
         await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
 
         // Upload routes
-        let routesFilePath = path.join(deployPath, 'routes.json');
-        let routesFile = fs.readFileSync(routesFilePath, 'utf-8');
-        let routes = JSON.parse(routesFile);
+        const routesFilePath = path.join(deployPath, 'routes.json');
+        const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
+        const routes = JSON.parse(routesFile);
 
         this.log.debug({routes}, 'Uploading route file...');
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
-        let routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
-        this.ctx.client.deployerProgress.update(routesFilePath, 100, `uploaded::${routeFileUploadedId}`);
+        const routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
+        this.ctx.client.deployerProgress.update(
+            routesFilePath,
+            100,
+            `uploaded::${routeFileUploadedId}`
+        );
         await this.updateZDNS(target, routeFileUploadedId);
 
         await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts);
@@ -115,9 +131,9 @@ class Deployer {
         this.log.info('Deploy finished');
     }
 
-    static async getPragmaVersion(source){
-        let regex = /pragma solidity [\^~><]?=?(?<version>[0-9.]*);/;
-        let found = source.match(regex);
+    static async getPragmaVersion(source) {
+        const regex = /pragma solidity [\^~><]?=?(?<version>[0-9.]*);/;
+        const found = source.match(regex);
         if (found) {
             return found.groups.version;
         } else {
@@ -133,62 +149,63 @@ class Deployer {
 
         const version = await Deployer.getPragmaVersion(contractSource);
         const versionArray = version.split('.');
-        let SOLC_MAJOR_VERSION = versionArray[0];
-        let SOLC_MINOR_VERSION = versionArray[1];
-        let SOLC_FULL_VERSION = `solc${SOLC_MAJOR_VERSION}_${SOLC_MINOR_VERSION}`;
+        const SOLC_MAJOR_VERSION = versionArray[0];
+        const SOLC_MINOR_VERSION = versionArray[1];
+        const SOLC_FULL_VERSION = `solc${SOLC_MAJOR_VERSION}_${SOLC_MINOR_VERSION}`;
 
         const path = require('path');
         const solc = require(SOLC_FULL_VERSION);
 
         const compileConfig = {
             language: 'Solidity',
-            sources: {
-                [contractName+'.sol']: {
-                    content: contractSource
-                },
-            },
+            sources: {[contractName + '.sol']: {content: contractSource}},
             settings: {
-                outputSelection: { // return everything
-                    '*': {
-                        '*': ['*']
-                    }
+                outputSelection: {
+                    // return everything
+                    '*': {'*': ['*']}
                 }
             }
         };
 
-        let getImports = function(dependency) {
+        const getImports = function (dependency) {
             const dependencyOriginalPath = path.join(deployPath, 'contracts', dependency);
             const dependencyNodeModulesPath = path.join(deployPath, 'node_modules/', dependency);
             if (fs.existsSync(dependencyOriginalPath)) {
                 return {contents: fs.readFileSync(dependencyOriginalPath, 'utf8')};
-            } else if (fs.existsSync(dependencyNodeModulesPath)){
+            } else if (fs.existsSync(dependencyNodeModulesPath)) {
                 return {contents: fs.readFileSync(dependencyNodeModulesPath, 'utf8')};
             } else {
                 throw new Error('Could not find contract dependency, have you tried npm install?');
             }
         };
 
-        let compiledSources = JSON.parse(solc.compile(JSON.stringify(compileConfig), { import: getImports }));
+        const compiledSources = JSON.parse(
+            solc.compile(JSON.stringify(compileConfig), {import: getImports})
+        );
         this.ctx.client.deployerProgress.update(fileName, 20, 'compiled');
         if (!compiledSources) {
-            throw new Error(">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\nNO OUTPUT");
+            throw new Error(
+                '>>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\nNO OUTPUT'
+            );
         } else if (compiledSources.errors) {
             let found = false;
             let msg = '';
-            for(let e of compiledSources.errors) {
+            for (const e of compiledSources.errors) {
                 if (e.severity === 'warning') {
                     this.log.warn(e, 'Contract compilation warning');
                     continue;
                 }
                 found = true;
-                msg += e.formattedMessage + "\n";
+                msg += e.formattedMessage + '\n';
             }
-            msg = ">>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\n" + msg;
+            msg =
+                '>>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\n' +
+                msg;
             if (found) throw new Error(msg);
         }
 
         let artifacts;
-        for (let contractFileName in compiledSources.contracts) {
+        for (const contractFileName in compiledSources.contracts) {
             const fileName = contractFileName.split('\\').pop().split('/').pop();
             const _contractName = fileName.replace('.sol', '');
             if (contractName === _contractName) {
@@ -198,9 +215,7 @@ class Deployer {
 
         const contract = new this.ctx.web3.eth.Contract(artifacts.abi);
 
-        const deploy = contract.deploy({
-            data: artifacts.evm.bytecode.object
-        });
+        const deploy = contract.deploy({data: artifacts.evm.bytecode.object});
         const gasPrice = await this.ctx.web3.eth.getGasPrice();
         const estimate = await deploy.estimateGas();
         const tx = await deploy.send({
@@ -216,70 +231,66 @@ class Deployer {
         const artifactsJSON = JSON.stringify(artifacts);
 
         this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts');
-        let artifacts_storage_id = await storage.uploadFile(artifactsJSON);
+        const artifacts_storage_id = await storage.uploadFile(artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
-        await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/address/'+contractName, address);
-        await this.ctx.web3bridge.putKeyValue(target, 'zweb/contracts/abi/'+contractName, artifacts_storage_id);
+        await this.ctx.web3bridge.putKeyValue(
+            target,
+            'zweb/contracts/address/' + contractName,
+            address
+        );
+        await this.ctx.web3bridge.putKeyValue(
+            target,
+            'zweb/contracts/abi/' + contractName,
+            artifacts_storage_id
+        );
 
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`);
 
-        this.log.debug(`Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`);
+        this.log.debug(
+            `Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`
+        );
     }
 
     async updateZDNS(host, id) {
-        let target = host.replace('.z', '');
+        const target = host.replace('.z', '');
         this.log.info({target, id}, 'Updating ZDNS');
-        await this.ctx.web3bridge.putZRecord(target, '0x'+id);
+        await this.ctx.web3bridge.putZRecord(target, '0x' + id);
     }
 
-    async updateKeyValue (target, values, deployPath, deployContracts = false) {
+    async updateKeyValue(target, values, deployPath, deployContracts = false) {
         const replaceContentsWithCids = async obj => {
-
             const result = {};
 
-            for (let [key, value] of Object.entries (obj)) {
-
-                if (/^storage\[[^\]]+\]$/.test (key)) {
-
-                    key = key.replace (/.*storage\[([^\]]+)\].*/, '$1');
+            for (let [key, value] of Object.entries(obj)) {
+                if (/^storage\[[^\]]+\]$/.test(key)) {
+                    key = key.replace(/.*storage\[([^\]]+)\].*/, '$1');
 
                     if ('blob' in value) {
-
                         const uploaded = await storage.uploadFile(String(value.blob));
 
                         value = uploaded;
-
                     } else if ('file' in value) {
-
                         const filePath = path.join(deployPath, 'public', value.file);
 
-                        if (!fs.existsSync (filePath)) {
-                            throw new Error ('File not found: ' + filePath);
+                        if (!fs.existsSync(filePath)) {
+                            throw new Error('File not found: ' + filePath);
                         }
 
-                        const ext = value.file.replace (/.*\.([a-zA-Z0-9]+)$/, '$1');
+                        const ext = value.file.replace(/.*\.([a-zA-Z0-9]+)$/, '$1');
                         const file = await fs.promises.readFile(filePath);
                         const cid = await storage.uploadFile(file);
 
                         value = '/_storage/' + cid + '.' + ext;
-
                     } else {
-
-                        throw new Error ('Storage resource not specified: ' + JSON.stringify (value));
+                        throw new Error('Storage resource not specified: ' + JSON.stringify(value));
                     }
-
                 } else if (typeof value === 'object') {
-
-                    value = await replaceContentsWithCids (value);
-
-                } else if (Array.isArray (value)) {
-
-                    for (let i in value) {
-
+                    value = await replaceContentsWithCids(value);
+                } else if (Array.isArray(value)) {
+                    for (const i in value) {
                         if (typeof value[i] === 'object') {
-
-                            value[i] = await replaceContentsWithCids (value[i]);
+                            value[i] = await replaceContentsWithCids(value[i]);
                         }
                     }
                 }
@@ -295,24 +306,31 @@ class Deployer {
         for (let [key, value] of Object.entries(values)) {
             if (value && (Array.isArray(value) || typeof value === 'object')) {
                 // if there is a contract_send in the value then send data to the specified contract
-                if('contract_send' in value && deployContracts) {
-                    let [contractName, methodNameAndParams] = value.contract_send.split('.');
+                if ('contract_send' in value && deployContracts) {
+                    const [contractName, methodNameAndParams] = value.contract_send.split('.');
                     let [methodName, paramsTogether] = methodNameAndParams.split('(');
                     paramsTogether = paramsTogether.replace(')', '');
-                    let paramNames = paramsTogether.split(',');
-                    let params = [];
-                    if (value.metadata){
-                        const metadataHash = await storage.uploadFile(JSON.stringify(value.metadata));
+                    const paramNames = paramsTogether.split(',');
+                    const params = [];
+                    if (value.metadata) {
+                        const metadataHash = await storage.uploadFile(
+                            JSON.stringify(value.metadata)
+                        );
                         value.metadata['metadataHash'] = metadataHash;
-                        for(let paramName of paramNames) {
+                        for (const paramName of paramNames) {
                             params.push(value.metadata[paramName]);
                         }
                     } else {
-                        for(let paramName of paramNames) {
+                        for (const paramName of paramNames) {
                             params.push(value[paramName]);
                         }
                     }
-                    await this.ctx.web3bridge.sendToContract(target, contractName, methodName, params );
+                    await this.ctx.web3bridge.sendToContract(
+                        target,
+                        contractName,
+                        methodName,
+                        params
+                    );
                 }
                 value = JSON.stringify(value);
             }

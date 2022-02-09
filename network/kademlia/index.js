@@ -1,5 +1,4 @@
 const kadence = require('@pointnetwork/kadence');
-const kadenceConstants = require('@pointnetwork/kadence/lib/constants');
 const path = require('path');
 const fs = require('fs');
 const _async = require('async');
@@ -22,7 +21,10 @@ class Kademlia {
     async start() {
         this.patchKadence();
 
-        const storage_leveldb_path = path.join(this.ctx.datadir, this.config.kadence_storage_leveldb_path);
+        const storage_leveldb_path = path.join(
+            this.ctx.datadir,
+            this.config.kadence_storage_leveldb_path
+        );
         if (!fs.existsSync(storage_leveldb_path)) fs.mkdirSync(storage_leveldb_path);
         const storage = level(storage_leveldb_path);
 
@@ -47,14 +49,14 @@ class Kademlia {
             deserializer: SerializerBSON.deserializer
         });
 
-        const node = this.node = new kadence.KademliaNode({
+        const node = (this.node = new kadence.KademliaNode({
             identity,
             storage,
             messenger,
             logger: this.ctx.log.child({module: 'Kademlia'}),
             transport: new kadence.HTTPTransport(),
             contact
-        });
+        }));
 
         // todo:
         // also todo: http://pieroxy.net/blog/pages/lz-string/index.html
@@ -86,10 +88,12 @@ class Kademlia {
             res.send(['bye']);
         });
 
-        node.authenticate = node.plugin(AuthenticatePlugin(this.ctx, networkPublicKey, networkPrivateKey, {
-            privateKey: networkPrivateKey,
-            publicKey: networkPublicKey
-        }));
+        node.authenticate = node.plugin(
+            AuthenticatePlugin(this.ctx, networkPublicKey, networkPrivateKey, {
+                privateKey: networkPrivateKey,
+                publicKey: networkPublicKey
+            })
+        );
 
         // node.eclipse = node.plugin(kadence.eclipse());
 
@@ -101,10 +105,14 @@ class Kademlia {
         //     walletPath: solutionsPath
         // }));
 
-        node.rolodex = node.plugin(kadence.rolodex(path.join(this.ctx.datadir, this.config.peer_cache_file_path)));
+        node.rolodex = node.plugin(
+            kadence.rolodex(path.join(this.ctx.datadir, this.config.peer_cache_file_path))
+        );
 
         if (this.ctx.config.service_provider.enabled) {
-            node.storage_provider = node.plugin(StorageProviderPlugin(this.ctx, networkPublicKey, networkPrivateKey, {}));
+            node.storage_provider = node.plugin(
+                StorageProviderPlugin(this.ctx, networkPublicKey, networkPrivateKey, {})
+            );
         }
 
         // todo: all this vvvvvvv
@@ -166,7 +174,7 @@ class Kademlia {
         // }
 
         // Handle any fatal errors
-        node.on('error', (err) => {
+        node.on('error', err => {
             this.log.error({error: err.message, stack: err.stack}, 'Kademlia Node error');
             // todo: more than just log?
         });
@@ -176,20 +184,22 @@ class Kademlia {
             node.plugin(kadence.logger(this.ctx.log));
         }
 
-        const bootstrapNodes = this.config.bootstrap_nodes || (
-            process.env.BOOTSTRAP_NODES && process.env.BOOTSTRAP_NODES.split(',') || undefined
-        );
+        const bootstrapNodes =
+            this.config.bootstrap_nodes ||
+            (process.env.BOOTSTRAP_NODES && process.env.BOOTSTRAP_NODES.split(',')) ||
+            undefined;
 
-        const joinNetwork = async(callback) => {
-            let peers = bootstrapNodes.concat(
-                await node.rolodex.getBootstrapCandidates()
-            );
+        const joinNetwork = async callback => {
+            const peers = bootstrapNodes.concat(await node.rolodex.getBootstrapCandidates());
 
             if (peers.length === 0) {
-                this.log.info('No bootstrap seeds provided and no known profiles. Running in seed mode (waiting for connections).');
+                this.log.info(
+                    'No bootstrap seeds provided and no known profiles. Running in seed mode (waiting for connections).'
+                );
 
-                return node.router.events.once('add', (identity) => {
-                    this.config.bootstrap_nodes = [ // todo: i think the intention here was to persist this data?
+                return node.router.events.once('add', identity => {
+                    this.config.bootstrap_nodes = [
+                        // todo: i think the intention here was to persist this data?
                         kadence.utils.getContactURL([
                             identity,
                             node.router.getContactByNodeId(identity)
@@ -199,54 +209,67 @@ class Kademlia {
                 });
             }
             this.log.info(`Joining network from ${peers.length} seeds`);
-            _async.detectSeries(peers, (url, done) => {
-                const contact = kadence.utils.parseContactURL(url);
-                node.join(contact, (err) => {
-                    done(null, !err && node.router.size > 1);
-                });
-            }, (err, result) => {
-                if (!result) {
-                    this.log.error('Failed to join network, will retry in 1 minute');
-                    callback(new Error('Failed to join network'));
-                } else {
-                    callback(null, result);
+            _async.detectSeries(
+                peers,
+                (url, done) => {
+                    const contact = kadence.utils.parseContactURL(url);
+                    node.join(contact, err => {
+                        done(null, !err && node.router.size > 1);
+                    });
+                },
+                (err, result) => {
+                    if (!result) {
+                        this.log.error('Failed to join network, will retry in 1 minute');
+                        callback(new Error('Failed to join network'));
+                    } else {
+                        callback(null, result);
+                    }
                 }
-            });
+            );
         };
 
         node.listen(parseInt(this.config.communication_port), () => {
             this.log.info(
                 `node listening on local port ${parseInt(this.config.communication_port)} ` +
-                `and exposed at https://${node.contact.hostname}:${node.contact.port}`
+                    `and exposed at https://${node.contact.hostname}:${node.contact.port}`
             );
             // registerControlInterface();
             // spawnSolverProcesses();
-            _async.retry({
-                times: Infinity,
-                interval: 60000
-            }, done => joinNetwork(done), (err, entry) => {
-                if (err) {
-                    this.log.error({error: err.message, stack: err.stack}, 'Unable to join Kadence DHT network');
-                    process.exit(1);
-                }
-                this.log.info(`Connected to Kadence DHT network via ${entry}`);
-                this.log.info(`Discovered ${node.router.size} peers from seed`);
+            _async.retry(
+                {
+                    times: Infinity,
+                    interval: 60000
+                },
+                done => joinNetwork(done),
+                (err, entry) => {
+                    if (err) {
+                        this.log.error(
+                            {error: err.message, stack: err.stack},
+                            'Unable to join Kadence DHT network'
+                        );
+                        process.exit(1);
+                    }
+                    this.log.info(`Connected to Kadence DHT network via ${entry}`);
+                    this.log.info(`Discovered ${node.router.size} peers from seed`);
 
-                this.ctx.network.peersCount = node.router.size;
-            });
+                    this.ctx.network.peersCount = node.router.size;
+                }
+            );
         });
     }
 
     patchKadence() {
-        kadenceUtils.toPublicKeyHash = function(publicKey) {
-            if (! Buffer.isBuffer(publicKey)) throw new Error('patched kadenceUtils.toPublicKeyHash: public key must be a Buffer');
+        kadenceUtils.toPublicKeyHash = function (publicKey) {
+            if (!Buffer.isBuffer(publicKey))
+                throw new Error(
+                    'patched kadenceUtils.toPublicKeyHash: public key must be a Buffer'
+                );
             const keccakHashHex = ethUtil.keccak256(publicKey);
             const keccakHash = Buffer.from(keccakHashHex, 'hex');
             const address = keccakHash.slice(-20);
             return address;
         };
     }
-
 }
 
 module.exports = Kademlia;

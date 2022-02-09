@@ -20,9 +20,9 @@ const sleepSync = time => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),
 const contractNames = new Set(Object.keys(contractAddresses));
 const start = Date.now();
 
-while (contractNames.size && (Date.now() - start < timeout)) {
+while (contractNames.size && Date.now() - start < timeout) {
     for (const contractName of contractNames) {
-        const filename = `${ contractBuildDir }/${ contractName }.json`;
+        const filename = `${contractBuildDir}/${contractName}.json`;
 
         try {
             if (!existsSync(filename)) continue;
@@ -32,11 +32,10 @@ while (contractNames.size && (Date.now() - start < timeout)) {
             const {networks} = require(filename);
             const network = process.env.BLOCKCHAIN_NETWORK_ID || Math.max(...Object.keys(networks));
 
-            if (!(network in networks) || (typeof networks[network].address !== 'string')) continue;
+            if (!(network in networks) || typeof networks[network].address !== 'string') continue;
 
             contractAddresses[contractName] = networks[network].address;
             contractNames.delete(contractName);
-
         } catch (e) {
             console.error(e);
             // todo
@@ -48,7 +47,7 @@ while (contractNames.size && (Date.now() - start < timeout)) {
 
 if (contractNames.size) {
     console.error('Timeout error:');
-    console.error(`Could not find contract build file(s): ${ Array.from(contractNames).join(', ') }`);
+    console.error(`Could not find contract build file(s): ${Array.from(contractNames).join(', ')}`);
 
     process.exit(1);
 }
@@ -59,9 +58,11 @@ const config = require(templateConfig);
 
 config.network = {
     ...config.network,
-    web3: `http://${ process.env.BLOCKCHAIN_HOST || 'localhost' }:${ process.env.BLOCKCHAIN_PORT || 7545 }`,
+    web3: `http://${process.env.BLOCKCHAIN_HOST || 'localhost'}:${
+        process.env.BLOCKCHAIN_PORT || 7545
+    }`,
     identity_contract_address: contractAddresses.Identity,
-    storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
+    storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry
 };
 
 if (process.env.BLOCKCHAIN_NETWORK_ID) {
@@ -99,6 +100,6 @@ console.info('Done.');
         }
     }
 
-    console.error(`Unable to reach blockchain provider at ${ config.network.web3 }`);
+    console.error(`Unable to reach blockchain provider at ${config.network.web3}`);
     process.exit(1);
 })();

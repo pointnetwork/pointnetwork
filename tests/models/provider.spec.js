@@ -2,7 +2,7 @@ const ctx = require('../_helpers/db/setup');
 const truncate = require('../_helpers/db/truncate');
 const DB = require('../../db');
 const db = new DB(ctx);
-const { v4: uuid } = require('uuid');
+const {v4: uuid} = require('uuid');
 
 describe('Provider model', () => {
     let Provider;
@@ -10,12 +10,12 @@ describe('Provider model', () => {
         id: uuid(),
         address: '0xB87C8Ec8cd1C33EB9548490D64623a63Fd757415',
         connection: `http://localhost:12345/#${this.address}`
-    }
+    };
 
     beforeAll(async () => {
         await db.init();
         Provider = require('../../db/models/provider');
-    })
+    });
 
     afterEach(async () => {
         truncate(Provider);
@@ -31,7 +31,7 @@ describe('Provider model', () => {
         });
 
         it('creates a record in `providers` table', async () => {
-            const providers = await Provider.findAll()
+            const providers = await Provider.findAll();
 
             expect(providers).toBeInstanceOf(Array);
             expect(providers).toHaveLength(1);
@@ -57,7 +57,7 @@ describe('Provider model', () => {
             provider.connection = updatedConnection;
             await provider.save();
 
-            savedProvider = await Provider.find(providerObj.id)
+            savedProvider = await Provider.find(providerObj.id);
 
             expect(savedProvider).toBeInstanceOf(Provider);
             expect(savedProvider).toHaveProperty('connection', updatedConnection);
@@ -66,9 +66,8 @@ describe('Provider model', () => {
 
     describe('findOrCreate', () => {
         beforeAll(async () => {
-                await Provider.findOrCreate({ where: { id: providerObj.id }, defaults: { ...providerObj } })
-            }
-        );
+            await Provider.findOrCreate({where: {id: providerObj.id}, defaults: {...providerObj}});
+        });
 
         it('extracts address and connection string from a string id and saves correct provider fields', async () => {
             const savedProviders = await Provider.findAll();
