@@ -8,8 +8,7 @@
 //BEWARE: download function uses current deployed identity contract
 //truffle exec scripts/pointSocialImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 
 const fs = require('fs');
-const { exit } = require('process');
-
+const {exit} = require('process');
 
 
 global.artifacts = artifacts;
@@ -34,7 +33,11 @@ const action = process.argv[4];
 const contract = process.argv[5];
 
 async function main(){
-    action == '--download' ? await download(contract) : await upload(contract);
+    if(action === '--download') {
+        await download(contract);
+    } else {
+        await upload(contract);
+    }
 }
 
 function loadMigrationFile() {
@@ -43,19 +46,17 @@ function loadMigrationFile() {
 }
 
 async function download(contract) {
-    const pointSocialArtifacts = artifacts.require("./PointSocial.sol");
-    const artifact = artifacts.require("./Identity.sol");
+    const pointSocialArtifacts = artifacts.require('./PointSocial.sol');
+    const artifact = artifacts.require('./Identity.sol');
     const identityContract = new web3.eth.Contract(artifact.abi, contract);
     const handle = 'pointsocial';
 
-    let fileStructure = {
-        "posts":[],
-    };
+    let fileStructure = {posts:[],};
 
     //0x16A9d233278075bf6EC4dC52BA70EF3E6ea9d182
     //assuming that the contract address is the first key in the ikvList
-    const contractAddressKey = await identityContract.methods.ikvList(handle, 0).call();
-    const contractAddress = await identityContract.methods.ikvGet(handle, contractAddressKey).call();
+    const contractKey = await identityContract.methods.ikvList(handle, 0).call();
+    const contractAddress = await identityContract.methods.ikvGet(handle, contractKey).call();
     const pointSocialContract = new web3.eth.Contract(pointSocialArtifacts.abi, contractAddress);
     const data = await pointSocialContract.methods.getAllPosts().call();
     const posts  = [];
@@ -63,11 +64,11 @@ async function download(contract) {
     for (const item of data) {
         console.log(item);
         const {id, from, contents, image, createdAt} = item;
-        console.log('Fetching post:'+id);
+        console.log('Fetching post:' + id);
 
-        let comments = await pointSocialContract.methods.getAllCommentsForPost(id).call();
+        const comments = await pointSocialContract.methods.getAllCommentsForPost(id).call();
         
-        let post = {
+        const post = {
             id, 
             from, 
             contents, 
@@ -81,10 +82,10 @@ async function download(contract) {
 
     fileStructure.posts = posts;
 
-    const timestamp = Math.round(+new Date()/1000); 
+    const timestamp = Math.floor(Date.now() / 1000); 
 
     fs.writeFileSync(
-        '../resources/migrations/'+timestamp+'-pointsocial.json', 
+        '../resources/migrations/' + timestamp + '-pointsocial.json', 
         JSON.stringify(fileStructure, null, 4)
     );
 
@@ -96,45 +97,40 @@ async function upload(contract) {
     const migrationFile = '../resources/migrations/'+process.argv[6];
     
     if (!fs.existsSync(migrationFile)) {
-        console.log("Migration not found");
+        console.log('Migration not found');
         exit(0);
     }
 
-    const pointSocialArtifacts = artifacts.require("./PointSocial.sol");
+    const pointSocialArtifacts = artifacts.require('./PointSocial.sol');
     const pointSocialContract = new web3.eth.Contract(pointSocialArtifacts.abi, contract);
-    let accounts = await web3.eth.getAccounts();
+    const accounts = await web3.eth.getAccounts();
 
-    let data = JSON.parse(fs.readFileSync(migrationFile));
+    const data = JSON.parse(fs.readFileSync(migrationFile));
 
-    await pointSocialContract.methods.addMigrator(accounts[0]).send({
-        from:accounts[0]
-    });
+    await pointSocialContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
 
     let postComments = [];
 
     for (const post of data.posts) {
         console.log('Migrating: PointSocial post from '+post.from+' contents '+post.contents);
     
-        
         await pointSocialContract.methods.add(
             post.id,
             post.from, 
             post.contents, 
             post.image, 
             post.createdAt
-        ).send({
-            from: accounts[0]
-        });
+        ).send({from: accounts[0]});
         
         postComments[post.id] = post.comments;
     }
 
-    for (let postId in postComments){
-        for(let comment of postComments[postId]) {
-            let id = comment[0];
-            let from = comment[1];
-            let contents = comment[2];
-            let createdAt = comment[3];
+    for (const postId in postComments){
+        for(const comment of postComments[postId]) {
+            const id = comment[0];
+            const from = comment[1];
+            const contents = comment[2];
+            const createdAt = comment[3];
     
             console.log('Migrating: PointSocial comment post id:'+postId+' from:'+from);
             await pointSocialContract.methods.addComment(
@@ -143,9 +139,7 @@ async function upload(contract) {
                 from, 
                 contents, 
                 createdAt 
-            ).send({
-                from: accounts[0]
-            });
+            ).send({from: accounts[0]});
         }
     }
     
@@ -156,5 +150,5 @@ async function upload(contract) {
 
 // For truffle exec
 module.exports = function(callback) {
-    main().then(() => callback()).catch(err => callback(err))
+    main().then(() => callback()).catch(err => callback(err));
 };
