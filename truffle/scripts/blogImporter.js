@@ -8,8 +8,7 @@
 //BEWARE: download function uses current deployed identity contract
 //truffle exec scripts/blogImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 
 const fs = require('fs');
-const { exit } = require('process');
-
+const {exit} = require('process');
 
 //truffle exec scripts/blogImporter.js --upload 0xa4C69e06Cdb629Cd20DC813517cb9a2f279cD0A7 1643656897-blog.json --config truffle-config-neon.js --network ynet
 
@@ -35,22 +34,21 @@ const action = process.argv[4];
 const contract = process.argv[5];
 
 async function main(){
-    action == '--download' ? await download(contract) : await upload(contract);
-}
-
-function loadMigrationFile() {
-    const migrationFile = '../resources/migrations/'+process.argv[6];
-    return JSON.parse(fs.readFileSync(migrationFile));
+    if(action === '--download') {
+        await download(contract);
+    } else {
+        await upload(contract);
+    }
 }
 
 async function download(contract) {
-    const blogArtifacts = artifacts.require("./Blog.sol");
-    const artifact = artifacts.require("./Identity.sol");
+    const blogArtifacts = artifacts.require('./Blog.sol');
+    const artifact = artifacts.require('./Identity.sol');
     const identityContract = new web3.eth.Contract(artifact.abi, contract);
     const handle = 'blog';
 
-    let fileStructure = {
-        "articles":[],
+    const fileStructure = {
+        'articles':[],
     };
 
     //0x16A9d233278075bf6EC4dC52BA70EF3E6ea9d182
@@ -64,7 +62,7 @@ async function download(contract) {
     for (const item of data) {
         const {id, author, title, contents, timestamp} = item;
 
-        console.log('Fetching post:'+id);
+        console.log('Fetching post:' + id);
 
         let comments = await blogContract.methods.getCommentsByArticle(id).call();
         
@@ -85,7 +83,7 @@ async function download(contract) {
     const timestamp = Math.round(+new Date()/1000); 
 
     fs.writeFileSync(
-        '../resources/migrations/'+timestamp+'-blog.json', 
+        '../resources/migrations/' + timestamp + '-blog.json', 
         JSON.stringify(fileStructure, null, 4)
     );
 
@@ -97,11 +95,11 @@ async function upload(contract) {
     const migrationFile = '../resources/migrations/'+process.argv[6];
 
     if (!fs.existsSync(migrationFile)) {
-        console.log("Migration not found");
+        console.log('Migration not found');
         exit(0);
     }
 
-    const blogArtifacts = artifacts.require("./Blog.sol");
+    const blogArtifacts = artifacts.require('./Blog.sol');
     const blogContract = new web3.eth.Contract(blogArtifacts.abi, contract);
     let accounts = await web3.eth.getAccounts();
 
@@ -111,10 +109,10 @@ async function upload(contract) {
         from:accounts[0]
     });
     
-    let articleComments = [];
+    const articleComments = [];
 
     for (const article of data.articles) {
-        console.log('Migrating: Blog post from '+article.author+' contents '+article.contents);
+        console.log('Migrating: Blog post from ' + article.author + ' contents ' + article.contents);
         
         await blogContract.methods.add(
             article.id,
@@ -135,7 +133,7 @@ async function upload(contract) {
             let contents = comment[1];
             let timestamp = comment[2];
     
-            console.log('Migrating: Blog comment post id:'+postId+' from:'+author);
+            console.log('Migrating: Blog comment post id:' + postId + ' from:' + author);
             await blogContract.methods.addComment(
                 postId,
                 author, 
