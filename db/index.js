@@ -18,8 +18,6 @@ class DB {
     async init() {
         await this.connection.authenticate();
         this.log.debug('Connection with DB established successfully');
-
-        Model.connection = this.connection;
     }
 
     async shutdown() {
