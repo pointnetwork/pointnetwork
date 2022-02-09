@@ -40,11 +40,6 @@ async function main(){
     }
 }
 
-function loadMigrationFile() {
-    const migrationFile = '../resources/migrations/'+process.argv[6];
-    return JSON.parse(fs.readFileSync(migrationFile));
-}
-
 async function download(contract) {
     const pointSocialArtifacts = artifacts.require('./PointSocial.sol');
     const artifact = artifacts.require('./Identity.sol');
@@ -73,7 +68,7 @@ async function download(contract) {
             image, 
             createdAt,
             comments
-        }
+        };
 
         posts.push(post);
     }
@@ -92,7 +87,7 @@ async function download(contract) {
 }
 
 async function upload(contract) {
-    const migrationFile = '../resources/migrations/'+process.argv[6];
+    const migrationFile = '../resources/migrations/' + process.argv[6];
     
     if (!fs.existsSync(migrationFile)) {
         console.log('Migration not found');
@@ -107,7 +102,7 @@ async function upload(contract) {
 
     await pointSocialContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
 
-    let postComments = [];
+    const postComments = [];
 
     for (const post of data.posts) {
         console.log('Migrating: PointSocial post from ' + post.from + ' contents ' + post.contents);
@@ -144,7 +139,6 @@ async function upload(contract) {
     console.log('Done');
     exit(0);
 }
-
 
 // For truffle exec
 module.exports = function(callback) {
