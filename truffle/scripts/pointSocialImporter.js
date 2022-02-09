@@ -10,7 +10,6 @@
 const fs = require('fs');
 const {exit} = require('process');
 
-
 global.artifacts = artifacts;
 global.web3 = web3;
 
