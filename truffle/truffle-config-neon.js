@@ -1,4 +1,3 @@
-/*
 const keystore = require('/.keystore/key.json');
 
 if (typeof keystore !== 'object') {
