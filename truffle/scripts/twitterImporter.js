@@ -48,30 +48,36 @@ async function download(contract) {
     const identityContract = new web3.eth.Contract(artifact.abi, contract);
     const handle = 'twitter';
 
-    let fileStructure = {tweets:[]};
+    const fileStructure = {tweets:[]};
 
     // assuming that the contract address is the first key in the ikvList
     const contractKey = await identityContract.methods.ikvList(handle, 0).call();
     const contractAddress = await identityContract.methods.ikvGet(handle, contractKey).call();
     const twitterContract = new web3.eth.Contract(twitterArtifacts.abi, contractAddress);
     
-    let data = loadMigrationFile();
+    const data = loadMigrationFile();
 
     const tweets = [];
     for (const identity of data.identities) {
-        console.log('trying to fetch tweets from '+identity.handle);
+        console.log('trying to fetch tweets from ' + identity.handle);
         const keepSearchingTweets = true;
         const tweetCounter = 0;
         while (keepSearchingTweets) {
             try {
-                const {from, contents, timestamp, likes} = await twitterContract.methods.getTweetByOwner(identity.owner, tweetCounter).call();
+                const {
+                    from,
+                    contents,
+                    timestamp, 
+                    likes
+                    } = await twitterContract.methods.getTweetByOwner(identity.owner, tweetCounter).call();
                
                 const tweet = {
                     from,
                     contents,
                     timestamp,
                     likes,
-                }
+                };
+
                 tweets.push(tweet);
                 console.log('Found tweet ' + tweetCounter + ' for ' + identity.handle);
                 tweetCounter++;
@@ -124,9 +130,7 @@ async function upload(contract) {
             tweet.contents, 
             tweet.timestamp, 
             tweet.likes
-        ).send({
-            from: accounts[0]
-        });
+        ).send({from: accounts[0]});
     }
 
     console.log('Done');
