@@ -51,8 +51,8 @@ async function download(contract) {
 
     //0x16A9d233278075bf6EC4dC52BA70EF3E6ea9d182
     // assuming that the contract address is the first key in the ikvList
-    const contractAddressKey = await identityContract.methods.ikvList(handle, 0).call();
-    const contractAddress = await identityContract.methods.ikvGet(handle, contractAddressKey).call();
+    const contractKey = await identityContract.methods.ikvList(handle, 0).call();
+    const contractAddress = await identityContract.methods.ikvGet(handle, contractKey).call();
     const blogContract = new web3.eth.Contract(blogArtifacts.abi, contractAddress);
     const data = await blogContract.methods.getArticles().call();
     const articles  = [];
@@ -78,7 +78,7 @@ async function download(contract) {
 
     fileStructure.articles = articles;
 
-    const timestamp = Math.round(+new Date() / 1000); 
+    const timestamp = Math.floor(Date.now() / 1000); 
 
     fs.writeFileSync(
         '../resources/migrations/' + timestamp + '-blog.json', 
@@ -141,8 +141,7 @@ async function upload(contract) {
     exit(0);
 }
 
-
 // For truffle exec
 module.exports = function(callback) {
-    main().then(() => callback()).catch(err => callback(err))
+    main().then(() => callback()).catch(err => callback(err));
 };
