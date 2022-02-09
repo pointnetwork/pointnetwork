@@ -64,7 +64,7 @@ const init = async ctx => {
     // TODO: ambiguous stuff, config is spread between storage and client.storage
     config = {
         ...ctx.config.storage,
-        ...ctx.config.client.storage,
+        ...ctx.config.client.storage
     };
     
     if (!config.arweave_experiment_version_major) {
@@ -82,11 +82,10 @@ const init = async ctx => {
     arweave =  Arweave.init({
         port: config.arweave_port,
         protocol: config.arweave_protocol,
-        host: config.arweave_host,
+        host: config.arweave_host
     });
 
 };
-
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
 const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
@@ -155,10 +154,10 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 const signTx = async (data, tags) => {
     // Real 'AR' mode
     
-    let transaction = await arweave.createTransaction({ data }, config.arweave_key);
+    const transaction = await arweave.createTransaction({data}, config.arweave_key);
 
-    for(let k in tags) {
-        let v = tags[k];
+    for(const k in tags){
+        const v = tags[k];
         transaction.addTag(k, v);
     }
 
@@ -169,18 +168,18 @@ const signTx = async (data, tags) => {
 };
 
 const broadcastTx = async (transaction) => {
-    let uploader = await arweave.transactions.getUploader(transaction);
+    const uploader = await arweave.transactions.getUploader(transaction);
     while (!uploader.isComplete) { await uploader.uploadChunk(); }
 
     return transaction;
-}
+};
 
 async function uploadArweave (data, tags) {
     // upload to areweave directly without using bundler
     let transaction = await signTx(data, tags);
     transaction = await broadcastTx(transaction);
     const txid = transaction.id;
-    logger.debug({txid}, "Transaction id successfully generated");
+    logger.debug({txid}, 'Transaction id successfully generated');
     const response = {data: {status: 'ok'}};
     return response;
 }
@@ -188,10 +187,10 @@ async function uploadArweave (data, tags) {
 const uploadBundler = async (data, tags) => {
     // upload to point bundler to forward to arweave
     const formData = new FormData();
-    formData.append("file", data);
+    formData.append('file', data);
     // add tags
-    for(let k in tags) {
-        let v = tags[k];
+    for(const k in tags) {
+        const v = tags[k];
         formData.append(k, v);
     }
 
@@ -201,7 +200,7 @@ const uploadBundler = async (data, tags) => {
         {headers: {...formData.getHeaders()}}
     );
     return response;
-}
+};
 
 const uploadChunk = async data => {
     const chunkId = hashFn(data).toString('hex');
@@ -225,19 +224,18 @@ const uploadChunk = async data => {
         const chunkIdVersioned = `__pn_chunk_${config.arweave_experiment_version_major}.${config.arweave_experiment_version_minor}_id`;
 
         const tags = {
-            "__pn_integration_version_major": config.arweave_experiment_version_major,
-            "__pn_integration_version_minor": config.arweave_experiment_version_minor,
-            "__pn_chunk_id": chunkId,
+            __pn_integration_version_major: config.arweave_experiment_version_major,
+            __pn_integration_version_minor: config.arweave_experiment_version_minor,
+            __pn_chunk_id: chunkId,
             [chunkIdVersioned]: chunkId
         };
 
         //it calls uploadLocalCall or uploadRemoteCall depending of env variable configured.
         let response;
-        if (process.env.MODE === "zappdev")
+        if (process.env.MODE === 'zappdev')
             response = await uploadArweave(data, tags);
         else
             response = await uploadBundler(data, tags);
-        
         
         //TODO: check status from bundler
         if (response.data.status !== 'ok') {
@@ -245,7 +243,6 @@ const uploadChunk = async data => {
                 JSON.stringify(response.data, null, 2)
             }`);
         }
-    
 
         logger.debug({chunkId}, 'Chunk successfully uploaded, saving to disk');
 

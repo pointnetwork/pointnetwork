@@ -36,7 +36,7 @@ const variables = {
                 process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || undefined,
             arweave_port: process.env.ARWEAVE_PORT || undefined,
             arweave_protocol: process.env.ARWEAVE_PROTOCOL || undefined,
-            arweave_host: process.env.ARWEAVE_HOST || undefined,
+            arweave_host: process.env.ARWEAVE_HOST || undefined
         },
         wallet: {
             account: '0x' + wallet.getAddress().toString('hex'),

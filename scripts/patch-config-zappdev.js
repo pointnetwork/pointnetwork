@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-const {existsSync, writeFileSync, readFileSync, unlinkSync, mkdirSync} = require('fs');
+const {existsSync, writeFileSync, unlinkSync, mkdirSync} = require('fs');
 const Web3 = require('web3');
-const Arweave = require("arweave");
-const axios = require("axios");
+const Arweave = require('arweave');
+const axios = require('axios');
 
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
 const templateConfig = '/nodeConfig.json';
@@ -64,7 +64,7 @@ config.network = {
     ...config.network,
     web3: `http://${ process.env.BLOCKCHAIN_HOST || 'localhost' }:${ process.env.BLOCKCHAIN_PORT || 7545 }`,
     identity_contract_address: contractAddresses.Identity,
-    storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry,
+    storage_provider_registry_contract_address: contractAddresses.StorageProviderRegistry
 };
 
 if (process.env.BLOCKCHAIN_NETWORK_ID) {
@@ -75,16 +75,16 @@ const arweave_init_params = {
     port: process.env.ARWEAVE_PORT,
     protocol: process.env.ARWEAVE_PROTOCOL,
     timeout: 20000,
-    logging: false,
+    logging: false
 };
 
-let arweave = Arweave.init(arweave_init_params);
+const arweave = Arweave.init(arweave_init_params);
 
 if (!existsSync('/data/keystore/arweave.json')) {
     //generate the wallet for arlocal and mint some tokents
     //only if the key does not exists
     arweave.wallets.generate().then((key) => {
-        console.info("Generating key for ArLocal...")
+        console.info('Generating key for ArLocal...');
 
         //write the key to the filesystem
         writeFileSync('/data/keystore/arweave.json', JSON.stringify(key, null, 2), 'utf-8');
@@ -99,7 +99,6 @@ if (!existsSync('/data/keystore/arweave.json')) {
 
 //sync
 sleepSync(2048);
-
 
 writeFileSync(targetConfig, JSON.stringify(config, null, 2));
 
