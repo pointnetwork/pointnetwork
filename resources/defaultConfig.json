@@ -62,8 +62,6 @@
       "__do not remove this section__": null,
       "id": "58225300-cf00-494a-be15-8a15e42d3758",
       "passcode": "BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9",
-      "account": "",
-      "privateKey": "",
       "keystore_path": "wallets/keystore"
     },
     "max_parallel_requests_per_provider": 3

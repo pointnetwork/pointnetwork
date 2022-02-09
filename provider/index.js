@@ -1,5 +1,4 @@
 const ProviderChunk = require('../db/models/provider_chunk');
-const ethUtil = require('ethereumjs-util');
 const utils = require('#utils');
 const path = require('path');
 const {fork} = require('child_process');
@@ -34,7 +33,6 @@ class Provider {
     async init() {
         this.privateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
         this.privateKey = Buffer.from(this.privateKeyHex, 'hex');
-        this.publicKey = ethUtil.privateToPublic(this.privateKey); // todo: different source than networkPrivateKeyHex, cross validate them!
 
         this.connectNode(this.node);
 
