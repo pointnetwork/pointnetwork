@@ -175,7 +175,7 @@ const broadcastTx = async (transaction) => {
     return transaction;
 }
 
-async function uploadLocalCall (data, tags) {
+async function uploadArweave (data, tags) {
     // upload to areweave directly without using bundler
     let transaction = await signTx(data, tags);
     transaction = await broadcastTx(transaction);
@@ -185,7 +185,7 @@ async function uploadLocalCall (data, tags) {
     return response;
 }
 
-const uploadRemoteCall = async (data, tags) => {
+const uploadBundler = async (data, tags) => {
     // upload to point bundler to forward to arweave
     const formData = new FormData();
     formData.append("file", data);
@@ -234,9 +234,9 @@ const uploadChunk = async data => {
         //it calls uploadLocalCall or uploadRemoteCall depending of env variable configured.
         let response;
         if (process.env.MODE === "zappdev")
-            response = await uploadLocalCall(data, tags);
+            response = await uploadArweave(data, tags);
         else
-            response = await uploadRemoteCall(data, tags);
+            response = await uploadBundler(data, tags);
         
         
         //TODO: check status from bundler
