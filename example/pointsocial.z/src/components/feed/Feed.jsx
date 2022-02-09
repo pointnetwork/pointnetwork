@@ -1,13 +1,26 @@
 import "./feed.css";
-import { useEffect, useState } from "react";
+import { useState,useEffect } from "react";
 import { useAppContext } from '../../context/AppContext';
+import useInView from 'react-cool-inview'
 import Post from "../post/Post";
 import Share from "../share/Share";
 import Identity from "../identity/Identity";
 import LoadingSpinner from '../loading/LoadingSpinner';
 
+const NUM_POSTS_PER_CALL = 20;
+
 const Feed = ({account}) =>{
+  const {observe} = useInView({
+    onEnter: async({observe,unobserve}) => {
+      if(numPosts === posts.length) return;
+      unobserve();
+      await getPosts();
+      observe();
+    }
+  })
+
   const [posts, setPosts] = useState([])
+  const [numPosts, setNumPosts] = useState()
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(undefined);
   const { walletAddress } = useAppContext();
@@ -23,17 +36,32 @@ const Feed = ({account}) =>{
     return 0;
   }
 
+  useEffect(()=>{
+    console.log('@@@@@@@@@@posts',posts)
+    console.log('@@@@@@@@@@account',account)
+  },[posts,account])
+
+  useEffect(()=>{
+    getPostsLength();
+  },[])
+
+  const getPostsLength = async() => {
+    const response = account
+    ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwnerLength', params: [account]}) :
+    await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsLength', params:[]})
+
+    setNumPosts(Number(response.data));
+  }
+
   const getPosts = async () => {
     setLoading(true);
     const posts = await fetchPosts()
     posts.sort(compareByTimestamp)
-    setPosts(posts);
-    console.log('posts',posts)
+    setPosts(prev => [...prev,...posts]);
     setLoading(false);
   }
 
   const renderPostsImmediate = ({contents,image}) => {
-    console.log('Using renderPostsImmediate function.')
     setLoading(true);
     let updatedPosts = [...posts];
     let newPostId = posts.length + 1;
@@ -41,26 +69,21 @@ const Feed = ({account}) =>{
     updatedPosts.push(newPost);
     updatedPosts.sort(compareByTimestamp)
     setPosts(updatedPosts);
-    console.log('posts',updatedPosts)
     setLoading(false);
   }
-
-  useEffect(() => {
-      getPosts()
-  }, [account])
 
   const fetchPosts = async () => {
     try {
       const response = account
-        ? await window.point.contract.call({contract: 'PointSocial', method: 'getAllPostsByOwner', params: [account]}) :
-        await window.point.contract.call({contract: 'PointSocial', method: 'getAllPosts'})
+        ? await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPostsByOwner', params: [account,posts.length,NUM_POSTS_PER_CALL]}) :
+        await window.point.contract.call({contract: 'PointSocial', method: 'getPaginatedPosts', params:[posts.length,NUM_POSTS_PER_CALL]})
 
-      const posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
+      const _posts = response.data.map(([id, from, contents, image, createdAt, likesCount, commentsCount]) => (
           {id, from, contents, image, createdAt: createdAt*1000, likesCount, commentsCount}
         )
       )
 
-      const postsContent = await Promise.all(posts.map(async (post) => {
+      const postsContent = await Promise.all(_posts.map(async (post) => {
         const {data: contents} = await window.point.storage.getString({ id: post.contents, encoding: 'utf-8' });
         const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: post.from});
         post.identity = identity;
@@ -89,12 +112,14 @@ const Feed = ({account}) =>{
     <div className="feed">
       <div className="feedWrapper">
         {!account && <div><Identity /><Share renderPostsImmediate={renderPostsImmediate} getPosts={getPosts} /></div>}
-        {loading && <LoadingSpinner />}
         {(!loading && feedError) && <span className='error'>Error loading feed: {feedError.message}. Did you deploy the contract sucessfully?</span>}
         {(!loading && !feedError && posts.length === 0) && <span className='no-post-to-show'>No posts made yet!</span>}
         {posts.map((p) => (
           <Post key={p.id} post={p} reloadPostLikesCount={reloadPostLikesCount} />
-        ))}
+          ))}
+        <div ref={observe}>
+        {loading && <LoadingSpinner />}
+        </div>
       </div>
     </div>
   );
