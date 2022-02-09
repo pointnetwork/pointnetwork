@@ -47,9 +47,7 @@ async function download(contract) {
     const identityContract = new web3.eth.Contract(artifact.abi, contract);
     const handle = 'blog';
 
-    const fileStructure = {
-        'articles':[],
-    };
+    const fileStructure = {articles:[]};
 
     //0x16A9d233278075bf6EC4dC52BA70EF3E6ea9d182
     // assuming that the contract address is the first key in the ikvList
@@ -64,23 +62,23 @@ async function download(contract) {
 
         console.log('Fetching post:' + id);
 
-        let comments = await blogContract.methods.getCommentsByArticle(id).call();
+        const comments = await blogContract.methods.getCommentsByArticle(id).call();
         
-        let article = {
+        const article = {
             id, 
             author, 
             title, 
             contents, 
             timestamp,
             comments
-        }
+        };
 
         articles.push(article);
     }
 
     fileStructure.articles = articles;
 
-    const timestamp = Math.round(+new Date()/1000); 
+    const timestamp = Math.round(+new Date() / 1000); 
 
     fs.writeFileSync(
         '../resources/migrations/' + timestamp + '-blog.json', 
@@ -92,7 +90,7 @@ async function download(contract) {
 }
 
 async function upload(contract) {
-    const migrationFile = '../resources/migrations/'+process.argv[6];
+    const migrationFile = '../resources/migrations/' + process.argv[6];
 
     if (!fs.existsSync(migrationFile)) {
         console.log('Migration not found');
@@ -101,13 +99,11 @@ async function upload(contract) {
 
     const blogArtifacts = artifacts.require('./Blog.sol');
     const blogContract = new web3.eth.Contract(blogArtifacts.abi, contract);
-    let accounts = await web3.eth.getAccounts();
+    const accounts = await web3.eth.getAccounts();
 
-    let data = JSON.parse(fs.readFileSync(migrationFile));
+    const data = JSON.parse(fs.readFileSync(migrationFile));
     
-    await blogContract.methods.addMigrator(accounts[0]).send({
-        from:accounts[0]
-    });
+    await blogContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
     
     const articleComments = [];
 
