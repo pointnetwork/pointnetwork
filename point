@@ -272,12 +272,15 @@ process.on('unhandledRejection', (err, second) => {
     ctx.log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
 });
 
-// -------------------- Init DB ---------------------- //
-ctx.db = new DB(ctx);
-ctx.db.init();
+(async function(){
+    // -------------------- Init DB ---------------------- //
+    ctx.db = new DB(ctx);
+    await ctx.db.init();
 
-// ------------------- Start Point ------------------- //
+    // ------------------- Start Point ------------------- //
 
-const Point = require('./core');
-const point = new Point(ctx);
-point.start();
+    const Point = require('./core');
+    const point = new Point(ctx);
+    point.start();
+
+})();
