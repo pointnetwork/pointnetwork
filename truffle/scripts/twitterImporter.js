@@ -53,7 +53,7 @@ async function download(contract) {
     // assuming that the contract address is the first key in the ikvList
     const contractKey = await identityContract.methods.ikvList(handle, 0).call();
     const contractAddress = await identityContract.methods.ikvGet(handle, contractKey).call();
-    const twitterContract = new web3.eth.Contract(twitterArtifacts.abi, contractAddress);
+    const zapContract = new web3.eth.Contract(twitterArtifacts.abi, contractAddress);
     
     const data = loadMigrationFile();
 
@@ -69,7 +69,7 @@ async function download(contract) {
                     contents,
                     timestamp, 
                     likes
-                } = await twitterContract.methods.getTweetByOwner(identity.owner, tweetCounter).call();
+                } = await zapContract.methods.getTweetByOwner(identity.owner, tweetCounter).call();
                
                 const tweet = {
                     from,
@@ -112,18 +112,18 @@ async function upload(contract) {
     }
 
     const twitterArtifacts = artifacts.require('./Twitter.sol');
-    const twitterContract = new web3.eth.Contract(twitterArtifacts.abi, contract);
+    const zapContract = new web3.eth.Contract(twitterArtifacts.abi, contract);
     const accounts = await web3.eth.getAccounts();
 
     const data = JSON.parse(fs.readFileSync(migrationFile));
 
     console.log('Adding migrator');
     
-    await twitterContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
+    await zapContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
 
     for (const tweet of data.tweets) {
         console.log('Migrating: tweet from ' + tweet.from + ' contents ' + tweet.contents);
-        await twitterContract.methods.add(
+        await zapContract.methods.add(
             tweet.from,
             tweet.contents, 
             tweet.timestamp, 
