@@ -66,7 +66,7 @@ const init = async ctx => {
         ...ctx.config.storage,
         ...ctx.config.client.storage,
     };
-    console.log(config);
+    
     if (!config.arweave_experiment_version_major) {
         throw new Error('arweave_experiment_version_major not set or is 0');
     }
@@ -82,9 +82,6 @@ const init = async ctx => {
         makeSurePathExistsAsync(filesDir)
     ]);
 
-    console.log(config.arweave_port)
-    console.log(config.arweave_protocol)
-    console.log(config.arweave_host)
     arweave =  Arweave.init({
         port: config.arweave_port,
         protocol: config.arweave_protocol,
@@ -157,7 +154,7 @@ const getChunk = async (chunkId, encoding = "utf8", useCache = true) => {
 
 const signTx = async (data, tags) => {
     // Real 'AR' mode
-    console.log(config.arweave_key);
+    
     let transaction = await arweave.createTransaction({ data }, config.arweave_key);
 
     for(let k in tags) {

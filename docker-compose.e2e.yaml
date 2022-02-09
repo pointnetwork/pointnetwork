@@ -139,6 +139,9 @@ services:
       BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
+      ARWEAVE_HOST: $ARWEAVE_HOST
+      ARWEAVE_PROTOCOL: $ARWEAVE_PROTOCOL
+      ARWEAVE_PORT: $ARWEAVE_PORT
 
   website_visitor:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
@@ -187,18 +190,9 @@ services:
       BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
       BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
 
-  arlocal:
-    image: textury/arlocal
-    container_name: arlocal
-    ports:
-      - '1984:1984'
-    volumes:
-      - arlocal_data:/bin/.db
-
 volumes:
   blockchain_data:
   shared_contracts:
   storage_provider_data:
   website_owner_data:
   website_visitor_data:
-  arlocal_data:

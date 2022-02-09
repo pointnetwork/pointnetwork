@@ -84,15 +84,13 @@ if (!existsSync('/data/keystore/arweave.json')) {
     //generate the wallet for arlocal and mint some tokents
     //only if the key does not exists
     arweave.wallets.generate().then((key) => {
-        console.log("Generating key for ArLocal:")
-        console.log(key);
+        console.info("Generating key for ArLocal...")
 
         //write the key to the filesystem
         writeFileSync('/data/keystore/arweave.json', JSON.stringify(key, null, 2), 'utf-8');
 
         //mint some tokens
         arweave.wallets.jwkToAddress(key).then((address) => {
-            console.log(address);
             //1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY
             axios.get(`http://arlocal:1984/mint/${address}/100000000000000000000`);
         });
