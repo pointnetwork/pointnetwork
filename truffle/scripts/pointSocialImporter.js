@@ -51,10 +51,8 @@ async function download(contract) {
     const identityContract = new web3.eth.Contract(artifact.abi, contract);
     const handle = 'pointsocial';
 
-    let fileStructure = {posts:[],};
+    const fileStructure = {posts:[]};
 
-    //0x16A9d233278075bf6EC4dC52BA70EF3E6ea9d182
-    //assuming that the contract address is the first key in the ikvList
     const contractKey = await identityContract.methods.ikvList(handle, 0).call();
     const contractAddress = await identityContract.methods.ikvGet(handle, contractKey).call();
     const pointSocialContract = new web3.eth.Contract(pointSocialArtifacts.abi, contractAddress);
@@ -112,7 +110,7 @@ async function upload(contract) {
     let postComments = [];
 
     for (const post of data.posts) {
-        console.log('Migrating: PointSocial post from '+post.from+' contents '+post.contents);
+        console.log('Migrating: PointSocial post from ' + post.from + ' contents ' + post.contents);
     
         await pointSocialContract.methods.add(
             post.id,
@@ -132,7 +130,7 @@ async function upload(contract) {
             const contents = comment[2];
             const createdAt = comment[3];
     
-            console.log('Migrating: PointSocial comment post id:'+postId+' from:'+from);
+            console.log('Migrating: PointSocial comment post id:' + postId + ' from:' + from);
             await pointSocialContract.methods.addComment(
                 id,
                 postId, 

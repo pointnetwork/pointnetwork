@@ -49,8 +49,6 @@ async function download(contract) {
 
     const fileStructure = {articles:[]};
 
-    //0x16A9d233278075bf6EC4dC52BA70EF3E6ea9d182
-    // assuming that the contract address is the first key in the ikvList
     const contractKey = await identityContract.methods.ikvList(handle, 0).call();
     const contractAddress = await identityContract.methods.ikvGet(handle, contractKey).call();
     const blogContract = new web3.eth.Contract(blogArtifacts.abi, contractAddress);
