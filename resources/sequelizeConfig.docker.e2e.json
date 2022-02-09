@@ -1,26 +1,26 @@
 {
-  "pointnode1": {
-    "username": "pointuser",
-    "password": "pointpassword",
-    "database": "point_storage_provider",
-    "host": "pointnetwork_database",
-    "port": "5432",
-    "dialect": "postgres"
-  },
-  "pointnode2": {
-    "username": "pointuser",
-    "password": "pointpassword",
-    "database": "point_website_owner",
-    "host": "pointnetwork_database",
-    "port": "5432",
-    "dialect": "postgres"
-  },
-  "pointnode3": {
-    "username": "pointuser",
-    "password": "pointpassword",
-    "database": "point_website_visitor",
-    "host": "pointnetwork_database",
-    "port": "5432",
-    "dialect": "postgres"
-  }
+    "pointnode1": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "DEFERRED",
+        "retry": {
+            "max": 30
+        }
+    },
+    "pointnode2": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "DEFERRED",
+        "retry": {
+            "max": 30
+        }
+    },
+    "pointnode3": {
+        "dialect": "sqlite",
+        "storage": "/data/pointdb.sqlite",
+        "transactionType": "DEFERRED",
+        "retry": {
+            "max": 30
+        }
+    }
 }

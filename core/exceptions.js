@@ -1,10 +1,8 @@
 class HttpNotFoundError extends Error {
     constructor(message) {
         super(message);
-        this.name = "HttpNotFoundError";
+        this.name = 'HttpNotFoundError';
     }
 }
 
-module.exports = {
-    HttpNotFoundError
-};
+module.exports = {HttpNotFoundError};

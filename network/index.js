@@ -14,7 +14,7 @@ class Network {
         // todo: rewrite with threads!
         this.timeout = this.ctx.config.simulation_delay; // todo: ???
         this.timerFn = null;
-        this.timerFn = async() => {
+        this.timerFn = async () => {
             await this.cycle();
             setTimeout(this.timerFn, this.timeout);
         };
@@ -37,7 +37,7 @@ class Network {
         await this.web3bridge.start(); // todo: do we need await?
 
         this.kademlia = new Kademlia(this.ctx);
-        await this.kademlia.start(); // todo: do we need await? if so, make sure it doesn't impact everything else
+        // await this.kademlia.start(); // todo: do we need await? if so, make sure it doesn't impact everything else
 
         this.keyvalue = new KeyValue(this.ctx, this);
         this.ctx.keyvalue = this.keyvalue;
@@ -46,7 +46,6 @@ class Network {
 
     async cycle() {
         // todo
-
         // todo: make sure web3 is up
         // todo: make sure raiden is up
         // todo: then signal to other processes that they can start communicating now

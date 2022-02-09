@@ -4,9 +4,11 @@ const truncate = require('../_helpers/db/truncate');
 const DB = require('../../db');
 const db = new DB(ctx);
 
-const randomHash = () => (
-    crypto.createHash('sha1').update(Date.now().toString() + Math.random().toString()).digest('hex')
-);
+const randomHash = () =>
+    crypto
+        .createHash('sha1')
+        .update(Date.now().toString() + Math.random().toString())
+        .digest('hex');
 
 describe('ProviderChunk model', () => {
     let ProviderChunk;
@@ -18,12 +20,12 @@ describe('ProviderChunk model', () => {
         real_id_verified: false,
         size: 256000,
         real_size: 512000
-    }
+    };
 
     beforeAll(async () => {
         await db.init();
         ProviderChunk = require('../../db/models/provider_chunk');
-    })
+    });
 
     afterEach(async () => {
         truncate(ProviderChunk);
@@ -50,8 +52,13 @@ describe('ProviderChunk model', () => {
             expect(savedProviderChunk).toHaveProperty('real_id', providerChunkObj.real_id);
             expect(savedProviderChunk).toHaveProperty('public_key', providerChunkObj.public_key);
             expect(savedProviderChunk).toHaveProperty('segment_hashes');
-            expect(savedProviderChunk.segment_hashes).toEqual(expect.arrayContaining(providerChunkObj.segment_hashes));
-            expect(savedProviderChunk).toHaveProperty('real_id_verified', providerChunkObj.real_id_verified);
+            expect(savedProviderChunk.segment_hashes).toEqual(
+                expect.arrayContaining(providerChunkObj.segment_hashes)
+            );
+            expect(savedProviderChunk).toHaveProperty(
+                'real_id_verified',
+                providerChunkObj.real_id_verified
+            );
             expect(savedProviderChunk).toHaveProperty('size', providerChunkObj.size);
             expect(savedProviderChunk).toHaveProperty('real_size', providerChunkObj.real_size);
         });
@@ -71,7 +78,7 @@ describe('ProviderChunk model', () => {
 
             await providerChunk.save();
 
-            const savedProviderChunks = await ProviderChunk.find(providerChunkObj.id)
+            const savedProviderChunks = await ProviderChunk.find(providerChunkObj.id);
 
             expect(savedProviderChunks).toBeInstanceOf(ProviderChunk);
             expect(savedProviderChunks).toHaveProperty('real_size', updatedRealSize);
@@ -80,7 +87,10 @@ describe('ProviderChunk model', () => {
 
     describe('find or create and save', () => {
         beforeAll(async () => {
-            await ProviderChunk.findOrCreate({ where: { id: providerChunkObj.id }, defaults: { ...providerChunkObj } })
+            await ProviderChunk.findOrCreate({
+                where: {id: providerChunkObj.id},
+                defaults: {...providerChunkObj}
+            });
         });
 
         it('creates a new provider chunk on findOrCreate call', async () => {

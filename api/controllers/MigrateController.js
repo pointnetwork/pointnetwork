@@ -8,15 +8,11 @@ class MigrateController extends PointSDKController {
     }
 
     async migrate() {
+        const identity = 'twitter';
+        const owner = await this.ctx.web3bridge.ownerByIdentity(identity);
 
-        let identity = 'twitter'
-        let owner = await this.ctx.web3bridge.ownerByIdentity(identity);
-
-        return this._response(
-            {'owner': owner}
-        );
+        return this._response({owner: owner});
     }
-
 }
 
 module.exports = MigrateController;

@@ -1,5 +1,3 @@
 export default () => {
-  return (
-    <b>Here be chunks</b>
-  )
-}
+    return <b>Here be chunks</b>;
+};

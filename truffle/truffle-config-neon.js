@@ -23,13 +23,11 @@ module.exports = {
             from: address,
             network_id: '*',
             gas: 3000000,
-            gasPrice: 1000000000,
+            gasPrice: 1000000000
         }
     },
 
-    mocha: {
-        // timeout: 100000
-    },
+    mocha: {},
 
     // Configure your compilers
     compilers: {
@@ -41,8 +39,8 @@ module.exports = {
                 optimizer: {
                     enabled: true,
                     runs: 200
-                },
-            },
-        },
-    },
+                }
+            }
+        }
+    }
 };

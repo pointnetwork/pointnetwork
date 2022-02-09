@@ -1,21 +1,16 @@
 const DeployerProgress = require('./zweb/deployer/progress');
 const ZProxy = require('./proxy');
+const {init: initStorage} = require('./storage/index.js');
 
 class Client {
     constructor(ctx) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'Client'});
         this.config = ctx.config.client;
     }
 
     async start() {
-        let Storage;
-        if (this.ctx.config.client.storage.engine && this.ctx.config.client.storage.engine === 'arweave') {
-            Storage = require('./storage/index-arweave');
-        } else {
-            Storage = require('./storage');
-        }
-        this.storage = new Storage(this.ctx);
-        this.storage.start();
+        await initStorage(this.ctx);
 
         this.proxy = new ZProxy(this.ctx);
         this.proxy.start();
