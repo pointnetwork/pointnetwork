@@ -98,6 +98,7 @@ contract Identity {
     function transferIdentityOwnership(string memory handle, address newOwner) public onlyIdentityOwner(handle) {
         require(newOwner != address(0), "Can't transfer ownership to address 0"); 
         require(newOwner != msg.sender, "Can't transfer ownership to same address"); 
+        require(bytes(ownerToIdentity[newOwner]).length == 0, "Owner already has a handle.");
 
         address oldOwner = msg.sender;
         
