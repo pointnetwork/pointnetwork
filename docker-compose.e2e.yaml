@@ -69,7 +69,7 @@ services:
     environment:
       ARWEAVE_BUNDLER_URL: http://bundler:80
       ARWEAVE_GATEWAY_URL: http://gateway:3000
-      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_URL: http://blockchain_node:7545
 
   arweave:
     extends:

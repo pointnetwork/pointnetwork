@@ -55,7 +55,7 @@ services:
     container_name: point_bundler
     hostname: bundler
     volumes:
-      - $POINT_KEYSTORE/arweave.json:/app/keystore/key.json
+      - ./resources/arweave-test-key.json:/app/keystore/key.json
     secrets:
       - minio_test_user
       - minio_test_pass

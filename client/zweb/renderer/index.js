@@ -281,10 +281,6 @@ class Renderer {
                     address: walletService.getNetworkAccount(),
                     balance: await walletService.getNetworkAccountBalanceInEth()
                 });
-                // wallets.push(
-                //     { currency_name: 'Arweave', currency_code: 'AR', address: this.renderer.ctx.config.client.storage.arweave_key /*this.renderer.ctx.wallet.getArweaveAccount()*/, balance: (await this.renderer.ctx.wallet.getArweaveBalanceInAR()) }
-                // );
-
                 return wallets;
             },
             get_wallet_history: async function(code) {
