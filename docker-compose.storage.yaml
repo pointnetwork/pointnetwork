@@ -20,36 +20,6 @@ services:
       - ./resources/arweave-test-genesis.csv:/opt/arweave/data/genesis_wallets.csv
       - arweave_data:/mnt/arweave-data
 
-  # miner:
-  #   image: lucaarweave/arweave-node:0.0.4
-  #   container_name: point_storage_miner
-  #   hostname: arweave-miner
-  #   environment:
-  #     AR_RUNMODE: normal
-  #   volumes:
-  #     - ./scripts/arweave-miner.sh:/opt/arweave/bin/miner.sh
-  #     - arweave_data:/mnt/arweave-data
-  #   entrypoint: /opt/arweave/bin/miner.sh
-  #   command:
-  #     - data_dir
-  #     - /mnt/arweave-data
-  #     - max_miners
-  #     - '0'
-  #     - peer
-  #     - arweave-node
-  #     - requests_per_minute_limit
-  #     - '9999999999999999999999999999999999999999'
-  #     - disk_space
-  #     - '1000000'
-  #     - tx_propagation_parallelization
-  #     - '3'
-  #     - max_emitters
-  #     - '1'
-  #     - enable
-  #     - arql_tags_index
-  #     - port
-  #     - '1984'
-
   gateway:
     image: lucaarweave/arweave-gateway:0.0.1
     container_name: point_storage_gateway

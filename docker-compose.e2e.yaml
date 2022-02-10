@@ -44,9 +44,9 @@ services:
       restart_policy:
         condition: 'no'
     volumes:
-      - ./truffle/migrations:/truffle/migrations:ro
-      - ./truffle/contracts:/truffle/contracts:ro
       - shared_contracts_e2e:/build:rw
+      - ./truffle/contracts:/truffle/contracts:ro
+      - ./truffle/migrations:/truffle/migrations:ro
       - ./truffle/truffle-config.js:/truffle/truffle-config.js:ro
     entrypoint: /truffle/run.js
     environment:
@@ -60,12 +60,16 @@ services:
     extends:
       file: docker-compose.dev.yaml
       service: point_node
+    depends_on:
+      contract_deployer:
+        condition: service_completed_successfully
     volumes:
-      - point_contracts_e2e:/app/truffle/build/contracts
+      - shared_contracts_e2e:/app/truffle/build/contracts
       - point_node_data_e2e:/data
     environment:
       ARWEAVE_BUNDLER_URL: http://bundler:80
       ARWEAVE_GATEWAY_URL: http://gateway:3000
+      BLOCKCHAIN_HOST: blockchain_node
 
   arweave:
     extends:
@@ -95,6 +99,10 @@ services:
     depends_on:
       arweave:
         condition: service_healthy
+    # volumes:
+    #   - ../arweave-bundler/src:/app/src
+    # entrypoint: npx
+    # command: nodemon --watch src/**/* --ext "ts" --exec "ts-node src/index.ts"
 
   cache:
     extends:
@@ -106,7 +114,6 @@ services:
 volumes:
   blockchain_data_e2e:
   shared_contracts_e2e:
-  point_contracts_e2e:
   point_node_data_e2e:
   arweave_data_e2e:
   gateway_data_e2e:

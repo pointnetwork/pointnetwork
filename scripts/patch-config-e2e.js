@@ -3,7 +3,7 @@
 const {existsSync, writeFileSync, unlinkSync, mkdirSync} = require('fs');
 const Web3 = require('web3');
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 120000;
-const templateConfig = '/nodeConfig.json';
+const templateConfig = '/app/resources/defaultConfig.json';
 const targetConfig = '/data/config.json';
 const contractBuildDir = '/app/truffle/build/contracts';
 const contractAddresses = {
@@ -30,11 +30,19 @@ while (contractNames.size && Date.now() - start < timeout) {
             delete require.cache[require.resolve(filename)];
 
             const {networks} = require(filename);
-            const network = process.env.BLOCKCHAIN_NETWORK_ID || Math.max(...Object.keys(networks));
+            let address;
 
-            if (!(network in networks) || typeof networks[network].address !== 'string') continue;
+            for (const network in networks) {
+                if (typeof networks[network].address === 'string') {
+                    address = networks[network].address;
+                }
+            }
 
-            contractAddresses[contractName] = networks[network].address;
+            if (!address) {
+                continue;
+            }
+
+            contractAddresses[contractName] = address;
             contractNames.delete(contractName);
         } catch (e) {
             console.error(e);
@@ -86,7 +94,7 @@ if (!existsSync('/data/keystore/arweave.json')) {
 console.info('Done.');
 
 (async () => {
-    console.log('Awaiting for blockchain provider to start...');
+    console.log('Awaiting for blockchain provider @', config.network.web3);
 
     const web3 = new Web3(config.network.web3);
     const start = Date.now();
