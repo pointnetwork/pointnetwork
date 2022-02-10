@@ -276,11 +276,11 @@ class Deployer {
                     } else {
                         throw new Error('Storage resource not specified: ' + JSON.stringify(value));
                     }
-                } else if (typeof value === 'object') {
+                } else if (value && typeof value === 'object') {
                     value = await replaceContentsWithCids(value);
                 } else if (Array.isArray(value)) {
                     for (const i in value) {
-                        if (typeof value[i] === 'object') {
+                        if (value[i] && typeof value[i] === 'object') {
                             value[i] = await replaceContentsWithCids(value[i]);
                         }
                     }
