@@ -21,18 +21,9 @@ services:
       - blockchain_data_e2e:/data:rw
     environment:
       - DOCKER=true
-    command:
-      - -v
-      - -p
-      - '7545'
-      - --account
-      - $TEST_PRIVATE_KEY,0x56bc75e2d63100000
-      - -i
-      - '256'
-      - --keepAliveTimeout
-      - '20000'
-      - --db
-      - '/data'
+    command: |
+      -v -p 7545 -i 256 --keepAliveTimeout 20000 --db /data \
+        --account 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e,0x56bc75e2d63100000
 
   contract_deployer:
     image: pointnetwork/pointnetwork_deployer:dev
@@ -64,8 +55,10 @@ services:
       contract_deployer:
         condition: service_completed_successfully
     volumes:
-      - shared_contracts_e2e:/app/truffle/build/contracts
       - point_node_data_e2e:/data
+      - shared_contracts_e2e:/app/truffle/build/contracts
+      - ./resources/blockchain-test-key.json:/data/keystore/key.json
+      - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     environment:
       ARWEAVE_BUNDLER_URL: http://bundler:80
       ARWEAVE_GATEWAY_URL: http://gateway:3000

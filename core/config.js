@@ -25,12 +25,34 @@ const variables = {
         web3_network_id: process.env.BLOCKCHAIN_NETWORK_ID || undefined,
         communication_external_host: process.env.POINT_NODE_PUBLIC_HOSTNAME || undefined,
         bootstrap_nodes: process.env.POINT_NODE_BOOTSTRAP_NODES || [],
-        identity_contract_address: process.env.CONTRACT_ADDRESS_IDENTITY || undefined,
-        migrations_contract_address: process.env.CONTRACT_ADDRESS_MIGRATIONS || undefined,
+        identity_contract_address:
+            getContractAddress('Identity') ||
+            process.env.CONTRACT_ADDRESS_IDENTITY || undefined,
+        migrations_contract_address:
+            getContractAddress('Migrations') ||
+            process.env.CONTRACT_ADDRESS_MIGRATIONS || undefined,
         storage_provider_registry_contract_address:
+            getContractAddress('StorageProviderRegistry') ||
             process.env.CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY || undefined
     }
 };
+
+function getContractAddress(name) {
+    const filename = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts', `${name}.json`);
+
+    if (!existsSync(filename)) {
+        return;
+    }
+
+    const {networks} = require(filename);
+
+    for (const network in networks) {
+        const {address} = networks[network];
+        if (address && typeof address === 'string') {
+            return address;
+        }
+    }
+}
 
 const datadir = process.env.DATADIR;
 const configPath = path.resolve(datadir, 'config.json');
