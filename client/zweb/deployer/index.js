@@ -249,7 +249,7 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x' + id);
     }
 
-    async updateKeyValue(target, values, deployPath, deployContracts = false) {
+    async updateKeyValue(target, values = {}, deployPath, deployContracts = false) {
         const replaceContentsWithCids = async obj => {
             const result = {};
 

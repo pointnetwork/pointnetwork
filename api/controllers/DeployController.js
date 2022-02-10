@@ -1,6 +1,7 @@
 class DeployController {
     constructor(ctx, request) {
         this.ctx = ctx;
+        this.log = ctx.log.child({module: 'DeployController'});
         this.request = request;
     }
 
@@ -18,6 +19,7 @@ class DeployController {
             await this.deployer.deploy(deploy_path, deploy_contracts, dev);
             return {status: 'success'};
         } catch (e) {
+            this.log.error(e, 'DeployController.deploy error');
             return {status: 'error', error: e.toString()};
         }
     }
