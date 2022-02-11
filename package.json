@@ -76,7 +76,7 @@
     "test:db:docker": "printf '\\e[2J\\e[3J\\e[H' && npm run migrate && NODE_ENV=development npm run test",
     "test:restart": "docker-compose -f docker-compose.test.yaml restart tests && docker logs -f pointnetwork_tests",
     "start": "./point --datadir $DATADIR -v",
-    "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
+    "start:dev": "nodemon ./point -- --datadir $DATADIR -v",
     "start:docker": "./scripts/patch-config.js && npm run migrate && npm start",
     "start:docker:dev": "./scripts/patch-config.js && npm run migrate && npm run start:dev",
     "start:docker:e2e": "./scripts/patch-config-e2e.js && npm run migrate && npm run start:dev",
