@@ -78,7 +78,6 @@ const init = async ctx => {
     // TODO: this should also come from config, but we don't have such a property
     filesDir = path.join(ctx.datadir, 'files');
     await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
-
     arweave =  Arweave.init({
         port: config.arweave_port,
         protocol: config.arweave_protocol,
@@ -113,17 +112,23 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             config.arweave_experiment_version_minor
         );
 
-        const queryResult = await request(config.arweave_graphql_endpoint, query);
+        const queryResult = await request('http://' + config.arweave_host + ':' + config.arweave_port + '/graphql', query);
         logger.debug({chunkId}, 'Graphql request success');
-
         for (const edge of queryResult.transactions.edges) {
             const txid = edge.node.id;
             logger.debug({chunkId, txid}, 'Downloading data from arweave');
 
-            const data = await arweave.transactions.getData(txid, {decode: true});
+            let data;
+            let buf;
+            if (process.env.MODE === 'zappdev'){
+                data = (await axios.get('http://' + config.arweave_host + ':' + config.arweave_port + '/tx/' +  txid + '/data')).data;
+                buf = Buffer.from(data, 'base64');
+            }else{
+                data = await arweave.transactions.getData(txid, {decode: true});
+                buf = Buffer.from(data);
+            }
+            
             logger.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
-
-            const buf = Buffer.from(data);
 
             const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
@@ -229,7 +234,6 @@ const uploadChunk = async data => {
             __pn_chunk_id: chunkId,
             [chunkIdVersioned]: chunkId
         };
-
         //it calls uploadLocalCall or uploadRemoteCall depending of env variable configured.
         let response;
         if (process.env.MODE === 'zappdev')
