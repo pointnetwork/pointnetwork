@@ -249,7 +249,7 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x' + id);
     }
 
-    async updateKeyValue(target, values, deployPath, deployContracts = false) {
+    async updateKeyValue(target, values = {}, deployPath, deployContracts = false) {
         const replaceContentsWithCids = async obj => {
             const result = {};
 
@@ -276,11 +276,11 @@ class Deployer {
                     } else {
                         throw new Error('Storage resource not specified: ' + JSON.stringify(value));
                     }
-                } else if (typeof value === 'object') {
+                } else if (value && typeof value === 'object') {
                     value = await replaceContentsWithCids(value);
                 } else if (Array.isArray(value)) {
                     for (const i in value) {
-                        if (typeof value[i] === 'object') {
+                        if (value[i] && typeof value[i] === 'object') {
                             value[i] = await replaceContentsWithCids(value[i]);
                         }
                     }
