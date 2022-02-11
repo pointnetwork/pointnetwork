@@ -10,6 +10,7 @@ const mkdirp = require('mkdirp');
 const DB = require('./db');
 const program = new Command();
 const logger = require('./core/log');
+const Model = require('./db/model');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -272,9 +273,7 @@ process.on('unhandledRejection', (err, second) => {
     ctx.log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
 });
 
-// -------------------- Init DB ---------------------- //
-ctx.db = new DB(ctx);
-ctx.db.init();
+Model.setCtx(ctx);
 
 // ------------------- Start Point ------------------- //
 
