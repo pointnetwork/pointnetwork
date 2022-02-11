@@ -23,6 +23,7 @@ contract Identity {
     uint public constant MAX_HANDLE_LENGTH = 16;
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
+    event IdentityOwnershipTransferred(string indexed handle, address indexed oldOwner, address indexed newOwner, uint256 date);
     event IKVSet(string identity, string key, string value);
 
     modifier onlyIdentityOwner(string memory identity) {
@@ -92,6 +93,21 @@ contract Identity {
 
     function finishMigrations() external {
         migrationApplied = true;
+    }
+
+    function transferIdentityOwnership(string memory handle, address newOwner) public onlyIdentityOwner(handle) {
+        require(newOwner != address(0), "Can't transfer ownership to address 0"); 
+        require(newOwner != msg.sender, "Can't transfer ownership to same address"); 
+        require(bytes(ownerToIdentity[newOwner]).length == 0, "Owner already has a handle.");
+
+        address oldOwner = msg.sender;
+        
+        delete ownerToIdentity[oldOwner];
+
+        identityToOwner[handle] = newOwner;
+        ownerToIdentity[newOwner] = handle;
+
+        emit IdentityOwnershipTransferred(handle, oldOwner, newOwner, block.timestamp);
     }
 
     //*** Internal functions ***//

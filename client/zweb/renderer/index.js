@@ -1,7 +1,6 @@
 const TwigLib = require('twig');
 const _ = require('lodash');
 const {encryptData, decryptData} = require('../../encryptIdentityUtils');
-const ethUtil = require('ethereumjs-util');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage/index.js');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
@@ -87,7 +86,7 @@ class Renderer {
             },
             decrypt_data: async function (encryptedData, unparsedEncryptedSymmetricObjJSON) {
                 const host = this.host;
-                const {privateKey} = this.renderer.ctx.wallet.config;
+                const privateKey = this.renderer.ctx.wallet.getNetworkAccountPrivateKey();
 
                 const encryptedSymmetricObjJS = JSON.parse(unparsedEncryptedSymmetricObjJSON);
                 const encryptedSymmetricObj = {};
@@ -169,7 +168,7 @@ class Renderer {
                 return eventData;
             },
             default_wallet_address: async function () {
-                return this.renderer.ctx.config.client.wallet.account;
+                return this.renderer.ctx.wallet.getNetworkAccount();
             },
             is_authenticated: async function (auth) {
                 return auth.walletid !== undefined;
@@ -282,10 +281,6 @@ class Renderer {
                     address: walletService.getNetworkAccount(),
                     balance: await walletService.getNetworkAccountBalanceInEth()
                 });
-                // wallets.push(
-                //     { currency_name: 'Arweave', currency_code: 'AR', address: this.renderer.ctx.config.client.storage.arweave_key /*this.renderer.ctx.wallet.getArweaveAccount()*/, balance: (await this.renderer.ctx.wallet.getArweaveBalanceInAR()) }
-                // );
-
                 return wallets;
             },
             get_wallet_history: async function(code) {
@@ -303,26 +298,28 @@ class Renderer {
             identity_register: async function(identity) {
                 this.renderer.#ensurePrivilegedAccess();
 
-                const privateKeyHex = this.renderer.ctx.wallet.getNetworkAccountPrivateKey();
-                const privateKey = Buffer.from(privateKeyHex, 'hex');
-                const publicKey = ethUtil.privateToPublic(privateKey);
+                const publicKey = this.renderer.ctx.wallet.getNetworkAccountPublicKey();
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
                 this.renderer.ctx.log.info(
                     {
                         identity,
                         owner,
-                        publicKey: publicKey.toString('hex'),
+                        publicKey,
                         len: Buffer.byteLength(publicKey, 'utf-8'),
                         parts: [
-                            `0x${publicKey.slice(0, 32).toString('hex')}`,
-                            `0x${publicKey.slice(32).toString('hex')}`
+                            `0x${publicKey.slice(0, 32)}`,
+                            `0x${publicKey.slice(32)}`
                         ]
                     },
                     'Registering a new identity'
                 );
 
-                await this.renderer.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
+                await this.renderer.ctx.web3bridge.registerIdentity(
+                    identity,
+                    owner,
+                    Buffer.from(publicKey, 'hex')
+                );
 
                 this.renderer.ctx.log.info(
                     {identity, owner, publicKey: publicKey.toString('hex')},

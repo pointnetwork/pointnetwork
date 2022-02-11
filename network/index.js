@@ -1,5 +1,4 @@
 const Web3Bridge = require('./web3bridge');
-const Kademlia = require('./kademlia');
 const KeyValue = require('./keyvalue');
 
 class Network {
@@ -35,9 +34,6 @@ class Network {
 
         this.web3bridge = new Web3Bridge(this.ctx);
         await this.web3bridge.start(); // todo: do we need await?
-
-        this.kademlia = new Kademlia(this.ctx);
-        // await this.kademlia.start(); // todo: do we need await? if so, make sure it doesn't impact everything else
 
         this.keyvalue = new KeyValue(this.ctx, this);
         this.ctx.keyvalue = this.keyvalue;

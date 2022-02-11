@@ -1,7 +1,6 @@
 const path = require('path');
 const fs = require('fs');
 const utils = require('#utils');
-const ethUtil = require('ethereumjs-util');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -23,16 +22,6 @@ class Deployer {
         const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
         utils.makeSurePathExists(cache_dir);
         return cache_dir;
-    }
-
-    async migrate() {
-        const privateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
-        const privateKey = Buffer.from(privateKeyHex, 'hex');
-        const publicKey = ethUtil.privateToPublic(privateKey);
-
-        this.log.info(privateKeyHex);
-        this.log.info(privateKey);
-        this.log.info(publicKey);
     }
 
     async deploy(deployPath, deployContracts = false, dev = false) {
@@ -62,22 +51,24 @@ class Deployer {
         }
 
         if (!identityIsRegistered) {
-            const privateKeyHex = this.ctx.wallet.getNetworkAccountPrivateKey();
-            const privateKey = Buffer.from(privateKeyHex, 'hex');
-            const publicKey = ethUtil.privateToPublic(privateKey);
+            const publicKey = this.ctx.wallet.getNetworkAccountPublicKey();
 
             this.ctx.log.info({
                 identity,
                 owner,
-                publicKey: publicKey.toString('hex'),
+                publicKey,
                 len: Buffer.byteLength(publicKey, 'utf-8'),
                 parts: [
-                    `0x${publicKey.slice(0, 32).toString('hex')}`,
-                    `0x${publicKey.slice(32).toString('hex')}`
+                    `0x${publicKey.slice(0, 32)}`,
+                    `0x${publicKey.slice(32)}`
                 ]
             }, 'Registring new identity');
 
-            await this.ctx.web3bridge.registerIdentity(identity, owner, publicKey);
+            await this.ctx.web3bridge.registerIdentity(
+                identity,
+                owner,
+                Buffer.from(publicKey, 'hex')
+            );
 
             this.ctx.log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
@@ -258,7 +249,7 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x' + id);
     }
 
-    async updateKeyValue(target, values, deployPath, deployContracts = false) {
+    async updateKeyValue(target, values = {}, deployPath, deployContracts = false) {
         const replaceContentsWithCids = async obj => {
             const result = {};
 
@@ -285,11 +276,11 @@ class Deployer {
                     } else {
                         throw new Error('Storage resource not specified: ' + JSON.stringify(value));
                     }
-                } else if (typeof value === 'object') {
+                } else if (value && typeof value === 'object') {
                     value = await replaceContentsWithCids(value);
                 } else if (Array.isArray(value)) {
                     for (const i in value) {
-                        if (typeof value[i] === 'object') {
+                        if (value[i] && typeof value[i] === 'object') {
                             value[i] = await replaceContentsWithCids(value[i]);
                         }
                     }

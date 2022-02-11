@@ -1,9 +1,10 @@
 const fs = require('fs');
 const path = require('path');
-const mkdirp = require('mkdirp');
 const events = require('events');
 const ethereumjs = require('ethereumjs-util');
 const solana = require('@solana/web3.js');
+const {hdkey} = require('ethereumjs-wallet');
+const bip39 = require('bip39');
 
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 async function getTransactionsByAccount(
@@ -64,11 +65,15 @@ class Wallet {
         return 'TRANSACTION_EVENT';
     }
 
+    #privateKey;
+    #publicKey;
+    #address;
+    #secretPhrase;
+
     constructor(ctx) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'Wallet'});
         this.config = ctx.config.client.wallet;
-        this.network_account = this.config.account;
 
         // Events
         // transactionEventEmitter emits the TRANSACTION_EVENT type
@@ -78,8 +83,17 @@ class Wallet {
     async start() {
         this.keystore_path = path.join(this.ctx.datadir, this.config.keystore_path);
         if (!fs.existsSync(this.keystore_path)) {
-            mkdirp.sync(this.keystore_path);
+            fs.mkdirSync(this.keystore_path, {recursive: true});
         }
+        this.#secretPhrase = JSON.parse(
+            // TODO: do not use such hardcoded paths
+            await fs.promises.readFile(path.join('/data/keystore', 'key.json'), 'utf-8')
+        ).phrase;
+        const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(this.#secretPhrase));
+        const wallet = hdwallet.getWallet();
+        this.#privateKey = wallet.getPrivateKey().toString('hex');
+        this.#publicKey = wallet.getPublicKey().toString('hex');
+        this.#address = `0x${wallet.getAddress().toString('hex')}`;
 
         this.solanaMainConnection = new solana.Connection(
             this.ctx.config.client.storage.solana_main_endpoint,
@@ -109,15 +123,14 @@ class Wallet {
         const bip32 = require('bip32');
 
         const derivePath = 'm/44\'/501\'/0\'/0\'';
-        const mnemonic = this.getSecretPhrase();
 
-        const seed = bip39.mnemonicToSeedSync(mnemonic); // Buffer
+        const seed = bip39.mnemonicToSeedSync(this.#secretPhrase); // Buffer
         // also tried to slice seed.slice(0, 32);
         const derivedSeed = bip32.fromSeed(seed).derivePath(derivePath).privateKey;
         const keypair = Keypair.fromSeed(derivedSeed);
 
         this.solanaKeyPair = keypair;
-        this.solanaAddress = this.solanaPublicKey = keypair.publicKey.toString();
+        this.solanaAddress = keypair.publicKey.toString();
     }
 
     get web3() {
@@ -188,7 +201,7 @@ class Wallet {
     }
 
     async getNetworkAccountBalanceInWei() {
-        return await this.web3.eth.getBalance(this.network_account);
+        return await this.web3.eth.getBalance(this.#address);
     }
     async getNetworkAccountBalanceInEth() {
         return (await this.getNetworkAccountBalanceInWei()) / 1e18;
@@ -210,7 +223,7 @@ class Wallet {
     }
 
     getNetworkAccount() {
-        return this.network_account;
+        return this.#address;
     }
     getArweaveAccount() {
         this.log.debug(this.ctx, 'getArweaveAccount context');
@@ -221,11 +234,10 @@ class Wallet {
     }
 
     getNetworkAccountPrivateKey() {
-        // todo: Use keystore instead of config!!!
-        return this.config.privateKey;
+        return this.#privateKey;
     }
-    getSecretPhrase() {
-        return this.config.secretPhrase;
+    getNetworkAccountPublicKey() {
+        return this.#publicKey;
     }
 
     getSolanaAccount() {

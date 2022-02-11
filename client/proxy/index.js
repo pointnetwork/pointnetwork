@@ -662,7 +662,7 @@ class ZProxy {
                         }
                     }
 
-                    postData.__from = this.ctx.config.client.wallet.account;
+                    postData.__from = this.ctx.wallet.getNetworkAccount();
                     postData.__time = Math.floor(Date.now() / 1000);
                     const data = JSON.stringify(postData);
 

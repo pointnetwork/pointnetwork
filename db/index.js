@@ -1,5 +1,4 @@
 const Model = require('./model');
-const SequelizeFactory = require('./models/index');
 const path = require('path');
 const fs = require('fs');
 
@@ -8,18 +7,14 @@ class DB {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'DB'});
         this.config = ctx.config.db;
-
-        SequelizeFactory.init(this.ctx);
-        this.connection = SequelizeFactory.sequelize;
-
-        Model.ctx = ctx;
+        Model.setCtx(ctx);
     }
 
     async init() {
+        // this function doesn't connect to the db, just make a check of the health of the connection
+        // connection to the db for sqlite happens under the hood when a query is first created
         await this.connection.authenticate();
         this.log.debug('Connection with DB established successfully');
-
-        Model.connection = this.connection;
     }
 
     async shutdown() {

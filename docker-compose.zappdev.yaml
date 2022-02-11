@@ -142,6 +142,7 @@ services:
       ARWEAVE_HOST: $ARWEAVE_HOST
       ARWEAVE_PROTOCOL: $ARWEAVE_PROTOCOL
       ARWEAVE_PORT: $ARWEAVE_PORT
+      ARWEAVE_GATEWAY_URL: http://arlocal:1984/graphql
 
   website_visitor:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
@@ -193,6 +194,7 @@ services:
       ARWEAVE_HOST: $ARWEAVE_HOST
       ARWEAVE_PROTOCOL: $ARWEAVE_PROTOCOL
       ARWEAVE_PORT: $ARWEAVE_PORT
+      ARWEAVE_GATEWAY_URL: http://arlocal:1984/graphql
 
   arlocal:
     image: textury/arlocal

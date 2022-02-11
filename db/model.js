@@ -1,5 +1,6 @@
 const sequelize_lib = require('sequelize');
 const _ = require('lodash');
+const SequelizeFactory = require('./models');
 
 const addUnderscoreIdFields = {};
 
@@ -8,6 +9,17 @@ class Model extends sequelize_lib.Model {
         super(...args);
         this.ctx = this.sequelize.options.ctx;
         this.log = this.ctx.log.child({module: 'Model', model: this.constructor.name});
+    }
+
+    static setCtx(ctx) {
+        Model.ctx = ctx;
+    }
+
+    static get connection() {
+        if (!Model._connection) {
+            Model._connection = SequelizeFactory.init(Model.ctx);
+        }
+        return Model._connection;
     }
 
     static init(attributes, options) {

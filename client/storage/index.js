@@ -112,7 +112,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             config.arweave_experiment_version_minor
         );
 
-        const queryResult = await request('http://' + config.arweave_host + ':' + config.arweave_port + '/graphql', query);
+        const queryResult = await request(config.arweave_gateway_url, query);
         logger.debug({chunkId}, 'Graphql request success');
         for (const edge of queryResult.transactions.edges) {
             const txid = edge.node.id;
@@ -200,7 +200,7 @@ const uploadBundler = async (data, tags) => {
     }
 
     const response = await axios.post(
-        `${config.arweave_airdrop_endpoint}/signPOST`,
+        `${config.arweave_bundler_url}/signPOST`,
         formData,
         {headers: {...formData.getHeaders()}}
     );
@@ -234,7 +234,7 @@ const uploadChunk = async data => {
             __pn_chunk_id: chunkId,
             [chunkIdVersioned]: chunkId
         };
-        //it calls uploadLocalCall or uploadRemoteCall depending of env variable configured.
+
         let response;
         if (process.env.MODE === 'zappdev')
             response = await uploadArweave(data, tags);
