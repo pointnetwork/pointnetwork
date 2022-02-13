@@ -1,12 +1,6 @@
 const path = require('path');
 const {merge} = require('lodash');
 const {existsSync} = require('fs');
-
-const arweave_key = require('/data/keystore/arweave.json');
-if (typeof arweave_key !== 'object') {
-    throw new Error('Unable to parse arweave key');
-}
-
 const variables = {
     api: {
         address: process.env.POINT_API_HOST || undefined,
@@ -20,7 +14,8 @@ const variables = {
         },
         storage: {
             engine: process.env.POINT_STORAGE_ENGINE || undefined,
-            arweave_key,
+            arweave_bundler_url: process.env.ARWEAVE_BUNDLER_URL || undefined,
+            arweave_gateway_url: process.env.ARWEAVE_GATEWAY_URL || undefined,
             arweave_experiment_version_minor:
                 process.env.ARWEAVE_EXPERIMENT_VERSION_MINOR || undefined
         }
@@ -30,12 +25,34 @@ const variables = {
         web3_network_id: process.env.BLOCKCHAIN_NETWORK_ID || undefined,
         communication_external_host: process.env.POINT_NODE_PUBLIC_HOSTNAME || undefined,
         bootstrap_nodes: process.env.POINT_NODE_BOOTSTRAP_NODES || [],
-        identity_contract_address: process.env.CONTRACT_ADDRESS_IDENTITY || undefined,
-        migrations_contract_address: process.env.CONTRACT_ADDRESS_MIGRATIONS || undefined,
+        identity_contract_address:
+            getContractAddress('Identity') ||
+            process.env.CONTRACT_ADDRESS_IDENTITY || undefined,
+        migrations_contract_address:
+            getContractAddress('Migrations') ||
+            process.env.CONTRACT_ADDRESS_MIGRATIONS || undefined,
         storage_provider_registry_contract_address:
+            getContractAddress('StorageProviderRegistry') ||
             process.env.CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY || undefined
     }
 };
+
+function getContractAddress(name) {
+    const filename = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts', `${name}.json`);
+
+    if (!existsSync(filename)) {
+        return;
+    }
+
+    const {networks} = require(filename);
+
+    for (const network in networks) {
+        const {address} = networks[network];
+        if (address && typeof address === 'string') {
+            return address;
+        }
+    }
+}
 
 const datadir = process.env.DATADIR;
 const configPath = path.resolve(datadir, 'config.json');

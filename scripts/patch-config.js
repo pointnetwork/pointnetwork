@@ -4,7 +4,7 @@ const {existsSync, writeFileSync, unlinkSync, mkdirSync, readFileSync} = require
 const {execSync} = require('child_process');
 const path = require('path');
 const config = require('../core/config');
-const log = require('../core/log').child({module: __filename}); // TODO: address
+const log = require('../core/log').child({module: 'patch-config'}); // TODO: address
 const Web3 = require('web3');
 const Deployer = require('../client/zweb/deployer');
 const timeout = process.env.AWAIT_CONTRACTS_TIMEOUT || 5000;
@@ -34,34 +34,28 @@ async function compilePointContracts() {
         }
         return {contents: readFileSync(dependencyNodeModulesPath, 'utf8')};
     };
-    for (const contractName in contractAddresses) {
+
+    for (const name in contractAddresses) {
         try {
-            const content = readFileSync(
-                path.resolve(__dirname, '..', 'truffle', 'contracts', `${contractName}.sol`),
-                'utf8'
-            );
+            const build = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts', `${name}.json`);
+            if (existsSync(build)) {
+                continue;
+            }
+            const filename = `${name}.sol`;
+            const filepath = path.resolve(__dirname, '..', 'truffle', 'contracts', filename);
+            const content = readFileSync(filepath, 'utf8');
             const version = await Deployer.getPragmaVersion(content);
             const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
-            const compileConfig = {
+            const compilerProps = {
                 language: 'Solidity',
-                sources: {[contractName + '.sol']: {content}},
+                sources: {[filename]: {content}},
                 settings: {outputSelection: {'*': {'*': ['*']}}}
             };
-
-            const compiledContract = JSON.parse(
-                solc.compile(JSON.stringify(compileConfig), {import: getImports})
-            );
-            if (compiledContract) {
+            const artefact = solc.compile(JSON.stringify(compilerProps), {import: getImports});
+            if (artefact) {
                 writeFileSync(
-                    path.resolve(
-                        __dirname,
-                        '..',
-                        'truffle',
-                        'build',
-                        'contracts',
-                        `${contractName}.json`
-                    ),
-                    JSON.stringify(compiledContract.contracts[`${contractName}.sol`][contractName]),
+                    build,
+                    JSON.stringify(JSON.parse(artefact).contracts[filename][name]),
                     'utf-8'
                 );
             } else {

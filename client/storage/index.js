@@ -93,7 +93,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 
         const query = getDownloadQuery(chunkId);
 
-        const queryResult = await request(config.get('storage.arweave_graphql_endpoint'), query);
+        const queryResult = await request(config.get('storage.arweave_gateway_url'), query);
         logger.debug({chunkId}, 'Graphql request success');
 
         for (const edge of queryResult.transactions.edges) {
@@ -169,7 +169,7 @@ const uploadChunk = async data => {
         );
 
         const response = await axios.post(
-            `${config.get('storage.arweave_airdrop_endpoint')}/signPOST`,
+            `${config.get('storage.arweave_bundler_url')}/signPOST`,
             formData,
             {headers: {...formData.getHeaders()}}
         );

@@ -87,7 +87,7 @@ if (program.datadir) {
 }
 const config = require('config');
 const logger = require('./core/log');
-const DB = require('./db');
+const Model = require('./db/model');
 
 ctx.basepath = __dirname;
 
@@ -249,9 +249,7 @@ process.on('unhandledRejection', (err, second) => {
     ctx.log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
 });
 
-// -------------------- Init DB ---------------------- //
-ctx.db = new DB(ctx);
-ctx.db.init();
+Model.setCtx(ctx);
 
 // ------------------- Start Point ------------------- //
 

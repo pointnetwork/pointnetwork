@@ -1,5 +1,7 @@
 datadir: /data
 mode: e2e
+log:
+  level: debug
 storage:
   arweave_experiment_version_major: 123
   arweave_experiment_version_minor: 456

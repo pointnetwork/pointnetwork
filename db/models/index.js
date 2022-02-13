@@ -1,9 +1,6 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const Sequelize = require('sequelize');
-const basename = path.basename(__filename);
 const config = require('config');
 
 class SequelizeFactory {
@@ -29,16 +26,7 @@ class SequelizeFactory {
             }
         ); // todo: validate config
 
-        // Pass context to base Model
-        const Model = require('../model');
-        Model.connection = this.sequelize;
-
-        // Load models
-        for (const file of fs.readdirSync(__dirname)) {
-            if (file.indexOf('.') !== 0 && file !== basename && file.slice(-3) === '.js') {
-                require(path.join(__dirname, file));
-            }
-        }
+        return this.sequelize;
 
         // todo: remove, right? why is it here?
         // Object.keys(this.sequelize.models).forEach(modelName => {
