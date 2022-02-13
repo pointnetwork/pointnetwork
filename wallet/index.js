@@ -5,6 +5,8 @@ const ethereumjs = require('ethereumjs-util');
 const solana = require('@solana/web3.js');
 const {hdkey} = require('ethereumjs-wallet');
 const bip39 = require('bip39');
+const config = require('config');
+const {makeSurePathExistsAsync} = require('#utils');
 
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 async function getTransactionsByAccount(
@@ -73,22 +75,25 @@ class Wallet {
     constructor(ctx) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'Wallet'});
-        this.config = ctx.config.client.wallet;
-
+        this.keystorePath = path.join(config.get('datadir'), config.get('wallet.keystore_path'));
         // Events
         // transactionEventEmitter emits the TRANSACTION_EVENT type
         this.transactionEventEmitter = new events.EventEmitter();
     }
 
     async start() {
-        this.keystore_path = path.join(this.ctx.datadir, this.config.keystore_path);
-        if (!fs.existsSync(this.keystore_path)) {
-            fs.mkdirSync(this.keystore_path, {recursive: true});
+        await makeSurePathExistsAsync(this.keystorePath);
+        try {
+            this.#secretPhrase = JSON.parse(
+                await fs.promises.readFile(path.join(this.keystorePath, 'key.json'), 'utf-8')
+            ).phrase;
+        } catch (e) {
+            if (e.code === 'ENOENT') {
+                this.#secretPhrase = '';
+            } else {
+                throw e;
+            }
         }
-        this.#secretPhrase = JSON.parse(
-            // TODO: do not use such hardcoded paths
-            await fs.promises.readFile(path.join('/data/keystore', 'key.json'), 'utf-8')
-        ).phrase;
         const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(this.#secretPhrase));
         const wallet = hdwallet.getWallet();
         this.#privateKey = wallet.getPrivateKey().toString('hex');
@@ -96,19 +101,19 @@ class Wallet {
         this.#address = `0x${wallet.getAddress().toString('hex')}`;
 
         this.solanaMainConnection = new solana.Connection(
-            this.ctx.config.client.storage.solana_main_endpoint,
+            config.get('wallet.solana_main_endpoint'),
             'confirmed'
         );
         this.solanaDevConnection = new solana.Connection(
-            this.ctx.config.client.storage.solana_dev_endpoint,
+            config.get('wallet.solana_dev_endpoint'),
             'confirmed'
         );
         this.solanaDevStandardConnection = new solana.Connection(
-            this.ctx.config.client.storage.solana_dev_standard_endpoint,
+            config.get('wallet.solana_dev_standard_endpoint'),
             'confirmed'
         );
         this.solanaTestConnection = new solana.Connection(
-            this.ctx.config.client.storage.solana_test_endpoint,
+            config.get('wallet.solana_test_endpoint'),
             'confirmed'
         );
 
@@ -143,11 +148,11 @@ class Wallet {
 
     saveDefaultWalletToKeystore() {
         // use the hard coded wallet id, passcode, address and private key to save to the nodes keystore
-        const id = this.config.id;
-        const passcode = this.config.passcode;
+        const id = config.get('wallet.id');
+        const passcode = config.get('wallet.passcode');
         const wallet = this.ctx.network.web3.eth.accounts.wallet[0];
         const keystore = wallet.encrypt(passcode);
-        fs.writeFileSync(`${this.keystore_path}/${id}`, JSON.stringify(keystore));
+        fs.writeFileSync(`${this.keystorePath}/${id}`, JSON.stringify(keystore));
     }
 
     async sendTransaction(from, to, value) {
@@ -179,15 +184,15 @@ class Wallet {
 
     saveWalletToKeystore(wallet, passcode) {
         const keystore = wallet.encrypt(passcode);
-        fs.writeFileSync(`${this.keystore_path}/${keystore.id}`, JSON.stringify(keystore));
+        fs.writeFileSync(`${this.keystorePath}/${keystore.id}`, JSON.stringify(keystore));
 
         return keystore;
     }
 
     loadWalletFromKeystore(walletId, passcode) {
         // todo what if it does not exist?
-        if (fs.existsSync(`${this.keystore_path}/${walletId}`)) {
-            const keystoreBuffer = fs.readFileSync(`${this.keystore_path}/${walletId}`);
+        if (fs.existsSync(`${this.keystorePath}/${walletId}`)) {
+            const keystoreBuffer = fs.readFileSync(`${this.keystorePath}/${walletId}`);
             const keystore = JSON.parse(keystoreBuffer);
 
             // decrypt it using the passcode

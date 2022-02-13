@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const utils = require('#utils');
+const config = require('config');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -9,7 +10,6 @@ class Deployer {
     constructor(ctx) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'Deployer'});
-        this.config = this.ctx.config.deployer;
         this.cache_uploaded = {}; // todo: unused? either remove or use
         storage = require('../../storage/index.js');
     }
@@ -19,7 +19,7 @@ class Deployer {
     }
 
     getCacheDir() {
-        const cache_dir = path.join(this.ctx.datadir, this.config.cache_path);
+        const cache_dir = path.join(config.get('datadir'), config.get('deployer.cache_path'));
         utils.makeSurePathExists(cache_dir);
         return cache_dir;
     }

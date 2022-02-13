@@ -8,6 +8,7 @@ const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce
 const {getJSON} = require('../client/storage/index.js');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
+const config = require('config');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -40,11 +41,9 @@ class Web3Bridge {
     constructor(ctx) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'Web3Bridge'});
-        this.connectionString = this.ctx.config.network.web3;
-        this.network_id = this.ctx.config.network.web3_network_id;
-        this.chain_id = this.ctx.config.network.web3_chain_id;
+        this.connectionString = config.get('network.web3');
         this.address = this.ctx.wallet.getNetworkAccount();
-        this.web3_call_retry_limit = this.ctx.config.network.web3_call_retry_limit || 4;
+        this.web3_call_retry_limit = config.get('network.web3_call_retry_limit') || 4;
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
         this.log.debug('Successfully created a web3 instance');
         this.ctx.web3bridge = this;
@@ -53,7 +52,7 @@ class Web3Bridge {
 
     createWeb3Instance() {
         return createWeb3Instance({
-            blockchainUrl: this.ctx.config.network.web3,
+            blockchainUrl: config.get('network.web3'),
             privateKey: '0x' + this.ctx.wallet.getNetworkAccountPrivateKey()
         });
     }
@@ -73,12 +72,12 @@ class Web3Bridge {
     }
 
     async loadStorageProviderRegistryContract() {
-        const at = this.ctx.config.network.storage_provider_registry_contract_address;
+        const at = config.get('network.storage_provider_registry_contract_address');
         return await this.loadPointContract('StorageProviderRegistry', at);
     }
 
     async loadIdentityContract() {
-        const at = this.ctx.config.network.identity_contract_address;
+        const at = config.get('network.identity_contract_address');
         return await this.loadPointContract('Identity', at);
     }
 
@@ -176,6 +175,7 @@ class Web3Bridge {
     async callContract(target, contractName, method, params) {
         // todo: multiple arguments, but check existing usage // huh?
         let attempt = 0;
+        this.log.debug({target, contractName, method, params}, 'Contract Call');
         while (true) {
             try {
                 const contract = await this.loadWebsiteContract(target, contractName);
@@ -402,7 +402,7 @@ class Web3Bridge {
         try {
             contract = await this.loadStorageProviderRegistryContract();
             method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
-            account = this.ctx.config.hardcode_default_provider;
+            account = config.get('network.hardcode_default_provider');
             gasPrice = await this.web3.eth.getGasPrice();
             return await method.send({from: account, gasPrice, gas: 2000000, value: 0.000001e18});
         } catch (e) {

@@ -15,5 +15,5 @@ COPY --from=builder /app /app
 RUN mkdir -p /data/db
 RUN npm install -g npm
 
-ENTRYPOINT [ "./point" ]
-CMD [ "--datadir", "/data", "-v" ]
+ENTRYPOINT [ "npm" ]
+CMD [ "run", "start:docker" ]

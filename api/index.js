@@ -1,12 +1,13 @@
 const fastify = require('fastify');
 const fastifyWs = require('fastify-websocket');
 const {checkRegisteredToken, registerToken} = require('../client/storage/payments');
+const config = require('config');
 
 class ApiServer {
     constructor(ctx) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'ApiServer'});
-        this.config = ctx.config.api;
+        this.config = config.get('api');
     }
 
     async start() {

@@ -7,7 +7,6 @@ class WalletController extends PointSDKController {
     constructor(ctx, req, reply) {
         super(ctx);
         web3 = this.ctx.network.web3;
-        this.keystorePath = this.ctx.wallet.keystore_path;
         this.payload = req.body;
         this.reply = reply;
         this.defaultWallet = web3.eth.accounts.wallet[0];
