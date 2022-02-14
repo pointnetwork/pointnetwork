@@ -1,7 +1,6 @@
 const ApiServer = require('../api');
 const Network = require('../network');
 const Client = require('../client');
-const Provider = require('../provider');
 const Wallet = require('../wallet');
 
 class Core {
@@ -20,7 +19,6 @@ class Core {
         await this.initWallet();
         await this.initNetwork();
         await this.initClient();
-        await this.initProvider();
 
         await this.postInit();
     }
@@ -53,11 +51,6 @@ class Core {
         // todo: rename to keychain?
         this.ctx.wallet = new Wallet(this.ctx);
         await this.ctx.wallet.start();
-    }
-
-    async initProvider() {
-        this.ctx.provider = new Provider(this.ctx);
-        await this.ctx.provider.start();
     }
 }
 

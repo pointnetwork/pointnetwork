@@ -109,7 +109,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             config.arweave_experiment_version_minor
         );
 
-        const queryResult = await request(config.arweave_graphql_endpoint, query);
+        const queryResult = await request(config.arweave_gateway_url, query);
         logger.debug({chunkId}, 'Graphql request success');
 
         for (const edge of queryResult.transactions.edges) {
@@ -123,7 +123,10 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 
             const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
-                logger.warn({chunkId, hash}, 'Chunk id and data do not match, chunk id');
+                logger.warn(
+                    {chunkId, hash, query, buf: buf.toString()},
+                    'Chunk id and data do not match, chunk id'
+                );
                 continue;
             }
 
@@ -135,7 +138,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             return buf;
         }
 
-        throw new Error('No mathing hash found in arweave');
+        throw new Error('No matching hash found in arweave');
     } catch (e) {
         logger.error({chunkId, message: e.message, stack: e.stack}, 'Chunk download failed');
         chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
@@ -174,20 +177,16 @@ const uploadChunk = async data => {
         );
 
         const response = await axios.post(
-            `${config.arweave_airdrop_endpoint}/signPOST`,
+            `${config.arweave_bundler_url}/signPOST`,
             formData,
             {headers: {...formData.getHeaders()}}
         );
 
         // TODO: check status from bundler
         if (response.data.status !== 'ok') {
-            throw new Error(
-                `Chunk ${chunkId} uploading failed: arweave airdrop endpoint error: ${JSON.stringify(
-                    response,
-                    null,
-                    2
-                )}`
-            );
+            throw new Error(`Chunk ${chunkId} uploading failed: arweave endpoint error: ${
+                JSON.stringify(response.data, null, 2)
+            }`);
         }
 
         logger.debug({chunkId}, 'Chunk successfully uploaded, saving to disk');

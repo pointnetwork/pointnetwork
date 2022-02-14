@@ -43,8 +43,8 @@
       "retransmit_segments_timeout_seconds": 30,
       "arweave_experiment_version_major": 1,
       "arweave_experiment_version_minor": 9,
-      "arweave_airdrop_endpoint": "https://arweave-bundler.herokuapp.com",
-      "arweave_graphql_endpoint": "https://arweave.net/graphql",
+      "arweave_bundler_url": "https://arweave-bundler.herokuapp.com",
+      "arweave_gateway_url": "https://arweave.net/graphql",
       "arweave_key": false,
       "solana_main_endpoint": "https://still-billowing-smoke.solana-mainnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/",
       "solana_dev_endpoint":  "https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/",
@@ -62,8 +62,6 @@
       "__do not remove this section__": null,
       "id": "58225300-cf00-494a-be15-8a15e42d3758",
       "passcode": "BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9",
-      "account": "",
-      "privateKey": "",
       "keystore_path": "wallets/keystore"
     },
     "max_parallel_requests_per_provider": 3

@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "1.0.33",
+  "version": "1.0.34",
   "description": "Point Network;",
   "main": "point",
   "engines": {
@@ -76,7 +76,7 @@
     "test:db:docker": "printf '\\e[2J\\e[3J\\e[H' && npm run migrate && NODE_ENV=development npm run test",
     "test:restart": "docker-compose -f docker-compose.test.yaml restart tests && docker logs -f pointnetwork_tests",
     "start": "./point --datadir $DATADIR -v",
-    "start:dev": "npx nodemon ./point -- --datadir $DATADIR -v",
+    "start:dev": "nodemon ./point -- --datadir $DATADIR -v",
     "start:docker": "./scripts/patch-config.js && npm run migrate && npm start",
     "start:docker:dev": "./scripts/patch-config.js && npm run migrate && npm run start:dev",
     "start:docker:e2e": "./scripts/patch-config-e2e.js && npm run migrate && npm run start:dev",
@@ -95,7 +95,8 @@
     "znet:local": "docker-compose -f docker-compose.znet.local.yaml",
     "volume:backup": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu tar -czvf /backup/$VOLUME-$(date \"+%Y-%m-%dT%H:%M:%S\").tar.gz /data",
     "volume:restore": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu bash -c \"cd /data && tar -xvf /backup/$FILE --strip 1\"",
-    "fix": "eslint --ext .js --fix ."
+    "fix": "eslint --ext .js --fix . && eslint --fix point",
+    "lint": "eslint --ext .js ./ && eslint point"
   },
   "imports": {
     "#utils": "./core/utils.js",

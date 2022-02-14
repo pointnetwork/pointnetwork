@@ -1,0 +1,9 @@
+require('arweave')
+    .init()
+    .wallets
+    .jwkToAddress(require(require('path').resolve(
+        __dirname,
+        '..',
+        'resources',
+        'arweave-test-key.json'
+    ))).then(console.log);
