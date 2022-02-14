@@ -94,7 +94,7 @@ const startMigration = async(site) => {
     const handleAddress = await identityInstance.methods.getOwnerByIdentity(handle).call({from:account.address});
 
     if(handleAddress === '0x0000000000000000000000000000000000000000') {
-        console.log('Please deplot your zapp before running their migrations');
+        console.log('Please deploy your zapp before running their migrations');
         exit(0);
     }
 
@@ -136,6 +136,5 @@ const loadIdentityAbi = () => {
 const loadSiteMigrationsAbi = (migrationAbi) => {
     return JSON.parse(readFileSync(migrationAbi));
 };
-
 
 init();
