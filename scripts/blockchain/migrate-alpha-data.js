@@ -13,7 +13,7 @@ const mnemonic = require('/data/keystore/key.json');
 const {exit} = require('process');
 if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
     throw new Error('Invalid key format');
-}
+};
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const privateKeyProvider = new HDWalletProvider({mnemonic, providerOrUrl: httpProvider});
 const privateKey = `0x${privateKeyProvider.hdwallet._hdkey._privateKey.toString('hex')}`;
@@ -33,7 +33,7 @@ const allowedSites = {
     'twitter.z': {
         abi:`${pointNodePath}/truffle/build/contracts/TwitterMigrations.json`,
         contract:'0x9EF1BEcF1e63BAB97F883bA3C5fDf8f761eD41F8',
-        'handle':'twitter'
+        handle:'twitter'
     }, 
     'blog.z': {
         abi:`${pointNodePath}/truffle/build/contracts/BlogMigrations.json`,
@@ -51,9 +51,9 @@ const minimal_contract_abi = [
     {
         inputs:[
             {
-                'internalType':'address',
-                'name':'migrator',
-                'type':'address'
+                internalType:'address',
+                name:'migrator',
+                type:'address'
             }
         ],
         name:'addMigrator',
@@ -91,7 +91,8 @@ const startMigration = async(site) => {
     const identityInstance = new web3.eth.Contract(identityAbiFile.abi, identity_contract_address);
     const migratorInstance = new web3.eth.Contract(migrationgAbi.abi, migrationAddress);
 
-    const handleAddress = await identityInstance.methods.getOwnerByIdentity(handle).call({from:account.address});
+    const handleAddress = await identityInstance.methods
+        .getOwnerByIdentity(handle).call({from:account.address});
 
     if(handleAddress === '0x0000000000000000000000000000000000000000') {
         console.log('Please deploy your zapp before running their migrations');
@@ -99,8 +100,11 @@ const startMigration = async(site) => {
     }
 
     //validate if handle exists
-    const contractKey = await identityInstance.methods.ikvList(handle, 0).call({from:account.address});
-    const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
+    const contractKey = await identityInstance.methods
+        .ikvList(handle, 0).call({from:account.address});
+    const contractAddress = await identityInstance.methods
+        .ikvGet(handle, contractKey).call();
+
     const zappInstance = new web3.eth.Contract(minimal_contract_abi, contractAddress);
 
     await zappInstance.methods.addMigrator(migrationAddress).send(
@@ -108,7 +112,7 @@ const startMigration = async(site) => {
         from: account.address,
         gas:200000
     }).then(function(txRaw) {
-        console.log(txRaw)
+        console.log(txRaw);
     });
     
     console.log('Migrator added');    
