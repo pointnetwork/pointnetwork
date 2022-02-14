@@ -36,7 +36,7 @@ storage:
 zproxy:
   port: 8666
   host: 127.0.0.1
-  sanitize_html: true
+  sanitize_html: false
   redirect_to_https: true
 wallet:
   keystore_path: keystore

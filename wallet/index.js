@@ -87,7 +87,7 @@ class Wallet {
             this.#secretPhrase = require(path.join(this.keystorePath, 'key.json'), 'utf-8').phrase;
         } catch (e) {
             if (e.code === 'ENOENT') {
-                this.#secretPhrase = '';
+                this.#secretPhrase = undefined;
             } else {
                 throw e;
             }

@@ -108,6 +108,8 @@ function getContractAddress(name) {
     }
 }
 
+// ------------------ Patch Config ------------ //
+
 if (process.env.MODE === 'e2e') {
     process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
     process.env.STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS = getContractAddress('StorageProviderRegistry');
@@ -204,12 +206,15 @@ if (program.migrate) {
 }
 
 // ------------------ Remove Everything ------------ //
+
 if (program.debug_destroy_everything) {
     // todo: remove in prod, dangerous
     ctx.db = new DB(ctx);
     DB.__debugClearCompletely(ctx); // async!
     return;
 }
+
+// ------------------ Compile Contracts ------------ //
 
 const CONTRACT_ADDRESSES = ['Identity', 'Migrations', 'StorageProviderRegistry'];
 
@@ -267,6 +272,7 @@ if (program.compile) {
 }
 
 // ------------ Main Cycle After This Block ---------- //
+
 if (!program.go || program.args.length > 0) {
     program.help();
     ctx.die();
