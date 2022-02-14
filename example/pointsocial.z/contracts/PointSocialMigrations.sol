@@ -174,8 +174,6 @@ contract PointSocialMigrations {
 
     function persistComments(address _contract) internal {
         string memory sig = "addComments(uint256,address,bytes32,uint256)";
-        uint256 fistPost = 1;
-        uint256 secondPost = 2;
 
         _contract.call(
             abi.encodeWithSignature(

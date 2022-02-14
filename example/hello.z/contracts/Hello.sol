@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 contract Hello {
-  string public value = 'Hello Contract Default Value';
+  string public value = "Hello Contract Default Value";
   bytes32 public storageValue;
   bytes32 public storageImage;
   int public counter = 0;

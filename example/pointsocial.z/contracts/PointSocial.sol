@@ -55,7 +55,6 @@ contract PointSocial {
     }
 
     // Post data functions
-    // example bytes32: "0x0000000000000000000000000000000000000000000068692066726f6d20706e", "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
     function addPost(bytes32 contents, bytes32 image) public {
         _postIds.increment();
         uint256 newPostId = _postIds.current();
@@ -115,7 +114,8 @@ contract PointSocial {
         return postsByOwner[owner].length;
     }
 
-    function getPaginatedPostsByOwner(address owner, uint256 cursor, uint256 howMany) public view returns (Post[] memory) {
+    function getPaginatedPostsByOwner(address owner, uint256 cursor, uint256 howMany) 
+    public view returns (Post[] memory) {
         uint256 _ownerPostLength = postsByOwner[owner].length;
 
         uint256 length = howMany;
@@ -134,7 +134,6 @@ contract PointSocial {
         return postById[id];
     }
 
-    // Comments data functions
     // Example: 1,"0x0000000000000000000000000000000000000000000068692066726f6d20706e"
     function addCommentToPost(uint256 postId, bytes32 contents) public {
         _commentIds.increment();

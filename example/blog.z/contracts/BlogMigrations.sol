@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 contract BlogMigrations {
     address private _owner;
     address private _migrator;
-    bool migrationsApplied = false;
+    bool public migrationsApplied = false;
 
 
     constructor() {
