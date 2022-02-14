@@ -32,36 +32,36 @@ let identity_contract_address;
 
 const allowedSites = {
     'twitter.z': {
-        'abi':`${pointNodePath}/truffle/build/contracts/TwitterMigrations.json`,
-        'contract':'0x9EF1BEcF1e63BAB97F883bA3C5fDf8f761eD41F8',
+        abi:`${pointNodePath}/truffle/build/contracts/TwitterMigrations.json`,
+        contract:'0x9EF1BEcF1e63BAB97F883bA3C5fDf8f761eD41F8',
         'handle':'twitter'
     }, 
     'blog.z': {
-        'ab':`${pointNodePath}/truffle/build/contracts/BlogMigrations.json`,
-        'contract':'0x506d6A079856A6EF444c99dAef1bf15fcbc37bbb',
-        'handle':'blog'
+        abi:`${pointNodePath}/truffle/build/contracts/BlogMigrations.json`,
+        contract:'0x506d6A079856A6EF444c99dAef1bf15fcbc37bbb',
+        handle:'blog'
     }, 
     'pointsocial.z': {
-        'abi':`${pointNodePath}/truffle/build/contracts/PointSocialMigrations.json`,
-        'contract':'0x59BDA94F762c9227cC426Ea29C0aC1c196f1d7b6',
-        'handle':'pointsocial'
-    }, 
+        abi:`${pointNodePath}/truffle/build/contracts/PointSocialMigrations.json`,
+        contract:'0x59BDA94F762c9227cC426Ea29C0aC1c196f1d7b6',
+        handle:'pointsocial'
+    }
 };
 
 const minimal_contract_abi = [
     {
-        'inputs':[
-           {
-              'internalType':'address',
-              'name':'migrator',
-              'type':'address'
-           }
+        inputs:[
+            {
+                'internalType':'address',
+                'name':'migrator',
+                'type':'address'
+            }
         ],
-        'name':'addMigrator',
-        'outputs':[],
-        'stateMutability':'nonpayable',
-        'type':'function'
-     }
+        name:'addMigrator',
+        outputs:[],
+        stateMutability:'nonpayable',
+        type:'function'
+    }
 ];
 
 const init = () => {
@@ -105,7 +105,6 @@ const startMigration = async(site) => {
     const contractAddress = await identityInstance.methods.ikvGet(handle, contractKey).call();
     const zappInstance = new web3.eth.Contract(minimal_contract_abi, contractAddress);
 
-    
     await zappInstance.methods.addMigrator(migrationAddress).send(
     {
         from: account.address,
