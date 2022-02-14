@@ -54,18 +54,18 @@ services:
     image: pointnetwork/arweave-bundler:v1.0.0
     container_name: point_bundler
     hostname: bundler
+    depends_on:
+      createbuckets:
+        condition: service_completed_successfully
     volumes:
       - ./resources/arweave-test-key.json:/app/keystore/key.json
-    secrets:
-      - minio_test_user
-      - minio_test_pass
     environment:
       S3_HOST: bundler-cache
       S3_PORT: 9000
       S3_PROTOCOL: http
-      S3_BUCKET: ' '
-      S3_KEY_FILE: /run/secrets/minio_test_user
-      S3_SECRET_FILE: /run/secrets/minio_test_pass
+      S3_BUCKET: testbucket
+      S3_KEY: miniouser
+      S3_SECRET: miniopass
       ARWEAVE_HOST: arweave-node
       ARWEAVE_PORT: 1984
       ARWEAVE_PROTOCOL: http
@@ -73,30 +73,41 @@ services:
       TESTMODE: '1'
 
   cache:
-    image: minio/minio:RELEASE.2022-02-01T18-00-14Z
+    image: minio/minio:latest
     container_name: point_storage_cache
     hostname: bundler-cache
     command: server /data --console-address ':9001'
+    healthcheck:
+      test: curl -If http://localhost:9000/minio/health/ready > /dev/null
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 0s
     ports:
       - '9000:9000'
       - '9001:9001'
     volumes:
       - bundler_data:/data
-    secrets:
-      - minio_test_user
-      - minio_test_pass
     environment:
-      MINIO_ROOT_USER_FILE: /run/secrets/minio_test_user
-      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_test_pass
+      MINIO_ACCESS_KEY: miniouser
+      MINIO_SECRET_KEY: miniopass
+
+  createbuckets:
+    image: minio/mc
+    container_name: point_bucket
+    depends_on:
+      cache:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add minio http://bundler-cache:9000 miniouser miniopass &&
+      /usr/bin/mc mb minio/testbucket &&
+      /usr/bin/mc policy set public minio/testbucket &&
+      exit 0;
+      "
 
 volumes:
   arweave_data:
   gateway_data:
   bundler_data:
   gateway_db_data:
-
-secrets:
-  minio_test_user:
-    file: ./resources/minio_test_user
-  minio_test_pass:
-    file: ./resources/minio_test_pass
