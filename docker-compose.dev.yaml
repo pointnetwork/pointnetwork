@@ -7,7 +7,7 @@ services:
       service: point_node
     image: $POINT_DEV_IMAGE_NAME
     volumes:
-      - point_contracts_dev:/app/truffle/build/contracts
+      - point_contracts_dev:/app/truffle/build/contracts:rw
       - point_node_data_dev:/data
       - ./api:/app/api:ro
       - ./client:/app/client:ro
@@ -20,7 +20,6 @@ services:
       - ./network:/app/network:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
       - ./package.json:/app/package.json:ro
       - ./point:/app/point:ro

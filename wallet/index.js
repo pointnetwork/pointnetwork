@@ -84,9 +84,7 @@ class Wallet {
     async start() {
         await makeSurePathExistsAsync(this.keystorePath);
         try {
-            this.#secretPhrase = JSON.parse(
-                await fs.promises.readFile(path.join(this.keystorePath, 'key.json'), 'utf-8')
-            ).phrase;
+            this.#secretPhrase = require(path.join(this.keystorePath, 'key.json'), 'utf-8').phrase;
         } catch (e) {
             if (e.code === 'ENOENT') {
                 this.#secretPhrase = '';

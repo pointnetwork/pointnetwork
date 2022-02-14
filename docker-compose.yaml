@@ -8,6 +8,7 @@ services:
       - point_contracts:/app/truffle/build/contracts
       - point_node_data:/data
       - $POINT_KEYSTORE:/data/keystore
+      - $POINT_DEPLOYSPACE:/app/deployspace:ro
     ports:
       - '8666:8666'
       - '2468:2468'

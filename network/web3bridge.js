@@ -43,7 +43,7 @@ class Web3Bridge {
         this.log = ctx.log.child({module: 'Web3Bridge'});
         this.connectionString = config.get('network.web3');
         this.address = this.ctx.wallet.getNetworkAccount();
-        this.web3_call_retry_limit = config.get('network.web3_call_retry_limit') || 4;
+        this.web3_call_retry_limit = config.get('network.web3_call_retry_limit');
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
         this.log.debug('Successfully created a web3 instance');
         this.ctx.web3bridge = this;
