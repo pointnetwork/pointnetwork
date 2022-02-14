@@ -111,9 +111,7 @@ const startMigration = async(site) => {
         {
             from: account.address,
             gas:200000
-        }).then(function(txRaw) {
-            console.log(txRaw);
-        }
+        }).then(function(txRaw){console.log(txRaw);}
     );
         
     console.log('Migrator added');    
@@ -121,9 +119,7 @@ const startMigration = async(site) => {
         {
             from: account.address,
             gas:200000
-        }).then(function(txRaw) {
-            console.log(txRaw);
-        }
+        }).then(function(txRaw) {console.log(txRaw);}
     );
 
     console.log('Migrated');    
