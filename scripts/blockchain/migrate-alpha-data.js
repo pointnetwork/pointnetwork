@@ -5,7 +5,7 @@ const {readFileSync} = require('fs');
 const Web3 = require('web3');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const blockchainUrl = process.env.BLOCKCHAIN_URL;
-const pointNodePath = '/app'
+const pointNodePath = '/app';
 const nodeConfigFile = `${process.env.DATADIR}/config.json`;
 const Web3HttpProvider = require('web3-providers-http');
 
@@ -108,37 +108,35 @@ const startMigration = async(site) => {
     const zappInstance = new web3.eth.Contract(minimal_contract_abi, contractAddress);
 
     await zappInstance.methods.addMigrator(migrationAddress).send(
-    {
-        from: account.address,
-        gas:200000
-    }).then(function(txRaw) {
-        console.log(txRaw);
-    });
-    
+        {
+            from: account.address,
+            gas:200000
+        }).then(function(txRaw) {
+            console.log(txRaw);
+        }
+    );
+        
     console.log('Migrator added');    
     await migratorInstance.methods.migrate(contractAddress).send(
-    {
-        from: account.address,
-        gas:200000
-    }).then(function(txRaw) {
-        console.log(txRaw)
-    });
+        {
+            from: account.address,
+            gas:200000
+        }).then(function(txRaw) {
+            console.log(txRaw);
+        }
+    );
 
     console.log('Migrated');    
     exit(0);
 };
 
-const loadNodeConfig = () => {
-    return JSON.parse(readFileSync(nodeConfigFile));
-};
+const loadNodeConfig = () => JSON.parse(readFileSync(nodeConfigFile));
 
 const loadIdentityAbi = () => {
     const abiFileName = `${pointNodePath}/truffle/build/contracts/Identity.json`;
     return JSON.parse(readFileSync(abiFileName));
 };
 
-const loadSiteMigrationsAbi = (migrationAbi) => {
-    return JSON.parse(readFileSync(migrationAbi));
-};
+const loadSiteMigrationsAbi = (migrationAbi) => JSON.parse(readFileSync(migrationAbi));
 
 init();
