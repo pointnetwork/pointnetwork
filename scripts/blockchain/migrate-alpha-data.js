@@ -26,7 +26,6 @@ const account = web3.eth.accounts.privateKeyToAccount(privateKey);
 web3.eth.accounts.wallet.add(account);
 web3.eth.defaultAccount = account.address;
 
-
 let config;
 let identity_contract_address;
 
@@ -74,15 +73,14 @@ const init = () => {
 
     config = loadNodeConfig();
     identity_contract_address = config.network.identity_contract_address;
-    storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
 
-    if(allowedSites[site] == undefined) {
+    if(allowedSites[site] === undefined) {
         console.log('Please inform a valid zapp domain');
         exit(0);
     }
     
     startMigration(site);
-}
+};
 
 const startMigration = async(site) => {
     const handle = allowedSites[site].handle;
@@ -124,20 +122,20 @@ const startMigration = async(site) => {
 
     console.log('Migrated');    
     exit(0);
-}
+};
 
 const loadNodeConfig = () => {
     return JSON.parse(readFileSync(nodeConfigFile));
-}
+};
 
 const loadIdentityAbi = () => {
     const abiFileName = `${pointNodePath}/truffle/build/contracts/Identity.json`;
     return JSON.parse(readFileSync(abiFileName));
-}
+};
 
 const loadSiteMigrationsAbi = (migrationAbi) => {
     return JSON.parse(readFileSync(migrationAbi));
-}
+};
 
 
 init();
