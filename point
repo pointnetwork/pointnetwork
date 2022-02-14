@@ -5,6 +5,7 @@ const {exec} = require('child_process');
 const path = require('path');
 const npid = require('npid');
 const program = new Command();
+const {existsSync} = require('fs');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -85,6 +86,29 @@ const ctx = {};
 if (program.datadir) {
     process.env.DATADIR = program.datadir;
 }
+
+function getContractAddress(name) {
+    const filename = path.resolve(__dirname, 'truffle', 'build', 'contracts', `${name}.json`);
+
+    if (!existsSync(filename)) {
+        return;
+    }
+
+    const {networks} = require(filename);
+
+    for (const network in networks) {
+        const {address} = networks[network];
+        if (address && typeof address === 'string') {
+            return address;
+        }
+    }
+}
+
+if (process.env.MODE === 'e2e') {
+    process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
+    process.env.STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS = getContractAddress('StorageProviderRegistry');
+}
+
 const config = require('config');
 const logger = require('./core/log');
 const Model = require('./db/model');

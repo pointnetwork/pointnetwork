@@ -5,3 +5,5 @@ log:
   sendLogsTo: SEND_LOGS_TO
 network:
   web3: BLOCKCHAIN_URL
+  identity_contract_address: IDENTITY_CONTRACT_ADDRESS
+  storage_provider_registry_contract_address: STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS
