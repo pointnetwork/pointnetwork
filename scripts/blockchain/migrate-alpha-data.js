@@ -1,23 +1,26 @@
 #!/usr/bin/env node
 //node scripts/blockchain/migrate-alpha-data.js twitter.z
 
-const { readFileSync } = require('fs');
-const Web3 = require('web3');
+const {readFileSync} = require("fs");
+const Web3 = require("web3");
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 const blockchainUrl = process.env.BLOCKCHAIN_URL;
-const pointNodePath = '/app'
+const pointNodePath = "/app"
 const nodeConfigFile = `${process.env.DATADIR}/config.json`;
-const Web3HttpProvider = require('web3-providers-http');
+const Web3HttpProvider = require("web3-providers-http");
 
-const mnemonic = require('/data/keystore/key.json');
-const { exit } = require('process');
-if (typeof mnemonic !== 'object' || !('phrase' in mnemonic)) {
-    throw new Error('Invalid key format');
+const mnemonic = require("/data/keystore/key.json");
+const {exit} = require("process");
+if (typeof mnemonic !== "object" || !("phrase" in mnemonic)) {
+    throw new Error("Invalid key format");
 }
 const httpProvider = new Web3HttpProvider(blockchainUrl, {keepAlive: true, timeout: 60000});
 const privateKeyProvider = new HDWalletProvider({mnemonic, providerOrUrl: httpProvider});
-const privateKey = `0x${privateKeyProvider.hdwallet._hdkey._privateKey.toString('hex')}`;
-const hdWalletProvider = new HDWalletProvider({privateKeys: [privateKey], providerOrUrl: blockchainUrl});
+const privateKey = `0x${privateKeyProvider.hdwallet._hdkey._privateKey.toString("hex")}`;
+const hdWalletProvider = new HDWalletProvider({
+    privateKeys: [privateKey], 
+    providerOrUrl: blockchainUrl
+});
 const web3 = new Web3(hdWalletProvider);
 const account = web3.eth.accounts.privateKeyToAccount(privateKey);
 web3.eth.accounts.wallet.add(account);
@@ -43,7 +46,7 @@ const allowedSites = {
         "contract":"0x59BDA94F762c9227cC426Ea29C0aC1c196f1d7b6",
         "handle":"pointsocial",
     }, 
-}
+};
 
 const minimal_contract_abi = [
     {
@@ -59,7 +62,7 @@ const minimal_contract_abi = [
         "stateMutability":"nonpayable",
         "type":"function"
      }
-]
+];
 
 const init = () => {
     if(process.argv[2] === undefined){
@@ -74,7 +77,7 @@ const init = () => {
     storage_provider_registry_contract_address = config.network.storage_provider_registry_contract_address;
 
     if(allowedSites[site] == undefined) {
-        console.log('Please inform a valid zapp domain');
+        console.log("Please inform a valid zapp domain");
         exit(0);
     }
     
@@ -92,8 +95,8 @@ const startMigration = async(site) => {
 
     const handleAddress = await identityInstance.methods.getOwnerByIdentity(handle).call({from:account.address});
 
-    if(handleAddress == '0x0000000000000000000000000000000000000000') {
-        console.log('Please deplot your zapp before running their migrations');
+    if(handleAddress == "0x0000000000000000000000000000000000000000") {
+        console.log("Please deplot your zapp before running their migrations");
         exit(0);
     }
 
@@ -111,7 +114,7 @@ const startMigration = async(site) => {
         console.log(txRaw)
     });
     
-    console.log('Migrator added');    
+    console.log("Migrator added");    
     await migratorInstance.methods.migrate(contractAddress).send(
     {
         from: account.address,
@@ -120,7 +123,7 @@ const startMigration = async(site) => {
         console.log(txRaw)
     });
 
-    console.log('Migrated');    
+    console.log("Migrated");    
     exit(0);
 }
 
