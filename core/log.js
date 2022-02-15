@@ -4,16 +4,15 @@ const pino = require('pino');
 const udpTransport = require('pino-udp');
 const {multistream} = require('pino-multi-stream');
 const ecsFormat = require('@elastic/ecs-pino-format');
-const config = require('./config');
+const config = require('config');
 
-const datadir = process.env.DATADIR;
-const {level, enabled} = config.log;
+const datadir = config.get('datadir');
+const {level, enabled, sendLogsTo} = config.get('log');
 const options = {enabled, formatters: ecsFormat(), level: pino.levels.values[level]};
 const streams = [];
-const sendTo = config.log.sendLogsTo || process.env.SEND_LOGS_TO;
 
-if (sendTo) {
-    const [address, port] = sendTo.split('://').pop().split(':');
+if (sendLogsTo) {
+    const [address, port] = sendLogsTo.split('://').pop().split(':');
     streams.push(new udpTransport({address, port}));
 }
 

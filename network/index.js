@@ -1,17 +1,17 @@
 const Web3Bridge = require('./web3bridge');
 const KeyValue = require('./keyvalue');
+const config = require('config');
 
 class Network {
     constructor(ctx) {
         this.ctx = ctx;
-        this.config = ctx.config.network;
     }
 
     async start() {
         await this.init();
 
         // todo: rewrite with threads!
-        this.timeout = this.ctx.config.simulation_delay; // todo: ???
+        this.timeout = config.get('network.simulation_delay'); // todo: ???
         this.timerFn = null;
         this.timerFn = async () => {
             await this.cycle();

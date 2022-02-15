@@ -1,11 +1,12 @@
 const fastify = require('fastify');
 const fastifyWs = require('fastify-websocket');
+const config = require('config');
 
 class ApiServer {
     constructor(ctx) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'ApiServer'});
-        this.config = ctx.config.api;
+        this.config = config.get('api');
     }
 
     async start() {

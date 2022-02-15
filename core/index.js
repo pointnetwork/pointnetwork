@@ -10,16 +10,10 @@ class Core {
     }
 
     async start() {
-        // todo: remove in prod
-        // if (this.ctx.config.client.wallet.account !== '0x989695771D51dE19e9ccb943d32E58F872267fcC') {
-        // DB.__debugClearCompletely(this.ctx);
-        // }
-
         await this.initApiServer();
         await this.initWallet();
         await this.initNetwork();
         await this.initClient();
-
         await this.postInit();
     }
 

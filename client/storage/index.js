@@ -14,14 +14,18 @@ const {promises: fs} = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 const axios = require('axios');
+const config = require('config');
 
 // TODO: for some reason docker fails to resolve module if I move it to another file
-const getDownloadQuery = (chunkId, majorVersion, minorVersion) =>
+// TODO: possibly split this file into several ones after migrating to modules
+const getDownloadQuery = chunkId =>
     gql`{
       transactions(
         tags: [
           {
-            name: "__pn_chunk_${majorVersion}.${minorVersion}_id",
+            name: "__pn_chunk_${config.get(
+        'storage.arweave_experiment_version_major'
+    )}.${config.get('storage.arweave_experiment_version_minor')}_id",
             values: ["${chunkId}"]
           }
         ]
@@ -50,30 +54,14 @@ const FILE_TYPE = {
 };
 
 const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
-const CONCURRENT_DOWNLOAD_DELAY = 100;
+const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay');
 
-// TODO: get rid of this and read config directly.
-// TODO: possibly split this file into several ones after refactoring config
-let config;
+const cacheDir = path.join(config.get('datadir'), config.get('storage.cache_path'));
+const filesDir = path.join(config.get('datadir'), config.get('storage.files_path'));
+
 let logger;
-let cacheDir;
-let filesDir;
 const init = async ctx => {
-    // TODO: ambiguous stuff, config is spread between storage and client.storage
-    config = {
-        ...ctx.config.storage,
-        ...ctx.config.client.storage
-    };
-    if (!config.arweave_experiment_version_major) {
-        throw new Error('arweave_experiment_version_major not set or is 0');
-    }
-    if (!config.arweave_experiment_version_minor) {
-        throw new Error('arweave_experiment_version_minor not set or is 0');
-    }
     logger = ctx.log.child({module: 'Storage'});
-    cacheDir = path.join(ctx.datadir, ctx.config.client.storage.cache_path);
-    // TODO: this should also come from config, but we don't have such a property
-    filesDir = path.join(ctx.datadir, 'files');
     await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
 };
 
@@ -103,13 +91,9 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
         chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
         await chunk.save();
 
-        const query = getDownloadQuery(
-            chunkId,
-            config.arweave_experiment_version_major,
-            config.arweave_experiment_version_minor
-        );
+        const query = getDownloadQuery(chunkId);
 
-        const queryResult = await request(config.arweave_gateway_url, query);
+        const queryResult = await request(config.get('storage.arweave_gateway_url'), query);
         logger.debug({chunkId}, 'Graphql request success');
 
         for (const edge of queryResult.transactions.edges) {
@@ -168,16 +152,24 @@ const uploadChunk = async data => {
 
         const formData = new FormData();
         formData.append('file', data, chunkId);
-        formData.append('__pn_integration_version_major', config.arweave_experiment_version_major);
-        formData.append('__pn_integration_version_minor', config.arweave_experiment_version_minor);
+        formData.append(
+            '__pn_integration_version_major',
+            config.get('storage.arweave_experiment_version_major')
+        );
+        formData.append(
+            '__pn_integration_version_minor',
+            config.get('storage.arweave_experiment_version_minor')
+        );
         formData.append('__pn_chunk_id', chunkId);
         formData.append(
-            `__pn_chunk_${config.arweave_experiment_version_major}.${config.arweave_experiment_version_minor}_id`,
+            `__pn_chunk_${config.get('storage.arweave_experiment_version_major')}.${config.get(
+                'storage.arweave_experiment_version_minor'
+            )}_id`,
             chunkId
         );
 
         const response = await axios.post(
-            `${config.arweave_bundler_url}/signPOST`,
+            `${config.get('storage.arweave_bundler_url')}/signPOST`,
             formData,
             {headers: {...formData.getHeaders()}}
         );
@@ -210,7 +202,7 @@ const uploadChunk = async data => {
 const uploadFile = async data => {
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
 
-    const CHUNK_SIZE = config.chunk_size_bytes;
+    const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
     const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
 
     if (totalChunks === 1) {
@@ -464,7 +456,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
             // We should trim the trailing zeros from the last chunk
             chunkBuffers[chunkBuffers.length - 1].slice(
                 0,
-                filesize - (chunkBuffers.length - 1) * config.chunk_size_bytes
+                filesize - (chunkBuffers.length - 1) * config.get('storage.chunk_size_bytes')
             )
         ]);
 

@@ -54,15 +54,14 @@ services:
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
+    command: 'run start:docker:e2e'
     volumes:
       - point_node_data_e2e:/data
       - shared_contracts_e2e:/app/truffle/build/contracts
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     environment:
-      ARWEAVE_BUNDLER_URL: http://bundler:80
-      ARWEAVE_GATEWAY_URL: http://gateway:3000
-      BLOCKCHAIN_URL: http://blockchain_node:7545
+      NODE_CONFIG_ENV: e2e
 
   arweave:
     extends:

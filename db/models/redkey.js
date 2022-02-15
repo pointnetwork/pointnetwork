@@ -2,9 +2,9 @@ const Model = require('../model');
 const crypto = require('crypto');
 const Provider = require('./provider');
 const Sequelize = require('sequelize');
+const config = require('config');
 
-const defaultConfig = require('../../resources/defaultConfig.json');
-const BITS = defaultConfig.storage.redkey_encryption_bits; // todo: make it read from the actual config, not default
+const BITS = config.get('storage.redkey_encryption_bits');
 
 class Redkey extends Model {
     constructor(...args) {

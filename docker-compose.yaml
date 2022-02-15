@@ -4,8 +4,6 @@ services:
   point_node:
     image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
     container_name: point_node
-    entrypoint: 'npm'
-    command: 'run start:docker'
     volumes:
       - point_contracts:/app/truffle/build/contracts
       - point_node_data:/data
@@ -15,21 +13,7 @@ services:
       - '8666:8666'
       - '2468:2468'
     environment:
-      DATADIR: /data
-      DB_ENV: production
-      POINT_API_HOST: 0.0.0.0
-      POINT_API_PORT: 2468
-      POINT_ZPROXY_HOST: 0.0.0.0
-      POINT_ZPROXY_PORT: 8666
-      POINT_STORAGE_ENGINE: arweave
-      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
-      PUBLIC_ADDRESS: $PUBLIC_ADDRESS
-      SEND_LOGS_TO: udp://znet.pointspace.io:12201
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      CONTRACT_ADDRESS_MIGRATIONS: $CONTRACT_ADDRESS_MIGRATIONS
-      CONTRACT_ADDRESS_IDENTITY: $CONTRACT_ADDRESS_IDENTITY
-      CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY: $CONTRACT_ADDRESS_STORAGE_PROVIDER_REGISTRY
-      ARWEAVE_EXPERIMENT_VERSION_MINOR: $ARWEAVE_EXPERIMENT_VERSION_MINOR
+      NODE_ENV: production
 
 volumes:
   point_contracts:

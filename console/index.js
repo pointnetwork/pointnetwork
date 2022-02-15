@@ -1,7 +1,7 @@
 const readline = require('readline');
 const axios = require('axios');
 /* eslint-disable no-console */
-const PROMPT = '> ';
+const config = require('config');
 
 class Console {
     constructor(ctx) {
@@ -14,7 +14,7 @@ class Console {
         this._console = readline.createInterface({
             input: process.stdin,
             output: process.stdout,
-            prompt: PROMPT
+            prompt: config.get('console.prompt')
         });
 
         this._console.prompt();
@@ -105,7 +105,7 @@ class Console {
     }
 
     get host() {
-        return `http://localhost:${parseInt(this.ctx.config.api.port)}`;
+        return `http://localhost:${parseInt(config.get('api.port'))}`;
     }
 
     get path() {
