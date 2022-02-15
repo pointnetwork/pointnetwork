@@ -92,11 +92,11 @@ services:
     depends_on:
       arweave:
         condition: service_healthy
-    volumes:
-      - ../arweave-bundler/src:/app/src
-      - ../arweave-bundler/config:/app/config
-    entrypoint: npx
-    command: nodemon --watch ./**/* --ext "ts,yaml" --exec "ts-node src/index.ts"
+    # volumes:
+    #   - ../arweave-bundler/src:/app/src
+    #   - ../arweave-bundler/config:/app/config
+    # entrypoint: npx
+    # command: nodemon --watch ./**/* --ext "ts,yaml" --exec "ts-node src/index.ts"
 
   cache:
     extends:

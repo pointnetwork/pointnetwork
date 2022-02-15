@@ -51,7 +51,7 @@ services:
     command: -p 5432
 
   bundler:
-    image: pointnetwork/arweave-bundler:v1.0.0
+    image: pointnetwork/arweave-bundler:v1.0.1
     container_name: point_bundler
     hostname: bundler
     depends_on:
