@@ -10,8 +10,8 @@ contract Twitter {
         uint256 likes;
     }
 
-    Tweet[] tweets;
-    mapping(address => Tweet[]) tweetsByOwner;
+    Tweet[] public tweets;
+    mapping(address => Tweet[]) public tweetsByOwner;
     address private _owner;
     address private _migrator;
 
@@ -32,16 +32,16 @@ contract Twitter {
         tweetsByOwner[msg.sender].push(_tweet);
     }
 
-    function like(uint256 tweet_id) public {
-        tweets[tweet_id].likes++;
+    function like(uint256 tweetId) public {
+        tweets[tweetId].likes++;
     }
 
-    function getTweet(uint256 tweet_id) view public returns (Tweet memory t) {
-        return tweets[tweet_id];
+    function getTweet(uint256 tweetId) public view returns (Tweet memory t) {
+        return tweets[tweetId];
     }
 
-    function getTweetByOwner(address owner, uint256 tweet_id) view public returns (Tweet memory t) {
-        return tweetsByOwner[owner][tweet_id];
+    function getTweetByOwner(address owner, uint256 tweetId) public view returns (Tweet memory t) {
+        return tweetsByOwner[owner][tweetId];
     }
 
     function add(address owner, bytes32 contents, uint256 timestamp, uint256 likes) public {

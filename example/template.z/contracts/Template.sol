@@ -16,9 +16,9 @@ contract Template  {
         uint createdAt;
     }
 
-    Example[] examples;
-    mapping(address => Example[]) examplesByOwner;
-    mapping(uint => Example) exampleById;
+    Example[] public examples;
+    mapping(address => Example[]) public examplesByOwner;
+    mapping(uint => Example) public exampleById;
 
     // Post data functions
     // example bytes32: "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
@@ -39,7 +39,7 @@ contract Template  {
         return _examples;
     }
 
-    function getAllExamplesByOwner(address owner) view public returns(Example[] memory) {
+    function getAllExamplesByOwner(address owner) public view returns(Example[] memory) {
         Example[] memory _examples = new Example[](examplesByOwner[owner].length);
         for(uint256 i = 0; i<examplesByOwner[owner].length; i++) {
             _examples[i] = exampleById[examplesByOwner[owner][i].id];
@@ -47,7 +47,7 @@ contract Template  {
         return _examples;
     }
 
-    function getExampleById(uint id) view public returns(Example memory) {
+    function getExampleById(uint id) public view returns(Example memory) {
         return exampleById[id];
     }
 }
