@@ -453,14 +453,21 @@ const uploadDir = async dirPath => {
 
 const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
-
+    console.log('------------------');
+    console.log(id);
+    console.log(encoding);
+    console.log('------------------');
+    console.log('1');
+    
     const filePath = path.join(filesDir, `file_${id}`);
     const file = await File.findByIdOrCreate(id, {original_path: filePath});
     if (useCache && file.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+        console.log('2');
         logger.debug({fileId: file.id}, 'Returning file from cache');
         return await fs.readFile(filePath, {encoding});
     }
     if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+        console.log('3');
         logger.debug({fileId: file.id}, 'File download already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return getFile(id, encoding); // use cache should be true in this case
@@ -468,6 +475,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
 
     logger.debug({fileId: file.id}, 'Downloading file');
     try {
+        console.log('4');
         file.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
         await file.save();
 
@@ -477,6 +485,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
         const chunkInfo = await getChunk(file.id, encoding);
         const chunkInfoString = chunkInfo.toString();
         if (!chunkInfoString.startsWith(CHUNKINFO_PROLOGUE)) {
+            console.log('5');
             logger.debug({fileId: file.id}, 'File consists of a single chunk, returning it');
             await fs.writeFile(filePath, chunkInfo);
 
@@ -537,6 +546,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
 
         return encoding === null ? fileBuffer : fileBuffer.toString(encoding);
     } catch (e) {
+        console.log('6');
         logger.error({fileId: file.id, message: e.message, stack: e.stack}, 'File download failed');
         file.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
         await file.save();

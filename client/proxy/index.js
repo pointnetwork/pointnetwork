@@ -7,6 +7,7 @@ const fs = require('fs-extra');
 const Renderer = require('../zweb/renderer');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
+const detectContentType = require('detect-content-type')
 const sanitizingConfig = require('./sanitizing-config');
 const WebSocketServer = require('websocket').server;
 const ZProxySocketController = require('../../api/sockets/ZProxySocketController');
@@ -207,14 +208,6 @@ class ZProxy {
                         hash.split('.').length > 1 ? hash.split('.').slice(0, -1).join('.') : hash;
                     const ext = hash.split('.').slice(-1)[0];
 
-                    const noExt = ext === hashWithoutExt || hash.split('.').length === 1;
-                    if (noExt) contentType = 'text/plain'; // just in case
-                    if (!noExt) {
-                        contentType = this.getContentTypeFromExt(ext);
-                        if (contentType.includes('html')) contentType = 'text/html'; // just in case
-                    } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
-                    if (ext === 'zhtml') contentType = 'text/plain';
-
                     try {
                         this.log.debug({hash}, 'Reading file from storage');
                         rendered = await getFile(hashWithoutExt);
@@ -222,10 +215,19 @@ class ZProxy {
                         return this.abortError(response, e);
                     }
 
+                    const noExt = ext === hashWithoutExt || hash.split('.').length === 1;
+                    if (noExt) contentType = detectContentType(Buffer.from(rendered));//'text/plain'; // just in case
+                    if (!noExt) {
+                        contentType = this.getContentTypeFromExt(ext);
+                        if (contentType.includes('html')) contentType = 'text/html'; // just in case
+                    } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
+                    if (ext === 'zhtml') contentType = 'text/plain';
+
                     if (this._isThisDirectoryJson(rendered) && noExt) {
                         rendered = this._renderDirectory(hash, rendered);
                         contentType = 'text/html';
                     }
+                    
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/_keyvalue_append/')) {
                 try {
@@ -493,6 +495,12 @@ class ZProxy {
                         );
                         if (response._contentType.includes('html'))
                             response._contentType = 'text/html'; // just in case
+                        
+                        console.log('passou aqui antes do 1 = ' + response._contentType);
+                        if(response._contentType === 'application/octet-stream'){
+                            console.log('passou aqui 1');
+                            response._contentType = detectContentType(Buffer.from(rendered));
+                        }
 
                         resolve(rendered);
                     }
@@ -606,8 +614,15 @@ class ZProxy {
                         response._contentType = this.getContentTypeFromExt(
                             this.getExtFromFilename(parsedUrl.pathname)
                         );
+
                         if (response._contentType.includes('html'))
                             response._contentType = 'text/html'; // just in case
+                        
+                        console.log('passou aqui antes do 2 = ' + response._contentType);
+                        if(response._contentType === 'application/octet-stream'){
+                            console.log('passou aqui 2');
+                            response._contentType = detectContentType(Buffer.from(rendered));
+                        }
 
                         resolve(rendered);
 
