@@ -3,14 +3,12 @@ pragma solidity ^0.8.0;
 
 contract PointSocialMigrations {
     address private _owner;
-    bool public migrationsApplied = false;
 
     constructor() {
         _owner = msg.sender;
     }
 
-    function persistPosts(address _contract) public {
-        require(migrationsApplied == false, "Migrations already applied");
+    function migrate(address _contract) public {
         require(msg.sender == _owner, "Access Denied");
 
         string memory sig = "add(uint256,address,bytes32,bytes32,uint256)";
@@ -174,8 +172,6 @@ contract PointSocialMigrations {
 
     function persistComments(address _contract) internal {
         string memory sig = "addComments(uint256,address,bytes32,uint256)";
-        uint256 fistPost = 1;
-        uint256 secondPost = 2;
 
         _contract.call(
             abi.encodeWithSignature(
@@ -210,7 +206,6 @@ contract PointSocialMigrations {
             )
         );
 
-        migrationsApplied = true;
     }
 
 }
