@@ -9,6 +9,7 @@ const {getJSON} = require('../client/storage/index.js');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
+const logger = require('../core/log');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -40,7 +41,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
 class Web3Bridge {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Web3Bridge'});
+        this.log = logger.child({module: 'Web3Bridge'});
         this.connectionString = config.get('network.web3');
         this.address = this.ctx.wallet.getNetworkAccount();
         this.web3_call_retry_limit = config.get('network.web3_call_retry_limit');

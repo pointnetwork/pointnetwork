@@ -1,17 +1,18 @@
 const fastify = require('fastify');
 const fastifyWs = require('fastify-websocket');
 const config = require('config');
+const logger = require('../core/log');
 
 class ApiServer {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'ApiServer'});
+        this.log = logger.child({module: 'ApiServer'});
         this.config = config.get('api');
     }
 
     async start() {
         this.server = fastify({
-            logger: this.ctx.log.child({module: 'ApiServer.server'}),
+            logger: logger.child({module: 'ApiServer.server'}),
             pluginTimeout: 20000
             // todo: more configuration?
         });
@@ -45,7 +46,7 @@ class ApiServer {
 
             await this.server.listen(parseInt(this.config.port), this.config.address, async err => {
                 if (err) {
-                    this.ctx.log.error(err, 'Error from API server');
+                    this.log.error(err, 'Error from API server');
                 }
             });
         } catch (err) {

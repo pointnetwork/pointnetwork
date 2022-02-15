@@ -1,7 +1,9 @@
+const logger = require('../core/log');
+
 class KeyValue {
     constructor(ctx, network) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'KeyValue'});
+        this.log = logger.child({module: 'KeyValue'});
         this.network = network;
         this.data = {};
     }

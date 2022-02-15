@@ -1,10 +1,11 @@
 const Console = require('../console');
 const path = require('path');
+const logger = require('../core/log');
 
 class Deploy {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Deploy'});
+        this.log = logger.child({module: 'Deploy'});
     }
 
     async deploy(deploy_path, deploy_contracts = false, dev = false) {

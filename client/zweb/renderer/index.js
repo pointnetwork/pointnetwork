@@ -3,6 +3,7 @@ const _ = require('lodash');
 const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage/index.js');
 const config = require('config');
+const logger = require('../../../core/log');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -12,7 +13,7 @@ class Renderer {
 
     constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Renderer'});
+        this.log = logger.child({module: 'Renderer'});
         this.config = config.get('zproxy');
         this.rootDirId = rootDirId;
         this.localDir = localDir;
@@ -302,7 +303,7 @@ class Renderer {
                 const publicKey = this.renderer.ctx.wallet.getNetworkAccountPublicKey();
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
-                this.renderer.ctx.log.info(
+                this.renderer.log.info(
                     {
                         identity,
                         owner,
@@ -322,7 +323,7 @@ class Renderer {
                     Buffer.from(publicKey, 'hex')
                 );
 
-                this.renderer.ctx.log.info(
+                this.renderer.log.info(
                     {identity, owner, publicKey: publicKey.toString('hex')},
                     'Successfully registered new identity'
                 );

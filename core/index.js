@@ -2,11 +2,12 @@ const ApiServer = require('../api');
 const Network = require('../network');
 const Client = require('../client');
 const Wallet = require('../wallet');
+const logger = require('../core/log');
 
 class Core {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Core'});
+        this.log = logger.child({module: 'Core'});
     }
 
     async start() {

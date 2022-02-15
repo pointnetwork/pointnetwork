@@ -2,12 +2,13 @@
 const path = require('path');
 const Sequelize = require('sequelize');
 const config = require('config');
+const logger = require('../../core/log');
 
 class SequelizeFactory {
     init(ctx) {
         this.ctx = ctx;
         this.config = config.get('db');
-        this.log = this.ctx.log.child({module: 'Sequelize'});
+        this.log = logger.child({module: 'Sequelize'});
 
         this.Sequelize = Sequelize; // Needed for export!
         this.sequelize = new Sequelize(

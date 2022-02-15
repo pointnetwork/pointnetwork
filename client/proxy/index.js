@@ -18,11 +18,12 @@ const utils = require('#utils');
 const {HttpNotFoundError} = require('../../core/exceptions');
 const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require('../storage/index.js');
 const config = require('config');
+const logger = require('../../core/log');
 
 class ZProxy {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'ZProxy'});
+        this.log = logger.child({module: 'ZProxy'});
         this.config = config.get('zproxy');
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;

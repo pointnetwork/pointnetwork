@@ -1,11 +1,12 @@
 const Model = require('./model');
 const path = require('path');
 const fs = require('fs');
+const logger = require('../core/log');
 
 class DB {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'DB'});
+        this.log = logger.child({module: 'DB'});
         this.config = config.get('db');
         Model.setCtx(ctx);
     }

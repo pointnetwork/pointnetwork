@@ -2,6 +2,7 @@
 The ZProxySocketController is for handling ZApp websocket connections via the ZProxy API port.
 See client/proxy/index.js for usage details of ZProxy and setup of the WebSocketServer instance.
 */
+const logger = require('../../core/log');
 
 const SUBSCRIPTION_EVENT_TYPES = {
     CONFIRMATION: 'subscription_confirmation',
@@ -18,7 +19,7 @@ const SUBSCRIPTION_REQUEST_TYPES = {
 class ZProxySocketController {
     constructor(_ctx, _ws, _wss, _hostname) {
         this.ctx = _ctx;
-        this.log = _ctx.log.child({module: 'ZProxySocketController'});
+        this.log = logger.child({module: 'ZProxySocketController'});
         this.ws = _ws;
         this.wss = _wss;
         this.hostname = _hostname;
@@ -70,7 +71,7 @@ class ZProxySocketController {
         });
 
         this.ws.on('error', err => {
-            this.ctx.log.error(err, 'Error from ZProxySocketController');
+            this.log.error(err, 'Error from ZProxySocketController');
         });
     }
 

@@ -1,7 +1,9 @@
+const logger = require('../../core/log');
+
 class DeployController {
     constructor(ctx, request) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'DeployController'});
+        this.log = logger.child({module: 'DeployController'});
         this.request = request;
     }
 

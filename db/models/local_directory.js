@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const {HttpNotFoundError} = require('../../core/exceptions');
+const logger = require('../../core/log');
 
 class LocalDirectory {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'LocalDirectory'});
+        this.log = logger.child({module: 'LocalDirectory'});
     }
 
     setLocalRoot(localRoot) {

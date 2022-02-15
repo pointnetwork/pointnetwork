@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const utils = require('#utils');
 const config = require('config');
+const logger = require('../../../core/log');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -9,7 +10,7 @@ let storage;
 class Deployer {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Deployer'});
+        this.log = logger.child({module: 'Deployer'});
         this.cache_uploaded = {}; // todo: unused? either remove or use
         storage = require('../../storage/index.js');
     }
@@ -41,7 +42,7 @@ class Deployer {
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
         if (identityIsRegistered && registeredOwner !== owner) {
-            this.ctx.log.error(
+            this.log.error(
                 {identity, registeredOwner, owner},
                 'Identity is already registered'
             );
@@ -53,7 +54,7 @@ class Deployer {
         if (!identityIsRegistered) {
             const publicKey = this.ctx.wallet.getNetworkAccountPublicKey();
 
-            this.ctx.log.info({
+            this.log.info({
                 identity,
                 owner,
                 publicKey,
@@ -70,7 +71,7 @@ class Deployer {
                 Buffer.from(publicKey, 'hex')
             );
 
-            this.ctx.log.info(
+            this.log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
             );
@@ -85,7 +86,7 @@ class Deployer {
                 try {
                     await this.deployContract(target, contractName, fileName, deployPath);
                 } catch (e) {
-                    this.ctx.log.error(
+                    this.log.error(
                         {
                             message: e.message,
                             stack: e.stack
