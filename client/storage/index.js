@@ -151,7 +151,7 @@ const uploadChunk = async data => {
         await chunk.save();
 
         const formData = new FormData();
-        formData.append('file', data);
+        formData.append('file', data, chunkId);
         formData.append(
             '__pn_integration_version_major',
             config.get('storage.arweave_experiment_version_major')

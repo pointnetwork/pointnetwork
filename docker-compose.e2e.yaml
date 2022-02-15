@@ -93,8 +93,9 @@ services:
         condition: service_healthy
     # volumes:
     #   - ../arweave-bundler/src:/app/src
+    #   - ../arweave-bundler/config:/app/config
     # entrypoint: npx
-    # command: nodemon --watch src/**/* --ext "ts" --exec "ts-node src/index.ts"
+    # command: nodemon --watch ./**/* --ext "ts,yaml" --exec "ts-node src/index.ts"
 
   cache:
     extends:
@@ -102,6 +103,20 @@ services:
       service: cache
     volumes:
       - bundler_data_e2e:/data
+
+  createbuckets:
+    image: minio/mc
+    container_name: point_bucket
+    depends_on:
+      cache:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add minio http://bundler-cache:9000 miniouser miniopass &&
+      /usr/bin/mc mb minio/testbucket &&
+      /usr/bin/mc policy set public minio/testbucket &&
+      exit 0;
+      "
 
 volumes:
   blockchain_data_e2e:
@@ -111,9 +126,3 @@ volumes:
   gateway_data_e2e:
   bundler_data_e2e:
   gateway_db_data_e2e:
-
-secrets:
-  minio_test_user:
-    file: ./resources/minio_test_user
-  minio_test_pass:
-    file: ./resources/minio_test_pass
