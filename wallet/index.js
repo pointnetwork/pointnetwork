@@ -86,11 +86,7 @@ class Wallet {
         try {
             this.#secretPhrase = require(path.join(this.keystorePath, 'key.json'), 'utf-8').phrase;
         } catch (e) {
-            if (e.code === 'ENOENT') {
-                this.#secretPhrase = undefined;
-            } else {
-                throw e;
-            }
+            this.#secretPhrase = undefined;
         }
         const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(this.#secretPhrase));
         const wallet = hdwallet.getWallet();

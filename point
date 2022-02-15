@@ -3,7 +3,6 @@
 const {Command} = require('commander');
 const {exec} = require('child_process');
 const path = require('path');
-const npid = require('npid');
 const program = new Command();
 const {existsSync, mkdirSync, readFileSync, promises} = require('fs');
 
@@ -231,31 +230,37 @@ if (program.compile) {
 
     log.info('Compiling contracts...');
 
-    const buildPath = path.resolve(__dirname, 'truffle', 'build', 'contracts');
-    if (!existsSync(buildPath)) {
-        mkdirSync(buildPath);
+    const buildDirPath = path.resolve(__dirname, 'truffle', 'build', 'contracts');
+    if (!existsSync(buildDirPath)) {
+        mkdirSync(buildDirPath);
     }
     const contractsPath = path.resolve(__dirname, 'truffle', 'contracts');
 
     Promise.all(CONTRACT_ADDRESSES.map(async name => {
-        const filename = `${name}.sol`;
-        const filepath = path.join(contractsPath, filename);
+        const sourceFileName = `${name}.sol`;
+        const buildPath = path.join(buildDirPath, `${name}.json`);
+        const filepath = path.join(contractsPath, sourceFileName);
+        if (existsSync(buildPath)) {
+            log.debug(`Contract build ${name}.json already exists, skipping`);
+            return;
+        }
         const content = await promises.readFile(filepath, 'utf8');
         const version = await Deployer.getPragmaVersion(content);
         const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
         const compilerProps = {
             language: 'Solidity',
-            sources: {[filename]: {content}},
+            sources: {[sourceFileName]: {content}},
             settings: {outputSelection: {'*': {'*': ['*']}}}
         };
         const artefact = solc.compile(JSON.stringify(compilerProps), {import: getImports});
 
         if (artefact) {
             await promises.writeFile(
-                path.join(buildPath, `${name}.json`),
-                JSON.stringify(JSON.parse(artefact).contracts[filename][name]),
+                path.join(buildPath),
+                JSON.stringify(JSON.parse(artefact).contracts[sourceFileName][name]),
                 'utf-8'
             );
+            log.debug(`Contract ${sourceFileName} successfully compiled`);
         } else {
             throw new Error('Compiled contract is empty');
         }
@@ -276,16 +281,6 @@ if (program.compile) {
 if (!program.go || program.args.length > 0) {
     program.help();
     ctx.die();
-}
-
-// ---------------------- PID ------------------------ //
-
-const pidFilePath = path.join(config.get('datadir'), 'point.pid');
-try {
-    npid.create(pidFilePath).removeOnExit();
-} catch (err) {
-    ctx.log.fatal('Failed to create PID file, is point already running? File path: ' + pidFilePath);
-    process.exit(1);
 }
 
 // ------------------ Gracefully exit ---------------- //

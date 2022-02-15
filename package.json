@@ -44,7 +44,6 @@
     "next": "^11.1.0",
     "node-forge": "^1.0.0",
     "node-match-path": "^0.6.3",
-    "npid": "^0.4.0",
     "pino": "^6.13.1",
     "pino-multi-stream": "6.0.0",
     "pino-pretty": "^7.5.1",
