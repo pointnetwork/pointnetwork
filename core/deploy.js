@@ -22,12 +22,6 @@ class Deploy {
         }
         this.log.info(`Deploy time: ${Date.now() - start} ms`);
     }
-
-    async migrate(site) {
-        if (site.length === 0) return this.ctx.die('error: invalid site');
-        const result = await new Console(this.ctx).cmd_api('migrate', 'site=' + site);
-        this.log.info(result);
-    }
 }
 
 module.exports = Deploy;

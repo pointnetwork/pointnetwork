@@ -1,16 +1,10 @@
 #!/usr/bin/env node
 // Load first dependencies
 const {Command} = require('commander');
-const {homedir} = require('os');
 const {exec} = require('child_process');
 const path = require('path');
-const fs = require('fs');
-const npid = require('npid');
-const mkdirp = require('mkdirp');
-const DB = require('./db');
 const program = new Command();
-const logger = require('./core/log');
-const Model = require('./db/model');
+const {existsSync, mkdirSync, readFileSync, promises} = require('fs');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -37,8 +31,7 @@ program
     .command('go', {isDefault: true})
     .description('start the node')
     .action(() => {program.go = true;});
-program.option('--config <file>', 'path to the configuration file');
-program.option('--datadir <path>', 'path to the data directory', path.join(homedir(), '.point/'));
+program.option('--datadir <path>', 'path to the data directory');
 program.option('-v, --verbose', 'force the logger to show debug level messages', false);
 program
     .command('attach')
@@ -52,6 +45,10 @@ program
     .command('migrate')
     .description('[dev mode] run migrations')
     .action(() => (program.migrate = true));
+program
+    .command('compile')
+    .description('compile contracts')
+    .action(() => (program.compile = true));
 program
     .command('migrate:undo')
     .description('[dev mode] undo migration')
@@ -75,29 +72,47 @@ program
     .option('--contracts', '(re)deploy contracts too', false)
     .option('--dev', 'deploy zapp to dev too', false);
 
-program
-    .command('migrate-contract <site>')
-    .description('migrates contracts genesis data')
-    .action(cmd => {
-        program.migrateContract = true;
-        program.site = cmd;
-    });
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
 // program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
 program.parse(process.argv);
 
-// todo: mix other param arguments into config, like here:
-// let argv;
-// let config = rc('kadence', options(program.datadir), argv);
-
-if (!program.config) {
-    program.config = path.join(program.datadir, 'config.json');
-}
-
 const ctx = {};
 
-ctx.datadir = ctx.datapath = program.datadir;
+if (program.datadir) {
+    process.env.DATADIR = program.datadir;
+}
+
+function getContractAddress(name) {
+    const filename = path.resolve(__dirname, 'truffle', 'build', 'contracts', `${name}.json`);
+
+    if (!existsSync(filename)) {
+        return;
+    }
+
+    const {networks} = require(filename);
+
+    for (const network in networks) {
+        const {address} = networks[network];
+        if (address && typeof address === 'string') {
+            return address;
+        }
+    }
+}
+
+// ------------------ Patch Config ------------ //
+
+if (process.env.MODE === 'e2e') {
+    process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
+    process.env.STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS = getContractAddress('StorageProviderRegistry');
+}
+
+const config = require('config');
+const logger = require('./core/log');
+const Model = require('./db/model');
+const Deployer = require('./client/zweb/deployer');
+const DB = require('./db');
+
 ctx.basepath = __dirname;
 
 // --------------- Dump Demo Configs ----------------- //
@@ -106,14 +121,6 @@ if (program.demo) {
     require('./resources/demo');
     return;
 }
-
-// ------------------- Init Config ----------------- //
-
-if (!fs.existsSync(ctx.datadir)) mkdirp.sync(ctx.datadir);
-
-ctx.config = require('./core/config');
-
-if (program.verbose) ctx.config.log.level = 'trace';
 
 // ------------------- Init Logger ----------------- //
 
@@ -129,16 +136,6 @@ if (program.attach) {
     const Console = require('./console');
     const console = new Console(ctx);
     console.start();
-    return;
-}
-
-// -------------------- Solidity Migrations --------------------- //
-
-if (program.migrateContract) {
-    if (program.site.length === 0) return ctx.die('error: missing site');
-    const Deploy = require('./core/deploy');
-    const deploy = new Deploy(ctx);
-    deploy.migrate(program.site);
     return;
 }
 
@@ -175,7 +172,8 @@ if (program.makemigration) {
 if (program.migrate) {
     const seq_cmd = program.migrate_undo ? 'db:migrate:undo' : 'db:migrate';
     exec(
-        `npx sequelize-cli ${seq_cmd} --config resources/sequelizeConfig.json --env ${process.env.DB_ENV || ctx.config.db.database}`,
+        `npx sequelize-cli ${seq_cmd} --url sqlite:${
+            path.join(config.get('datadir'), config.get('db.storage'))} --env ${config.get('db.env')}`,
         (error, stdout, stderr) => {
             if (error) {
                 return log.error(error, 'Migration error');
@@ -190,6 +188,7 @@ if (program.migrate) {
 }
 
 // ------------------ Remove Everything ------------ //
+
 if (program.debug_destroy_everything) {
     // todo: remove in prod, dangerous
     ctx.db = new DB(ctx);
@@ -197,20 +196,74 @@ if (program.debug_destroy_everything) {
     return;
 }
 
+// ------------------ Compile Contracts ------------ //
+
+const CONTRACT_ADDRESSES = ['Identity', 'Migrations', 'StorageProviderRegistry'];
+
+if (program.compile) {
+    const getImports = dependency => {
+        const dependencyNodeModulesPath = path.join(__dirname, 'node_modules/', dependency);
+        if (!existsSync(dependencyNodeModulesPath)) {
+            throw new Error(
+                `Could not find contract dependency "${dependency}", have you tried npm install?`
+            );
+        }
+        return {contents: readFileSync(dependencyNodeModulesPath, 'utf8')};
+    };
+
+    log.info('Compiling contracts...');
+
+    const buildDirPath = path.resolve(__dirname, 'truffle', 'build', 'contracts');
+    if (!existsSync(buildDirPath)) {
+        mkdirSync(buildDirPath);
+    }
+    const contractsPath = path.resolve(__dirname, 'truffle', 'contracts');
+
+    Promise.all(CONTRACT_ADDRESSES.map(async name => {
+        const sourceFileName = `${name}.sol`;
+        const buildPath = path.join(buildDirPath, `${name}.json`);
+        const filepath = path.join(contractsPath, sourceFileName);
+        if (existsSync(buildPath)) {
+            log.debug(`Contract build ${name}.json already exists, skipping`);
+            return;
+        }
+        const content = await promises.readFile(filepath, 'utf8');
+        const version = await Deployer.getPragmaVersion(content);
+        const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
+        const compilerProps = {
+            language: 'Solidity',
+            sources: {[sourceFileName]: {content}},
+            settings: {outputSelection: {'*': {'*': ['*']}}}
+        };
+        const artefact = solc.compile(JSON.stringify(compilerProps), {import: getImports});
+
+        if (artefact) {
+            await promises.writeFile(
+                path.join(buildPath),
+                JSON.stringify(JSON.parse(artefact).contracts[sourceFileName][name]),
+                'utf-8'
+            );
+            log.debug(`Contract ${sourceFileName} successfully compiled`);
+        } else {
+            throw new Error('Compiled contract is empty');
+        }
+    }))
+        .then(() => {
+            log.info('Contracts successfully compiled');
+            process.exit(0);
+        })
+        .catch(e => {
+            log.error(e, 'Failed to compile contracts');
+            process.exit(1);
+        });
+    return;
+}
+
 // ------------ Main Cycle After This Block ---------- //
+
 if (!program.go || program.args.length > 0) {
     program.help();
     ctx.die();
-}
-
-// ---------------------- PID ------------------------ //
-
-const pidFilePath = path.join(ctx.datadir, 'point.pid');
-try {
-    npid.create(pidFilePath).removeOnExit();
-} catch (err) {
-    ctx.log.fatal('Failed to create PID file, is point already running? File path: ' + pidFilePath);
-    process.exit(1);
 }
 
 // ------------------ Gracefully exit ---------------- //

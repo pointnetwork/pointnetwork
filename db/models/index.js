@@ -1,13 +1,12 @@
 'use strict';
-
+const path = require('path');
 const Sequelize = require('sequelize');
-// const env = process.env.NODE_ENV || 'development'; // todo
-// const config = require(__dirname + '/../config/config.json')[env];
+const config = require('config');
 
 class SequelizeFactory {
     init(ctx) {
         this.ctx = ctx;
-        this.config = this.ctx.config.db;
+        this.config = config.get('db');
         this.log = this.ctx.log.child({module: 'Sequelize'});
 
         this.Sequelize = Sequelize; // Needed for export!
@@ -18,7 +17,7 @@ class SequelizeFactory {
             {
                 dialect: this.config.dialect,
                 define: this.config.define,
-                storage: this.config.storage,
+                storage: path.join(config.get('datadir'), this.config.storage),
                 transactionType: this.config.transactionType,
                 retry: {max: this.config.retry.max},
                 logQueryParameters: true,

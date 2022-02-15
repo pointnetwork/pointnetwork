@@ -3,13 +3,14 @@ const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
 const DEFAULT_ENCODING = 'utf-8';
 const {getFile, uploadFile, DOWNLOAD_UPLOAD_STATUS} = require('../../client/storage/index.js');
+const config = require('config');
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
         super(ctx);
 
         this.req = req;
-        this.config = ctx.config.client.zproxy;
+        this.config = config.get('zproxy');
 
         this.payload = req.body;
     }

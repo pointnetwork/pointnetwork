@@ -1,7 +1,8 @@
 /* Wallet Helper Functions */
+const config = require('config');
 
 function useWalletTokenFromConfig() {
-    return `${ctx.config.client.wallet.id}-${ctx.config.client.wallet.passcode}`;
+    return `${config.get('wallet.id')}-${config.get('wallet.passcode')}`;
 }
 
 function initWallet(ctx, walletToken) {

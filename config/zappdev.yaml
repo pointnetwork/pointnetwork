@@ -1,0 +1,11 @@
+datadir: /data
+mode: zappdev
+log:
+  level: debug
+storage:
+  arweave_host: arlocal
+  arweave_protocol: http
+  arweave_port: 1984
+  use_arweave_bundler: false
+network:
+  web3: http://blockchain_node:7545

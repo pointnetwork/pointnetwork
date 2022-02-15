@@ -2,6 +2,7 @@ const TwigLib = require('twig');
 const _ = require('lodash');
 const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage/index.js');
+const config = require('config');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -12,7 +13,7 @@ class Renderer {
     constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'Renderer'});
-        this.config = ctx.config.client.zproxy;
+        this.config = config.get('zproxy');
         this.rootDirId = rootDirId;
         this.localDir = localDir;
     }

@@ -1,8 +1,8 @@
 # point-e2e is used for starting the e2e environment (for development and testing usage only)
-alias point-e2e="docker-compose --env-file .env.e2e -f docker-compose.e2e.yaml "
-alias point-zappdev="docker-compose --env-file .env.zappdev -f docker-compose.zappdev.yaml "
+alias point-e2e="docker compose -f docker-compose.e2e.yaml "
+alias point-zappdev="docker compose -f docker-compose.zappdev.yaml "
 
-# point-browser-docker-N starts a point browser instance for one of the locally saved e2e environment profiles.
+# point-browser-docker-N starts a point browser instance for one of the locally saved zappdev environment profiles.
 alias point-browser-docker-1="web-ext run --firefox-profile=storage_provider_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 alias point-browser-docker-2="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 alias point-browser-docker-3="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"

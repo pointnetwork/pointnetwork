@@ -17,12 +17,13 @@ const Console = require('../../console');
 const utils = require('#utils');
 const {HttpNotFoundError} = require('../../core/exceptions');
 const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require('../storage/index.js');
+const config = require('config');
 
 class ZProxy {
     constructor(ctx) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'ZProxy'});
-        this.config = ctx.config.client.zproxy;
+        this.config = config.get('zproxy');
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
         // for forwarding on api requests when required
@@ -259,7 +260,7 @@ class ZProxy {
                     parsedUrl
                 );
                 contentType = response._contentType;
-            } else if (process.env.MODE === 'e2e') {
+            } else if (config.get('mode') === 'e2e' || config.get('mode') === 'zappdev') {
                 // when MODE=e2e is set this site will be loaded directly from the local system - useful for Zapp developers :)
                 // If host contains `dev`, then we slice the zapp name out of the host to serve from local example folder
                 const zappName = host.includes('dev') ? `${host.split('dev')[0]}.z` : host;

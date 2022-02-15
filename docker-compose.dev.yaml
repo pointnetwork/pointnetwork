@@ -5,27 +5,26 @@ services:
     extends:
       file: docker-compose.yaml
       service: point_node
-    command: 'run start:docker:dev'
+    image: $POINT_DEV_IMAGE_NAME
     volumes:
-      - point_contracts_dev:/app/truffle/build/contracts
+      - point_contracts_dev:/app/truffle/build/contracts:rw
       - point_node_data_dev:/data
       - ./api:/app/api:ro
       - ./client:/app/client:ro
+      - ./config:/app/config:ro
       - ./console:/app/console:ro
       - ./core:/app/core:ro
       - ./db:/app/db:ro
       - ./example:/app/example:ro
       - ./internal:/app/internal:ro
       - ./network:/app/network:ro
-      - ./provider:/app/provider:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./tests:/app/tests:ro
-      - ./threads:/app/threads:ro
-      - ./truffle:/app/truffle:ro
       - ./wallet:/app/wallet:ro
       - ./package.json:/app/package.json:ro
       - ./point:/app/point:ro
+    environment:
+      NODE_CONFIG_ENV: dockerdev
 
 volumes:
   point_contracts_dev:

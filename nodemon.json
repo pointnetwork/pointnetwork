@@ -1,0 +1,5 @@
+{
+  "watch": [".", "point"],
+  "ext": "js,yaml",
+  "exec": "NODE_ENV=development ./point"
+}
