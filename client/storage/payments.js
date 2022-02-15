@@ -1,5 +1,6 @@
 const axios = require('axios');
-const {token_address} = require('../../resources/defaultConfig.json');
+const config = require('config');
+const token_address = config.get('payments.token_address');
 
 const raidenBaseUrl = 'http://localhost:5001/api/v1';
 

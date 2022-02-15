@@ -1,0 +1,4 @@
+db:
+  env: development
+log:
+  level: debug

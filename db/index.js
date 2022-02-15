@@ -6,7 +6,7 @@ class DB {
     constructor(ctx) {
         this.ctx = ctx;
         this.log = ctx.log.child({module: 'DB'});
-        this.config = ctx.config.db;
+        this.config = config.get('db');
         Model.setCtx(ctx);
     }
 
@@ -26,9 +26,8 @@ class DB {
 
         // Clear storage data files
         const dirs = [
-            ctx.config.client.storage.cache_path,
-            ctx.config.service_provider.storage.cache_path,
-            ctx.config.client.zproxy.cache_path
+            path.join(config.get('datadir'), config.get('deployer.cache_path')),
+            path.join(config.get('datadir'), config.get('storage.cache_path'))
         ];
         for (const dir of dirs) {
             if (typeof dir !== 'string' || dir.length < 5) {

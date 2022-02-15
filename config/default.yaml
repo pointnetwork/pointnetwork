@@ -1,0 +1,57 @@
+datadir: ~/.point
+mode: ""
+api:
+  address: localhost
+  port: 2468
+db:
+  define:
+    underscored: true
+    timestamps: true
+    createdAt: created_at
+    updatedAt: updated_at
+  dialect: sqlite
+  storage: pointdb.sqlite
+  transactionType: DEFERRED
+  retry:
+    max: 30
+  env: production
+log:
+  enabled: true
+  level: info
+  sendLogsTo: ""
+console:
+  prompt: "> "
+deployer:
+  cache_path: deployer_cache
+storage:
+  chunk_size_bytes: 262144
+  cache_path: client_storage_cache
+  files_path: files
+  arweave_experiment_version_major: 1
+  arweave_experiment_version_minor: 8
+  arweave_bundler_url: https://arweave-bundler.herokuapp.com
+  arweave_gateway_url: https://arweave.net/graphql
+  concurrent_download_delay: 100
+  redkey_encryption_bits: 1024 # TODO: not used
+zproxy:
+  port: 8666
+  host: 127.0.0.1
+  sanitize_html: false
+  redirect_to_https: true
+wallet:
+  keystore_path: keystore
+  solana_main_endpoint: https://still-billowing-smoke.solana-mainnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
+  solana_dev_endpoint:  https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
+  solana_dev_standard_endpoint:  https://api.devnet.solana.com/
+  solana_test_endpoint: https://still-billowing-smoke.solana-testnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
+  id: 58225300-cf00-494a-be15-8a15e42d3758 # TODO: remove
+  passcode: BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9 # TODO: remove
+network:
+  web3: "http://ynet.point.space:44444"
+  web3_call_retry_limit: 4
+  identity_contract_address: "0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b"
+  storage_provider_registry_contract_address: "0xDB9F3c999224e7E8935C1c7c235704Cd935FD6D7"
+  hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
+  simulation_delay: 10 # TODO: not used
+payments:
+  token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
