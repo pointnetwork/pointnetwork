@@ -38,6 +38,6 @@ jobs:
 
     - name: Run Lint
       run: npm run lint
-    - name: Run solhint
+    - name: Run Solhint
       run: npm run lint:sol
 
