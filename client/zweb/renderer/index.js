@@ -303,7 +303,7 @@ class Renderer {
                 const publicKey = this.renderer.ctx.wallet.getNetworkAccountPublicKey();
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
-                this.renderer.log.info(
+                log.info(
                     {
                         identity,
                         owner,
@@ -323,7 +323,7 @@ class Renderer {
                     Buffer.from(publicKey, 'hex')
                 );
 
-                this.renderer.log.info(
+                log.info(
                     {identity, owner, publicKey: publicKey.toString('hex')},
                     'Successfully registered new identity'
                 );
