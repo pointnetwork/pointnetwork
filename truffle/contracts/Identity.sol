@@ -9,13 +9,13 @@ contract Identity {
         bytes32 part2;
     }
 
-    mapping(string => address) identityToOwner;
-    mapping(address => string) ownerToIdentity;
-    mapping(string => mapping(string => string)) ikv;
+    mapping(string => address) public identityToOwner;
+    mapping(address => string) public ownerToIdentity;
+    mapping(string => mapping(string => string)) public ikv;
     mapping(string => string[]) public ikvList;
     // At the same time this mapping is used to see if the identity is registered at all
-    mapping(string => string) lowercaseToCanonicalIdentities;
-    mapping(string => PubKey64) identityToCommPublicKey;
+    mapping(string => string) public lowercaseToCanonicalIdentities;
+    mapping(string => PubKey64) public identityToCommPublicKey;
     string[] public identityList;
 
     bool public migrationApplied = false;
@@ -23,7 +23,12 @@ contract Identity {
     uint public constant MAX_HANDLE_LENGTH = 16;
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
-    event IdentityOwnershipTransferred(string indexed handle, address indexed oldOwner, address indexed newOwner, uint256 date);
+    event IdentityOwnershipTransferred(
+        string indexed handle, 
+        address indexed oldOwner, 
+        address indexed newOwner, 
+        uint256 date
+    );
     event IKVSet(string identity, string key, string value);
 
     modifier onlyIdentityOwner(string memory identity) {

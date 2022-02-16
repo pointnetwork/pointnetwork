@@ -4,12 +4,16 @@ module.exports = {
         es2021: true,
         mocha: true
     },
+    parser: '@babel/eslint-parser',
     extends: [
         // 'plugin:@typescript-eslint/recommended',
         // 'plugin:import/recommended'``
     ],
     // 'parser': '@typescript-eslint/parser',
-    parserOptions: {ecmaVersion: 13},
+    parserOptions: {
+        ecmaVersion: 13,
+        requireConfigFile: false
+    },
     plugins: [
         // '@typescript-eslint',
         // 'import',
