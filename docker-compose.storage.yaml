@@ -26,9 +26,11 @@ services:
     hostname: gateway
     volumes:
       - gateway_data:/app
-    links:
-      - gateway_db
-      - arweave
+    depends_on:
+      gateway_db:
+        condition: service_healthy
+      arweave:
+        condition: service_healthy
     ports:
       - '3000:3000'
     environment:
@@ -40,10 +42,15 @@ services:
 
   gateway_db:
     image: postgres:12
-    container_name: point_storage_gateway_db
+    container_name: gateway_db
     hostname: gateway_db
     volumes:
       - gateway_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arweave"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_USER: arweave
       POSTGRES_PASSWORD: arweave
