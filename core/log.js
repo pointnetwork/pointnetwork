@@ -7,11 +7,11 @@ const ecsFormat = require('@elastic/ecs-pino-format');
 const config = require('config');
 
 const datadir = config.get('datadir');
-const {level, enabled, sendLogsTo} = config.get('log');
+const {level, enabled, sendLogs, sendLogsTo} = config.get('log');
 const options = {enabled, formatters: ecsFormat(), level: pino.levels.values[level]};
 const streams = [];
 
-if (sendLogsTo) {
+if (sendLogs && sendLogsTo) {
     const [address, port] = sendLogsTo.split('://').pop().split(':');
     streams.push(new udpTransport({address, port}));
 }

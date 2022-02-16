@@ -9,6 +9,8 @@ const {getJSON} = require('../client/storage/index.js');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
+const logger = require('../core/log');
+const log = logger.child({module: 'Web3Bridge'});
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -40,12 +42,11 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
 class Web3Bridge {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Web3Bridge'});
         this.connectionString = config.get('network.web3');
         this.address = this.ctx.wallet.getNetworkAccount();
         this.web3_call_retry_limit = config.get('network.web3_call_retry_limit');
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
-        this.log.debug('Successfully created a web3 instance');
+        log.debug('Successfully created a web3 instance');
         this.ctx.web3bridge = this;
         this.start();
     }
@@ -123,13 +124,13 @@ class Web3Bridge {
             try {
                 account = this.web3.eth.defaultAccount;
                 gasPrice = await this.web3.eth.getGasPrice();
-                this.log.debug(
+                log.debug(
                     {gasLimit, gasPrice, account},
                     'Prepared to send tx to contract method'
                 );
                 // if (!gasLimit) {
                 gasLimit = await method.estimateGas({from: account, value: amountInWei});
-                this.log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
+                log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
                 // }
                 requestStart = Date.now();
                 return await method.send({
@@ -139,7 +140,7 @@ class Web3Bridge {
                     value: amountInWei
                 });
             } catch (error) {
-                this.log.error(
+                log.error(
                     {
                         method: method._method.name,
                         account,
@@ -153,7 +154,7 @@ class Web3Bridge {
                     'Web3 Contract Send error:'
                 );
                 if (isRetryableError(error) && this.web3_call_retry_limit - ++attempt > 0) {
-                    this.log.debug({attempt}, 'Retrying Web3 Contract Send');
+                    log.debug({attempt}, 'Retrying Web3 Contract Send');
                     await sleep(attempt * 1000);
                     continue;
                 }
@@ -175,7 +176,7 @@ class Web3Bridge {
     async callContract(target, contractName, method, params) {
         // todo: multiple arguments, but check existing usage // huh?
         let attempt = 0;
-        this.log.debug({target, contractName, method, params}, 'Contract Call');
+        log.debug({target, contractName, method, params}, 'Contract Call');
         while (true) {
             try {
                 const contract = await this.loadWebsiteContract(target, contractName);
@@ -186,7 +187,7 @@ class Web3Bridge {
                 const result = await contract.methods[method](...params).call();
                 return result;
             } catch (error) {
-                this.log.error(
+                log.error(
                     {
                         contractName,
                         method,
@@ -198,7 +199,7 @@ class Web3Bridge {
                     'Web3 Contract Call error:'
                 );
                 if (isRetryableError(error) && this.web3_call_retry_limit - ++attempt > 0) {
-                    this.log.debug({attempt}, 'Retrying Web3 Contract Call');
+                    log.debug({attempt}, 'Retrying Web3 Contract Call');
                     await sleep(attempt * 1000);
                     continue;
                 }
@@ -278,7 +279,7 @@ class Web3Bridge {
             const method = identityContract.methods.getIdentityByOwner(owner);
             return await method.call();
         } catch (e) {
-            this.log.error({owner}, 'Error: identityByOwner');
+            log.error({owner}, 'Error: identityByOwner');
             throw e;
         }
     }
@@ -289,7 +290,7 @@ class Web3Bridge {
             const method = identityContract.methods.getOwnerByIdentity(identity);
             return await method.call();
         } catch (e) {
-            this.log.error({identity}, 'Error: ownerByIdentity');
+            log.error({identity}, 'Error: ownerByIdentity');
             throw e;
         }
     }
@@ -302,7 +303,7 @@ class Web3Bridge {
             return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
             // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
         } catch (e) {
-            this.log.error('Error: commPublicKeyByIdentity', {identity});
+            log.error('Error: commPublicKeyByIdentity', {identity});
         }
     }
 
@@ -329,7 +330,7 @@ class Web3Bridge {
             const result = await contract.methods.ikvGet(identity, key).call();
             return result;
         } catch (e) {
-            this.log.error({error: e, stack: e.stack, identity, key}, 'getKeyValue error');
+            log.error({error: e, stack: e.stack, identity, key}, 'getKeyValue error');
             throw e;
         }
     }
@@ -339,10 +340,10 @@ class Web3Bridge {
             identity = identity.replace('.z', ''); // todo: rtrim instead
             const contract = await this.loadIdentityContract();
             const method = contract.methods.ikvPut(identity, key, value);
-            this.log.debug({identity, key, value}, 'Ready to put key value');
+            log.debug({identity, key, value}, 'Ready to put key value');
             await this.web3send(method);
         } catch (e) {
-            this.log.error({error: e, stack: e.stack, identity, key, value}, 'putKeyValue error');
+            log.error({error: e, stack: e.stack, identity, key, value}, 'putKeyValue error');
             throw e;
         }
     }
@@ -365,11 +366,11 @@ class Web3Bridge {
             );
 
             const result = await this.web3send(method);
-            this.log.info(result, 'Identity registration result');
+            log.info(result, 'Identity registration result');
 
             return result;
         } catch (e) {
-            this.log.error(
+            log.error(
                 {error: e, stack: e.stack, identity, address, commPublicKey},
                 'Identity registration error'
             );
@@ -406,7 +407,7 @@ class Web3Bridge {
             gasPrice = await this.web3.eth.getGasPrice();
             return await method.send({from: account, gasPrice, gas: 2000000, value: 0.000001e18});
         } catch (e) {
-            this.log.error(
+            log.error(
                 {
                     method,
                     gasPrice,
@@ -428,7 +429,7 @@ class Web3Bridge {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getCheapestProvider().call();
         } catch (e) {
-            this.log.error({error: e, stack: e.stack}, 'getCheapestStorageProvider error');
+            log.error({error: e, stack: e.stack}, 'getCheapestStorageProvider error');
             throw e;
         }
     }
@@ -437,7 +438,7 @@ class Web3Bridge {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
         } catch (e) {
-            this.log.error({error: e, stack: e.stack}, 'getAllStorageProviders error');
+            log.error({error: e, stack: e.stack}, 'getAllStorageProviders error');
             throw e;
         }
     }
@@ -446,7 +447,7 @@ class Web3Bridge {
             const contract = await this.loadStorageProviderRegistryContract();
             return contract.methods.getProvider(address).call();
         } catch (e) {
-            this.log.error({error: e, stack: e.stack, address}, 'getSingleProvider error');
+            log.error({error: e, stack: e.stack, address}, 'getSingleProvider error');
             throw e;
         }
     }

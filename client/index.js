@@ -5,11 +5,10 @@ const {init: initStorage} = require('./storage/index.js');
 class Client {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Client'});
     }
 
     async start() {
-        await initStorage(this.ctx);
+        await initStorage();
 
         this.proxy = new ZProxy(this.ctx);
         this.proxy.start();

@@ -2,6 +2,8 @@ const WebSocket = require('ws');
 const Wallet = require('../../wallet/index');
 const DeployerProgress = require('../../client/zweb/deployer/progress');
 const Console = require('../../console');
+const logger = require('../../core/log');
+const log = logger.child({module: 'NodeSocketController'});
 
 /*
 The NodeSocketController is for handling internal node websocket connections via the internal node api port and is currently used by the Fastify Websocket connection (see ws_routes.js).
@@ -56,7 +58,7 @@ class NodeSocketController {
         });
 
         this.ws.on('error', err => {
-            this.ctx.log.error(err, 'Error from NodeSocketController');
+            log.error(err, 'Error from NodeSocketController');
         });
     }
 
