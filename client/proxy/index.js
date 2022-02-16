@@ -260,7 +260,7 @@ class ZProxy {
                     parsedUrl
                 );
                 contentType = response._contentType;
-            } else if (config.get('mode') === 'e2e' || config.get('mode') === 'zappdev') {
+            } else if (config.get('mode') === 'e2e') {
                 // when MODE=e2e is set this site will be loaded directly from the local system - useful for Zapp developers :)
                 // If host contains `dev`, then we slice the zapp name out of the host to serve from local example folder
                 const zappName = host.includes('dev') ? `${host.split('dev')[0]}.z` : host;
