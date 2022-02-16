@@ -8,6 +8,7 @@ const bip39 = require('bip39');
 const config = require('config');
 const {makeSurePathExistsAsync} = require('#utils');
 
+
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 async function getTransactionsByAccount(
     eth,
@@ -71,6 +72,7 @@ class Wallet {
     #publicKey;
     #address;
     #secretPhrase;
+    #arewaveKey;
 
     constructor(ctx) {
         this.ctx = ctx;
@@ -111,6 +113,12 @@ class Wallet {
             'confirmed'
         );
 
+        try{
+            this.#arewaveKey = require(path.join(this.keystorePath, 'arweave.json'), 'utf-8');
+        }catch(e){
+            this.#arewaveKey = {};
+        }
+
         this.initSolanaWallet();
 
         // todo: other setup?
@@ -134,6 +142,10 @@ class Wallet {
 
     get web3() {
         return this.ctx.network.web3;
+    }
+
+    get arweaveKey(){
+        return this.#arewaveKey;
     }
 
     // get transactionEvents() {

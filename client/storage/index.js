@@ -61,6 +61,7 @@ const filesDir = path.join(config.get('datadir'), config.get('storage.files_path
 
 let logger;
 let arweave;
+let arweaveKey;
 const init = async ctx => {
     logger = ctx.log.child({module: 'Storage'});
     await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
@@ -69,6 +70,16 @@ const init = async ctx => {
         protocol: config.get('storage.arweave_protocol'),
         host: config.get('storage.arweave_host')
     });
+
+    arweaveKey = ctx.wallet.arweaveKey;
+    if (process.env.MODE === 'zappdev'){
+        //mint some tokens for arlocal
+        const address = await arweave.wallets.jwkToAddress(arweaveKey);
+        const host = config.get('storage.arweave_host');
+        const port = config.get('storage.arweave_port');
+        const protocol = config.get('storage.arweave_protocol');
+        await axios.get(`${protocol}://${host}:${port}/mint/${address}/100000000000000000000`);
+    }
 
 };
 
@@ -102,8 +113,12 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 
             let data;
             let buf;
+            
+            //TODO: Remove the if part (maintain else) when this bug of arlocal was fixed
+            //https://github.com/textury/arlocal/issues/63
             if (process.env.MODE === 'zappdev'){
-                data = (await axios.get('http://' + config.arweave_host + ':' + config.arweave_port + '/tx/' +  txid + '/data')).data;
+                data = (await axios.get('http://' +  config.get('storage.arweave_host') + 
+                    ':' + config.get('storage.arweave_port') + '/tx/' +  txid + '/data')).data;
                 buf = Buffer.from(data, 'base64');
             }else{
                 data = await arweave.transactions.getData(txid, {decode: true});
@@ -141,7 +156,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 const signTx = async (data, tags) => {
     // Real 'AR' mode
     
-    const transaction = await arweave.createTransaction({data}, config.arweave_key);
+    const transaction = await arweave.createTransaction({data}, arweaveKey);
 
     for(const k in tags){
         const v = tags[k];
@@ -149,7 +164,7 @@ const signTx = async (data, tags) => {
     }
 
     // Sign
-    await arweave.transactions.sign(transaction, config.arweave_key);
+    await arweave.transactions.sign(transaction, arweaveKey);
 
     return transaction;
 };
