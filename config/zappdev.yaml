@@ -7,5 +7,6 @@ storage:
   arweave_protocol: http
   arweave_port: 1984
   use_arweave_bundler: false
+  use_arlocal: true
 network:
   web3: http://blockchain_node:7545

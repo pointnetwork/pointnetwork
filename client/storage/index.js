@@ -65,19 +65,21 @@ let arweaveKey;
 const init = async ctx => {
     logger = ctx.log.child({module: 'Storage'});
     await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
+
+    const host = config.get('storage.arweave_host');
+    const port = config.get('storage.arweave_port');
+    const protocol = config.get('storage.arweave_protocol');
+
     arweave =  Arweave.init({
-        port: config.get('storage.arweave_port'),
-        protocol: config.get('storage.arweave_protocol'),
-        host: config.get('storage.arweave_host')
+        port: port,
+        protocol: protocol,
+        host: host
     });
 
     arweaveKey = ctx.wallet.arweaveKey;
-    if (process.env.MODE === 'zappdev'){
+    if (config.get('storage.use_arlocal')){
         //mint some tokens for arlocal
         const address = await arweave.wallets.jwkToAddress(arweaveKey);
-        const host = config.get('storage.arweave_host');
-        const port = config.get('storage.arweave_port');
-        const protocol = config.get('storage.arweave_protocol');
         await axios.get(`${protocol}://${host}:${port}/mint/${address}/100000000000000000000`);
     }
 
@@ -116,7 +118,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             
             //TODO: Remove the if part (maintain else) when this bug of arlocal was fixed
             //https://github.com/textury/arlocal/issues/63
-            if (process.env.MODE === 'zappdev'){
+            if (config.get('storage.use_arlocal')){
                 data = (await axios.get('http://' +  config.get('storage.arweave_host') + 
                     ':' + config.get('storage.arweave_port') + '/tx/' +  txid + '/data')).data;
                 buf = Buffer.from(data, 'base64');
