@@ -92,19 +92,18 @@ services:
       MINIO_ACCESS_KEY: miniouser
       MINIO_SECRET_KEY: miniopass
 
-  createbuckets:
+  buckets:
     image: minio/mc
     container_name: point_bucket
     depends_on:
       cache:
         condition: service_healthy
+    environment:
+      MC_HOST_minio: http://miniouser:miniopass@bundler-cache:9000
     entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc config host add minio http://bundler-cache:9000 miniouser miniopass &&
-      /usr/bin/mc mb minio/testbucket &&
-      /usr/bin/mc policy set public minio/testbucket &&
-      exit 0;
-      "
+      /bin/bash -c "
+      mc ls minio/testbucket > /dev/null || (
+      mc mb minio/testbucket && mc policy set public minio/testbucket && exit 0)"
 
 volumes:
   arweave_data:

@@ -104,19 +104,10 @@ services:
     volumes:
       - bundler_data_e2e:/data
 
-  createbuckets:
-    image: minio/mc
-    container_name: point_bucket
-    depends_on:
-      cache:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc config host add minio http://bundler-cache:9000 miniouser miniopass &&
-      /usr/bin/mc mb minio/testbucket &&
-      /usr/bin/mc policy set public minio/testbucket &&
-      exit 0;
-      "
+  buckets:
+    extends:
+      file: docker-compose.storage.yaml
+      service: buckets
 
 volumes:
   blockchain_data_e2e:
