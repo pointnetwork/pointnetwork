@@ -3,6 +3,8 @@ const _ = require('lodash');
 const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage/index.js');
 const config = require('config');
+const logger = require('../../../core/log');
+const log = logger.child({module: 'Renderer'});
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -12,7 +14,6 @@ class Renderer {
 
     constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Renderer'});
         this.config = config.get('zproxy');
         this.rootDirId = rootDirId;
         this.localDir = localDir;
@@ -61,10 +62,10 @@ class Renderer {
             storage_get_by_ikv: async function(identity, key) {
                 try {
                     const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
-                    this.log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
+                    log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
                     return await getFile(fileKey);
                 } catch (e) {
-                    this.log.error({identity, key, ...e}, 'storage_get_by_ikv error');
+                    log.error({identity, key, ...e}, 'storage_get_by_ikv error');
                     return 'Invalid Content';
                 }
             },
@@ -209,7 +210,7 @@ class Renderer {
             },
             identity_check_availability: async function (identity) {
                 const owner = await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
-                this.log.debug({identity, owner}, 'identity_check_availability');
+                log.debug({identity, owner}, 'identity_check_availability');
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
@@ -302,7 +303,7 @@ class Renderer {
                 const publicKey = this.renderer.ctx.wallet.getNetworkAccountPublicKey();
                 const owner = this.renderer.ctx.wallet.getNetworkAccount();
 
-                this.renderer.ctx.log.info(
+                log.info(
                     {
                         identity,
                         owner,
@@ -322,7 +323,7 @@ class Renderer {
                     Buffer.from(publicKey, 'hex')
                 );
 
-                this.renderer.ctx.log.info(
+                log.info(
                     {identity, owner, publicKey: publicKey.toString('hex')},
                     'Successfully registered new identity'
                 );

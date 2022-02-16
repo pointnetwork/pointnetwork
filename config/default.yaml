@@ -18,6 +18,7 @@ db:
 log:
   enabled: true
   level: info
+  sendLogs: true
   sendLogsTo: ""
 console:
   prompt: "> "

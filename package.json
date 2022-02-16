@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "1.0.34",
+  "version": "0.1.35",
   "description": "Point Network;",
   "main": "point",
   "engines": {

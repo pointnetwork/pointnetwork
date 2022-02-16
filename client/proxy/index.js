@@ -18,11 +18,12 @@ const utils = require('#utils');
 const {HttpNotFoundError} = require('../../core/exceptions');
 const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require('../storage/index.js');
 const config = require('config');
+const logger = require('../../core/log');
+const log = logger.child({module: 'ZProxy'});
 
 class ZProxy {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'ZProxy'});
         this.config = config.get('zproxy');
         this.port = parseInt(this.config.port); // todo: put default if null/void
         this.host = this.config.host;
@@ -34,7 +35,7 @@ class ZProxy {
         const server = this.httpx();
         this.wsServer(server);
         server.listen(this.port, () =>
-            this.log.info({host: this.host, port: this.port}, 'ZProxy server is started')
+            log.info({host: this.host, port: this.port}, 'ZProxy server is started')
         );
     }
 
@@ -49,16 +50,16 @@ class ZProxy {
                 new ZProxySocketController(this.ctx, socket, wss, parsedUrl.host);
 
                 socket.on('close', () => {
-                    this.log.debug('WS Client disconnected');
+                    log.debug('WS Client disconnected');
                 });
 
                 socket.on('error', error => {
-                    this.log.error(error, 'Error from WebSocket');
+                    log.error(error, 'Error from WebSocket');
                 });
             });
 
             wss.on('error', error => {
-                this.log.error(error, 'Error from WebSocket');
+                log.error(error, 'Error from WebSocket');
             });
 
             server.http.on('upgrade', (request, socket, head) => {
@@ -69,7 +70,7 @@ class ZProxy {
 
             return wss;
         } catch (error) {
-            this.log.error(error, 'ZProxy.wsServer error');
+            log.error(error, 'ZProxy.wsServer error');
             throw error;
         }
     }
@@ -82,9 +83,9 @@ class ZProxy {
                 const ctx = tls.createSecureContext(certData);
 
                 if (!ctx) {
-                    this.log.debug({servername}, `Not found SSL certificate for host`);
+                    log.debug({servername}, `Not found SSL certificate for host`);
                 } else {
-                    this.log.debug({servername}, `SSL certificate has been found and assigned`);
+                    log.debug({servername}, `SSL certificate has been found and assigned`);
                 }
 
                 if (typeof cb !== 'function') {
@@ -109,7 +110,7 @@ class ZProxy {
                 } else if (32 < byte && byte < 127) {
                     protocol = 'http';
                 } else {
-                    this.log.error({byte}, 'Access Runtime Error! Protocol: not http, not https!');
+                    log.error({byte}, 'Access Runtime Error! Protocol: not http, not https!');
                     protocol = 'error'; // todo: !
                 }
 
@@ -141,7 +142,7 @@ class ZProxy {
         this.doubleServer.http = http.createServer(
             this.config.redirect_to_https ? redirectToHttpsHandler : this.request.bind(this)
         );
-        this.doubleServer.http.on('error', err => this.log.error(err, 'Double Server HTTP error'));
+        this.doubleServer.http.on('error', err => log.error(err, 'Double Server HTTP error'));
         this.doubleServer.http.on('connect', (req, cltSocket, head) => {
             // connect to an origin server
             const srvSocket = net.connect(this.port, 'localhost', () => {
@@ -157,7 +158,7 @@ class ZProxy {
         });
         this.doubleServer.https = https.createServer(credentials, this.request.bind(this));
         this.doubleServer.https.on('error', err =>
-            this.log.error(err, 'Double Server HTTPS error')
+            log.error(err, 'Double Server HTTPS error')
         );
         return this.doubleServer;
     }
@@ -173,7 +174,7 @@ class ZProxy {
         const headers = {'Content-Type': 'text/html;charset=UTF-8'};
         response.writeHead(500, headers);
         response.write(this._errorMsgHtml(err, 500)); // better code
-        this.log.error({err, stack: err.stack}, `ZProxy 500 Error`);
+        log.error({err, stack: err.stack}, `ZProxy 500 Error`);
         response.end();
     }
 
@@ -217,7 +218,7 @@ class ZProxy {
                     if (ext === 'zhtml') contentType = 'text/plain';
 
                     try {
-                        this.log.debug({hash}, 'Reading file from storage');
+                        log.debug({hash}, 'Reading file from storage');
                         rendered = await getFile(hashWithoutExt);
                     } catch (e) {
                         return this.abortError(response, e);
@@ -299,7 +300,7 @@ class ZProxy {
             response.end();
         } catch (error) {
             // throw 'ZProxy Error: '+e; // todo: remove
-            this.log.error(
+            log.error(
                 {host, error: error.message, stack: error.stack},
                 'ZProxy.request Error'
             );
@@ -525,7 +526,7 @@ class ZProxy {
                         ); // todo: replace with is_valid_id
                     }
 
-                    this.log.debug({host, zroute_id}, 'Requesting ZRoute id for domain');
+                    log.debug({host, zroute_id}, 'Requesting ZRoute id for domain');
                     const routes = await getJSON(zroute_id); // todo: check result
                     if (!routes)
                         return this.abort404(
@@ -552,7 +553,7 @@ class ZProxy {
                             rootDirId,
                             template_filename
                         );
-                        this.log.debug(
+                        log.debug(
                             {template_filename, template_file_id},
                             'ZProxy.processRequest getFileIdByPath result'
                         );
@@ -589,7 +590,7 @@ class ZProxy {
                         // to redirect the user back to the site home page.
                         if (request.headers.referer === undefined) {
                             const redirect = '/';
-                            this.log.debug(
+                            log.debug(
                                 {redirect},
                                 'Page reload detected from unknown referer. Redirecting to'
                             );
@@ -656,7 +657,7 @@ class ZProxy {
                             delete postData[k];
                         } else if (_.startsWith(k, 'storage[')) {
                             const uploadedId = await uploadFile(v);
-                            this.log.debug({uploaded_id}, 'Found storage[x], uploading file');
+                            log.debug({uploaded_id}, 'Found storage[x], uploading file');
 
                             delete postData[k];
                             postData[k.replace('storage[', '').replace(']', '')] = uploadedId;
@@ -669,7 +670,7 @@ class ZProxy {
 
                     await this.ctx.keyvalue.propagate(host, newKey, data);
 
-                    this.log.debug({host, redirect}, 'Redirecting after keyValueAppend');
+                    log.debug({host, redirect}, 'Redirecting after keyValueAppend');
                     const redirectHtml =
                         '<html><head><meta http-equiv="refresh" content="0;url=' +
                         redirect +
@@ -753,7 +754,7 @@ class ZProxy {
                         reject(e);
                     }
 
-                    this.log.debug({host, redirect}, 'Redirecting after contractSend');
+                    log.debug({host, redirect}, 'Redirecting after contractSend');
 
                     const redirectHtml =
                         '<html><head><meta http-equiv="refresh" content="0;url=' +

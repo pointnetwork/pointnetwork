@@ -3,7 +3,7 @@ version: '3.9'
 services:
   arweave:
     image: lucaarweave/arweave-node:0.0.4
-    container_name: point_storage
+    container_name: storage
     hostname: arweave-node
     healthcheck:
       test: |
@@ -22,13 +22,15 @@ services:
 
   gateway:
     image: lucaarweave/arweave-gateway:0.0.1
-    container_name: point_storage_gateway
+    container_name: gateway
     hostname: gateway
     volumes:
       - gateway_data:/app
-    links:
-      - gateway_db
-      - arweave
+    depends_on:
+      gateway_db:
+        condition: service_healthy
+      arweave:
+        condition: service_healthy
     ports:
       - '3000:3000'
     environment:
@@ -40,10 +42,15 @@ services:
 
   gateway_db:
     image: postgres:12
-    container_name: point_storage_gateway_db
+    container_name: gateway_db
     hostname: gateway_db
     volumes:
       - gateway_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arweave"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_USER: arweave
       POSTGRES_PASSWORD: arweave
@@ -52,11 +59,13 @@ services:
 
   bundler:
     image: pointnetwork/arweave-bundler:v1.0.1
-    container_name: point_bundler
+    container_name: bundler
     hostname: bundler
     depends_on:
-      createbuckets:
+      buckets:
         condition: service_completed_successfully
+      arweave:
+        condition: service_healthy
     volumes:
       - ./resources/arweave-test-key.json:/app/keystore/key.json
     environment:
@@ -74,7 +83,7 @@ services:
 
   cache:
     image: minio/minio:latest
-    container_name: point_storage_cache
+    container_name: cache
     hostname: bundler-cache
     command: server /data --console-address ':9001'
     healthcheck:
@@ -92,19 +101,18 @@ services:
       MINIO_ACCESS_KEY: miniouser
       MINIO_SECRET_KEY: miniopass
 
-  createbuckets:
+  buckets:
     image: minio/mc
-    container_name: point_bucket
+    container_name: buckets
     depends_on:
       cache:
         condition: service_healthy
+    environment:
+      MC_HOST_minio: http://miniouser:miniopass@bundler-cache:9000
     entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc config host add minio http://bundler-cache:9000 miniouser miniopass &&
-      /usr/bin/mc mb minio/testbucket &&
-      /usr/bin/mc policy set public minio/testbucket &&
-      exit 0;
-      "
+      /bin/bash -c "
+      mc ls minio/testbucket > /dev/null || (
+      mc mb minio/testbucket && mc policy set public minio/testbucket && exit 0)"
 
   arlocal:
     image: textury/arlocal

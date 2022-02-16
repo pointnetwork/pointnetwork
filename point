@@ -124,8 +124,7 @@ if (program.demo) {
 
 // ------------------- Init Logger ----------------- //
 
-ctx.log = logger.child({module: 'point'}); // TODO: account
-const log = ctx.log.child({module: 'point'});
+const log = logger.child({module: 'point'});
 
 ctx.exit = code => (log.close(), process.exit(code));
 ctx.die = err => (log.fatal(err), ctx.exit(1));
@@ -318,12 +317,12 @@ sigs.forEach(function (sig) {
 });
 
 process.on('uncaughtException', err => {
-    ctx.log.error({message: err.message, stack: err.stack}, 'Error: uncaught exception');
+    log.error({message: err.message, stack: err.stack}, 'Error: uncaught exception');
 });
 
 process.on('unhandledRejection', (err, second) => {
-    ctx.log.debug(err, second);
-    ctx.log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
+    log.debug(err, second);
+    log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
 });
 
 Model.setCtx(ctx);

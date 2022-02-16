@@ -6,7 +6,6 @@ const Wallet = require('../wallet');
 class Core {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Core'});
     }
 
     async start() {

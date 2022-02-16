@@ -1,7 +1,9 @@
+const logger = require('../core/log');
+const log = logger.child({module: 'KeyValue'});
+
 class KeyValue {
     constructor(ctx, network) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'KeyValue'});
         this.network = network;
         this.data = {};
     }
@@ -9,17 +11,17 @@ class KeyValue {
     async start() {}
 
     update(identity, key, value) {
-        this.log.debug('KeyValue locally updated:', key, '=', value);
+        log.debug('KeyValue locally updated:', key, '=', value);
         this.data[identity + '/' + key] = value;
     }
 
     async get(identity, key, recursive = true, alwaysUpdate = false) {
-        this.log.debug('getting keyvalue', identity + '/' + key);
+        log.debug('getting keyvalue', identity + '/' + key);
         if (identity + '/' + key in this.data && !alwaysUpdate) {
             return this.data[identity + '/' + key];
         } else if (recursive) {
             const result = await this.ask(identity, key);
-            this.log.debug('ask for key ' + key + ' returned ', result);
+            log.debug('ask for key ' + key + ' returned ', result);
             if (result) {
                 this.data[identity + '/' + key] = result;
                 return result;
@@ -32,9 +34,9 @@ class KeyValue {
     }
 
     async ask(identity, key) {
-        this.log.debug('asking keyvalue', identity + '/' + key);
+        log.debug('asking keyvalue', identity + '/' + key);
         const result = await this.ctx.web3bridge.getKeyValue(identity, key);
-        this.log.debug('result:', result);
+        log.debug('result:', result);
         return result;
     }
 
@@ -53,7 +55,7 @@ class KeyValue {
     }
 
     async propagate(identity, key, value) {
-        this.log.debug('propagating keyvalue', identity + '/' + key, '=', value);
+        log.debug('propagating keyvalue', identity + '/' + key, '=', value);
         await this.update(identity, key, value);
         return await this.ctx.web3bridge.putKeyValue(identity, key, value);
     }

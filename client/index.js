@@ -5,7 +5,6 @@ const {init: initStorage} = require('./storage/index.js');
 class Client {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'Client'});
     }
 
     async start() {

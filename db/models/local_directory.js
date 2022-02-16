@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const {HttpNotFoundError} = require('../../core/exceptions');
+const logger = require('../../core/log');
+const log = logger.child({module: 'LocalDirectory'});
 
 class LocalDirectory {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = ctx.log.child({module: 'LocalDirectory'});
     }
 
     setLocalRoot(localRoot) {
@@ -26,7 +27,7 @@ class LocalDirectory {
             throw Error('Directory traversal is not allowed');
         }
 
-        this.log.debug({filePath, fullPath}, 'LocalDirectory.readFileByPath');
+        log.debug({filePath, fullPath}, 'LocalDirectory.readFileByPath');
 
         if (!fs.existsSync(fullPath))
             throw new HttpNotFoundError('This route or file is not found');
