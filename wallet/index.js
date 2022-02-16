@@ -8,6 +8,7 @@ const bip39 = require('bip39');
 const config = require('config');
 const {makeSurePathExistsAsync} = require('#utils');
 const logger = require('../core/log');
+const log = logger.child({module: 'Wallet'});
 
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 async function getTransactionsByAccount(
@@ -75,7 +76,6 @@ class Wallet {
 
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = logger.child({module: 'Wallet'});
         this.keystorePath = path.join(config.get('datadir'), config.get('wallet.keystore_path'));
         // Events
         // transactionEventEmitter emits the TRANSACTION_EVENT type
@@ -215,7 +215,7 @@ class Wallet {
                     this.getNetworkAccount(),
                     null,
                     null,
-                    this.log
+                    log
                 );
             default:
                 throw Error('Unsupported currency: ' + code);
@@ -226,7 +226,7 @@ class Wallet {
         return this.#address;
     }
     getArweaveAccount() {
-        this.log.debug(this.ctx, 'getArweaveAccount context');
+        log.debug(this.ctx, 'getArweaveAccount context');
         return 0;
     }
     getArweaveBalanceInAR() {
@@ -299,7 +299,7 @@ class Wallet {
                 break;
             }
             case 'NEON':
-                this.log.debug(
+                log.debug(
                     {
                         from: this.getNetworkAccount(),
                         to: recipient,

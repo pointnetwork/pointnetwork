@@ -1,11 +1,11 @@
 const Console = require('../console');
 const path = require('path');
 const logger = require('../core/log');
+const log = logger.child({module: 'Deploy'});
 
 class Deploy {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = logger.child({module: 'Deploy'});
     }
 
     async deploy(deploy_path, deploy_contracts = false, dev = false) {
@@ -19,9 +19,9 @@ class Deploy {
             'dev=' + (dev ? 'true' : 'false')
         );
         if (result.error) {
-            this.log.error(result, 'Deploy error');
+            log.error(result, 'Deploy error');
         }
-        this.log.info(`Deploy time: ${Date.now() - start} ms`);
+        log.info(`Deploy time: ${Date.now() - start} ms`);
     }
 }
 

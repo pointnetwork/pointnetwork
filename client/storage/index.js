@@ -16,6 +16,7 @@ const FormData = require('form-data');
 const axios = require('axios');
 const config = require('config');
 const logger = require('../../core/log');
+const log = logger.child({module: 'Storage'});
 
 // TODO: for some reason docker fails to resolve module if I move it to another file
 // TODO: possibly split this file into several ones after migrating to modules
@@ -60,7 +61,6 @@ const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay'
 const cacheDir = path.join(config.get('datadir'), config.get('storage.cache_path'));
 const filesDir = path.join(config.get('datadir'), config.get('storage.files_path'));
 
-const log = logger.child({module: 'Storage'});
 const init = async () => {
     await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
 };
@@ -109,7 +109,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             if (hash !== chunk.id) {
                 log.warn(
                     {chunkId, hash, query, buf: buf.toString()},
-                    'Chunk id and data do not match, chunk id'
+                    'Chunk id and data do not match'
                 );
                 continue;
             }

@@ -3,6 +3,7 @@ const fs = require('fs');
 const utils = require('#utils');
 const config = require('config');
 const logger = require('../../../core/log');
+const log = logger.child({module: 'Deployer'});
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -10,7 +11,6 @@ let storage;
 class Deployer {
     constructor(ctx) {
         this.ctx = ctx;
-        this.log = logger.child({module: 'Deployer'});
         this.cache_uploaded = {}; // todo: unused? either remove or use
         storage = require('../../storage/index.js');
     }
@@ -42,7 +42,7 @@ class Deployer {
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
         if (identityIsRegistered && registeredOwner !== owner) {
-            this.log.error(
+            log.error(
                 {identity, registeredOwner, owner},
                 'Identity is already registered'
             );
@@ -54,7 +54,7 @@ class Deployer {
         if (!identityIsRegistered) {
             const publicKey = this.ctx.wallet.getNetworkAccountPublicKey();
 
-            this.log.info({
+            log.info({
                 identity,
                 owner,
                 publicKey,
@@ -71,7 +71,7 @@ class Deployer {
                 Buffer.from(publicKey, 'hex')
             );
 
-            this.log.info(
+            log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
             );
@@ -86,7 +86,7 @@ class Deployer {
                 try {
                     await this.deployContract(target, contractName, fileName, deployPath);
                 } catch (e) {
-                    this.log.error(
+                    log.error(
                         {
                             message: e.message,
                             stack: e.stack
@@ -99,7 +99,7 @@ class Deployer {
         }
 
         // Upload public - root dir
-        this.log.debug('Uploading root directory...');
+        log.debug('Uploading root directory...');
         const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
         await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
 
@@ -108,7 +108,7 @@ class Deployer {
         const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         const routes = JSON.parse(routesFile);
 
-        this.log.debug({routes}, 'Uploading route file...');
+        log.debug({routes}, 'Uploading route file...');
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
         const routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
         this.ctx.client.deployerProgress.update(
@@ -120,7 +120,7 @@ class Deployer {
 
         await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts);
 
-        this.log.info('Deploy finished');
+        log.info('Deploy finished');
     }
 
     static async getPragmaVersion(source) {
@@ -184,7 +184,7 @@ class Deployer {
             let msg = '';
             for (const e of compiledSources.errors) {
                 if (e.severity === 'warning') {
-                    this.log.warn(e, 'Contract compilation warning');
+                    log.warn(e, 'Contract compilation warning');
                     continue;
                 }
                 found = true;
@@ -217,7 +217,7 @@ class Deployer {
         });
         const address = tx.options && tx.options.address;
 
-        this.log.debug({contractName, address}, 'Deployed Contract Instance');
+        log.debug({contractName, address}, 'Deployed Contract Instance');
         this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
         const artifactsJSON = JSON.stringify(artifacts);
@@ -239,14 +239,14 @@ class Deployer {
 
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`);
 
-        this.log.debug(
+        log.debug(
             `Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`
         );
     }
 
     async updateZDNS(host, id) {
         const target = host.replace('.z', '');
-        this.log.info({target, id}, 'Updating ZDNS');
+        log.info({target, id}, 'Updating ZDNS');
         await this.ctx.web3bridge.putZRecord(target, '0x' + id);
     }
 

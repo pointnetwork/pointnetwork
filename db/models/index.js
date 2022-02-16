@@ -3,12 +3,12 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const config = require('config');
 const logger = require('../../core/log');
+const log = logger.child({module: 'Sequelize'});
 
 class SequelizeFactory {
     init(ctx) {
         this.ctx = ctx;
         this.config = config.get('db');
-        this.log = logger.child({module: 'Sequelize'});
 
         this.Sequelize = Sequelize; // Needed for export!
         this.sequelize = new Sequelize(
@@ -22,7 +22,7 @@ class SequelizeFactory {
                 transactionType: this.config.transactionType,
                 retry: {max: this.config.retry.max},
                 logQueryParameters: true,
-                logging: this.log.debug.bind(this.log),
+                logging: log.debug.bind(log),
                 ctx
             }
         ); // todo: validate config
