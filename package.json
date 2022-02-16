@@ -81,7 +81,7 @@
     "start": "./point",
     "start:docker": "npm run compile && npm run migrate && npm start",
     "start:docker:e2e": "npm run migrate && MODE=e2e npm start",
-    "start:docker:zappdev": "npm run migrate && MODE=zappdev npm run start",
+    "start:docker:zappdev": "npm run migrate && MODE=zappdev npm run start:dev",
     "start:dev": "nodemon",
     "migrate": "./point migrate",
     "compile": "./point compile",
