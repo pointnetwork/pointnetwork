@@ -10,7 +10,6 @@ const {makeSurePathExistsAsync} = require('#utils');
 const logger = require('../core/log');
 const log = logger.child({module: 'Wallet'});
 
-
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 async function getTransactionsByAccount(
     eth,

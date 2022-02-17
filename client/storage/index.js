@@ -79,7 +79,7 @@ const init = async (ctx) => {
     arweaveKey = ctx.wallet.arweaveKey;
     if (config.get('storage.use_arlocal')){
         //mint some tokens for arlocal
-        if (arweaveKey != undefined){
+        if (arweaveKey !== undefined){
             const address = await arweave.wallets.jwkToAddress(arweaveKey);
             await axios.get(`${protocol}://${host}:${port}/mint/${address}/100000000000000000000`);
         }
@@ -245,7 +245,6 @@ const uploadChunk = async data => {
         else
             response = await uploadArweave(data, tags);
             
-        
         //TODO: check status from bundler
         if (response.data.status !== 'ok') {
             throw new Error(`Chunk ${chunkId} uploading failed: arweave endpoint error: ${
