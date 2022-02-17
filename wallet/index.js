@@ -117,7 +117,7 @@ class Wallet {
         try{
             this.#arewaveKey = require(path.join(this.keystorePath, 'arweave.json'), 'utf-8');
         }catch(e){
-            this.#arewaveKey = {};
+            this.#arewaveKey = undefined;
         }
 
         this.initSolanaWallet();

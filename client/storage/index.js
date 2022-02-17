@@ -79,8 +79,10 @@ const init = async (ctx) => {
     arweaveKey = ctx.wallet.arweaveKey;
     if (config.get('storage.use_arlocal')){
         //mint some tokens for arlocal
-        const address = await arweave.wallets.jwkToAddress(arweaveKey);
-        await axios.get(`${protocol}://${host}:${port}/mint/${address}/100000000000000000000`);
+        if (arweaveKey != undefined){
+            const address = await arweave.wallets.jwkToAddress(arweaveKey);
+            await axios.get(`${protocol}://${host}:${port}/mint/${address}/100000000000000000000`);
+        }
     }
 
 };
