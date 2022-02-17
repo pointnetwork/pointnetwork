@@ -30,7 +30,7 @@ storage:
   files_path: files
   arweave_experiment_version_major: 1
   arweave_experiment_version_minor: 8
-  arweave_bundler_url: https://arweave-bundler.herokuapp.com
+  arweave_bundler_url: https://test-arweave-bundler.herokuapp.com
   arweave_gateway_url: https://arweave.net/graphql
   concurrent_download_delay: 100
   redkey_encryption_bits: 1024 # TODO: not used
