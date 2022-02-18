@@ -1,5 +1,5 @@
 {
-  "watch": ["src"],
+  "watch": ["src, config"],
   "ext": "tx,js,yaml",
   "exec": "NODE_ENV=development ts-node src/index.ts"
 }
