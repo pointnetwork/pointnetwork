@@ -99,7 +99,7 @@ module.exports = {
         files: [
             'scripts/**/*.js',
             'truffle/scripts/*.js',
-            'cli'
+            'point'
         ],
         rules: {'no-console': 'off'}
     }]
