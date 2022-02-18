@@ -90,8 +90,8 @@
     "start:docker:e2e": "npm run migrate && npm run build && MODE=e2e npm start",
     "start:dev": "nodemon",
     "build": "tsc",
-    "migrate": "./cli migrate",
-    "compile": "./cli compile",
+    "migrate": "./point migrate",
+    "compile": "./points compile",
     "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
     "watch:sites": "ls -d example/*/ | xargs -I {} echo \"SITE={} npm run watch:site\" | sed \"s/.*/\\\\'&\\\\'/\" | xargs npx concurrently",
     "watch:sites:and:start": "npm run watch:sites -- 'npm run start' -n \"Pointnetwork,$(ls -d example/*/ | tr '\n' ',')\"",
@@ -104,8 +104,8 @@
     "znet:local": "docker-compose -f docker-compose.znet.local.yaml",
     "volume:backup": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu tar -czvf /backup/$VOLUME-$(date \"+%Y-%m-%dT%H:%M:%S\").tar.gz /data",
     "volume:restore": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu bash -c \"cd /data && tar -xvf /backup/$FILE --strip 1\"",
-    "fix": "eslint --ext .js --fix src/ && eslint --ext .js --fix truffle/ && eslint --fix cli",
-    "lint": "eslint --ext .js src/ && eslint --ext .js truffle/ && eslint cli",
+    "fix": "eslint --ext .js --fix src/ && eslint --ext .js --fix truffle/ && eslint --fix point",
+    "lint": "eslint --ext .js src/ && eslint --ext .js truffle/ && eslint point",
     "lint:sol": "solhint 'example/**/contracts/*.sol' 'truffle/contracts/*.sol'"
   },
   "imports": {
