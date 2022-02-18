@@ -1,2 +1,2 @@
-build/contracts
+build/*
 contracts/Hello.sol
