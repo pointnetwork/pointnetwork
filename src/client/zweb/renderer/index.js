@@ -1,9 +1,9 @@
 const TwigLib = require('twig');
 const _ = require('lodash');
-const {encryptData, decryptData} = require('../../encryptIdentityUtils.js');
-const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage/index.js');
+const {encryptData, decryptData} = require('../../encryptIdentityUtils');
+const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
 const config = require('config');
-const logger = require('../../../core/log.js');
+const logger = require('../../../core/log');
 const log = logger.child({module: 'Renderer'});
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing

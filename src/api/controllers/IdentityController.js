@@ -1,4 +1,4 @@
-const PointSDKController = require('./PointSDKController.js');
+const PointSDKController = require('./PointSDKController');
 
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {

@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const utils = require('#utils');
 const config = require('config');
-const logger = require('../../../core/log.js');
+const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
 
 // TODO: direct import cause fails in some docker scripts

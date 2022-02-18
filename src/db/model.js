@@ -1,7 +1,7 @@
 const sequelize_lib = require('sequelize');
 const _ = require('lodash');
-const SequelizeFactory = require('./models/index.js');
-const logger = require('../core/log.js');
+const SequelizeFactory = require('./models');
+const logger = require('../core/log');
 
 const addUnderscoreIdFields = {};
 

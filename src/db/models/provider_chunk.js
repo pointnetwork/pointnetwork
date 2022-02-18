@@ -1,4 +1,4 @@
-const Model = require('../model.js');
+const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');

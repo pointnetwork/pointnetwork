@@ -1,8 +1,8 @@
-const PointSDKController = require('./PointSDKController.js');
-const File = require('../../db/models/file.js');
-const Chunk = require('../../db/models/chunk.js');
+const PointSDKController = require('./PointSDKController');
+const File = require('../../db/models/file');
+const Chunk = require('../../db/models/chunk');
 const DEFAULT_ENCODING = 'utf-8';
-const {getFile, uploadFile, DOWNLOAD_UPLOAD_STATUS} = require('../../client/storage/index.js');
+const {getFile, uploadFile, DOWNLOAD_UPLOAD_STATUS} = require('../../client/storage');
 const config = require('config');
 
 class StorageController extends PointSDKController {

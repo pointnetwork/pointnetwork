@@ -1,4 +1,4 @@
-const Model = require('../model.js');
+const Model = require('../model');
 
 class Identity extends Model {
     constructor(...args) {

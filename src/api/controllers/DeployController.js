@@ -1,4 +1,4 @@
-const logger = require('../../core/log.js');
+const logger = require('../../core/log');
 const log = logger.child({module: 'DeployController'});
 
 class DeployController {
@@ -16,7 +16,7 @@ class DeployController {
         if (deploy_path.length === 0) throw new Error('error: deploy path not specified');
 
         try {
-            const Deployer = require('../../client/zweb/deployer/index.js');
+            const Deployer = require('../../client/zweb/deployer');
             this.deployer = new Deployer(this.ctx);
             await this.deployer.deploy(deploy_path, deploy_contracts, dev);
             return {status: 'success'};

@@ -1,4 +1,4 @@
-const Model = require('../model.js');
+const Model = require('../model');
 const Sequelize = require('sequelize');
 
 class Provider extends Model {

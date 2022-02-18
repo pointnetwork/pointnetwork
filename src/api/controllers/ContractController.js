@@ -1,4 +1,4 @@
-const PointSDKController = require('./PointSDKController.js');
+const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
 
 class ContractController extends PointSDKController {

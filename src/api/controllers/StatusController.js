@@ -1,7 +1,7 @@
-const File = require('../../db/models/file.js');
-const api_routes = require('../api_routes.js');
-const ws_routes = require('../ws_routes.js');
-const PointSDKController = require('./PointSDKController.js');
+const File = require('../../db/models/file');
+const api_routes = require('../api_routes');
+const ws_routes = require('../ws_routes');
+const PointSDKController = require('./PointSDKController');
 
 class StatusController extends PointSDKController {
     constructor(ctx) {

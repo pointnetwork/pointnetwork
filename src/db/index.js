@@ -1,7 +1,7 @@
-const Model = require('./model.js');
+const Model = require('./model');
 const path = require('path');
 const fs = require('fs');
-const logger = require('../core/log.js');
+const logger = require('../core/log');
 const log = logger.child({module: 'DB'});
 
 class DB {

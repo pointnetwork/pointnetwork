@@ -170,6 +170,6 @@ const utils = {
     }
 };
 
-utils.merkle = require('./merkle-utils.js');
+utils.merkle = require('./merkle-utils');
 
 module.exports = utils;

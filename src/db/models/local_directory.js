@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const {HttpNotFoundError} = require('../../core/exceptions.js');
-const logger = require('../../core/log.js');
+const {HttpNotFoundError} = require('../../core/exceptions');
+const logger = require('../../core/log');
 const log = logger.child({module: 'LocalDirectory'});
 
 class LocalDirectory {

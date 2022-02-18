@@ -1,6 +1,6 @@
-const Model = require('../model.js');
+const Model = require('../model');
 const crypto = require('crypto');
-const Provider = require('./provider.js');
+const Provider = require('./provider');
 const Sequelize = require('sequelize');
 const config = require('config');
 

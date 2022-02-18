@@ -2,7 +2,7 @@
 const path = require('path');
 const Sequelize = require('sequelize');
 const config = require('config');
-const logger = require('../../core/log.js');
+const logger = require('../../core/log');
 const log = logger.child({module: 'Sequelize'});
 
 class SequelizeFactory {

@@ -1,5 +1,5 @@
-const File = require('../../db/models/file.js');
-const Chunk = require('../../db/models/chunk.js');
+const File = require('../../db/models/file');
+const Chunk = require('../../db/models/chunk');
 const {request, gql} = require('graphql-request');
 const {
     hashFn,
@@ -15,7 +15,7 @@ const path = require('path');
 const FormData = require('form-data');
 const axios = require('axios');
 const config = require('config');
-const logger = require('../../core/log.js');
+const logger = require('../../core/log');
 const log = logger.child({module: 'Storage'});
 
 // TODO: for some reason docker fails to resolve module if I move it to another file

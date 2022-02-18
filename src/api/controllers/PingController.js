@@ -1,4 +1,4 @@
-const PointSDKController = require('./PointSDKController.js');
+const PointSDKController = require('./PointSDKController');
 
 class PingController extends PointSDKController {
     constructor(ctx) {

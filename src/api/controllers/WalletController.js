@@ -1,4 +1,4 @@
-const PointSDKController = require('./PointSDKController.js');
+const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
 
 let web3;

@@ -1,4 +1,4 @@
-const Model = require('../model.js');
+const Model = require('../model');
 const Sequelize = require('sequelize');
 
 // We are using one status for both upload and download, because, since file's id is its

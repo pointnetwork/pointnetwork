@@ -1,5 +1,5 @@
-const Web3Bridge = require('./web3bridge.js');
-const KeyValue = require('./keyvalue.js');
+const Web3Bridge = require('./web3bridge');
+const KeyValue = require('./keyvalue');
 const config = require('config');
 
 class Network {

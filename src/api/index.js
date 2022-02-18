@@ -1,7 +1,7 @@
 const fastify = require('fastify');
 const fastifyWs = require('fastify-websocket');
 const config = require('config');
-const logger = require('../core/log.js');
+const logger = require('../core/log');
 const log = logger.child({module: 'ApiServer'});
 
 class ApiServer {
@@ -58,7 +58,7 @@ class ApiServer {
         /*
          * Example: ['GET', '/api/ping', 'PingController@ping'],
          */
-        const api_routes = require('./api_routes.js');
+        const api_routes = require('./api_routes');
 
         for (const apiRoute of api_routes) {
             const [controllerName, actionName] = apiRoute[2].split('@');
@@ -85,7 +85,7 @@ class ApiServer {
         /*
          * Example: ['GET', '/ws/node', 'NodeSocket'],
          */
-        const ws_routes = require('./ws_routes.js');
+        const ws_routes = require('./ws_routes');
 
         for (const wsRoute of ws_routes) {
             const socketName = wsRoute[2];

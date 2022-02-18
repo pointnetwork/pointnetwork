@@ -2,7 +2,7 @@
 import 'bootstrap/dist/css/bootstrap.css';
 import Head from 'next/head';
 import '../styles/globals.css';
-import NavBar from '../components/navbar.js';
+import NavBar from '../components/navbar';
 
 function App({Component, pageProps}) {
     return (

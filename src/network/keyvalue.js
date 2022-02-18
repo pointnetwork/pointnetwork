@@ -1,4 +1,4 @@
-const logger = require('../core/log.js');
+const logger = require('../core/log');
 const log = logger.child({module: 'KeyValue'});
 
 class KeyValue {

@@ -5,11 +5,11 @@ const utils = require('#utils');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
-const {getJSON} = require('../client/storage/index.js');
+const {getJSON} = require('../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
-const logger = require('../core/log.js');
+const logger = require('../core/log');
 const log = logger.child({module: 'Web3Bridge'});
 
 function isRetryableError({message}) {

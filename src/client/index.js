@@ -1,6 +1,6 @@
-const DeployerProgress = require('./zweb/deployer/progress.js');
-const ZProxy = require('./proxy/index.js');
-const {init: initStorage} = require('./storage/index.js');
+const DeployerProgress = require('./zweb/deployer/progress');
+const ZProxy = require('./proxy');
+const {init: initStorage} = require('./storage');
 
 class Client {
     constructor(ctx) {

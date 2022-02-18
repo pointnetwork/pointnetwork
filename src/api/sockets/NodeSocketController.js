@@ -1,8 +1,8 @@
 const WebSocket = require('ws');
-const Wallet = require('../../wallet/index.js');
-const DeployerProgress = require('../../client/zweb/deployer/progress.js');
-const Console = require('../../console/index.js');
-const logger = require('../../core/log.js');
+const Wallet = require('../../wallet/index');
+const DeployerProgress = require('../../client/zweb/deployer/progress');
+const Console = require('../../console');
+const logger = require('../../core/log');
 const log = logger.child({module: 'NodeSocketController'});
 
 /*

@@ -9,7 +9,7 @@ When you start up a node, for example Node 1, then the Point Network Web Utility
 
 The application is structured as follows:
 
-The root of the Next JS web application lives in the **api/web**  folder. Its configured to live in this folder via the server registration in the [api/index.js](..dex.js) file line: `server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })`.
+The root of the Next JS web application lives in the **api/web**  folder. Its configured to live in this folder via the server registration in the [api/index.js](./api/index.js) file line: `server.register(require('fastify-nextjs'), { dev: true, dir: './api/web' })`.
 
 Everything that follows is under the folder **api/web**:
 

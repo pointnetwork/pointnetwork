@@ -7,7 +7,7 @@ const {hdkey} = require('ethereumjs-wallet');
 const bip39 = require('bip39');
 const config = require('config');
 const {makeSurePathExistsAsync} = require('#utils');
-const logger = require('../core/log.js');
+const logger = require('../core/log');
 const log = logger.child({module: 'Wallet'});
 
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478

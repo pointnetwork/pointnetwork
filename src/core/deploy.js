@@ -1,6 +1,6 @@
-const Console = require('../console/index.js');
+const Console = require('../console');
 const path = require('path');
-const logger = require('./log.js');
+const logger = require('./log');
 const log = logger.child({module: 'Deploy'});
 
 class Deploy {
