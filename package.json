@@ -91,7 +91,7 @@
     "start:dev": "nodemon",
     "build": "tsc",
     "migrate": "./point migrate",
-    "compile": "./points compile",
+    "compile": "./point compile",
     "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
     "watch:sites": "ls -d example/*/ | xargs -I {} echo \"SITE={} npm run watch:site\" | sed \"s/.*/\\\\'&\\\\'/\" | xargs npx concurrently",
     "watch:sites:and:start": "npm run watch:sites -- 'npm run start' -n \"Pointnetwork,$(ls -d example/*/ | tr '\n' ',')\"",
