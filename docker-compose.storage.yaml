@@ -115,15 +115,6 @@ services:
       mc ls minio/testbucket > /dev/null || (
       mc mb minio/testbucket && mc policy set public minio/testbucket && exit 0)"
 
-  arlocal:
-    image: textury/arlocal
-    container_name: arlocal
-    command: node bin/index.js --persist=true
-    ports:
-      - '1984:1984'
-    volumes:
-      - arlocal_data:/home/node/:rw
-
 volumes:
   arweave_data:
   gateway_data:

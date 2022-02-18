@@ -62,12 +62,8 @@ services:
       - shared_contracts_e2e:/app/truffle/build/contracts
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
-    ports:
-      - '8666:8666'
-      - '2468:2468'
     environment:
       NODE_CONFIG_ENV: e2e
-
   arweave:
     extends:
       file: docker-compose.storage.yaml

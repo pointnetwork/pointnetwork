@@ -2,60 +2,45 @@ version: '3.9'
 
 services:
   blockchain_node:
-    image: trufflesuite/ganache-cli:v6.12.2
-    container_name: point_blockchain
-    hostname: blockchain_node
-    healthcheck:
-      test: |
-        wget -qO- http://localhost:7545 \
-          --header='Content-Type: application/json' \
-          --header="Accept: application/json" \
-          --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}'
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
-    ports:
-      - '7545:7545'
+    extends:
+        file: docker-compose.e2e.yaml
+        service: blockchain_node
     volumes:
       - blockchain_data_zappdev:/data:rw
-    environment:
-      - DOCKER=true
     command: |
       -v -p 7545 -i 256 --keepAliveTimeout 20000 --db /data \
         --account 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e,0x56bc75e2d63100000 --account 0x22a316b515a68d4851087571bd5ff051f5ec3f13b28997fb80a8de055052514e,0x56bc75e2d63100000
 
   contract_deployer:
-    image: pointnetwork/pointnetwork_deployer:dev
-    container_name: point_deployer
-    depends_on:
-      blockchain_node:
-        condition: service_healthy
-    deploy:
-      restart_policy:
-        condition: 'no'
+    extends:
+          file: docker-compose.e2e.yaml
+          service: contract_deployer
     volumes:
       - shared_contracts_zappdev:/build:rw
-      - ./truffle/contracts:/truffle/contracts:ro
-      - ./truffle/migrations:/truffle/migrations:ro
-      - ./truffle/truffle-config.js:/truffle/truffle-config.js:ro
-    entrypoint: /truffle/run.js
-    environment:
-      BLOCKCHAIN_HOST: blockchain_node
-      BLOCKCHAIN_PORT: 7545
-      BLOCKCHAIN_NETWORK_ID: 256
-      DEPLOYER_COMPILER_VERSION: native
-      DEPLOYER_BUILD_PATH: /build
-
+    
   point_node:
     extends:
-      file: docker-compose.dev.yaml
+      file: docker-compose.base.yaml
       service: point_node
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
     command: 'run start:docker:zappdev'
     volumes:
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./config:/app/config:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
+      - ./network:/app/network:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
       - point_node_data_zappdev:/data
       - shared_contracts_zappdev:/app/truffle/build/contracts
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
@@ -70,7 +55,7 @@ services:
   
   website_visitor:
     extends:
-      file: docker-compose.dev.yaml
+      file: docker-compose.base.yaml
       service: point_node
     container_name: website_visitor
     depends_on:
@@ -78,6 +63,20 @@ services:
         condition: service_completed_successfully
     command: 'run start:docker:zappdev'
     volumes:
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./config:/app/config:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
+      - ./network:/app/network:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
       - website_visitor_data_zappdev:/data
       - shared_contracts_zappdev:/app/truffle/build/contracts
       - ./resources/blockchain-test-key2.json:/data/keystore/key.json
@@ -91,16 +90,17 @@ services:
       DATADIR: /data
 
   arlocal:
-    extends:
-      file: docker-compose.storage.yaml
-      service: arlocal
+    image: textury/arlocal
+    container_name: arlocal
+    command: node bin/index.js --persist=true
+    ports:
+      - '1984:1984'
     volumes:
-      - arlocal_data_zappdev:/home/node/:rw
-
+      - arlocal_data:/home/node/:rw
 
 volumes:
   blockchain_data_zappdev:
   shared_contracts_zappdev:
   point_node_data_zappdev:
   website_visitor_data_zappdev:
-  arlocal_data_zappdev:
+  arlocal_data:

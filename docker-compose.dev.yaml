@@ -4,7 +4,7 @@ services:
   point_node:
     image: ${POINT_DEV_IMAGE_NAME:-pointnetwork/pointnetwork_node:$POINT_NODE_VERSION}
     extends:
-      file: docker-compose.base.yaml
+      file: docker-compose.yaml
       service: point_node
     volumes:
       - point_contracts_dev:/app/truffle/build/contracts:rw
