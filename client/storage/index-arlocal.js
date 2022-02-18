@@ -12,7 +12,6 @@ const {
 const Arweave = require('arweave');
 const {promises: fs} = require('fs');
 const path = require('path');
-const FormData = require('form-data');
 const axios = require('axios');
 const config = require('config');
 const logger = require('../../core/log');
@@ -62,6 +61,9 @@ const cacheDir = path.join(config.get('datadir'), config.get('storage.cache_path
 const filesDir = path.join(config.get('datadir'), config.get('storage.files_path'));
 
 let arweave;
+// load the arweave key for arlocal
+const keystorePath = path.join(config.get('datadir'), config.get('wallet.keystore_path'));
+const arweaveKey = require(path.join(keystorePath, 'arweave.json'), 'utf-8');
 
 const init = async () => {
     await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
@@ -75,10 +77,6 @@ const init = async () => {
         protocol: protocol,
         host: host
     });
-
-    // load the arweave key for arlocal
-    const keystorePath = path.join(config.get('datadir'), config.get('wallet.keystore_path'));
-    const arweaveKey = require(path.join(keystorePath, 'arweave.json'), 'utf-8');
 
     // mint tokens on arlocal
     if (arweaveKey !== undefined){
