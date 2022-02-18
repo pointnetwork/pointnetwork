@@ -61,15 +61,31 @@ const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay'
 const cacheDir = path.join(config.get('datadir'), config.get('storage.cache_path'));
 const filesDir = path.join(config.get('datadir'), config.get('storage.files_path'));
 
-const init = async () => {
+let arweave;
+let arweaveKey;
+const init = async (ctx) => {
     await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
-};
 
-const arweave = Arweave.init({
-    port: 443,
-    protocol: 'https',
-    host: 'arweave.net'
-});
+    const host = config.get('storage.arweave_host');
+    const port = config.get('storage.arweave_port');
+    const protocol = config.get('storage.arweave_protocol');
+
+    arweave =  Arweave.init({
+        port: port,
+        protocol: protocol,
+        host: host
+    });
+
+    arweaveKey = ctx.wallet.arweaveKey;
+    if (config.get('storage.use_arlocal')){
+        //mint some tokens for arlocal
+        if (arweaveKey !== undefined){
+            const address = await arweave.wallets.jwkToAddress(arweaveKey);
+            await axios.get(`${protocol}://${host}:${port}/mint/${address}/100000000000000000000`);
+        }
+    }
+
+};
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
 const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
@@ -100,10 +116,21 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const txid = edge.node.id;
             log.debug({chunkId, txid}, 'Downloading data from arweave');
 
-            const data = await arweave.transactions.getData(txid, {decode: true});
-            log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
+            let data;
+            let buf;
 
-            const buf = Buffer.from(data);
+            //TODO: Remove the if part (maintain else) when this bug of arlocal was fixed
+            //https://github.com/textury/arlocal/issues/63
+            if (config.get('storage.use_arlocal')){
+                data = (await axios.get('http://' +  config.get('storage.arweave_host') +
+                    ':' + config.get('storage.arweave_port') + '/tx/' +  txid + '/data')).data;
+                buf = Buffer.from(data, 'base64');
+            }else{
+                data = await arweave.transactions.getData(txid, {decode: true});
+                buf = Buffer.from(data);
+            }
+
+            log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
 
             const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
@@ -131,6 +158,57 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     }
 };
 
+const signTx = async (data, tags) => {
+    // Real 'AR' mode
+
+    const transaction = await arweave.createTransaction({data}, arweaveKey);
+
+    for(const k in tags){
+        const v = tags[k];
+        transaction.addTag(k, v);
+    }
+
+    // Sign
+    await arweave.transactions.sign(transaction, arweaveKey);
+
+    return transaction;
+};
+
+const broadcastTx = async (transaction) => {
+    const uploader = await arweave.transactions.getUploader(transaction);
+    while (!uploader.isComplete) { await uploader.uploadChunk(); }
+
+    return transaction;
+};
+
+async function uploadArweave (data, tags) {
+    // upload to areweave directly without using bundler
+    let transaction = await signTx(data, tags);
+    transaction = await broadcastTx(transaction);
+    const txid = transaction.id;
+    log.debug({txid}, 'Transaction id successfully generated');
+    const response = {data: {status: 'ok'}};
+    return response;
+}
+
+const uploadBundler = async (data, tags) => {
+    // upload to point bundler to forward to arweave
+    const formData = new FormData();
+    formData.append('file', data);
+    // add tags
+    for(const k in tags) {
+        const v = tags[k];
+        formData.append(k, v);
+    }
+
+    const response = await axios.post(
+        `${config.get('storage.arweave_bundler_url')}/signPOST`,
+        formData,
+        {headers: {...formData.getHeaders()}}
+    );
+    return response;
+};
+
 const uploadChunk = async data => {
     const chunkId = hashFn(data).toString('hex');
 
@@ -150,31 +228,24 @@ const uploadChunk = async data => {
         chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
         await chunk.save();
 
-        const formData = new FormData();
-        formData.append('file', data, chunkId);
-        formData.append(
-            '__pn_integration_version_major',
-            config.get('storage.arweave_experiment_version_major')
-        );
-        formData.append(
-            '__pn_integration_version_minor',
-            config.get('storage.arweave_experiment_version_minor')
-        );
-        formData.append('__pn_chunk_id', chunkId);
-        formData.append(
-            `__pn_chunk_${config.get('storage.arweave_experiment_version_major')}.${config.get(
-                'storage.arweave_experiment_version_minor'
-            )}_id`,
-            chunkId
-        );
+        const chunkIdVersioned = `__pn_chunk_${config.get('storage.arweave_experiment_version_major')}.${config.get(
+            'storage.arweave_experiment_version_minor'
+        )}_id`;
 
-        const response = await axios.post(
-            `${config.get('storage.arweave_bundler_url')}/signPOST`,
-            formData,
-            {headers: {...formData.getHeaders()}}
-        );
+        const tags = {
+            __pn_integration_version_major: config.get('storage.arweave_experiment_version_major'),
+            __pn_integration_version_minor: config.get('storage.arweave_experiment_version_minor'),
+            __pn_chunk_id: chunkId,
+            [chunkIdVersioned]: chunkId
+        };
 
-        // TODO: check status from bundler
+        let response;
+        if (config.get('storage.use_arweave_bundler'))
+            response = await uploadBundler(data, tags);
+        else
+            response = await uploadArweave(data, tags);
+
+        //TODO: check status from bundler
         if (response.data.status !== 'ok') {
             throw new Error(`Chunk ${chunkId} uploading failed: arweave endpoint error: ${
                 JSON.stringify(response.data, null, 2)
@@ -502,7 +573,7 @@ const getFileIdByPath = async (dirId, filePath) => {
     }
 };
 
-module.exports = process.env.NODE_CONFIG_ENV === 'zappdev' ? require('./index-arlocal') : {
+module.exports = {
     DOWNLOAD_UPLOAD_STATUS,
     FILE_TYPE,
     init,
