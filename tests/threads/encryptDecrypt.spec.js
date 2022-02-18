@@ -1,5 +1,5 @@
-const encrypt = require('../../threads/encrypt');
-const decrypt = require('../../threads/decrypt');
+const encrypt = require('../../src/threads/encrypt');
+const decrypt = require('../../src/threads/decrypt');
 const fs = require('fs');
 
 //todo

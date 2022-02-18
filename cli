@@ -1,0 +1,212 @@
+#!/usr/bin/env node
+const {Command} = require('commander');
+const {exec} = require('child_process');
+const path = require('path');
+const program = new Command();
+const {existsSync, mkdirSync, readFileSync, promises} = require('fs');
+
+// Disable https://nextjs.org/telemetry
+process.env['NEXT_TELEMETRY_DISABLED'] = '1';
+
+// TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
+program.storeOptionsAsProperties();
+
+program.option('--datadir <path>', 'path to the data directory');
+program
+    .command('attach')
+    .description('attach to the running point process')
+    .action(() => (program.attach = true));
+program
+    .command('makemigration')
+    .description('[dev mode] auto create db migrations from models')
+    .action(() => (program.makemigration = true));
+program
+    .command('migrate')
+    .description('[dev mode] run migrations')
+    .action(() => (program.migrate = true));
+program
+    .command('compile')
+    .description('compile contracts')
+    .action(() => (program.compile = true));
+program
+    .command('migrate:undo')
+    .description('[dev mode] undo migration')
+    .action(() => (program.migrate = program.migrate_undo = true));
+program
+    .command('demo')
+    .description('dump demo configs to ~/.point')
+    .action(() => (program.demo = true));
+program
+    .command('debug-destroy-everything')
+    .description('destroys everything in datadir: database and files. dangerous!')
+    .action(() => (program.debug_destroy_everything = true));
+program
+    .command('deploy <path>')
+    .description('deploy a website')
+    .action((path, cmd) => {
+        program.deploy = path;
+        program.deploy_contracts = Boolean(cmd.contracts);
+        program.dev = Boolean(cmd.dev);
+    })
+    .option('--contracts', '(re)deploy contracts too', false)
+    .option('--dev', 'deploy zapp to dev too', false);
+
+// program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
+// program.option('--daemon', 'sends the daemon to the background'); // todo
+// program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
+program.parse(process.argv);
+
+const ctx = {};
+
+if (program.datadir) {
+    process.env.DATADIR = program.datadir;
+}
+
+const config = require('config');
+const logger = require('./src/core/log.js');
+const Console = require('./src/console/index.js');
+const Deployer = require('./src/client/zweb/deployer/index.js');
+const DB = require('./src/db/index.js');
+
+// --------------- Dump Demo Configs ----------------- //
+// Must be placed before we're checking for existence of any configs!
+if (program.demo) {
+    require('./resources/demo/index.js');
+    return;
+}
+
+// ------------------- Init Logger ----------------- //
+
+const log = logger.child({module: 'point'});
+
+ctx.exit = code => (log.close(), process.exit(code));
+ctx.die = err => (log.fatal(err), ctx.exit(1));
+
+// ----------------- Console Mode -------------------- //
+
+if (program.attach) {
+    const console = new Console(ctx);
+    console.start();
+    return;
+}
+
+// -------------------- Deployer --------------------- //
+
+if (program.deploy) {
+    if (program.deploy.length === 0) return ctx.die('error: missing path');
+    const Deploy = require('./src/core/deploy.js');
+    const deploy = new Deploy(ctx);
+    deploy.deploy(program.deploy, program.deploy_contracts, program.dev).then(ctx.exit);
+    return;
+}
+
+// ---------------- Migration Modes ---------------- //
+
+if (program.makemigration) {
+    // A little hack: prepare sequelize-auto-migrations for reading from the current datadir config
+    process.argv = [
+        './point',
+        'makemigration',
+        '--models-path',
+        './db/models',
+        '--migrations-path',
+        './db/migrations',
+        '--name',
+        'automigration'
+    ];
+    const SequelizeFactory = require('./src/db/models/index.js');
+    SequelizeFactory.init(ctx);
+
+    require('sequelize-auto-migrations/bin/makemigration.js');
+    return;
+}
+if (program.migrate) {
+    const seq_cmd = program.migrate_undo ? 'db:migrate:undo' : 'db:migrate';
+    exec(
+        `npx sequelize-cli ${seq_cmd} --url sqlite:${
+            path.join(config.get('datadir'), config.get('db.storage'))} --env ${
+            config.get('db.env')}`,
+        (error, stdout, stderr) => {
+            if (error) {
+                return log.error(error, 'Migration error');
+            }
+            if (stderr) {
+                return log.error(`Migration stderr: ${stderr}`);
+            }
+            log.debug(`Migration result: ${stdout}`);
+        }
+    );
+    return;
+}
+
+// ------------------ Remove Everything ------------ //
+
+if (program.debug_destroy_everything) {
+    // todo: remove in prod, dangerous
+    ctx.db = new DB(ctx);
+    DB.__debugClearCompletely(ctx); // async!
+    return;
+}
+
+// ------------------ Compile Contracts ------------ //
+
+const CONTRACT_ADDRESSES = ['Identity', 'Migrations', 'StorageProviderRegistry'];
+
+if (program.compile) {
+    const getImports = dependency => {
+        const dependencyNodeModulesPath = path.join(__dirname, 'node_modules', dependency);
+        if (!existsSync(dependencyNodeModulesPath)) {
+            throw new Error(
+                `Could not find contract dependency "${dependency}", have you tried npm install?`
+            );
+        }
+        return {contents: readFileSync(dependencyNodeModulesPath, 'utf8')};
+    };
+
+    log.info('Compiling contracts...');
+
+    const buildDirPath = path.resolve(__dirname, 'src', 'truffle', 'build', 'contracts');
+    if (!existsSync(buildDirPath)) {
+        mkdirSync(buildDirPath);
+    }
+    const contractsPath = path.resolve(__dirname, 'src', 'truffle', 'contracts');
+
+    Promise.all(CONTRACT_ADDRESSES.map(async name => {
+        const sourceFileName = `${name}.sol`;
+        const buildPath = path.join(buildDirPath, `${name}.json`);
+        const filepath = path.join(contractsPath, sourceFileName);
+        if (existsSync(buildPath)) {
+            log.debug(`Contract build ${name}.json already exists, skipping`);
+            return;
+        }
+        const content = await promises.readFile(filepath, 'utf8');
+        const version = await Deployer.getPragmaVersion(content);
+        const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
+        const compilerProps = {
+            language: 'Solidity',
+            sources: {[sourceFileName]: {content}},
+            settings: {outputSelection: {'*': {'*': ['*']}}}
+        };
+        const artefact = solc.compile(JSON.stringify(compilerProps), {import: getImports});
+
+        if (artefact) {
+            await promises.writeFile(
+                path.join(buildPath),
+                JSON.stringify(JSON.parse(artefact).contracts[sourceFileName][name]),
+                'utf-8'
+            );
+            log.debug(`Contract ${sourceFileName} successfully compiled`);
+        } else {
+            throw new Error('Compiled contract is empty');
+        }
+    }))
+        .then(() => {
+            log.info('Contracts successfully compiled');
+            process.exit(0);
+        })
+        .catch(e => {
+            log.error(e, 'Failed to compile contracts');
+            process.exit(1);
+        });
+    
+}

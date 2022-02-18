@@ -9,6 +9,8 @@ sessions/
 dist/
 .cache/
 .parcel-cache/
+dist
+.vscode
 
 # Ignore everything in deployspace folder
 deployspace/*

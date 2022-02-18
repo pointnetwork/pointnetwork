@@ -1,5 +1,5 @@
 {
-  "watch": [".", "point"],
-  "ext": "js,yaml",
-  "exec": "NODE_ENV=development ./point"
+  "watch": ["src"],
+  "ext": "tx,js,yaml",
+  "exec": "NODE_ENV=development ts-node src/index.ts"
 }

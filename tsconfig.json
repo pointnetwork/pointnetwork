@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "esnext",
+    "strict": true,
+    "alwaysStrict": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "useUnknownInCatchVariables": true,
+    "noEmit": false,
+    "declaration": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "noImplicitAny": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/internal",
+    "src/truffle"
+  ],
+  "references": []
+}
