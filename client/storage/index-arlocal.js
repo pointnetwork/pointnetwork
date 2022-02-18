@@ -62,8 +62,8 @@ const cacheDir = path.join(config.get('datadir'), config.get('storage.cache_path
 const filesDir = path.join(config.get('datadir'), config.get('storage.files_path'));
 
 let arweave;
-let arweaveKey;
-const init = async (ctx) => {
+
+const init = async () => {
     await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
 
     const host = config.get('storage.arweave_host');
@@ -76,13 +76,14 @@ const init = async (ctx) => {
         host: host
     });
 
-    arweaveKey = ctx.wallet.arweaveKey;
-    if (config.get('storage.use_arlocal')){
-        //mint some tokens for arlocal
-        if (arweaveKey !== undefined){
-            const address = await arweave.wallets.jwkToAddress(arweaveKey);
-            await axios.get(`${protocol}://${host}:${port}/mint/${address}/100000000000000000000`);
-        }
+    // load the arweave key for arlocal
+    const keystorePath = path.join(config.get('datadir'), config.get('wallet.keystore_path'));
+    const arweaveKey = require(path.join(keystorePath, 'arweave.json'), 'utf-8');
+
+    // mint tokens on arlocal
+    if (arweaveKey !== undefined){
+        const address = await arweave.wallets.jwkToAddress(arweaveKey);
+        await axios.get(`${protocol}://${host}:${port}/mint/${address}/100000000000000000000`);
     }
 
 };
@@ -116,19 +117,17 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const txid = edge.node.id;
             log.debug({chunkId, txid}, 'Downloading data from arweave');
 
-            let data;
-            let buf;
+            // TODO: Remove the axios hack below when this bug of arlocal is resolved
+            // https://github.com/textury/arlocal/issues/63
+            const data = (await axios.get('http://' +  config.get('storage.arweave_host') +
+                ':' + config.get('storage.arweave_port') + '/tx/' +  txid + '/data')).data;
+            const buf = Buffer.from(data, 'base64');
 
-            //TODO: Remove the if part (maintain else) when this bug of arlocal was fixed
-            //https://github.com/textury/arlocal/issues/63
-            if (config.get('storage.use_arlocal')){
-                data = (await axios.get('http://' +  config.get('storage.arweave_host') +
-                    ':' + config.get('storage.arweave_port') + '/tx/' +  txid + '/data')).data;
-                buf = Buffer.from(data, 'base64');
-            }else{
-                data = await arweave.transactions.getData(txid, {decode: true});
-                buf = Buffer.from(data);
-            }
+            /*
+            // NOTE: above code can be replaced with below when mentioned arlocal bug is resolved
+            const data = await arweave.transactions.getData(txid, {decode: true});
+            const buf = Buffer.from(data);
+            */
 
             log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
 
@@ -191,24 +190,6 @@ async function uploadArweave (data, tags) {
     return response;
 }
 
-const uploadBundler = async (data, tags) => {
-    // upload to point bundler to forward to arweave
-    const formData = new FormData();
-    formData.append('file', data);
-    // add tags
-    for(const k in tags) {
-        const v = tags[k];
-        formData.append(k, v);
-    }
-
-    const response = await axios.post(
-        `${config.get('storage.arweave_bundler_url')}/signPOST`,
-        formData,
-        {headers: {...formData.getHeaders()}}
-    );
-    return response;
-};
-
 const uploadChunk = async data => {
     const chunkId = hashFn(data).toString('hex');
 
@@ -239,11 +220,7 @@ const uploadChunk = async data => {
             [chunkIdVersioned]: chunkId
         };
 
-        let response;
-        if (config.get('storage.use_arweave_bundler'))
-            response = await uploadBundler(data, tags);
-        else
-            response = await uploadArweave(data, tags);
+        const response = await uploadArweave(data, tags);
 
         //TODO: check status from bundler
         if (response.data.status !== 'ok') {

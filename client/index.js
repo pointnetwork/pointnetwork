@@ -8,7 +8,7 @@ class Client {
     }
 
     async start() {
-        await initStorage(this.ctx);
+        await initStorage();
 
         this.proxy = new ZProxy(this.ctx);
         this.proxy.start();
