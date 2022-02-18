@@ -20,6 +20,7 @@ const {getFile, getJSON, uploadFile, getFileIdByPath, FILE_TYPE} = require('../s
 const config = require('config');
 const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxy'});
+const detectContentType = require('detect-content-type');
 
 class ZProxy {
     constructor(ctx) {
@@ -209,20 +210,21 @@ class ZProxy {
                         hash.split('.').length > 1 ? hash.split('.').slice(0, -1).join('.') : hash;
                     const ext = hash.split('.').slice(-1)[0];
 
+                    try {
+                        log.debug({hash}, 'Reading file from storage');
+                        rendered = await getFile(hashWithoutExt, null);
+                    } catch (e) {
+                        return this.abortError(response, e);
+                    }
+                    
                     const noExt = ext === hashWithoutExt || hash.split('.').length === 1;
-                    if (noExt) contentType = 'text/plain'; // just in case
+                    if (noExt) contentType = detectContentType(rendered); // just in case
                     if (!noExt) {
                         contentType = this.getContentTypeFromExt(ext);
                         if (contentType.includes('html')) contentType = 'text/html'; // just in case
                     } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
                     if (ext === 'zhtml') contentType = 'text/plain';
 
-                    try {
-                        log.debug({hash}, 'Reading file from storage');
-                        rendered = await getFile(hashWithoutExt);
-                    } catch (e) {
-                        return this.abortError(response, e);
-                    }
 
                     if (this._isThisDirectoryJson(rendered) && noExt) {
                         rendered = this._renderDirectory(hash, rendered);
