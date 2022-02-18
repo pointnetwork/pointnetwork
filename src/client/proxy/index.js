@@ -252,7 +252,7 @@ class ZProxy {
                 }
             } else if (host === 'point') {
                 // handle the point welcome page by rendering explorer.z
-                const localPath = 'src/internal/explorer.z/public'; // hardcode to render explorer.z
+                const localPath = 'internal/explorer.z/public'; // hardcode to render explorer.z
                 rendered = await this.processLocalRequest(
                     host,
                     localPath,

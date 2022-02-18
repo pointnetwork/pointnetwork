@@ -36,9 +36,9 @@ services:
         condition: 'no'
     volumes:
       - shared_contracts_e2e:/build:rw
-      - ./src/truffle/contracts:/truffle/contracts:ro
-      - ./src/truffle/migrations:/truffle/migrations:ro
-      - ./src/truffle/truffle-config.js:/truffle/truffle-config.js:ro
+      - ./truffle/contracts:/truffle/contracts:ro
+      - ./truffle/migrations:/truffle/migrations:ro
+      - ./truffle/truffle-config.js:/truffle/truffle-config.js:ro
     entrypoint: /truffle/run.js
     environment:
       BLOCKCHAIN_HOST: blockchain_node
@@ -59,7 +59,7 @@ services:
     command: 'run start:docker:e2e'
     volumes:
       - point_node_data_e2e:/data
-      - shared_contracts_e2e:/app/src/truffle/build/contracts
+      - shared_contracts_e2e:/app/truffle/build/contracts
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     environment:

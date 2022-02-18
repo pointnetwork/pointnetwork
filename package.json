@@ -89,7 +89,7 @@
     "start:docker:dev": "npm run compile && npm run migrate && npm run start:dev",
     "start:docker:e2e": "npm run migrate && npm run build && MODE=e2e npm start",
     "start:dev": "nodemon",
-    "build": "tsc && cp -R src/truffle dist/truffle && cp -R src/internal dist/internal && cp -R src/client/proxy/certs dist/client/proxy/certs && cp src/client/proxy/ca.srl dist/client/proxy/ca.srl",
+    "build": "tsc",
     "migrate": "./cli migrate",
     "compile": "./cli compile",
     "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
@@ -104,9 +104,9 @@
     "znet:local": "docker-compose -f docker-compose.znet.local.yaml",
     "volume:backup": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu tar -czvf /backup/$VOLUME-$(date \"+%Y-%m-%dT%H:%M:%S\").tar.gz /data",
     "volume:restore": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu bash -c \"cd /data && tar -xvf /backup/$FILE --strip 1\"",
-    "fix": "eslint --ext .js --fix src/ && eslint --fix cli",
-    "lint": "eslint --ext .js src/ && eslint cli",
-    "lint:sol": "solhint 'example/**/contracts/*.sol' 'src/truffle/contracts/*.sol'"
+    "fix": "eslint --ext .js --fix src/ && eslint --ext .js --fix truffle/ && eslint --fix cli",
+    "lint": "eslint --ext .js src/ && eslint --ext .js truffle/ && eslint cli",
+    "lint:sol": "solhint 'example/**/contracts/*.sol' 'truffle/contracts/*.sol'"
   },
   "imports": {
     "#utils": "./src/core/utils.js",

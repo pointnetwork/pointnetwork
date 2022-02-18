@@ -18,9 +18,6 @@
   "include": [
     "src/**/*"
   ],
-  "exclude": [
-    "src/internal",
-    "src/truffle"
-  ],
+  "exclude": [],
   "references": []
 }

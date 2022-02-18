@@ -12,9 +12,7 @@ process.env['NEXT_TELEMETRY_DISABLED'] = '1';
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-program.version(`
-    0.0 alpha
-`); // todo
+program.version(process.env.npm_package_version);
 
 program.description(`
     Point Network
@@ -36,7 +34,7 @@ if (program.datadir) {
 }
 
 const getContractAddress = (name: string) => {
-    const filename = path.resolve(__dirname, 'truffle', 'build', 'contracts', `${name}.json`);
+    const filename = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts', `${name}.json`);
 
     if (!existsSync(filename)) {
         return;

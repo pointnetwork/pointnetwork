@@ -18,8 +18,8 @@ function generateCertificate(servername) {
     const keys = pki.rsa.generateKeyPair(2048);
     const cert = pki.createCertificate();
 
-    const privateCAKey = pki.privateKeyFromPem(fs.readFileSync('./src/client/proxy/certs/ca.key'));
-    const caCert = pki.certificateFromPem(fs.readFileSync('./src/client/proxy/certs/ca.crt'));
+    const privateCAKey = pki.privateKeyFromPem(fs.readFileSync('./resources/certs/ca.key'));
+    const caCert = pki.certificateFromPem(fs.readFileSync('./resources/certs/ca.crt'));
 
     cert.publicKey = keys.publicKey;
     function md5(value) {

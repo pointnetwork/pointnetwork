@@ -63,7 +63,7 @@ class Web3Bridge {
     async loadPointContract(contractName, at) {
         const abiFileName = path.join(
             this.ctx.basepath,
-            'truffle/build/contracts/' + contractName + '.json'
+            '../truffle/build/contracts/' + contractName + '.json'
         );
         const abiFile = JSON.parse(fs.readFileSync(abiFileName));
         const abi = abiFile.abi;

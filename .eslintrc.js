@@ -99,7 +99,7 @@ module.exports = {
     overrides: [{
         files: [
             'scripts/**/*.js',
-            'src/truffle/scripts/*.js',
+            'truffle/scripts/*.js',
             'cli'
         ],
         rules: {'no-console': 'off'}

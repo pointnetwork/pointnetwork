@@ -165,11 +165,11 @@ if (program.compile) {
 
     log.info('Compiling contracts...');
 
-    const buildDirPath = path.resolve(__dirname, 'src', 'truffle', 'build', 'contracts');
+    const buildDirPath = path.resolve(__dirname, 'truffle', 'build', 'contracts');
     if (!existsSync(buildDirPath)) {
         mkdirSync(buildDirPath);
     }
-    const contractsPath = path.resolve(__dirname, 'src', 'truffle', 'contracts');
+    const contractsPath = path.resolve(__dirname, 'truffle', 'contracts');
 
     Promise.all(CONTRACT_ADDRESSES.map(async name => {
         const sourceFileName = `${name}.sol`;
