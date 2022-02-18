@@ -1,7 +1,7 @@
-const ApiServer = require('../api/index');
-const Network = require('../network/index');
-const Client = require('../client/index');
-const Wallet = require('../wallet/index');
+const ApiServer = require('../api');
+const Network = require('../network');
+const Client = require('../client');
+const Wallet = require('../wallet');
 
 class Core {
     constructor(ctx) {

@@ -63,15 +63,15 @@ if (program.datadir) {
 }
 
 const config = require('config');
-const logger = require('./src/core/log.js');
-const Console = require('./src/console/index.js');
-const Deployer = require('./src/client/zweb/deployer/index.js');
-const DB = require('./src/db/index.js');
+const logger = require('./src/core/log');
+const Console = require('./src/console');
+const Deployer = require('./src/client/zweb/deployer');
+const DB = require('./src/db');
 
 // --------------- Dump Demo Configs ----------------- //
 // Must be placed before we're checking for existence of any configs!
 if (program.demo) {
-    require('./resources/demo/index.js');
+    require('./resources/demo');
     return;
 }
 
@@ -94,7 +94,7 @@ if (program.attach) {
 
 if (program.deploy) {
     if (program.deploy.length === 0) return ctx.die('error: missing path');
-    const Deploy = require('./src/core/deploy.js');
+    const Deploy = require('./src/core/deploy');
     const deploy = new Deploy(ctx);
     deploy.deploy(program.deploy, program.deploy_contracts, program.dev).then(ctx.exit);
     return;
@@ -114,7 +114,7 @@ if (program.makemigration) {
         '--name',
         'automigration'
     ];
-    const SequelizeFactory = require('./src/db/models/index.js');
+    const SequelizeFactory = require('./src/db/models');
     SequelizeFactory.init(ctx);
 
     require('sequelize-auto-migrations/bin/makemigration.js');
