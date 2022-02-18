@@ -58,7 +58,7 @@ services:
     command: -p 5432
 
   bundler:
-    image: pointnetwork/arweave-bundler:v1.0.1
+    image: pointnetwork/arweave-bundler:v1.0.2
     container_name: bundler
     hostname: bundler
     depends_on:
@@ -68,6 +68,8 @@ services:
         condition: service_healthy
     volumes:
       - ./resources/arweave-test-key.json:/app/keystore/key.json
+    entrypoint: >
+      /bin/bash -c "ARWEAVE_KEY=$$(cat /app/keystore/key.json) npm start"
     environment:
       S3_HOST: bundler-cache
       S3_PORT: 9000
@@ -78,7 +80,6 @@ services:
       ARWEAVE_HOST: arweave-node
       ARWEAVE_PORT: 1984
       ARWEAVE_PROTOCOL: http
-      KEYSTORE: /app/keystore/key.json
       TESTMODE: '1'
 
   cache:

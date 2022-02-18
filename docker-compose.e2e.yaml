@@ -96,8 +96,9 @@ services:
     # volumes:
     #   - ../arweave-bundler/src:/app/src
     #   - ../arweave-bundler/config:/app/config
-    # entrypoint: npx
-    # command: nodemon --watch ./**/* --ext "ts,yaml" --exec "ts-node src/index.ts"
+    #   - ../arweave-bundler/package.json:/app/package.json
+    # entrypoint: >
+    #   /bin/bash -c "ARWEAVE_KEY=$$(cat /app/keystore/key.json) npm run develop"
 
   cache:
     extends:

@@ -4,7 +4,8 @@ const {Command} = require('commander');
 const {exec} = require('child_process');
 const path = require('path');
 const program = new Command();
-const {existsSync, mkdirSync, readFileSync, promises} = require('fs');
+const {existsSync, mkdirSync, readFileSync, promises, writeFileSync} = require('fs');
+const lockfile = require('proper-lockfile');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -329,6 +330,19 @@ Model.setCtx(ctx);
 
 // ------------------- Start Point ------------------- //
 
-const Point = require('./core');
-const point = new Point(ctx);
-point.start();
+// This is just a dummy file: proper-lockfile handles the lockfile creation,
+// but it's intended to lock some existing file
+const lockfilePath = path.join(config.get('datadir'), 'point');
+if (!existsSync(lockfilePath)) {
+    writeFileSync(lockfilePath, 'point');
+}
+lockfile.lock(lockfilePath)
+    .then(() => {
+        const Point = require('./core');
+        const point = new Point(ctx);
+        point.start();
+    })
+    .catch(err => {
+        log.error({err}, 'Failed to create lockfile, is point already running?');
+        process.exit(1);
+    });
