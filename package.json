@@ -41,7 +41,7 @@
     "merge": "^2.1.1",
     "mime-types": "^2.1.32",
     "mkdirp": "^1.0.4",
-    "next": "^11.1.0",
+    "next": "^12.1.0",
     "node-forge": "^1.0.0",
     "node-match-path": "^0.6.3",
     "pino": "^6.13.1",
