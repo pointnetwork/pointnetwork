@@ -1,0 +1,13 @@
+datadir: /data
+mode: zappdev
+log:
+  level: debug
+storage:
+  arweave_host: arlocal
+  arweave_protocol: http
+  arweave_port: 1984
+  use_arweave_bundler: false
+  use_arlocal: true
+  arweave_gateway_url: http://arlocal:1984/graphql
+network:
+  web3: http://blockchain_node:7545

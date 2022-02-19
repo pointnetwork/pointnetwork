@@ -73,6 +73,7 @@ class Wallet {
     #publicKey;
     #address;
     #secretPhrase;
+    #arewaveKey;
 
     constructor(ctx) {
         this.ctx = ctx;
@@ -112,6 +113,12 @@ class Wallet {
             'confirmed'
         );
 
+        try{
+            this.#arewaveKey = require(path.join(this.keystorePath, 'arweave.json'), 'utf-8');
+        }catch(e){
+            this.#arewaveKey = undefined;
+        }
+
         this.initSolanaWallet();
 
         // todo: other setup?
@@ -135,6 +142,10 @@ class Wallet {
 
     get web3() {
         return this.ctx.network.web3;
+    }
+
+    get arweaveKey(){
+        return this.#arewaveKey;
     }
 
     // get transactionEvents() {
