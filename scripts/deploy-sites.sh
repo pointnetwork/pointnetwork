@@ -31,7 +31,7 @@ fi
 
 # If DATADIR ENV var is not set ...
 if [[ -z "${DATADIR}" ]]; then
-  DATADIR=~/.point/test2
+  DATADIR=/data
 fi
 
 for SITE in $EXAMPLE_SITES;
