@@ -17,7 +17,7 @@ services:
       - ./scripts:/app/scripts:ro
       - ./package.json:/app/package.json:ro
       - ./src:/app/src:ro
-      - ./cli:/app/cli:ro
+      - ./point:/app/point:ro
     environment:
       NODE_CONFIG_ENV: dockerdev
 

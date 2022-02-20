@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   point_node:
-    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
+    image: ${POINT_DEV_IMAGE_NAME:-pointnetwork/pointnetwork_node:$POINT_NODE_VERSION}
     container_name: point_node
     volumes:
       - point_contracts:/app/truffle/build/contracts
