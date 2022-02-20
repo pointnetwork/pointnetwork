@@ -120,3 +120,4 @@ volumes:
   gateway_data:
   bundler_data:
   gateway_db_data:
+  arlocal_data:

@@ -1,12 +1,13 @@
 # point-e2e is used for starting the e2e environment (for development and testing usage only)
 alias point-e2e="docker compose -f docker-compose.e2e.yaml "
+alias point-zappdev="docker compose --env-file .env.zappdev -f docker-compose.zappdev.yaml "
 
 # point-browser-docker-N starts a point browser instance for one of the locally saved zappdev environment profiles.
 alias point-browser-docker-1="web-ext run --firefox-profile=storage_provider_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 alias point-browser-docker-2="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 alias point-browser-docker-3="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 
-build-e2e() {
+build-image() {
     local image=$(git branch --show-current | sed 's/[^a-zA-Z0-9]/-/g');
 
     docker image inspect pointnetwork/pointnetwork_node:$image > /dev/null 2>&1;
@@ -14,9 +15,8 @@ build-e2e() {
     if [[ $? != 0 ]] || [ "$1" == "--force" ]; then
         echo "Building image: pointnetwork/pointnetwork_node:$image";
         docker build -t "pointnetwork/pointnetwork_node:$image" .;
-        perl -i -pe"s/POINT_NODE_VERSION=.*/POINT_NODE_VERSION=$image/" .env.e2e;
     else
-        echo "Docker Image for current branch exists. To rebuild the image run 'build-e2e --force'";
+        echo "Docker Image for current branch exists. To rebuild the image run 'build-image --force'";
     fi;
 }
 

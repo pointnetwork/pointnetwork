@@ -17,7 +17,7 @@ class Core {
     }
 
     async postInit() {
-        await this.ctx.wallet.saveDefaultWalletToKeystore();
+        // await this.ctx.wallet.saveDefaultWalletToKeystore();
 
         setTimeout(async () => {
             // Here we can put something that will run at each node start, but better not to

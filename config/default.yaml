@@ -34,6 +34,11 @@ storage:
   arweave_gateway_url: https://arweave.net/graphql
   concurrent_download_delay: 100
   redkey_encryption_bits: 1024 # TODO: not used
+  arweave_host: arweave.net
+  arweave_protocol: https
+  arweave_port: 443
+  use_arweave_bundler: true
+  use_arlocal: false
 zproxy:
   port: 8666
   host: 127.0.0.1
