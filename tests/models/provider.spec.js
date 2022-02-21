@@ -1,6 +1,6 @@
 const ctx = require('../_helpers/db/setup');
 const truncate = require('../_helpers/db/truncate');
-const DB = require('../../db');
+const DB = require('../../src/db');
 const db = new DB(ctx);
 const {v4: uuid} = require('uuid');
 
@@ -14,7 +14,7 @@ describe('Provider model', () => {
 
     beforeAll(async () => {
         await db.init();
-        Provider = require('../../db/models/provider');
+        Provider = require('../../src/db/models/provider');
     });
 
     afterEach(async () => {

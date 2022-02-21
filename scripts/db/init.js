@@ -1,6 +1,6 @@
 const fs = require('fs');
 const os = require('os');
-const DB = require('../../db');
+const DB = require('../../src/db');
 const _ = require('lodash');
 const pino = require('pino');
 const defaultConfig = require('../../resources/defaultConfig.json');

@@ -8,11 +8,11 @@ NOTE: LevelDB only supports a single client connection at a time so you will nee
 require('./init');
 
 // now use the db models to check the leveldb database
-const File = require('../../db/models/file');
-const Chunk = require('../../db/models/chunk');
-const ProviderChunk = require('../../db/models/provider_chunk');
-const RedKey = require('../../db/models/redkey');
-const StorageLink = require('../../db/models/storage_link');
+const File = require('../../src/db/models/file');
+const Chunk = require('../../src/db/models/chunk');
+const ProviderChunk = require('../../src/db/models/provider_chunk');
+const RedKey = require('../../src/db/models/redkey');
+const StorageLink = require('../../src/db/models/storage_link');
 
 /***
  *
