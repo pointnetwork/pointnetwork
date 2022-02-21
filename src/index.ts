@@ -3,6 +3,7 @@ import path from 'path';
 import {existsSync, writeFileSync} from 'fs';
 import lockfile from 'proper-lockfile';
 import disclaimer from './disclaimer';
+import { resolveHome } from './core/utils';
 
 export const RUNNING_PKG_MODE = (process as any).pkg ? true : false;;
 
@@ -148,7 +149,9 @@ Model.setCtx(ctx);
 
 // This is just a dummy file: proper-lockfile handles the lockfile creation,
 // but it's intended to lock some existing file
-const lockfilePath = path.join(config.get('datadir'), 'point');
+
+const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
+
 if (!existsSync(lockfilePath)) {
     writeFileSync(lockfilePath, 'point');
 }

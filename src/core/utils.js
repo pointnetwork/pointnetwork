@@ -3,6 +3,7 @@ const mkdirp = require('mkdirp');
 const ethUtil = require('ethereumjs-util');
 const {promises: fs} = require('fs');
 const kadUtils = require('@pointnetwork/kadence').utils;
+const os = require('os');
 
 const utils = {
     makeSurePathExists: function (path) {
@@ -167,7 +168,15 @@ const utils = {
                 throw e;
             }
         }
+    },
+
+    resolveHome: (filepath) => {
+        if (filepath[0] === '~') {
+            return path.join(process.env.HOME || os.homedir(), filepath.slice(1));
+        }
+        return filepath;
     }
+
 };
 
 utils.merkle = require('./merkle-utils');
