@@ -50,8 +50,8 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV -v"
-  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV -v
+  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV"
+  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV
 
   echo
   echo "FINISHED: ${SITE}"
