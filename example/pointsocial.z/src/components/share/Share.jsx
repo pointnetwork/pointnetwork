@@ -18,10 +18,13 @@ export default function Share({getPosts, renderPostsImmediate}) {
 
   const onFileChange = event => {
     let fileToUpload = event.target.files[0];
-    if(fileToUpload.type.startsWith('image')) {
+    if(fileToUpload.type.startsWith('image') || fileToUpload.type.startsWith('video') ) {
+      if (fileToUpload.size > 100 * 1024 * 1024){
+        alert('Point Social only supports image and video until 100 MB. Please change to a samller image or video file!')  
+      }
       setSelectedFile(event.target.files[0]);
     } else {
-      alert('Point Social only supports image uploads for now. Please change to an image file!')
+      alert('Point Social only supports image and video uploads for now. Please change to an image or video file!')
     }
   };
 
@@ -91,7 +94,7 @@ export default function Share({getPosts, renderPostsImmediate}) {
               <input
                 type="file"
                 name="fileupload"
-                accept="image/*"
+                accept="image/*,video/*"
                 ref={fileInputRef}
                 onChange={onFileChange}
               />
