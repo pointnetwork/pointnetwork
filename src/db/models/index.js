@@ -4,12 +4,13 @@ const Sequelize = require('sequelize');
 const config = require('config');
 const logger = require('../../core/log');
 const log = logger.child({module: 'Sequelize'});
+const {resolveHome} = require('../../core/utils');
 
 class SequelizeFactory {
     init(ctx) {
         this.ctx = ctx;
         this.config = config.get('db');
-
+        const storage = path.join(resolveHome(config.get('datadir')), this.config.storage);
         this.Sequelize = Sequelize; // Needed for export!
         this.sequelize = new Sequelize(
             this.config.database,
@@ -18,7 +19,7 @@ class SequelizeFactory {
             {
                 dialect: this.config.dialect,
                 define: this.config.define,
-                storage: path.join(config.get('datadir'), this.config.storage),
+                storage,
                 transactionType: this.config.transactionType,
                 retry: {max: this.config.retry.max},
                 logQueryParameters: true,
