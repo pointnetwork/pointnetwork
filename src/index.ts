@@ -4,6 +4,18 @@ import {existsSync, writeFileSync} from 'fs';
 import lockfile from 'proper-lockfile';
 import disclaimer from './disclaimer';
 
+export const RUNNING_PKG_MODE = (process as any).pkg ? true : false;;
+
+if (RUNNING_PKG_MODE) {
+  // when running inside the packaged version the configuration should be
+  // retrieved from the internal packaged config
+  // by default config library uses process.cwd() to reference the config folder
+  // when using vercel/pkg process.cwd references real folder and not packaged folder
+  // overwriting this env variable fixes the problems
+  process.env.NODE_CONFIG_DIR = path.resolve(__dirname, 'config');
+}
+
+
 const program: any = new Command();
 
 // Disable https://nextjs.org/telemetry
