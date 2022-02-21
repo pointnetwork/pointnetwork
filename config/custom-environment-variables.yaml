@@ -1,0 +1,29 @@
+datadir: DATADIR
+mode: MODE
+api:
+  address: API_ADDRESS
+  port: API_PORT
+db:
+  env: DB_ENV
+log:
+  log: LOG_LEVEL
+  sendLogs: SEND_LOGS
+  sendLogsTo: SEND_LOGS_TO
+deployer:
+  cache_path: DEPLOYER_CACHE_PATH
+storage:
+  cache_path: STORAGE_CACHE_PATH
+  files_path: STORAGE_FILES_PATH
+  arweave_experiment_version_major: STORAGE_ARWEAVE_VERSION_MAJOR
+  arweave_experiment_version_minor: STORAGE_ARWEAVE_VERSION_MINOR
+  arweave_bundler_url: STORAGE_ARWEAVE_BUNDLER_URL
+  arweave_gateway_url: STORAGE_ARWEAVE_GATEWAY_URL
+zproxy:
+  port: ZPROXY_PORT
+  host: ZPROXY_HOST
+network:
+  web3: BLOCKCHAIN_URL
+  identity_contract_address: IDENTITY_CONTRACT_ADDRESS
+  storage_provider_registry_contract_address: STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS
+wallet:
+  keystore_path: WALLET_KEYSTORE_PATH

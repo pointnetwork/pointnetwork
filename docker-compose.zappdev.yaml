@@ -1,0 +1,106 @@
+version: '3.9'
+
+services:
+  blockchain_node:
+    extends:
+        file: docker-compose.e2e.yaml
+        service: blockchain_node
+    volumes:
+      - blockchain_data_zappdev:/data:rw
+    command: |
+      -v -p 7545 -i 256 --keepAliveTimeout 20000 --db /data \
+        --account 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e,0x56bc75e2d63100000 --account 0x22a316b515a68d4851087571bd5ff051f5ec3f13b28997fb80a8de055052514e,0x56bc75e2d63100000
+
+  contract_deployer:
+    extends:
+          file: docker-compose.e2e.yaml
+          service: contract_deployer
+    volumes:
+      - shared_contracts_zappdev:/build:rw
+    
+  point_node:
+    extends:
+      file: docker-compose.base.yaml
+      service: point_node
+    depends_on:
+      contract_deployer:
+        condition: service_completed_successfully
+    command: 'run start:docker:zappdev'
+    volumes:
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./config:/app/config:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
+      - ./network:/app/network:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
+      - point_node_data_zappdev:/data
+      - shared_contracts_zappdev:/app/truffle/build/contracts
+      - ./resources/blockchain-test-key.json:/data/keystore/key.json
+      - ./resources/arweave-test-key.json:/data/keystore/arweave.json
+    ports:
+      - '12346:9685'
+      - '65501:8666'
+      - '24681:2468'
+    environment:
+      NODE_CONFIG_ENV: zappdev
+      DATADIR: /data
+  
+  website_visitor:
+    extends:
+      file: docker-compose.base.yaml
+      service: point_node
+    container_name: website_visitor
+    depends_on:
+      contract_deployer:
+        condition: service_completed_successfully
+    command: 'run start:docker:zappdev'
+    volumes:
+      - ./api:/app/api:ro
+      - ./client:/app/client:ro
+      - ./config:/app/config:ro
+      - ./console:/app/console:ro
+      - ./core:/app/core:ro
+      - ./db:/app/db:ro
+      - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
+      - ./network:/app/network:ro
+      - ./resources:/app/resources:ro
+      - ./scripts:/app/scripts:ro
+      - ./wallet:/app/wallet:ro
+      - ./package.json:/app/package.json:ro
+      - ./point:/app/point:ro
+      - website_visitor_data_zappdev:/data
+      - shared_contracts_zappdev:/app/truffle/build/contracts
+      - ./resources/blockchain-test-key2.json:/data/keystore/key.json
+      - ./resources/arweave-test-key2.json:/data/keystore/arweave.json
+    ports:
+      - '12347:9685'
+      - '65502:8666'
+      - '24682:2468'
+    environment:
+      NODE_CONFIG_ENV: zappdev
+      DATADIR: /data
+
+  arlocal:
+    image: textury/arlocal
+    container_name: arlocal
+    command: node bin/index.js --persist=true
+    ports:
+      - '1984:1984'
+    volumes:
+      - arlocal_data:/home/node/:rw
+
+volumes:
+  blockchain_data_zappdev:
+  shared_contracts_zappdev:
+  point_node_data_zappdev:
+  website_visitor_data_zappdev:
+  arlocal_data:

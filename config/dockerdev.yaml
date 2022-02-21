@@ -1,0 +1,5 @@
+datadir: /data
+db:
+  env: development
+log:
+  level: debug

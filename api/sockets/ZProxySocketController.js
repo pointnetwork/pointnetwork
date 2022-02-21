@@ -2,17 +2,19 @@
 The ZProxySocketController is for handling ZApp websocket connections via the ZProxy API port.
 See client/proxy/index.js for usage details of ZProxy and setup of the WebSocketServer instance.
 */
+const logger = require('../../core/log');
+const log = logger.child({module: 'ZProxySocketController'});
 
 const SUBSCRIPTION_EVENT_TYPES = {
     CONFIRMATION: 'subscription_confirmation',
     CANCELLATION: 'subscription_cancellation',
     EVENT: 'subscription_event',
-    ERROR: 'subscription_error',
+    ERROR: 'subscription_error'
 };
 
 const SUBSCRIPTION_REQUEST_TYPES = {
     SUBSCRIBE: 'subscribeContractEvent',
-    UNSUBSCRIBE: 'removeSubscriptionById',
+    UNSUBSCRIBE: 'removeSubscriptionById'
 };
 
 class ZProxySocketController {
@@ -29,7 +31,7 @@ class ZProxySocketController {
             const {hostname} = this;
             const request = {
                 ...JSON.parse(utf8Data),
-                hostname, // add the hostname to the `request` object to be echoed back via the callback closure
+                hostname // add the hostname to the `request` object to be echoed back via the callback closure
             };
 
             switch (request.type) {
@@ -42,7 +44,8 @@ class ZProxySocketController {
                         contract,
                         event,
                         event => this.pushSubscriptionEvent({...event, request, type: EVENT}),
-                        event => this.pushSubscriptionEvent({...event, request, type: CONFIRMATION}),
+                        event =>
+                            this.pushSubscriptionEvent({...event, request, type: CONFIRMATION}),
                         options
                     );
                 }
@@ -51,9 +54,8 @@ class ZProxySocketController {
                     const {subscriptionId} = request.params;
                     const {CANCELLATION} = SUBSCRIPTION_EVENT_TYPES;
 
-                    return this.ctx.web3bridge.removeSubscriptionById(
-                        subscriptionId,
-                        event => this.pushSubscriptionEvent({...event, request, type: CANCELLATION})
+                    return this.ctx.web3bridge.removeSubscriptionById(subscriptionId, event =>
+                        this.pushSubscriptionEvent({...event, request, type: CANCELLATION})
                     );
                 }
 
@@ -67,11 +69,15 @@ class ZProxySocketController {
                 }
             }
         });
+
+        this.ws.on('error', err => {
+            log.error(err, 'Error from ZProxySocketController');
+        });
     }
 
     pushToClients(msg) {
         if (this.wss) {
-            this.wss.connections.forEach((client) => {
+            this.wss.connections.forEach(client => {
                 if (client.state === 'open') {
                     client.send(JSON.stringify(msg));
                 }
@@ -80,7 +86,7 @@ class ZProxySocketController {
     }
 
     pushSubscriptionEvent({type, subscriptionId, request, data}) {
-        this.ctx.log.info({type, subscriptionId, request, data}, 'Pushing subscription event');
+        log.info({type, subscriptionId, request, data}, 'Pushing subscription event');
 
         return this.pushToClients({type, subscriptionId, request, data});
     }

@@ -10,10 +10,8 @@ class StatusController extends PointSDKController {
     }
 
     async meta() {
-        let status = await this._nodeStatus();
-        return this._response(
-            status
-        );
+        const status = await this._nodeStatus();
+        return this._response(status);
     }
 
     async _nodeStatus() {

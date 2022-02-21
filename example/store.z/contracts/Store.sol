@@ -28,7 +28,7 @@ contract Store is ERC721 {
     }
 
     // StoreFront Array
-    StoreFront[] stores;
+    StoreFront[] public stores;
 
     // Product Arrays and Mappings
     mapping(uint256 => uint256[]) public storeIdToTokenIds;
@@ -77,12 +77,12 @@ contract Store is ERC721 {
         Product memory product = tokenIdToProduct[_tokenId];
         uint256 productPrice = product.price;
         address ownerAddress = ownerOf(_tokenId);
-        require(msg.value >= productPrice, 'You need to send more Ether');
-        require(ownerAddress != msg.sender, 'You already own this Product');
-        _transfer(ownerAddress, msg.sender, _tokenId);
-        payable(ownerAddress).transfer(productPrice);
         product.owner = msg.sender;
         tokenIdToProduct[_tokenId] = product;
+        require(msg.value >= productPrice, "You need to send more Ether");
+        require(ownerAddress != msg.sender, "You already own this Product");
+        _transfer(ownerAddress, msg.sender, _tokenId);
+        payable(ownerAddress).transfer(productPrice);
         if(msg.value > productPrice) {
             payable(msg.sender).transfer(msg.value - productPrice);
         }

@@ -1,26 +1,11 @@
 #!/usr/bin/env node
-
-// Check Node.js version
-const m = process.version.match(/(\d+)\.(\d+)\.(\d+)/);
-const [major, minor, patch] = m.slice(1).map(_ => parseInt(_));
-if (major < 14) {
-    console.error('\x1b[41m%s\x1b[0m', "You are not using the latest Node.JS version supported by this application. Execute `nvm use` to switch to the app's version.");
-    process.exit(1);
-}
-
 // Load first dependencies
-const { Command } = require('commander');
-const { homedir } = require('os');
-const { exec } = require("child_process");
+const {Command} = require('commander');
+const {exec} = require('child_process');
 const path = require('path');
-const fs = require('fs');
-const _ = require('lodash');
-const pino = require('pino');
-const multistream = require('pino-multi-stream').multistream;
-const npid = require('npid');
-const mkdirp = require('mkdirp');
-const DB = require('./db');
 const program = new Command();
+const {existsSync, mkdirSync, readFileSync, promises, writeFileSync} = require('fs');
+const lockfile = require('proper-lockfile');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -43,40 +28,93 @@ program.description(`
 require('./resources/disclaimer').output();
 
 // NOTE: After changing parameters here, update the documentation
-program.command('go', { isDefault: true }).description('start the node').action(() => { program.go = true; });
-program.option('--config <file>', 'path to the configuration file');
-program.option('--datadir <path>', 'path to the data directory', path.join(homedir(), '.point/'));
+program
+    .command('go', {isDefault: true})
+    .description('start the node')
+    .action(() => {program.go = true;});
+program.option('--datadir <path>', 'path to the data directory');
 program.option('-v, --verbose', 'force the logger to show debug level messages', false);
-program.command('attach').description('attach to the running point process').action(() => program.attach = true);
-program.command('makemigration').description('[dev mode] auto create db migrations from models').action(() => program.makemigration = true);
-program.command('migrate').description('[dev mode] run migrations').action(() => program.migrate = true);
-program.command('migrate:undo').description('[dev mode] undo migration').action(() => program.migrate = program.migrate_undo = true);
-program.command('demo').description('dump demo configs to ~/.point').action(() => program.demo = true);
-program.command('debug-destroy-everything').description('destroys everything in datadir: database and files. dangerous!').action(() => program.debug_destroy_everything = true);
-program.command('deploy <path>')
+program
+    .command('attach')
+    .description('attach to the running point process')
+    .action(() => (program.attach = true));
+program
+    .command('makemigration')
+    .description('[dev mode] auto create db migrations from models')
+    .action(() => (program.makemigration = true));
+program
+    .command('migrate')
+    .description('[dev mode] run migrations')
+    .action(() => (program.migrate = true));
+program
+    .command('compile')
+    .description('compile contracts')
+    .action(() => (program.compile = true));
+program
+    .command('migrate:undo')
+    .description('[dev mode] undo migration')
+    .action(() => (program.migrate = program.migrate_undo = true));
+program
+    .command('demo')
+    .description('dump demo configs to ~/.point')
+    .action(() => (program.demo = true));
+program
+    .command('debug-destroy-everything')
+    .description('destroys everything in datadir: database and files. dangerous!')
+    .action(() => (program.debug_destroy_everything = true));
+program
+    .command('deploy <path>')
     .description('deploy a website')
-    .action((path, cmd) => { program.deploy = path; program.deploy_contracts = !!cmd.contracts; })
-    .option('--contracts', '(re)deploy contracts too', false);
+    .action((path, cmd) => {
+        program.deploy = path;
+        program.deploy_contracts = Boolean(cmd.contracts);
+        program.dev = Boolean(cmd.dev);
+    })
+    .option('--contracts', '(re)deploy contracts too', false)
+    .option('--dev', 'deploy zapp to dev too', false);
+
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
 // program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
 program.parse(process.argv);
 
-// todo: mix other param arguments into config, like here:
-// let argv;
-// let config = rc('kadence', options(program.datadir), argv);
-
-if (! program.config) {
-    program.config = path.join(program.datadir, 'config.json');
-}
-
 const ctx = {};
 
-ctx.datadir = ctx.datapath = program.datadir;
-ctx.configPath = program.config;
+if (program.datadir) {
+    process.env.DATADIR = program.datadir;
+}
+
+function getContractAddress(name) {
+    const filename = path.resolve(__dirname, 'truffle', 'build', 'contracts', `${name}.json`);
+
+    if (!existsSync(filename)) {
+        return;
+    }
+
+    const {networks} = require(filename);
+
+    for (const network in networks) {
+        const {address} = networks[network];
+        if (address && typeof address === 'string') {
+            return address;
+        }
+    }
+}
+
+// ------------------ Patch Config ------------ //
+
+if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
+    process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
+    process.env.STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS = getContractAddress('StorageProviderRegistry');
+}
+
+const config = require('config');
+const logger = require('./core/log');
+const Model = require('./db/model');
+const Deployer = require('./client/zweb/deployer');
+const DB = require('./db');
+
 ctx.basepath = __dirname;
-ctx.exit = (code = 1) => { process.exit(code); }; // todo: use graceful _exit() function here below. and why 1?
-ctx.die = (err) => { ctx.log.fatal(err); ctx.exit(1); };
 
 // --------------- Dump Demo Configs ----------------- //
 // Must be placed before we're checking for existence of any configs!
@@ -85,54 +123,18 @@ if (program.demo) {
     return;
 }
 
-// ------------------- Init Config ----------------- //
-
-if (! fs.existsSync(ctx.datadir)) mkdirp.sync(ctx.datadir);
-if (! fs.existsSync(ctx.configPath)) throw Error('Cannot find configuration file '+ctx.configPath);
-
-const environment = process.env.DB_ENV || 'development';
-
-const config = JSON.parse(fs.readFileSync(ctx.configPath, 'utf-8'));
-const defaultConfig = require(path.resolve(__dirname, 'resources', 'defaultConfig.json'));
-const dbConfig = { "db": require(path.resolve(__dirname, 'resources', 'sequelizeConfig.json'))[environment] }; // todo: the todo is about 'development' part
-ctx.config = _.merge(defaultConfig, dbConfig, config);
-if (program.verbose) ctx.config.log.level = 'debug';
-
 // ------------------- Init Logger ----------------- //
 
-const logFilePath = path.join(ctx.datadir, 'point.log');
+const log = logger.child({module: 'point'});
 
-const level = pino.levels.values[ ctx.config.log.level ];
-const formatters = {
-    level: (label) => {
-        return { level: label };
-    },
-};
-
-const options = {
-    enabled: ctx.config.log.enabled,
-    formatters,
-    level
-};
-
-let streams = [];
-const outStream = pino({ prettyPrint: { colorize: true } });
-streams.push({
-    level: options.level,
-    stream: outStream[pino.symbols.streamSym]
-});
-streams.push({
-    level: options.level,
-    stream: fs.createWriteStream(path.resolve(logFilePath))
-});
-
-ctx.log = pino(options, multistream(streams));
+ctx.exit = code => (log.close(), process.exit(code));
+ctx.die = err => (log.fatal(err), ctx.exit(1));
 
 // ----------------- Console Mode -------------------- //
 
 if (program.attach) {
     const Console = require('./console');
-    const console = new Console();
+    const console = new Console(ctx);
     console.start();
     return;
 }
@@ -143,7 +145,7 @@ if (program.deploy) {
     if (program.deploy.length === 0) return ctx.die('error: missing path');
     const Deploy = require('./core/deploy');
     const deploy = new Deploy(ctx);
-    deploy.deploy(program.deploy, program.deploy_contracts);
+    deploy.deploy(program.deploy, program.deploy_contracts, program.dev).then(ctx.exit);
     return;
 }
 
@@ -151,7 +153,16 @@ if (program.deploy) {
 
 if (program.makemigration) {
     // A little hack: prepare sequelize-auto-migrations for reading from the current datadir config
-    process.argv = ['./point', 'makemigration', '--models-path', './db/models', '--migrations-path', './db/migrations', '--name', 'automigration'];
+    process.argv = [
+        './point',
+        'makemigration',
+        '--models-path',
+        './db/models',
+        '--migrations-path',
+        './db/migrations',
+        '--name',
+        'automigration'
+    ];
     const SequelizeFactory = require('./db/models');
     SequelizeFactory.init(ctx);
 
@@ -159,18 +170,25 @@ if (program.makemigration) {
     return;
 }
 if (program.migrate) {
-    const seq_cmd = (program.migrate_undo) ? 'db:migrate:undo' : 'db:migrate';
-    exec(`npx sequelize-cli ${seq_cmd} --config resources/sequelizeConfig.json --env ${process.env.DB_ENV || ctx.config.db.database}`,
+    const seq_cmd = program.migrate_undo ? 'db:migrate:undo' : 'db:migrate';
+    exec(
+        `npx sequelize-cli ${seq_cmd} --url sqlite:${
+            path.join(config.get('datadir'), config.get('db.storage'))} --env ${config.get('db.env')}`,
         (error, stdout, stderr) => {
-            if (error) return console.log(`error: ${error.message}`);
-            if (stderr) return console.log(`stderr: ${stderr}`);
-            console.log(`${stdout}`);
+            if (error) {
+                return log.error(error, 'Migration error');
+            }
+            if (stderr) {
+                return log.error(`Migration stderr: ${stderr}`);
+            }
+            log.debug(`Migration result: ${stdout}`);
         }
     );
     return;
 }
 
 // ------------------ Remove Everything ------------ //
+
 if (program.debug_destroy_everything) {
     // todo: remove in prod, dangerous
     ctx.db = new DB(ctx);
@@ -178,20 +196,74 @@ if (program.debug_destroy_everything) {
     return;
 }
 
-// ------------ Main Cycle After This Block ---------- //
-if (! program.go || program.args.length > 0) {
-    program.help();
-    ctx.die();
+// ------------------ Compile Contracts ------------ //
+
+const CONTRACT_ADDRESSES = ['Identity', 'Migrations', 'StorageProviderRegistry'];
+
+if (program.compile) {
+    const getImports = dependency => {
+        const dependencyNodeModulesPath = path.join(__dirname, 'node_modules/', dependency);
+        if (!existsSync(dependencyNodeModulesPath)) {
+            throw new Error(
+                `Could not find contract dependency "${dependency}", have you tried npm install?`
+            );
+        }
+        return {contents: readFileSync(dependencyNodeModulesPath, 'utf8')};
+    };
+
+    log.info('Compiling contracts...');
+
+    const buildDirPath = path.resolve(__dirname, 'truffle', 'build', 'contracts');
+    if (!existsSync(buildDirPath)) {
+        mkdirSync(buildDirPath);
+    }
+    const contractsPath = path.resolve(__dirname, 'truffle', 'contracts');
+
+    Promise.all(CONTRACT_ADDRESSES.map(async name => {
+        const sourceFileName = `${name}.sol`;
+        const buildPath = path.join(buildDirPath, `${name}.json`);
+        const filepath = path.join(contractsPath, sourceFileName);
+        if (existsSync(buildPath)) {
+            log.debug(`Contract build ${name}.json already exists, skipping`);
+            return;
+        }
+        const content = await promises.readFile(filepath, 'utf8');
+        const version = await Deployer.getPragmaVersion(content);
+        const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
+        const compilerProps = {
+            language: 'Solidity',
+            sources: {[sourceFileName]: {content}},
+            settings: {outputSelection: {'*': {'*': ['*']}}}
+        };
+        const artefact = solc.compile(JSON.stringify(compilerProps), {import: getImports});
+
+        if (artefact) {
+            await promises.writeFile(
+                path.join(buildPath),
+                JSON.stringify(JSON.parse(artefact).contracts[sourceFileName][name]),
+                'utf-8'
+            );
+            log.debug(`Contract ${sourceFileName} successfully compiled`);
+        } else {
+            throw new Error('Compiled contract is empty');
+        }
+    }))
+        .then(() => {
+            log.info('Contracts successfully compiled');
+            process.exit(0);
+        })
+        .catch(e => {
+            log.error(e, 'Failed to compile contracts');
+            process.exit(1);
+        });
+    return;
 }
 
-// ---------------------- PID ------------------------ //
+// ------------ Main Cycle After This Block ---------- //
 
-const pidFilePath = path.join(ctx.datadir, 'point.pid');
-try {
-    npid.create(pidFilePath).removeOnExit();
-} catch (err) {
-    ctx.log.fatal('Failed to create PID file, is point already running? File path: '+pidFilePath);
-    process.exit(1);
+if (!program.go || program.args.length > 0) {
+    program.help();
+    ctx.die();
 }
 
 // ------------------ Gracefully exit ---------------- //
@@ -201,20 +273,22 @@ async function _exit(sig) {
     if (exiting) return;
     exiting = true;
 
-    let errors = [];
+    const errors = [];
 
-    ctx.log.info('Received signal '+sig+', shutting down...');
+    log.info('Received signal ' + sig + ', shutting down...');
 
     try {
         if (ctx.db && ctx.db.shutdown) await ctx.db.shutdown();
-    } catch(e) {
+    } catch (e) {
         errors.push('Error while shutting down database: ' + e);
     }
 
     if (errors.length) {
-        for (let e of errors) ctx.log.error(e);
+        for (const e of errors) {
+            log.error(e);
+        }
     } else {
-        ctx.log.info('Successfully shut down.');
+        log.info('Successfully shut down.');
     }
 
     process.exit(1);
@@ -222,56 +296,53 @@ async function _exit(sig) {
     // todo: shut down everything else
 }
 
-const sigs = ['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT', 'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'];
+const sigs = [
+    'exit',
+    'SIGHUP',
+    'SIGINT',
+    'SIGQUIT',
+    'SIGILL',
+    'SIGTRAP',
+    'SIGABRT',
+    'SIGBUS',
+    'SIGFPE',
+    'SIGUSR1',
+    'SIGSEGV',
+    'SIGUSR2',
+    'SIGTERM'
+];
 sigs.forEach(function (sig) {
     process.on(sig, function () {
         _exit(sig);
     });
 });
 
-process.on('uncaughtException', (err) => {
-    ctx.log.error(err.message);
-    ctx.log.debug(err.stack);
-
-    if (err.message.includes('This socket has been ended by the other party')) {
-        // todo: where is it coming from?
-        /*
-        [1632829385722] ERROR (5912 on Serges-MacBook-Pro.local): This socket has been ended by the other party
-        [1632829385722] DEBUG (5912 on Serges-MacBook-Pro.local): Error: This socket has been ended by the other party
-    at Socket.writeAfterFIN [as write] (net.js:457:14)
-    at Socket.ondata (internal/streams/readable.js:726:22)
-    at Socket.emit (events.js:400:28)
-    at addChunk (internal/streams/readable.js:290:12)
-    at readableAddChunk (internal/streams/readable.js:265:9)
-    at Socket.Readable.push (internal/streams/readable.js:204:10)
-    at TCP.onStreamRead (internal/stream_base_commons.js:188:23)
-         */
-        // do nothing
-        return;
-    }
-
-    npid.remove(pidFilePath);
-    process.exit(1);
+process.on('uncaughtException', err => {
+    log.error({message: err.message, stack: err.stack}, 'Error: uncaught exception');
 });
+
 process.on('unhandledRejection', (err, second) => {
-    npid.remove(pidFilePath);
-
-    if (err.message && err.message.includes && err.message.includes('Invalid JSON RPC response')) ctx.log.debug('>>> Are you sure you have a web3 connection? Such as Ganache, Ethereum etc. <<<');
-
-    ctx.log.debug(err, second);
-    ctx.log.error('Unhandled Rejection: ' + err.message);
-    ctx.log.debug(err.stack);
-    process.exit(1);
+    log.debug(err, second);
+    log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
 });
 
-// -------------------- Init DB ---------------------- //
-ctx.db = new DB(ctx);
-setImmediate(async() => {
-    await ctx.db.init();
-});
+Model.setCtx(ctx);
 
 // ------------------- Start Point ------------------- //
 
-const Point = require('./core');
-const point = new Point(ctx);
-point.start();
+// This is just a dummy file: proper-lockfile handles the lockfile creation,
+// but it's intended to lock some existing file
+const lockfilePath = path.join(config.get('datadir'), 'point');
+if (!existsSync(lockfilePath)) {
+    writeFileSync(lockfilePath, 'point');
+}
+lockfile.lock(lockfilePath)
+    .then(() => {
+        const Point = require('./core');
+        const point = new Point(ctx);
+        point.start();
+    })
+    .catch(err => {
+        log.error({err}, 'Failed to create lockfile, is point already running?');
+        process.exit(1);
+    });

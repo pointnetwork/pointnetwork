@@ -1,3 +1,1 @@
-module.exports = [
-    ['GET', '/', 'NodeSocketController']
-];
+module.exports = [['GET', '/', 'NodeSocketController']];

@@ -10,6 +10,7 @@ import Comments from '../comments/Comments'
 export default function Post({ post, reloadPostLikesCount }) {
   const EMPTY_IMAGE = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const [showComments, setShowComments] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(post.commentsCount);
   const { walletAddress, csrfToken } = useAppContext();
 
   const toggleShowComments = () => {
@@ -58,11 +59,11 @@ export default function Post({ post, reloadPostLikesCount }) {
             <span className="postLikeCounter">{post.likesCount} people like it</span>
           </div>
           <div className="postBottomRight">
-            <span className="postCommentText" onClick={toggleShowComments}>{post.commentsCount} comments</span>
+            <span className="postCommentText" onClick={toggleShowComments}>{commentsCount} comments</span>
           </div>
         </div>
         <div className="comments">
-          {showComments && <Comments postId={post.id} />}
+          {showComments && <Comments postId={post.id} commentsCount={commentsCount} setCommentsCount={setCommentsCount} />}
         </div>
       </div>
     </div>

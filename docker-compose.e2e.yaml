@@ -3,181 +3,116 @@ version: '3.9'
 services:
   blockchain_node:
     image: trufflesuite/ganache-cli:v6.12.2
-    container_name: pointnetwork_blockchain_node
+    container_name: blockchain
+    hostname: blockchain_node
     healthcheck:
       test: |
-        wget -qO- http://localhost:$BLOCKCHAIN_PROVIDER_PORT \
+        wget -qO- http://localhost:7545 \
           --header='Content-Type: application/json' \
           --header="Accept: application/json" \
           --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}'
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 5s
     ports:
-      - '$BLOCKCHAIN_PROVIDER_PORT:$BLOCKCHAIN_PROVIDER_PORT'
+      - '7545:7545'
     volumes:
-      - blockchain_data:/data:rw
+      - blockchain_data_e2e:/data:rw
     environment:
       - DOCKER=true
-    command:
-      - -v
-      - -p
-      - $BLOCKCHAIN_PROVIDER_PORT
-      - --account
-      - $PK_STORAGE_PROVIDER,0x56bc75e2d63100000
-      - $PK_WEBSITE_OWNER,0x56bc75e2d63100000
-      - $PK_WEBSITE_VISITOR,0x56bc75e2d63100000
-      - -i
-      - $BLOCKCHAIN_NETWORK_ID
-      - --keepAliveTimeout
-      - '20000'
-      - --db
-      - '/data'
+    command: |
+      -v -p 7545 -i 256 --keepAliveTimeout 20000 --db /data \
+        --account 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e,0x56bc75e2d63100000
 
   contract_deployer:
     image: pointnetwork/pointnetwork_deployer:dev
-    container_name: pointnetwork_contract_deployer
+    container_name: deployer
     depends_on:
-      - blockchain_node
+      blockchain_node:
+        condition: service_healthy
     deploy:
       restart_policy:
-        condition: none
+        condition: 'no'
     volumes:
-      - ./truffle/migrations:/truffle/migrations:ro
+      - shared_contracts_e2e:/build:rw
       - ./truffle/contracts:/truffle/contracts:ro
-      - shared_contracts:/build:rw
+      - ./truffle/migrations:/truffle/migrations:ro
       - ./truffle/truffle-config.js:/truffle/truffle-config.js:ro
     entrypoint: /truffle/run.js
     environment:
-      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
-      BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: 7545
+      BLOCKCHAIN_NETWORK_ID: 256
       DEPLOYER_COMPILER_VERSION: native
       DEPLOYER_BUILD_PATH: /build
 
-  storage_provider:
-    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
-    container_name: pointnetwork_storage_provider
-    healthcheck:
-      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
+  point_node:
+    extends:
+      file: docker-compose.dev.yaml
+      service: point_node
     depends_on:
-      - blockchain_node
-    entrypoint: 'npm'
+      contract_deployer:
+        condition: service_completed_successfully
+      buckets:
+        condition: service_completed_successfully
     command: 'run start:docker:e2e'
     volumes:
-      - storage_provider_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test1.json:/nodeConfig.json:ro
-      - ./resources/demo-docker/mnemonic-storage_provider.json:/data/keystore/key.json
-      - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
-    ports:
-      - '12345:9685'
-      - '65500:8666'
-      - '24680:2468'
+      - point_node_data_e2e:/data
+      - shared_contracts_e2e:/app/truffle/build/contracts
+      - ./resources/blockchain-test-key.json:/data/keystore/key.json
+      - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     environment:
-      DATADIR: /data
-      DB_ENV: pointnode1
-      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
-      BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_STORAGE_PROVIDER
-
-  website_owner:
-    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
-    container_name: pointnetwork_website_owner
-    healthcheck:
-      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
-    depends_on:
-      - blockchain_node
-      - database
-    ports:
-      - '12346:9685'
-      - '65501:8666'
-      - '24681:2468'
-    entrypoint: 'npm'
-    command: 'run start:docker:e2e'
+      NODE_CONFIG_ENV: e2e
+  arweave:
+    extends:
+      file: docker-compose.storage.yaml
+      service: arweave
     volumes:
-      - website_owner_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test2.json:/nodeConfig.json:ro
-      - ./resources/demo-docker/mnemonic-website_owner.json:/data/keystore/key.json
-      - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
-      - ./example:/app/example:ro
-      - ./deployspace:/app/deployspace:ro
-    environment:
-      DATADIR: /data
-      DB_ENV: pointnode2
-      DEV_ZAPP_HOST: $DEV_ZAPP_HOST
-      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
-      BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_OWNER
+      - arweave_data_e2e:/mnt/arweave-data
 
-  website_visitor:
-    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
-    container_name: pointnetwork_website_visitor
-    healthcheck:
-      test: node /app/scripts/healthcheck.network.js && curl -f http://localhost:2468/v1/api/status/ping
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
-    depends_on:
-      - blockchain_node
-    ports:
-      - '12347:9685'
-      - '65502:8666'
-      - '24682:2468'
-    entrypoint: 'npm'
-    command: 'run start:docker:e2e'
+  gateway:
+    extends:
+      file: docker-compose.storage.yaml
+      service: gateway
     volumes:
-      - website_visitor_data:/data:rw
-      - shared_contracts:/app/truffle/build/contracts:ro
-      - ./resources/demo-docker/config.test3.json:/nodeConfig.json:ro
-      - ./resources/demo-docker/mnemonic-website_visitor.json:/data/keystore/key.json
-      - ./resources/sequelizeConfig.docker.e2e.json:/app/resources/sequelizeConfig.json:ro
-    environment:
-      DATADIR: /data
-      DB_ENV: pointnode3
-      BLOCKCHAIN_URL: $BLOCKCHAIN_URL
-      BLOCKCHAIN_NETWORK_ID: $BLOCKCHAIN_NETWORK_ID
-      BLOCKCHAIN_HOST: $BLOCKCHAIN_HOST
-      BLOCKCHAIN_PORT: $BLOCKCHAIN_PROVIDER_PORT
-      DATABASE_URL: postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_WEBSITE_VISITOR
+      - gateway_data_e2e:/app
 
-  database:
-    image: postgres:13.4
-    container_name: pointnetwork_database
-    healthcheck:
-      test: pg_isready -U $DB_USERNAME
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    environment:
-      POSTGRES_USER: $DB_USERNAME
-      POSTGRES_PASSWORD: $DB_PASSWORD
-      POSTGRES_DB: $DB_USERNAME
-      DATABASE: $DB_STORAGE_PROVIDER $DB_WEBSITE_OWNER $DB_WEBSITE_VISITOR
+  gateway_db:
+    extends:
+      file: docker-compose.storage.yaml
+      service: gateway_db
     volumes:
-      - database_data:/var/lib/postgresql/data/
-      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
+      - gateway_db_data_e2e:/var/lib/postgresql/data
+
+  bundler:
+    extends:
+      file: docker-compose.storage.yaml
+      service: bundler
+    # volumes:
+    #   - ../arweave-bundler/src:/app/src
+    #   - ../arweave-bundler/config:/app/config
+    #   - ../arweave-bundler/package.json:/app/package.json
+    # entrypoint: >
+    #   /bin/bash -c "ARWEAVE_KEY=$$(cat /app/keystore/key.json) npm run develop"
+
+  cache:
+    extends:
+      file: docker-compose.storage.yaml
+      service: cache
+    volumes:
+      - bundler_data_e2e:/data
+
+  buckets:
+    extends:
+      file: docker-compose.storage.yaml
+      service: buckets
 
 volumes:
-  blockchain_data:
-  shared_contracts:
-  storage_provider_data:
-  website_owner_data:
-  website_visitor_data:
-  database_data:
+  blockchain_data_e2e:
+  shared_contracts_e2e:
+  point_node_data_e2e:
+  arweave_data_e2e:
+  gateway_data_e2e:
+  bundler_data_e2e:
+  gateway_db_data_e2e:

@@ -6,9 +6,7 @@ class PingController extends PointSDKController {
     }
 
     ping() {
-        return this._response(
-            {'ping': 'pong'}
-        );
+        return this._response({ping: 'pong'});
     }
 }
 

@@ -20,3 +20,7 @@ arweave.json
 *.zip
 geth
 .env.e2e
+.env.local
+.env.zappdev
+
+config/*local*

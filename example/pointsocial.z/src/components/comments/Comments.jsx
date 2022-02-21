@@ -5,22 +5,23 @@ import Comment from './Comment'
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
 
-const Comments = ({ postId }) => {
-    const { csrfToken } = useAppContext()
+const Comments = ({ postId, commentsCount, setCommentsCount }) => {
     const DEFAULT_BTN_LABEL = 'Comment'
+    const { csrfToken } = useAppContext()
     const [comments, setComments] = useState([])
     const [contents, setContents] = useState()
     const [btnLabel, setBtnLabel] = useState(DEFAULT_BTN_LABEL);
     const [btnEnabled, setBtnEnabled] = useState(false);
     const [loading, setLoading] = useState(true);
+    const { walletAddress } = useAppContext();
 
-    onContentsChange = event => {
+    const onContentsChange = event => {
       let newContents = event.target.value;
       setContents(newContents)
       setBtnEnabled(newContents && newContents.length > 0)
     }
 
-    setSaving = (saving) => {
+    const setSaving = (saving) => {
       setBtnEnabled(!saving);
       saving ? setBtnLabel('Saving...') : setBtnLabel(DEFAULT_BTN_LABEL);
     }
@@ -29,6 +30,18 @@ const Comments = ({ postId }) => {
       setLoading(true);
       const comments = await fetchComments()
       setComments(comments);
+      setLoading(false);
+    }
+
+    const renderCommentsImmediate = (newCommentContent) => {
+      console.log('Using renderCommentsImmediate function.')
+      setLoading(true);
+      updatedComments = [...comments];
+      newCommentId = comments.length + 1;
+      const newComment = {id: newCommentId, from: walletAddress, contents: newCommentContent, createdAt: Date.now()}
+      updatedComments.push(newComment);
+      setComments(updatedComments);
+      setCommentsCount(parseInt(commentsCount) + 1);
       setLoading(false);
     }
 
@@ -65,8 +78,10 @@ const Comments = ({ postId }) => {
           // Save the post contents storage id in the PoinSocial Smart Contract
           await window.point.contract.send({contract: 'PointSocial', method: 'addCommentToPost', params: [postId, storageId], csrfToken});
           setSaving(false);
+          // calling renderCommentsImmediate instead of fetching the comments due to issues with fetching content too soon from Arweave after posting.
+          renderCommentsImmediate(contents);
           setContents('');
-          await getComments();
+          // await getComments();
       } catch (err) {
         setSaving(false);
         console.error('Error: ', err);
@@ -92,7 +107,7 @@ const Comments = ({ postId }) => {
         {loading && <Box sx={{ display: 'flex' }}>
           <CircularProgress />
         </Box>}
-        {(!loading && comments.length == 0) && 'No comments yet. Be the first!'}
+        {(!loading && comments.length === 0) && 'No comments yet. Be the first!'}
         {comments.map((comment) => (
           <Comment key={comment.id} comment={comment} />
         ))}

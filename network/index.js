@@ -1,20 +1,19 @@
 const Web3Bridge = require('./web3bridge');
-const Kademlia = require('./kademlia');
 const KeyValue = require('./keyvalue');
+const config = require('config');
 
 class Network {
     constructor(ctx) {
         this.ctx = ctx;
-        this.config = ctx.config.network;
     }
 
     async start() {
         await this.init();
 
         // todo: rewrite with threads!
-        this.timeout = this.ctx.config.simulation_delay; // todo: ???
+        this.timeout = config.get('network.simulation_delay'); // todo: ???
         this.timerFn = null;
-        this.timerFn = async() => {
+        this.timerFn = async () => {
             await this.cycle();
             setTimeout(this.timerFn, this.timeout);
         };
@@ -36,9 +35,6 @@ class Network {
         this.web3bridge = new Web3Bridge(this.ctx);
         await this.web3bridge.start(); // todo: do we need await?
 
-        this.kademlia = new Kademlia(this.ctx);
-        await this.kademlia.start(); // todo: do we need await? if so, make sure it doesn't impact everything else
-
         this.keyvalue = new KeyValue(this.ctx, this);
         this.ctx.keyvalue = this.keyvalue;
         await this.keyvalue.start();
@@ -46,7 +42,6 @@ class Network {
 
     async cycle() {
         // todo
-
         // todo: make sure web3 is up
         // todo: make sure raiden is up
         // todo: then signal to other processes that they can start communicating now

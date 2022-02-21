@@ -2,6 +2,8 @@ const WebSocket = require('ws');
 const Wallet = require('../../wallet/index');
 const DeployerProgress = require('../../client/zweb/deployer/progress');
 const Console = require('../../console');
+const logger = require('../../core/log');
+const log = logger.child({module: 'NodeSocketController'});
 
 /*
 The NodeSocketController is for handling internal node websocket connections via the internal node api port and is currently used by the Fastify Websocket connection (see ws_routes.js).
@@ -17,7 +19,7 @@ class NodeSocketController {
     init() {
         this.console = new Console(this.ctx);
         // expect the message to contain an object detailing the
-        this.ws.on('message', async (msg) => {
+        this.ws.on('message', async msg => {
             const cmd = JSON.parse(msg);
             switch (cmd.type) {
                 case 'api':
@@ -25,25 +27,44 @@ class NodeSocketController {
                     break;
                 case 'walletSubscription':
                     // subscribe to the wallets TRANSACTION_EVENT via the wallet transactionEventEmitter
-                    this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, (data) => {
+                    this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, data => {
                         this.publishToClients(this._formatResponse(cmd, data));
                     });
-                    this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to Wallet.TRANSACTION_EVENT'}, 'SUBSCRIBED_EVENT'));
+                    this.publishToClients(
+                        this._formatResponse(
+                            cmd,
+                            {message: 'Subscribed to Wallet.TRANSACTION_EVENT'},
+                            'SUBSCRIBED_EVENT'
+                        )
+                    );
                     break;
                 case 'deployerSubscription':
                     // subscribe to the deployerProgress PROGRESS_UPDATED via the wallet progressEventEmitter
-                    this.ctx.client.deployerProgress.progressEventEmitter.on(DeployerProgress.PROGRESS_UPDATED, (data) => {
-                        this.publishToClients(this._formatResponse(cmd, data));
-                    });
-                    this.publishToClients(this._formatResponse(cmd, {message: 'Subscribed to DeployerProgress.PROGRESS_UPDATED'}, 'SUBSCRIBED_EVENT'));
+                    this.ctx.client.deployerProgress.progressEventEmitter.on(
+                        DeployerProgress.PROGRESS_UPDATED,
+                        data => {
+                            this.publishToClients(this._formatResponse(cmd, data));
+                        }
+                    );
+                    this.publishToClients(
+                        this._formatResponse(
+                            cmd,
+                            {message: 'Subscribed to DeployerProgress.PROGRESS_UPDATED'},
+                            'SUBSCRIBED_EVENT'
+                        )
+                    );
                     break;
             }
+        });
+
+        this.ws.on('error', err => {
+            log.error(err, 'Error from NodeSocketController');
         });
     }
 
     publishToClients(msg) {
         if (this.wss) {
-            this.wss.clients.forEach((client) => {
+            this.wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify(msg));
                 }
@@ -52,19 +73,23 @@ class NodeSocketController {
     }
 
     async apiResponseFor(cmdObj) {
-        let [cmd, params] = this._parseCmd(cmdObj.params.path);
-        let response = await this.console.cmd_api(cmd, ...params);
+        const [cmd, params] = this._parseCmd(cmdObj.params.path);
+        const response = await this.console.cmd_api(cmd, ...params);
         return this._formatResponse(cmdObj, response);
     }
 
     _formatResponse(cmd, response, event = 'DATA_EVENT') {
-        let payload = {...cmd, data: response, event};
+        const payload = {...cmd, data: response, event};
         return payload;
     }
 
     _parseCmd(cmdstr) {
         let [cmd, params] = cmdstr.split('?');
-        params ? params = params.split('&') : params = '';
+        if (params) {
+            params = params.split('&');
+        } else {
+            params = '';
+        }
         return [cmd, params];
     }
 }

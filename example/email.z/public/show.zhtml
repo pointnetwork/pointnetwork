@@ -20,6 +20,12 @@
 
     </div>
     <div class="inbox-body">
+        <form action="/compose" method="get">
+            <input type="hidden" name="recipient" value="{{ identity_by_owner(from) }}"/>
+            <input type="hidden" name="message" value="> Msg Id {{ request.messageid }} form @{{ identity_by_owner(from) }} sent at {{ createdAt | date('Y-m-d H:i:s') }}
+> {{ message |replace({'\n': '\n> '}) }}"/>
+            <input type="submit" value="Reply" />
+        </form>
 
         {{ message | nl2br }}
 
