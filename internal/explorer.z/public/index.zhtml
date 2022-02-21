@@ -44,10 +44,17 @@
     %}
 
     <style>ul { margin-bottom: 0; }</style>
+    {% set zapp_listed_counter = 0 %}
     {% for k,v in websites %}
-    <ul>
-        <li><a href="{{ 'https://' ~ k }}" target="_blank">{{ k }} &mdash; {{ v }}</a></li>
-    </ul>
+        {% if (k|replace({'.z': ''})) in identity_handles %}
+            <ul>
+                <li><a href="{{ 'https://' ~ k }}" target="_blank">{{ k }} &mdash; {{ v }}</a></li>
+            </ul>
+            {% set zapp_listed_counter = zapp_listed_counter + 1 %}
+        {% endif %}
     {% endfor %}
+    {% if zapp_listed_counter == 0 %}
+        <p>No ZApp deployed yet.</p>
+    {% endif %}
 
 {% endblock %}
