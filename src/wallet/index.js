@@ -6,7 +6,7 @@ const solana = require('@solana/web3.js');
 const {hdkey} = require('ethereumjs-wallet');
 const bip39 = require('bip39');
 const config = require('config');
-const {makeSurePathExistsAsync} = require('#utils');
+const {makeSurePathExistsAsync} = require('../core/utils');
 const logger = require('../core/log');
 const log = logger.child({module: 'Wallet'});
 

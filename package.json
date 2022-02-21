@@ -111,10 +111,6 @@
     "lint": "eslint --ext .js src/ && eslint --ext .js truffle/ && eslint point",
     "lint:sol": "solhint 'example/**/contracts/*.sol' 'truffle/contracts/*.sol'"
   },
-  "imports": {
-    "#utils": "./src/core/utils.js",
-    "#exceptions": "./src/core/exceptions.js"
-  },
   "jest": {
     "verbose": true,
     "moduleNameMapper": {

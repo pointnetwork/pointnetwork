@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 const fs = require('fs');
 const crypto = require('crypto');
-const utils = require('#utils');
+const utils = require('../core/utils');
 const defaultConfig = require('../../resources/defaultConfig.json');
 
 const BITS = defaultConfig.storage.redkey_encryption_bits;

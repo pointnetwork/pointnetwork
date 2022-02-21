@@ -2,7 +2,7 @@ const Model = require('../model');
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
-const utils = require('#utils');
+const utils = require('../../core/utils');
 const _ = require('lodash');
 
 // todo: two files? maybe reuse some code at least
