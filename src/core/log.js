@@ -19,7 +19,7 @@ if (sendLogs && sendLogsTo) {
 
 streams.push(
     {level: options.level, stream: pino({prettyPrint: {colorize: true}})[pino.symbols.streamSym]},
-    {level: options.level, stream: createWriteStream(path.resolve(path.join(resolveHome(datadir), 'point.log')))}
+    {level: options.level, stream: createWriteStream(path.resolve(path.join(resolveHome(__datadir), 'point.log')))}
 );
 
 module.exports = Object.assign(pino(options, multistream(streams)), {
