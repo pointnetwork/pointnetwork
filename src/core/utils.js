@@ -2,8 +2,8 @@ const crypto = require('crypto');
 const mkdirp = require('mkdirp');
 const ethUtil = require('ethereumjs-util');
 const {promises: fs} = require('fs');
-const kadUtils = require('@pointnetwork/kadence').utils;
 const os = require('os');
+const path = require('path');
 
 const utils = {
     makeSurePathExists: function (path) {
@@ -135,10 +135,6 @@ const utils = {
             }
         }
         return results;
-    },
-
-    urlToContact: function (str) {
-        return kadUtils.parseContactURL(str);
     },
 
     nullAsyncFn: async function () {}, // todo: can you replace it with just await null?
