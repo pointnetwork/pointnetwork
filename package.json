@@ -91,6 +91,7 @@
     "start:docker:zappdev": "npm run migrate && MODE=zappdev nodemon",
     "start:dev": "NODE_ENV=development nodemon",
     "build": "tsc",
+    "postbuild": "npx copyfiles resources/certs/* config/*.yaml dist",
     "migrate": "./point migrate",
     "migration": "node ./scripts/migrate.js",
     "compile": "./point compile",
