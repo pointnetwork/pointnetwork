@@ -8,7 +8,7 @@ const {
     delay,
     areScalarArraysEqual,
     escape
-} = require('#utils');
+} = require('../../core/utils');
 const Arweave = require('arweave');
 const {promises: fs} = require('fs');
 const path = require('path');

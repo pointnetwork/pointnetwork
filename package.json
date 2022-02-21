@@ -112,7 +112,6 @@
     "lint:sol": "solhint 'example/**/contracts/*.sol' 'truffle/contracts/*.sol'"
   },
   "imports": {
-    "#utils": "./src/core/utils.js",
     "#exceptions": "./src/core/exceptions.js"
   },
   "jest": {
