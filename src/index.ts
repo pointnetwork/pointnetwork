@@ -13,7 +13,7 @@ if (RUNNING_PKG_MODE) {
   // by default config library uses process.cwd() to reference the config folder
   // when using vercel/pkg process.cwd references real folder and not packaged folder
   // overwriting this env variable fixes the problems
-  process.env.NODE_CONFIG_DIR = path.resolve(__dirname, 'config');
+  process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
 }
 
 

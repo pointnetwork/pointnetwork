@@ -1,5 +1,6 @@
 const forge = require('node-forge');
 const fs = require('fs');
+const path = require('path');
 
 const certCache = {};
 
@@ -18,8 +19,9 @@ function generateCertificate(servername) {
     const keys = pki.rsa.generateKeyPair(2048);
     const cert = pki.createCertificate();
 
-    const privateCAKey = pki.privateKeyFromPem(fs.readFileSync('./resources/certs/ca.key'));
-    const caCert = pki.certificateFromPem(fs.readFileSync('./resources/certs/ca.crt'));
+    const certsPath = path.join(__dirname, '../../../resources/certs');
+    const privateCAKey = pki.privateKeyFromPem(fs.readFileSync(`${certsPath}/ca.key`));
+    const caCert = pki.certificateFromPem(fs.readFileSync(`${certsPath}/ca.crt`));
 
     cert.publicKey = keys.publicKey;
     function md5(value) {

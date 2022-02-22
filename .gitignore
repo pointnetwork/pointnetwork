@@ -7,6 +7,7 @@ resources/demo/config.test4.json
 debug
 sessions/
 dist/
+bin/
 .cache/
 .parcel-cache/
 dist
