@@ -1,11 +1,9 @@
 #!/usr/bin/env node
-// Load first dependencies
 const {Command} = require('commander');
 const {exec} = require('child_process');
 const path = require('path');
 const program = new Command();
-const {existsSync, mkdirSync, readFileSync, promises, writeFileSync} = require('fs');
-const lockfile = require('proper-lockfile');
+const {existsSync, mkdirSync, readFileSync, promises} = require('fs');
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -13,27 +11,7 @@ process.env['NEXT_TELEMETRY_DISABLED'] = '1';
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-program.version(`
-    0.0 alpha
-`); // todo
-
-program.description(`
-    Point Network
-    https://pointnetwork.io/
-
-    Licensed under MIT license.
-`);
-
-// Print disclaimer
-require('./resources/disclaimer').output();
-
-// NOTE: After changing parameters here, update the documentation
-program
-    .command('go', {isDefault: true})
-    .description('start the node')
-    .action(() => {program.go = true;});
 program.option('--datadir <path>', 'path to the data directory');
-program.option('-v, --verbose', 'force the logger to show debug level messages', false);
 program
     .command('attach')
     .description('attach to the running point process')
@@ -109,12 +87,10 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 }
 
 const config = require('config');
-const logger = require('./core/log');
-const Model = require('./db/model');
-const Deployer = require('./client/zweb/deployer');
-const DB = require('./db');
-
-ctx.basepath = __dirname;
+const logger = require('./src/core/log');
+const Console = require('./src/console');
+const Deployer = require('./src/client/zweb/deployer');
+const DB = require('./src/db');
 
 // --------------- Dump Demo Configs ----------------- //
 // Must be placed before we're checking for existence of any configs!
@@ -133,7 +109,6 @@ ctx.die = err => (log.fatal(err), ctx.exit(1));
 // ----------------- Console Mode -------------------- //
 
 if (program.attach) {
-    const Console = require('./console');
     const console = new Console(ctx);
     console.start();
     return;
@@ -143,7 +118,7 @@ if (program.attach) {
 
 if (program.deploy) {
     if (program.deploy.length === 0) return ctx.die('error: missing path');
-    const Deploy = require('./core/deploy');
+    const Deploy = require('./src/core/deploy');
     const deploy = new Deploy(ctx);
     deploy.deploy(program.deploy, program.deploy_contracts, program.dev).then(ctx.exit);
     return;
@@ -163,17 +138,18 @@ if (program.makemigration) {
         '--name',
         'automigration'
     ];
-    const SequelizeFactory = require('./db/models');
+    const SequelizeFactory = require('./src/db/models');
     SequelizeFactory.init(ctx);
 
-    require('./node_modules/sequelize-auto-migrations/bin/makemigration.js');
+    require('sequelize-auto-migrations/bin/makemigration.js');
     return;
 }
 if (program.migrate) {
     const seq_cmd = program.migrate_undo ? 'db:migrate:undo' : 'db:migrate';
     exec(
         `npx sequelize-cli ${seq_cmd} --url sqlite:${
-            path.join(config.get('datadir'), config.get('db.storage'))} --env ${config.get('db.env')}`,
+            path.join(config.get('datadir'), config.get('db.storage'))} --env ${
+            config.get('db.env')}`,
         (error, stdout, stderr) => {
             if (error) {
                 return log.error(error, 'Migration error');
@@ -202,7 +178,7 @@ const CONTRACT_ADDRESSES = ['Identity', 'Migrations', 'StorageProviderRegistry']
 
 if (program.compile) {
     const getImports = dependency => {
-        const dependencyNodeModulesPath = path.join(__dirname, 'node_modules/', dependency);
+        const dependencyNodeModulesPath = path.join(__dirname, 'node_modules', dependency);
         if (!existsSync(dependencyNodeModulesPath)) {
             throw new Error(
                 `Could not find contract dependency "${dependency}", have you tried npm install?`
@@ -256,93 +232,5 @@ if (program.compile) {
             log.error(e, 'Failed to compile contracts');
             process.exit(1);
         });
-    return;
+    
 }
-
-// ------------ Main Cycle After This Block ---------- //
-
-if (!program.go || program.args.length > 0) {
-    program.help();
-    ctx.die();
-}
-
-// ------------------ Gracefully exit ---------------- //
-
-let exiting = false;
-async function _exit(sig) {
-    if (exiting) return;
-    exiting = true;
-
-    const errors = [];
-
-    log.info('Received signal ' + sig + ', shutting down...');
-
-    try {
-        if (ctx.db && ctx.db.shutdown) await ctx.db.shutdown();
-    } catch (e) {
-        errors.push('Error while shutting down database: ' + e);
-    }
-
-    if (errors.length) {
-        for (const e of errors) {
-            log.error(e);
-        }
-    } else {
-        log.info('Successfully shut down.');
-    }
-
-    process.exit(1);
-
-    // todo: shut down everything else
-}
-
-const sigs = [
-    'exit',
-    'SIGHUP',
-    'SIGINT',
-    'SIGQUIT',
-    'SIGILL',
-    'SIGTRAP',
-    'SIGABRT',
-    'SIGBUS',
-    'SIGFPE',
-    'SIGUSR1',
-    'SIGSEGV',
-    'SIGUSR2',
-    'SIGTERM'
-];
-sigs.forEach(function (sig) {
-    process.on(sig, function () {
-        _exit(sig);
-    });
-});
-
-process.on('uncaughtException', err => {
-    log.error({message: err.message, stack: err.stack}, 'Error: uncaught exception');
-});
-
-process.on('unhandledRejection', (err, second) => {
-    log.debug(err, second);
-    log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
-});
-
-Model.setCtx(ctx);
-
-// ------------------- Start Point ------------------- //
-
-// This is just a dummy file: proper-lockfile handles the lockfile creation,
-// but it's intended to lock some existing file
-const lockfilePath = path.join(config.get('datadir'), 'point');
-if (!existsSync(lockfilePath)) {
-    writeFileSync(lockfilePath, 'point');
-}
-lockfile.lock(lockfilePath)
-    .then(() => {
-        const Point = require('./core');
-        const point = new Point(ctx);
-        point.start();
-    })
-    .catch(err => {
-        log.error({err}, 'Failed to create lockfile, is point already running?');
-        process.exit(1);
-    });

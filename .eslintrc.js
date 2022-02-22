@@ -4,18 +4,17 @@ module.exports = {
         es2021: true,
         mocha: true
     },
-    parser: '@babel/eslint-parser',
+    parser: '@typescript-eslint/parser',
     extends: [
-        // 'plugin:@typescript-eslint/recommended',
+        'plugin:@typescript-eslint/recommended'
         // 'plugin:import/recommended'``
     ],
-    // 'parser': '@typescript-eslint/parser',
     parserOptions: {
         ecmaVersion: 13,
         requireConfigFile: false
     },
     plugins: [
-        // '@typescript-eslint',
+        '@typescript-eslint',
         // 'import',
         'filenames',
         'prefer-arrow'
@@ -23,10 +22,8 @@ module.exports = {
     ignorePatterns: [
         'node_modules',
         '*.min.js',
-        'example/*',
         '**/public/**/*',
-        'db/migrations',
-        'api/web/' // TODO: default parser doesn't handle them
+        'src/db/migrations'
     ],
     rules: {
         'no-implicit-coercion': ['error'],
@@ -44,7 +41,6 @@ module.exports = {
         'no-fallthrough': 'off',
         'no-console': 'error',
         'no-debugger': 'error',
-        'no-unused-vars': 'error',
         'max-len': ['warn', {
             code: 100,
             ignoreStrings: true,
@@ -84,13 +80,16 @@ module.exports = {
         'no-multiple-empty-lines': ['warn', {max: 1, maxEOF: 0}],
         'quotes': ['error', 'single', {allowTemplateLiterals: true}],
         'no-eval': 'error',
-        'no-implied-eval': 'error'
-        // '@typescript-eslint/no-var-requires': 'error', // If we decide to proceed with TS
-        // '@typescript-eslint/ban-ts-comment': 'error', // If we decide to proceed with TS
-        // '@typescript-eslint/no-non-null-assertion': 'off', // If we decide to proceed with TS
-        // '@typescript-eslint/no-shadow': 'error',
-        // '@typescript-eslint/no-unused-vars': 'error'
-        // 'no-shadow': 'off',
+        'no-implied-eval': 'error',
+        '@typescript-eslint/no-var-requires': 'off', // TODO: enable
+        '@typescript-eslint/ban-ts-comment': 'error',
+        '@typescript-eslint/no-non-null-assertion': 'off',
+        '@typescript-eslint/no-shadow': 'off', // TODO: fix all and enable
+        '@typescript-eslint/no-this-alias': 'off', // TODO: fix all and enable
+        '@typescript-eslint/no-empty-function': 'off', // TODO: fix all and enable
+        'no-shadow': 'off',
+        '@typescript-eslint/no-unused-vars': 'error',
+        'no-unused-vars': 'off'
         // 'import/no-extraneous-dependencies': 'error',
         // 'import/imports-first': ['error', 'absolute-first'],
         // 'import/extensions': ['error', 'never'],
@@ -100,10 +99,7 @@ module.exports = {
         files: [
             'scripts/**/*.js',
             'truffle/scripts/*.js',
-            'point',
-            'web2server.js',
-            'resources/**/*.js',
-            'tests/**/*.js'
+            'point'
         ],
         rules: {'no-console': 'off'}
     }]

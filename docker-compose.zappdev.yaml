@@ -27,20 +27,13 @@ services:
         condition: service_completed_successfully
     command: 'run start:docker:zappdev'
     volumes:
-      - ./api:/app/api:ro
-      - ./client:/app/client:ro
       - ./config:/app/config:ro
-      - ./console:/app/console:ro
-      - ./core:/app/core:ro
-      - ./db:/app/db:ro
       - ./example:/app/example:ro
-      - ./internal:/app/internal:ro
-      - ./network:/app/network:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./wallet:/app/wallet:ro
       - ./package.json:/app/package.json:ro
       - ./point:/app/point:ro
+      - ./src:/app/src:ro
       - point_node_data_zappdev:/data
       - shared_contracts_zappdev:/app/truffle/build/contracts
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
@@ -51,7 +44,6 @@ services:
       - '24681:2468'
     environment:
       NODE_CONFIG_ENV: zappdev
-      DATADIR: /data
   
   website_visitor:
     extends:
@@ -63,20 +55,13 @@ services:
         condition: service_completed_successfully
     command: 'run start:docker:zappdev'
     volumes:
-      - ./api:/app/api:ro
-      - ./client:/app/client:ro
       - ./config:/app/config:ro
-      - ./console:/app/console:ro
-      - ./core:/app/core:ro
-      - ./db:/app/db:ro
       - ./example:/app/example:ro
-      - ./internal:/app/internal:ro
-      - ./network:/app/network:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./wallet:/app/wallet:ro
       - ./package.json:/app/package.json:ro
       - ./point:/app/point:ro
+      - ./src:/app/src:ro
       - website_visitor_data_zappdev:/data
       - shared_contracts_zappdev:/app/truffle/build/contracts
       - ./resources/blockchain-test-key2.json:/data/keystore/key.json
