@@ -78,6 +78,7 @@
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "jest": "^27.0.6",
     "nodemon": "^2.0.12",
+    "pkg": "^5.5.2",
     "sequelize-cli": "^6.2.0",
     "solhint": "^3.3.7",
     "ts-node": "^10.5.0"
