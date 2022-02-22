@@ -31,7 +31,7 @@ fi
 
 # If DATADIR ENV var is not set ...
 if [[ -z "${DATADIR}" ]]; then
-  DATADIR=~/.point/test2
+  DATADIR=/data
 fi
 
 for SITE in $EXAMPLE_SITES;
@@ -50,8 +50,8 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV -v"
-  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV -v
+  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV"
+  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV
 
   echo
   echo "FINISHED: ${SITE}"

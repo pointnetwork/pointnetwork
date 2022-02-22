@@ -4,8 +4,8 @@
 .gitignore
 .nvmrc
 .vscode
-src/
 _local/
+dist/
 
 deployspace/*
 !deployspace/README.md

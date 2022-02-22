@@ -1,6 +1,6 @@
 const ctx = require('../_helpers/db/setup');
 const truncate = require('../_helpers/db/truncate');
-const DB = require('../../db');
+const DB = require('../../src/db');
 const db = new DB(ctx);
 const {v4: uuid} = require('uuid');
 
@@ -26,8 +26,8 @@ describe('RedKey model', () => {
 
     beforeAll(async () => {
         await db.init();
-        RedKey = require('../../db/models/redkey');
-        Provider = require('../../db/models/provider');
+        RedKey = require('../../src/db/models/redkey');
+        Provider = require('../../src/db/models/provider');
     });
 
     afterEach(async () => {
