@@ -265,6 +265,20 @@ class ZProxy {
                 contentType = response._contentType;
             } else if (config.get('mode') === 'zappdev') {
                 // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
+
+                // First try route file (and check if this domain even exists)
+                const zroute_id = await this.getZRouteIdFromDomain(host);
+                if (
+                    zroute_id === null ||
+                    zroute_id === '' ||
+                    typeof zroute_id === 'undefined'
+                ) {
+                    return this.abort404(
+                        response,
+                        'Domain not found (Route file not specified for this domain) - Is the ZApp deployed?'
+                    ); // todo: replace with is_valid_id
+                }
+
                 // If host contains `dev`, then we slice the zapp name out of the host to serve from local example folder
                 const zappName = host.includes('dev') ? `${host.split('dev')[0]}.z` : host;
                 const localPath = `example/${zappName}/public`; // hardcode to render the zapp host
