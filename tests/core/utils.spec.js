@@ -1,4 +1,4 @@
-const utils = require('#utils');
+const utils = require('../../src/core/utils');
 
 describe('Core/Utils', () => {
     // todo: test for null, Object, integers etc. - ideally it should throw errors

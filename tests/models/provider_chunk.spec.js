@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const ctx = require('../_helpers/db/setup');
 const truncate = require('../_helpers/db/truncate');
-const DB = require('../../db');
+const DB = require('../../src/db');
 const db = new DB(ctx);
 
 const randomHash = () =>
@@ -24,7 +24,7 @@ describe('ProviderChunk model', () => {
 
     beforeAll(async () => {
         await db.init();
-        ProviderChunk = require('../../db/models/provider_chunk');
+        ProviderChunk = require('../../src/db/models/provider_chunk');
     });
 
     afterEach(async () => {

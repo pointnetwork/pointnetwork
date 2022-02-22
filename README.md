@@ -32,7 +32,7 @@ For details on debugging, please refer to the [run a point network node in a vs 
 
 ## Database
 
-For more details on the database setup please refer to the [Database README](./db/README.md).
+For more details on the database setup please refer to the [Database README](src/db/README.md).
 
 ## Contact
 
