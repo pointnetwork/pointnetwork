@@ -101,7 +101,7 @@ async function upload(contract) {
 
     const data = JSON.parse(fs.readFileSync(migrationFile));
 
-    // await blogContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
+    await blogContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
 
     const articleComments = [];
 
