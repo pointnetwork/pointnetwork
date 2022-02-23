@@ -40,4 +40,14 @@ The above process should also work exactly the same way when running `YNet`. The
 There are two differences you must follow:
 
 1. Ensure that you have your key.json stored in $HOME/.point/keystore/key.json
-2. Ensure that you pass the `--network=ynet` flag when running the truffle scripts.
+2. Ensure that you pass the `--network ynet` flag when running the truffle scripts.
+
+## YNet Example
+
+Example below shows downloading and uploading tweets from the network. Assumes that the download script is run first before a new contract is deployed.
+
+```
+truffle exec scripts/twitterImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 1643307237-identity.json --network ynet
+
+truffle exec scripts/twitterImporter.js --upload 0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e 1645590994-twitter.json --network ynet
+```
