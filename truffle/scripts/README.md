@@ -6,7 +6,7 @@ This process can run in any network. For example, to test this in `zappdev` envi
 
 The example below shows how this process works with migrating data for `twitter.z`
 
-1. Copy the Zapp Smart Contract for the Zapp that you want to migrate data for `cp example/twitter.z/contracts/twitter.sol truffle/contracts/.`.
+1. Copy the Zapp Smart Contract for the Zapp that you want to migrate data for `cp example/twitter.z/contracts/Twitter.sol truffle/contracts/.`.
 1. Change directory into the truffle project folder `cd truffle`
 1. Compile `twitter.sol` contract: `truffle compile`
 1. Download the list of registerd Identities from the network using `truffle exec scripts/identityImporter.js --download IDENTITY_CONTRACT_ADDRESS`
@@ -20,7 +20,7 @@ The example below shows how this process works with migrating data for `twitter.
 Below is an example of the above steps taken while running `zappdev`. Note you will need to change the contract addresses and data file names based on your local values when you run this.
 
 ```
-cp example/twitter.z/contracts/twotter.sol truffe/contracts/.
+cp example/twitter.z/contracts/Twitter.sol truffle/contracts/.
 
 cd truffle
 
