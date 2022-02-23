@@ -327,7 +327,6 @@ class Web3Bridge {
     }
 
     async getKeyLastVersion(identity, key){
-        '@', 'Identity', 'IKVSet', {identity: identity, key: key}
         const filter = {identity: identity, key: key};
         let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
         if(events.length > 0 ){
