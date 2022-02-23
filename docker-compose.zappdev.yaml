@@ -76,7 +76,7 @@ services:
       DATADIR: /data
 
   arlocal:
-    image: textury/arlocal
+    image: textury/arlocal:v1.1.21
     container_name: arlocal
     command: node bin/index.js --persist=true
     ports:
