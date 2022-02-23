@@ -1,0 +1,91 @@
+# This workflow will package the application
+
+name: Create release
+
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache node modules
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-node-modules
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm i -g npm
+    - run: npm install
+
+    - name: Run build
+      run: npm run build
+    - name: Create sqlite binaries
+      run: ./scripts/build-sqlite3-for-all-platforms.sh
+    - name: Create package
+      run: npm run pkg
+    - name: Compress pkg
+      run: gzip -r bin/
+    - name: Get the Source Tag
+      id: get_source_tag
+      run: echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
+        release_name: Release ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
+        draft: false
+        prerelease: false
+
+    - name: upload linux artefact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./bin/pointnetwork-linux.gz
+        asset_name: pointnetwork-linux-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.gz
+        asset_content_type: application/gzip
+    - name: upload windows artefact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./bin/pointnetwork-win.exe.gz
+        asset_name: pointnetwork-win-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.gz
+        asset_content_type: application/gzip
+    - name: upload macos artefact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./bin/pointnetwork-macos.gz
+        asset_name: pointnetwork-macos-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.gz
+        asset_content_type: application/gzip
