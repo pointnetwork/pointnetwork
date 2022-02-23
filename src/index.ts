@@ -3,21 +3,22 @@ import path from 'path';
 import {existsSync, writeFileSync} from 'fs';
 import lockfile from 'proper-lockfile';
 import disclaimer from './disclaimer';
-import { resolveHome } from './core/utils';
+import {resolveHome} from './core/utils';
 
-export const RUNNING_PKG_MODE = (process as any).pkg ? true : false;;
-
-if (RUNNING_PKG_MODE) {
-  // when running inside the packaged version the configuration should be
-  // retrieved from the internal packaged config
-  // by default config library uses process.cwd() to reference the config folder
-  // when using vercel/pkg process.cwd references real folder and not packaged folder
-  // overwriting this env variable fixes the problems
-  process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
+if ((process as typeof process & {pkg?: unknown}).pkg !== undefined) {
+    // when running inside the packaged version the configuration should be
+    // retrieved from the internal packaged config
+    // by default config library uses process.cwd() to reference the config folder
+    // when using vercel/pkg process.cwd references real folder and not packaged folder
+    // overwriting this env variable fixes the problems
+    process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
 }
 
+type ProgramType = InstanceType<typeof Command> & {
+    datadir?: string
+};
 
-const program: any = new Command();
+const program: ProgramType = new Command();
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
@@ -25,7 +26,7 @@ process.env['NEXT_TELEMETRY_DISABLED'] = '1';
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-program.version(process.env.npm_package_version);
+program.version(process.env.npm_package_version || 'No version is specified');
 
 program.description(`
     Point Network
@@ -37,10 +38,8 @@ program.description(`
 // Print disclaimer
 disclaimer.output();
 
-program.option('--datadir <path>', 'path to the data directory');
+program.option('-d, --datadir <path>', 'path to the data directory');
 program.parse(process.argv);
-
-const ctx: Record<string, any> = {};
 
 if (program.datadir) {
     process.env.DATADIR = program.datadir;
@@ -75,14 +74,22 @@ const logger = require('./core/log.js');
 const Model = require('./db/model.js');
 const Point = require('./core/index.js');
 
-ctx.basepath = __dirname;
-
 // ------------------- Init Logger ----------------- //
 
 const log = logger.child({module: 'point'});
 
-ctx.exit = (code: number) => (log.close(), process.exit(code));
-ctx.die = (err: Error) => (log.fatal(err), ctx.exit(1));
+export type CtxType = Record<string, unknown> & {
+    basepath: string;
+    exit: (code: number) => void;
+    die: (err: Error) => void;
+    db?: {shutdown?: () => Promise<undefined>};
+};
+
+const ctx: CtxType = {
+    basepath: __dirname,
+    exit: (code: number) => (log.close(), process.exit(code)),
+    die: (err: Error) => (log.fatal(err), ctx.exit(1))
+};
 
 // ------------------ Gracefully exit ---------------- //
 

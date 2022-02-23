@@ -1,11 +1,25 @@
-const {Sequelize} = require('sequelize');
-const {Umzug, SequelizeStorage, MigrationError} = require('umzug');
-const config = require('config');
-const dbConfig = config.get('db');
-const path = require('path');
-const { resolveHome } = require('../dist/core/utils');
-const storage = path.join(resolveHome(config.get('datadir')), dbConfig.storage);
+import {Dialect, ModelOptions, Sequelize} from 'sequelize';
+import {Umzug, SequelizeStorage, MigrationError} from 'umzug';
+import config from 'config';
+import path from 'path';
+import {resolveHome} from '../core/utils';
+import logger from '../core/log';
 
+const log = logger.child({module: 'migrate'});
+
+type DatabaseConfig = {
+    storage: string,
+    database: string,
+    username: string,
+    password: string,
+    host: string,
+    port: number,
+    dialect: Dialect,
+    define: ModelOptions
+};
+
+const dbConfig: DatabaseConfig = config.get('db');
+const storage = path.join(resolveHome(config.get('datadir')), dbConfig.storage);
 const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
     host: dbConfig.host,
     port: dbConfig.port,
@@ -18,10 +32,10 @@ const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.p
 
 const umzug = new Umzug({
     migrations: {
-        glob: 'dist/db/migrations/*.js',
+        glob: 'migrations/database/*.js',
         resolve({name, path: migrationPath, context}) {
-          // Adjust the migration from the new signature to the v2 signature, making easier to upgrade to v3
-            const migration = require(migrationPath);
+            // Adjust the migration from the new signature to the v2 signature, making easier to upgrade to v3
+            const migration = require(migrationPath as string);
             return {
                 name,
                 up: async () => migration.up(context),
@@ -40,7 +54,7 @@ const umzug = new Umzug({
         await sequelize.close();
     } catch (e) {
         if (e instanceof MigrationError) {
-            console.error('Migration error:', e.cause());
+            log.error(e.cause(), 'Migration error');
         } else {
             throw e;
         }

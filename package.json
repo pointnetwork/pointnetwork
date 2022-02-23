@@ -13,8 +13,6 @@
     "@openzeppelin/contracts": "^4.4.2",
     "@solana/web3.js": "^1.29.2",
     "@truffle/hdwallet-provider": "^1.5.0",
-    "@types/node": "^17.0.18",
-    "@types/proper-lockfile": "^4.1.2",
     "arweave": "^1.10.17",
     "arweave-mnemonic-keys": "^0.0.9",
     "async": "^3.2.1",
@@ -71,6 +69,11 @@
     "websocket": "^1.0.34"
   },
   "devDependencies": {
+    "@types/commander": "^2.12.2",
+    "@types/config": "^0.0.41",
+    "@types/node": "^17.0.19",
+    "@types/proper-lockfile": "^4.1.2",
+    "@types/umzug": "^2.3.3",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "eslint": "^8.9.0",
