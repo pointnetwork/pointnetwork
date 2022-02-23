@@ -17,7 +17,7 @@ services:
           service: contract_deployer
     volumes:
       - shared_contracts_zappdev:/build:rw
-    
+
   point_node:
     extends:
       file: docker-compose.base.yaml
@@ -44,7 +44,7 @@ services:
       - '24681:2468'
     environment:
       NODE_CONFIG_ENV: zappdev
-  
+
   website_visitor:
     extends:
       file: docker-compose.base.yaml
@@ -75,7 +75,7 @@ services:
       DATADIR: /data
 
   arlocal:
-    image: textury/arlocal
+    image: textury/arlocal:v1.1.21
     container_name: arlocal
     command: node bin/index.js --persist=true
     ports:
