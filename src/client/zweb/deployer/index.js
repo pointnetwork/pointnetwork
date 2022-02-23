@@ -20,7 +20,7 @@ class Deployer {
     }
 
     getCacheDir() {
-        const cache_dir = path.join(config.get('datadir'), config.get('deployer.cache_path'));
+        const cache_dir = path.join(resolveHome(config.get('datadir')), config.get('deployer.cache_path'));
         utils.makeSurePathExists(cache_dir);
         return cache_dir;
     }
