@@ -210,7 +210,14 @@ class Web3Bridge {
 
     async getPastEvents(target, contractName, event, options = {fromBlock: 0, toBlock: 'latest'}) {
         const contract = await this.loadWebsiteContract(target, contractName);
-        return await contract.getPastEvents(event, options);
+        let events = await contract.getPastEvents(event, options);
+        //filter non-indexed properties from return value for convenience
+        if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
+            for (const k in options.filter) {
+                events = events.filter(e => e.returnValues[k] === options.filter[k]);
+            }
+        }
+        return events;
     }
 
     async getBlockTimestamp(blockNumber) {
@@ -317,6 +324,18 @@ class Web3Bridge {
     async putZRecord(domain, routesFile, version) {
         domain = domain.replace('.z', ''); // todo: rtrim instead
         return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile, version);
+    }
+
+    async getKeyLastVersion(identity, key){
+        '@', 'Identity', 'IKVSet', {identity: identity, key: key}
+        const filter = {identity: identity, key: key};
+        let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+        if(events.length > 0 ){
+            const maxObj = events.reduce((prev, current) => (prev.blockNumber > current.blockNumber) ? prev : current);
+            return maxObj.returnValues.version;
+        }else{
+            return null; 
+        }
     }
 
     async getKeyValue(identity, key) {

@@ -159,13 +159,6 @@ class Renderer {
                     });
                 }
 
-                //filter non-indexed properties from return value for convenience
-                if (Object.keys(filter).length > 0) {
-                    for (const k in filter) {
-                        eventData = eventData.filter(e => e.data[k] === filter[k]);
-                    }
-                }
-
                 return eventData;
             },
             default_wallet_address: async function () {

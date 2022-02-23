@@ -134,6 +134,10 @@ class Deployer {
     }
 
     async deployContract(target, contractName, fileName, deployPath, version) {
+        
+        const lastVersionContract = await this.ctx.web3bridge.getKeyLastVersion(target.replace('.z', ''), 'zweb/contracts/address/' + contractName);
+        //todo: verify if the version is consistent with IKV system and generate patch version. 
+
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
         const fs = require('fs-extra');
 
@@ -226,6 +230,8 @@ class Deployer {
         const artifacts_storage_id = await storage.uploadFile(artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
+
+
         await this.ctx.web3bridge.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
