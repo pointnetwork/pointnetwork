@@ -55,7 +55,15 @@
                         {% set timestamp_array = timestamp_array|merge([ev.timestamp]) %}
                     {% endif %}
                 {% endfor %}
-                {{timestamp_array|sort|reverse|first|date}}
+                {% set last_timestamp = timestamp_array|sort|reverse|first %}
+                {{last_timestamp|date}}
+            </td>
+            <td>
+                {% for ev in events %}
+                    {% if ev.data.key == k and ev.data.value == v and ev.timestamp == last_timestamp%}
+                        {{ev.data.version}}
+                    {% endif %}
+                {% endfor %}
             </td>
         </tr>
     {% else %}

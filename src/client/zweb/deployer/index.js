@@ -30,7 +30,7 @@ class Deployer {
         const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
         const deployConfig = JSON.parse(deployConfigFile);
-
+        const baseVersion = deployConfig.version.toString();
         // assert(deployConfig.version === 1); // todo: msg
 
         const target = dev ? `${deployConfig.target.replace('.z', 'dev')}.z` : deployConfig.target;
@@ -84,7 +84,7 @@ class Deployer {
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
                 try {
-                    await this.deployContract(target, contractName, fileName, deployPath);
+                    await this.deployContract(target, contractName, fileName, deployPath, baseVersion);
                 } catch (e) {
                     log.error(
                         {
@@ -101,13 +101,14 @@ class Deployer {
         // Upload public - root dir
         log.debug('Uploading root directory...');
         const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
-        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
+        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts, baseVersion);
 
         // Upload routes
         const routesFilePath = path.join(deployPath, 'routes.json');
         const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         const routes = JSON.parse(routesFile);
 
+        
         log.debug({routes}, 'Uploading route file...');
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
         const routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
@@ -116,9 +117,8 @@ class Deployer {
             100,
             `uploaded::${routeFileUploadedId}`
         );
-        await this.updateZDNS(target, routeFileUploadedId);
-
-        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts);
+        await this.updateZDNS(target, routeFileUploadedId, baseVersion);
+        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts, baseVersion);
 
         log.info('Deploy finished');
     }
@@ -133,14 +133,14 @@ class Deployer {
         }
     }
 
-    async deployContract(target, contractName, fileName, deployPath) {
+    async deployContract(target, contractName, fileName, deployPath, version) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
         const fs = require('fs-extra');
 
         const contractSource = fs.readFileSync(fileName, 'utf8');
 
-        const version = await Deployer.getPragmaVersion(contractSource);
-        const versionArray = version.split('.');
+        const pragmaVersion = await Deployer.getPragmaVersion(contractSource);
+        const versionArray = pragmaVersion.split('.');
         const SOLC_MAJOR_VERSION = versionArray[0];
         const SOLC_MINOR_VERSION = versionArray[1];
         const SOLC_FULL_VERSION = `solc${SOLC_MAJOR_VERSION}_${SOLC_MINOR_VERSION}`;
@@ -229,12 +229,14 @@ class Deployer {
         await this.ctx.web3bridge.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
-            address
+            address,
+            version
         );
         await this.ctx.web3bridge.putKeyValue(
             target,
             'zweb/contracts/abi/' + contractName,
-            artifacts_storage_id
+            artifacts_storage_id,
+            version
         );
 
         this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`);
@@ -244,13 +246,13 @@ class Deployer {
         );
     }
 
-    async updateZDNS(host, id) {
+    async updateZDNS(host, id, version) {
         const target = host.replace('.z', '');
         log.info({target, id}, 'Updating ZDNS');
-        await this.ctx.web3bridge.putZRecord(target, '0x' + id);
+        await this.ctx.web3bridge.putZRecord(target, '0x' + id, version);
     }
 
-    async updateKeyValue(target, values = {}, deployPath, deployContracts = false) {
+    async updateKeyValue(target, values = {}, deployPath, deployContracts = false, baseVersion) {
         const replaceContentsWithCids = async obj => {
             const result = {};
 
@@ -326,7 +328,7 @@ class Deployer {
                 }
                 value = JSON.stringify(value);
             }
-            await this.ctx.web3bridge.putKeyValue(target, key, String(value));
+            await this.ctx.web3bridge.putKeyValue(target, key, String(value), baseVersion);
         }
     }
 }

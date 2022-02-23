@@ -314,9 +314,9 @@ class Web3Bridge {
         return result;
     }
 
-    async putZRecord(domain, routesFile) {
+    async putZRecord(domain, routesFile, version) {
         domain = domain.replace('.z', ''); // todo: rtrim instead
-        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile);
+        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile, version);
     }
 
     async getKeyValue(identity, key) {
@@ -334,16 +334,16 @@ class Web3Bridge {
             throw e;
         }
     }
-    async putKeyValue(identity, key, value) {
+    async putKeyValue(identity, key, value, version) {
         try {
             // todo: only send transaction if it's different. if it's already the same value, no need
             identity = identity.replace('.z', ''); // todo: rtrim instead
             const contract = await this.loadIdentityContract();
-            const method = contract.methods.ikvPut(identity, key, value);
-            log.debug({identity, key, value}, 'Ready to put key value');
+            const method = contract.methods.ikvPut(identity, key, value, version);
+            log.debug({identity, key, value, version}, 'Ready to put key value');
             await this.web3send(method);
         } catch (e) {
-            log.error({error: e, stack: e.stack, identity, key, value}, 'putKeyValue error');
+            log.error({error: e, stack: e.stack, identity, key, value, version}, 'putKeyValue error');
             throw e;
         }
     }

@@ -139,8 +139,7 @@ class Renderer {
             contract_events: async function (host, contractName, event, filter = {}) {
                 //delete keys property inserted by twig
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
-
-                const options = {filter, fromBlock: 1, toBlock: 'latest'};
+                const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
                 const events = await this.renderer.ctx.web3bridge.getPastEvents(
                     host.replace('.z', ''),
                     contractName,
