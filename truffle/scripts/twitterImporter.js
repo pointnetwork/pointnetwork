@@ -70,9 +70,7 @@ async function download(contract) {
                     timestamp
                 } = await zapContract.methods.getTweetByOwner(identity.owner, tweetCounter).call();
 
-                const {
-                    likes
-                } = await zapContract.methods.getTweet(tweetCounter).call();
+                const {likes} = await zapContract.methods.getTweet(tweetCounter).call();
 
                 const tweet = {
                     from,

@@ -37,10 +37,11 @@ truffle exec scripts/twitterImporter.js --upload 0x51F88aDDe44d2dB9d897d06aD5c77
 
 The above process should also work exactly the same way when running `YNet`. The only difference is that you need to start your local Point Node in `YNet` mode and the rest of the steps should be the same.
 
-There are two differences you must follow:
+There are a few differences you must follow, namely:
 
-1. Ensure that you have your `key.json` stored in `$HOME/.point/keystore/key.json` and this is the key that owns the Zapp you want to migrate.s
-2. Ensure that you pass the `--network ynet` flag when running the truffle scripts.
+1. Ensure that you have your `key.json` stored in `$HOME/.point/keystore/key.json` and this is the key that owns the Zapp you want to migrate.
+1. You will need to uncomment the Ynet network script and configuration block in the [truffle-config.js](./truffle/truffle-consfig.js) file.
+1. Ensure that you pass the `--network ynet` flag when running the truffle scripts.
 
 ### YNet Example
 
