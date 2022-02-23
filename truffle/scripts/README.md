@@ -36,3 +36,8 @@ truffle exec scripts/twitterImporter.js --upload 0x51F88aDDe44d2dB9d897d06aD5c77
 ## YNet
 
 The above process should also work exactly the same way when running `YNet`. The only difference is that you need to start your local Point Node in `YNet` mode and the rest of the steps should be the same.
+
+There are two differences you must follow:
+
+1. Ensure that you have your key.json stored in $HOME/.point/keystore/key.json
+2. Ensure that you pass the `--network=ynet` flag when running the truffle scripts.
