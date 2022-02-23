@@ -22,6 +22,7 @@ const config = require('config');
 const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxy'});
 const detectContentType = require('detect-content-type');
+const {getNetworkAddress} = require('../../wallet/keystore');
 
 class ZProxy {
     constructor(ctx) {
@@ -217,7 +218,7 @@ class ZProxy {
                     } catch (e) {
                         return this.abortError(response, e);
                     }
-                    
+
                     const noExt = ext === hashWithoutExt || hash.split('.').length === 1;
                     if (noExt) contentType = detectContentType(rendered); // just in case
                     if (!noExt) {
@@ -225,7 +226,6 @@ class ZProxy {
                         if (contentType.includes('html')) contentType = 'text/html'; // just in case
                     } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
                     if (ext === 'zhtml') contentType = 'text/plain';
-
 
                     if (this._isThisDirectoryJson(rendered) && noExt) {
                         rendered = this._renderDirectory(hash, rendered);
@@ -681,7 +681,7 @@ class ZProxy {
                         }
                     }
 
-                    postData.__from = this.ctx.wallet.getNetworkAccount();
+                    postData.__from = getNetworkAddress();
                     postData.__time = Math.floor(Date.now() / 1000);
                     const data = JSON.stringify(postData);
 

@@ -19,7 +19,7 @@ log:
   enabled: true
   level: info
   sendLogs: true
-  sendLogsTo: ""
+  sendLogsTo: "http://logstash.pointspace.io:12201"
 console:
   prompt: "> "
 deployer:
