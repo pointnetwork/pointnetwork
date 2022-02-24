@@ -10,6 +10,7 @@ const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
+const {compileContract} = require('../util/contract');
 const log = logger.child({module: 'Web3Bridge'});
 
 function isRetryableError({message}) {
@@ -39,6 +40,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
     return web3;
 }
 
+let identityAbi;
 class Web3Bridge {
     constructor(ctx) {
         this.ctx = ctx;
@@ -61,15 +63,35 @@ class Web3Bridge {
     async start() {}
 
     async loadPointContract(contractName, at) {
-        const abiFileName = path.join(
-            this.ctx.basepath,
-            '../truffle/build/contracts/' + contractName + '.json'
-        );
-        const abiFile = JSON.parse(fs.readFileSync(abiFileName));
-        const abi = abiFile.abi;
-        // const bytecode = abiFile.bytecode;
+        if (!identityAbi) {
+            const buildDirPath = path.resolve(
+                this.ctx.basepath,
+                '..',
+                'truffle',
+                'build',
+                'contracts'
+            );
 
-        return new this.web3.eth.Contract(abi, at);
+            const abiFileName = path.resolve(buildDirPath, contractName + '.json');
+
+            if (!fs.existsSync(abiFileName)) {
+                if (!fs.existsSync(buildDirPath)) {
+                    fs.mkdirSync(buildDirPath, {recursive: true});
+                }
+                const contractPath = path.resolve(
+                    this.ctx.basepath,
+                    '..',
+                    'truffle',
+                    'contracts'
+                );
+                await compileContract({name: contractName, contractPath, buildDirPath});
+            }
+
+            const abiFile = JSON.parse(fs.readFileSync(abiFileName));
+            identityAbi = abiFile.abi;
+        }
+
+        return new this.web3.eth.Contract(identityAbi, at);
     }
 
     async loadStorageProviderRegistryContract() {

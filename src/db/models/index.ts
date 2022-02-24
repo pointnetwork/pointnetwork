@@ -1,13 +1,21 @@
 'use strict';
-const path = require('path');
-const Sequelize = require('sequelize');
-const config = require('config');
-const logger = require('../../core/log');
-const log = logger.child({module: 'Sequelize'});
-const {resolveHome} = require('../../core/utils');
 
-class SequelizeFactory {
-    init() {
+import path from 'path';
+import {Sequelize} from 'sequelize';
+import config from 'config';
+import logger from '../../core/log';
+import {resolveHome} from '../../core/utils';
+
+const log = logger.child({module: 'Sequelize'});
+
+interface SequelizeFactory {
+    config: DatabaseConfig;
+    Sequelize: typeof Sequelize;
+    sequelize: Sequelize;
+}
+
+class SequelizeFactory implements SequelizeFactory {
+    init(ctx: CtxType) {
         this.config = config.get('db');
         const storage = path.join(resolveHome(config.get('datadir')), this.config.storage);
         this.Sequelize = Sequelize; // Needed for export!
@@ -22,18 +30,15 @@ class SequelizeFactory {
                 transactionType: this.config.transactionType,
                 retry: {max: this.config.retry.max},
                 logQueryParameters: true,
-                logging: log.debug.bind(log)
+                logging: log.debug.bind(log),
+                // TODO: remove ctx from Sequelize options
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                ctx
             }
-        ); // todo: validate config
+        );
 
         return this.sequelize;
-
-        // todo: remove, right? why is it here?
-        // Object.keys(this.sequelize.models).forEach(modelName => {
-        //     if (this.sequelize.models[modelName].associate) {
-        //         this.sequelize.models[modelName].associate(this.sequelize.models);
-        //     }
-        // });
     }
 }
 

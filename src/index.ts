@@ -7,6 +7,7 @@ import {Command} from 'commander';
 import disclaimer from './disclaimer';
 import {resolveHome} from './core/utils';
 import {getContractAddress, compileContract} from './util/contract';
+import migrate from './util/migrate';
 
 if ((process as typeof process & {pkg?: unknown}).pkg !== undefined) {
     // when running inside the packaged version the configuration should be
@@ -279,12 +280,25 @@ const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
 if (!existsSync(lockfilePath)) {
     writeFileSync(lockfilePath, 'point');
 }
-lockfile.lock(lockfilePath)
-    .then(() => {
+
+(async () => {
+    try {
+        await lockfile.lock(lockfilePath);
+    } catch (err) {
+        log.falal(err, 'Failed to create lockfile, is point already running?');
+        ctx.exit(1);
+    }
+    try {
+        await migrate();
+    } catch (err) {
+        log.fatal(err, 'Failed to run database migrations');
+        ctx.exit(1);
+    }
+    try {
         const point = new Point(ctx);
-        point.start();
-    })
-    .catch(err => {
-        log.error({err}, 'Failed to create lockfile, is point already running?');
-        process.exit(1);
-    });
+        await point.start();
+    } catch (err) {
+        log.fatal(err, 'Failed to start Point Node');
+        ctx.exit(1);
+    }
+})();
