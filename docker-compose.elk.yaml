@@ -223,7 +223,7 @@ services:
       - "12201:12201/udp"
       - "5044:5044"
     environment:
-      - "xpack.monitoring.elasticsearch.url=http://es03:9200"
+      - "xpack.monitoring.elasticsearch.url=https://es03:9200"
     volumes:
       - ./resources/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     depends_on:
