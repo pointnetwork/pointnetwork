@@ -263,7 +263,7 @@ class ZProxy {
                     parsedUrl
                 );
                 contentType = response._contentType;
-            } else if (config.get('mode') === 'zappdev') {
+            } else if (false /*for testing only*/ && config.get('mode') === 'zappdev') {
                 // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
 
                 // First try route file (and check if this domain even exists)
@@ -529,8 +529,24 @@ class ZProxy {
             });
             request.on('end', async () => {
                 try {
+                    let version = 'latest';
+                    console.log(parsedUrl);
+
+
+                    if(parsedUrl.searchParams != undefined && 
+                        parsedUrl.searchParams.has('__point_version')){
+                        version = parsedUrl.searchParams.get('__point_version');
+                        
+                    }
+                    console.log('--------------');
+                    console.log('version = ' + version);
+                    console.log('--------------');
+
                     // First try route file (and check if this domain even exists)
-                    const zroute_id = await this.getZRouteIdFromDomain(host);
+                    const zroute_id = await this.getZRouteIdFromDomain(host, version);
+                    console.log('--------------');
+                    console.log('zroute_id = ' + zroute_id);
+                    console.log('--------------');
                     if (
                         zroute_id === null ||
                         zroute_id === '' ||
@@ -551,7 +567,10 @@ class ZProxy {
                         );
 
                     // Download info about root dir
-                    const rootDirId = await this.getRootDirectoryIdForDomain(host);
+                    const rootDirId = await this.getRootDirectoryIdForDomain(host, version);
+                    console.log('--------------');
+                    console.log('rootDirId = ' + rootDirId);
+                    console.log('--------------');
 
                     let route_params = {};
                     let template_filename = null;
@@ -787,9 +806,9 @@ class ZProxy {
         });
     }
 
-    async getRootDirectoryIdForDomain(host) {
+    async getRootDirectoryIdForDomain(host, version = 'latest') {
         const key = '::rootDir';
-        const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
+        const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key, version);
         if (!rootDirId)
             throw Error(
                 'getRootDirectoryIdForDomain failed: key ' + key + ' returned empty: ' + rootDirId
@@ -797,8 +816,8 @@ class ZProxy {
         return rootDirId;
     }
 
-    async getZRouteIdFromDomain(host) {
-        const result = await this.ctx.web3bridge.getZRecord(host);
+    async getZRouteIdFromDomain(host, version = 'latest') {
+        const result = await this.ctx.web3bridge.getZRecord(host, version);
         return result;
 
         // const records = await this.getZDNSRecordsFromDomain(host);

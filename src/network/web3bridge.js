@@ -82,21 +82,24 @@ class Web3Bridge {
         return await this.loadPointContract('Identity', at);
     }
 
-    async loadWebsiteContract(target, contractName) {
+    async loadWebsiteContract(target, contractName, version = 'latest') {
         // todo: make it nicer, extend to all potential contracts, and add to docs
         // @ means internal contract for Point Network (truffle/contracts)
         if (target === '@' && contractName === 'Identity') {
             return this.loadIdentityContract();
         }
+        if (version == 'latest'){
+            const at = await this.ctx.web3bridge.getKeyValue(
+                target,
+                'zweb/contracts/address/' + contractName
+            );
+            const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
+                target,
+                'zweb/contracts/abi/' + contractName
+            );
+        }else{
 
-        const at = await this.ctx.web3bridge.getKeyValue(
-            target,
-            'zweb/contracts/address/' + contractName
-        );
-        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
-            target,
-            'zweb/contracts/abi/' + contractName
-        );
+        }
         let abi;
         try {
             abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
@@ -314,9 +317,9 @@ class Web3Bridge {
         }
     }
 
-    async getZRecord(domain) {
+    async getZRecord(domain, version = 'latest') {
         domain = domain.replace('.z', ''); // todo: rtrim instead
-        let result = await this.getKeyValue(domain, ZDNS_ROUTES_KEY);
+        let result = await this.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
         if (result.substr(0, 2) === '0x') result = result.substr(2);
         return result;
     }
@@ -337,18 +340,33 @@ class Web3Bridge {
         }
     }
 
-    async getKeyValue(identity, key) {
+
+    async getKeyValue(identity, key, version = 'latest') {
         try {
             if (typeof identity !== 'string')
                 throw Error('web3bridge.getKeyValue(): identity must be a string');
             if (typeof key !== 'string')
                 throw Error('web3bridge.getKeyValue(): key must be a string');
+            if (typeof version !== 'string')
+                throw Error('web3bridge.getKeyValue(): version must be a string');
+            
             identity = identity.replace('.z', ''); // todo: rtrim instead
-            const contract = await this.loadIdentityContract();
-            const result = await contract.methods.ikvGet(identity, key).call();
-            return result;
+
+            if(version === 'latest'){
+                const contract = await this.loadIdentityContract();
+                const result = await contract.methods.ikvGet(identity, key).call();
+                return result;
+            }else{
+                const filter = {identity: identity, key: key, version: version};
+                let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+                if(events.length > 0 ){
+                    return events[0].returnValues.value;
+                }else{
+                    return null; 
+                }
+            }
         } catch (e) {
-            log.error({error: e, stack: e.stack, identity, key}, 'getKeyValue error');
+            log.error({error: e, stack: e.stack, identity, key, version}, 'getKeyValue error');
             throw e;
         }
     }
