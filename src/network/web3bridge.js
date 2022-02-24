@@ -60,10 +60,22 @@ class Web3Bridge {
 
     async start() {}
 
-    async loadPointContract(contractName, at) {
+    async loadPointContractOld(contractName, at) {
         const abiFileName = path.join(
             this.ctx.basepath,
             '../truffle/build/contracts/' + contractName + '.json'
+        );
+        const abiFile = JSON.parse(fs.readFileSync(abiFileName));
+        const abi = abiFile.abi;
+        // const bytecode = abiFile.bytecode;
+
+        return new this.web3.eth.Contract(abi, at);
+    }
+
+    async loadPointContract(contractName, at) {
+        const abiFileName = path.join(
+            this.ctx.basepath,
+            '../hardhat/artifacts/contracts/' + contractName + '.sol' + '/' + contractName + '.json'
         );
         const abiFile = JSON.parse(fs.readFileSync(abiFileName));
         const abi = abiFile.abi;

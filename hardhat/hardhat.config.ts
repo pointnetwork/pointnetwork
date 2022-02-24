@@ -1,11 +1,17 @@
 import * as dotenv from "dotenv";
-
 import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+
+const ethers = require('ethers');
+const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
+
+if (typeof keystore !== 'object') {
+    throw new Error('Please provide a valid kstore');
+}
 
 dotenv.config();
 
@@ -19,25 +25,45 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
+const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
+const port = process.env.BLOCKCHAIN_PORT || 7545;
+const networkid = process.env.BLOCKCHAIN_NETWORK_ID || '*';
+
+const devaddress = 'http://' + host + ':' + port
+
+const wallet = ethers.Wallet.fromMnemonic(keystore.phrase);
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.4",
-  networks: {
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    solidity: {
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200,
+            }
+        },
+        compilers: [
+            {
+                version: "0.8.0",
+            },
+            {
+                version: "0.8.4",
+            },
+            {
+                version: "0.8.7",
+            }
+        ],
     },
-  },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: "USD",
-  },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
-  },
+  networks: {
+    development: {
+      url: devaddress,
+      accounts:
+        [privateKey],
+    },
+  }
 };
 
 export default config;

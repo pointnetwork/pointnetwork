@@ -1,8 +1,9 @@
 {
   "name": "pointnetwork",
-  "version": "0.1.37",
+  "version": "0.1.38",
   "description": "Point Network;",
   "main": "point",
+  "bin": "dist/index.js",
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=6.0.0"
@@ -24,6 +25,7 @@
     "bson": "^4.5.0",
     "commander": "^8.1.0",
     "config": "^3.3.7",
+    "detect-content-type": "^1.2.0",
     "eccrypto": "^1.1.6",
     "ethereumjs-util": "^7.1.0",
     "ethereumjs-wallet": "^1.0.2",
@@ -77,6 +79,7 @@
     "hardhat": "^2.8.4",
     "jest": "^27.0.6",
     "nodemon": "^2.0.12",
+    "pkg": "^5.5.2",
     "sequelize-cli": "^6.2.0",
     "solhint": "^3.3.7",
     "ts-node": "^10.5.0"
@@ -92,6 +95,7 @@
     "start:docker:zappdev": "npm run migrate && MODE=zappdev nodemon",
     "start:dev": "NODE_ENV=development nodemon",
     "build": "tsc",
+    "pkg": "pkg .",
     "migrate": "./point migrate",
     "migration": "node ./scripts/migrate.js",
     "compile": "./point compile",
@@ -127,5 +131,38 @@
     "url": "git://github.com/pointnetwork/pointnetwork.git"
   },
   "author": "Point Network",
-  "license": "MIT"
+  "license": "MIT",
+  "pkg": {
+    "outputPath": "bin",
+    "assets": [
+      "truffle/**/*",
+      "config/*.yaml",
+      "resources/certs/*.{crt,key,srl}",
+      "node_modules/sqlite3/**/*"
+    ],
+    "scripts": [
+      ".sequelizerc",
+      "node_modules/solc*/**/*.js",
+      "dist/api/controllers/**/*.js",
+      "dist/api/sockets/*.js"
+    ],
+    "patches": {
+      "./node_modules/undici/lib/fetch/body.js": [
+        "require('stream/web')",
+        "require('stream').web"
+      ],
+      "./node_modules/undici/lib/core/util.js": [
+        "require('stream/web')",
+        "require('stream').web"
+      ],
+      "./node_modules/undici/lib/fetch/request.js": [
+        "require('stream/web')",
+        "require('stream').web"
+      ],
+      "./node_modules/undici/lib/fetch/index.js": [
+        "require('stream/web')",
+        "require('stream').web"
+      ]
+    }
+  }
 }

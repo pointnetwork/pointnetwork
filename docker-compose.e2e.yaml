@@ -26,8 +26,10 @@ services:
         --account 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e,0x56bc75e2d63100000
 
   contract_deployer:
-    image: pointnetwork/pointnetwork_deployer:dev
     container_name: deployer
+    build:
+      context: .
+      dockerfile: ./deployer.Dockerfile
     depends_on:
       blockchain_node:
         condition: service_healthy
@@ -36,15 +38,16 @@ services:
         condition: 'no'
     volumes:
       - shared_contracts_e2e:/build:rw
-      - ./truffle/contracts:/truffle/contracts:ro
-      - ./truffle/migrations:/truffle/migrations:ro
-      - ./truffle/truffle-config.js:/truffle/truffle-config.js:ro
-    entrypoint: /truffle/run.js
+      - ./hardhat/contracts:/hardhat/contracts:ro
+      - ./hardhat/scripts:/hardhat/scripts:ro
+      - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
+    command: hardhat run scripts/deploy.ts --network development
     environment:
       BLOCKCHAIN_HOST: blockchain_node
       BLOCKCHAIN_PORT: 7545
       BLOCKCHAIN_NETWORK_ID: 256
       DEPLOYER_COMPILER_VERSION: native
+      DEPLOYER_ACCOUNT: 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e
       DEPLOYER_BUILD_PATH: /build
 
   point_node:
