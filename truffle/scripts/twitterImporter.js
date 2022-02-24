@@ -54,23 +54,24 @@ async function download(contract) {
     const contractKey = await identityContract.methods.ikvList(handle, 0).call();
     const contractAddress = await identityContract.methods.ikvGet(handle, contractKey).call();
     const zapContract = new web3.eth.Contract(twitterArtifacts.abi, contractAddress);
-    
+
     const data = loadMigrationFile();
 
     const tweets = [];
     for (const identity of data.identities) {
         console.log('trying to fetch tweets from ' + identity.handle);
-        const keepSearchingTweets = true;
-        const tweetCounter = 0;
+        let keepSearchingTweets = true;
+        let tweetCounter = 0;
         while (keepSearchingTweets) {
             try {
                 const {
                     from,
                     contents,
-                    timestamp, 
-                    likes
+                    timestamp
                 } = await zapContract.methods.getTweetByOwner(identity.owner, tweetCounter).call();
-               
+
+                const {likes} = await zapContract.methods.getTweet(tweetCounter).call();
+
                 const tweet = {
                     from,
                     contents,
@@ -92,10 +93,10 @@ async function download(contract) {
 
     fileStructure.tweets = unique;
 
-    const timestamp = Math.floor(Date.now() / 1000); 
+    const timestamp = Math.floor(Date.now() / 1000);
 
     fs.writeFileSync(
-        '../resources/migrations/' + timestamp + '-twitter.json', 
+        '../resources/migrations/' + timestamp + '-twitter.json',
         JSON.stringify(fileStructure, null, 4)
     );
 
@@ -118,17 +119,17 @@ async function upload(contract) {
     const data = JSON.parse(fs.readFileSync(migrationFile));
 
     console.log('Adding migrator');
-    
+
     await zapContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
 
     for (const tweet of data.tweets) {
         console.log('Migrating: tweet from ' + tweet.from + ' contents ' + tweet.contents);
         await zapContract.methods.add(
             tweet.from,
-            tweet.contents, 
-            tweet.timestamp, 
+            tweet.contents,
+            tweet.timestamp,
             tweet.likes
-        ).send({from: accounts[0]});
+        ).send({from: accounts[0], gas: 6500000});
     }
 
     console.log('Done');

@@ -6,7 +6,7 @@
 //truffle exec scripts/blogImporter.js --upload 0xa4C69e06Cdb629Cd20DC813517cb9a2f279cD0A7 1643656897-blog.json
 
 //BEWARE: download function uses current deployed identity contract
-//truffle exec scripts/blogImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 
+//truffle exec scripts/blogImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b
 const fs = require('fs');
 const {exit} = require('process');
 
@@ -61,12 +61,12 @@ async function download(contract) {
         console.log('Fetching post:' + id);
 
         const comments = await blogContract.methods.getCommentsByArticle(id).call();
-        
+
         const article = {
-            id, 
-            author, 
-            title, 
-            contents, 
+            id,
+            author,
+            title,
+            contents,
             timestamp,
             comments
         };
@@ -76,10 +76,10 @@ async function download(contract) {
 
     fileStructure.articles = articles;
 
-    const timestamp = Math.floor(Date.now() / 1000); 
+    const timestamp = Math.floor(Date.now() / 1000);
 
     fs.writeFileSync(
-        '../resources/migrations/' + timestamp + '-blog.json', 
+        '../resources/migrations/' + timestamp + '-blog.json',
         JSON.stringify(fileStructure, null, 4)
     );
 
@@ -100,22 +100,22 @@ async function upload(contract) {
     const accounts = await web3.eth.getAccounts();
 
     const data = JSON.parse(fs.readFileSync(migrationFile));
-    
+
     await blogContract.methods.addMigrator(accounts[0]).send({from:accounts[0]});
-    
+
     const articleComments = [];
 
     for (const article of data.articles) {
         console.log('Migrating: Blog post from ' + article.author + ' contents ' + article.contents);
-        
+
         await blogContract.methods.add(
             article.id,
-            article.author, 
-            article.title, 
-            article.contents, 
+            article.author,
+            article.title,
+            article.contents,
             article.timestamp
-        ).send({from: accounts[0]});
-    
+        ).send({from: accounts[0], gas: 6500000});
+
         articleComments[article.id] = article.comments;
     }
 
@@ -124,14 +124,14 @@ async function upload(contract) {
             const author = comment[0];
             const contents = comment[1];
             const timestamp = comment[2];
-    
+
             console.log('Migrating: Blog comment post id:' + postId + ' from:' + author);
             await blogContract.methods.addComment(
                 postId,
-                author, 
-                contents, 
-                timestamp 
-            ).send({from: accounts[0]});
+                author,
+                contents,
+                timestamp
+            ).send({from: accounts[0], gas: 6500000});
         }
     }
 

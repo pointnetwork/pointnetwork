@@ -18,11 +18,25 @@
  *
  */
 
-// const HDWalletProvider = require('truffle-hdwallet-provider');
-// const infuraKey = "fj4jll3k.....";
-//
-// const fs = require('fs');
-// const mnemonic = fs.readFileSync(".secret").toString().trim();
+// UNCOMMENT BELOW IN ORDER TO RUN DATA MIGRATION SCRIPT IN YNET
+/*
+const HDWalletProvider = require('@truffle/hdwallet-provider') || {};
+const fs = require('fs');
+const keyJson = `${process.env.HOME}/.point/keystore/key.json`;
+let mnemonic = undefined;
+
+if (fs.existsSync(keyJson)) {
+    const phrase = fs.readFileSync(keyJson).toString().trim();
+    mnemonic = JSON.parse(phrase)['phrase'];
+}
+
+const {hdkey} = require('ethereumjs-wallet');
+const bip39 = require('bip39');
+const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic));
+const wallet = hdwallet.getWallet();
+const privateKey = wallet.getPrivateKey().toString('hex');
+const ynetBlockchainUrl = 'http://ynet.point.space:44444';
+*/
 
 const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
@@ -60,6 +74,16 @@ module.exports = {
             // gas: 4500000,
             // gasPrice: 10000000000,
         }
+
+        // UNCOMMENT BELOW IN ORDER TO RUN DATA MIGRATION SCRIPT IN YNET
+
+        // ynet: {
+        //     network_id: 10700,
+        //     provider: new HDWalletProvider(
+        //         privateKey,
+        //         ynetBlockchainUrl
+        //     )
+        // }
 
         // Another network with more advanced options...
         // advanced: {

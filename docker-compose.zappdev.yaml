@@ -58,6 +58,7 @@ services:
     volumes:
       - ./config:/app/config:ro
       - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
       - ./package.json:/app/package.json:ro

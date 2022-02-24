@@ -6,7 +6,7 @@
 //truffle exec scripts/pointSocialImporter.js --upload 0x9AFE3DfB2920d669579B6780eb858A36dAA576b8 1644243059-pointsocial.json
 
 //BEWARE: download function uses current deployed identity contract
-//truffle exec scripts/pointSocialImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b 
+//truffle exec scripts/pointSocialImporter.js --download 0x61Db2E6aD1B19E94638d4C73fDe2ba3dE2498B9b
 const fs = require('fs');
 const {exit} = require('process');
 
@@ -55,16 +55,17 @@ async function download(contract) {
 
     for (const item of data) {
         console.log(item);
-        const {id, from, contents, image, createdAt} = item;
+        const {id, from, contents, image, likesCount, createdAt} = item;
         console.log('Fetching post:' + id);
 
         const comments = await pointSocialContract.methods.getAllCommentsForPost(id).call();
-        
+
         const post = {
-            id, 
-            from, 
-            contents, 
-            image, 
+            id,
+            from,
+            contents,
+            image,
+            likesCount,
             createdAt,
             comments
         };
@@ -74,10 +75,10 @@ async function download(contract) {
 
     fileStructure.posts = posts;
 
-    const timestamp = Math.floor(Date.now() / 1000); 
+    const timestamp = Math.floor(Date.now() / 1000);
 
     fs.writeFileSync(
-        '../resources/migrations/' + timestamp + '-pointsocial.json', 
+        '../resources/migrations/' + timestamp + '-pointsocial.json',
         JSON.stringify(fileStructure, null, 4)
     );
 
@@ -87,7 +88,7 @@ async function download(contract) {
 
 async function upload(contract) {
     const migrationFile = '../resources/migrations/' + process.argv[6];
-    
+
     if (!fs.existsSync(migrationFile)) {
         console.log('Migration not found');
         exit(0);
@@ -105,15 +106,16 @@ async function upload(contract) {
 
     for (const post of data.posts) {
         console.log('Migrating: PointSocial post from ' + post.from + ' contents ' + post.contents);
-    
+
         await pointSocialContract.methods.add(
             post.id,
-            post.from, 
-            post.contents, 
-            post.image, 
+            post.from,
+            post.contents,
+            post.image,
+            post.likesCount,
             post.createdAt
-        ).send({from: accounts[0]});
-        
+        ).send({from: accounts[0], gas: 6500000});
+
         postComments[post.id] = post.comments;
     }
 
@@ -123,18 +125,18 @@ async function upload(contract) {
             const from = comment[1];
             const contents = comment[2];
             const createdAt = comment[3];
-    
+
             console.log('Migrating: PointSocial comment post id:' + postId + ' from:' + from);
             await pointSocialContract.methods.addComment(
                 id,
-                postId, 
-                from, 
-                contents, 
-                createdAt 
-            ).send({from: accounts[0]});
+                postId,
+                from,
+                contents,
+                createdAt
+            ).send({from: accounts[0], gas: 6500000});
         }
     }
-    
+
     console.log('Done');
     exit(0);
 }

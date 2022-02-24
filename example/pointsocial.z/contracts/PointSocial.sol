@@ -90,7 +90,7 @@ contract PointSocial {
         if(length > posts.length - cursor) {
             length = posts.length - cursor;
         }
-        
+
         Post[] memory _posts = new Post[](length);
         for (uint256 i = length; i > 0; i--) {
             _posts[length-i] = postById[posts[posts.length - cursor - i].id];
@@ -114,7 +114,7 @@ contract PointSocial {
         return postsByOwner[owner].length;
     }
 
-    function getPaginatedPostsByOwner(address owner, uint256 cursor, uint256 howMany) 
+    function getPaginatedPostsByOwner(address owner, uint256 cursor, uint256 howMany)
     public view returns (Post[] memory) {
         uint256 _ownerPostLength = postsByOwner[owner].length;
 
@@ -122,7 +122,7 @@ contract PointSocial {
         if(length > _ownerPostLength - cursor) {
             length = _ownerPostLength - cursor;
         }
-        
+
         Post[] memory _posts = new Post[](length);
         for (uint256 i = length; i > 0; i--) {
             _posts[length-i] = postById[postsByOwner[owner][_ownerPostLength - cursor - i].id];
@@ -195,6 +195,7 @@ contract PointSocial {
         address author,
         bytes32 contents,
         bytes32 image,
+        uint16 likesCount,
         uint256 createdAt
     ) public {
         require(msg.sender == _migrator, "Access Denied");
@@ -205,7 +206,7 @@ contract PointSocial {
                 contents: contents,
                 image: image,
                 createdAt: createdAt,
-                likesCount: 0,
+                likesCount: likesCount,
                 commentsCount: 0
             });
 
@@ -230,7 +231,7 @@ contract PointSocial {
                 contents: contents,
                 createdAt: createdAt
             });
-            
+
             commentsByPost[postId].push(_comment);
             commentById[_comment.id] = _comment;
             commentsByOwner[_comment.from].push(_comment);
