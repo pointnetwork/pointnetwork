@@ -222,12 +222,16 @@ services:
     ports:
       - "12201:12201/udp"
       - "5044:5044"
-    environment:
-      - "xpack.monitoring.elasticsearch.url=http://127.0.0.1:9200"
     volumes:
       - ./resources/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - certs:/usr/share/certs
     depends_on:
-      - es03
+      es01:
+        condition: service_healthy
+      es02:
+        condition: service_healthy
+      es03:
+        condition: service_healthy
     command: logstash -f /usr/share/logstash/pipeline/logstash.conf --config.reload.automatic
 
 volumes:
