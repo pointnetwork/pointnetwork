@@ -25,16 +25,93 @@ class Deployer {
         return cache_dir;
     }
 
+    isVersionFormated(baseVersion){
+        return /^\d+\.\d+$/.test(String(baseVersion));
+    }
+
+    getVersionParts(version){
+        const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
+        const found = version.match(regex);
+        if (found) {
+            return {major: found.groups.major, 
+                    minor: found.groups.minor, 
+                    patch: found.groups.patch};
+        } else {
+            throw new Error('Version in wrong format ');
+        }
+    }
+
+    isNewBaseVersionValid(oldVersion, newBaseVersion){
+        if(oldVersion == null || oldVersion == undefined || oldVersion == ''){
+            return true;
+        }
+
+        const oldP = this.getVersionParts(oldVersion);
+        const oldBaseVersion = new Number(oldP.major + '.' + oldP.minor);
+        if(oldBaseVersion <= new Number(newBaseVersion)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    getNewPatchedVersion(oldVersion, newBaseVersion){
+        if(oldVersion == null || oldVersion == undefined || oldVersion == ''){
+            return newBaseVersion + '.0';
+        }
+
+        const oldP = this.getVersionParts(oldVersion);
+        const oldBaseVersion = oldP.major + '.' + oldP.minor;
+        if(oldBaseVersion === newBaseVersion){
+            return oldBaseVersion + '.' + (new Number(oldP.patch) + 1);
+        }else{
+            return newBaseVersion + '.0';
+        }
+    }
+
     async deploy(deployPath, deployContracts = false, dev = false) {
         // todo: error handling, as usual
         const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
         const deployConfig = JSON.parse(deployConfigFile);
         const baseVersion = deployConfig.version.toString();
-        // assert(deployConfig.version === 1); // todo: msg
+        if(!this.isVersionFormated(baseVersion)){
+            log.error(
+                {
+                    deployConfigFilePath: deployConfigFilePath,
+                    version: baseVersion
+                },
+                'Incorrect format of Version number. Should be MAJOR.MINOR.'
+            );
+            throw new Error(
+                `Incorrect format of Version number ${baseVersion}. Should be MAJOR.MINOR.`
+            );
+        }
 
         const target = dev ? `${deployConfig.target.replace('.z', 'dev')}.z` : deployConfig.target;
         const identity = target.replace(/\.z$/, '');
+
+        //get the last version.
+        const lastVersion = await this.ctx.web3bridge.getKeyLastVersion(identity, '::rootDir');
+
+        //get the new version with patch.
+        let version;
+        if(this.isNewBaseVersionValid(lastVersion, baseVersion)){
+            version = this.getNewPatchedVersion(lastVersion, baseVersion);
+        }else{
+            log.error(
+                {
+                    deployConfigFilePath: deployConfigFilePath,
+                    baseVersion: baseVersion,
+                    lastVersion: lastVersion
+                },
+                'Base version should be greater or equal to MAJOR.MINOR of lastVersion.'
+            );
+            throw new Error(
+                `'Base version ${baseVersion} should be greater or equal to MAJOR.MINOR of lastVersion ${lastVersion}.'`
+            );
+        }
+
         const {defaultAccount: owner} = this.ctx.web3.eth;
 
         const registeredOwner = await this.ctx.web3bridge.ownerByIdentity(identity);
@@ -84,7 +161,7 @@ class Deployer {
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
                 try {
-                    await this.deployContract(target, contractName, fileName, deployPath, baseVersion);
+                    await this.deployContract(target, contractName, fileName, deployPath, version);
                 } catch (e) {
                     log.error(
                         {
@@ -101,7 +178,7 @@ class Deployer {
         // Upload public - root dir
         log.debug('Uploading root directory...');
         const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
-        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts, baseVersion);
+        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts, version);
 
         // Upload routes
         const routesFilePath = path.join(deployPath, 'routes.json');
@@ -117,8 +194,8 @@ class Deployer {
             100,
             `uploaded::${routeFileUploadedId}`
         );
-        await this.updateZDNS(target, routeFileUploadedId, baseVersion);
-        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts, baseVersion);
+        await this.updateZDNS(target, routeFileUploadedId, version);
+        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts, version);
 
         log.info('Deploy finished');
     }
@@ -135,9 +212,6 @@ class Deployer {
 
     async deployContract(target, contractName, fileName, deployPath, version) {
         
-        const lastVersionContract = await this.ctx.web3bridge.getKeyLastVersion(target.replace('.z', ''), 'zweb/contracts/address/' + contractName);
-        //todo: verify if the version is consistent with IKV system and generate patch version. 
-
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
         const fs = require('fs-extra');
 
@@ -258,7 +332,7 @@ class Deployer {
         await this.ctx.web3bridge.putZRecord(target, '0x' + id, version);
     }
 
-    async updateKeyValue(target, values = {}, deployPath, deployContracts = false, baseVersion) {
+    async updateKeyValue(target, values = {}, deployPath, deployContracts = false, version) {
         const replaceContentsWithCids = async obj => {
             const result = {};
 
@@ -334,7 +408,7 @@ class Deployer {
                 }
                 value = JSON.stringify(value);
             }
-            await this.ctx.web3bridge.putKeyValue(target, key, String(value), baseVersion);
+            await this.ctx.web3bridge.putKeyValue(target, key, String(value), version);
         }
     }
 }
