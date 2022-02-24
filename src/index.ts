@@ -1,9 +1,12 @@
-import {Command} from 'commander';
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
-import {existsSync, writeFileSync} from 'fs';
+import {exec} from 'child_process';
+import {existsSync, writeFileSync, mkdirSync} from 'fs';
 import lockfile from 'proper-lockfile';
+import {Command} from 'commander';
 import disclaimer from './disclaimer';
 import {resolveHome} from './core/utils';
+import {getContractAddress, compileContract} from './util/contract';
 
 if ((process as typeof process & {pkg?: unknown}).pkg !== undefined) {
     // when running inside the packaged version the configuration should be
@@ -14,20 +17,17 @@ if ((process as typeof process & {pkg?: unknown}).pkg !== undefined) {
     process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
 }
 
-type ProgramType = InstanceType<typeof Command> & {
-    datadir?: string
-};
-
-const program: ProgramType = new Command();
+disclaimer.output();
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
+
+const program: ProgramType<typeof Command> = new Command();
 
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
 program.version(process.env.npm_package_version || 'No version is specified');
-
 program.description(`
     Point Network
     https://pointnetwork.io/
@@ -35,61 +35,178 @@ program.description(`
     Licensed under MIT license.
 `);
 
-// Print disclaimer
-disclaimer.output();
-
 program.option('-d, --datadir <path>', 'path to the data directory');
+program.option('-v, --verbose', 'force the logger to show debug level messages', false);
+
+program
+    .command('start', {isDefault: true})
+    .description('start the node');
+program
+    .command('attach')
+    .description('attach to the running point process')
+    .action(() => void (program.attach = true));
+program
+    .command('makemigration')
+    .description('[dev mode] auto create db migrations from models')
+    .action(() => void (program.makemigration = true));
+program
+    .command('migrate')
+    .description('[dev mode] run migrations')
+    .action(() => void (program.migrate = true));
+program
+    .command('compile')
+    .description('compile contracts')
+    .action(() => void (program.compile = true));
+program
+    .command('migrate:undo')
+    .description('[dev mode] undo migration')
+    .action(() => void (program.migrate = program.migrate_undo = true));
+program
+    .command('debug-destroy-everything')
+    .description('destroys everything in datadir: database and files. dangerous!')
+    .action(() => void (program.debug_destroy_everything = true));
+program
+    .command('deploy <path>')
+    .description('deploy a website')
+    .action((path, cmd) => {
+        program.deploy = path;
+        program.deploy_contracts = Boolean(cmd.contracts);
+        program.dev = Boolean(cmd.dev);
+    })
+    .option('--contracts', '(re)deploy contracts too', false)
+    .option('--dev', 'deploy zapp to dev too', false);
+
+// program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
+// program.option('--daemon', 'sends the daemon to the background'); // todo
+// program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
+
 program.parse(process.argv);
+
+// ------------------ Patch Config ------------ //
 
 if (program.datadir) {
     process.env.DATADIR = program.datadir;
 }
-
-const getContractAddress = (name: string) => {
-    const filename = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts', `${name}.json`);
-
-    if (!existsSync(filename)) {
-        return;
-    }
-
-    const {networks} = require(filename);
-
-    for (const network in networks) {
-        const {address} = networks[network];
-        if (address && typeof address === 'string') {
-            return address;
-        }
-    }
-};
-
-// ------------------ Patch Config ------------ //
 
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
     process.env.STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS = getContractAddress('StorageProviderRegistry');
 }
 
-const config = require('config');
-const logger = require('./core/log.js');
-const Model = require('./db/model.js');
-const Point = require('./core/index.js');
+// Warning: the below imports should take place after the above config patch!
+
+import config from 'config';
+import logger from './core/log.js';
+import Model from './db/model.js';
+import Point from './core/index.js';
 
 // ------------------- Init Logger ----------------- //
 
 const log = logger.child({module: 'point'});
-
-export type CtxType = Record<string, unknown> & {
-    basepath: string;
-    exit: (code: number) => void;
-    die: (err: Error) => void;
-    db?: {shutdown?: () => Promise<undefined>};
-};
-
 const ctx: CtxType = {
     basepath: __dirname,
     exit: (code: number) => (log.close(), process.exit(code)),
     die: (err: Error) => (log.fatal(err), ctx.exit(1))
 };
+
+// ----------------- Console Mode -------------------- //
+
+if (program.attach) {
+    const Console = require('./console');
+    const console = new Console();
+    console.start();
+    // @ts-ignore
+    return;
+}
+
+// -------------------- Deployer --------------------- //
+
+if (program.deploy) {
+    const Deploy = require('./core/deploy');
+    const deploy = new Deploy();
+    deploy.deploy(program.deploy, program.deploy_contracts, program.dev)
+        .then(ctx.exit)
+        .catch(ctx.die);
+    // @ts-ignore
+    return;
+}
+
+// ---------------- Migration Modes ---------------- //
+
+if (program.makemigration) {
+    // A little hack: prepare sequelize-auto-migrations for reading from the current datadir config
+    process.argv = [
+        './point',
+        'makemigration',
+        '--models-path',
+        './db/models',
+        '--migrations-path',
+        './db/migrations',
+        '--name',
+        'automigration'
+    ];
+    const SequelizeFactory = require('./db/models');
+    SequelizeFactory.init();
+
+    require('sequelize-auto-migrations/bin/makemigration.js');
+    // @ts-ignore
+    return;
+}
+
+if (program.migrate) {
+    const seq_cmd = program.migrate_undo ? 'db:migrate:undo' : 'db:migrate';
+    exec(`npx sequelize-cli ${seq_cmd} --url sqlite:${
+        path.join(resolveHome(config.get('datadir')), config.get('db.storage'))} --env ${
+        config.get('db.env')
+    }`,
+    (error, stdout, stderr) => {
+        if (error) {
+            return log.error(error, 'Migration error');
+        }
+        if (stderr) {
+            return log.error(`Migration stderr: ${stderr}`);
+        }
+        log.debug(`Migration result: ${stdout}`);
+    });
+    // @ts-ignore
+    return;
+}
+
+// ------------------ Remove Everything ------------ //
+
+if (program.debug_destroy_everything) {
+    const DB = require('./db');
+    ctx.db = new DB(ctx);
+    DB.__debugClearCompletely(ctx); // async!
+    // @ts-ignore
+    return;
+}
+
+// ------------------ Compile Contracts ------------ //
+
+if (program.compile) {
+    log.info('Compiling contracts...');
+
+    const buildDirPath = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts');
+    if (!existsSync(buildDirPath)) {
+        mkdirSync(buildDirPath);
+    }
+
+    const contractPath = path.resolve(__dirname, '..', 'truffle', 'contracts');
+    const contracts = ['Identity', 'Migrations', 'StorageProviderRegistry'];
+
+    Promise.all(contracts.map(name => compileContract({name, contractPath, buildDirPath})
+        .then(compiled => log.debug(compiled
+            ? `Contract ${name} successfully compiled`
+            : `Contract ${name} is already compiled`
+        ))
+    ))
+        .then(() => ctx.exit(0))
+        .catch(ctx.die);
+
+    // @ts-ignore
+    return;
+}
 
 // ------------------ Gracefully exit ---------------- //
 
