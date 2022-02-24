@@ -23,7 +23,7 @@ export function getContractAddress(name: string, buildPath = defaultBuildPath) {
 }
 
 export function getImports(dependency: string) {
-    const dependencyNodeModulesPath = path.join(__dirname, '..', 'node_modules', dependency);
+    const dependencyNodeModulesPath = path.join(__dirname, '..', '..', 'node_modules', dependency);
     if (!existsSync(dependencyNodeModulesPath)) {
         throw new Error(
             `Could not find contract dependency "${dependency}", have you tried npm install?`

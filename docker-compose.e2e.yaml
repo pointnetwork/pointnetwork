@@ -56,7 +56,7 @@ services:
         condition: service_completed_successfully
       buckets:
         condition: service_completed_successfully
-    command: 'run start:docker:e2e'
+    command: 'run start:e2e'
     volumes:
       - point_node_data_e2e:/data
       - shared_contracts_e2e:/app/truffle/build/contracts

@@ -16,7 +16,8 @@
     "noImplicitAny": true,
     "paths": {
       ".util": ["./src/util"],
-      ".migrations": ["./migrations"]
+      ".migrations": ["./migrations"],
+      ".types": ["./src/@types"]
     },
     "typeRoots": ["./src/@types", "./node_modules/@types"]
   },
