@@ -4,10 +4,6 @@ const axios = require('axios');
 const config = require('config');
 
 class Console {
-    constructor(ctx) {
-        this.ctx = ctx;
-    }
-
     start() {
         console.log('Welcome to Point Network!');
 

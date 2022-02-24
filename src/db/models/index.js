@@ -7,8 +7,7 @@ const log = logger.child({module: 'Sequelize'});
 const {resolveHome} = require('../../core/utils');
 
 class SequelizeFactory {
-    init(ctx) {
-        this.ctx = ctx;
+    init() {
         this.config = config.get('db');
         const storage = path.join(resolveHome(config.get('datadir')), this.config.storage);
         this.Sequelize = Sequelize; // Needed for export!
@@ -23,8 +22,7 @@ class SequelizeFactory {
                 transactionType: this.config.transactionType,
                 retry: {max: this.config.retry.max},
                 logQueryParameters: true,
-                logging: log.debug.bind(log),
-                ctx
+                logging: log.debug.bind(log)
             }
         ); // todo: validate config
 
