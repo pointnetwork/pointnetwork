@@ -1,5 +1,5 @@
 <div class="tweet">
-    <div class="identity"><a href="/@{{ identity_by_owner(tweet.from) }}">@{{ identity_by_owner(tweet.from) }}</a></div>
+    <div class="identity"><a href="/@{{ identity_by_owner(tweet.from) }}?__point_version={{version}}">@{{ identity_by_owner(tweet.from) }}</a></div>
     <div class="from">{{ tweet.from }}</div>
 
     {% set contents = storage_get(tweet.contents) %}

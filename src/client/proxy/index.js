@@ -263,7 +263,7 @@ class ZProxy {
                     parsedUrl
                 );
                 contentType = response._contentType;
-            } else if (false /*for testing only*/ && config.get('mode') === 'zappdev') {
+            } else if (false /* for testing only */ && config.get('mode') === 'zappdev') {
                 // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
 
                 // First try route file (and check if this domain even exists)

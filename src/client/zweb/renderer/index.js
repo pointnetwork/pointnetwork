@@ -167,7 +167,7 @@ class Renderer {
             is_authenticated: async function (auth) {
                 return auth.walletid !== undefined;
             },
-            contract_list: async function (target, contractName, method, params = []) {
+            contract_list: async function (target, contractName, method, params = [], version = 'latest') {
                 let i = 0;
                 const results = [];
                 while (true) {
@@ -177,7 +177,8 @@ class Renderer {
                                 target,
                                 contractName,
                                 method,
-                                params.concat([i])
+                                params.concat([i]),
+                                version
                             )
                         );
                     } catch (e) {

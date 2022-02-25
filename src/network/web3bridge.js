@@ -88,18 +88,20 @@ class Web3Bridge {
         if (target === '@' && contractName === 'Identity') {
             return this.loadIdentityContract();
         }
-        if (version == 'latest'){
-            const at = await this.ctx.web3bridge.getKeyValue(
-                target,
-                'zweb/contracts/address/' + contractName
-            );
-            const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
-                target,
-                'zweb/contracts/abi/' + contractName
-            );
-        }else{
 
-        }
+        const at = await this.ctx.web3bridge.getKeyValue(
+                target,
+                'zweb/contracts/address/' + contractName,
+                version,
+                'equalOrBefore'
+            );
+        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
+                target,
+                'zweb/contracts/abi/' + contractName,
+                version,
+                'equalOrBefore'
+            );
+        
         let abi;
         try {
             abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
@@ -176,13 +178,13 @@ class Web3Bridge {
          */
     }
 
-    async callContract(target, contractName, method, params) {
+    async callContract(target, contractName, method, params, version = 'latest') {
         // todo: multiple arguments, but check existing usage // huh?
         let attempt = 0;
         log.debug({target, contractName, method, params}, 'Contract Call');
         while (true) {
             try {
-                const contract = await this.loadWebsiteContract(target, contractName);
+                const contract = await this.loadWebsiteContract(target, contractName, version);
                 if (!Array.isArray(params))
                     throw Error('Params sent to callContract is not an array');
                 if (!contract.methods[method])
@@ -340,8 +342,28 @@ class Web3Bridge {
         }
     }
 
+    compareVersions(v1, v2){
+        const v1p = v1.split('.');
+        const v2p = v2.split('.');
+        for(let i in v1p){
+            if(v1p[i] > v2p[i]){
+                return 1;
+            }else if(v1p[i] < v2p[i]) {
+                return -1;
+            }
+        }
+        return 0;
+    }
 
-    async getKeyValue(identity, key, version = 'latest') {
+    getLastVersionOrBefore(version, events){
+        let filteredEvents = events.filter(e => [-1,0].includes(this.compareVersions(e.returnValues.version, version)) )
+        const maxObj = filteredEvents.reduce((prev, current) => 
+                        (this.compareVersions(prev.returnValues.version, current.returnValues.version) == 1) ? prev : current);
+        return maxObj.returnValues.value;
+    }
+
+
+    async getKeyValue(identity, key, version = 'latest', versionSearchStrategy = 'exact') {
         try {
             if (typeof identity !== 'string')
                 throw Error('web3bridge.getKeyValue(): identity must be a string');
@@ -357,12 +379,21 @@ class Web3Bridge {
                 const result = await contract.methods.ikvGet(identity, key).call();
                 return result;
             }else{
-                const filter = {identity: identity, key: key, version: version};
-                let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
-                if(events.length > 0 ){
-                    return events[0].returnValues.value;
+                if(versionSearchStrategy === 'exact'){
+                    const filter = {identity: identity, key: key, version: version};
+                    let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+                    if(events.length > 0 ){
+                        return events[0].returnValues.value;
+                    }else{
+                        return null; 
+                    }
+                }else if (versionSearchStrategy === 'equalOrBefore'){
+                    const filter = {identity: identity, key: key};
+                    let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+                    let value = this.getLastVersionOrBefore(version, events);
+                    return value;
                 }else{
-                    return null; 
+                    return null;
                 }
             }
         } catch (e) {
