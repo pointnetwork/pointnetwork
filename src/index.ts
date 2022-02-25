@@ -6,6 +6,7 @@ import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
 import {resolveHome} from './core/utils';
+import {getContractAddress, compileContract} from './util/contract';
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
@@ -99,7 +100,6 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 import config from 'config';
 import logger from './core/log.js';
 import Point from './core/index.js';
-import {getContractAddress, compileContract} from './util/contract';
 import migrate from './util/migrate';
 
 // ------------------- Init Logger ----------------- //

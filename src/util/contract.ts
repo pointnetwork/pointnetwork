@@ -1,9 +1,8 @@
 import path from 'path';
 import {existsSync, readFileSync, writeFileSync} from 'fs';
-import Deployer from '../client/zweb/deployer';
 
-const defaultBuildPath = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts');
-const defaultContractPath = path.resolve(__dirname, '..', 'truffle', 'contracts');
+const defaultBuildPath = path.resolve(__dirname, '..', '..', 'truffle', 'build', 'contracts');
+const defaultContractPath = path.resolve(__dirname, '..', '..', 'truffle', 'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
     const filename = path.resolve(buildPath, `${name}.json`);
@@ -22,6 +21,17 @@ export function getContractAddress(name: string, buildPath = defaultBuildPath) {
     }
 }
 
+export function getPragmaVersion(source: string) {
+    const regex = /pragma solidity [\^~><]?=?(?<version>[0-9.]*);/;
+    const found = source.match(regex);
+    if (found && found.groups) {
+        return found.groups.version;
+    } else {
+        throw new Error('Contract has no compiler version');
+    }
+}
+
+// TODO: unify with the same function from Deployer
 export function getImports(dependency: string) {
     const dependencyNodeModulesPath = path.join(__dirname, '..', '..', 'node_modules', dependency);
     if (!existsSync(dependencyNodeModulesPath)) {
@@ -51,7 +61,7 @@ export async function compileContract({
     }
 
     const content = readFileSync(filepath, 'utf8');
-    const version = await Deployer.getPragmaVersion(content);
+    const version = getPragmaVersion(content);
     const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
     const compilerProps = {
         language: 'Solidity',
