@@ -261,12 +261,11 @@ sigs.forEach(function (sig) {
 });
 
 process.on('uncaughtException', err => {
-    log.error({message: err.message, stack: err.stack}, 'Error: uncaught exception');
+    log.error(err, 'Error: uncaught exception');
 });
 
-process.on('unhandledRejection', (err: Error, second) => {
-    log.debug(err, second);
-    log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
+process.on('unhandledRejection', (err: Error) => {
+    log.error(err, 'Error: unhandled rejection');
 });
 
 // ------------------- Start Point ------------------- //

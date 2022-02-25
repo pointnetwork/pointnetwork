@@ -2,7 +2,6 @@ version: '3.9'
 
 services:
   point_node:
-    image: ${POINT_DEV_IMAGE_NAME:-pointnetwork/pointnetwork_node:$POINT_NODE_VERSION}
     extends:
       file: docker-compose.yaml
       service: point_node
@@ -13,11 +12,13 @@ services:
       - ./config:/app/config:ro
       - ./example:/app/example:ro
       - ./internal:/app/internal:ro
+      - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./package.json:/app/package.json:ro
       - ./src:/app/src:ro
-      - ./point:/app/point:ro
+      - ./package.json:/app/package.json:ro
+      - ./nodemon.json:/app/nodemon.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
     environment:
       NODE_CONFIG_ENV: dockerdev
 

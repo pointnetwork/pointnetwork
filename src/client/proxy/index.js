@@ -175,7 +175,7 @@ class ZProxy {
         const headers = {'Content-Type': 'text/html;charset=UTF-8'};
         response.writeHead(500, headers);
         response.write(this._errorMsgHtml(err, 500)); // better code
-        log.error({err, stack: err.stack}, `ZProxy 500 Error`);
+        log.error(err, `ZProxy 500 Error`);
         response.end();
     }
 

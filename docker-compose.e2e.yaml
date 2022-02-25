@@ -64,6 +64,7 @@ services:
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     environment:
       NODE_CONFIG_ENV: e2e
+
   arweave:
     extends:
       file: docker-compose.storage.yaml

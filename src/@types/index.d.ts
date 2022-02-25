@@ -33,7 +33,7 @@ declare global {
         basepath: string;
         exit: (code: number) => void;
         die: (err: Error) => void;
-        db?: {shutdown?: () => Promise<undefined>};
+        db?: {shutdown?: () => Promise<void>};
     };
 }
 
