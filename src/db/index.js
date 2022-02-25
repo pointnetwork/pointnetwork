@@ -6,10 +6,8 @@ const log = logger.child({module: 'DB'});
 const {resolveHome} = require('../core/utils');
 
 class DB {
-    constructor(ctx) {
-        this.ctx = ctx;
+    constructor() {
         this.config = config.get('db');
-        Model.setCtx(ctx);
     }
 
     async init() {

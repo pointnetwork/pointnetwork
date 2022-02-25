@@ -15,7 +15,7 @@ interface SequelizeFactory {
 }
 
 class SequelizeFactory implements SequelizeFactory {
-    init(ctx: CtxType) {
+    init() {
         this.config = config.get('db');
         const storage = path.join(resolveHome(config.get('datadir')), this.config.storage);
         this.Sequelize = Sequelize; // Needed for export!
@@ -30,11 +30,7 @@ class SequelizeFactory implements SequelizeFactory {
                 transactionType: this.config.transactionType,
                 retry: {max: this.config.retry.max},
                 logQueryParameters: true,
-                logging: log.debug.bind(log),
-                // TODO: remove ctx from Sequelize options
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                ctx
+                logging: log.debug.bind(log)
             }
         );
 

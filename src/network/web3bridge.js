@@ -40,7 +40,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
     return web3;
 }
 
-let identityAbi;
+const abisByContractName = {};
 class Web3Bridge {
     constructor(ctx) {
         this.ctx = ctx;
@@ -63,7 +63,7 @@ class Web3Bridge {
     async start() {}
 
     async loadPointContract(contractName, at) {
-        if (!identityAbi) {
+        if (!(contractName in abisByContractName)) {
             const buildDirPath = path.resolve(
                 this.ctx.basepath,
                 '..',
@@ -88,10 +88,10 @@ class Web3Bridge {
             }
 
             const abiFile = JSON.parse(fs.readFileSync(abiFileName));
-            identityAbi = abiFile.abi;
+            abisByContractName[contractName] = abiFile.abi;
         }
 
-        return new this.web3.eth.Contract(identityAbi, at);
+        return new this.web3.eth.Contract(abisByContractName[contractName], at);
     }
 
     async loadStorageProviderRegistryContract() {
