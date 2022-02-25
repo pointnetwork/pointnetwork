@@ -136,6 +136,26 @@ class Renderer {
                     params
                 );
             },
+            all_contract_instance_data: async function(host) {
+                const eventData = [];
+                // TODO: load from IKV / Contract Registry
+                const instances = ['0x420126709199a6e6C91550C4e06Fc62B595f357A', '0x97CB9eFe7a18f4619e7Bb2d50c7fB729DbEfC59b'];
+                for(const address of instances) {
+                    log.debug(`**** getting events from address: ${address}`);
+                    const options = {fromBlock: 1, toBlock: 'latest', address};
+                    const events = await this.renderer.ctx.web3bridge.getPastEventsAt(
+                        host.replace('.z', ''),
+                        'Twitter',
+                        address,
+                        'StorageEvent',
+                        options
+                    );
+                    for (const ev of events) {
+                        eventData.push({data: ev.returnValues});
+                    }
+                }
+                return eventData;
+            },
             contract_events: async function (host, contractName, event, filter = {}) {
                 //delete keys property inserted by twig
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];

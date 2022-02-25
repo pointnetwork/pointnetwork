@@ -1,9 +1,9 @@
 {% extends 'layout.zhtml' %}
 
 {% block contents %}
-    {% set tweets = contract_list(host, 'Twitter', 'getTweet') %}
+    {% set tweets = all_contract_instance_data(host) %}
 
-    {% for tweet in tweets %}
+   	{% for tweet in tweets %}
         {% include 'tweet.zhtml' %}
     {% else %}
         <b>No tweets here. Let's post something!</b>

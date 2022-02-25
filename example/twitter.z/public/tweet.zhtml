@@ -1,17 +1,19 @@
 <div class="tweet">
-    <div class="identity"><a href="/@{{ identity_by_owner(tweet.from) }}">@{{ identity_by_owner(tweet.from) }}</a></div>
-    <div class="from">{{ tweet.from }}</div>
+    <div class="identity"><a href="/@{{ identity_by_owner(tweet.data.sender) }}">@{{ identity_by_owner(tweet.data.sender) }}</a></div>
+    <div class="from">{{ tweet.data.sender }}</div>
 
-    {% set contents = storage_get(tweet.contents) %}
+    {% set contents = storage_get(tweet.data.cid) %}
+
+    {% set state = contract_get(host, 'Twitter', 'states', [ tweet.data.id ]) %}
 
     <div class="contents">
         {{ contents|length <= 280 ? contents : 'N/A' }}
     </div>
 
-    <div class="time">{{ tweet.timestamp | date('Y-m-d H:i:s') }}</div>
+    <div class="time">{{ tweet.data.timestamp | date('Y-m-d H:i:s') }}</div>
 
     <form method="post" action="/_contract_send/Twitter.like(tweet_id)">
-        <input type="hidden" name="tweet_id" value="{{ loop.index0 }}" />
-        <input type="submit" value="{{ tweet.likes }} likes" value="Send Tweet" />
+        <input type="hidden" name="tweet_id" value="{{ tweet.data.id }}" />
+        <input type="submit" value="{{ state.likes }} likes" value="Send Tweet" />
     </form>
 </div>

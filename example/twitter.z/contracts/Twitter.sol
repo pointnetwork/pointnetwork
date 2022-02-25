@@ -3,58 +3,44 @@ pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 contract Twitter {
-    struct Tweet {
-        address from;
-        bytes32 contents;
-        uint256 timestamp;
+    struct TweetState {
+        uint256 tweetId;
         uint256 likes;
     }
 
-    Tweet[] public tweets;
-    mapping(address => Tweet[]) public tweetsByOwner;
+    TweetState[] public states;
     address private _owner;
-    address private _migrator;
 
     constructor() {
         _owner = msg.sender;
     }
 
-   
-    function addMigrator(address migrator) public {
-        require(msg.sender == _owner, "Access Denied");
-        require(_migrator == address(0), "Access Denied");
-        _migrator = migrator;
-    }
+    event StorageEvent(
+        uint256 id,
+        bytes32 cid,
+        string datatype,
+        address sender,
+        uint256 blocknumber,
+        uint256 timestamp
+    );
 
+    // Example: 0x0000000000000000000000000000000000000000000068692066726f6d20706e
     function tweet(bytes32 contents) public {
-        Tweet memory _tweet = Tweet(msg.sender, contents, block.timestamp, 0);
-        tweets.push(_tweet);
-        tweetsByOwner[msg.sender].push(_tweet);
+        uint256 tweetId = states.length;
+        TweetState memory _tweetstate = TweetState(tweetId, 0);
+        states.push(_tweetstate);
+        emit StorageEvent(tweetId, contents, "tweet", msg.sender, block.number, block.timestamp);
     }
 
     function like(uint256 tweetId) public {
-        tweets[tweetId].likes++;
+        states[tweetId].likes++;
     }
 
-    function getTweet(uint256 tweetId) public view returns (Tweet memory t) {
-        return tweets[tweetId];
-    }
+    // migrate tweet state
+    function migrateTweetState(uint256 tweetId, uint256 likes) public {
+        require(msg.sender == _owner, "Only owner can migrate.");
 
-    function getTweetByOwner(address owner, uint256 tweetId) public view returns (Tweet memory t) {
-        return tweetsByOwner[owner][tweetId];
-    }
-
-    function add(address owner, bytes32 contents, uint256 timestamp, uint256 likes) public {
-        require(msg.sender == _migrator, "Access Denied");
-
-        Tweet memory _tweet = Tweet({
-            from : owner,
-            contents : contents,
-            timestamp : timestamp,
-            likes : likes
-        });
-
-        tweets.push(_tweet);
-        tweetsByOwner[_tweet.from].push(_tweet);
+        TweetState memory _tweetstate = TweetState(tweetId, likes);
+        states.push(_tweetstate);
     }
 }

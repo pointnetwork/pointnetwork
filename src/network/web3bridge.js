@@ -82,17 +82,17 @@ class Web3Bridge {
         return await this.loadPointContract('Identity', at);
     }
 
-    async loadWebsiteContract(target, contractName) {
+    async loadWebsiteContract(target, contractName, address = undefined) {
         // todo: make it nicer, extend to all potential contracts, and add to docs
         // @ means internal contract for Point Network (truffle/contracts)
         if (target === '@' && contractName === 'Identity') {
             return this.loadIdentityContract();
         }
 
-        const at = await this.ctx.web3bridge.getKeyValue(
+        const at = address === undefined ? await this.ctx.web3bridge.getKeyValue(
             target,
             'zweb/contracts/address/' + contractName
-        );
+        ) : address;
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
             target,
             'zweb/contracts/abi/' + contractName
@@ -210,6 +210,11 @@ class Web3Bridge {
 
     async getPastEvents(target, contractName, event, options = {fromBlock: 0, toBlock: 'latest'}) {
         const contract = await this.loadWebsiteContract(target, contractName);
+        return await contract.getPastEvents(event, options);
+    }
+
+    async getPastEventsAt(target, contractName, address, event, options = {fromBlock: 0, toBlock: 'latest'}) {
+        const contract = await this.loadWebsiteContract(target, contractName, address);
         return await contract.getPastEvents(event, options);
     }
 
