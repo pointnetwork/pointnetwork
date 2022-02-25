@@ -10,7 +10,7 @@ import {getContractAddress, compileContract} from './util/contract';
 import migrate from './util/migrate';
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
-
+console.log({RUNNING_PKG_MODE});
 if (RUNNING_PKG_MODE) {
     // when running inside the packaged version the configuration should be
     // retrieved from the internal packaged config
@@ -18,6 +18,7 @@ if (RUNNING_PKG_MODE) {
     // when using vercel/pkg process.cwd references real folder and not packaged folder
     // overwriting this env variable fixes the problems
     process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
+    console.log({configDir: process.env.NODE_CONFIG_DIR});
 }
 
 disclaimer.output();
@@ -101,6 +102,8 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 import config from 'config';
 import logger from './core/log.js';
 import Point from './core/index.js';
+
+console.log({datadir: config.get('datadir')});
 
 // ------------------- Init Logger ----------------- //
 
