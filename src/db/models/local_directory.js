@@ -5,10 +5,6 @@ const logger = require('../../core/log');
 const log = logger.child({module: 'LocalDirectory'});
 
 class LocalDirectory {
-    constructor(ctx) {
-        this.ctx = ctx;
-    }
-
     setLocalRoot(localRoot) {
         this.localRoot = localRoot;
     }

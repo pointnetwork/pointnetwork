@@ -9,7 +9,9 @@ import {resolveHome} from './core/utils';
 import {getContractAddress, compileContract} from './util/contract';
 import migrate from './util/migrate';
 
-if ((process as typeof process & {pkg?: unknown}).pkg !== undefined) {
+export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
+
+if (RUNNING_PKG_MODE) {
     // when running inside the packaged version the configuration should be
     // retrieved from the internal packaged config
     // by default config library uses process.cwd() to reference the config folder
@@ -98,7 +100,6 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 
 import config from 'config';
 import logger from './core/log.js';
-import Model from './db/model.js';
 import Point from './core/index.js';
 
 // ------------------- Init Logger ----------------- //
@@ -267,8 +268,6 @@ process.on('unhandledRejection', (err: Error, second) => {
     log.debug(err, second);
     log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
 });
-
-Model.setCtx(ctx);
 
 // ------------------- Start Point ------------------- //
 
