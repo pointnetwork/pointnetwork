@@ -224,7 +224,7 @@ services:
       - "5044:5044"
     volumes:
       - ./resources/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-      - certs:/usr/share/certs
+      - certs:/usr/share/logstash/config/certs
     environment:
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     depends_on:
