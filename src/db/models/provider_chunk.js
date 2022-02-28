@@ -4,6 +4,7 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const utils = require('../../core/utils');
 const _ = require('lodash');
+const config = require('config');
 
 // todo: two files? maybe reuse some code at least
 
@@ -12,28 +13,28 @@ class ProviderChunk extends Model {
         super(...args);
     }
 
-    static getChunkStoragePath(id) {
-        const cache_dir = path.join(
-            this.ctx.datadir,
-            this.ctx.config.service_provider.storage.cache_path
+    static getStorageDir() {
+        return path.join(
+            utils.resolveHome(config.get('datadir')),
+            config.get('storage.cache_path')
         );
+    }
+
+    static getChunkStoragePath(id) {
+        const cache_dir = this.getStorageDir();
         utils.makeSurePathExists(cache_dir);
         return cache_dir + '/' + 'provider_chunk_' + id;
     }
+
     static getSegmentStoragePath(segment_hash) {
-        const cache_dir = path.join(
-            this.ctx.datadir,
-            this.ctx.config.service_provider.storage.cache_path
-        );
+        const cache_dir = this.getStorageDir();
         utils.makeSurePathExists(cache_dir);
         return cache_dir + '/' + 'provider_chunk_segment_' + segment_hash;
     }
+
     static getDecryptedChunkStoragePath(id) {
         // todo: can there be a situation where when decrypted, the contents is the same as another decrypted chunk? maybe find a way to store them in one space?
-        const cache_dir = path.join(
-            this.ctx.datadir,
-            this.ctx.config.service_provider.storage.cache_path
-        );
+        const cache_dir = this.getStorageDir();
         utils.makeSurePathExists(cache_dir);
         return cache_dir + '/' + 'provider_chunk_decrypted_' + id;
     }
