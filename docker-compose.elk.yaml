@@ -225,6 +225,8 @@ services:
     volumes:
       - ./resources/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
       - certs:/usr/share/certs
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     depends_on:
       es01:
         condition: service_healthy
