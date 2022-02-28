@@ -33,9 +33,7 @@ services:
       # (!) TLS certificates. Generate using instructions from tls/README.md.
       - ./tls/elasticsearch/elasticsearch.p12:/usr/share/elasticsearch/config/elasticsearch.p12:ro,z
       - ./tls/elasticsearch/http.p12:/usr/share/elasticsearch/config/http.p12:ro,z
-    ports:
-      - "9200:9200"
-      - "9300:9300"
+
     environment:
       ES_JAVA_OPTS: -Xmx256m -Xms256m
       # Bootstrap password.
@@ -57,10 +55,8 @@ services:
       # (!) CA certificate. Generate using instructions from tls/README.md
       - ./tls/kibana/elasticsearch-ca.pem:/usr/share/logstash/config/elasticsearch-ca.pem:ro,z
     ports:
-      - "5044:5044"
-      - "5000:5000/tcp"
-      - "5000:5000/udp"
       - "9600:9600"
+      - "12201:12201/udp"
     environment:
       LS_JAVA_OPTS: -Xmx256m -Xms256m
       LOGSTASH_INTERNAL_PASSWORD: ${LOGSTASH_INTERNAL_PASSWORD:-}
