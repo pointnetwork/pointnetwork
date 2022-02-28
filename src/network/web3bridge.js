@@ -11,6 +11,7 @@ const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
 const {compileContract} = require('../util/contract');
+const {resolveHome} = require('../core/utils');
 const log = logger.child({module: 'Web3Bridge'});
 
 function isRetryableError({message}) {
@@ -65,12 +66,12 @@ class Web3Bridge {
     async loadPointContract(contractName, at) {
         if (!(contractName in abisByContractName)) {
             const buildDirPath = path.resolve(
-                this.ctx.basepath,
-                '..',
-                'truffle',
-                'build',
+                resolveHome(config.get('datadir')),
                 'contracts'
             );
+
+            // eslint-disable-next-line
+            console.log({buildDirPath});
 
             const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
