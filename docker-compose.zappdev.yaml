@@ -25,16 +25,18 @@ services:
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
-    command: 'run start:docker:zappdev'
+    command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
       - ./example:/app/example:ro
       - ./internal:/app/internal:ro
+      - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./package.json:/app/package.json:ro
-      - ./point:/app/point:ro
       - ./src:/app/src:ro
+      - ./package.json:/app/package.json:ro
+      - ./nodemon.json:/app/nodemon.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
       - point_node_data_zappdev:/data
       - shared_contracts_zappdev:/app/truffle/build/contracts
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
@@ -54,16 +56,18 @@ services:
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
-    command: 'run start:docker:zappdev'
+    command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
       - ./example:/app/example:ro
       - ./internal:/app/internal:ro
+      - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./package.json:/app/package.json:ro
-      - ./point:/app/point:ro
       - ./src:/app/src:ro
+      - ./package.json:/app/package.json:ro
+      - ./nodemon.json:/app/nodemon.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
       - website_visitor_data_zappdev:/data
       - shared_contracts_zappdev:/app/truffle/build/contracts
       - ./resources/blockchain-test-key2.json:/data/keystore/key.json

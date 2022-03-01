@@ -8,17 +8,12 @@ const addUnderscoreIdFields = {};
 class Model extends sequelize_lib.Model {
     constructor(...args) {
         super(...args);
-        this.ctx = this.sequelize.options.ctx;
         this.log = logger.child({module: 'Model', model: this.constructor.name});
-    }
-
-    static setCtx(ctx) {
-        Model.ctx = ctx;
     }
 
     static get connection() {
         if (!Model._connection) {
-            Model._connection = SequelizeFactory.init(Model.ctx);
+            Model._connection = SequelizeFactory.init();
         }
         return Model._connection;
     }

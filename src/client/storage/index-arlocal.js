@@ -7,7 +7,8 @@ const {
     makeSurePathExistsAsync,
     delay,
     areScalarArraysEqual,
-    escape
+    escape,
+    resolveHome
 } = require('../../core/utils');
 const Arweave = require('arweave');
 const {promises: fs} = require('fs');
@@ -57,12 +58,12 @@ const FILE_TYPE = {
 const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
 const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay');
 
-const cacheDir = path.join(config.get('datadir'), config.get('storage.cache_path'));
-const filesDir = path.join(config.get('datadir'), config.get('storage.files_path'));
+const cacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.cache_path'));
+const filesDir = path.join(resolveHome(config.get('datadir')), config.get('storage.files_path'));
 
 let arweave;
 // load the arweave key for arlocal
-const keystorePath = path.join(config.get('datadir'), config.get('wallet.keystore_path'));
+const keystorePath = path.join(resolveHome(config.get('datadir')), config.get('wallet.keystore_path'));
 const arweaveKey = require(path.join(keystorePath, 'arweave.json'), 'utf-8');
 
 const init = async () => {

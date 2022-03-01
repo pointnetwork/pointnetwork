@@ -3,12 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../core/log');
 const log = logger.child({module: 'DB'});
+const {resolveHome} = require('../core/utils');
 
 class DB {
-    constructor(ctx) {
-        this.ctx = ctx;
+    constructor() {
         this.config = config.get('db');
-        Model.setCtx(ctx);
     }
 
     async init() {
@@ -27,8 +26,8 @@ class DB {
 
         // Clear storage data files
         const dirs = [
-            path.join(config.get('datadir'), config.get('deployer.cache_path')),
-            path.join(config.get('datadir'), config.get('storage.cache_path'))
+            path.join(resolveHome(config.get('datadir')), config.get('deployer.cache_path')),
+            path.join(resolveHome(config.get('datadir')), config.get('storage.cache_path'))
         ];
         for (const dir of dirs) {
             if (typeof dir !== 'string' || dir.length < 5) {

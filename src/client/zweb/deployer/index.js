@@ -1,9 +1,8 @@
 const path = require('path');
 const fs = require('fs');
-const utils = require('../../../core/utils');
-const config = require('config');
 const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
+const {getPragmaVersion} = require('../../../util/contract');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -169,13 +168,7 @@ class Deployer {
                 try {
                     await this.deployContract(target, contractName, fileName, deployPath, version);
                 } catch (e) {
-                    log.error(
-                        {
-                            message: e.message,
-                            stack: e.stack
-                        },
-                        'Zapp contract deployment error'
-                    );
+                    log.error(e, 'Zapp contract deployment error');
                     throw e;
                 }
             }
@@ -206,24 +199,13 @@ class Deployer {
         log.info('Deploy finished');
     }
 
-    static async getPragmaVersion(source) {
-        const regex = /pragma solidity [\^~><]?=?(?<version>[0-9.]*);/;
-        const found = source.match(regex);
-        if (found) {
-            return found.groups.version;
-        } else {
-            throw new Error('Contract has no compiler version');
-        }
-    }
-
     async deployContract(target, contractName, fileName, deployPath, version) {
-        
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
         const fs = require('fs-extra');
 
         const contractSource = fs.readFileSync(fileName, 'utf8');
 
-        const pragmaVersion = await Deployer.getPragmaVersion(contractSource);
+        const pragmaVersion = getPragmaVersion(contractSource);
         const versionArray = pragmaVersion.split('.');
         const SOLC_MAJOR_VERSION = versionArray[0];
         const SOLC_MINOR_VERSION = versionArray[1];
