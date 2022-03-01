@@ -148,7 +148,7 @@ class Renderer {
                     event,
                     options
                 );
-                let eventData = [];
+                const eventData = [];
                 for (const ev of events) {
                     //console.log(ev, ev.raw);
                     const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(

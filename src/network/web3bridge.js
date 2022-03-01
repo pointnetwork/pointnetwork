@@ -113,17 +113,17 @@ class Web3Bridge {
         }
 
         const at = await this.ctx.web3bridge.getKeyValue(
-                target,
-                'zweb/contracts/address/' + contractName,
-                version,
-                'equalOrBefore'
-            );
+            target,
+            'zweb/contracts/address/' + contractName,
+            version,
+            'equalOrBefore'
+        );
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
-                target,
-                'zweb/contracts/abi/' + contractName,
-                version,
-                'equalOrBefore'
-            );
+            target,
+            'zweb/contracts/abi/' + contractName,
+            version,
+            'equalOrBefore'
+        );
 
         let abi;
         try {
@@ -274,14 +274,15 @@ class Web3Bridge {
 
     async sendToContract(target, contractName, methodName, params, options = {}, version = 'latest') {
         //Block send call from versions that are not the latest one.
-        if (version != 'latest'){
-            log.error({target,
+        if (version !== 'latest'){
+            log.error({
+                target,
                 contractName,
                 methodName,
                 params,
                 options,
                 version
-                }, 'Error: Contract send does not allowed for versions different than latest.');
+            }, 'Error: Contract send does not allowed for versions different than latest.');
             throw new Error(`Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`);
         }
         
@@ -368,8 +369,8 @@ class Web3Bridge {
 
     async getKeyLastVersion(identity, key){
         const filter = {identity: identity, key: key};
-        let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
-        if(events.length > 0 ){
+        const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+        if(events.length > 0){
             const maxObj = events.reduce((prev, current) => (prev.blockNumber > current.blockNumber) ? prev : current);
             return maxObj.returnValues.version;
         }else{
@@ -380,7 +381,7 @@ class Web3Bridge {
     compareVersions(v1, v2){
         const v1p = v1.split('.');
         const v2p = v2.split('.');
-        for(let i in v1p){
+        for(const i in v1p){
             if(v1p[i] > v2p[i]){
                 return 1;
             }else if(v1p[i] < v2p[i]) {
@@ -391,9 +392,9 @@ class Web3Bridge {
     }
 
     getLastVersionOrBefore(version, events){
-        let filteredEvents = events.filter(e => [-1,0].includes(this.compareVersions(e.returnValues.version, version)) )
+        const filteredEvents = events.filter(e => [-1, 0].includes(this.compareVersions(e.returnValues.version, version)));
         const maxObj = filteredEvents.reduce((prev, current) => 
-                        (this.compareVersions(prev.returnValues.version, current.returnValues.version) == 1) ? prev : current);
+            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1) ? prev : current);
         return maxObj.returnValues.value;
     }
 
@@ -416,16 +417,16 @@ class Web3Bridge {
             }else{
                 if(versionSearchStrategy === 'exact'){
                     const filter = {identity: identity, key: key, version: version};
-                    let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
-                    if(events.length > 0 ){
+                    const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+                    if(events.length > 0){
                         return events[0].returnValues.value;
                     }else{
                         return null;
                     }
                 }else if (versionSearchStrategy === 'equalOrBefore'){
                     const filter = {identity: identity, key: key};
-                    let events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
-                    let value = this.getLastVersionOrBefore(version, events);
+                    const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+                    const value = this.getLastVersionOrBefore(version, events);
                     return value;
                 }else{
                     return null;

@@ -32,16 +32,18 @@ class Deployer {
         const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
         const found = version.match(regex);
         if (found) {
-            return {major: found.groups.major, 
-                    minor: found.groups.minor, 
-                    patch: found.groups.patch};
+            return {
+                major: found.groups.major, 
+                minor: found.groups.minor, 
+                patch: found.groups.patch
+            };
         } else {
             throw new Error('Version in wrong format ');
         }
     }
 
     isNewBaseVersionValid(oldVersion, newBaseVersion){
-        if(oldVersion == null || oldVersion == undefined || oldVersion == ''){
+        if(oldVersion === null || oldVersion === undefined || oldVersion === ''){
             return true;
         }
 
@@ -183,7 +185,6 @@ class Deployer {
         const routesFilePath = path.join(deployPath, 'routes.json');
         const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         const routes = JSON.parse(routesFile);
-
         
         log.debug({routes}, 'Uploading route file...');
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
@@ -194,7 +195,8 @@ class Deployer {
             `uploaded::${routeFileUploadedId}`
         );
         await this.updateZDNS(target, routeFileUploadedId, version);
-        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts, version);
+        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts, 
+            version);
 
         log.info('Deploy finished');
     }
@@ -292,7 +294,6 @@ class Deployer {
         const artifacts_storage_id = await storage.uploadFile(artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
-
 
         await this.ctx.web3bridge.putKeyValue(
             target,

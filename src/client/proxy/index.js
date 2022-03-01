@@ -232,7 +232,6 @@ class ZProxy {
                     } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
                     if (ext === 'zhtml') contentType = 'text/plain';
 
-
                     if (this._isThisDirectoryJson(rendered) && noExt) {
                         rendered = this._renderDirectory(hash, rendered);
                         contentType = 'text/html';
@@ -553,7 +552,7 @@ class ZProxy {
                 try {
                     let version = 'latest';
                     
-                    if(parsedUrl.searchParams != undefined && 
+                    if(parsedUrl.searchParams !== undefined && 
                         parsedUrl.searchParams.has('__point_version')){
                         version = parsedUrl.searchParams.get('__point_version');
                         
@@ -760,8 +759,8 @@ class ZProxy {
                     const paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
                     
                     if (parsedUrl.searchParams.has('__point_version') &&
-                        parsedUrl.searchParams.get('__point_version') != 'latest'){
-                        let version = parsedUrl.searchParams.get('__point_version');
+                        parsedUrl.searchParams.get('__point_version') !== 'latest'){
+                        const version = parsedUrl.searchParams.get('__point_version');
                         throw new Error(`Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`);
                     }
 
