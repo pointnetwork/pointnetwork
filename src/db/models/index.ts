@@ -1,14 +1,21 @@
 'use strict';
-const path = require('path');
-const Sequelize = require('sequelize');
-const config = require('config');
-const logger = require('../../core/log');
-const log = logger.child({module: 'Sequelize'});
-const {resolveHome} = require('../../core/utils');
 
-class SequelizeFactory {
-    init(ctx) {
-        this.ctx = ctx;
+import path from 'path';
+import {Sequelize} from 'sequelize';
+import config from 'config';
+import logger from '../../core/log';
+import {resolveHome} from '../../core/utils';
+
+const log = logger.child({module: 'Sequelize'});
+
+interface SequelizeFactory {
+    config: DatabaseConfig;
+    Sequelize: typeof Sequelize;
+    sequelize: Sequelize;
+}
+
+class SequelizeFactory implements SequelizeFactory {
+    init() {
         this.config = config.get('db');
         const storage = path.join(resolveHome(config.get('datadir')), this.config.storage);
         this.Sequelize = Sequelize; // Needed for export!
@@ -23,19 +30,11 @@ class SequelizeFactory {
                 transactionType: this.config.transactionType,
                 retry: {max: this.config.retry.max},
                 logQueryParameters: true,
-                logging: log.debug.bind(log),
-                ctx
+                logging: log.debug.bind(log)
             }
-        ); // todo: validate config
+        );
 
         return this.sequelize;
-
-        // todo: remove, right? why is it here?
-        // Object.keys(this.sequelize.models).forEach(modelName => {
-        //     if (this.sequelize.models[modelName].associate) {
-        //         this.sequelize.models[modelName].associate(this.sequelize.models);
-        //     }
-        // });
     }
 }
 

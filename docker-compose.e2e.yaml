@@ -37,7 +37,7 @@ services:
       restart_policy:
         condition: 'no'
     volumes:
-      - shared_contracts_e2e:/build:rw
+      - shared_contracts_e2e:/hardhat/build/contracts:rw
       - ./hardhat/contracts:/hardhat/contracts:ro
       - ./hardhat/scripts:/hardhat/scripts:ro
       - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
@@ -59,14 +59,15 @@ services:
         condition: service_completed_successfully
       buckets:
         condition: service_completed_successfully
-    command: 'run start:docker:e2e'
+    command: 'run start:e2e'
     volumes:
       - point_node_data_e2e:/data
-      - shared_contracts_e2e:/app/truffle/build/contracts
+      - shared_contracts_e2e:/app/hardhat/build/contracts:rw
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     environment:
       NODE_CONFIG_ENV: e2e
+
   arweave:
     extends:
       file: docker-compose.storage.yaml

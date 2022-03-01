@@ -12,8 +12,8 @@ fi
 ganache-cli -p 7545 -m 'theme narrow finger canal enact photo census miss economy hotel often' &
 sleep 2s
 
-cd truffle
-truffle deploy --network development
+cd hardhat
+npx hardhat run scripts/deploy.ts --network development
 cd ..
 sleep 3s
 

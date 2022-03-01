@@ -39,12 +39,6 @@ const wallet = ethers.Wallet.fromMnemonic(keystore.phrase);
 
 const config: HardhatUserConfig = {
     solidity: {
-        settings: {
-            optimizer: {
-                enabled: true,
-                runs: 200,
-            }
-        },
         compilers: [
             {
                 version: "0.8.0",
