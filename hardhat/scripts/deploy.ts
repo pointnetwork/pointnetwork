@@ -28,18 +28,31 @@ async function main() {
   console.log("Identity deployed to:", identity.address);
   console.log("StorageProviderRegistry deployed to:", storageProvider.address);
 
-  const identityABI = {
-    address: identity.address,
-    abi: identity.interface.format('json')
-  };
+  // File destination.txt will be created or overwritten by default.
+  fs.copyFile('artifacts/contracts/Identity.sol/Identity.json', 'build/contracts/Identity.json', (err: any) => {
+    if (err) {
+        throw err;
+    } 
 
-  const storageABI = {
-    address: storageProvider.address,
-    abi: storageProvider.interface.format('json')
-  };
+    fs.writeFileSync('build/contracts/Identity-address.json', JSON.stringify({address:identity.address}));
 
-  fs.writeFileSync('build/contracts/Identity.json',identityABI.toString());
-  fs.writeFileSync('build/contracts/StorageProviderRegistry.json', storageABI.toString());
+    console.log('Identity abi was copied to build folder');
+  });
+
+  // File destination.txt will be created or overwritten by default.
+  fs.copyFile('artifacts/contracts/StorageProviderRegistry.sol/StorageProviderRegistry.json', 'build/contracts/StorageProviderRegistry.json', (err: any) => {
+    if (err) {
+        throw err;
+    } 
+
+    fs.writeFileSync('build/contracts/StorageProviderRegistry-address.json', JSON.stringify({address:storageProvider.address}));
+
+    console.log('StorageProviderRegistry abi was copied to build folder');
+  });
+    
+
+//  fs.writeFileSync('build/contracts/Identity.json',identityABI.toString());
+  //fs.writeFileSync('build/contracts/StorageProviderRegistry.json', storageABI.toString());
   
 }
 

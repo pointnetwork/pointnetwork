@@ -6,7 +6,7 @@ const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'cont
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
     
-    const filename = path.resolve(buildPath, `${name}.json`);
+    const filename = path.resolve(buildPath, `${name}-address.json`);
 
     if (!existsSync(filename)) {
         return;

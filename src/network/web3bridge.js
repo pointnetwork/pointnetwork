@@ -68,12 +68,6 @@ class Web3Bridge {
 
         if (!(contractName in abisByContractName)) {
 
-            /*
-            const buildDirPath = path.resolve(
-                resolveHome(config.get('datadir')),
-                'contracts'
-            );*/
-
             const buildDirPath = path.resolve(
                 'hardhat',
                 'build',
