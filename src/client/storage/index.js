@@ -1,7 +1,8 @@
-const File = require('../../db/models/file');
-const Chunk = require('../../db/models/chunk');
-const {request, gql} = require('graphql-request');
-const {
+import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
+import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
+import getDownloadQuery from './query';
+import {request} from 'graphql-request';
+import {
     hashFn,
     merkle,
     makeSurePathExistsAsync,
@@ -9,47 +10,15 @@ const {
     areScalarArraysEqual,
     escape,
     resolveHome
-} = require('../../core/utils');
-const Arweave = require('arweave');
-const {promises: fs} = require('fs');
-const path = require('path');
-const FormData = require('form-data');
-const axios = require('axios');
-const config = require('config');
-const logger = require('../../core/log');
+} from '../../core/utils';
+import Arweave from 'arweave';
+import {promises as fs} from 'fs';
+import path from 'path';
+import config from 'config';
+import logger from '../../core/log';
+import {uploadLoop} from './uploader';
+
 const log = logger.child({module: 'Storage'});
-
-// TODO: for some reason docker fails to resolve module if I move it to another file
-// TODO: possibly split this file into several ones after migrating to modules
-const getDownloadQuery = chunkId =>
-    gql`{
-      transactions(
-        tags: [
-          {
-            name: "__pn_chunk_${config.get(
-        'storage.arweave_experiment_version_major'
-    )}.${config.get('storage.arweave_experiment_version_minor')}_id",
-            values: ["${chunkId}"]
-          }
-        ]
-      ) {
-        edges {
-          node {
-            id
-          }
-        }
-      }
-    }`;
-
-// We are using one status for both upload and download, because, since file's id is its
-// data hash, if file is downloaded, then it's also uploaded, and vice versa
-// TODO: apply migration and rename dl_status to status to avoid confusion
-const DOWNLOAD_UPLOAD_STATUS = {
-    NOT_STARTED: 'NOT_STARTED',
-    IN_PROGRESS: 'IN_PROGRESS',
-    COMPLETED: 'COMPLETED',
-    FAILED: 'FAILED'
-};
 
 const FILE_TYPE = {
     fileptr: 'fileptr', // File
@@ -58,12 +27,20 @@ const FILE_TYPE = {
 
 const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
 const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay');
+const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
+const RETRIES = Number(config.get('storage.retries'));
 
-const cacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.cache_path'));
+const uploadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.upload_cache_path'));
+const downloadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.download_cache_path'));
 const filesDir = path.join(resolveHome(config.get('datadir')), config.get('storage.files_path'));
 
 const init = async () => {
-    await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
+    await Promise.all([
+        makeSurePathExistsAsync(uploadCacheDir),
+        makeSurePathExistsAsync(downloadCacheDir),
+        makeSurePathExistsAsync(filesDir)
+    ]);
+    uploadLoop();
 };
 
 const arweave = Arweave.init({
@@ -75,13 +52,13 @@ const arweave = Arweave.init({
 // TODO: add better error handling with custom errors and keeping error messages in DB
 const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     const chunk = await Chunk.findByIdOrCreate(chunkId);
-    const chunkPath = path.join(cacheDir, `chunk_${chunkId}`);
+    const chunkPath = path.join(downloadCacheDir, `chunk_${chunkId}`);
 
-    if (useCache && chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+    if (useCache && chunk.dl_status === CHUNK_DOWNLOAD_STATUS.COMPLETED) {
         log.debug({chunkId}, 'Returning chunk from cache');
         return fs.readFile(chunkPath, {encoding});
     }
-    if (chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+    if (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.IN_PROGRESS) {
         log.debug({chunkId}, 'Chunk download already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return getChunk(chunkId, encoding); // use cache should be true in this case
@@ -89,7 +66,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 
     log.debug({chunkId}, 'Downloading chunk');
     try {
-        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+        chunk.dl_status = CHUNK_DOWNLOAD_STATUS.IN_PROGRESS;
         await chunk.save();
 
         const query = getDownloadQuery(chunkId);
@@ -118,7 +95,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             await fs.writeFile(chunkPath, buf);
 
             chunk.size = buf.length;
-            chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+            chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
             await chunk.save();
             return buf;
         }
@@ -126,79 +103,50 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
         throw new Error('No matching hash found in arweave');
     } catch (e) {
         log.error({chunkId, message: e.message, stack: e.stack}, 'Chunk download failed');
-        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+        chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
         await chunk.save();
         throw e;
     }
 };
 
-const uploadChunk = async data => {
+const uploadChunk = data => new Promise(async (resolve, reject) => {
     const chunkId = hashFn(data).toString('hex');
-
     const chunk = await Chunk.findByIdOrCreate(chunkId);
-    if (chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
-        log.debug({chunkId}, 'Chunk already exists, cancelling upload');
-        return chunkId;
-    }
-    if (chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
-        log.debug({chunkId}, 'Chunk upload already in progress, waiting');
-        await delay(CONCURRENT_DOWNLOAD_DELAY);
-        return uploadChunk(data);
+
+    if (chunk.id !== chunkId) {
+        throw new Error(`Unexpected chunk ids mismatch: ${chunkId}, ${chunk.id}`);
     }
 
-    log.debug({chunkId}, 'Starting chunk upload');
-    try {
-        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
-        await chunk.save();
+    const chunkPath = path.join(uploadCacheDir, `chunk_${chunkId}`);
+    await fs.writeFile(chunkPath, data);
 
-        const formData = new FormData();
-        formData.append('file', data, chunkId);
-        formData.append(
-            '__pn_integration_version_major',
-            config.get('storage.arweave_experiment_version_major')
-        );
-        formData.append(
-            '__pn_integration_version_minor',
-            config.get('storage.arweave_experiment_version_minor')
-        );
-        formData.append('__pn_chunk_id', chunkId);
-        formData.append(
-            `__pn_chunk_${config.get('storage.arweave_experiment_version_major')}.${config.get(
-                'storage.arweave_experiment_version_minor'
-            )}_id`,
-            chunkId
-        );
+    log.debug({chunkId}, 'Enqueuing chunk for upload');
+    chunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
+    await chunk.save();
 
-        const response = await axios.post(
-            `${config.get('storage.arweave_bundler_url')}/signPOST`,
-            formData,
-            {headers: {...formData.getHeaders()}}
-        );
-
-        // TODO: check status from bundler
-        if (response.data.status !== 'ok') {
-            throw new Error(`Chunk ${chunkId} uploading failed: arweave endpoint error: ${
-                JSON.stringify(response.data, null, 2)
-            }`);
+    const check = async () => {
+        const updatedChunk = await Chunk.find(chunkId);
+        if (!updatedChunk) {
+            throw new Error(`Unexpected upload result: chunk ${chunkId} does not exist`);
         }
+        if (updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.FAILED) {
+            if (updatedChunk.redundancy >= RETRIES) {
+                reject(new Error(`Failed to upload chunk ${chunkId}`));
+            } else {
+                updatedChunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
+                await updatedChunk.save();
+                setTimeout(check, UPLOAD_LOOP_INTERVAL);
+            }
+        } else if (updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.COMPLETED) {
+            log.debug({chunkId}, 'Chunk successfully uploaded');
+            resolve(chunkId);
+        } else {
+            setTimeout(check, UPLOAD_LOOP_INTERVAL);
+        }
+    };
 
-        log.debug({chunkId}, 'Chunk successfully uploaded, saving to disk');
-
-        await fs.writeFile(path.join(cacheDir, `chunk_${chunkId}`), data);
-        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
-        chunk.size = data.length;
-        await chunk.save();
-
-        log.debug({chunkId}, 'Chunk successfully uploaded and saved');
-
-        return chunkId;
-    } catch (e) {
-        log.error({chunkId, message: e.message, stack: e.stack}, 'Chunk upload failed');
-        chunk.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
-        await chunk.save();
-        throw e;
-    }
-};
+    check();
+});
 
 const uploadFile = async data => {
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
@@ -212,11 +160,11 @@ const uploadFile = async data => {
 
         const filePath = path.join(filesDir, `file_${fileId}`);
         const file = await File.findByIdOrCreate(fileId, {original_path: filePath});
-        if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+        if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
             log.debug({fileId}, 'File already exists, cancelling upload');
             return fileId;
         }
-        if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+        if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
             log.debug({fileId}, 'File  upload already in progress, waiting');
             await delay(CONCURRENT_DOWNLOAD_DELAY);
             return uploadFile(data);
@@ -224,7 +172,7 @@ const uploadFile = async data => {
 
         log.debug({fileId}, 'Starting file upload');
         try {
-            file.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+            file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
             await file.save();
 
             const chunkId = await uploadChunk(buf);
@@ -236,7 +184,7 @@ const uploadFile = async data => {
 
             await fs.writeFile(filePath, buf);
             file.size = buf.length;
-            file.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+            file.ul_status = FILE_UPLOAD_STATUS.COMPLETED;
             await file.save();
 
             log.debug({fileId}, 'File successfully uploaded');
@@ -244,7 +192,7 @@ const uploadFile = async data => {
             return fileId;
         } catch (e) {
             log.error({fileId, message: e.message, stack: e.stack}, 'File upload failed');
-            file.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+            file.ul_status = FILE_UPLOAD_STATUS.FAILED;
             await file.save();
             throw e;
         }
@@ -278,11 +226,11 @@ const uploadFile = async data => {
     const filePath = path.join(filesDir, `file_${fileId}`);
 
     const file = await File.findByIdOrCreate(fileId, {original_path: filePath});
-    if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+    if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
         log.debug({fileId}, 'File already exists, cancelling upload');
         return fileId;
     }
-    if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+    if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
         log.debug({fileId}, 'File upload already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return uploadFile(data);
@@ -290,8 +238,7 @@ const uploadFile = async data => {
 
     log.debug({fileId}, 'Uploading file');
     try {
-        // TODO: retry logic
-        file.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+        file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
         await file.save();
 
         const indexChunkId = await uploadChunk(chunkInfoBuffer);
@@ -315,14 +262,14 @@ const uploadFile = async data => {
 
         await fs.writeFile(filePath, buf);
         file.size = buf.length;
-        file.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+        file.ul_status = FILE_UPLOAD_STATUS.COMPLETED;
         await file.save();
 
         log.debug({fileId}, 'File successfully uploaded and saved');
         return fileId;
     } catch (e) {
         log.error({fileId, message: e.message, stack: e.stack}, 'File upload failed');
-        file.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+        file.ul_status = FILE_UPLOAD_STATUS.FAILED;
         await file.save();
         throw e;
     }
@@ -390,11 +337,11 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
 
     const filePath = path.join(filesDir, `file_${id}`);
     const file = await File.findByIdOrCreate(id, {original_path: filePath});
-    if (useCache && file.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
+    if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {
         log.debug({fileId: file.id}, 'Returning file from cache');
         return await fs.readFile(filePath, {encoding});
     }
-    if (file.dl_status === DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS) {
+    if (file.dl_status === FILE_DOWNLOAD_STATUS.IN_PROGRESS) {
         log.debug({fileId: file.id}, 'File download already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return getFile(id, encoding); // use cache should be true in this case
@@ -402,7 +349,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
 
     log.debug({fileId: file.id}, 'Downloading file');
     try {
-        file.dl_status = DOWNLOAD_UPLOAD_STATUS.IN_PROGRESS;
+        file.dl_status = FILE_DOWNLOAD_STATUS.IN_PROGRESS;
         await file.save();
 
         log.debug({fileId: file.id}, 'Getting info chunk');
@@ -415,7 +362,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
             await fs.writeFile(filePath, chunkInfo);
 
             file.size = chunkInfo.length;
-            file.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+            file.dl_status = FILE_DOWNLOAD_STATUS.COMPLETED;
             await file.save();
 
             return encoding === null ? chunkInfo : chunkInfo.toString(encoding);
@@ -466,13 +413,13 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
         await fs.writeFile(filePath, fileBuffer);
 
         file.size = filesize;
-        file.dl_status = DOWNLOAD_UPLOAD_STATUS.COMPLETED;
+        file.dl_status = FILE_DOWNLOAD_STATUS.COMPLETED;
         await file.save();
 
         return encoding === null ? fileBuffer : fileBuffer.toString(encoding);
     } catch (e) {
         log.error({fileId: file.id, message: e.message, stack: e.stack}, 'File download failed');
-        file.dl_status = DOWNLOAD_UPLOAD_STATUS.FAILED;
+        file.dl_status = FILE_DOWNLOAD_STATUS.FAILED;
         await file.save();
         throw e;
     }
@@ -504,7 +451,6 @@ const getFileIdByPath = async (dirId, filePath) => {
 };
 
 module.exports = process.env.NODE_CONFIG_ENV === 'zappdev' ? require('./index-arlocal') : {
-    DOWNLOAD_UPLOAD_STATUS,
     FILE_TYPE,
     init,
     getFile,

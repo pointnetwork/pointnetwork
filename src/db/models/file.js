@@ -1,11 +1,14 @@
 const Model = require('../model');
 const Sequelize = require('sequelize');
 
-// We are using one status for both upload and download, because, since file's id is its
-// data hash, if file is downloaded, then it's also uploaded, and vice versa
-// TODO: apply migration and rename dl_status to status to avoid confusion
-// TODO: import from storage, now having problems with circular dependencies
-const DOWNLOAD_UPLOAD_STATUS = {
+export const FILE_DOWNLOAD_STATUS = {
+    NOT_STARTED: 'NOT_STARTED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED'
+};
+
+export const FILE_UPLOAD_STATUS = {
     NOT_STARTED: 'NOT_STARTED',
     IN_PROGRESS: 'IN_PROGRESS',
     COMPLETED: 'COMPLETED',
@@ -25,14 +28,17 @@ File.init(
         size: {type: Sequelize.DataTypes.INTEGER, allowNull: true},
         dl_status: {
             type: Sequelize.DataTypes.STRING,
-            defaultValue: DOWNLOAD_UPLOAD_STATUS.NOT_STARTED
+            defaultValue: FILE_DOWNLOAD_STATUS.NOT_STARTED
         },
+        ul_status: {
+            type: Sequelize.DataTypes.STRING,
+            defaultValue: FILE_UPLOAD_STATUS.NOT_STARTED
+        },
+        expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true},
 
         // TODO: not used, remove
-        ul_status: {type: Sequelize.DataTypes.STRING, defaultValue: ''},
         chunkIds: {type: Sequelize.DataTypes.JSON, allowNull: true},
         redundancy: {type: Sequelize.DataTypes.INTEGER, allowNull: true},
-        expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true},
         autorenew: {type: Sequelize.DataTypes.BOOLEAN, allowNull: true}
     },
     {
@@ -43,4 +49,4 @@ File.init(
     }
 );
 
-module.exports = File;
+export default File;

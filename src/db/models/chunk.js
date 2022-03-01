@@ -1,12 +1,16 @@
 const Model = require('../model');
 const Sequelize = require('sequelize');
 
-// We are using one status for both upload and download, because, since file's id is its
-// data hash, if file is downloaded, then it's also uploaded, and vice versa
-// TODO: apply migration and rename dl_status to status to avoid confusion
-// TODO: import from storage, now having problems with circular dependencies
-const DOWNLOAD_UPLOAD_STATUS = {
+export const CHUNK_DOWNLOAD_STATUS = {
     NOT_STARTED: 'NOT_STARTED',
+    IN_PROGRESS: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED'
+};
+
+export const CHUNK_UPLOAD_STATUS = {
+    NOT_STARTED: 'NOT_STARTED',
+    ENQUEUED: 'ENQUEUED',
     IN_PROGRESS: 'IN_PROGRESS',
     COMPLETED: 'COMPLETED',
     FAILED: 'FAILED'
@@ -24,21 +28,24 @@ Chunk.init(
         size: {type: Sequelize.DataTypes.INTEGER, allowNull: true},
         dl_status: {
             type: Sequelize.DataTypes.STRING,
-            defaultValue: DOWNLOAD_UPLOAD_STATUS.NOT_STARTED
+            defaultValue: CHUNK_DOWNLOAD_STATUS.NOT_STARTED
         },
+        ul_status: {
+            type: Sequelize.DataTypes.STRING,
+            defaultValue: CHUNK_UPLOAD_STATUS.NOT_STARTED
+        },
+        redundancy: {type: Sequelize.DataTypes.INTEGER, allowNull: true}, // TODO: rename
+        expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true},
 
         // TODO: not used, remove
-        ul_status: {type: Sequelize.DataTypes.STRING, defaultValue: ''},
-        redundancy: {type: Sequelize.DataTypes.INTEGER, allowNull: true},
-        expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true},
         autorenew: {type: Sequelize.DataTypes.BOOLEAN, allowNull: true}
     },
     {
         indexes: [
-            {fields: ['ul_status']}, // TODO: remove
+            {fields: ['ul_status']},
             {fields: ['dl_status']}
         ]
     }
 );
 
-module.exports = Chunk;
+export default Chunk;
