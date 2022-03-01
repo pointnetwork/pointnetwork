@@ -101,7 +101,7 @@ class Web3Bridge {
                 version,
                 'equalOrBefore'
             );
-        
+
         let abi;
         try {
             abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
@@ -249,7 +249,19 @@ class Web3Bridge {
         });
     }
 
-    async sendToContract(target, contractName, methodName, params, options = {}) {
+    async sendToContract(target, contractName, methodName, params, options = {}, version = 'latest') {
+        //Block send call from versions that are not the latest one.
+        if (version != 'latest'){
+            log.error({target,
+                contractName,
+                methodName,
+                params,
+                options,
+                version
+                }, 'Error: Contract send does not allowed for versions different than latest.');
+            throw new Error(`Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`);
+        }
+        
         // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
 
@@ -322,7 +334,7 @@ class Web3Bridge {
     async getZRecord(domain, version = 'latest') {
         domain = domain.replace('.z', ''); // todo: rtrim instead
         let result = await this.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
-        if (result.substr(0, 2) === '0x') result = result.substr(2);
+        if (result != null && result.substr(0, 2) === '0x') result = result.substr(2);
         return result;
     }
 
@@ -385,7 +397,7 @@ class Web3Bridge {
                     if(events.length > 0 ){
                         return events[0].returnValues.value;
                     }else{
-                        return null; 
+                        return null;
                     }
                 }else if (versionSearchStrategy === 'equalOrBefore'){
                     const filter = {identity: identity, key: key};

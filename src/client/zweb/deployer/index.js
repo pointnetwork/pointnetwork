@@ -74,7 +74,13 @@ class Deployer {
         const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
         const deployConfig = JSON.parse(deployConfigFile);
-        const baseVersion = deployConfig.version.toString();
+        let baseVersion;
+        if(typeof(deployConfig.version) === 'number' && deployConfig.version.toString().indexOf('.') === -1){
+            baseVersion = deployConfig.version.toString() + '.0';
+        }else{
+            baseVersion = deployConfig.version.toString();
+        }
+        
         if(!this.isVersionFormated(baseVersion)){
             log.error(
                 {

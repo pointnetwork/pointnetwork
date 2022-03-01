@@ -128,12 +128,14 @@ class Renderer {
                     params
                 );
             },
-            contract_call: async function (host, contractName, methodName, params) {
+            contract_call: async function (host, contractName, methodName, params, version = 'latest') {
                 return await this.renderer.ctx.web3bridge.sendToContract(
                     host.replace('.z', ''),
                     contractName,
                     methodName,
-                    params
+                    params,
+                    {},
+                    version
                 );
             },
             contract_events: async function (host, contractName, event, filter = {}) {
