@@ -57,7 +57,7 @@ class Deployer {
     }
 
     getNewPatchedVersion(oldVersion, newBaseVersion){
-        if(oldVersion == null || oldVersion == undefined || oldVersion == ''){
+        if(oldVersion === null || oldVersion === undefined || oldVersion === ''){
             return newBaseVersion + '.0';
         }
 

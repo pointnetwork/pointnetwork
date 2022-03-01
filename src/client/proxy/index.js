@@ -278,7 +278,7 @@ class ZProxy {
                 // Side effect: versionig of zapps will not work for Zapp files in this env since files are loaded from local file system.
                 let version = 'latest';
                 
-                if(parsedUrl.searchParams != undefined && 
+                if(parsedUrl.searchParams !== undefined && 
                     parsedUrl.searchParams.has('__point_version')){
                     version = parsedUrl.searchParams.get('__point_version');
                     
