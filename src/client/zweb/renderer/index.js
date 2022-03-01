@@ -1,10 +1,10 @@
 const TwigLib = require('twig');
 const _ = require('lodash');
-const { encryptData, decryptData } = require('../../encryptIdentityUtils');
-const { getFile, getJSON, getFileIdByPath, uploadFile } = require('../../storage');
+const {encryptData, decryptData} = require('../../encryptIdentityUtils');
+const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
 const config = require('config');
 const logger = require('../../../core/log');
-const log = logger.child({ module: 'Renderer' });
+const log = logger.child({module: 'Renderer'});
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -12,7 +12,7 @@ class Renderer {
     #twigs = {};
     #twigs_use_counter = {};
 
-    constructor(ctx, { rootDirId, localDir }) {
+    constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
         this.config = config.get('zproxy');
         this.rootDirId = rootDirId;
@@ -34,8 +34,8 @@ class Renderer {
             });
 
             // Here we can specify global variables to pass into twig
-            let variables = { host };
-            variables = Object.assign({}, variables, { request: request_params });
+            let variables = {host};
+            variables = Object.assign({}, variables, {request: request_params});
 
             const result = await template.renderAsync(variables);
 
@@ -62,10 +62,10 @@ class Renderer {
             storage_get_by_ikv: async function (identity, key) {
                 try {
                     const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
-                    log.debug({ identity, key, fileKey }, 'storage_get_by_ikv'); // TODO: logger doesn't work here
+                    log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
                     return await getFile(fileKey);
                 } catch (e) {
-                    log.error({ identity, key, ...e }, 'storage_get_by_ikv error');
+                    log.error({identity, key, ...e}, 'storage_get_by_ikv error');
                     return 'Invalid Content';
                 }
             },
@@ -140,7 +140,7 @@ class Renderer {
                 //delete keys property inserted by twig
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
 
-                const options = { filter, fromBlock: 1, toBlock: 'latest' };
+                const options = {filter, fromBlock: 1, toBlock: 'latest'};
                 const events = await this.renderer.ctx.web3bridge.getPastEvents(
                     host.replace('.z', ''),
                     contractName,
@@ -179,15 +179,6 @@ class Renderer {
                 let i = 0;
                 const results = [];
                 while (true) {
-
-                    console.log('----------------------------------------');
-                 /*
-                    console.log(target,
-                        contractName,
-                        method,
-                        i);*/
-                    console.log('----------------------------------------');
-
                     try {
                         results.push(
                             await this.renderer.ctx.web3bridge.callContract(
@@ -219,7 +210,7 @@ class Renderer {
             },
             identity_check_availability: async function (identity) {
                 const owner = await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
-                log.debug({ identity, owner }, 'identity_check_availability');
+                log.debug({identity, owner}, 'identity_check_availability');
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
@@ -333,7 +324,7 @@ class Renderer {
                 );
 
                 log.info(
-                    { identity, owner, publicKey: publicKey.toString('hex') },
+                    {identity, owner, publicKey: publicKey.toString('hex')},
                     'Successfully registered new identity'
                 );
 
@@ -495,7 +486,7 @@ class Renderer {
             next: [],
             open: true,
             compile(token) {
-                const { match } = token;
+                const {match} = token;
                 const expression = match[1].trim();
                 const ignoreMissing = match[2] !== undefined;
                 const withContext = match[3];
@@ -522,11 +513,11 @@ class Renderer {
             },
             parse(token, context, chain) {
                 // Resolve filename
-                let innerContext = token.only ? {} : { ...context };
-                const { ignoreMissing } = token;
+                let innerContext = token.only ? {} : {...context};
+                const {ignoreMissing} = token;
                 const state = this;
                 let promise = null;
-                const result = { chain, output: '' };
+                const result = {chain, output: ''};
 
                 if (typeof token.withStack === 'undefined') {
                     promise = Twig.Promise.resolve();
@@ -561,7 +552,7 @@ class Renderer {
                                     const res = {
                                         render: await file.renderAsync(
                                             innerContext,
-                                            { isInclude: true }
+                                            {isInclude: true}
                                         ),
                                         lastError: null
                                     };
@@ -572,7 +563,7 @@ class Renderer {
                                     const res = {
                                         render: await (
                                             await state.template.importFile(file)
-                                        ).renderAsync(innerContext, { isInclude: true }),
+                                        ).renderAsync(innerContext, {isInclude: true}),
                                         lastError: null
                                     };
                                     return res;
@@ -588,7 +579,7 @@ class Renderer {
                         };
 
                         return await tryToRender(file);
-                    }, { render: null, lastError: null }))
+                    }, {render: null, lastError: null}))
                     .then(finalResultReduce => {
                         if (finalResultReduce.render !== null) {
                             return finalResultReduce.render;
