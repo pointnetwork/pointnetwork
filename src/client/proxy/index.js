@@ -256,7 +256,7 @@ class ZProxy {
                 }
             } else if (host === 'point') {
                 // handle the point welcome page by rendering explorer.z
-                const localPath = path.resolve(__dirname, '..', 'internal', 'explorer.z', 'public');
+                const localPath = path.resolve(__dirname, '..', '..', '..', 'internal', 'explorer.z', 'public');
 
                 log.debug({localPath, __dirname}, 'Internal path resolution');
 

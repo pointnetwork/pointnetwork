@@ -139,6 +139,7 @@
     "assets": [
       "truffle/**/*",
       "config/*.yaml",
+      "migrations/**/*",
       "resources/certs/*.{crt,key,srl}",
       "node_modules/sqlite3/**/*"
     ],

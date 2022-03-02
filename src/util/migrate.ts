@@ -18,7 +18,7 @@ export default (async () => {
         logging: false
     });
 
-    const migrations = path.resolve(__dirname, '..', 'migrations', 'database', '*.js');
+    const migrations = path.resolve(__dirname, '..', '..', 'migrations', 'database', '*.js');
 
     logger.debug({migrations, __dirname}, 'Migrations pattern');
 
