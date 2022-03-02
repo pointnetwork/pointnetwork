@@ -283,7 +283,7 @@ if (!existsSync(lockfilePath)) {
     try {
         await lockfile.lock(lockfilePath);
     } catch (err) {
-        log.falal(err, 'Failed to create lockfile, is point already running?');
+        log.fatal(err, 'Failed to create lockfile, is point already running?');
         ctx.exit(1);
     }
     try {
