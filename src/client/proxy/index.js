@@ -5,7 +5,6 @@ const tls = require('tls');
 const _ = require('lodash');
 const fs = require('fs-extra');
 const path = require('path');
-const {existsSync} = require('fs');
 const Renderer = require('../zweb/renderer');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
@@ -257,9 +256,6 @@ class ZProxy {
             } else if (host === 'point') {
                 // handle the point welcome page by rendering explorer.z
                 const localPath = path.resolve(__dirname, '..', '..', '..', 'internal', 'explorer.z', 'public');
-
-                log.debug({localPath, __dirname}, 'Internal path resolution');
-
                 rendered = await this.processLocalRequest(
                     host,
                     localPath,
@@ -450,11 +446,6 @@ class ZProxy {
             request.on('end', async () => {
                 try {
                     const routesJsonPath = path.resolve(filePath, '..', 'routes.json');
-                    log.debug({
-                        routesJsonPath,
-                        exists: existsSync(routesJsonPath)
-                    }, 'Routes file resolution');
-
                     const routes = fs.readJSONSync(routesJsonPath);
 
                     let route_params = {};

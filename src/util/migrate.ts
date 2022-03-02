@@ -19,9 +19,6 @@ export default (async () => {
     });
 
     const migrations = path.resolve(__dirname, '..', '..', 'migrations', 'database', '*.js');
-
-    logger.debug({migrations, __dirname}, 'Migrations pattern');
-
     const umzug = new Umzug({
         migrations: {
             glob: migrations,
