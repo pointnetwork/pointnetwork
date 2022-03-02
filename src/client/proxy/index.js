@@ -4,6 +4,7 @@ const https = require('https');
 const tls = require('tls');
 const _ = require('lodash');
 const fs = require('fs-extra');
+const path = require('path');
 const {existsSync} = require('fs');
 const Renderer = require('../zweb/renderer');
 const sanitizeHtml = require('sanitize-html');
