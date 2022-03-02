@@ -140,6 +140,7 @@
       "truffle/**/*",
       "config/*.yaml",
       "migrations/**/*",
+      "internal/**/*",
       "resources/certs/*.{crt,key,srl}",
       "node_modules/sqlite3/**/*"
     ],
