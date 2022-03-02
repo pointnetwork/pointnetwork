@@ -44,9 +44,10 @@ const init = async () => {
 };
 
 const arweave = Arweave.init({
-    port: 443,
-    protocol: 'https',
-    host: 'arweave.net'
+    port: Number(config.get('storage.arweave_port')),
+    protocol: config.get('storage.arweave_protocol'),
+    host: config.get('storage.arweave_host'),
+    timeout: config.get('storage.request_timeout')
 });
 
 // TODO: add better error handling with custom errors and keeping error messages in DB

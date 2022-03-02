@@ -43,8 +43,6 @@ storage:
   arweave_host: arweave.net
   arweave_protocol: https
   arweave_port: 443
-  use_arweave_bundler: true
-  use_arlocal: false
 zproxy:
   port: 8666
   host: 127.0.0.1
