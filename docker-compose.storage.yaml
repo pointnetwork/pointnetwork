@@ -47,7 +47,7 @@ services:
     volumes:
       - gateway_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U arweave"]
+      test: pg_isready -U arweave
       interval: 10s
       timeout: 5s
       retries: 5

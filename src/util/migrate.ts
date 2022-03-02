@@ -18,9 +18,10 @@ export default (async () => {
         logging: false
     });
 
+    const migrations = path.resolve(__dirname, '..', '..', 'migrations', 'database', '*.js');
     const umzug = new Umzug({
         migrations: {
-            glob: 'migrations/database/*.js',
+            glob: migrations,
             resolve({name, path: migrationPath, context}) {
                 // Adjust the migration from the new signature to the v2 signature, making easier to upgrade to v3
                 const migration = require(migrationPath as string);
