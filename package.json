@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.1.39",
+  "version": "0.1.40",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -137,6 +137,8 @@
     "assets": [
       "truffle/**/*",
       "config/*.yaml",
+      "migrations/**/*",
+      "internal/**/*",
       "resources/certs/*.{crt,key,srl}",
       "node_modules/sqlite3/**/*"
     ],
