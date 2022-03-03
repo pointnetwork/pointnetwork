@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { StorageProviderRegistry__factory } from "../../typechain"
 
-describe("Token identity contract", function () {
+describe("Token StorageRegistryProvider contract", function () {
 
     let storageProviderRegistry: any;
 	let owner: SignerWithAddress;
