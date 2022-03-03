@@ -293,6 +293,7 @@ if (!existsSync(lockfilePath)) {
         ctx.exit(1);
     }
     try {
+        log.info({env: config.util.getEnv('NODE_ENV')}, 'Starting Point Node');
         const point = new Point(ctx);
         await point.start();
     } catch (err) {
