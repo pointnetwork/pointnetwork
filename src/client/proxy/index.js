@@ -4,6 +4,7 @@ const https = require('https');
 const tls = require('tls');
 const _ = require('lodash');
 const fs = require('fs-extra');
+const path = require('path');
 const Renderer = require('../zweb/renderer');
 const sanitizeHtml = require('sanitize-html');
 const mime = require('mime-types');
@@ -21,6 +22,7 @@ const config = require('config');
 const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxy'});
 const detectContentType = require('detect-content-type');
+const {getNetworkAddress} = require('../../wallet/keystore');
 
 class ZProxy {
     constructor(ctx) {
@@ -223,7 +225,7 @@ class ZProxy {
                     } catch (e) {
                         return this.abortError(response, e);
                     }
-                    
+
                     const noExt = ext === hashWithoutExt || hash.split('.').length === 1;
                     if (noExt) contentType = detectContentType(rendered); // just in case
                     if (!noExt) {
@@ -264,7 +266,7 @@ class ZProxy {
                 }
             } else if (host === 'point') {
                 // handle the point welcome page by rendering explorer.z
-                const localPath = 'internal/explorer.z/public'; // hardcode to render explorer.z
+                const localPath = path.resolve(__dirname, '..', '..', '..', 'internal', 'explorer.z', 'public');
                 rendered = await this.processLocalRequest(
                     host,
                     localPath,
@@ -462,7 +464,7 @@ class ZProxy {
             });
             request.on('end', async () => {
                 try {
-                    const routesJsonPath = `${filePath}/../routes.json`;
+                    const routesJsonPath = path.resolve(filePath, '..', 'routes.json');
                     const routes = fs.readJSONSync(routesJsonPath);
 
                     let route_params = {};
@@ -713,7 +715,7 @@ class ZProxy {
                         }
                     }
 
-                    postData.__from = this.ctx.wallet.getNetworkAccount();
+                    postData.__from = getNetworkAddress();
                     postData.__time = Math.floor(Date.now() / 1000);
                     const data = JSON.stringify(postData);
 

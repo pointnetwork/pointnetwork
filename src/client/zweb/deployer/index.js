@@ -3,6 +3,7 @@ const fs = require('fs');
 const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
 const {getPragmaVersion} = require('../../../util/contract');
+const {getNetworkPublicKey} = require('../../../wallet/keystore');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -136,7 +137,7 @@ class Deployer {
         }
 
         if (!identityIsRegistered) {
-            const publicKey = this.ctx.wallet.getNetworkAccountPublicKey();
+            const publicKey = getNetworkPublicKey();
 
             log.info({
                 identity,

@@ -13,6 +13,7 @@ const logger = require('../core/log');
 const {compileContract} = require('../util/contract');
 const {resolveHome} = require('../core/utils');
 const log = logger.child({module: 'Web3Bridge'});
+const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -46,7 +47,7 @@ class Web3Bridge {
     constructor(ctx) {
         this.ctx = ctx;
         this.connectionString = config.get('network.web3');
-        this.address = this.ctx.wallet.getNetworkAccount();
+        this.address = getNetworkAddress();
         this.web3_call_retry_limit = config.get('network.web3_call_retry_limit');
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
         log.debug('Successfully created a web3 instance');
@@ -57,7 +58,7 @@ class Web3Bridge {
     createWeb3Instance() {
         return createWeb3Instance({
             blockchainUrl: config.get('network.web3'),
-            privateKey: '0x' + this.ctx.wallet.getNetworkAccountPrivateKey()
+            privateKey: '0x' + getNetworkPrivateKey()
         });
     }
 
@@ -484,7 +485,7 @@ class Web3Bridge {
     }
 
     async isCurrentIdentityRegistered() {
-        const address = this.ctx.wallet.getNetworkAccount();
+        const address = getNetworkAddress();
         const identity = await this.identityByOwner(address);
         if (
             !identity ||
@@ -495,7 +496,7 @@ class Web3Bridge {
     }
 
     async getCurrentIdentity() {
-        const address = this.ctx.wallet.getNetworkAccount();
+        const address = getNetworkAddress();
         return await this.identityByOwner(address);
     }
 
