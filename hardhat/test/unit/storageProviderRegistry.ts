@@ -36,9 +36,33 @@ describe("Token StorageRegistryProvider contract", function () {
               ).to.be.revertedWith('No collateral supplied');
         });
 
-        it("Create annoucement ether", async function () {
+        it("Create annoucement provider", async function () {
 
             const deposit = ethers.utils.parseUnits('4', 'wei');
+
+            await storageProviderRegistry.announce(
+                connectionStorage,
+                collateralLockPeriod,
+                costPerKb
+            ,{value:deposit});
+
+            const providerInfo = await storageProviderRegistry.getProvider(owner.address);
+            expect(providerInfo['connection']).to.be.equal(connectionStorage);
+            expect(providerInfo['costPerKb']).to.be.equal(costPerKb);
+
+            const cheapestProvider = await storageProviderRegistry.getCheapestProvider();
+            expect(cheapestProvider).to.be.equal(owner.address);
+        });
+
+        it("Create annoucement provider with the same id", async function () {
+
+            const deposit = ethers.utils.parseUnits('4', 'wei');
+
+            await storageProviderRegistry.announce(
+                connectionStorage,
+                collateralLockPeriod,
+                costPerKb
+            ,{value:deposit});
 
             await storageProviderRegistry.announce(
                 connectionStorage,
