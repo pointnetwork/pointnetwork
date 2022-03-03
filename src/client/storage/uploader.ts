@@ -14,6 +14,9 @@ const CONCURRENT_UPLOAD_LIMIT = Number(config.get('storage.concurrent_upload_lim
 const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
 const REQUEST_TIMEOUT = Number(config.get('storage.request_timeout'));
 const UPLOAD_EXPIRE = Number(config.get('storage.upload_expire'));
+const VERSION_MAJOR = config.get('storage.arweave_experiment_version_major');
+const VERSION_MINOR = config.get('storage.arweave_experiment_version_minor');
+const BUNDLER_URL = config.get('storage.arweave_bundler_url');
 
 const chunksBeingUploaded: Record<string, boolean> = {};
 
@@ -34,24 +37,16 @@ export const startChunkUpload = async (chunkId: string) => {
 
         const formData = new FormData();
         formData.append('file', data, chunkId);
-        formData.append(
-            '__pn_integration_version_major',
-            config.get('storage.arweave_experiment_version_major')
-        );
-        formData.append(
-            '__pn_integration_version_minor',
-            config.get('storage.arweave_experiment_version_minor')
-        );
+        formData.append('__pn_integration_version_major', VERSION_MAJOR);
+        formData.append('__pn_integration_version_minor', VERSION_MINOR);
         formData.append('__pn_chunk_id', chunkId);
         formData.append(
-            `__pn_chunk_${config.get('storage.arweave_experiment_version_major')}.${config.get(
-                'storage.arweave_experiment_version_minor'
-            )}_id`,
+            `__pn_chunk_${VERSION_MAJOR}.${VERSION_MINOR}_id`,
             chunkId
         );
 
         const response = await axios.post(
-            `${config.get('storage.arweave_bundler_url')}/signPOST`,
+            `${BUNDLER_URL}/signPOST`,
             formData,
             {headers: {...formData.getHeaders()}, timeout: REQUEST_TIMEOUT}
         );
@@ -73,7 +68,7 @@ export const startChunkUpload = async (chunkId: string) => {
     } catch (e) {
         log.error({chunkId, message: e.message, stack: e.stack}, 'Chunk upload failed');
         chunk.ul_status = CHUNK_UPLOAD_STATUS.FAILED;
-        chunk.redundancy = (chunk.redundancy ?? 0) + 1; // TODO: apply migration and remove null
+        chunk.retry_count = (chunk.retry_count) + 1;
         await chunk.save();
         delete chunksBeingUploaded[chunkId];
         throw e;

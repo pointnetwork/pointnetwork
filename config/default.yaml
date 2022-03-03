@@ -15,6 +15,7 @@ db:
   retry:
     max: 30
   env: production
+  logging: true
 log:
   enabled: true
   level: info
@@ -32,7 +33,7 @@ storage:
   upload_loop_interval: 500
   request_timeout: 15000
   upload_expire: 60000
-  retries: 3
+  upload_retry_limit: 3
   files_path: files
   arweave_experiment_version_major: 1
   arweave_experiment_version_minor: 8

@@ -28,7 +28,9 @@ const FILE_TYPE = {
 const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
 const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay');
 const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
-const RETRIES = Number(config.get('storage.retries'));
+const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
+const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
+const GATEWAY_URL = config.get('storage.arweave_gateway_url');
 
 const uploadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.upload_cache_path'));
 const downloadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.download_cache_path'));
@@ -72,7 +74,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 
         const query = getDownloadQuery(chunkId);
 
-        const queryResult = await request(config.get('storage.arweave_gateway_url'), query);
+        const queryResult = await request(GATEWAY_URL, query);
         log.debug({chunkId}, 'Graphql request success');
 
         for (const edge of queryResult.transactions.edges) {
@@ -110,7 +112,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     }
 };
 
-const uploadChunk = data => new Promise(async (resolve, reject) => {
+const uploadChunk = async data => {
     const chunkId = hashFn(data).toString('hex');
     const chunk = await Chunk.findByIdOrCreate(chunkId);
 
@@ -125,34 +127,36 @@ const uploadChunk = data => new Promise(async (resolve, reject) => {
     chunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
     await chunk.save();
 
+    let uploaded = false;
+
     const check = async () => {
         const updatedChunk = await Chunk.find(chunkId);
         if (!updatedChunk) {
             throw new Error(`Unexpected upload result: chunk ${chunkId} does not exist`);
         }
         if (updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.FAILED) {
-            if (updatedChunk.redundancy >= RETRIES) {
-                reject(new Error(`Failed to upload chunk ${chunkId}`));
+            if (updatedChunk.retry_count >= UPLOAD_RETRY_LIMIT) {
+                throw new Error(`Failed to upload chunk ${chunkId}`);
             } else {
                 updatedChunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
                 await updatedChunk.save();
-                setTimeout(check, UPLOAD_LOOP_INTERVAL);
             }
         } else if (updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.COMPLETED) {
             log.debug({chunkId}, 'Chunk successfully uploaded');
-            resolve(chunkId);
-        } else {
-            setTimeout(check, UPLOAD_LOOP_INTERVAL);
+            uploaded = true;
         }
     };
 
-    check();
-});
+    while (!uploaded) {
+        await check();
+        await delay(UPLOAD_LOOP_INTERVAL);
+    }
+    
+    return chunkId;
+};
 
 const uploadFile = async data => {
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
-
-    const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
     const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
 
     if (totalChunks === 1) {
@@ -405,7 +409,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
             // We should trim the trailing zeros from the last chunk
             chunkBuffers[chunkBuffers.length - 1].slice(
                 0,
-                filesize - (chunkBuffers.length - 1) * config.get('storage.chunk_size_bytes')
+                filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
             )
         ]);
 

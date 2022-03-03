@@ -34,11 +34,8 @@ Chunk.init(
             type: Sequelize.DataTypes.STRING,
             defaultValue: CHUNK_UPLOAD_STATUS.NOT_STARTED
         },
-        redundancy: {type: Sequelize.DataTypes.INTEGER, allowNull: true}, // TODO: rename
-        expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true},
-
-        // TODO: not used, remove
-        autorenew: {type: Sequelize.DataTypes.BOOLEAN, allowNull: true}
+        retry_count: {type: Sequelize.DataTypes.INTEGER, defaultValue: 0},
+        expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true}
     },
     {
         indexes: [

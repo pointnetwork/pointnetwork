@@ -34,16 +34,11 @@ File.init(
             type: Sequelize.DataTypes.STRING,
             defaultValue: FILE_UPLOAD_STATUS.NOT_STARTED
         },
-        expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true},
-
-        // TODO: not used, remove
-        chunkIds: {type: Sequelize.DataTypes.JSON, allowNull: true},
-        redundancy: {type: Sequelize.DataTypes.INTEGER, allowNull: true},
-        autorenew: {type: Sequelize.DataTypes.BOOLEAN, allowNull: true}
+        expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true}
     },
     {
         indexes: [
-            {fields: ['ul_status']}, // TODO: remove
+            {fields: ['ul_status']},
             {fields: ['dl_status']}
         ]
     }

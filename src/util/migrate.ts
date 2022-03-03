@@ -5,6 +5,8 @@ import path from 'path';
 import {resolveHome} from '../core/utils';
 import logger from '../core/log';
 
+const log = logger.child({module: 'migrate'});
+
 export default (async () => {
     const dbConfig: DatabaseConfig = config.get('db');
     const storage = path.join(resolveHome(config.get('datadir')), dbConfig.storage);
@@ -26,20 +28,21 @@ export default (async () => {
                 const migration = require(migrationPath as string);
                 return {
                     name,
-                    up: async () => migration.up(context),
-                    down: async () => migration.down(context)
+                    up: async () => migration.up(context, Sequelize),
+                    down: async () => migration.down(context, Sequelize)
                 };
             }
         },
         context: sequelize.getQueryInterface(),
         storage: new SequelizeStorage({sequelize}),
-        logger: logger.child({module: 'migrate'})
+        logger: log
     });
 
     try {
         await umzug.up();
         await sequelize.close();
     } catch (e) {
+        log.error(e);
         if (e instanceof MigrationError) {
             await umzug.down();
         } else {

@@ -225,7 +225,6 @@ class ZProxy {
                     } // Note: after this block and call to getContentTypeFromExt, if there is no valid mime type detected, it will be application/octet-stream
                     if (ext === 'zhtml') contentType = 'text/plain';
 
-
                     if (this._isThisDirectoryJson(rendered) && noExt) {
                         rendered = this._renderDirectory(hash, rendered);
                         contentType = 'text/html';
