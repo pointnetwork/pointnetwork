@@ -113,9 +113,9 @@ class Wallet {
             'confirmed'
         );
 
-        try{
+        try {
             this.#arewaveKey = require(path.join(this.keystorePath, 'arweave.json'), 'utf-8');
-        }catch(e){
+        } catch (e){
             this.#arewaveKey = undefined;
         }
 

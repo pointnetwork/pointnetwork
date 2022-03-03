@@ -247,11 +247,11 @@ class ZProxy {
                 try {
                     rendered = await this.contractSend(host, request);
                 } catch (e) {
-                    if(e.message != null && e.message.startsWith('Forbidden')){
+                    if (e.message != null && e.message.startsWith('Forbidden')){
                         return this.abortCode(response, e.message, 403);
-                    }else{
+                    } else {
                         return this.abortError(response, e);
-                    }
+                    } 
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/v1/api/')) {
                 try {
@@ -278,7 +278,7 @@ class ZProxy {
                 // Side effect: versionig of zapps will not work for Zapp files in this env since files are loaded from local file system.
                 let version = 'latest';
                 
-                if(parsedUrl.searchParams !== undefined && 
+                if (parsedUrl.searchParams !== undefined && 
                     parsedUrl.searchParams.has('__point_version')){
                     version = parsedUrl.searchParams.get('__point_version');
                     
@@ -533,7 +533,7 @@ class ZProxy {
                         resolve(rendered);
                     }
                 } catch (e) {
-                    if(e.message != null && e.message.startsWith('Forbidden')){
+                    if (e.message != null && e.message.startsWith('Forbidden')){
                         return this.abortCode(response, e.message, 403);
                     }
                     reject(e); // todo: sanitize?
@@ -552,7 +552,7 @@ class ZProxy {
                 try {
                     let version = 'latest';
                     
-                    if(parsedUrl.searchParams !== undefined && 
+                    if (parsedUrl.searchParams !== undefined && 
                         parsedUrl.searchParams.has('__point_version')){
                         version = parsedUrl.searchParams.get('__point_version');
                         
@@ -662,7 +662,7 @@ class ZProxy {
                         // return this.abort404(response, 'route not found'); // todo: write a better msg // todo: remove, it's automatic
                     }
                 } catch (e) {
-                    if(e.message != null && e.message.startsWith('Forbidden')){
+                    if (e.message != null && e.message.startsWith('Forbidden')){
                         return this.abortCode(response, e.message, 403);
                     }
                     reject(e); // todo: sanitize?

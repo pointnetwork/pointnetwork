@@ -163,7 +163,7 @@ const signTx = async (data, tags) => {
 
     const transaction = await arweave.createTransaction({data}, arweaveKey);
 
-    for(const k in tags){
+    for (const k in tags){
         const v = tags[k];
         transaction.addTag(k, v);
     }

@@ -58,15 +58,15 @@ async function upload(contract) {
     for (const ikv of data.ikv) {
         console.log('Migrating IKV value for: ' + ikv.handle);
         let version;
-        if(ikv.hasOwnProperty('version')){
+        if (ikv.hasOwnProperty('version')){
             version = ikv.version;
-        }else{
+        } else {
             //fixed version for first time migration
             version = '0.1.0';
         }
         await targetContract.methods
-             .ikvImportKV(ikv.handle, ikv.key, ikv.value, version)
-             .send({from: accounts[0]});
+            .ikvImportKV(ikv.handle, ikv.key, ikv.value, version)
+            .send({from: accounts[0]});
     }
 
     console.log('Closing migrations');
@@ -119,7 +119,7 @@ async function download(contract) {
                     value
                 };
                 
-                if(e.returnValues.hasOwnProperty('version')){
+                if (e.returnValues.hasOwnProperty('version')){
                     ikv.version = e.returnValues.version;
                 }
                 ikvs.push(ikv);

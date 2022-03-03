@@ -370,10 +370,11 @@ class Web3Bridge {
     async getKeyLastVersion(identity, key){
         const filter = {identity: identity, key: key};
         const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
-        if(events.length > 0){
-            const maxObj = events.reduce((prev, current) => (prev.blockNumber > current.blockNumber) ? prev : current);
+        if (events.length > 0){
+            const maxObj = events.reduce((prev, current) => 
+                (prev.blockNumber > current.blockNumber) ? prev : current);
             return maxObj.returnValues.version;
-        }else{
+        } else {
             return null; 
         }
     }
@@ -381,10 +382,10 @@ class Web3Bridge {
     compareVersions(v1, v2){
         const v1p = v1.split('.');
         const v2p = v2.split('.');
-        for(const i in v1p){
-            if(v1p[i] > v2p[i]){
+        for (const i in v1p){
+            if (v1p[i] > v2p[i]){
                 return 1;
-            }else if(v1p[i] < v2p[i]) {
+            } else if (v1p[i] < v2p[i]) {
                 return -1;
             }
         }
@@ -392,12 +393,13 @@ class Web3Bridge {
     }
 
     getLastVersionOrBefore(version, events){
-        const filteredEvents = events.filter(e => [-1, 0].includes(this.compareVersions(e.returnValues.version, version)));
+        const filteredEvents = events.filter(e => 
+            [-1, 0].includes(this.compareVersions(e.returnValues.version, version)));
         const maxObj = filteredEvents.reduce((prev, current) => 
-            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1) ? prev : current);
+            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1) 
+                ? prev : current);
         return maxObj.returnValues.value;
     }
-
 
     async getKeyValue(identity, key, version = 'latest', versionSearchStrategy = 'exact') {
         try {
@@ -410,25 +412,25 @@ class Web3Bridge {
             
             identity = identity.replace('.z', ''); // todo: rtrim instead
 
-            if(version === 'latest'){
+            if (version === 'latest'){
                 const contract = await this.loadIdentityContract();
                 const result = await contract.methods.ikvGet(identity, key).call();
                 return result;
-            }else{
-                if(versionSearchStrategy === 'exact'){
+            } else {
+                if (versionSearchStrategy === 'exact'){
                     const filter = {identity: identity, key: key, version: version};
                     const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
-                    if(events.length > 0){
+                    if (events.length > 0){
                         return events[0].returnValues.value;
-                    }else{
+                    } else {
                         return null;
                     }
-                }else if (versionSearchStrategy === 'equalOrBefore'){
+                } else if (versionSearchStrategy === 'equalOrBefore'){
                     const filter = {identity: identity, key: key};
                     const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
                     const value = this.getLastVersionOrBefore(version, events);
                     return value;
-                }else{
+                } else {
                     return null;
                 }
             }

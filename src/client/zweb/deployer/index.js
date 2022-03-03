@@ -43,29 +43,29 @@ class Deployer {
     }
 
     isNewBaseVersionValid(oldVersion, newBaseVersion){
-        if(oldVersion === null || oldVersion === undefined || oldVersion === ''){
+        if (oldVersion === null || oldVersion === undefined || oldVersion === ''){
             return true;
         }
 
         const oldP = this.getVersionParts(oldVersion);
         const oldBaseVersion = new Number(oldP.major + '.' + oldP.minor);
-        if(oldBaseVersion <= new Number(newBaseVersion)){
+        if (oldBaseVersion <= new Number(newBaseVersion)){
             return true;
-        }else{
+        } else {
             return false;
         }
     }
 
     getNewPatchedVersion(oldVersion, newBaseVersion){
-        if(oldVersion === null || oldVersion === undefined || oldVersion === ''){
+        if (oldVersion === null || oldVersion === undefined || oldVersion === ''){
             return newBaseVersion + '.0';
         }
 
         const oldP = this.getVersionParts(oldVersion);
         const oldBaseVersion = oldP.major + '.' + oldP.minor;
-        if(oldBaseVersion === newBaseVersion){
+        if (oldBaseVersion === newBaseVersion){
             return oldBaseVersion + '.' + (new Number(oldP.patch) + 1);
-        }else{
+        } else {
             return newBaseVersion + '.0';
         }
     }
@@ -76,13 +76,13 @@ class Deployer {
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
         const deployConfig = JSON.parse(deployConfigFile);
         let baseVersion;
-        if(typeof(deployConfig.version) === 'number' && deployConfig.version.toString().indexOf('.') === -1){
+        if (typeof(deployConfig.version) === 'number' && deployConfig.version.toString().indexOf('.') === -1){
             baseVersion = deployConfig.version.toString() + '.0';
-        }else{
+        } else {
             baseVersion = deployConfig.version.toString();
         }
         
-        if(!this.isVersionFormated(baseVersion)){
+        if (!this.isVersionFormated(baseVersion)){
             log.error(
                 {
                     deployConfigFilePath: deployConfigFilePath,
@@ -103,9 +103,9 @@ class Deployer {
 
         //get the new version with patch.
         let version;
-        if(this.isNewBaseVersionValid(lastVersion, baseVersion)){
+        if (this.isNewBaseVersionValid(lastVersion, baseVersion)){
             version = this.getNewPatchedVersion(lastVersion, baseVersion);
-        }else{
+        } else {
             log.error(
                 {
                     deployConfigFilePath: deployConfigFilePath,
