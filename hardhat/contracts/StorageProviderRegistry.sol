@@ -27,7 +27,7 @@ contract StorageProviderRegistry {
         providers[0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1] = Provider({
             id: 0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1,
             connection: "http://storage_provider:9685/#3c903addcc954b318a5077d0f7bce44a7b9c95b1",
-            announcedAt: 1613647823,
+            announcedAt: 1613847823,
             announcedBy: msg.sender,
             collateral: 50,
             costPerKb: 5,

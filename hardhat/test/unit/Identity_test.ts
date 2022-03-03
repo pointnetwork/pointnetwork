@@ -50,6 +50,18 @@ describe("Token identity contract", function () {
             expect(ownerIdentity).to.equal(handle);
         });
 
+		it("Validating can't transfer ownership to address 0", async function () {
+            await expect(
+                identityContract.connect(addr1).transferIdentityOwnership(handle, '0x0000000000000000000000000000000000000000')
+              ).to.be.revertedWith("Can't transfer ownership to address 0");
+        });
+
+		it("Validating can't transfer ownership to itself", async function () {
+            await expect(
+                identityContract.connect(addr1).transferIdentityOwnership(handle, addr1.address)
+              ).to.be.revertedWith("Can't transfer ownership to same address");
+        });
+
 		it("Validating only handle owner can set its IKV value", async function () {
             const shouldBe = 'has passed?';
             await expect(
