@@ -30,7 +30,7 @@ class SequelizeFactory implements SequelizeFactory {
                 transactionType: this.config.transactionType,
                 retry: {max: this.config.retry.max},
                 logQueryParameters: true,
-                logging: config.get('db.logging') ? log.debug.bind(log) : false
+                logging: config.get('db.enable_db_logging') ? log.debug.bind(log) : false
             }
         );
 

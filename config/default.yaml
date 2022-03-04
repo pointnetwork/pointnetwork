@@ -15,7 +15,7 @@ db:
   retry:
     max: 30
   env: production
-  logging: true
+  enable_db_logging: true
 log:
   enabled: true
   level: info
