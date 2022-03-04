@@ -255,8 +255,6 @@ class Renderer {
             get_wallet_info: async function() {
                 this.renderer.#ensurePrivilegedAccess();
 
-                const walletService = this.renderer.ctx.wallet;
-
                 const wallets = [];
                 wallets.push({
                     currency_name: 'Point',
@@ -265,24 +263,6 @@ class Renderer {
                         (await this.renderer.ctx.web3bridge.getCurrentIdentity()) + '.point' ||
                         'N/A',
                     balance: 0
-                });
-                wallets.push({
-                    currency_name: 'Solana',
-                    currency_code: 'SOL',
-                    address: walletService.getSolanaAccount(),
-                    balance: await walletService.getSolanaMainnetBalanceInSOL()
-                });
-                wallets.push({
-                    currency_name: 'Solana - Devnet',
-                    currency_code: 'devSOL',
-                    address: walletService.getSolanaAccount(),
-                    balance: await walletService.getSolanaDevnetBalanceInSOL()
-                });
-                wallets.push({
-                    currency_name: 'Neon',
-                    currency_code: 'NEON',
-                    address: getNetworkAddress(),
-                    balance: await walletService.getNetworkAccountBalanceInEth()
                 });
                 return wallets;
             },
