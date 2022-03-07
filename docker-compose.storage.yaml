@@ -21,11 +21,9 @@ services:
       - arweave_data:/mnt/arweave-data
 
   gateway:
-    image: lucaarweave/arweave-gateway:0.0.1
+    image: INSERT_IMAGE_NAME_HERE
     container_name: gateway
     hostname: gateway
-    volumes:
-      - gateway_data:/app
     depends_on:
       gateway_db:
         condition: service_healthy
@@ -36,9 +34,10 @@ services:
     environment:
       DATABASE_HOST: gateway_db
       DATABASE_PORT: 5432
-      POSTGRES_USER: arweave
-      POSTGRES_PASSWORD: arweave
-      POSTGRES_DB: arweave
+      DATABASE_NAME: postgres
+      DATABASE_USER: arweave
+      DATABASE_PASSWORD: arweave
+      ARWEAVE_NODES: '["http://arweave-node:1984"]'
 
   gateway_db:
     image: postgres:12
@@ -55,8 +54,9 @@ services:
       POSTGRES_USER: arweave
       POSTGRES_PASSWORD: arweave
       POSTGRES_DB: arweave
-    command: -p 5432
-
+    command: postgres -c 'max_connections=500'
+    ports:
+      - '5432:5432'
   bundler:
     image: pointnetwork/arweave-bundler:v1.0.2
     container_name: bundler
@@ -117,7 +117,6 @@ services:
 
 volumes:
   arweave_data:
-  gateway_data:
   bundler_data:
   gateway_db_data:
   arlocal_data:
