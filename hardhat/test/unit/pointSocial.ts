@@ -32,6 +32,99 @@ describe("Token identity contract", function () {
                 pointSocial.addMigrator(addr2.address)
               ).to.be.revertedWith("Access Denied");
         });
+
+        it("User can add migrator migrator can add post", async function () {
+            await pointSocial.addMigrator(
+                addr1.address
+            )
+
+            await expect(
+                pointSocial.addMigrator(addr2.address)
+              ).to.be.revertedWith("Access Denied");
+
+            await pointSocial.connect(addr1).add(
+                1,
+                addr2.address,
+                postContent,
+                postimage,
+                0,
+                "1646689414"
+            )  
+
+            const posts = await pointSocial.getAllPosts();
+
+            expect(posts[0].from).to.be.equal(addr2.address);
+
+        });
+
+        it("Random user can't add migrator post", async function () {
+            await expect(
+              pointSocial.add(
+                1,
+                addr2.address,
+                postContent,
+                postimage,
+                0,
+                "1646689414"
+            )).to.be.revertedWith("Access Denied");
+        });
+
+        it("Migrator user can add migrator comment", async function () {
+            await pointSocial.addMigrator(
+                addr1.address
+            )
+
+            await pointSocial.connect(addr1).add(
+                1,
+                addr2.address,
+                postContent,
+                postimage,
+                0,
+                "1646689414"
+            )  
+
+            await pointSocial.connect(addr1).addComment(
+                1,
+                1,
+                addr2.address,
+                postContent,
+                "1646689414"
+            );
+
+            const postComments = await pointSocial.getAllCommentsForPost(1);
+
+            expect(postComments[0].contents).to.be.equal(postContent);
+        });
+
+        it("Random user can't add migrator comment", async function () {
+            await pointSocial.addMigrator(
+                addr1.address
+            )
+
+            await pointSocial.connect(addr1).add(
+                1,
+                addr2.address,
+                postContent,
+                postimage,
+                0,
+                "1646689414"
+            )  
+
+            await expect(
+              pointSocial.addComment(
+                1,
+                1,
+                addr2.address,
+                postContent,
+                "1646689414"
+            )).to.be.revertedWith("Access Denied");
+        });
+
+        it("Random user can't add migrator", async function () {
+            await expect(
+                pointSocial.connect(addr2).addMigrator(addr2.address)
+              ).to.be.revertedWith("Access Denied");
+        });
     });
 
 	describe("Testing user functions", function () {
@@ -91,6 +184,128 @@ describe("Token identity contract", function () {
 
         });
        
+       
+        it("Get paginated posts more pages", async function () {
+            await pointSocial.addPost(
+                postContent,
+                postimage
+            )
+
+            await pointSocial.addPost(
+                "0xdd5a0873f998fff6b00052b51d1662f2993b603d9837da33cbc281a06b9f3b55",
+                "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
+            )
+
+            await pointSocial.connect(addr1).addPost(
+                "0xdd5a0873f998fff6b00052b51d1662f2993b603d9837da33cbc281a06b9f3b55",
+                "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
+            )
+
+            await pointSocial.connect(addr1).addPost(
+                "0xdd5a0873f998fff6b00052b51d1662f2993b603d9837da33cbc281a06b9f3b55",
+                "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
+            )
+
+            await pointSocial.connect(addr2).addPost(
+                "0xdd5a0873f998fff6b00052b51d1662f2993b603d9837da33cbc281a06b9f3b55",
+                "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
+            )
+
+            await pointSocial.connect(addr2).addPost(
+                "0xdd5a0873f998fff6b00052b51d1662f2993b603d9837da33cbc281a06b9f3b55",
+                "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
+            )
+
+            const paginatedPosts = await pointSocial.getPaginatedPosts("1", "10");
+                
+            expect(paginatedPosts.length).to.be.equal(5);
+        });
+       
+        it("Add comments to posts", async function () {
+            await pointSocial.addPost(
+                postContent,
+                postimage
+            )
+
+            await pointSocial.addCommentToPost(
+                "1",
+                "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
+            )
+            
+            const postComments = await pointSocial.commentsByPost(1, 0);
+
+            expect(postComments.contents).to.be.equal("0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe");
+        });
+       
+       
+        it("Add like to posts", async function () {
+            await pointSocial.addPost(
+                postContent,
+                postimage
+            )
+
+            await pointSocial.addLikeToPost(
+                "1"
+            )
+
+            await pointSocial.connect(addr2).addLikeToPost(
+                "1"
+            )
+            
+            const posts = await pointSocial.getAllPosts();
+
+            expect(posts[0].likesCount).to.be.equal(2);
+        });
+       
+        it("Add like to posts twice same user", async function () {
+            await pointSocial.addPost(
+                postContent,
+                postimage
+            )
+
+            await pointSocial.connect(addr1).addLikeToPost(
+                1
+            )
+
+            await pointSocial.connect(addr1).addLikeToPost(
+                1
+            )
+
+            await pointSocial.connect(addr2).addLikeToPost(
+                1
+            )
+            //remove index?
+            
+            const postsByOwnerLenght = await pointSocial.getAllPostsByOwnerLength(owner.address);
+            const posts = await pointSocial.getAllPosts();
+
+            expect(postsByOwnerLenght).to.be.equal(1);
+            expect(posts[0].likesCount).to.be.equal(1);
+        });
+       
+       
+       
+        it("Add comments to posts", async function () {
+            await pointSocial.addPost(
+                postContent,
+                postimage
+            )
+
+            await pointSocial.addCommentToPost(
+                "1",
+                "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
+            )
+
+            await pointSocial.addCommentToPost(
+                "1",
+                "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
+            )
+            
+            const postComments = await pointSocial.getAllCommentsForPost(1);
+
+            expect(postComments[0].contents).to.be.equal("0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe");
+            expect(postComments[1].contents).to.be.equal("0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe");
+        });
     });
 
 });
