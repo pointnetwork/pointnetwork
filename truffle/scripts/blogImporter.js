@@ -15,17 +15,17 @@ const {exit} = require('process');
 global.artifacts = artifacts;
 global.web3 = web3;
 
-if(process.argv[4] === undefined){
+if (process.argv[4] === undefined){
     console.log(`Please use the tags --download or --upload <contract_addresss>`);
     exit(0);
 }
 
-if(process.argv[5] === undefined){
+if (process.argv[5] === undefined){
     console.log(`Please inform the contract address`);
     exit(0);
 }
 
-if(process.argv[6] === undefined){
+if (process.argv[6] === undefined){
     console.log(`Please inform the identity list migration file`);
     exit(0);
 }
@@ -34,7 +34,7 @@ const action = process.argv[4];
 const contract = process.argv[5];
 
 async function main(){
-    if(action === '--download') {
+    if (action === '--download') {
         await download(contract);
     } else {
         await upload(contract);
@@ -120,7 +120,7 @@ async function upload(contract) {
     }
 
     for (const postId in articleComments){
-        for(const comment of articleComments[postId]) {
+        for (const comment of articleComments[postId]) {
             const author = comment[0];
             const contents = comment[1];
             const timestamp = comment[2];

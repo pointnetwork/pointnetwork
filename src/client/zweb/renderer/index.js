@@ -4,6 +4,7 @@ const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
 const config = require('config');
 const logger = require('../../../core/log');
+const {getNetworkPrivateKey, getNetworkAddress, getNetworkPublicKey} = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
@@ -88,7 +89,7 @@ class Renderer {
             },
             decrypt_data: async function (encryptedData, unparsedEncryptedSymmetricObjJSON) {
                 const host = this.host;
-                const privateKey = this.renderer.ctx.wallet.getNetworkAccountPrivateKey();
+                const privateKey = getNetworkPrivateKey();
 
                 const encryptedSymmetricObjJS = JSON.parse(unparsedEncryptedSymmetricObjJSON);
                 const encryptedSymmetricObj = {};
@@ -170,7 +171,7 @@ class Renderer {
                 return eventData;
             },
             default_wallet_address: async function () {
-                return this.renderer.ctx.wallet.getNetworkAccount();
+                return getNetworkAddress();
             },
             is_authenticated: async function (auth) {
                 return auth.walletid !== undefined;
@@ -254,8 +255,6 @@ class Renderer {
             get_wallet_info: async function () {
                 this.renderer.#ensurePrivilegedAccess();
 
-                const walletService = this.renderer.ctx.wallet;
-
                 const wallets = [];
                 wallets.push({
                     currency_name: 'Point',
@@ -264,24 +263,6 @@ class Renderer {
                         (await this.renderer.ctx.web3bridge.getCurrentIdentity()) + '.point' ||
                         'N/A',
                     balance: 0
-                });
-                wallets.push({
-                    currency_name: 'Solana',
-                    currency_code: 'SOL',
-                    address: walletService.getSolanaAccount(),
-                    balance: await walletService.getSolanaMainnetBalanceInSOL()
-                });
-                wallets.push({
-                    currency_name: 'Solana - Devnet',
-                    currency_code: 'devSOL',
-                    address: walletService.getSolanaAccount(),
-                    balance: await walletService.getSolanaDevnetBalanceInSOL()
-                });
-                wallets.push({
-                    currency_name: 'Neon',
-                    currency_code: 'NEON',
-                    address: walletService.getNetworkAccount(),
-                    balance: await walletService.getNetworkAccountBalanceInEth()
                 });
                 return wallets;
             },
@@ -300,8 +281,8 @@ class Renderer {
             identity_register: async function (identity) {
                 this.renderer.#ensurePrivilegedAccess();
 
-                const publicKey = this.renderer.ctx.wallet.getNetworkAccountPublicKey();
-                const owner = this.renderer.ctx.wallet.getNetworkAccount();
+                const publicKey = getNetworkPublicKey();
+                const owner = getNetworkAddress();
 
                 log.info(
                     {

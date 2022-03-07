@@ -16,7 +16,7 @@ services:
           file: docker-compose.e2e.yaml
           service: contract_deployer
     volumes:
-      - shared_contracts_zappdev:/build:rw
+      - shared_contracts_zappdev:/hardhat/build/contracts:rw
 
   point_node:
     extends:
@@ -39,6 +39,7 @@ services:
       - ./tsconfig.json:/app/tsconfig.json:ro
       - point_node_data_zappdev:/data
       - shared_contracts_zappdev:/app/hardhat/artifacts/contracts
+      - ./hardhat/build/contracts/:/app/hardhat/build/contracts:ro
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     ports:
