@@ -15,6 +15,7 @@ db:
   retry:
     max: 30
   env: production
+  enable_db_logging: true
 log:
   enabled: true
   level: info
@@ -26,7 +27,13 @@ deployer:
   cache_path: deployer_cache
 storage:
   chunk_size_bytes: 262144
-  cache_path: client_storage_cache
+  upload_cache_path: client_storage_upload_cache
+  download_cache_path: client_storage_download_cache
+  concurrent_upload_limit: 10
+  upload_loop_interval: 500
+  request_timeout: 15000
+  upload_expire: 60000
+  upload_retry_limit: 3
   files_path: files
   arweave_experiment_version_major: 1
   arweave_experiment_version_minor: 8
@@ -37,8 +44,6 @@ storage:
   arweave_host: arweave.net
   arweave_protocol: https
   arweave_port: 443
-  use_arweave_bundler: true
-  use_arlocal: false
 zproxy:
   port: 8666
   host: 127.0.0.1

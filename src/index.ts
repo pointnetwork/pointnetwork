@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
-import {exec} from 'child_process';
 import {existsSync, writeFileSync, mkdirSync} from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
@@ -151,25 +150,6 @@ if (program.makemigration) {
     SequelizeFactory.init();
 
     require('sequelize-auto-migrations/bin/makemigration.js');
-    // @ts-ignore
-    return;
-}
-
-if (program.migrate) {
-    const seq_cmd = program.migrate_undo ? 'db:migrate:undo' : 'db:migrate';
-    exec(`npx sequelize-cli ${seq_cmd} --url sqlite:${
-        path.join(resolveHome(config.get('datadir')), config.get('db.storage'))} --env ${
-        config.get('db.env')
-    }`,
-    (error, stdout, stderr) => {
-        if (error) {
-            return log.error(error, 'Migration error');
-        }
-        if (stderr) {
-            return log.error(`Migration stderr: ${stderr}`);
-        }
-        log.debug(`Migration result: ${stdout}`);
-    });
     // @ts-ignore
     return;
 }
