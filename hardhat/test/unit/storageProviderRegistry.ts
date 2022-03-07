@@ -22,7 +22,7 @@ describe("Token StorageRegistryProvider contract", function () {
 	});
 
 	describe("Testing announcement", function () {
-        const connectionStorage = "http://fake:9685/#fake_storage;"
+        let connectionStorage = "http://fake:9685/#fake_storage;"
         const costPerKb = 5;
         const collateralLockPeriod = 500;
 
@@ -64,13 +64,19 @@ describe("Token StorageRegistryProvider contract", function () {
                 costPerKb
             ,{value:deposit});
 
+            let providerInfo = await storageProviderRegistry.getProvider(owner.address);
+            expect(providerInfo['connection']).to.be.equal(connectionStorage);
+            expect(providerInfo['costPerKb']).to.be.equal(costPerKb);
+
+            connectionStorage = 'http://new_fake_storage.com';
+
             await storageProviderRegistry.announce(
                 connectionStorage,
                 collateralLockPeriod,
                 costPerKb
             ,{value:deposit});
 
-            const providerInfo = await storageProviderRegistry.getProvider(owner.address);
+            providerInfo = await storageProviderRegistry.getProvider(owner.address);
             expect(providerInfo['connection']).to.be.equal(connectionStorage);
             expect(providerInfo['costPerKb']).to.be.equal(costPerKb);
 
