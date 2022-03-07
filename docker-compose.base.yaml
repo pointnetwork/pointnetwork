@@ -10,7 +10,7 @@ services:
       - $POINT_KEYSTORE:/data/keystore
       - $POINT_DEPLOYSPACE:/app/deployspace:ro
     environment:
-      NODE_ENV: production
+      NODE_CONFIG_ENV: dockerdev
 
 volumes:
   point_contracts:
