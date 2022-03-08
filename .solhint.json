@@ -10,7 +10,7 @@
       "avoid-call-value": "error",
       "no-complex-fallback": "error",
       "reentrancy": "error",
-      "no-inline-assembly": "info",
+      "no-inline-assembly": "warn",
       "avoid-throw": "error",
       "avoid-tx-origin": "error",
       "no-empty-blocks": "off",
