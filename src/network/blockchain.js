@@ -10,7 +10,7 @@ const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
 const {compileContract} = require('../util/contract');
-const log = logger.child({module: 'Web3Bridge'});
+const log = logger.child({module: 'Blockchain'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
 const {utils, resolveHome} = require('../core/utils');
 
@@ -42,7 +42,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
 }
 
 const abisByContractName = {};
-class Web3Bridge {
+class Blockchain {
     constructor(ctx) {
         this.ctx = ctx;
         this.connectionString = config.get('network.web3');
@@ -50,7 +50,7 @@ class Web3Bridge {
         this.web3_call_retry_limit = config.get('network.web3_call_retry_limit');
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
         log.debug('Successfully created a web3 instance');
-        this.ctx.web3bridge = this;
+        this.ctx.blockchain = this;
         this.start();
     }
 
@@ -61,17 +61,12 @@ class Web3Bridge {
         });
     }
 
-    async start() { }
+    async start() {}
 
     async loadPointContract(contractName, at) {
-
         if (!(contractName in abisByContractName)) {
+            const buildDirPath = path.resolve(resolveHome(config.get('datadir')), 'contracts');
 
-            const buildDirPath = path.resolve(
-                resolveHome(config.get('datadir')),
-                'contracts'
-            );
-            
             const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
             if (!fs.existsSync(abiFileName)) {
@@ -79,12 +74,7 @@ class Web3Bridge {
                     fs.mkdirSync(buildDirPath, {recursive: true});
                 }
 
-                const contractPath = path.resolve(
-                    this.ctx.basepath,
-                    '..',
-                    'hardhat',
-                    'contracts'
-                );
+                const contractPath = path.resolve(this.ctx.basepath, '..', 'hardhat', 'contracts');
 
                 await compileContract({name: contractName, contractPath, buildDirPath});
             }
@@ -109,13 +99,13 @@ class Web3Bridge {
             return this.loadIdentityContract();
         }
 
-        const at = await this.ctx.web3bridge.getKeyValue(
+        const at = await this.ctx.blockchain.getKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
             version,
             'equalOrBefore'
         );
-        const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
+        const abi_storage_id = await this.ctx.blockchain.getKeyValue(
             target,
             'zweb/contracts/abi/' + contractName,
             version,
@@ -131,10 +121,10 @@ class Web3Bridge {
         } catch (e) {
             throw Error(
                 'Could not read abi of the contract ' +
-                utils.escape(contractName) +
-                '. Reason: ' +
-                e +
-                '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'
+                    utils.escape(contractName) +
+                    '. Reason: ' +
+                    e +
+                    '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'
             );
         }
     }
@@ -149,10 +139,7 @@ class Web3Bridge {
             try {
                 account = this.web3.eth.defaultAccount;
                 gasPrice = await this.web3.eth.getGasPrice();
-                log.debug(
-                    {gasLimit, gasPrice, account},
-                    'Prepared to send tx to contract method'
-                );
+                log.debug({gasLimit, gasPrice, account}, 'Prepared to send tx to contract method');
                 // if (!gasLimit) {
                 gasLimit = await method.estimateGas({from: account, value: amountInWei});
                 log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
@@ -261,10 +248,14 @@ class Web3Bridge {
         let subscriptionId;
         return contract.events[event](options)
             .on('data', data => onEvent({subscriptionId, data}))
-            .on('connected', id => onStart({
-                subscriptionId: (subscriptionId = id),
-                data: {message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`}
-            }));
+            .on('connected', id =>
+                onStart({
+                    subscriptionId: (subscriptionId = id),
+                    data: {
+                        message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`
+                    }
+                })
+            );
     }
 
     async removeSubscriptionById(subscriptionId, onRemove) {
@@ -275,20 +266,32 @@ class Web3Bridge {
         });
     }
 
-    async sendToContract(target, contractName, methodName, params, options = {}, version = 'latest') {
+    async sendToContract(
+        target,
+        contractName,
+        methodName,
+        params,
+        options = {},
+        version = 'latest'
+    ) {
         //Block send call from versions that are not the latest one.
-        if (version !== 'latest'){
-            log.error({
-                target,
-                contractName,
-                methodName,
-                params,
-                options,
-                version
-            }, 'Error: Contract send does not allowed for versions different than latest.');
-            throw new Error(`Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`);
+        if (version !== 'latest') {
+            log.error(
+                {
+                    target,
+                    contractName,
+                    methodName,
+                    params,
+                    options,
+                    version
+                },
+                'Error: Contract send does not allowed for versions different than latest.'
+            );
+            throw new Error(
+                `Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`
+            );
         }
-        
+
         // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
 
@@ -299,7 +302,10 @@ class Web3Bridge {
             if (k.split('(')[0] === methodName && k.includes('(')) {
                 // example of k: send(address,bytes32,string)
                 let paramIdx = 0;
-                const kArgTypes = k.split('(')[1].replace(')', '').split(',');
+                const kArgTypes = k
+                    .split('(')[1]
+                    .replace(')', '')
+                    .split(',');
                 for (const kArgType of kArgTypes) {
                     if (kArgType === 'bytes32') {
                         // Potential candidate for conversion
@@ -370,23 +376,28 @@ class Web3Bridge {
         return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile, version);
     }
 
-    async getKeyLastVersion(identity, key){
+    async getKeyLastVersion(identity, key) {
         const filter = {identity: identity, key: key};
-        const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
-        if (events.length > 0){
-            const maxObj = events.reduce((prev, current) => 
-                (prev.blockNumber > current.blockNumber) ? prev : current);
+        const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {
+            filter,
+            fromBlock: 0,
+            toBlock: 'latest'
+        });
+        if (events.length > 0) {
+            const maxObj = events.reduce((prev, current) =>
+                prev.blockNumber > current.blockNumber ? prev : current
+            );
             return maxObj.returnValues.version;
         } else {
-            return null; 
+            return null;
         }
     }
 
-    compareVersions(v1, v2){
+    compareVersions(v1, v2) {
         const v1p = v1.split('.');
         const v2p = v2.split('.');
-        for (const i in v1p){
-            if (v1p[i] > v2p[i]){
+        for (const i in v1p) {
+            if (v1p[i] > v2p[i]) {
                 return 1;
             } else if (v1p[i] < v2p[i]) {
                 return -1;
@@ -395,42 +406,53 @@ class Web3Bridge {
         return 0;
     }
 
-    getLastVersionOrBefore(version, events){
-        const filteredEvents = events.filter(e => 
-            [-1, 0].includes(this.compareVersions(e.returnValues.version, version)));
-        const maxObj = filteredEvents.reduce((prev, current) => 
-            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1) 
-                ? prev : current);
+    getLastVersionOrBefore(version, events) {
+        const filteredEvents = events.filter(e =>
+            [-1, 0].includes(this.compareVersions(e.returnValues.version, version))
+        );
+        const maxObj = filteredEvents.reduce((prev, current) =>
+            this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1
+                ? prev
+                : current
+        );
         return maxObj.returnValues.value;
     }
 
     async getKeyValue(identity, key, version = 'latest', versionSearchStrategy = 'exact') {
         try {
             if (typeof identity !== 'string')
-                throw Error('web3bridge.getKeyValue(): identity must be a string');
+                throw Error('blockchain.getKeyValue(): identity must be a string');
             if (typeof key !== 'string')
-                throw Error('web3bridge.getKeyValue(): key must be a string');
+                throw Error('blockchain.getKeyValue(): key must be a string');
             if (typeof version !== 'string')
-                throw Error('web3bridge.getKeyValue(): version must be a string');
-            
+                throw Error('blockchain.getKeyValue(): version must be a string');
+
             identity = identity.replace('.z', ''); // todo: rtrim instead
 
-            if (version === 'latest'){
+            if (version === 'latest') {
                 const contract = await this.loadIdentityContract();
                 const result = await contract.methods.ikvGet(identity, key).call();
                 return result;
             } else {
-                if (versionSearchStrategy === 'exact'){
+                if (versionSearchStrategy === 'exact') {
                     const filter = {identity: identity, key: key, version: version};
-                    const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
-                    if (events.length > 0){
+                    const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {
+                        filter,
+                        fromBlock: 0,
+                        toBlock: 'latest'
+                    });
+                    if (events.length > 0) {
                         return events[0].returnValues.value;
                     } else {
                         return null;
                     }
-                } else if (versionSearchStrategy === 'equalOrBefore'){
+                } else if (versionSearchStrategy === 'equalOrBefore') {
                     const filter = {identity: identity, key: key};
-                    const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+                    const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {
+                        filter,
+                        fromBlock: 0,
+                        toBlock: 'latest'
+                    });
                     const value = this.getLastVersionOrBefore(version, events);
                     return value;
                 } else {
@@ -451,7 +473,10 @@ class Web3Bridge {
             log.debug({identity, key, value, version}, 'Ready to put key value');
             await this.web3send(method);
         } catch (e) {
-            log.error({error: e, stack: e.stack, identity, key, value, version}, 'putKeyValue error');
+            log.error(
+                {error: e, stack: e.stack, identity, key, value, version},
+                'putKeyValue error'
+            );
             throw e;
         }
     }
@@ -508,4 +533,4 @@ class Web3Bridge {
     }
 }
 
-module.exports = Web3Bridge;
+module.exports = Blockchain;

@@ -39,7 +39,7 @@ class ZProxySocketController {
                     const {contract, event, ...options} = request.params;
                     const {CONFIRMATION, EVENT} = SUBSCRIPTION_EVENT_TYPES;
 
-                    return this.ctx.web3bridge.subscribeContractEvent(
+                    return this.ctx.blockchain.subscribeContractEvent(
                         hostname,
                         contract,
                         event,
@@ -54,7 +54,7 @@ class ZProxySocketController {
                     const {subscriptionId} = request.params;
                     const {CANCELLATION} = SUBSCRIPTION_EVENT_TYPES;
 
-                    return this.ctx.web3bridge.removeSubscriptionById(subscriptionId, event =>
+                    return this.ctx.blockchain.removeSubscriptionById(subscriptionId, event =>
                         this.pushSubscriptionEvent({...event, request, type: CANCELLATION})
                     );
                 }

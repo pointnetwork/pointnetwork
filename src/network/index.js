@@ -1,4 +1,4 @@
-const Web3Bridge = require('./web3bridge');
+const Blockchain = require('./blockchain');
 const KeyValue = require('./keyvalue');
 const config = require('config');
 
@@ -32,8 +32,8 @@ class Network {
         // todo: just use rejectUnauthorized: false on transport-https, extend it
         // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-        this.web3bridge = new Web3Bridge(this.ctx);
-        await this.web3bridge.start(); // todo: do we need await?
+        this.blockchain = new Blockchain(this.ctx);
+        await this.blockchain.start(); // todo: do we need await?
 
         this.keyvalue = new KeyValue(this.ctx, this);
         this.ctx.keyvalue = this.keyvalue;

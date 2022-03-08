@@ -9,13 +9,13 @@ class IdentityController extends PointSDKController {
 
     async identityToOwner() {
         const identity = this.req.params.identity;
-        const owner = await this.ctx.web3bridge.ownerByIdentity(identity);
+        const owner = await this.ctx.blockchain.ownerByIdentity(identity);
         return this._response({owner: owner});
     }
 
     async ownerToIdentity() {
         const owner = this.req.params.owner;
-        const identity = await this.ctx.web3bridge.identityByOwner(owner);
+        const identity = await this.ctx.blockchain.identityByOwner(owner);
         return this._response({identity});
     }
 }

@@ -21,7 +21,7 @@ class ContractController extends PointSDKController {
         // params=["String Param", 999, true, "Another string"] etc...
         const params = this.payload.params ? this.payload.params : [];
 
-        const data = await this.ctx.web3bridge.callContract(this.host, contract, method, params);
+        const data = await this.ctx.blockchain.callContract(this.host, contract, method, params);
 
         return this._response(data);
     }
@@ -29,7 +29,7 @@ class ContractController extends PointSDKController {
     async load() {
         const contractName = this.req.params.contract;
 
-        const contract = await this.ctx.web3bridge.loadWebsiteContract(this.host, contractName);
+        const contract = await this.ctx.blockchain.loadWebsiteContract(this.host, contractName);
 
         const data = {
             address: contract._address,
@@ -54,7 +54,7 @@ class ContractController extends PointSDKController {
             gasLimit
         };
 
-        const data = await this.ctx.web3bridge.sendToContract(
+        const data = await this.ctx.blockchain.sendToContract(
             this.host,
             contract,
             method,

@@ -801,7 +801,7 @@ class ZProxy {
                     }
 
                     try {
-                        await this.ctx.web3bridge.sendToContract(
+                        await this.ctx.blockchain.sendToContract(
                             host,
                             contractName,
                             methodName,
@@ -830,7 +830,7 @@ class ZProxy {
 
     async getRootDirectoryIdForDomain(host, version = 'latest') {
         const key = '::rootDir';
-        const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key, version);
+        const rootDirId = await this.ctx.blockchain.getKeyValue(host, key, version);
         if (!rootDirId)
             throw Error(
                 'getRootDirectoryIdForDomain failed: key ' + key + ' returned empty: ' + rootDirId
@@ -839,7 +839,7 @@ class ZProxy {
     }
 
     async getZRouteIdFromDomain(host, version = 'latest') {
-        const result = await this.ctx.web3bridge.getZRecord(host, version);
+        const result = await this.ctx.blockchain.getZRecord(host, version);
         return result;
 
         // const records = await this.getZDNSRecordsFromDomain(host);

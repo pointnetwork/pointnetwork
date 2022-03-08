@@ -99,7 +99,7 @@ class Deployer {
         const identity = target.replace(/\.z$/, '');
 
         //get the last version.
-        const lastVersion = await this.ctx.web3bridge.getKeyLastVersion(identity, '::rootDir');
+        const lastVersion = await this.ctx.blockchain.getKeyLastVersion(identity, '::rootDir');
 
         //get the new version with patch.
         let version;
@@ -121,7 +121,7 @@ class Deployer {
 
         const {defaultAccount: owner} = this.ctx.web3.eth;
 
-        const registeredOwner = await this.ctx.web3bridge.ownerByIdentity(identity);
+        const registeredOwner = await this.ctx.blockchain.ownerByIdentity(identity);
         const identityIsRegistered =
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
@@ -149,7 +149,7 @@ class Deployer {
                 ]
             }, 'Registring new identity');
 
-            await this.ctx.web3bridge.registerIdentity(
+            await this.ctx.blockchain.registerIdentity(
                 identity,
                 owner,
                 Buffer.from(publicKey, 'hex')
@@ -295,13 +295,13 @@ class Deployer {
 
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
 
-        await this.ctx.web3bridge.putKeyValue(
+        await this.ctx.blockchain.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
             address,
             version
         );
-        await this.ctx.web3bridge.putKeyValue(
+        await this.ctx.blockchain.putKeyValue(
             target,
             'zweb/contracts/abi/' + contractName,
             artifacts_storage_id,
@@ -318,7 +318,7 @@ class Deployer {
     async updateZDNS(host, id, version) {
         const target = host.replace('.z', '');
         log.info({target, id}, 'Updating ZDNS');
-        await this.ctx.web3bridge.putZRecord(target, '0x' + id, version);
+        await this.ctx.blockchain.putZRecord(target, '0x' + id, version);
     }
 
     async updateKeyValue(target, values = {}, deployPath, deployContracts = false, version) {
@@ -388,7 +388,7 @@ class Deployer {
                             params.push(value[paramName]);
                         }
                     }
-                    await this.ctx.web3bridge.sendToContract(
+                    await this.ctx.blockchain.sendToContract(
                         target,
                         contractName,
                         methodName,
@@ -397,7 +397,7 @@ class Deployer {
                 }
                 value = JSON.stringify(value);
             }
-            await this.ctx.web3bridge.putKeyValue(target, key, String(value), version);
+            await this.ctx.blockchain.putKeyValue(target, key, String(value), version);
         }
     }
 }
