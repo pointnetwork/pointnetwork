@@ -40,8 +40,14 @@ jobs:
       run: pip3 install slither-analyzer
 
     - name: Installing Solc-select
-    - run: pip3 install solc-select
-    - run: solc-select install 0.8.0
+      run: pip3 install solc-select
+
+    - name: Installing Solc-select
+      run: solc-select install 0.8.0
+    
+    - name: Setting up right solc version
+      run: solc-select use 0.8.0
+    
     - run: solc-select use 0.8.0
 
     - name: Run Lint
