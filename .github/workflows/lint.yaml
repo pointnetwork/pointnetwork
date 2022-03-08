@@ -36,6 +36,10 @@ jobs:
     - run: npm i -g npm
     - run: npm install
 
+    - name: Installing Slither
+      run: pip3 install slither-analyzer
+      run: npm run slither
+
     - name: Run Lint
       run: npm run lint
     - name: Run Solhint
