@@ -173,6 +173,13 @@ class ZProxy {
         response.end();
     }
 
+    abortCode(response, message = 'Forbidden', HTTPStatusCode) {
+        const headers = {'Content-Type': 'text/html;charset=UTF-8'};
+        response.writeHead(HTTPStatusCode, headers);
+        response.write(this._errorMsgHtml(message, HTTPStatusCode));
+        response.end();
+    }
+
     abortError(response, err) {
         const headers = {'Content-Type': 'text/html;charset=UTF-8'};
         response.writeHead(500, headers);
@@ -242,7 +249,11 @@ class ZProxy {
                 try {
                     rendered = await this.contractSend(host, request);
                 } catch (e) {
-                    return this.abortError(response, e);
+                    if (e.message != null && e.message.startsWith('Forbidden')){
+                        return this.abortCode(response, e.message, 403);
+                    } else {
+                        return this.abortError(response, e);
+                    } 
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/v1/api/')) {
                 try {
@@ -266,9 +277,17 @@ class ZProxy {
                 contentType = response._contentType;
             } else if (config.get('mode') === 'zappdev') {
                 // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
+                // Side effect: versionig of zapps will not work for Zapp files in this env since files are loaded from local file system.
+                let version = 'latest';
+                
+                if (parsedUrl.searchParams !== undefined && 
+                    parsedUrl.searchParams.has('__point_version')){
+                    version = parsedUrl.searchParams.get('__point_version');
+                    
+                }
 
                 // First try route file (and check if this domain even exists)
-                const zroute_id = await this.getZRouteIdFromDomain(host);
+                const zroute_id = await this.getZRouteIdFromDomain(host, version);
                 if (
                     zroute_id === null ||
                     zroute_id === '' ||
@@ -276,7 +295,7 @@ class ZProxy {
                 ) {
                     return this.abort404(
                         response,
-                        'Domain not found (Route file not specified for this domain) - Is the ZApp deployed?'
+                        'Domain not found (Route file not specified for this domain) - Is the ZApp deployed or version requested correct?'
                     ); // todo: replace with is_valid_id
                 }
 
@@ -516,6 +535,9 @@ class ZProxy {
                         resolve(rendered);
                     }
                 } catch (e) {
+                    if (e.message != null && e.message.startsWith('Forbidden')){
+                        return this.abortCode(response, e.message, 403);
+                    }
                     reject(e); // todo: sanitize?
                 }
             });
@@ -530,8 +552,17 @@ class ZProxy {
             });
             request.on('end', async () => {
                 try {
+                    let version = 'latest';
+                    
+                    if (parsedUrl.searchParams !== undefined && 
+                        parsedUrl.searchParams.has('__point_version')){
+                        version = parsedUrl.searchParams.get('__point_version');
+                        
+                    }
+                    
                     // First try route file (and check if this domain even exists)
-                    const zroute_id = await this.getZRouteIdFromDomain(host);
+                    const zroute_id = await this.getZRouteIdFromDomain(host, version);
+                    
                     if (
                         zroute_id === null ||
                         zroute_id === '' ||
@@ -552,7 +583,7 @@ class ZProxy {
                         );
 
                     // Download info about root dir
-                    const rootDirId = await this.getRootDirectoryIdForDomain(host);
+                    const rootDirId = await this.getRootDirectoryIdForDomain(host, version);
 
                     let route_params = {};
                     let template_filename = null;
@@ -633,6 +664,9 @@ class ZProxy {
                         // return this.abort404(response, 'route not found'); // todo: write a better msg // todo: remove, it's automatic
                     }
                 } catch (e) {
+                    if (e.message != null && e.message.startsWith('Forbidden')){
+                        return this.abortCode(response, e.message, 403);
+                    }
                     reject(e); // todo: sanitize?
                 }
             });
@@ -712,7 +746,7 @@ class ZProxy {
             request.on('end', async () => {
                 try {
                     if (request.method.toUpperCase() !== 'POST') reject(new Error('Must be POST'));
-
+                    
                     let parsedUrl;
                     try {
                         parsedUrl = new URL(request.url, `http://${request.headers.host}`);
@@ -725,6 +759,12 @@ class ZProxy {
                     paramsTogether = decodeURI(paramsTogether);
                     paramsTogether = paramsTogether.replace(')', '');
                     const paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
+                    
+                    if (parsedUrl.searchParams.has('__point_version') &&
+                        parsedUrl.searchParams.get('__point_version') !== 'latest'){
+                        const version = parsedUrl.searchParams.get('__point_version');
+                        throw new Error(`Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`);
+                    }
 
                     const entries = new URL('http://localhost/?' + body).searchParams.entries();
                     const postData = {};
@@ -788,9 +828,9 @@ class ZProxy {
         });
     }
 
-    async getRootDirectoryIdForDomain(host) {
+    async getRootDirectoryIdForDomain(host, version = 'latest') {
         const key = '::rootDir';
-        const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key);
+        const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key, version);
         if (!rootDirId)
             throw Error(
                 'getRootDirectoryIdForDomain failed: key ' + key + ' returned empty: ' + rootDirId
@@ -798,8 +838,8 @@ class ZProxy {
         return rootDirId;
     }
 
-    async getZRouteIdFromDomain(host) {
-        const result = await this.ctx.web3bridge.getZRecord(host);
+    async getZRouteIdFromDomain(host, version = 'latest') {
+        const result = await this.ctx.web3bridge.getZRecord(host, version);
         return result;
 
         // const records = await this.getZDNSRecordsFromDomain(host);

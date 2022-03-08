@@ -117,8 +117,19 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const txid = edge.node.id;
             log.debug({chunkId, txid}, 'Downloading data from arweave');
 
+            // TODO: Remove the axios hack below when this bug of arlocal is resolved.
+            // https://github.com/textury/arlocal/issues/63
+            // It is fixed, but don't seems to work in all cases. 
+            const data = (await axios.get('http://' +  config.get('storage.arweave_host') +
+                ':' + config.get('storage.arweave_port') + '/tx/' +  txid + '/data')).data;
+            const buf = Buffer.from(data, 'base64');
+
+            /*
+            // NOTE: above code can be replaced with below when mentioned arlocal bug is resolved
+            // It works in twitter.z, but brokes in pointsocial.z, for example.
             const data = await arweave.transactions.getData(txid, {decode: true});
             const buf = Buffer.from(data);
+            */
 
             log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
 

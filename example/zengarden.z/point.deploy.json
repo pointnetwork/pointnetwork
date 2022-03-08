@@ -1,5 +1,5 @@
 {
-    "version": 1,
+    "version": 0.1,
     "target": "zengarden.z",
     "upload": {
         "redundancy": 10,

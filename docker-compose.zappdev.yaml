@@ -56,7 +56,7 @@ services:
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
-    command: 'run start:docker:zappdev'
+    command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
       - ./example:/app/example:ro

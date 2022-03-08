@@ -106,7 +106,7 @@ class Web3Bridge {
         return await this.loadPointContract('Identity', at);
     }
 
-    async loadWebsiteContract(target, contractName) {
+    async loadWebsiteContract(target, contractName, version = 'latest') {
         // todo: make it nicer, extend to all potential contracts, and add to docs
         // @ means internal contract for Point Network (truffle/contracts)
         if (target === '@' && contractName === 'Identity') {
@@ -115,12 +115,17 @@ class Web3Bridge {
 
         const at = await this.ctx.web3bridge.getKeyValue(
             target,
-            'zweb/contracts/address/' + contractName
+            'zweb/contracts/address/' + contractName,
+            version,
+            'equalOrBefore'
         );
         const abi_storage_id = await this.ctx.web3bridge.getKeyValue(
             target,
-            'zweb/contracts/abi/' + contractName
+            'zweb/contracts/abi/' + contractName,
+            version,
+            'equalOrBefore'
         );
+
         let abi;
         try {
             abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
@@ -197,13 +202,13 @@ class Web3Bridge {
          */
     }
 
-    async callContract(target, contractName, method, params) {
+    async callContract(target, contractName, method, params, version = 'latest') {
         // todo: multiple arguments, but check existing usage // huh?
         let attempt = 0;
         log.debug({target, contractName, method, params}, 'Contract Call');
         while (true) {
             try {
-                const contract = await this.loadWebsiteContract(target, contractName);
+                const contract = await this.loadWebsiteContract(target, contractName, version);
                 if (!Array.isArray(params))
                     throw Error('Params sent to callContract is not an array');
                 if (!contract.methods[method])
@@ -234,7 +239,14 @@ class Web3Bridge {
 
     async getPastEvents(target, contractName, event, options = {fromBlock: 0, toBlock: 'latest'}) {
         const contract = await this.loadWebsiteContract(target, contractName);
-        return await contract.getPastEvents(event, options);
+        let events = await contract.getPastEvents(event, options);
+        //filter non-indexed properties from return value for convenience
+        if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
+            for (const k in options.filter) {
+                events = events.filter(e => e.returnValues[k] === options.filter[k]);
+            }
+        }
+        return events;
     }
 
     async getBlockTimestamp(blockNumber) {
@@ -261,7 +273,20 @@ class Web3Bridge {
         });
     }
 
-    async sendToContract(target, contractName, methodName, params, options = {}) {
+    async sendToContract(target, contractName, methodName, params, options = {}, version = 'latest') {
+        //Block send call from versions that are not the latest one.
+        if (version !== 'latest'){
+            log.error({
+                target,
+                contractName,
+                methodName,
+                params,
+                options,
+                version
+            }, 'Error: Contract send does not allowed for versions different than latest.');
+            throw new Error(`Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`);
+        }
+        
         // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
 
@@ -331,43 +356,100 @@ class Web3Bridge {
         }
     }
 
-    async getZRecord(domain) {
+    async getZRecord(domain, version = 'latest') {
         domain = domain.replace('.z', ''); // todo: rtrim instead
-        let result = await this.getKeyValue(domain, ZDNS_ROUTES_KEY);
-        if (result.substr(0, 2) === '0x') result = result.substr(2);
+        let result = await this.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
+        if (result != null && result.substr(0, 2) === '0x') result = result.substr(2);
         return result;
     }
 
-    async putZRecord(domain, routesFile) {
+    async putZRecord(domain, routesFile, version) {
         domain = domain.replace('.z', ''); // todo: rtrim instead
-        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile);
+        return await this.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile, version);
     }
 
-    async getKeyValue(identity, key) {
+    async getKeyLastVersion(identity, key){
+        const filter = {identity: identity, key: key};
+        const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+        if (events.length > 0){
+            const maxObj = events.reduce((prev, current) => 
+                (prev.blockNumber > current.blockNumber) ? prev : current);
+            return maxObj.returnValues.version;
+        } else {
+            return null; 
+        }
+    }
+
+    compareVersions(v1, v2){
+        const v1p = v1.split('.');
+        const v2p = v2.split('.');
+        for (const i in v1p){
+            if (v1p[i] > v2p[i]){
+                return 1;
+            } else if (v1p[i] < v2p[i]) {
+                return -1;
+            }
+        }
+        return 0;
+    }
+
+    getLastVersionOrBefore(version, events){
+        const filteredEvents = events.filter(e => 
+            [-1, 0].includes(this.compareVersions(e.returnValues.version, version)));
+        const maxObj = filteredEvents.reduce((prev, current) => 
+            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1) 
+                ? prev : current);
+        return maxObj.returnValues.value;
+    }
+
+    async getKeyValue(identity, key, version = 'latest', versionSearchStrategy = 'exact') {
         try {
             if (typeof identity !== 'string')
                 throw Error('web3bridge.getKeyValue(): identity must be a string');
             if (typeof key !== 'string')
                 throw Error('web3bridge.getKeyValue(): key must be a string');
+            if (typeof version !== 'string')
+                throw Error('web3bridge.getKeyValue(): version must be a string');
+            
             identity = identity.replace('.z', ''); // todo: rtrim instead
-            const contract = await this.loadIdentityContract();
-            const result = await contract.methods.ikvGet(identity, key).call();
-            return result;
+
+            if (version === 'latest'){
+                const contract = await this.loadIdentityContract();
+                const result = await contract.methods.ikvGet(identity, key).call();
+                return result;
+            } else {
+                if (versionSearchStrategy === 'exact'){
+                    const filter = {identity: identity, key: key, version: version};
+                    const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+                    if (events.length > 0){
+                        return events[0].returnValues.value;
+                    } else {
+                        return null;
+                    }
+                } else if (versionSearchStrategy === 'equalOrBefore'){
+                    const filter = {identity: identity, key: key};
+                    const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
+                    const value = this.getLastVersionOrBefore(version, events);
+                    return value;
+                } else {
+                    return null;
+                }
+            }
         } catch (e) {
-            log.error({error: e, stack: e.stack, identity, key}, 'getKeyValue error');
+            log.error({error: e, stack: e.stack, identity, key, version}, 'getKeyValue error');
             throw e;
         }
     }
-    async putKeyValue(identity, key, value) {
+    async putKeyValue(identity, key, value, version) {
         try {
             // todo: only send transaction if it's different. if it's already the same value, no need
             identity = identity.replace('.z', ''); // todo: rtrim instead
             const contract = await this.loadIdentityContract();
-            const method = contract.methods.ikvPut(identity, key, value);
-            log.debug({identity, key, value}, 'Ready to put key value');
+            const method = contract.methods.ikvPut(identity, key, value, version);
+            log.debug({identity, key, value, version}, 'Ready to put key value');
             await this.web3send(method);
         } catch (e) {
-            log.error({error: e, stack: e.stack, identity, key, value}, 'putKeyValue error');
+            log.error({error: e, stack: e.stack, identity, key, value, version}, 'putKeyValue error');
             throw e;
         }
     }
