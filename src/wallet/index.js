@@ -185,7 +185,7 @@ class Wallet {
     }
 
     async getNetworkAccountBalanceInWei() {
-        return await this.web3.eth.getBalance(getNetworkAddress());
+        return await this.ctx.blockchain.getBalance(getNetworkAddress());
     }
     async getNetworkAccountBalanceInEth() {
         return (await this.getNetworkAccountBalanceInWei()) / 1e18;

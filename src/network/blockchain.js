@@ -535,6 +535,10 @@ class Blockchain {
         });
         return receipt;
     }
+
+    async getBalance(address) {
+        return await this.web3.eth.getBalance(address);
+    }
 }
 
 module.exports = Blockchain;
