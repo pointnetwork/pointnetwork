@@ -94,11 +94,6 @@ class Web3Bridge {
         return new this.web3.eth.Contract(abisByContractName[contractName], at);
     }
 
-    async loadStorageProviderRegistryContract() {
-        const at = config.get('network.storage_provider_registry_contract_address');
-        return await this.loadPointContract('StorageProviderRegistry', at);
-    }
-
     async loadIdentityContract() {
         const at = config.get('network.identity_contract_address');
         return await this.loadPointContract('Identity', at);
@@ -428,59 +423,6 @@ class Web3Bridge {
     async toChecksumAddress(address) {
         const checksumAddress = this.web3.utils.toChecksumAddress(address);
         return checksumAddress;
-    }
-    async announceStorageProvider(connection, collateral_lock_period, cost_per_kb) {
-        let contract, method, account, gasPrice;
-        try {
-            contract = await this.loadStorageProviderRegistryContract();
-            method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
-            account = config.get('network.hardcode_default_provider');
-            gasPrice = await this.web3.eth.getGasPrice();
-            return await method.send({from: account, gasPrice, gas: 2000000, value: 0.000001e18});
-        } catch (e) {
-            log.error(
-                {
-                    method,
-                    gasPrice,
-                    account,
-                    collateral_lock_period,
-                    cost_per_kb,
-                    error: e.message,
-                    stack: e.stack
-                },
-                'announceStorageProvider error'
-            );
-
-            throw e;
-        }
-    }
-    async getCheapestStorageProvider() {
-        //todo: unused?
-        try {
-            const contract = await this.loadStorageProviderRegistryContract();
-            return contract.methods.getCheapestProvider().call();
-        } catch (e) {
-            log.error({error: e, stack: e.stack}, 'getCheapestStorageProvider error');
-            throw e;
-        }
-    }
-    async getAllStorageProviders() {
-        try {
-            const contract = await this.loadStorageProviderRegistryContract();
-            return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
-        } catch (e) {
-            log.error({error: e, stack: e.stack}, 'getAllStorageProviders error');
-            throw e;
-        }
-    }
-    async getSingleProvider(address) {
-        try {
-            const contract = await this.loadStorageProviderRegistryContract();
-            return contract.methods.getProvider(address).call();
-        } catch (e) {
-            log.error({error: e, stack: e.stack, address}, 'getSingleProvider error');
-            throw e;
-        }
     }
 }
 

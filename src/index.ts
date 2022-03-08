@@ -94,7 +94,6 @@ if (program.datadir) {
 
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
-    process.env.STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS = getContractAddress('StorageProviderRegistry');
 }
 
 // Warning: the below imports should take place after the above config patch!
