@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.0;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts/utils/Counters.sol";
+
 contract PointEmail {
-    uint256 public emailIds;
+    using Counters for Counters.Counter;
+    Counters.Counter internal _emailIds;
 
     struct Email {
         uint id;
@@ -19,11 +22,10 @@ contract PointEmail {
     mapping(address => Email[]) public toEmails; // mapping to address to emails
 
     function send(address to, bytes32 encryptedMessageId, string memory encryptedSymmetricObj) external {
-        require(to != address(0), "Can't send email to address 0");
-        emailIds++;
+        _emailIds.increment();
+        uint newEmailId = _emailIds.current();
         Email memory _email = Email(
-            emailIds, 
-            msg.sender, 
+            newEmailId, msg.sender, 
             to, 
             encryptedMessageId, 
             encryptedSymmetricObj, 
@@ -36,8 +38,6 @@ contract PointEmail {
     }
 
     function getAllEmailsByToAddress(address to) external view returns(Email[] memory) {
-        require(to != address(0), "Can't get email from address 0");
-
         return toEmails[to];
     }
 

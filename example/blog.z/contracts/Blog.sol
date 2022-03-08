@@ -36,7 +36,7 @@ contract Blog {
     }
     
     // Article Functions
-    function createArticle(string memory title, bytes32 contents) public {
+    function createArticle(string memory title, bytes32 contents) external {
         uint256 _id = articles.length + 1;
         Article memory _article = Article(
             _id,
