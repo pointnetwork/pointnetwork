@@ -1,5 +1,6 @@
 const path = require('path');
 const Web3 = require('web3');
+const ethereumjs = require('ethereumjs-util');
 const fs = require('fs');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
@@ -538,6 +539,72 @@ class Blockchain {
 
     async getBalance(address) {
         return await this.web3.eth.getBalance(address);
+    }
+
+    getWallet() {
+        return this.web3.eth.accounts.wallet[0];
+    }
+
+    createAccountAndAddToWallet() {
+        const account = this.web3.eth.accounts.create(this.web3.utils.randomHex(32));
+        const wallet = this.web3.eth.accounts.wallet.add(account);
+        return wallet;
+    }
+
+    /** Returns the wallet using the address in the loaded keystore */
+    decryptWallet(keystore, passcode) {
+        const decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], passcode);
+        const address = ethereumjs.addHexPrefix(keystore.address);
+        return decryptedWallets[address];
+    }
+
+    // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
+    async getTransactionsByAccount(account, startBlockNumber, endBlockNumber) {
+        if (endBlockNumber == null) {
+            endBlockNumber = await this.web3.eth.getBlockNumber();
+            log.debug({endBlockNumber}, 'Using endBlockNumber');
+        }
+        if (startBlockNumber == null) {
+            startBlockNumber = Math.max(0, endBlockNumber - 1000000);
+            log.debug({startBlockNumber}, 'Using startBlockNumber');
+        }
+        log.debug(
+            {account, startBlockNumber, endBlockNumber, ethblocknumber: this.web3.eth.blockNumber},
+            'Searching for transactions'
+        );
+
+        const txs = [];
+
+        for (var i = startBlockNumber; i <= endBlockNumber; i++) {
+            if (i % 1000 === 0) {
+                log.debug('Searching block ' + i);
+            }
+
+            var block = this.web3.eth.getBlock(i, true);
+            if (block != null && block.transactions != null) {
+                block.transactions.forEach(function(e) {
+                    if (account === '*' || account === e.from || account === e.to) {
+                        txs.push(e);
+                        // log.debug('   tx hash         : ' + e.hash + '\n'
+                        //         + '   nonce           : ' + e.nonce + '\n'
+                        //         + '   blockHash       : ' + e.blockHash + '\n'
+                        //         + '   blockNumber     : ' + e.blockNumber + '\n'
+                        //         + '   transactionIndex: ' + e.transactionIndex + '\n'
+                        //         + '   from            : ' + e.from + '\n'
+                        //         + '   to              : ' + e.to + '\n'
+                        //         + '   value           : ' + e.value + '\n'
+                        //         + '   time            : ' + block.timestamp + ' ' + new Date(block.timestamp * 1000).toGMTString() + '\n'
+                        //         + '   gasPrice        : ' + e.gasPrice + '\n'
+                        //         + '   gas             : ' + e.gas + '\n'
+                        //         + '   input           : ' + e.input);
+                    }
+                });
+            }
+
+            log.debug({txs}, 'Accound transactions');
+        }
+
+        return txs;
     }
 }
 

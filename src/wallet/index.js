@@ -1,65 +1,10 @@
 const fs = require('fs');
 const events = require('events');
-const ethereumjs = require('ethereumjs-util');
 const solana = require('@solana/web3.js');
 const config = require('config');
 const logger = require('../core/log');
 const log = logger.child({module: 'Wallet'});
 const {getNetworkAddress, getSecretPhrase} = require('./keystore');
-
-// from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
-async function getTransactionsByAccount(
-    eth,
-    myaccount,
-    startBlockNumber,
-    endBlockNumber,
-    log = console
-) {
-    if (endBlockNumber == null) {
-        endBlockNumber = await eth.getBlockNumber();
-        log.debug({endBlockNumber}, 'Using endBlockNumber');
-    }
-    if (startBlockNumber == null) {
-        startBlockNumber = Math.max(0, endBlockNumber - 1000000);
-        log.debug({startBlockNumber}, 'Using startBlockNumber');
-    }
-    log.debug(
-        {myaccount, startBlockNumber, endBlockNumber, ethblocknumber: eth.blockNumber},
-        'Searching for transactions'
-    );
-
-    const txs = [];
-
-    for (var i = startBlockNumber; i <= endBlockNumber; i++) {
-        if (i % 1000 === 0) {
-            log.debug('Searching block ' + i);
-        }
-        var block = eth.getBlock(i, true);
-        if (block != null && block.transactions != null) {
-            block.transactions.forEach(function(e) {
-                if (myaccount === '*' || myaccount === e.from || myaccount === e.to) {
-                    txs.push(e);
-                    // log.debug('   tx hash         : ' + e.hash + '\n'
-                    //         + '   nonce           : ' + e.nonce + '\n'
-                    //         + '   blockHash       : ' + e.blockHash + '\n'
-                    //         + '   blockNumber     : ' + e.blockNumber + '\n'
-                    //         + '   transactionIndex: ' + e.transactionIndex + '\n'
-                    //         + '   from            : ' + e.from + '\n'
-                    //         + '   to              : ' + e.to + '\n'
-                    //         + '   value           : ' + e.value + '\n'
-                    //         + '   time            : ' + block.timestamp + ' ' + new Date(block.timestamp * 1000).toGMTString() + '\n'
-                    //         + '   gasPrice        : ' + e.gasPrice + '\n'
-                    //         + '   gas             : ' + e.gas + '\n'
-                    //         + '   input           : ' + e.input);
-                }
-            });
-        }
-
-        log.debug({txs}, 'Accound transactions');
-    }
-
-    return txs;
-}
 
 class Wallet {
     static get TRANSACTION_EVENT() {
@@ -129,7 +74,7 @@ class Wallet {
         // use the hard coded wallet id, passcode, address and private key to save to the nodes keystore
         const id = config.get('wallet.id');
         const passcode = config.get('wallet.passcode');
-        const wallet = this.ctx.network.web3.eth.accounts.wallet[0];
+        const wallet = this.ctx.blockchain.getWallet();
         const keystore = wallet.encrypt(passcode);
         fs.writeFileSync(`${this.keystorePath}/${id}`, JSON.stringify(keystore));
     }
@@ -151,8 +96,7 @@ class Wallet {
     }
 
     generate(passcode) {
-        const account = this.web3.eth.accounts.create(this.web3.utils.randomHex(32));
-        const wallet = this.web3.eth.accounts.wallet.add(account);
+        const wallet = this.ctx.blockchain.createAccountAndAddToWallet();
         const keystore = this.saveWalletToKeystore(wallet, passcode);
 
         // TODO: remove
@@ -173,12 +117,7 @@ class Wallet {
         if (fs.existsSync(`${this.keystorePath}/${walletId}`)) {
             const keystoreBuffer = fs.readFileSync(`${this.keystorePath}/${walletId}`);
             const keystore = JSON.parse(keystoreBuffer);
-
-            // decrypt it using the passcode
-            const decryptedWallets = this.web3.eth.accounts.wallet.decrypt([keystore], passcode);
-
-            const address = ethereumjs.addHexPrefix(keystore.address);
-            return decryptedWallets[address]; // return the wallet using the address in the loaded keystore
+            return this.ctx.blockchain.decryptWallet(keystore, passcode);
         } else {
             return null;
         }
@@ -194,13 +133,7 @@ class Wallet {
     async getHistoryForCurrency(code) {
         switch (code) {
             case 'NEON':
-                return getTransactionsByAccount(
-                    this.web3.eth,
-                    getNetworkAddress(),
-                    null,
-                    null,
-                    log
-                );
+                return this.ctx.blockchain.getTransactionsByAccount(getNetworkAddress());
             default:
                 throw Error('Unsupported currency: ' + code);
         }
