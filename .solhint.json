@@ -10,14 +10,14 @@
       "avoid-call-value": "error",
       "no-complex-fallback": "error",
       "reentrancy": "error",
-      "no-inline-assembly": "error",
+      "no-inline-assembly": "info",
       "avoid-throw": "error",
       "avoid-tx-origin": "error",
       "no-empty-blocks": "off",
       "avoid-low-level-calls": "off",
       "constructor-syntax": "error",
       "func-visibility": ["error", { "ignoreConstructors": true }],
-      "max-line-length": ["error", 120],
+      "max-line-length": ["error", 160],
       "not-rely-on-time": "off",
       "reason-string": ["warn", { "maxLength": 64 }]
     }
