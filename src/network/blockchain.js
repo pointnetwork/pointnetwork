@@ -525,6 +525,16 @@ class Blockchain {
         const checksumAddress = this.web3.utils.toChecksumAddress(address);
         return checksumAddress;
     }
+
+    async sendTransaction({from, to, value, gas}) {
+        const receipt = await this.web3.eth.sendTransaction({
+            from,
+            to,
+            value,
+            gas
+        });
+        return receipt;
+    }
 }
 
 module.exports = Blockchain;

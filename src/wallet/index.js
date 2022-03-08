@@ -36,7 +36,7 @@ async function getTransactionsByAccount(
         }
         var block = eth.getBlock(i, true);
         if (block != null && block.transactions != null) {
-            block.transactions.forEach(function (e) {
+            block.transactions.forEach(function(e) {
                 if (myaccount === '*' || myaccount === e.from || myaccount === e.to) {
                     txs.push(e);
                     // log.debug('   tx hash         : ' + e.hash + '\n'
@@ -64,6 +64,10 @@ async function getTransactionsByAccount(
 class Wallet {
     static get TRANSACTION_EVENT() {
         return 'TRANSACTION_EVENT';
+    }
+
+    static get DEFAULT_GAS() {
+        return 21000;
     }
 
     constructor(ctx) {
@@ -101,7 +105,8 @@ class Wallet {
         const bip39 = require('bip39');
         const bip32 = require('bip32');
 
-        const derivePath = 'm/44\'/501\'/0\'/0\'';
+        // Temporarily ignoring. Prettier keeps changing to double-quotes, which is inconistent with eslint.
+        const derivePath = "m/44'/501'/0'/0"; //eslint-disable-line
 
         const seed = bip39.mnemonicToSeedSync(getSecretPhrase()); // Buffer
         // also tried to slice seed.slice(0, 32);
@@ -130,11 +135,11 @@ class Wallet {
     }
 
     async sendTransaction(from, to, value) {
-        const receipt = await this.web3.eth.sendTransaction({
-            from: from,
-            to: to,
-            value: value,
-            gas: 21000
+        const receipt = await this.ctx.blockchain.sendTransaction({
+            from,
+            to,
+            value,
+            gas: Wallet.DEFAULT_GAS
         });
         this.transactionEventEmitter.emit(Wallet.TRANSACTION_EVENT, {
             transactionHash: receipt.transactionHash,
@@ -273,15 +278,15 @@ class Wallet {
                         from: getNetworkAddress(),
                         to: recipient,
                         value: amount * 1e18,
-                        gas: 21000
+                        gas: Wallet.DEFAULT_GAS
                     },
                     'Sending Neon tx'
                 );
-                await this.ctx.web3.eth.sendTransaction({
+                await this.ctx.blockchain.sendTransaction({
                     from: getNetworkAddress(),
                     to: recipient,
                     value: amount * 1e18,
-                    gas: 21000
+                    gas: Wallet.DEFAULT_GAS
                 });
                 break;
             default:
@@ -291,11 +296,11 @@ class Wallet {
 
     // todo: remove
     _fundWallet(_address) {
-        this.web3.eth.sendTransaction({
+        this.ctx.blockchain.sendTransaction({
             from: this.network_account,
             to: _address,
             value: 1e18,
-            gas: 21000
+            gas: Wallet.DEFAULT_GAS
         });
     }
 }
