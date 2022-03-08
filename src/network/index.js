@@ -33,7 +33,6 @@ class Network {
         // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
         this.blockchain = new Blockchain(this.ctx);
-        await this.blockchain.start(); // todo: do we need await?
 
         this.keyvalue = new KeyValue(this.ctx, this);
         this.ctx.keyvalue = this.keyvalue;

@@ -49,7 +49,6 @@ class Blockchain {
         this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
         log.debug('Successfully created a web3 instance');
         this.ctx.blockchain = this;
-        this.start();
     }
 
     createWeb3Instance() {
@@ -58,8 +57,6 @@ class Blockchain {
             privateKey: '0x' + getNetworkPrivateKey()
         });
     }
-
-    async start() {}
 
     async loadPointContract(contractName, at) {
         if (!(contractName in abisByContractName)) {
