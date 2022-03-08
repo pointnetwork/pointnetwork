@@ -71,9 +71,6 @@ class Web3Bridge {
                 'contracts'
             );
 
-            // eslint-disable-next-line
-            console.log({buildDirPath});
-
             const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
             if (!fs.existsSync(abiFileName)) {
