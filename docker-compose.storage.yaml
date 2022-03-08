@@ -38,6 +38,7 @@ services:
       DATABASE_USER: arweave
       DATABASE_PASSWORD: arweave
       ARWEAVE_NODES: '["http://arweave-node:1984"]'
+      START_HEIGHT: 0
 
   gateway_db:
     image: postgres:12
