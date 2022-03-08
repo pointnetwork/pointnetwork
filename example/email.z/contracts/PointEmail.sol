@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/utils/Counters.sol";
-
 contract PointEmail {
-    using Counters for Counters.Counter;
-    Counters.Counter internal _emailIds;
+    uint256 public emailIds;
 
     struct Email {
         uint id;
@@ -21,11 +18,12 @@ contract PointEmail {
     mapping(bytes32 => Email) public encryptedMessageIdToEmail;
     mapping(address => Email[]) public toEmails; // mapping to address to emails
 
-    function send(address to, bytes32 encryptedMessageId, string memory encryptedSymmetricObj) public {
-        _emailIds.increment();
-        uint newEmailId = _emailIds.current();
+    function send(address to, bytes32 encryptedMessageId, string memory encryptedSymmetricObj) external {
+        require(to != address(0), "Can't send email to address 0");
+        emailIds++;
         Email memory _email = Email(
-            newEmailId, msg.sender, 
+            emailIds, 
+            msg.sender, 
             to, 
             encryptedMessageId, 
             encryptedSymmetricObj, 
@@ -37,12 +35,14 @@ contract PointEmail {
         toEmails[to].push(_email);
     }
 
-    function getAllEmailsByToAddress(address to) public view returns(Email[] memory) {
+    function getAllEmailsByToAddress(address to) external view returns(Email[] memory) {
+        require(to != address(0), "Can't get email from address 0");
+
         return toEmails[to];
     }
 
     // example "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
-    function getMessageById(bytes32 encryptedMessageId) public view returns (Email memory email) {
+    function getMessageById(bytes32 encryptedMessageId) external view returns (Email memory email) {
         return encryptedMessageIdToEmail[encryptedMessageId];
     }
 }

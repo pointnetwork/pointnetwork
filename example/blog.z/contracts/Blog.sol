@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.0;
 pragma experimental ABIEncoderV2;
 
 
@@ -28,7 +28,8 @@ contract Blog {
         _owner = msg.sender;
     }
 
-    function addMigrator(address migrator) public {
+    function addMigrator(address migrator) external {
+        require(migrator != address(0), "Access Denied");
         require(msg.sender == _owner, "Access Denied");
         require(_migrator == address(0), "Access Denied");
         _migrator = migrator;
@@ -47,17 +48,17 @@ contract Blog {
         articles.push(_article);
     }
 
-    function getArticles() public view returns (Article[] memory) {
+    function getArticles() external view returns (Article[] memory) {
         return articles;
     }
 
-    function getArticle(uint256 articleId) public view returns (Article memory)
+    function getArticle(uint256 articleId) external view returns (Article memory)
     {
         return articles[articleId - 1];
     }
 
     // Comment Functions
-    function createCommentByArticle(uint256 articleId, bytes32 contents) public {
+    function createCommentByArticle(uint256 articleId, bytes32 contents) external {
         Comment memory _comment = Comment(
             msg.sender,
             contents,
@@ -66,12 +67,12 @@ contract Blog {
         commentsByArticleId[articleId].push(_comment);
     }
 
-    function getCommentsByArticle(uint256 articleId) public view returns (Comment[] memory)
+    function getCommentsByArticle(uint256 articleId) external view returns (Comment[] memory)
     {
         return commentsByArticleId[articleId];
     }
 
-    function add(uint256 id ,address author ,string memory title ,bytes32 contents ,uint256 timestamp) public {
+    function add(uint256 id ,address author ,string memory title ,bytes32 contents ,uint256 timestamp) external {
         require(msg.sender == _migrator, "Access Denied");
         Article memory _article = Article(
             id,
@@ -83,7 +84,7 @@ contract Blog {
         articles.push(_article);
     }
 
-    function addComment(uint256 postId,address author ,bytes32 contents,uint256 timestamp) public {
+    function addComment(uint256 postId,address author ,bytes32 contents,uint256 timestamp) external {
         require(msg.sender == _migrator, "Access Denied");
         require(articles[postId].id != 0, "Invalid article");
         
