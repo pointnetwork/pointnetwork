@@ -33,6 +33,7 @@ class Network {
         // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
         this.blockchain = new Blockchain(this.ctx);
+        this.ctx.blockchain = this.blockchain;
 
         this.keyvalue = new KeyValue(this.ctx, this);
         this.ctx.keyvalue = this.keyvalue;
