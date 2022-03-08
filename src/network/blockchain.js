@@ -47,7 +47,7 @@ class Blockchain {
     constructor(ctx) {
         this.ctx = ctx;
         this.web3_call_retry_limit = config.get('network.web3_call_retry_limit');
-        this.web3 = this.ctx.web3 = this.ctx.network.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
+        this.web3 = this.ctx.web3 = this.createWeb3Instance(); // todo: maybe you should hide it behind this abstraction, no?
         log.debug('Successfully created a web3 instance');
     }
 

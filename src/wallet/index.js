@@ -62,10 +62,6 @@ class Wallet {
         this.solanaAddress = keypair.publicKey.toString();
     }
 
-    get web3() {
-        return this.ctx.network.web3;
-    }
-
     // get transactionEvents() {
     //     return this.transactionEventEmitter;
     // }
