@@ -47,8 +47,6 @@ jobs:
     
     - name: Setting up right solc version
       run: solc-select use 0.8.0
-    
-    - run: solc-select use 0.8.0
 
     - name: Run Lint
       run: npm run lint
