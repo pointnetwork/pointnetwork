@@ -74,7 +74,8 @@ interface IERC721 is IERC165 {
      * - `to` cannot be the zero address.
      * - `tokenId` token must exist and be owned by `from`.
      * - If the caller is not `from`, it must be have been allowed to move this token by either {approve} or {setApprovalForAll}.
-     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
+     * - If `to` refers to a smart contract, it must implement 
+     * - {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
      *
      * Emits a {Transfer} event.
      */
@@ -155,7 +156,8 @@ interface IERC721 is IERC165 {
      * - `from` cannot be the zero address.
      * - `to` cannot be the zero address.
      * - `tokenId` token must exist and be owned by `from`.
-     * - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.
+     * - If the caller is not `from`, it must be approved to move this token 
+     * - by either {approve} or {setApprovalForAll}.
      * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
      *
      * Emits a {Transfer} event.
@@ -186,7 +188,8 @@ interface IERC721Receiver {
      * by `operator` from `from`, this function is called.
      *
      * It must return its Solidity selector to confirm the token transfer.
-     * If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted.
+     * If any other value is returned or the interface 
+     * is not implemented by the recipient, the transfer will be reverted.
      *
      * The selector can be obtained in Solidity with `IERC721.onERC721Received.selector`.
      */
@@ -258,7 +261,8 @@ library Address {
      * ====
      * You shouldn't rely on `isContract` to protect against flash loan attacks!
      *
-     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets
+     * Preventing calls from contracts is highly discouraged. 
+     * It breaks composability, breaks support for smart wallets
      * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract
      * constructor.
      * ====
@@ -285,7 +289,6 @@ library Address {
      * IMPORTANT: because control is transferred to `recipient`, care must be
      * taken to not create reentrancy vulnerabilities. Consider using
      * {ReentrancyGuard} or the
-     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
      */
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");
@@ -423,7 +426,8 @@ library Address {
     }
 
     /**
-     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the
+     * @dev Tool to verifies that a low level call was 
+     * successful, and revert if it wasn't, either by bubbling the
      * revert reason using the provided one.
      *
      * _Available since v4.3._
@@ -496,7 +500,6 @@ library Strings {
      */
     function toString(uint256 value) internal pure returns (string memory) {
         // Inspired by OraclizeAPI's implementation - MIT licence
-        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
 
         if (value == 0) {
             return "0";
@@ -558,7 +561,8 @@ pragma solidity 0.8.0;
 /**
  * @dev Implementation of the {IERC165} interface.
  *
- * Contracts that want to implement ERC165 should inherit from this contract and override {supportsInterface} to check
+ * Contracts that want to implement ERC165 should inherit from 
+ * this contract and override {supportsInterface} to check
  * for the additional interface id that will be supported. For example:
  *
  * ```solidity
@@ -592,8 +596,10 @@ pragma solidity 0.8.0;
 
 
 /**
- * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
- * the Metadata extension, but not including the Enumerable extension, which is available separately as
+ * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] 
+ * Non-Fungible Token Standard, including
+ * the Metadata extension, but not including the Enumerable extension, 
+ * which is available separately as
  * {ERC721Enumerable}.
  */
 contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
