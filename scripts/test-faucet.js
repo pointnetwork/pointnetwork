@@ -2,6 +2,8 @@ const {generateMnemonic, mnemonicToSeed} = require('bip39');
 const {hdkey} = require('ethereumjs-wallet');
 const {get} = require('axios');
 
+const faucetUrl = process.env.FAUCET_URL || 'https://point-faucet.herokuapp.com';
+
 const generateAddress = async () => {
     const phrase = generateMnemonic();
     const seed = await mnemonicToSeed(phrase);
@@ -25,13 +27,13 @@ const generateAddress = async () => {
 
     await Promise.all(addresses.map(async address => {
         try {
-            await get(`https://point-faucet.herokuapp.com/airdrop?address=0x${address}`);
+            await get(`${faucetUrl}/airdrop?address=0x${address}`);
             successCount++;
         } catch (e) {
             console.error(e.message);
             failCount++;
         }
     }));
-    
+
     console.log(`Faucet test completed, success count: ${successCount}, fail count: ${failCount}`);
 })();
