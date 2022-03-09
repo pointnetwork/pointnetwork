@@ -1,19 +1,10 @@
 const crypto = require('crypto');
-const mkdirp = require('mkdirp');
 const ethUtil = require('ethereumjs-util');
 const {promises: fs} = require('fs');
 const os = require('os');
 const path = require('path');
 
 const utils = {
-    makeSurePathExists: function (path) {
-        try {
-            mkdirp.sync(path);
-        } catch (err) {
-            if (err.code !== 'EEXIST') throw err;
-        }
-    },
-
     // todo: ok, this has to do with point signatures, but why not use the same keccak256 to be fully compatible with everything else?
     sha256: function (data) {
         return crypto.createHash('sha256').update(data).digest();
@@ -153,13 +144,12 @@ const utils = {
             setTimeout(resolve, ms);
         }),
 
-    // TODO: replace the old func
-    makeSurePathExistsAsync: async folderPath => {
+    makeSurePathExists: async (pathToCheck, createIfNotExists = false) => {
         try {
-            await fs.stat(folderPath);
+            await fs.stat(pathToCheck);
         } catch (e) {
-            if (e.code === 'ENOENT') {
-                await fs.mkdir(folderPath, {recursive: true});
+            if (e.code === 'ENOENT' && createIfNotExists) {
+                await fs.mkdir(pathToCheck, {recursive: true});
             } else {
                 throw e;
             }

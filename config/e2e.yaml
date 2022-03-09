@@ -1,4 +1,6 @@
 datadir: /data
+wallet:
+  keystore_path: /data/keystore
 mode: e2e
 log:
   level: debug

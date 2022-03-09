@@ -1,4 +1,3 @@
-import {makeSurePathExists, resolveHome} from '../core/utils';
 import path from 'path';
 import config from 'config';
 import Wallet, {hdkey} from 'ethereumjs-wallet';
@@ -8,15 +7,13 @@ import {JWKInterface} from 'arweave/node/lib/wallet';
 
 const arweave = Arweave.init({});
 
-const keystorePath = path.join(resolveHome(config.get('datadir')), config.get('wallet.keystore_path'));
+const keystorePath: string = config.get('wallet.keystore_path');
 
 function getWalletFactory() {
     let wallet: Wallet | undefined;
     let secretPhrase: string;
     return (): { wallet: Wallet, secretPhrase: string } => {
         if (!wallet) {
-            const keystorePath = path.join(resolveHome(config.get('datadir')), config.get('wallet.keystore_path'));
-            makeSurePathExists(keystorePath);
             secretPhrase = require(path.join(keystorePath, 'key.json')).phrase;
             const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(secretPhrase));
             wallet = hdwallet.getWallet();
