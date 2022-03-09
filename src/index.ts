@@ -146,7 +146,7 @@ if (program.makemigration) {
         '--name',
         'automigration'
     ];
-    const SequelizeFactory = require('./db/models');
+    const {SequelizeFactory} = require('./db/models');
     SequelizeFactory.init();
 
     require('sequelize-auto-migrations/bin/makemigration.js');
