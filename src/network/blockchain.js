@@ -619,6 +619,20 @@ class Blockchain {
     getContractFromAbi(abi) {
         return new this.web3.eth.Contract(abi);
     }
+
+    async deployContract(contract, artifacts, contractName) {
+        const deploy = contract.deploy({data: artifacts.evm.bytecode.object});
+        const gasPrice = await this.getGasPrice();
+        const estimate = await deploy.estimateGas();
+        const tx = await deploy.send({
+            from: this.getOwner(),
+            gasPrice,
+            gas: Math.floor(estimate * 1.1)
+        });
+        const address = tx.options && tx.options.address;
+        log.debug({contractName, address}, 'Deployed Contract Instance');
+        return address;
+    }
 }
 
 module.exports = Blockchain;

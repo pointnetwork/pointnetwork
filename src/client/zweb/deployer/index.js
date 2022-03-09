@@ -168,7 +168,31 @@ class Deployer {
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
                 try {
-                    await this.deployContract(target, contractName, fileName, deployPath, version);
+                    const {contract, artifacts} = await this.compileContract(
+                        contractName,
+                        fileName,
+                        deployPath
+                    );
+
+                    const address = await this.ctx.blockchain.deployContract(
+                        contract,
+                        artifacts,
+                        contractName
+                    );
+                    this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
+
+                    const artifactsStorageId = await this.storeContractArtifacts(
+                        artifacts,
+                        fileName,
+                        contractName,
+                        version,
+                        address,
+                        target
+                    );
+
+                    log.debug(
+                        `Contract ${contractName} with Artifacts Storage ID ${artifactsStorageId} is deployed to ${address}`
+                    );
                 } catch (e) {
                     log.error(e, 'Zapp contract deployment error');
                     throw e;
@@ -212,10 +236,9 @@ class Deployer {
         log.info('Deploy finished');
     }
 
-    async deployContract(target, contractName, fileName, deployPath, version) {
+    async compileContract(contractName, fileName, deployPath) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
         const fs = require('fs-extra');
-
         const contractSource = fs.readFileSync(fileName, 'utf8');
 
         const pragmaVersion = getPragmaVersion(contractSource);
@@ -253,6 +276,7 @@ class Deployer {
         const compiledSources = JSON.parse(
             solc.compile(JSON.stringify(compileConfig), {import: getImports})
         );
+
         this.ctx.client.deployerProgress.update(fileName, 20, 'compiled');
         if (!compiledSources) {
             throw new Error(
@@ -289,26 +313,16 @@ class Deployer {
         }
 
         const contract = this.ctx.blockchain.getContractFromAbi(artifacts.abi);
-        const deploy = contract.deploy({data: artifacts.evm.bytecode.object});
-        const gasPrice = await this.ctx.blockchain.getGasPrice();
-        const estimate = await deploy.estimateGas();
-        const tx = await deploy.send({
-            from: this.ctx.blockchain.getOwner(),
-            gasPrice,
-            gas: Math.floor(estimate * 1.1)
-        });
-        const address = tx.options && tx.options.address;
+        return {contract, artifacts};
+    }
 
-        log.debug({contractName, address}, 'Deployed Contract Instance');
-        this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
-
+    async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
         const artifactsJSON = JSON.stringify(artifacts);
 
         this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts');
-        const artifacts_storage_id = await storage.uploadFile(artifactsJSON);
+        const artifactsStorageId = await storage.uploadFile(artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
-
         await this.ctx.blockchain.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
@@ -318,15 +332,12 @@ class Deployer {
         await this.ctx.blockchain.putKeyValue(
             target,
             'zweb/contracts/abi/' + contractName,
-            artifacts_storage_id,
+            artifactsStorageId,
             version
         );
 
-        this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`);
-
-        log.debug(
-            `Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`
-        );
+        this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifactsStorageId}`);
+        return artifactsStorageId;
     }
 
     async updateZDNS(host, id, version) {
