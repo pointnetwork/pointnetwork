@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
 import {existsSync, writeFileSync, mkdirSync} from 'fs';
 import lockfile from 'proper-lockfile';
