@@ -50,8 +50,7 @@ class Wallet {
         const bip39 = require('bip39');
         const bip32 = require('bip32');
 
-        // Temporarily ignoring. Prettier keeps changing to double-quotes, which is inconistent with eslint.
-        const derivePath = "m/44'/501'/0'/0"; //eslint-disable-line
+        const derivePath = `m/44'/501'/0'/0`;
 
         const seed = bip39.mnemonicToSeedSync(getSecretPhrase()); // Buffer
         // also tried to slice seed.slice(0, 32);
