@@ -77,8 +77,8 @@ export const startChunkUpload = async (chunkId: string) => {
 
 export const uploadLoop = async () => {
     // TODO: any
-    const allAwaitingChunks: any[] = await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.ENQUEUED);
-    const allStaleChunks: any[] = (await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.IN_PROGRESS))
+    const allAwaitingChunks: any[] = await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.ENQUEUED, false);
+    const allStaleChunks: any[] = (await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.IN_PROGRESS, false))
         .filter((chunk: any) => chunk.expires !== null && chunk.expires < new Date().getTime());
 
     [...allAwaitingChunks, ...allStaleChunks].forEach(chunk => {
