@@ -24,17 +24,17 @@ class Deployer {
         return cache_dir;
     }
 
-    isVersionFormated(baseVersion){
+    isVersionFormated(baseVersion) {
         return /^\d+\.\d+$/.test(String(baseVersion));
     }
 
-    getVersionParts(version){
+    getVersionParts(version) {
         const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
         const found = version.match(regex);
         if (found) {
             return {
-                major: found.groups.major, 
-                minor: found.groups.minor, 
+                major: found.groups.major,
+                minor: found.groups.minor,
                 patch: found.groups.patch
             };
         } else {
@@ -42,28 +42,28 @@ class Deployer {
         }
     }
 
-    isNewBaseVersionValid(oldVersion, newBaseVersion){
-        if (oldVersion === null || oldVersion === undefined || oldVersion === ''){
+    isNewBaseVersionValid(oldVersion, newBaseVersion) {
+        if (oldVersion === null || oldVersion === undefined || oldVersion === '') {
             return true;
         }
 
         const oldP = this.getVersionParts(oldVersion);
         const oldBaseVersion = new Number(oldP.major + '.' + oldP.minor);
-        if (oldBaseVersion <= new Number(newBaseVersion)){
+        if (oldBaseVersion <= new Number(newBaseVersion)) {
             return true;
         } else {
             return false;
         }
     }
 
-    getNewPatchedVersion(oldVersion, newBaseVersion){
-        if (oldVersion === null || oldVersion === undefined || oldVersion === ''){
+    getNewPatchedVersion(oldVersion, newBaseVersion) {
+        if (oldVersion === null || oldVersion === undefined || oldVersion === '') {
             return newBaseVersion + '.0';
         }
 
         const oldP = this.getVersionParts(oldVersion);
         const oldBaseVersion = oldP.major + '.' + oldP.minor;
-        if (oldBaseVersion === newBaseVersion){
+        if (oldBaseVersion === newBaseVersion) {
             return oldBaseVersion + '.' + (new Number(oldP.patch) + 1);
         } else {
             return newBaseVersion + '.0';
@@ -76,13 +76,16 @@ class Deployer {
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
         const deployConfig = JSON.parse(deployConfigFile);
         let baseVersion;
-        if (typeof(deployConfig.version) === 'number' && deployConfig.version.toString().indexOf('.') === -1){
+        if (
+            typeof deployConfig.version === 'number' &&
+            deployConfig.version.toString().indexOf('.') === -1
+        ) {
             baseVersion = deployConfig.version.toString() + '.0';
         } else {
             baseVersion = deployConfig.version.toString();
         }
-        
-        if (!this.isVersionFormated(baseVersion)){
+
+        if (!this.isVersionFormated(baseVersion)) {
             log.error(
                 {
                     deployConfigFilePath: deployConfigFilePath,
@@ -103,7 +106,7 @@ class Deployer {
 
         //get the new version with patch.
         let version;
-        if (this.isNewBaseVersionValid(lastVersion, baseVersion)){
+        if (this.isNewBaseVersionValid(lastVersion, baseVersion)) {
             version = this.getNewPatchedVersion(lastVersion, baseVersion);
         } else {
             log.error(
@@ -119,17 +122,14 @@ class Deployer {
             );
         }
 
-        const {defaultAccount: owner} = this.ctx.web3.eth;
+        const owner = this.ctx.blockchain.getOwner();
 
         const registeredOwner = await this.ctx.blockchain.ownerByIdentity(identity);
         const identityIsRegistered =
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
         if (identityIsRegistered && registeredOwner !== owner) {
-            log.error(
-                {identity, registeredOwner, owner},
-                'Identity is already registered'
-            );
+            log.error({identity, registeredOwner, owner}, 'Identity is already registered');
             throw new Error(
                 `Identity ${identity} is already registered, please choose a new one and try again`
             );
@@ -138,16 +138,16 @@ class Deployer {
         if (!identityIsRegistered) {
             const publicKey = getNetworkPublicKey();
 
-            log.info({
-                identity,
-                owner,
-                publicKey,
-                len: Buffer.byteLength(publicKey, 'utf-8'),
-                parts: [
-                    `0x${publicKey.slice(0, 32)}`,
-                    `0x${publicKey.slice(32)}`
-                ]
-            }, 'Registring new identity');
+            log.info(
+                {
+                    identity,
+                    owner,
+                    publicKey,
+                    len: Buffer.byteLength(publicKey, 'utf-8'),
+                    parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
+                },
+                'Registering new identity'
+            );
 
             await this.ctx.blockchain.registerIdentity(
                 identity,
@@ -179,13 +179,19 @@ class Deployer {
         // Upload public - root dir
         log.debug('Uploading root directory...');
         const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
-        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts, version);
+        await this.updateKeyValue(
+            target,
+            {'::rootDir': publicDirId},
+            deployPath,
+            deployContracts,
+            version
+        );
 
         // Upload routes
         const routesFilePath = path.join(deployPath, 'routes.json');
         const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
         const routes = JSON.parse(routesFile);
-        
+
         log.debug({routes}, 'Uploading route file...');
         this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
         const routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
@@ -195,8 +201,13 @@ class Deployer {
             `uploaded::${routeFileUploadedId}`
         );
         await this.updateZDNS(target, routeFileUploadedId, version);
-        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts, 
-            version);
+        await this.updateKeyValue(
+            target,
+            deployConfig.keyvalue,
+            deployPath,
+            deployContracts,
+            version
+        );
 
         log.info('Deploy finished');
     }
@@ -227,7 +238,7 @@ class Deployer {
             }
         };
 
-        const getImports = function (dependency) {
+        const getImports = function(dependency) {
             const dependencyOriginalPath = path.join(deployPath, 'contracts', dependency);
             const dependencyNodeModulesPath = path.join(deployPath, 'node_modules/', dependency);
             if (fs.existsSync(dependencyOriginalPath)) {
@@ -266,20 +277,23 @@ class Deployer {
 
         let artifacts;
         for (const contractFileName in compiledSources.contracts) {
-            const fileName = contractFileName.split('\\').pop().split('/').pop();
+            const fileName = contractFileName
+                .split('\\')
+                .pop()
+                .split('/')
+                .pop();
             const _contractName = fileName.replace('.sol', '');
             if (contractName === _contractName) {
                 artifacts = compiledSources.contracts[contractFileName][_contractName];
             }
         }
 
-        const contract = new this.ctx.web3.eth.Contract(artifacts.abi);
-
+        const contract = this.ctx.blockchain.getContractFromAbi(artifacts.abi);
         const deploy = contract.deploy({data: artifacts.evm.bytecode.object});
-        const gasPrice = await this.ctx.web3.eth.getGasPrice();
+        const gasPrice = await this.ctx.blockchain.getGasPrice();
         const estimate = await deploy.estimateGas();
         const tx = await deploy.send({
-            from: this.ctx.web3.eth.defaultAccount,
+            from: this.ctx.blockchain.getOwner(),
             gasPrice,
             gas: Math.floor(estimate * 1.1)
         });
