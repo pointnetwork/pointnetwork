@@ -606,7 +606,7 @@ class Blockchain {
     }
 
     getOwner() {
-        return this.web3.eth.defaultAccount;
+        return getNetworkAddress();
     }
 
     async getGasPrice() {
