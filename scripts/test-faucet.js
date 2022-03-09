@@ -25,9 +25,14 @@ const generateAddress = async () => {
     let successCount = 0;
     let failCount = 0;
 
+    const start = Date.now();
+
     await Promise.all(addresses.map(async address => {
         try {
-            await get(`${faucetUrl}/airdrop?address=0x${address}`);
+            const {data} = await get(`${faucetUrl}/airdrop?address=0x${address}`);
+            if (data.status !== 'ok') {
+                throw new Error('Transaction failed: ' + JSON.stringify(data));
+            }
             successCount++;
         } catch (e) {
             console.error(e.message);
@@ -35,5 +40,7 @@ const generateAddress = async () => {
         }
     }));
 
-    console.log(`Faucet test completed, success count: ${successCount}, fail count: ${failCount}`);
+    const time = (Date.now() - start) / 1000;
+
+    console.log(`Faucet test completed, success count: ${successCount}, fail count: ${failCount}; Total time: ${time}`);
 })();
