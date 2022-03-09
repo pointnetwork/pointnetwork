@@ -1,14 +1,11 @@
 const fs = require('fs');
-const path = require('path');
 const events = require('events');
 const ethereumjs = require('ethereumjs-util');
 const solana = require('@solana/web3.js');
-const {hdkey} = require('ethereumjs-wallet');
-const bip39 = require('bip39');
 const config = require('config');
-const {makeSurePathExistsAsync, resolveHome} = require('../core/utils');
 const logger = require('../core/log');
 const log = logger.child({module: 'Wallet'});
+const {getNetworkAddress, getSecretPhrase} = require('./keystore');
 
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 async function getTransactionsByAccount(
@@ -69,33 +66,14 @@ class Wallet {
         return 'TRANSACTION_EVENT';
     }
 
-    #privateKey;
-    #publicKey;
-    #address;
-    #secretPhrase;
-    #arewaveKey;
-
     constructor(ctx) {
         this.ctx = ctx;
-        this.keystorePath = path.join(resolveHome(config.get('datadir')), config.get('wallet.keystore_path'));
         // Events
         // transactionEventEmitter emits the TRANSACTION_EVENT type
         this.transactionEventEmitter = new events.EventEmitter();
     }
 
     async start() {
-        await makeSurePathExistsAsync(this.keystorePath);
-        try {
-            this.#secretPhrase = require(path.join(this.keystorePath, 'key.json'), 'utf-8').phrase;
-        } catch (e) {
-            this.#secretPhrase = undefined;
-        }
-        const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(this.#secretPhrase));
-        const wallet = hdwallet.getWallet();
-        this.#privateKey = wallet.getPrivateKey().toString('hex');
-        this.#publicKey = wallet.getPublicKey().toString('hex');
-        this.#address = `0x${wallet.getAddress().toString('hex')}`;
-
         this.solanaMainConnection = new solana.Connection(
             config.get('wallet.solana_main_endpoint'),
             'confirmed'
@@ -113,12 +91,6 @@ class Wallet {
             'confirmed'
         );
 
-        try{
-            this.#arewaveKey = require(path.join(this.keystorePath, 'arweave.json'), 'utf-8');
-        }catch(e){
-            this.#arewaveKey = undefined;
-        }
-
         this.initSolanaWallet();
 
         // todo: other setup?
@@ -131,7 +103,7 @@ class Wallet {
 
         const derivePath = 'm/44\'/501\'/0\'/0\'';
 
-        const seed = bip39.mnemonicToSeedSync(this.#secretPhrase); // Buffer
+        const seed = bip39.mnemonicToSeedSync(getSecretPhrase()); // Buffer
         // also tried to slice seed.slice(0, 32);
         const derivedSeed = bip32.fromSeed(seed).derivePath(derivePath).privateKey;
         const keypair = Keypair.fromSeed(derivedSeed);
@@ -142,10 +114,6 @@ class Wallet {
 
     get web3() {
         return this.ctx.network.web3;
-    }
-
-    get arweaveKey(){
-        return this.#arewaveKey;
     }
 
     // get transactionEvents() {
@@ -212,7 +180,7 @@ class Wallet {
     }
 
     async getNetworkAccountBalanceInWei() {
-        return await this.web3.eth.getBalance(this.#address);
+        return await this.web3.eth.getBalance(getNetworkAddress());
     }
     async getNetworkAccountBalanceInEth() {
         return (await this.getNetworkAccountBalanceInWei()) / 1e18;
@@ -223,7 +191,7 @@ class Wallet {
             case 'NEON':
                 return getTransactionsByAccount(
                     this.web3.eth,
-                    this.getNetworkAccount(),
+                    getNetworkAddress(),
                     null,
                     null,
                     log
@@ -233,22 +201,12 @@ class Wallet {
         }
     }
 
-    getNetworkAccount() {
-        return this.#address;
-    }
     getArweaveAccount() {
         log.debug(this.ctx, 'getArweaveAccount context');
         return 0;
     }
     getArweaveBalanceInAR() {
         return 0;
-    }
-
-    getNetworkAccountPrivateKey() {
-        return this.#privateKey;
-    }
-    getNetworkAccountPublicKey() {
-        return this.#publicKey;
     }
 
     getSolanaAccount() {
@@ -312,7 +270,7 @@ class Wallet {
             case 'NEON':
                 log.debug(
                     {
-                        from: this.getNetworkAccount(),
+                        from: getNetworkAddress(),
                         to: recipient,
                         value: amount * 1e18,
                         gas: 21000
@@ -320,7 +278,7 @@ class Wallet {
                     'Sending Neon tx'
                 );
                 await this.ctx.web3.eth.sendTransaction({
-                    from: this.getNetworkAccount(),
+                    from: getNetworkAddress(),
                     to: recipient,
                     value: amount * 1e18,
                     gas: 21000

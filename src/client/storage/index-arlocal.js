@@ -1,5 +1,6 @@
-const File = require('../../db/models/file.js');
-const Chunk = require('../../db/models/chunk.js');
+import File from '../../db/models/file';
+import Chunk from '../../db/models/chunk';
+
 const {request, gql} = require('graphql-request');
 const {
     hashFn,
@@ -58,7 +59,7 @@ const FILE_TYPE = {
 const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
 const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay');
 
-const cacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.cache_path'));
+const cacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.upload_cache_path'));
 const filesDir = path.join(resolveHome(config.get('datadir')), config.get('storage.files_path'));
 
 let arweave;
@@ -152,7 +153,7 @@ const signTx = async (data, tags) => {
 
     const transaction = await arweave.createTransaction({data}, arweaveKey);
 
-    for(const k in tags){
+    for (const k in tags){
         const v = tags[k];
         transaction.addTag(k, v);
     }
