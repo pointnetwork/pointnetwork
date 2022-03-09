@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
-const {getPragmaVersion, compileContract, getImportsFactory} = require('../../../util/contract');
+const {compileContract, getImportsFactory} = require('../../../util/contract');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 
 // TODO: direct import cause fails in some docker scripts
