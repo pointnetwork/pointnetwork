@@ -29,11 +29,6 @@ else
     EXAMPLE_SITES="./example/${1}*"
 fi
 
-# If DATADIR ENV var is not set ...
-if [[ -z "${DATADIR}" ]]; then
-  DATADIR=/data
-fi
-
 for SITE in $EXAMPLE_SITES;
 do
   if [ "${SITE}" == "./example/nodemon.json" ]
@@ -50,8 +45,8 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV"
-  ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV
+  echo "./point deploy $SITE $DEPLOY_CONTRACTS $DEV"
+  ./point deploy $SITE $DEPLOY_CONTRACTS $DEV
 
   echo
   echo "FINISHED: ${SITE}"
