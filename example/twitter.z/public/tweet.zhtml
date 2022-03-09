@@ -1,5 +1,5 @@
 <div class="tweet">
-    <div class="identity"><a href="/@{{ identity_by_owner(tweet.from) }}">@{{ identity_by_owner(tweet.from) }}</a></div>
+    <div class="identity"><a href="/@{{ identity_by_owner(tweet.from) }}?__point_version={{version}}">@{{ identity_by_owner(tweet.from) }}</a></div>
     <div class="from">{{ tweet.from }}</div>
 
     {% set contents = storage_get(tweet.contents) %}
@@ -10,7 +10,7 @@
 
     <div class="time">{{ tweet.timestamp | date('Y-m-d H:i:s') }}</div>
 
-    <form method="post" action="/_contract_send/Twitter.like(tweet_id)">
+    <form method="post" action="/_contract_send/Twitter.like(tweet_id)?__point_version={{version}}">
         <input type="hidden" name="tweet_id" value="{{ loop.index0 }}" />
         <input type="submit" value="{{ tweet.likes }} likes" value="Send Tweet" />
     </form>

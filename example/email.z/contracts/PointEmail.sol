@@ -21,7 +21,7 @@ contract PointEmail {
     mapping(bytes32 => Email) public encryptedMessageIdToEmail;
     mapping(address => Email[]) public toEmails; // mapping to address to emails
 
-    function send(address to, bytes32 encryptedMessageId, string memory encryptedSymmetricObj) public {
+    function send(address to, bytes32 encryptedMessageId, string memory encryptedSymmetricObj) external {
         _emailIds.increment();
         uint newEmailId = _emailIds.current();
         Email memory _email = Email(
@@ -37,12 +37,12 @@ contract PointEmail {
         toEmails[to].push(_email);
     }
 
-    function getAllEmailsByToAddress(address to) public view returns(Email[] memory) {
+    function getAllEmailsByToAddress(address to) external view returns(Email[] memory) {
         return toEmails[to];
     }
 
     // example "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
-    function getMessageById(bytes32 encryptedMessageId) public view returns (Email memory email) {
+    function getMessageById(bytes32 encryptedMessageId) external view returns (Email memory email) {
         return encryptedMessageIdToEmail[encryptedMessageId];
     }
 }

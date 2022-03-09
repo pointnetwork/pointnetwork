@@ -129,26 +129,27 @@ class Renderer {
                     params
                 );
             },
-            contract_call: async function (host, contractName, methodName, params) {
+            contract_call: async function (host, contractName, methodName, params, version = 'latest') {
                 return await this.renderer.ctx.web3bridge.sendToContract(
                     host.replace('.z', ''),
                     contractName,
                     methodName,
-                    params
+                    params,
+                    {},
+                    version
                 );
             },
             contract_events: async function (host, contractName, event, filter = {}) {
                 //delete keys property inserted by twig
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
-
-                const options = {filter, fromBlock: 1, toBlock: 'latest'};
+                const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
                 const events = await this.renderer.ctx.web3bridge.getPastEvents(
                     host.replace('.z', ''),
                     contractName,
                     event,
                     options
                 );
-                let eventData = [];
+                const eventData = [];
                 for (const ev of events) {
                     //console.log(ev, ev.raw);
                     const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(
@@ -161,13 +162,6 @@ class Renderer {
                     });
                 }
 
-                //filter non-indexed properties from return value for convenience
-                if (Object.keys(filter).length > 0) {
-                    for (const k in filter) {
-                        eventData = eventData.filter(e => e.data[k] === filter[k]);
-                    }
-                }
-
                 return eventData;
             },
             default_wallet_address: async function () {
@@ -176,7 +170,7 @@ class Renderer {
             is_authenticated: async function (auth) {
                 return auth.walletid !== undefined;
             },
-            contract_list: async function (target, contractName, method, params = []) {
+            contract_list: async function (target, contractName, method, params = [], version = 'latest') {
                 let i = 0;
                 const results = [];
                 while (true) {
@@ -186,7 +180,8 @@ class Renderer {
                                 target,
                                 contractName,
                                 method,
-                                params.concat([i])
+                                params.concat([i]),
+                                version
                             )
                         );
                     } catch (e) {

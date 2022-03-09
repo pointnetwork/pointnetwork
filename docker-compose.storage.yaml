@@ -38,6 +38,7 @@ services:
       DATABASE_USER: arweave
       DATABASE_PASSWORD: arweave
       ARWEAVE_NODES: '["http://arweave-node:1984"]'
+      START_HEIGHT: 0
 
   gateway_db:
     image: postgres:12
@@ -57,6 +58,7 @@ services:
     command: postgres -c 'max_connections=500'
     ports:
       - '5432:5432'
+
   bundler:
     image: pointnetwork/arweave-bundler:v1.0.2
     container_name: bundler
