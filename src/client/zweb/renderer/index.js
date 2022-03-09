@@ -243,9 +243,7 @@ class Renderer {
                     this.renderer.ctx.csrf_tokens[this.host] = require('crypto')
                         .randomBytes(64)
                         .toString('hex');
-                return (
-                    "<input name='_csrf' value='" + this.renderer.ctx.csrf_tokens[this.host] + ' />'
-                );
+                return `<input name="_csrf" value="${this.renderer.ctx.csrf_tokens[this.host]}" />`;
             },
             csrf_guard: async function(submitted_token) {
                 if (!this.renderer.ctx.csrf_tokens)
@@ -540,10 +538,9 @@ class Renderer {
                                 const tryToRender = async file => {
                                     if (acc.render === null) {
                                         if (file instanceof Twig.Template) {
+                                            const opts = {isInclude: true};
                                             const res = {
-                                                render: await file.renderAsync(innerContext, {
-                                                    isInclude: true
-                                                }),
+                                                render: await file.renderAsync(innerContext, opts),
                                                 lastError: null
                                             };
                                             return res;

@@ -242,14 +242,13 @@ class Blockchain {
         let subscriptionId;
         return contract.events[event](options)
             .on('data', data => onEvent({subscriptionId, data}))
-            .on('connected', id =>
+            .on('connected', id => {
+                const message = `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`;
                 onStart({
                     subscriptionId: (subscriptionId = id),
-                    data: {
-                        message: `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`
-                    }
-                })
-            );
+                    data: {message}
+                });
+            });
     }
 
     async removeSubscriptionById(subscriptionId, onRemove) {
