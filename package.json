@@ -113,7 +113,8 @@
     "volume:restore": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu bash -c \"cd /data && tar -xvf /backup/$FILE --strip 1\"",
     "fix": "eslint --ext .js --fix src/ && eslint --ext .js --fix truffle/ && eslint --fix point",
     "lint": "eslint --ext .js src/ && eslint --ext .js truffle/ && eslint point",
-    "lint:sol": "solhint 'example/**/contracts/*.sol' 'truffle/contracts/*.sol'"
+    "lint:sol": "solhint 'example/**/contracts/*.sol' 'truffle/contracts/*.sol'",
+    "slither": "find example -type f -name '*.sol' -exec slither '{}' --solc-remaps @openzeppelin=node_modules/@openzeppelin --config slither.config.json  ';'"
   },
   "jest": {
     "verbose": true,
