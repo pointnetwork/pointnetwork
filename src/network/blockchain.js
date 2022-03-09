@@ -10,7 +10,7 @@ const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
-const {compileContract} = require('../util/contract');
+const {compileAndSaveContract} = require('../util/contract');
 const log = logger.child({module: 'Blockchain'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
 const {utils, resolveHome} = require('../core/utils');
@@ -69,9 +69,8 @@ class Blockchain {
                     fs.mkdirSync(buildDirPath, {recursive: true});
                 }
 
-                const contractPath = path.resolve(this.ctx.basepath, '..', 'hardhat', 'contracts');
-
-                await compileContract({name: contractName, contractPath, buildDirPath});
+                const contractPath = path.resolve(this.basepath, '..', 'hardhat', 'contracts');
+                await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
             }
 
             const abiFile = JSON.parse(fs.readFileSync(abiFileName));

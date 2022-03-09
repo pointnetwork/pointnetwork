@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
-const {getPragmaVersion} = require('../../../util/contract');
+const {getPragmaVersion, compileContract, getImportsFactory} = require('../../../util/contract');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 
 // TODO: direct import cause fails in some docker scripts
@@ -238,46 +238,14 @@ class Deployer {
 
     async compileContract(contractName, fileName, deployPath) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
-        const fs = require('fs-extra');
-        const contractSource = fs.readFileSync(fileName, 'utf8');
-
-        const pragmaVersion = getPragmaVersion(contractSource);
-        const versionArray = pragmaVersion.split('.');
-        const SOLC_MAJOR_VERSION = versionArray[0];
-        const SOLC_MINOR_VERSION = versionArray[1];
-        const SOLC_FULL_VERSION = `solc${SOLC_MAJOR_VERSION}_${SOLC_MINOR_VERSION}`;
-
-        const path = require('path');
-        const solc = require(SOLC_FULL_VERSION);
-
-        const compileConfig = {
-            language: 'Solidity',
-            sources: {[contractName + '.sol']: {content: contractSource}},
-            settings: {
-                outputSelection: {
-                    // return everything
-                    '*': {'*': ['*']}
-                }
-            }
-        };
-
-        const getImports = function(dependency) {
-            const dependencyOriginalPath = path.join(deployPath, 'contracts', dependency);
-            const dependencyNodeModulesPath = path.join(deployPath, 'node_modules/', dependency);
-            if (fs.existsSync(dependencyOriginalPath)) {
-                return {contents: fs.readFileSync(dependencyOriginalPath, 'utf8')};
-            } else if (fs.existsSync(dependencyNodeModulesPath)) {
-                return {contents: fs.readFileSync(dependencyNodeModulesPath, 'utf8')};
-            } else {
-                throw new Error('Could not find contract dependency, have you tried npm install?');
-            }
-        };
-
+        const contractPath = path.join(deployPath, 'contracts');
+        const nodeModulesPath = path.join(deployPath, 'node_modules');
+        const originalPath = path.join(deployPath, 'contracts');
+        const getImports = getImportsFactory(nodeModulesPath, originalPath);
         const compiledSources = JSON.parse(
-            solc.compile(JSON.stringify(compileConfig), {import: getImports})
+            compileContract({name: contractName, contractPath, getImports})
         );
 
-        this.ctx.client.deployerProgress.update(fileName, 20, 'compiled');
         if (!compiledSources) {
             throw new Error(
                 '>>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\nNO OUTPUT'
@@ -298,6 +266,8 @@ class Deployer {
                 msg;
             if (found) throw new Error(msg);
         }
+
+        this.ctx.client.deployerProgress.update(fileName, 20, 'compiled');
 
         let artifacts;
         for (const contractFileName in compiledSources.contracts) {
