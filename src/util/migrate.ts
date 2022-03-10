@@ -2,13 +2,12 @@ import {Sequelize} from 'sequelize';
 import {Umzug, SequelizeStorage, MigrationError} from 'umzug';
 import path from 'path';
 import logger from '../core/log';
-import {SequelizeFactory} from '../db/models';
+import {Database} from '../db';
 
 const log = logger.child({module: 'migrate'});
 
 export default (async () => {
-    const sequelize = SequelizeFactory.init();
-
+    const sequelize = Database.init();
     const migrations = path.resolve(__dirname, '..', '..', 'migrations', 'database', '*.js');
     const umzug = new Umzug({
         migrations: {

@@ -1,4 +1,4 @@
-const Model = require('../model');
+const Model = require('./base');
 const Sequelize = require('sequelize');
 
 export const CHUNK_DOWNLOAD_STATUS = {
