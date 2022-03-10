@@ -24,9 +24,10 @@ declare global {
         migrate_undo?: boolean,
         compile?: boolean,
         debug_destroy_everything?: boolean,
-        deploy?: boolean,
+        deploy?: string,
         deploy_contracts?: boolean,
         dev?: boolean,
+        upload?: string
     };
 
     type CtxType = Record<string, unknown> & {
