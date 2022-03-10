@@ -60,7 +60,6 @@ wallet:
 network:
   web3: "http://ynet.point.space:44444"
   web3_call_retry_limit: 4
-  identity_contract_address: "0x1411f3dC11D60595097b53eCa3202c34dbee0CdA"
   storage_provider_registry_contract_address: "0xDB9F3c999224e7E8935C1c7c235704Cd935FD6D7"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
   simulation_delay: 10 # TODO: not used

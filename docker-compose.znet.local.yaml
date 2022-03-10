@@ -93,7 +93,7 @@ services:
       - ./wallet:/app/wallet
       - ./package.json:/app/package.json
       - ./point:/app/point
-      - point_contracts:/app/hardhat/build/contracts
+      - point_contracts:/data/hardhat/artifacts/contracts
     environment:
       BLOCKCHAIN_URL: http://blockchain_provider:9090/solana
       CONTRACT_ADDRESS_MIGRATIONS: '0xbE2a4E61eEDcE7102EA37B3AE0D741A50fC3ce4d'
