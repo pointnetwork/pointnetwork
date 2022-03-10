@@ -11,8 +11,8 @@ RUN npm -g config set user root
 
 RUN apk update && apk add --no-cache git
 
-COPY blockchain/package.json ./
-COPY blockchain/package-lock.json ./
+COPY hardhat/package.json ./
+COPY hardhat/package-lock.json ./
 RUN npm install
 
 ENTRYPOINT ["npm", "start"]
