@@ -5,12 +5,12 @@ const {resolveHome} = require('../core/utils');
 
 const defaultBuildPath = path.resolve(
     resolveHome(config.get('datadir')),
-    'hardhat',
+    'blockchain',
     'artifacts',
     'contracts'
 );
 
-const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
+const defaultContractPath = path.resolve(__dirname, '..', '..', 'blockchain', 'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
     
