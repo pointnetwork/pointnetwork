@@ -74,8 +74,7 @@ class Web3Bridge {
                 'contracts'
             );
             
-            const abiFileName = path.resolve(buildDirPath, contractName +'.sol/' + contractName + '.json');
-
+            const abiFileName = path.resolve(buildDirPath, contractName + '.sol/' + contractName + '.json');
 
             if (!fs.existsSync(abiFileName)) {
                 if (!fs.existsSync(buildDirPath)) {
