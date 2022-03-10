@@ -1,3 +1,4 @@
+import {resolveHome} from '../core/utils';
 import path from 'path';
 import config from 'config';
 import Wallet, {hdkey} from 'ethereumjs-wallet';
@@ -7,7 +8,7 @@ import {JWKInterface} from 'arweave/node/lib/wallet';
 
 const arweave = Arweave.init({});
 
-const keystorePath: string = config.get('wallet.keystore_path');
+const keystorePath: string = resolveHome(config.get('wallet.keystore_path'));
 
 function getWalletFactory() {
     let wallet: Wallet | undefined;

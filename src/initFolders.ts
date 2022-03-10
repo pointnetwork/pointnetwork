@@ -1,9 +1,11 @@
-import {makeSurePathExists} from './core/utils';
+import {makeSurePathExists} from './util';
 import path from 'path';
 import config from 'config';
+import {resolveHome} from './core/utils';
 
 const initFolders = async () => {
-    const datadir: string = config.get('datadir');
+    const datadir: string = resolveHome(config.get('datadir'));
+    const keystore = resolveHome(config.get('wallet.keystore_path'));
     try {
         await makeSurePathExists(datadir);
     } catch (e) {
@@ -11,13 +13,13 @@ const initFolders = async () => {
     }
 
     try {
-        await makeSurePathExists(config.get('wallet.keystore_path'));
+        await makeSurePathExists(keystore);
     } catch (e) {
         throw new Error('Keystore folder does not exist. Did you create it? Please, refer to this guide: https://github.com/pointnetwork/pointnetwork-dashboard/blob/main/ALPHA.md');
     }
 
     try {
-        await makeSurePathExists(path.join(config.get('wallet.keystore_path'), 'key.json'));
+        await makeSurePathExists(path.join(keystore, 'key.json'));
     } catch (e) {
         throw new Error('key.json file does not exist. Did you create it? Please, refer to this guide: https://github.com/pointnetwork/pointnetwork-dashboard/blob/main/ALPHA.md');
     }

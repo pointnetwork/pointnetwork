@@ -1,6 +1,5 @@
 const crypto = require('crypto');
 const ethUtil = require('ethereumjs-util');
-const {promises: fs} = require('fs');
 const os = require('os');
 const path = require('path');
 
@@ -143,18 +142,6 @@ const utils = {
         new Promise(resolve => {
             setTimeout(resolve, ms);
         }),
-
-    makeSurePathExists: async (pathToCheck, createIfNotExists = false) => {
-        try {
-            await fs.stat(pathToCheck);
-        } catch (e) {
-            if (e.code === 'ENOENT' && createIfNotExists) {
-                await fs.mkdir(pathToCheck, {recursive: true});
-            } else {
-                throw e;
-            }
-        }
-    },
 
     resolveHome: (filepath) => {
         if (filepath[0] === '~') {
