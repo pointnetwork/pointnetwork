@@ -146,20 +146,10 @@ if (program.makemigration) {
         '--name',
         'automigration'
     ];
-    const {SequelizeFactory} = require('./db/models');
-    SequelizeFactory.init();
+    const {Database} = require('./db/models');
+    Database.init();
 
     require('sequelize-auto-migrations/bin/makemigration.js');
-    // @ts-ignore
-    return;
-}
-
-// ------------------ Remove Everything ------------ //
-
-if (program.debug_destroy_everything) {
-    const DB = require('./db');
-    ctx.db = new DB(ctx);
-    DB.__debugClearCompletely(ctx); // async!
     // @ts-ignore
     return;
 }
