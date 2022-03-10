@@ -5,6 +5,9 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "@nomiclabs/hardhat-ethers";
+import "@openzeppelin/hardhat-upgrades";
+
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
@@ -15,6 +18,7 @@ if (typeof keystore !== 'object') {
 
 dotenv.config();
 
+
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
@@ -24,6 +28,24 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     console.log(account.address);
   }
 });
+
+
+task("deploy-upgradable", "Deploy Upgradable Contract")
+  .addParam("zapp", "Zapp that will be deployed")
+  .setAction(async (taskArgs, hre) => {
+    console.log("Deploying upgradable " + taskArgs.zapp);
+    //1.copiar contrato
+
+    //2.fazer deploy dos contratos
+    console.log('1');
+    let PointSocial = await hre.ethers.getContractFactory("PointSocial");
+    console.log('2');
+    let pointsocial = await hre.upgrades.deployProxy(PointSocial, [], { kind: 'uups' });
+    console.log('3');
+    await pointsocial.deployed();
+    console.log('4');
+
+  });
 
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
 const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
@@ -59,5 +81,7 @@ const config: HardhatUserConfig = {
     },
   }
 };
+
+
 
 export default config;

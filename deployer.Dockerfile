@@ -18,6 +18,8 @@ RUN yarn add --dev "hardhat@^2.8.4" \
  "@nomiclabs/hardhat-waffle@^2.0.0" \ 
  "@openzeppelin/contracts@4.3.0" \
  "ethereum-waffle@^3.0.0" \
+ "@openzeppelin/hardhat-upgrades@^1.16.0" \
+ "@openzeppelin/contracts-upgradeable@^4.5.2" \
  "chai@^4.2.0" \
  "@nomiclabs/hardhat-ethers@^2.0.0" \
  "ethers@^5.0.0" \

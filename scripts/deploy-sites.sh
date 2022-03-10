@@ -50,6 +50,13 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
+  cd hardhat
+  echo "npx hardhat compile"
+  npx hardhat compile
+  echo "npx hardhat deploy-upgradable --zapp $SITE "
+  npx hardhat deploy-upgradable --zapp $SITE 
+  cd ..
+
   echo "./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV"
   ./point deploy $SITE --datadir $DATADIR $DEPLOY_CONTRACTS $DEV
 
