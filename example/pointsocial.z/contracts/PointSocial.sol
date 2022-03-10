@@ -4,9 +4,10 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-
-contract PointSocial is Initializable{
+contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     using Counters for Counters.Counter;
     Counters.Counter internal _postIds;
     Counters.Counter internal _commentIds;
@@ -44,15 +45,16 @@ contract PointSocial is Initializable{
     mapping(uint256 => uint256[]) public likeIdsByPost;
     mapping(uint256 => Like) public likeById;
 
-    address private _owner;
     address private _migrator;
 
     function initialize() public initializer {
-        _owner = msg.sender;
+        __Ownable_init();
+        __UUPSUpgradeable_init();
     }
 
-    function addMigrator(address migrator) public {
-        require(msg.sender == _owner, "Access Denied");
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    function addMigrator(address migrator) public onlyOwner {
         require(_migrator == address(0), "Access Denied");
         _migrator = migrator;
     }
