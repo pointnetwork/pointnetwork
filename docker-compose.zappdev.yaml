@@ -38,8 +38,7 @@ services:
       - ./nodemon.json:/app/nodemon.json:ro
       - ./tsconfig.json:/app/tsconfig.json:ro
       - point_node_data_zappdev:/data
-      - shared_contracts_zappdev:/app/hardhat/artifacts/contracts
-      - ./hardhat/build/contracts/:/app/hardhat/build/contracts:ro
+      - shared_contracts_zappdev:/app/hardhat/build/contracts:rw
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     ports:
@@ -57,7 +56,7 @@ services:
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
-    command: 'run start:docker:zappdev'
+    command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
       - ./example:/app/example:ro
