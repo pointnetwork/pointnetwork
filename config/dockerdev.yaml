@@ -1,4 +1,6 @@
 datadir: /data
+wallet:
+  keystore_path: /data/keystore
 db:
   env: development
 log:
