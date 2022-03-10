@@ -257,7 +257,7 @@ class Renderer {
                     address:
                         (await this.renderer.ctx.web3bridge.getCurrentIdentity()) + '.point' ||
                         'N/A',
-                    balance: 0
+                    balance: await this.renderer.ctx.wallet.getNetworkAccountBalanceInEth()
                 });
                 return wallets;
             },
