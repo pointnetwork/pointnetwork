@@ -1,7 +1,7 @@
 datadir: ~/.point
 mode: ""
 api:
-  address: localhost
+  address: 127.0.0.1
   port: 2468
 db:
   define:
