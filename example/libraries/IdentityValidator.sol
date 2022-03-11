@@ -4,23 +4,30 @@ pragma solidity >=0.8.0;
 /**
  * @dev Interface of the standard identity validator process
  */
- interface IdentityValidator {     
+ interface Identity {     
     /**
      * @dev Validates identity by handle
      */
-    function validateHandleExists(string calldata handle) external returns(bool handleExists);
+    function getOwnerByIdentity(string memory identity) external view returns (address owner);
 
     /**
      * @dev Validate identity by address
      */
-    function validateAddressExists(address owner) external returns(bool addressExists);
+    function getIdentityByOwner(address owner) external view returns (string memory identity);
 }
 
+abstract contract IdentityValidator {
+    Identity public identityContract;
 
-contract UserValidator {
-    IdentityValidator public identityContract;
+    function setIdentityContract(address validator) internal  {
+        identityContract = Identity(validator);
+    }
 
-    function setIdentityContract(address test) internal  {
-        identityContract = IdentityValidator(test);
+    function isValidAddress(address test) internal view returns (bool exists) {
+        return bytes(identityContract.getIdentityByOwner(test)).length != 0; 
+    }
+
+    function isValidHandle(string memory test) internal view returns (bool exists) {
+        return identityContract.getOwnerByIdentity(test) != address(0);
     }
 }
