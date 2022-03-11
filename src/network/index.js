@@ -1,4 +1,4 @@
-const Blockchain = require('./blockchain');
+const createBlockchain = require('./blockchain');
 const KeyValue = require('./keyvalue');
 const config = require('config');
 
@@ -32,7 +32,7 @@ class Network {
         // todo: just use rejectUnauthorized: false on transport-https, extend it
         // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-        this.blockchain = new Blockchain(this.ctx.basepath);
+        this.blockchain = createBlockchain(this.ctx.basepath);
         this.ctx.blockchain = this.blockchain;
 
         this.keyvalue = new KeyValue(this.ctx, this);
