@@ -23,11 +23,11 @@ abstract contract IdentityValidator {
         identityContract = Identity(validator);
     }
 
-    function isValidAddress(address test) internal view returns (bool exists) {
-        return bytes(identityContract.getIdentityByOwner(test)).length != 0; 
+    function isValidAddress(address owner) internal view returns (bool exists) {
+        return bytes(identityContract.getIdentityByOwner(owner)).length != 0; 
     }
 
-    function isValidHandle(string memory test) internal view returns (bool exists) {
-        return identityContract.getOwnerByIdentity(test) != address(0);
+    function isValidHandle(string memory handle) internal view returns (bool exists) {
+        return identityContract.getOwnerByIdentity(handle) != address(0);
     }
 }
