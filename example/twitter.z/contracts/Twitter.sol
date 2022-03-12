@@ -10,6 +10,14 @@ contract Twitter {
         uint256 likes;
     }
 
+    enum Action {Migrator, Tweet, Like}
+
+    event stateChange(
+        address indexed from,
+        uint256 indexed date,
+        Action indexed action
+    );
+
     Tweet[] public tweets;
     mapping(address => Tweet[]) public tweetsByOwner;
     address private _owner;
@@ -18,23 +26,25 @@ contract Twitter {
     constructor() {
         _owner = msg.sender;
     }
-
    
     function addMigrator(address migrator) external {
         require(migrator != address(0), "Access Denied");
         require(msg.sender == _owner, "Access Denied");
         require(_migrator == address(0), "Access Denied");
         _migrator = migrator;
+        emit stateChange(msg.sender, block.timestamp, Action.Migrator);
     }
 
     function tweet(bytes32 contents) external {
         Tweet memory _tweet = Tweet(msg.sender, contents, block.timestamp, 0);
         tweets.push(_tweet);
         tweetsByOwner[msg.sender].push(_tweet);
+        emit stateChange(msg.sender, block.timestamp, Action.Tweet);
     }
 
     function like(uint256 tweetId) external {
         tweets[tweetId].likes++;
+        emit stateChange(msg.sender, block.timestamp, Action.Like);
     }
 
     function getTweet(uint256 tweetId) external view returns (Tweet memory t) {
@@ -57,5 +67,6 @@ contract Twitter {
 
         tweets.push(_tweet);
         tweetsByOwner[_tweet.from].push(_tweet);
+        emit stateChange(owner, timestamp, Action.Tweet);
     }
 }

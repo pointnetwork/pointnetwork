@@ -10,6 +10,13 @@ contract Hello {
 
   event HelloWorld(string message);
   event UpdatedValue(string oldValue, string newValue);
+  enum Action {SetValue, SetStorageValue, SetStoreImage, SetValueAndCounter}
+
+  event stateChange(
+    address indexed from,
+    uint256 indexed date,
+    Action indexed action
+  );
 
   // Setter functions for testing contract write send interactions
   function incrementCounter() external {
@@ -24,15 +31,18 @@ contract Hello {
   // Should save the storage id of a text file on storage layer
   function setStorageValue(bytes32 newStorageValue) external {
     storageValue = newStorageValue;
+    emit stateChange(msg.sender, block.timestamp, Action.SetStorageValue);
   }
 
   function setStorageImage(bytes32 newStorageImage) external {
     storageImage = newStorageImage;
+    emit stateChange(msg.sender, block.timestamp, Action.SetStoreImage);
   }
 
   function setValueAndCounter(string memory newValue, int newCounter) external {
     value = newValue;
     counter = newCounter;
+    emit stateChange(msg.sender, block.timestamp, Action.SetValueAndCounter);
   }
 
   function emitHelloWorldEvent(string memory message) external {
