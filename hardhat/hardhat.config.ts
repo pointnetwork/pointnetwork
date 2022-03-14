@@ -5,6 +5,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "./tasks/importer/identity";
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
@@ -56,6 +57,11 @@ const config: HardhatUserConfig = {
       url: devaddress,
       accounts:
         [privateKey],
+    },
+    ynet: {
+      url: 'http://ynet.point.space:44444',
+      accounts:
+        ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
     },
   }
 };
