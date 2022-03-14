@@ -1,6 +1,7 @@
 import path from 'path';
 import {existsSync, readFileSync, writeFileSync} from 'fs';
 
+
 const defaultBuildPath = path.resolve(__dirname, '..', '..', 'hardhat', 'artifacts', 'contracts');
 const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
 
