@@ -90,7 +90,6 @@ if (program.datadir) {
     process.env.DATADIR = program.datadir;
 }
 
-
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
 }

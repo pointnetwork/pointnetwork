@@ -139,13 +139,13 @@
   "pkg": {
     "outputPath": "bin",
     "assets": [
+      "package.json",
       "truffle/**/*",
       "config/*.yaml",
       "migrations/**/*",
       "internal/**/*",
       "resources/certs/*.{crt,key,srl}",
-      "node_modules/sqlite3/**/*",
-      "package.json"
+      "node_modules/sqlite3/**/*"
     ],
     "scripts": [
       ".sequelizerc",
