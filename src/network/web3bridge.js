@@ -1,7 +1,6 @@
 const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
-const utils = require('../core/utils');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
@@ -10,10 +9,10 @@ const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
-const {compileContract} = require('../util/contract');
-const {resolveHome} = require('../core/utils');
+const {compileContract, getContractAddress} = require('../util/contract');
 const log = logger.child({module: 'Web3Bridge'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
+const {utils, resolveHome} = require('../core/utils');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -62,16 +61,20 @@ class Web3Bridge {
         });
     }
 
-    async start() {}
+    async start() { }
 
     async loadPointContract(contractName, at) {
+
         if (!(contractName in abisByContractName)) {
+
             const buildDirPath = path.resolve(
                 resolveHome(config.get('datadir')),
+                'hardhat',
+                'artifacts',
                 'contracts'
             );
-
-            const abiFileName = path.resolve(buildDirPath, contractName + '.json');
+            
+            const abiFileName = path.resolve(buildDirPath, contractName + '.sol/' + contractName + '.json');
 
             if (!fs.existsSync(abiFileName)) {
                 if (!fs.existsSync(buildDirPath)) {
@@ -80,13 +83,14 @@ class Web3Bridge {
                 const contractPath = path.resolve(
                     this.ctx.basepath,
                     '..',
-                    'truffle',
+                    'hardhat',
                     'contracts'
                 );
                 await compileContract({name: contractName, contractPath, buildDirPath});
             }
 
             const abiFile = JSON.parse(fs.readFileSync(abiFileName));
+
             abisByContractName[contractName] = abiFile.abi;
         }
 
@@ -99,7 +103,7 @@ class Web3Bridge {
     }
 
     async loadIdentityContract() {
-        const at = config.get('network.identity_contract_address');
+        const at = getContractAddress('Identity');
         return await this.loadPointContract('Identity', at);
     }
 
@@ -132,10 +136,10 @@ class Web3Bridge {
         } catch (e) {
             throw Error(
                 'Could not read abi of the contract ' +
-                    utils.escape(contractName) +
-                    '. Reason: ' +
-                    e +
-                    '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'
+                utils.escape(contractName) +
+                '. Reason: ' +
+                e +
+                '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'
             );
         }
     }
@@ -206,11 +210,16 @@ class Web3Bridge {
         while (true) {
             try {
                 const contract = await this.loadWebsiteContract(target, contractName, version);
-                if (!Array.isArray(params))
+                if (!Array.isArray(params)) {
                     throw Error('Params sent to callContract is not an array');
-                if (!contract.methods[method])
+                }
+
+                if (!contract.methods[method]) {
                     throw Error('Method ' + method + ' does not exist on contract ' + contractName); // todo: sanitize
+                }
+
                 const result = await contract.methods[method](...params).call();
+
                 return result;
             } catch (error) {
                 log.error(
@@ -220,7 +229,8 @@ class Web3Bridge {
                         params,
                         target,
                         error,
-                        stack: error.stack
+                        stack: error.stack,
+                        line: error.line
                     },
                     'Web3 Contract Call error:'
                 );

@@ -5,7 +5,7 @@ services:
     image: ${POINT_DEV_IMAGE_NAME:-pointnetwork/pointnetwork_node:$POINT_NODE_VERSION}
     container_name: point_node
     volumes:
-      - point_contracts:/app/truffle/build/contracts
+      - point_contracts:/data/hardhat/artifacts/contracts
       - point_node_data:/data
       - $POINT_KEYSTORE:/data/keystore
       - $POINT_DEPLOYSPACE:/app/deployspace:ro
