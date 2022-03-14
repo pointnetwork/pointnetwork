@@ -43,7 +43,7 @@ abstract contract Administrable is Context {
     event AdminDeleted(address indexed account, uint256 date);
 
     /**
-     * @dev Emitted when admin period changes.
+     * @dev Emitted whenever admin period changes.
      */
     event AdminPeriodChanged(address indexed sender, address indexed account, uint256 newPeriod);
 
