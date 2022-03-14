@@ -98,7 +98,7 @@ class Web3Bridge {
     }
 
     async loadIdentityContract() {
-        const at = getContractAddress('Identity');
+        const at = config.get('network.identity_contract_address');
         return await this.loadPointContract('Identity', at);
     }
 
