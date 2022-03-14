@@ -140,7 +140,7 @@
     "outputPath": "bin",
     "assets": [
       "package.json",
-      "truffle/**/*",
+      "hardhat/**/*",
       "config/*.yaml",
       "migrations/**/*",
       "internal/**/*",
