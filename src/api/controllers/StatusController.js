@@ -1,6 +1,8 @@
+const path = require('path');
 const api_routes = require('../api_routes');
 const ws_routes = require('../ws_routes');
 const PointSDKController = require('./PointSDKController');
+const app = require(path.resolve(__dirname, '..', '..', '..', 'package.json'));
 
 class StatusController extends PointSDKController {
     constructor(ctx) {
@@ -16,7 +18,7 @@ class StatusController extends PointSDKController {
         const formatRoute = ([, route]) => route;
 
         const nodeJsVersion = process.version;
-        const pointNodeVersion = process.env.npm_package_version;
+        const pointNodeVersion = app.version;
         const apiRoutes = api_routes.map(formatRoute);
         const wsRoutes = ws_routes.map(formatRoute);
 

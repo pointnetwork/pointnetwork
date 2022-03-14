@@ -74,7 +74,7 @@ class Web3Bridge {
                 'contracts'
             );
             
-            const abiFileName = path.resolve(buildDirPath, contractName + '.sol/' + contractName + '.json');
+            const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
             if (!fs.existsSync(abiFileName)) {
                 if (!fs.existsSync(buildDirPath)) {
@@ -98,7 +98,7 @@ class Web3Bridge {
     }
 
     async loadIdentityContract() {
-        const at = getContractAddress('Identity');
+        const at = config.get('network.identity_contract_address');
         return await this.loadPointContract('Identity', at);
     }
 
