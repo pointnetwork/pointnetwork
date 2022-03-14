@@ -33,17 +33,17 @@ abstract contract Administrable is Context {
     event Blacklisted(address indexed account, uint256 date);
 
     /**
-     * @dev Emitted when account is blacklisted.
+     * @dev Emitted when account is added to admin list.
      */
     event AdminAdded(address indexed account, uint256 date);
 
     /**
-     * @dev Emitted when account is blacklisted.
+     * @dev Emitted when account is removed to admin list
      */
     event AdminDeleted(address indexed account, uint256 date);
 
     /**
-     * @dev Emitted when account is blacklisted.
+     * @dev Emitted when admin period changes.
      */
     event AdminPeriodChanged(address indexed sender, address indexed account, uint256 newPeriod);
 
