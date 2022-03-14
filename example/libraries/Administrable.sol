@@ -103,7 +103,6 @@ abstract contract Administrable is Context {
 
     /**
      * @dev Modifier to make a function callable only by admin
-     *
      */
     modifier onlyAdmin(address account) {
         require(account != address(0), "Admin can't be address 0");
@@ -115,8 +114,7 @@ abstract contract Administrable is Context {
     }
 
     /**
-     * @dev Modifier to make a function callable only by admin
-     *
+     * @dev Modifier to make only accesible to whitelisted users.
      */
     modifier onlyWhitelisted(address account) {
         require(blacklist[account] == 0, "Account blacklisted");
@@ -136,6 +134,7 @@ abstract contract Administrable is Context {
      * Requirements:
      *
      * - The contract must not be paused.
+     * - Must be an admin.
      */
     function pause() external whenNotPaused() onlyAdmin(_msgSender()) {
         _pause();
@@ -146,18 +145,19 @@ abstract contract Administrable is Context {
      *
      * Requirements:
      *
-     * - The contract must be paused.
+     * - The contract must not be paused.
+     * - Must be an admin.
      */
     function unpause() external whenPaused() onlyAdmin(_msgSender()) {
         _unpause();
     }
 
    /**
-     * @dev Set's the admin user that will control contract state
+     * @dev Add user to blacklist.
      *
      * Requirements:
      *
-     * - The contract must not be paused.
+     * - Must be an admin.
      */
     function addToBlacklist(address account) external onlyAdmin(_msgSender()) {
         require(blacklist[account] == 0, "Already added to blacklist");
@@ -166,11 +166,11 @@ abstract contract Administrable is Context {
     }
 
    /**
-     * @dev Set's the admin user that will control contract state
+     * @dev Add user to whitelist.
      *
      * Requirements:
      *
-     * - The contract must not be paused.
+     * - Must be an admin.
      */
     function removeFromBlacklist(address account) external onlyAdmin(_msgSender()) {
         require(blacklist[account] != 0, "Account not blacklisted");
@@ -179,11 +179,7 @@ abstract contract Administrable is Context {
     }
 
     /**
-     * @dev Set's the admin user that will control contract state
-     *
-     * Requirements:
-     *
-     * - The contract must not be paused.
+     * @dev Add the admin user that will control contract state
      */
     function _addAdmin(address account,uint256 totalPeriod) internal {
         require(account != address(0), "Admin can't be address 0");
@@ -212,7 +208,7 @@ abstract contract Administrable is Context {
     }
 
     /**
-     * @dev Change admin period
+     * @dev Changes admin period.
      */
     function _changeAdminPeriod(address account, uint256 newPeriod) internal {
         require(account != address(0), "Admin can't be address 0");
