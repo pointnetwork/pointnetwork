@@ -7,7 +7,7 @@ const defaultBuildPath = path.resolve(
     resolveHome(config.get('datadir')),'hardhat','artifacts','contracts'
 );
 
-const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'artifacts' ,'contracts');
+const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
     
