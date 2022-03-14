@@ -143,7 +143,8 @@
       "migrations/**/*",
       "internal/**/*",
       "resources/certs/*.{crt,key,srl}",
-      "node_modules/sqlite3/**/*"
+      "node_modules/sqlite3/**/*",
+      "package.json"
     ],
     "scripts": [
       ".sequelizerc",
