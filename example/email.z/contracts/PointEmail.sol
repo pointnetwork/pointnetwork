@@ -23,7 +23,7 @@ contract PointEmail  {
 
     enum Action {Send}
 
-    event stateChange(
+    event StateChange(
         address indexed from,
         address indexed to,
         uint256 indexed date,
@@ -34,17 +34,17 @@ contract PointEmail  {
         _emailIds.increment();
         uint newEmailId = _emailIds.current();
         Email memory _email = Email(
-            newEmailId, msg.sender, 
-            to, 
-            encryptedMessageId, 
-            encryptedSymmetricObj, 
+            newEmailId, msg.sender,
+            to,
+            encryptedMessageId,
+            encryptedSymmetricObj,
             block.timestamp
         );
         // add mapping from encrypted message id to the email id;
         encryptedMessageIdToEmail[encryptedMessageId] = _email;
         // add email to toEmails mapping
         toEmails[to].push(_email);
-        emit stateChange(msg.sender, to, block.timestamp, Action.Send);
+        emit StateChange(msg.sender, to, block.timestamp, Action.Send);
     }
 
     function getAllEmailsByToAddress(address to) external view returns(Email[] memory) {

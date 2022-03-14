@@ -18,7 +18,7 @@ contract Template  {
 
     enum Action {Example}
 
-    event stateChange(
+    event StateChange(
         address indexed from,
         uint256 indexed date,
         Action indexed action
@@ -37,7 +37,7 @@ contract Template  {
         examples.push(_example);
         exampleById[newExampleId] = _example;
         examplesByOwner[msg.sender].push(_example);
-        emit stateChange(msg.sender, block.timestamp, Action.Example);
+        emit StateChange(msg.sender, block.timestamp, Action.Example);
     }
 
     function getAllExamples() external view returns(Example[] memory) {

@@ -35,8 +35,8 @@ contract PointSocial {
     }
 
     enum Action {Migrator, Post, Like, Comment}
-    
-    event stateChange(
+
+    event StateChange(
         uint256 postId,
         address indexed from,
         uint256 indexed date,
@@ -61,7 +61,7 @@ contract PointSocial {
         require(msg.sender == _owner, "Access Denied");
         require(_migrator == address(0), "Access Denied");
         _migrator = migrator;
-        emit stateChange(0, msg.sender, block.timestamp, Action.Migrator);
+        emit StateChange(0, msg.sender, block.timestamp, Action.Migrator);
     }
 
     // Post data functions
@@ -81,7 +81,7 @@ contract PointSocial {
         postById[newPostId] = _post;
         postsByOwner[msg.sender].push(_post);
 
-        emit stateChange(newPostId, msg.sender, block.timestamp, Action.Post);
+        emit StateChange(newPostId, msg.sender, block.timestamp, Action.Post);
     }
 
     function getAllPosts() public view returns (Post[] memory) {
@@ -161,7 +161,7 @@ contract PointSocial {
         commentsByOwner[msg.sender].push(_comment);
         postById[postId].commentsCount += 1;
 
-        emit stateChange(postId, msg.sender, block.timestamp, Action.Comment);
+        emit StateChange(postId, msg.sender, block.timestamp, Action.Comment);
     }
 
     function getAllCommentsForPost(uint256 postId) public view returns (Comment[] memory)
@@ -202,7 +202,7 @@ contract PointSocial {
         _likesOnPost.push(_like);
         postById[postId].likesCount += 1;
 
-        emit stateChange(postId, msg.sender, block.timestamp, Action.Like);
+        emit StateChange(postId, msg.sender, block.timestamp, Action.Like);
 
         return true;
     }
@@ -232,7 +232,7 @@ contract PointSocial {
             postById[_post.id] = _post;
             _postIds.increment();
 
-            emit stateChange(id, author, block.timestamp, Action.Post);
+            emit StateChange(id, author, block.timestamp, Action.Post);
     }
 
     function addComment(
@@ -257,6 +257,6 @@ contract PointSocial {
             _commentIds.increment();
             postById[postId].commentsCount += 1;
 
-            emit stateChange(postId, author, block.timestamp, Action.Comment);
+            emit StateChange(postId, author, block.timestamp, Action.Comment);
     }
 }
