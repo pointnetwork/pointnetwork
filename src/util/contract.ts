@@ -1,16 +1,10 @@
 import path from 'path';
 import {existsSync, readFileSync, writeFileSync} from 'fs';
-const config = require('config');
-const {resolveHome} = require('../core/utils');
 
-const defaultBuildPath = path.resolve(
-    resolveHome(config.get('datadir')),'hardhat','artifacts','contracts'
-);
-
+const defaultBuildPath = path.resolve(__dirname, '..', '..', 'hardhat', 'artefacts', 'contracts');
 const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
-    
     const filename = path.resolve(buildPath, `${name}.sol/${name}-address.json`);
 
     if (!existsSync(filename)) {

@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.1.45",
+  "version": "0.1.46",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -139,6 +139,7 @@
   "pkg": {
     "outputPath": "bin",
     "assets": [
+      "package.json",
       "truffle/**/*",
       "config/*.yaml",
       "migrations/**/*",
