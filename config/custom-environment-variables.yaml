@@ -25,4 +25,4 @@ network:
   web3: BLOCKCHAIN_URL
   identity_contract_address: IDENTITY_CONTRACT_ADDRESS
 wallet:
-  keystore_path: WALLET_KEYSTORE_PATH
+  keystore_path: POINT_KEYSTORE

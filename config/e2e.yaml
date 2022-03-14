@@ -1,4 +1,6 @@
 datadir: /data
+wallet:
+  keystore_path: /data/keystore
 mode: e2e
 log:
   level: debug
@@ -6,9 +8,13 @@ storage:
   arweave_experiment_version_major: 123
   arweave_experiment_version_minor: 456
   arweave_bundler_url: http://bundler:80
-  arweave_gateway_url: http://gateway:3000
+  arweave_gateway_url: http://gateway:3000/graphql
   arweave_host: arweave-node
   arweave_protocol: http
   arweave_port: 1984
 network:
   web3: http://blockchain_node:7545
+api:
+  address: 0.0.0.0
+zproxy:
+  host: 0.0.0.0

@@ -6,7 +6,7 @@
     "alwaysStrict": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "useUnknownInCatchVariables": true,
+    "useUnknownInCatchVariables": false,
     "noEmit": false,
     "declaration": true,
     "rootDir": "./src",

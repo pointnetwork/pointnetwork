@@ -27,7 +27,7 @@ async function main() {
   fs.copyFile('artifacts/contracts/Identity.sol/Identity.json', 'build/contracts/Identity.json', (err: any) => {
     if (err) {
         throw err;
-    } 
+    }
 
     fs.writeFileSync('build/contracts/Identity-address.json', JSON.stringify({address:identity.address}));
 

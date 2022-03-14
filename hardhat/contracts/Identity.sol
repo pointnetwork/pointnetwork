@@ -29,7 +29,7 @@ contract Identity {
         address indexed newOwner, 
         uint256 date
     );
-    event IKVSet(string identity, string key, string value);
+    event IKVSet(string identity, string key, string value, string version);
 
     modifier onlyIdentityOwner(string memory identity) {
 
@@ -84,12 +84,14 @@ contract Identity {
     }
 
     // todo: put or set? decide
-    function ikvPut(string memory identity, string memory key, string memory value) public onlyIdentityOwner(identity) {
-        ikvSet(identity,key,value);
+    function ikvPut(string memory identity, string memory key, string memory value, string memory version) public 
+        onlyIdentityOwner(identity) {
+        ikvSet(identity,key,value,version);
     }
     
-    function ikvImportKV(string memory identity, string memory key, string memory value) public onlyBeforeMigrations() {
-        ikvSet(identity,key,value);
+    function ikvImportKV(string memory identity, string memory key, string memory value, string memory version) public 
+        onlyBeforeMigrations() {
+        ikvSet(identity,key,value,version);
     }
 
     function ikvGet(string memory identity, string memory key) public view returns (string memory value) {
@@ -179,13 +181,13 @@ contract Identity {
         emit IdentityRegistered(handle, owner, commPublicKey);
     }
 
-    function ikvSet(string memory identity, string memory key, string memory value) internal {
+    function ikvSet(string memory identity, string memory key, string memory value, string memory version) internal {
         if (bytes(ikv[identity][key]).length == 0) {
             ikvList[identity].push(key);
         }
 
         ikv[identity][key] = value;
 
-        emit IKVSet(identity, key, value);
+        emit IKVSet(identity, key, value, version);
     }
 }

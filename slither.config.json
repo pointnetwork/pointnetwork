@@ -1,0 +1,5 @@
+{
+    "exclude_informational": true,
+    "exclude_low": true,
+    "detectors_to_exclude": "unused-return"
+}

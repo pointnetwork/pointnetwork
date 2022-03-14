@@ -1,10 +1,10 @@
-const File = require('../../db/models/file.js');
-const Chunk = require('../../db/models/chunk.js');
+import File from '../../db/models/file';
+import Chunk from '../../db/models/chunk';
+
 const {request, gql} = require('graphql-request');
 const {
     hashFn,
     merkle,
-    makeSurePathExistsAsync,
     delay,
     areScalarArraysEqual,
     escape,
@@ -58,17 +58,15 @@ const FILE_TYPE = {
 const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
 const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay');
 
-const cacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.cache_path'));
+const cacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.upload_cache_path'));
 const filesDir = path.join(resolveHome(config.get('datadir')), config.get('storage.files_path'));
 
 let arweave;
 // load the arweave key for arlocal
-const keystorePath = path.join(resolveHome(config.get('datadir')), config.get('wallet.keystore_path'));
+const keystorePath = config.get('wallet.keystore_path');
 const arweaveKey = require(path.join(keystorePath, 'arweave.json'), 'utf-8');
 
 const init = async () => {
-    await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
-
     const host = config.get('storage.arweave_host');
     const port = config.get('storage.arweave_port');
     const protocol = config.get('storage.arweave_protocol');
@@ -116,8 +114,19 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const txid = edge.node.id;
             log.debug({chunkId, txid}, 'Downloading data from arweave');
 
+            // TODO: Remove the axios hack below when this bug of arlocal is resolved.
+            // https://github.com/textury/arlocal/issues/63
+            // It is fixed, but don't seems to work in all cases. 
+            const data = (await axios.get('http://' +  config.get('storage.arweave_host') +
+                ':' + config.get('storage.arweave_port') + '/tx/' +  txid + '/data')).data;
+            const buf = Buffer.from(data, 'base64');
+
+            /*
+            // NOTE: above code can be replaced with below when mentioned arlocal bug is resolved
+            // It works in twitter.z, but brokes in pointsocial.z, for example.
             const data = await arweave.transactions.getData(txid, {decode: true});
             const buf = Buffer.from(data);
+            */
 
             log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
 
@@ -152,7 +161,7 @@ const signTx = async (data, tags) => {
 
     const transaction = await arweave.createTransaction({data}, arweaveKey);
 
-    for(const k in tags){
+    for (const k in tags){
         const v = tags[k];
         transaction.addTag(k, v);
     }

@@ -48,7 +48,6 @@ async function upload(contract) {
     const artifact = artifacts.require('./Identity.sol');
     const targetContract = new web3.eth.Contract(artifact.abi, contract);
     const accounts = await web3.eth.getAccounts();
-
     for (const identity of data.identities) {
         console.log('Migrating: ' + identity.handle);
         await targetContract.methods
@@ -58,8 +57,15 @@ async function upload(contract) {
 
     for (const ikv of data.ikv) {
         console.log('Migrating IKV value for: ' + ikv.handle);
+        let version;
+        if (ikv.hasOwnProperty('version')){
+            version = ikv.version;
+        } else {
+            //fixed version for first time migration
+            version = '0.1.0';
+        }
         await targetContract.methods
-            .ikvImportKV(ikv.handle, ikv.key, ikv.value)
+            .ikvImportKV(ikv.handle, ikv.key, ikv.value, version)
             .send({from: accounts[0]});
     }
 
@@ -112,6 +118,10 @@ async function download(contract) {
                     key,
                     value
                 };
+                
+                if (e.returnValues.hasOwnProperty('version')){
+                    ikv.version = e.returnValues.version;
+                }
                 ikvs.push(ikv);
             }
             fileStructure.ikv = ikvs;

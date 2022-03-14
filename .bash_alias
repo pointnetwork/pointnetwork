@@ -2,11 +2,11 @@
 alias point-e2e="docker compose -f docker-compose.e2e.yaml "
 alias point-zappdev="docker compose --env-file .env.zappdev -f docker-compose.zappdev.yaml "
 
-# point-browser-docker-N starts a point browser instance for one of the locally saved zappdev environment profiles.
-alias point-browser-docker-1="web-ext run --firefox-profile=storage_provider_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
-alias point-browser-docker-2="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
-alias point-browser-docker-3="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
+# point-browser-docker-owner / visitor starts a point browser using one saved zappdev environment Firefox profiles
+alias point-browser-owner="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
+alias point-browser-visitor="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 
+# build a local image from the current working branch
 build-image() {
     local image=$(git branch --show-current | sed 's/[^a-zA-Z0-9]/-/g');
 
