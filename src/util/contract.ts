@@ -10,7 +10,7 @@ const defaultBuildPath = path.resolve(
     'contracts'
 );
 
-const defaultContractPath = path.resolve(__dirname, '..', '..', 'blockchain', 'contracts');
+const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'artifacts' ,'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
     
