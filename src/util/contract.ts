@@ -1,10 +1,12 @@
 import path from 'path';
 import {existsSync, readFileSync, writeFileSync} from 'fs';
 
-const defaultBuildPath = path.resolve(__dirname, '..', '..', 'hardhat', 'artefacts', 'contracts');
+const defaultBuildPath = path.resolve('/data/','hardhat', 'artifacts', 'contracts');
 const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
+
+
     const filename = path.resolve(buildPath, `${name}.sol/${name}-address.json`);
 
     if (!existsSync(filename)) {
@@ -12,6 +14,8 @@ export function getContractAddress(name: string, buildPath = defaultBuildPath) {
     }
 
     const buildFile = require(filename);
+
+    console.log(buildFile);
 
     return buildFile.address;
 }
