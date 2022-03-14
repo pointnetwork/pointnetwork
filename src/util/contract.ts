@@ -4,10 +4,7 @@ const config = require('config');
 const {resolveHome} = require('../core/utils');
 
 const defaultBuildPath = path.resolve(
-    resolveHome(config.get('datadir')),
-    'hardhat',
-    'artifacts',
-    'contracts'
+    resolveHome(config.get('datadir')),'hardhat','artifacts','contracts'
 );
 
 const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'artifacts' ,'contracts');
