@@ -14,15 +14,10 @@
     "allowJs": true,
     "skipLibCheck": true,
     "noImplicitAny": true,
-    "paths": {
-      ".util": ["./src/util"],
-      ".migrations": ["./migrations"]
-    },
     "typeRoots": ["./src/@types", "./node_modules/@types"]
   },
   "include": [
     "src/**/*"
   ],
-  "exclude": [],
-  "references": []
+  "exclude": []
 }

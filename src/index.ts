@@ -28,7 +28,8 @@ const program: ProgramType<typeof Command> = new Command();
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-program.version(process.env.npm_package_version || 'No version is specified');
+const app = require(path.resolve(__dirname, '..', 'package.json'));
+program.version(app.version || 'No version is specified');
 program.description(`
     Point Network
     https://pointnetwork.io/
