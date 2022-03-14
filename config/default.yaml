@@ -1,7 +1,7 @@
 datadir: ~/.point
 mode: ""
 api:
-  address: localhost
+  address: 127.0.0.1
   port: 2468
 db:
   define:
@@ -50,7 +50,7 @@ zproxy:
   sanitize_html: false
   redirect_to_https: true
 wallet:
-  keystore_path: keystore
+  keystore_path: ~/.point/keystore
   solana_main_endpoint: https://still-billowing-smoke.solana-mainnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
   solana_dev_endpoint:  https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
   solana_dev_standard_endpoint:  https://api.devnet.solana.com/

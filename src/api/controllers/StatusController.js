@@ -1,4 +1,3 @@
-const File = require('../../db/models/file');
 const api_routes = require('../api_routes');
 const ws_routes = require('../ws_routes');
 const PointSDKController = require('./PointSDKController');
@@ -14,22 +13,16 @@ class StatusController extends PointSDKController {
     }
 
     async _nodeStatus() {
-        function _formatRoute(route) {
-            return `${route[0]} => ${route[1]} (${route[2]})`;
-        }
+        const formatRoute = ([, route]) => route;
 
         const nodeJsVersion = process.version;
-        const fileCount = (await File.allKeys()).length;
-        const peersCount = this.ctx.network.peersCount;
-        const pointNetworkNodeVersion = process.env.npm_package_version;
-        const apiRoutes = api_routes.map(_formatRoute);
-        const wsRoutes = ws_routes.map(_formatRoute);
+        const pointNodeVersion = process.env.npm_package_version;
+        const apiRoutes = api_routes.map(formatRoute);
+        const wsRoutes = ws_routes.map(formatRoute);
 
         return {
             nodeJsVersion,
-            fileCount,
-            peersCount,
-            pointNetworkNodeVersion,
+            pointNodeVersion,
             apiRoutes,
             wsRoutes
         };

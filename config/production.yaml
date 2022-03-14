@@ -1,6 +1,2 @@
 db:
   env: production
-api:
-  address: 0.0.0.0
-zproxy:
-  host: 0.0.0.0

@@ -5,7 +5,6 @@ const {request, gql} = require('graphql-request');
 const {
     hashFn,
     merkle,
-    makeSurePathExistsAsync,
     delay,
     areScalarArraysEqual,
     escape,
@@ -64,12 +63,10 @@ const filesDir = path.join(resolveHome(config.get('datadir')), config.get('stora
 
 let arweave;
 // load the arweave key for arlocal
-const keystorePath = path.join(resolveHome(config.get('datadir')), config.get('wallet.keystore_path'));
+const keystorePath = config.get('wallet.keystore_path');
 const arweaveKey = require(path.join(keystorePath, 'arweave.json'), 'utf-8');
 
 const init = async () => {
-    await Promise.all([makeSurePathExistsAsync(cacheDir), makeSurePathExistsAsync(filesDir)]);
-
     const host = config.get('storage.arweave_host');
     const port = config.get('storage.arweave_port');
     const protocol = config.get('storage.arweave_protocol');

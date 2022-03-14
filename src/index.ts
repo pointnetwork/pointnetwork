@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
-import {existsSync, writeFileSync, mkdirSync} from 'fs';
+import {existsSync, mkdirSync, promises} from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
@@ -101,6 +101,7 @@ import config from 'config';
 import logger from './core/log.js';
 import Point from './core/index.js';
 import migrate from './util/migrate';
+import initFolders from './initFolders';
 
 // ------------------- Init Logger ----------------- //
 
@@ -147,20 +148,10 @@ if (program.makemigration) {
         '--name',
         'automigration'
     ];
-    const {SequelizeFactory} = require('./db/models');
-    SequelizeFactory.init();
+    const {Database} = require('./db/models');
+    Database.init();
 
     require('sequelize-auto-migrations/bin/makemigration.js');
-    // @ts-ignore
-    return;
-}
-
-// ------------------ Remove Everything ------------ //
-
-if (program.debug_destroy_everything) {
-    const DB = require('./db');
-    ctx.db = new DB(ctx);
-    DB.__debugClearCompletely(ctx); // async!
     // @ts-ignore
     return;
 }
@@ -253,20 +244,20 @@ process.on('unhandledRejection', (err: Error) => {
 
 // This is just a dummy file: proper-lockfile handles the lockfile creation,
 // but it's intended to lock some existing file
-
 const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
 
-if (!existsSync(lockfilePath)) {
-    writeFileSync(lockfilePath, 'point');
-}
-
 (async () => {
+    await initFolders();
     try {
+        if (!existsSync(lockfilePath)) {
+            await promises.writeFile(lockfilePath, 'point');
+        }
         await lockfile.lock(lockfilePath);
     } catch (err) {
         log.fatal(err, 'Failed to create lockfile, is point already running?');
         ctx.exit(1);
     }
+
     try {
         await migrate();
     } catch (err) {
