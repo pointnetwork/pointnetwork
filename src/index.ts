@@ -28,7 +28,8 @@ const program: ProgramType<typeof Command> = new Command();
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-program.version(process.env.npm_package_version || 'No version is specified');
+const app = require(path.resolve(__dirname, '..', 'package.json'));
+program.version(app.version || 'No version is specified');
 program.description(`
     Point Network
     https://pointnetwork.io/
@@ -88,7 +89,6 @@ program.parse(process.argv);
 if (program.datadir) {
     process.env.DATADIR = program.datadir;
 }
-
 
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
