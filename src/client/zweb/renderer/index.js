@@ -60,7 +60,7 @@ class Renderer {
             keyvalue_get: async function (host, key) {
                 return await this.renderer.ctx.keyvalue.get(host, key);
             },
-            storage_get_by_ikv: async function(identity, key) {
+            storage_get_by_ikv: async function (identity, key) {
                 try {
                     const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
                     log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
@@ -247,7 +247,7 @@ class Renderer {
 
             // Privileged access functions (only scoped to https://point domain)
 
-            get_wallet_info: async function() {
+            get_wallet_info: async function () {
                 this.renderer.#ensurePrivilegedAccess();
 
                 const wallets = [];
@@ -261,19 +261,19 @@ class Renderer {
                 });
                 return wallets;
             },
-            get_wallet_history: async function(code) {
+            get_wallet_history: async function (code) {
                 this.renderer.#ensurePrivilegedAccess();
                 return await this.renderer.ctx.wallet.getHistoryForCurrency(code);
             },
-            wallet_request_dev_sol: async function() {
+            wallet_request_dev_sol: async function () {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.initiateSolanaDevAirdrop();
             },
-            wallet_send: async function(code, recipient, amount) {
+            wallet_send: async function (code, recipient, amount) {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
             },
-            identity_register: async function(identity) {
+            identity_register: async function (identity) {
                 this.renderer.#ensurePrivilegedAccess();
 
                 const publicKey = getNetworkPublicKey();

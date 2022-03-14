@@ -1,24 +1,28 @@
 import path from 'path';
 import {existsSync, readFileSync, writeFileSync} from 'fs';
+const config = require('config');
+const {resolveHome} = require('../core/utils');
 
-const defaultBuildPath = path.resolve(__dirname, '..', '..', 'truffle', 'build', 'contracts');
-const defaultContractPath = path.resolve(__dirname, '..', '..', 'truffle', 'contracts');
+const defaultBuildPath = path.resolve(
+    resolveHome(config.get('datadir')),
+    'hardhat',
+    'artifacts',
+    'contracts'
+);
+
+const defaultContractPath = path.resolve(__dirname, '..', '..', 'blockchain', 'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
-    const filename = path.resolve(buildPath, `${name}.json`);
+    
+    const filename = path.resolve(buildPath, `${name}.sol/${name}-address.json`);
 
     if (!existsSync(filename)) {
         return;
     }
 
-    const {networks} = require(filename);
+    const buildFile = require(filename);
 
-    for (const network in networks) {
-        const {address} = networks[network];
-        if (address && typeof address === 'string') {
-            return address;
-        }
-    }
+    return buildFile.address;
 }
 
 export function getPragmaVersion(source: string) {
