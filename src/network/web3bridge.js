@@ -73,8 +73,8 @@ class Web3Bridge {
                 'artifacts',
                 'contracts'
             );
-            
-            const abiFileName = path.resolve(buildDirPath, contractName + '.sol/' + contractName + '.json');
+
+            const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
             if (!fs.existsSync(abiFileName)) {
                 if (!fs.existsSync(buildDirPath)) {
@@ -98,7 +98,7 @@ class Web3Bridge {
     }
 
     async loadIdentityContract() {
-        const at = getContractAddress('Identity');
+        const at = config.get('network.identity_contract_address');
         return await this.loadPointContract('Identity', at);
     }
 
@@ -288,7 +288,7 @@ class Web3Bridge {
             }, 'Error: Contract send does not allowed for versions different than latest.');
             throw new Error(`Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`);
         }
-        
+
         // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
 
@@ -374,11 +374,11 @@ class Web3Bridge {
         const filter = {identity: identity, key: key};
         const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
         if (events.length > 0){
-            const maxObj = events.reduce((prev, current) => 
+            const maxObj = events.reduce((prev, current) =>
                 (prev.blockNumber > current.blockNumber) ? prev : current);
             return maxObj.returnValues.version;
         } else {
-            return null; 
+            return null;
         }
     }
 
@@ -396,10 +396,10 @@ class Web3Bridge {
     }
 
     getLastVersionOrBefore(version, events){
-        const filteredEvents = events.filter(e => 
+        const filteredEvents = events.filter(e =>
             [-1, 0].includes(this.compareVersions(e.returnValues.version, version)));
-        const maxObj = filteredEvents.reduce((prev, current) => 
-            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1) 
+        const maxObj = filteredEvents.reduce((prev, current) =>
+            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1)
                 ? prev : current);
         return maxObj.returnValues.value;
     }
@@ -412,7 +412,7 @@ class Web3Bridge {
                 throw Error('web3bridge.getKeyValue(): key must be a string');
             if (typeof version !== 'string')
                 throw Error('web3bridge.getKeyValue(): version must be a string');
-            
+
             identity = identity.replace('.z', ''); // todo: rtrim instead
 
             if (version === 'latest'){
