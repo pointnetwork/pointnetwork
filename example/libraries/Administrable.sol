@@ -58,7 +58,7 @@ abstract contract Administrable is Context {
     /**
      * @dev Blacklisted users.
      */
-    mapping(address => uint256) private blacklist;
+    mapping(address => bool) private blacklist;
 
     /**
      * @dev Admins mapping.
@@ -106,7 +106,7 @@ abstract contract Administrable is Context {
      */
     modifier onlyAdmin(address account) {
         require(account != address(0), "Admin can't be address 0");
-        require(blacklist[account] == 0, "This account was blacklisted");
+        require(!blacklist[account], "This account was blacklisted");
         Admin memory data = admins[account];
         require(data.exists, "Admin not created");
         require(data.period > block.timestamp, "Admin period expired");
@@ -117,7 +117,7 @@ abstract contract Administrable is Context {
      * @dev Modifier to make only accesible to whitelisted users.
      */
     modifier onlyWhitelisted(address account) {
-        require(blacklist[account] == 0, "Account blacklisted");
+        require(!blacklist[account], "Account blacklisted");
         _;
     }
 
@@ -160,8 +160,8 @@ abstract contract Administrable is Context {
      * - Must be an admin.
      */
     function addToBlacklist(address account) external onlyAdmin(_msgSender()) {
-        require(blacklist[account] == 0, "Already added to blacklist");
-        blacklist[account] = block.timestamp;
+        require(!blacklist[account], "Already added to blacklist");
+        blacklist[account] = true;
         emit Blacklisted(account, block.timestamp);
     }
 
@@ -173,8 +173,8 @@ abstract contract Administrable is Context {
      * - Must be an admin.
      */
     function removeFromBlacklist(address account) external onlyAdmin(_msgSender()) {
-        require(blacklist[account] != 0, "Account not blacklisted");
-        blacklist[account] = 0;
+        require(blacklist[account], "Account not blacklisted");
+        blacklist[account] = false;
         emit Whitelisted(account, block.timestamp);
     }
 
