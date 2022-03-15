@@ -1,12 +1,13 @@
 const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
+const blockchain = require('../../network/blockchain');
 
 class WalletController extends PointSDKController {
     constructor(ctx, req, reply) {
         super(ctx);
         this.payload = req.body;
         this.reply = reply;
-        this.defaultWallet = this.ctx.blockchain.getWallet();
+        this.defaultWallet = blockchain.getWallet();
     }
 
     async tx() {
@@ -37,7 +38,7 @@ class WalletController extends PointSDKController {
 
     async balance() {
         const balance = (
-            await this.ctx.blockchain.getBalance(this.defaultWallet.address)
+            await blockchain.getBalance(this.defaultWallet.address)
         ).toString();
 
         // return the wallet balance

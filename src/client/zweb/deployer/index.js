@@ -4,6 +4,7 @@ const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
 const {compileContract, getImportsFactory} = require('../../../util/contract');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
+const blockchain = require('../../../network/blockchain');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -102,7 +103,7 @@ class Deployer {
         const identity = target.replace(/\.z$/, '');
 
         //get the last version.
-        const lastVersion = await this.ctx.blockchain.getKeyLastVersion(identity, '::rootDir');
+        const lastVersion = await blockchain.getKeyLastVersion(identity, '::rootDir');
 
         //get the new version with patch.
         let version;
@@ -122,9 +123,9 @@ class Deployer {
             );
         }
 
-        const owner = this.ctx.blockchain.getOwner();
+        const owner = blockchain.getOwner();
 
-        const registeredOwner = await this.ctx.blockchain.ownerByIdentity(identity);
+        const registeredOwner = await blockchain.ownerByIdentity(identity);
         const identityIsRegistered =
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
@@ -149,7 +150,7 @@ class Deployer {
                 'Registering new identity'
             );
 
-            await this.ctx.blockchain.registerIdentity(
+            await blockchain.registerIdentity(
                 identity,
                 owner,
                 Buffer.from(publicKey, 'hex')
@@ -174,7 +175,7 @@ class Deployer {
                         deployPath
                     );
 
-                    const address = await this.ctx.blockchain.deployContract(
+                    const address = await blockchain.deployContract(
                         contract,
                         artifacts,
                         contractName
@@ -282,7 +283,7 @@ class Deployer {
             }
         }
 
-        const contract = this.ctx.blockchain.getContractFromAbi(artifacts.abi);
+        const contract = blockchain.getContractFromAbi(artifacts.abi);
         return {contract, artifacts};
     }
 
@@ -293,13 +294,13 @@ class Deployer {
         const artifactsStorageId = await storage.uploadFile(artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
-        await this.ctx.blockchain.putKeyValue(
+        await blockchain.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
             address,
             version
         );
-        await this.ctx.blockchain.putKeyValue(
+        await blockchain.putKeyValue(
             target,
             'zweb/contracts/abi/' + contractName,
             artifactsStorageId,
@@ -313,7 +314,7 @@ class Deployer {
     async updateZDNS(host, id, version) {
         const target = host.replace('.z', '');
         log.info({target, id}, 'Updating ZDNS');
-        await this.ctx.blockchain.putZRecord(target, '0x' + id, version);
+        await blockchain.putZRecord(target, '0x' + id, version);
     }
 
     async updateKeyValue(target, values = {}, deployPath, deployContracts = false, version) {
@@ -383,7 +384,7 @@ class Deployer {
                             params.push(value[paramName]);
                         }
                     }
-                    await this.ctx.blockchain.sendToContract(
+                    await blockchain.sendToContract(
                         target,
                         contractName,
                         methodName,
@@ -392,7 +393,7 @@ class Deployer {
                 }
                 value = JSON.stringify(value);
             }
-            await this.ctx.blockchain.putKeyValue(target, key, String(value), version);
+            await blockchain.putKeyValue(target, key, String(value), version);
         }
     }
 }

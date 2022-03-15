@@ -5,6 +5,7 @@ const config = require('config');
 const logger = require('../core/log');
 const log = logger.child({module: 'Wallet'});
 const {getNetworkAddress, getSecretPhrase} = require('./keystore');
+const blockchain = require('../network/blockchain');
 
 class Wallet {
     static get TRANSACTION_EVENT() {
@@ -69,13 +70,13 @@ class Wallet {
         // use the hard coded wallet id, passcode, address and private key to save to the nodes keystore
         const id = config.get('wallet.id');
         const passcode = config.get('wallet.passcode');
-        const wallet = this.ctx.blockchain.getWallet();
+        const wallet = blockchain.getWallet();
         const keystore = wallet.encrypt(passcode);
         fs.writeFileSync(`${this.keystorePath}/${id}`, JSON.stringify(keystore));
     }
 
     async sendTransaction(from, to, value) {
-        const receipt = await this.ctx.blockchain.sendTransaction({
+        const receipt = await blockchain.sendTransaction({
             from,
             to,
             value,
@@ -91,7 +92,7 @@ class Wallet {
     }
 
     generate(passcode) {
-        const wallet = this.ctx.blockchain.createAccountAndAddToWallet();
+        const wallet = blockchain.createAccountAndAddToWallet();
         const keystore = this.saveWalletToKeystore(wallet, passcode);
 
         // TODO: remove
@@ -112,14 +113,14 @@ class Wallet {
         if (fs.existsSync(`${this.keystorePath}/${walletId}`)) {
             const keystoreBuffer = fs.readFileSync(`${this.keystorePath}/${walletId}`);
             const keystore = JSON.parse(keystoreBuffer);
-            return this.ctx.blockchain.decryptWallet(keystore, passcode);
+            return blockchain.decryptWallet(keystore, passcode);
         } else {
             return null;
         }
     }
 
     async getNetworkAccountBalanceInWei() {
-        return await this.ctx.blockchain.getBalance(getNetworkAddress());
+        return await blockchain.getBalance(getNetworkAddress());
     }
     async getNetworkAccountBalanceInEth() {
         return (await this.getNetworkAccountBalanceInWei()) / 1e18;
@@ -128,7 +129,7 @@ class Wallet {
     async getHistoryForCurrency(code) {
         switch (code) {
             case 'NEON':
-                return this.ctx.blockchain.getTransactionsByAccount(getNetworkAddress());
+                return blockchain.getTransactionsByAccount(getNetworkAddress());
             default:
                 throw Error('Unsupported currency: ' + code);
         }
@@ -210,7 +211,7 @@ class Wallet {
                     },
                     'Sending Neon tx'
                 );
-                await this.ctx.blockchain.sendTransaction({
+                await blockchain.sendTransaction({
                     from: getNetworkAddress(),
                     to: recipient,
                     value: amount * 1e18,
@@ -224,7 +225,7 @@ class Wallet {
 
     // todo: remove
     _fundWallet(_address) {
-        this.ctx.blockchain.sendTransaction({
+        blockchain.sendTransaction({
             from: this.network_account,
             to: _address,
             value: 1e18,

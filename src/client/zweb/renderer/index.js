@@ -10,6 +10,7 @@ const {
     getNetworkPublicKey
 } = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
+const blockchain = require('../../../network/blockchain');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -64,9 +65,9 @@ class Renderer {
             keyvalue_get: async function(host, key) {
                 return await this.renderer.ctx.keyvalue.get(host, key);
             },
-            storage_get_by_ikv: async function (identity, key) {
+            storage_get_by_ikv: async function(identity, key) {
                 try {
-                    const fileKey = await this.renderer.ctx.blockchain.getKeyValue(identity, key);
+                    const fileKey = await blockchain.getKeyValue(identity, key);
                     log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
                     return await getFile(fileKey);
                 } catch (e) {
@@ -114,24 +115,19 @@ class Renderer {
                 return new RegExp('^[0-9a-fA-F]+$').test(s);
             },
             identity_by_owner: async function(owner) {
-                return await this.renderer.ctx.blockchain.identityByOwner(owner);
+                return await blockchain.identityByOwner(owner);
             },
             owner_by_identity: async function(identity) {
-                return await this.renderer.ctx.blockchain.ownerByIdentity(identity);
+                return await blockchain.ownerByIdentity(identity);
             },
             public_key_by_identity: async function(identity) {
-                return await this.renderer.ctx.blockchain.commPublicKeyByIdentity(identity);
+                return await blockchain.commPublicKeyByIdentity(identity);
             },
             identity_ikv_get: async function(identity, key) {
-                return await this.renderer.ctx.blockchain.getKeyValue(identity, key);
+                return await blockchain.getKeyValue(identity, key);
             },
             contract_get: async function(target, contractName, method, params) {
-                return await this.renderer.ctx.blockchain.callContract(
-                    target,
-                    contractName,
-                    method,
-                    params
-                );
+                return await blockchain.callContract(target, contractName, method, params);
             },
             contract_call: async function(
                 host,
@@ -140,7 +136,7 @@ class Renderer {
                 params,
                 version = 'latest'
             ) {
-                return await this.renderer.ctx.blockchain.sendToContract(
+                return await blockchain.sendToContract(
                     host.replace('.z', ''),
                     contractName,
                     methodName,
@@ -153,7 +149,7 @@ class Renderer {
                 //delete keys property inserted by twig
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
                 const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
-                const events = await this.renderer.ctx.blockchain.getPastEvents(
+                const events = await blockchain.getPastEvents(
                     host.replace('.z', ''),
                     contractName,
                     event,
@@ -162,9 +158,7 @@ class Renderer {
                 const eventData = [];
                 for (const ev of events) {
                     //console.log(ev, ev.raw);
-                    const eventTimestamp = await this.renderer.ctx.blockchain.getBlockTimestamp(
-                        ev.blockNumber
-                    );
+                    const eventTimestamp = blockchain.getBlockTimestamp(ev.blockNumber);
 
                     eventData.push({
                         data: ev.returnValues,
@@ -192,7 +186,7 @@ class Renderer {
                 while (true) {
                     try {
                         results.push(
-                            await this.renderer.ctx.blockchain.callContract(
+                            await blockchain.callContract(
                                 target,
                                 contractName,
                                 method,
@@ -215,13 +209,13 @@ class Renderer {
             },
 
             is_identity_registered: async function() {
-                return await this.renderer.ctx.blockchain.isCurrentIdentityRegistered();
+                return await blockchain.isCurrentIdentityRegistered();
             },
             get_current_identity: async function() {
-                return await this.renderer.ctx.blockchain.getCurrentIdentity();
+                return await blockchain.getCurrentIdentity();
             },
             identity_check_availability: async function(identity) {
-                const owner = await this.renderer.ctx.blockchain.ownerByIdentity(identity);
+                const owner = await blockchain.ownerByIdentity(identity);
                 log.debug({identity, owner}, 'identity_check_availability');
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
@@ -261,33 +255,31 @@ class Renderer {
 
             // Privileged access functions (only scoped to https://point domain)
 
-            get_wallet_info: async function () {
+            get_wallet_info: async function() {
                 this.renderer.#ensurePrivilegedAccess();
 
                 const wallets = [];
                 wallets.push({
                     currency_name: 'Point',
                     currency_code: 'POINT',
-                    address:
-                        (await this.renderer.ctx.blockchain.getCurrentIdentity()) + '.point' ||
-                        'N/A',
+                    address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
                     balance: await this.renderer.ctx.wallet.getNetworkAccountBalanceInEth()
                 });
                 return wallets;
             },
-            get_wallet_history: async function (code) {
+            get_wallet_history: async function(code) {
                 this.renderer.#ensurePrivilegedAccess();
                 return await this.renderer.ctx.wallet.getHistoryForCurrency(code);
             },
-            wallet_request_dev_sol: async function () {
+            wallet_request_dev_sol: async function() {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.initiateSolanaDevAirdrop();
             },
-            wallet_send: async function (code, recipient, amount) {
+            wallet_send: async function(code, recipient, amount) {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
             },
-            identity_register: async function (identity) {
+            identity_register: async function(identity) {
                 this.renderer.#ensurePrivilegedAccess();
 
                 const publicKey = getNetworkPublicKey();
@@ -304,11 +296,7 @@ class Renderer {
                     'Registering a new identity'
                 );
 
-                await this.renderer.ctx.blockchain.registerIdentity(
-                    identity,
-                    owner,
-                    Buffer.from(publicKey, 'hex')
-                );
+                await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
 
                 log.info(
                     {identity, owner, publicKey: publicKey.toString('hex')},

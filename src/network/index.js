@@ -1,4 +1,3 @@
-const createBlockchain = require('./blockchain');
 const KeyValue = require('./keyvalue');
 const config = require('config');
 
@@ -31,9 +30,6 @@ class Network {
         // todo: but it affects the whole application, right? maybe limit it to one process?
         // todo: just use rejectUnauthorized: false on transport-https, extend it
         // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
-        this.blockchain = createBlockchain();
-        this.ctx.blockchain = this.blockchain;
 
         this.keyvalue = new KeyValue(this.ctx, this);
         this.ctx.keyvalue = this.keyvalue;

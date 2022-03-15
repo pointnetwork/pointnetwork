@@ -1,4 +1,5 @@
 const PointSDKController = require('./PointSDKController');
+const blockchain = require('../../network/blockchain');
 
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
@@ -9,13 +10,13 @@ class IdentityController extends PointSDKController {
 
     async identityToOwner() {
         const identity = this.req.params.identity;
-        const owner = await this.ctx.blockchain.ownerByIdentity(identity);
+        const owner = await blockchain.ownerByIdentity(identity);
         return this._response({owner: owner});
     }
 
     async ownerToIdentity() {
         const owner = this.req.params.owner;
-        const identity = await this.ctx.blockchain.identityByOwner(owner);
+        const identity = await blockchain.identityByOwner(owner);
         return this._response({identity});
     }
 }

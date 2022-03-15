@@ -4,6 +4,7 @@ See client/proxy/index.js for usage details of ZProxy and setup of the WebSocket
 */
 const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxySocketController'});
+const blockchain = require('../../network/blockchain');
 
 const SUBSCRIPTION_EVENT_TYPES = {
     CONFIRMATION: 'subscription_confirmation',
@@ -39,7 +40,7 @@ class ZProxySocketController {
                     const {contract, event, ...options} = request.params;
                     const {CONFIRMATION, EVENT} = SUBSCRIPTION_EVENT_TYPES;
 
-                    return this.ctx.blockchain.subscribeContractEvent(
+                    return blockchain.subscribeContractEvent(
                         hostname,
                         contract,
                         event,
@@ -54,7 +55,7 @@ class ZProxySocketController {
                     const {subscriptionId} = request.params;
                     const {CANCELLATION} = SUBSCRIPTION_EVENT_TYPES;
 
-                    return this.ctx.blockchain.removeSubscriptionById(subscriptionId, event =>
+                    return blockchain.removeSubscriptionById(subscriptionId, event =>
                         this.pushSubscriptionEvent({...event, request, type: CANCELLATION})
                     );
                 }
