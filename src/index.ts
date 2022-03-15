@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
-import {existsSync, mkdirSync, promises} from 'fs';
+import {existsSync, mkdirSync, promises as fs} from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
@@ -77,6 +77,12 @@ program
     })
     .option('--contracts', '(re)deploy contracts too', false)
     .option('--dev', 'deploy zapp to dev too', false);
+program
+    .command('upload <path>')
+    .description('uploads a file or directory')
+    .action(path => {
+        program.upload = path;
+    });
 
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
@@ -129,6 +135,42 @@ if (program.deploy) {
     deploy.deploy(program.deploy, program.deploy_contracts, program.dev)
         .then(ctx.exit)
         .catch(ctx.die);
+    // @ts-ignore
+    return;
+}
+
+// -------------------- Uploader --------------------- //
+
+if (program.upload) {
+    const {init, uploadFile, uploadDir} = require('./client/storage');
+
+    const main = async () => {
+        await init();
+
+        const filePath = path.isAbsolute(program.upload!)
+            ? program.upload!
+            : path.resolve(__dirname, '..', program.upload!);
+
+        const stat = await fs.stat(filePath);
+        if (stat.isDirectory()) {
+            return uploadDir(filePath);
+        } else {
+            const file = await fs.readFile(filePath);
+            return uploadFile(file);
+        }
+    };
+
+    main()
+        .then(id => {
+            log.info({id}, 'Upload finished successfully');
+            process.exit(0);
+        })
+        .catch(e => {
+            log.error('Upload failed');
+            log.error(e);
+            process.exit(1);
+        });
+
     // @ts-ignore
     return;
 }
@@ -249,7 +291,7 @@ const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
     await initFolders();
     try {
         if (!existsSync(lockfilePath)) {
-            await promises.writeFile(lockfilePath, 'point');
+            await fs.writeFile(lockfilePath, 'point');
         }
         await lockfile.lock(lockfilePath);
     } catch (err) {
