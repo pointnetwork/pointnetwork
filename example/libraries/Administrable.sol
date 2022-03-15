@@ -174,7 +174,7 @@ abstract contract Administrable is Context {
      */
     function removeFromBlacklist(address account) external onlyAdmin(_msgSender()) {
         require(blacklist[account], "Account not blacklisted");
-        blacklist[account] = false;
+        delete blacklist[account];
         emit Whitelisted(account, block.timestamp);
     }
 
