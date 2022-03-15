@@ -101,6 +101,7 @@ task("identityImporter", "Will download and upload data to point identity contra
         }
 
         const lockFileStructure = {
+            contract:taskArgs.contract.toString(),
             migrationFilePath:taskArgs.migrationFile.toString(),
             identityLastProcessedIndex:0,
             ikvLastProcessedIndex:0
@@ -110,26 +111,25 @@ task("identityImporter", "Will download and upload data to point identity contra
 
         let processIdentityFrom = 0;
         let processIkvFrom = 0;
+        let lastIdentityAddedIndex = 0;
+        let lastIkvAddedIndex = 0;
         let foundLockFile = false;
 
         if (!fs.existsSync(lockFilePath)) {
             console.log('Lockfile not found');
         }else{
             const lockFile = JSON.parse(fs.readFileSync(lockFilePath).toString());
-            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString()) {
+            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() && 
+                lockFile.contract == taskArgs.contract.toString()) {
                 console.log('Previous lock file found');
                 console.log(`Last processed identity ${lockFile.identityLastProcessedIndex}`);
                 console.log(`Last IVK param ${lockFile.ikvLastProcessedIndex}`);
-                console.log(lockFile);
                 foundLockFile = true;
                 processIdentityFrom = lockFile.identityLastProcessedIndex;
                 processIkvFrom = lockFile.ikvLastProcessedIndex;
             }
         }
 
-  
-        let lastIdentityAddedIndex = 0;
-        let lastIkvAddedIndex = 0;
         try {
             console.log(`found ${data.identities.length}`);
             for (const identity of data.identities) {
@@ -151,13 +151,10 @@ task("identityImporter", "Will download and upload data to point identity contra
         lockFileStructure.identityLastProcessedIndex = lastIdentityAddedIndex;
 
         try {
-            console.log(`found ${data.ikv.length} IKV params `);
+            console.log(`found ${data.ikv.length} IKV params`);
             for (const ikv of data.ikv) {
                 lastIkvAddedIndex++;
                 if(lastIkvAddedIndex > processIkvFrom || processIkvFrom == 0){
-                    if(lastIkvAddedIndex == 30) {
-                        throw new Error('test');
-                    }
                     console.log(`${lastIkvAddedIndex} Migrating IVK param for ${ikv.handle} ${ikv.key} ${ikv.value}`)
                     await contract.ikvImportKV(ikv.handle, ikv.key, ikv.value, ikv.version);
                 }else{
@@ -172,7 +169,7 @@ task("identityImporter", "Will download and upload data to point identity contra
         }
 
         if(lastIdentityAddedIndex == data.identities.length && lastIkvAddedIndex == data.ikv.length) {
-            if(foundLockFile) {
+            if(fs.existsSync(lockFilePath)) {
                 fs.unlinkSync(lockFilePath);
             }
             console.log('Everything processed and uploaded, lock file removed.');
