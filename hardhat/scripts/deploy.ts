@@ -24,7 +24,7 @@ async function main() {
 
   console.log("Identity deployed to:", identity.address);
 
-  fs.writeFileSync('/build/contracts/Identity.sol/Identity-address.json', JSON.stringify({address:identity.address}));
+  fs.writeFileSync(build_path+'/contracts/Identity.sol/Identity-address.json', JSON.stringify({address:identity.address}));
   console.log('Identity abi was copied to build folder');
 };
 
