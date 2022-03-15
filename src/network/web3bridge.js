@@ -9,7 +9,7 @@ const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
-const {compileContract, getContractAddress} = require('../util/contract');
+const {compileContract} = require('../util/contract');
 const log = logger.child({module: 'Web3Bridge'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
 const {utils, resolveHome} = require('../core/utils');
@@ -69,8 +69,6 @@ class Web3Bridge {
 
             const buildDirPath = path.resolve(
                 resolveHome(config.get('datadir')),
-                'hardhat',
-                'artifacts',
                 'contracts'
             );
             
@@ -80,12 +78,14 @@ class Web3Bridge {
                 if (!fs.existsSync(buildDirPath)) {
                     fs.mkdirSync(buildDirPath, {recursive: true});
                 }
+
                 const contractPath = path.resolve(
                     this.ctx.basepath,
                     '..',
                     'hardhat',
                     'contracts'
                 );
+
                 await compileContract({name: contractName, contractPath, buildDirPath});
             }
 
