@@ -35,8 +35,7 @@ services:
       restart_policy:
         condition: 'no'
     volumes:
-      - shared_contracts_e2e:/hardhat/artifacts/contracts:rw
-      - ./hardhat/artifacts/contract:/hardhat/artifacts/contract:ro
+      - shared_contracts_e2e:/build:rw
       - ./hardhat/contracts:/hardhat/contracts:ro
       - ./hardhat/scripts:/hardhat/scripts:ro
       - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
@@ -60,7 +59,7 @@ services:
     command: 'run start:e2e'
     volumes:
       - point_node_data_e2e:/data
-      - shared_contracts_e2e:/data/hardhat/artifacts/contracts:rw
+      - shared_contracts_e2e:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     environment:

@@ -26,10 +26,12 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+
+
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
 const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
-const networkid = process.env.BLOCKCHAIN_NETWORK_ID || '*';
+const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
 
 const devaddress = 'http://' + host + ':' + port
 
@@ -52,18 +54,21 @@ const config: HardhatUserConfig = {
             }
         ],
     },
-  networks: {
-    development: {
-      url: devaddress,
-      accounts:
-        [privateKey],
+    paths: {
+        artifacts:build_path
     },
-    ynet: {
-      url: 'http://ynet.point.space:44444',
-      accounts:
-        ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
-    },
-  }
+    networks: {
+        development: {
+            url: devaddress,
+            accounts:
+            [privateKey],
+        },
+        ynet: {
+          url: 'http://ynet.point.space:44444',
+          accounts:
+            ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
+        },
+    }
 };
 
 export default config;

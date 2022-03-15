@@ -9,7 +9,7 @@ const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
-const compileContract = require('../util/contract');
+const {compileContract} = require('../util/contract');
 const log = logger.child({module: 'Web3Bridge'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
 const {utils, resolveHome} = require('../core/utils');
@@ -69,23 +69,23 @@ class Web3Bridge {
 
             const buildDirPath = path.resolve(
                 resolveHome(config.get('datadir')),
-                'hardhat',
-                'artifacts',
                 'contracts'
             );
-            
+
             const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
             if (!fs.existsSync(abiFileName)) {
                 if (!fs.existsSync(buildDirPath)) {
                     fs.mkdirSync(buildDirPath, {recursive: true});
                 }
+
                 const contractPath = path.resolve(
                     this.ctx.basepath,
                     '..',
                     'hardhat',
                     'contracts'
                 );
+
                 await compileContract({name: contractName, contractPath, buildDirPath});
             }
 
@@ -288,7 +288,7 @@ class Web3Bridge {
             }, 'Error: Contract send does not allowed for versions different than latest.');
             throw new Error(`Forbidden, contract send does not allowed for versions different than latest. Contract: ${contractName}, method: ${methodName}, version: ${version}`);
         }
-        
+
         // todo: multiple arguments, but check existing usage // huh?
         const contract = await this.loadWebsiteContract(target, contractName);
 
@@ -374,11 +374,11 @@ class Web3Bridge {
         const filter = {identity: identity, key: key};
         const events = await this.getPastEvents('@', 'Identity', 'IKVSet', {filter, fromBlock: 0, toBlock: 'latest'});
         if (events.length > 0){
-            const maxObj = events.reduce((prev, current) => 
+            const maxObj = events.reduce((prev, current) =>
                 (prev.blockNumber > current.blockNumber) ? prev : current);
             return maxObj.returnValues.version;
         } else {
-            return null; 
+            return null;
         }
     }
 
@@ -396,10 +396,10 @@ class Web3Bridge {
     }
 
     getLastVersionOrBefore(version, events){
-        const filteredEvents = events.filter(e => 
+        const filteredEvents = events.filter(e =>
             [-1, 0].includes(this.compareVersions(e.returnValues.version, version)));
-        const maxObj = filteredEvents.reduce((prev, current) => 
-            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1) 
+        const maxObj = filteredEvents.reduce((prev, current) =>
+            (this.compareVersions(prev.returnValues.version, current.returnValues.version) === 1)
                 ? prev : current);
         return maxObj.returnValues.value;
     }
@@ -412,7 +412,7 @@ class Web3Bridge {
                 throw Error('web3bridge.getKeyValue(): key must be a string');
             if (typeof version !== 'string')
                 throw Error('web3bridge.getKeyValue(): version must be a string');
-            
+
             identity = identity.replace('.z', ''); // todo: rtrim instead
 
             if (version === 'latest'){
