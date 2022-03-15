@@ -42,7 +42,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
     return web3;
 }
 
-function createBlockchain(basepath) {
+function createBlockchain() {
     const abisByContractName = {};
     const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
     const web3 = createWeb3Instance({
@@ -52,7 +52,9 @@ function createBlockchain(basepath) {
 
     const blockchain = {};
 
-    blockchain.loadPointContract = async (contractName, at) => {
+    blockchain.loadPointContract = async (contractName, at, basepath) => {
+        basepath = basepath || path.resolve(__dirname, '..');
+
         if (!(contractName in abisByContractName)) {
             const buildDirPath = path.resolve(resolveHome(config.get('datadir')), 'contracts');
 
