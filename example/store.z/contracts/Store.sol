@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/introspection/IERC165.sol)
 
-pragma solidity 0.8.0;
+pragma solidity >=0.8.0;
 
 /**
  * @dev Interface of the ERC165 standard, as defined in the
@@ -74,7 +74,7 @@ interface IERC721 is IERC165 {
      * - `to` cannot be the zero address.
      * - `tokenId` token must exist and be owned by `from`.
      * - If the caller is not `from`, it must be have been allowed to move this token by either {approve} or {setApprovalForAll}.
-     * - If `to` refers to a smart contract, it must implement 
+     * - If `to` refers to a smart contract, it must implement
      * - {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
      *
      * Emits a {Transfer} event.
@@ -156,7 +156,7 @@ interface IERC721 is IERC165 {
      * - `from` cannot be the zero address.
      * - `to` cannot be the zero address.
      * - `tokenId` token must exist and be owned by `from`.
-     * - If the caller is not `from`, it must be approved to move this token 
+     * - If the caller is not `from`, it must be approved to move this token
      * - by either {approve} or {setApprovalForAll}.
      * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
      *
@@ -188,7 +188,7 @@ interface IERC721Receiver {
      * by `operator` from `from`, this function is called.
      *
      * It must return its Solidity selector to confirm the token transfer.
-     * If any other value is returned or the interface 
+     * If any other value is returned or the interface
      * is not implemented by the recipient, the transfer will be reverted.
      *
      * The selector can be obtained in Solidity with `IERC721.onERC721Received.selector`.
@@ -261,7 +261,7 @@ library Address {
      * ====
      * You shouldn't rely on `isContract` to protect against flash loan attacks!
      *
-     * Preventing calls from contracts is highly discouraged. 
+     * Preventing calls from contracts is highly discouraged.
      * It breaks composability, breaks support for smart wallets
      * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract
      * constructor.
@@ -426,7 +426,7 @@ library Address {
     }
 
     /**
-     * @dev Tool to verifies that a low level call was 
+     * @dev Tool to verifies that a low level call was
      * successful, and revert if it wasn't, either by bubbling the
      * revert reason using the provided one.
      *
@@ -443,7 +443,7 @@ library Address {
             // Look for revert reason and bubble it up if present
             if (returndata.length > 0) {
                 // The easiest way to bubble the revert reason is using memory via assembly
-
+                // solhint-disable-next-line no-inline-assembly
                 assembly {
                     let returndata_size := mload(returndata)
                     revert(add(32, returndata), returndata_size)
@@ -561,7 +561,7 @@ pragma solidity 0.8.0;
 /**
  * @dev Implementation of the {IERC165} interface.
  *
- * Contracts that want to implement ERC165 should inherit from 
+ * Contracts that want to implement ERC165 should inherit from
  * this contract and override {supportsInterface} to check
  * for the additional interface id that will be supported. For example:
  *
@@ -596,9 +596,9 @@ pragma solidity 0.8.0;
 
 
 /**
- * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] 
+ * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721]
  * Non-Fungible Token Standard, including
- * the Metadata extension, but not including the Enumerable extension, 
+ * the Metadata extension, but not including the Enumerable extension,
  * which is available separately as
  * {ERC721Enumerable}.
  */
@@ -984,6 +984,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
                 if (reason.length == 0) {
                     revert("ERC721: transfer to non ERC721Receiver implementer");
                 } else {
+                    // solhint-disable-next-line no-inline-assembly
                     assembly {
                         revert(add(32, reason), mload(reason))
                     }

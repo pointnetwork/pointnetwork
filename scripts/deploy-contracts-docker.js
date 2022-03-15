@@ -12,4 +12,4 @@ function execCommand(command) {
     }
 }
 
-console.log(execCommand('truffle deploy --network development'));
+console.log(execCommand('npx hardhat run scripts/deploy.ts --network development'));

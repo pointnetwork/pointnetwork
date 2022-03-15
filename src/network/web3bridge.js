@@ -1,7 +1,6 @@
 const path = require('path');
 const Web3 = require('web3');
 const fs = require('fs');
-const utils = require('../core/utils');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
@@ -11,9 +10,9 @@ const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
 const {compileContract} = require('../util/contract');
-const {resolveHome} = require('../core/utils');
 const log = logger.child({module: 'Web3Bridge'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
+const {utils, resolveHome} = require('../core/utils');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -62,40 +61,40 @@ class Web3Bridge {
         });
     }
 
-    async start() {}
+    async start() { }
 
     async loadPointContract(contractName, at) {
+
         if (!(contractName in abisByContractName)) {
+
             const buildDirPath = path.resolve(
                 resolveHome(config.get('datadir')),
                 'contracts'
             );
-
+            
             const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
             if (!fs.existsSync(abiFileName)) {
                 if (!fs.existsSync(buildDirPath)) {
                     fs.mkdirSync(buildDirPath, {recursive: true});
                 }
+
                 const contractPath = path.resolve(
                     this.ctx.basepath,
                     '..',
-                    'truffle',
+                    'hardhat',
                     'contracts'
                 );
+
                 await compileContract({name: contractName, contractPath, buildDirPath});
             }
 
             const abiFile = JSON.parse(fs.readFileSync(abiFileName));
+
             abisByContractName[contractName] = abiFile.abi;
         }
 
         return new this.web3.eth.Contract(abisByContractName[contractName], at);
-    }
-
-    async loadStorageProviderRegistryContract() {
-        const at = config.get('network.storage_provider_registry_contract_address');
-        return await this.loadPointContract('StorageProviderRegistry', at);
     }
 
     async loadIdentityContract() {
@@ -132,10 +131,10 @@ class Web3Bridge {
         } catch (e) {
             throw Error(
                 'Could not read abi of the contract ' +
-                    utils.escape(contractName) +
-                    '. Reason: ' +
-                    e +
-                    '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'
+                utils.escape(contractName) +
+                '. Reason: ' +
+                e +
+                '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'
             );
         }
     }
@@ -206,11 +205,16 @@ class Web3Bridge {
         while (true) {
             try {
                 const contract = await this.loadWebsiteContract(target, contractName, version);
-                if (!Array.isArray(params))
+                if (!Array.isArray(params)) {
                     throw Error('Params sent to callContract is not an array');
-                if (!contract.methods[method])
+                }
+
+                if (!contract.methods[method]) {
                     throw Error('Method ' + method + ' does not exist on contract ' + contractName); // todo: sanitize
+                }
+
                 const result = await contract.methods[method](...params).call();
+
                 return result;
             } catch (error) {
                 log.error(
@@ -220,7 +224,8 @@ class Web3Bridge {
                         params,
                         target,
                         error,
-                        stack: error.stack
+                        stack: error.stack,
+                        line: error.line
                     },
                     'Web3 Contract Call error:'
                 );
@@ -500,59 +505,6 @@ class Web3Bridge {
     async toChecksumAddress(address) {
         const checksumAddress = this.web3.utils.toChecksumAddress(address);
         return checksumAddress;
-    }
-    async announceStorageProvider(connection, collateral_lock_period, cost_per_kb) {
-        let contract, method, account, gasPrice;
-        try {
-            contract = await this.loadStorageProviderRegistryContract();
-            method = contract.methods.announce(connection, collateral_lock_period, cost_per_kb);
-            account = config.get('network.hardcode_default_provider');
-            gasPrice = await this.web3.eth.getGasPrice();
-            return await method.send({from: account, gasPrice, gas: 2000000, value: 0.000001e18});
-        } catch (e) {
-            log.error(
-                {
-                    method,
-                    gasPrice,
-                    account,
-                    collateral_lock_period,
-                    cost_per_kb,
-                    error: e.message,
-                    stack: e.stack
-                },
-                'announceStorageProvider error'
-            );
-
-            throw e;
-        }
-    }
-    async getCheapestStorageProvider() {
-        //todo: unused?
-        try {
-            const contract = await this.loadStorageProviderRegistryContract();
-            return contract.methods.getCheapestProvider().call();
-        } catch (e) {
-            log.error({error: e, stack: e.stack}, 'getCheapestStorageProvider error');
-            throw e;
-        }
-    }
-    async getAllStorageProviders() {
-        try {
-            const contract = await this.loadStorageProviderRegistryContract();
-            return contract.methods.getAllProviderIds().call(); // todo: cache response and return cache if exists
-        } catch (e) {
-            log.error({error: e, stack: e.stack}, 'getAllStorageProviders error');
-            throw e;
-        }
-    }
-    async getSingleProvider(address) {
-        try {
-            const contract = await this.loadStorageProviderRegistryContract();
-            return contract.methods.getProvider(address).call();
-        } catch (e) {
-            log.error({error: e, stack: e.stack, address}, 'getSingleProvider error');
-            throw e;
-        }
     }
 }
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
-import {existsSync, writeFileSync, mkdirSync, promises as fs} from 'fs';
+import {existsSync, mkdirSync, promises as fs} from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
@@ -28,7 +28,8 @@ const program: ProgramType<typeof Command> = new Command();
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-program.version(process.env.npm_package_version || 'No version is specified');
+const app = require(path.resolve(__dirname, '..', 'package.json'));
+program.version(app.version || 'No version is specified');
 program.description(`
     Point Network
     https://pointnetwork.io/
@@ -97,7 +98,6 @@ if (program.datadir) {
 
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
-    process.env.STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS = getContractAddress('StorageProviderRegistry');
 }
 
 // Warning: the below imports should take place after the above config patch!
@@ -106,6 +106,7 @@ import config from 'config';
 import logger from './core/log.js';
 import Point from './core/index.js';
 import migrate from './util/migrate';
+import initFolders from './initFolders';
 
 // ------------------- Init Logger ----------------- //
 
@@ -284,20 +285,20 @@ process.on('unhandledRejection', (err: Error) => {
 
 // This is just a dummy file: proper-lockfile handles the lockfile creation,
 // but it's intended to lock some existing file
-
 const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
 
-if (!existsSync(lockfilePath)) {
-    writeFileSync(lockfilePath, 'point');
-}
-
 (async () => {
+    await initFolders();
     try {
+        if (!existsSync(lockfilePath)) {
+            await fs.writeFile(lockfilePath, 'point');
+        }
         await lockfile.lock(lockfilePath);
     } catch (err) {
         log.fatal(err, 'Failed to create lockfile, is point already running?');
         ctx.exit(1);
     }
+
     try {
         await migrate();
     } catch (err) {

@@ -77,7 +77,7 @@ position: relative;">
             {% set emails = contract_get(host, 'PointEmail', 'getAllEmailsByToAddress', [wallet_address]) %}
 
             {% set count = emails|length %}
-            <p>You have {{ count }} emails.</p>
+            <p>You have {{ count }} emails</p>
 
             {% for email in emails %}
 
@@ -87,8 +87,6 @@ position: relative;">
                 {% set encryptedMessageId = email.encryptedMessageId %}
                 {% set createdAt = email.createdAt %}
 
-                {% if to == wallet_address %}
-
                 <tr class="unread" onclick="location.href='/show?messageid={{ encryptedMessageId }}'">
                     <td class="inbox-small-cells">
                         <input type="checkbox" class="mail-checkbox">
@@ -97,9 +95,6 @@ position: relative;">
                     <td class="view-message  dont-show">{{ from_identity }}</td>
                     <td class="view-message ">
                         Message
-                        {% if to != wallet_address %}
-                            <div style="background-color: red;">This message is not for you!</div>
-                        {% endif %}
                     </td>
                     <td class="view-message  inbox-small-cells"></td>
                     <td class="view-message  text-right">
@@ -111,8 +106,6 @@ position: relative;">
                     </td>
 
                 </tr>
-
-                {% endif %}
 
             {% endfor %}
             </tbody>

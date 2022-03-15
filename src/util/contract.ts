@@ -1,24 +1,20 @@
 import path from 'path';
 import {existsSync, readFileSync, writeFileSync} from 'fs';
 
-const defaultBuildPath = path.resolve(__dirname, '..', '..', 'truffle', 'build', 'contracts');
-const defaultContractPath = path.resolve(__dirname, '..', '..', 'truffle', 'contracts');
+const defaultBuildPath = path.resolve(__dirname, '..', '..', 'hardhat', 'build', 'contracts');
+const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
-    const filename = path.resolve(buildPath, `${name}.json`);
+
+    const filename = path.resolve(buildPath, `${name}.sol/${name}-address.json`);
 
     if (!existsSync(filename)) {
         return;
     }
 
-    const {networks} = require(filename);
+    const buildFile = require(filename);
 
-    for (const network in networks) {
-        const {address} = networks[network];
-        if (address && typeof address === 'string') {
-            return address;
-        }
-    }
+    return buildFile.address;
 }
 
 export function getPragmaVersion(source: string) {
@@ -54,13 +50,16 @@ export async function compileContract({
     buildDirPath = defaultBuildPath
 }: ContractCompilerArgs) {
     const sourceFileName = `${name}.sol`;
+
     const buildPath = path.join(buildDirPath, `${name}.json`);
     const filepath = path.join(contractPath, sourceFileName);
+
     if (existsSync(buildPath)) {
         return;
     }
-
+        
     const content = readFileSync(filepath, 'utf8');
+
     const version = getPragmaVersion(content);
     const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
     const compilerProps = {
