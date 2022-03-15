@@ -116,7 +116,7 @@
     "fix": "eslint --ext .js --fix src/ && eslint --ext .js --fix truffle/ && eslint --fix point",
     "lint": "eslint --ext .js src/ && eslint --ext .js truffle/ && eslint point",
     "lint:sol": "solhint 'example/**/contracts/*.sol' 'truffle/contracts/*.sol'",
-    "slither": "find example -type f -name '*.sol' -exec slither '{}' --solc-remaps @openzeppelin=node_modules/@openzeppelin --config slither.config.json  ';'",
+    "slither": "find example -type f -name '*.sol' -exec slither '{}' --print human-sumary --solc-remaps @openzeppelin=node_modules/@openzeppelin --config slither.config.json  ';'",
     "generateMigration": "npm run build && npx sequelize-mig migration:make --name ${npm_config_name}  --indexFilePath dist/db/makeMigrationsEntrypoint.js"
   },
   "jest": {
