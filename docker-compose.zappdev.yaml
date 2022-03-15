@@ -16,7 +16,7 @@ services:
           file: docker-compose.e2e.yaml
           service: contract_deployer
     volumes:
-      - shared_contracts_zappdev:/hardhat/artifacts/contracts:rw
+      - shared_contracts_zappdev:/build:rw
 
   point_node:
     extends:
