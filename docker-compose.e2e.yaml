@@ -27,9 +27,7 @@ services:
 
   contract_deployer:
     container_name: deployer
-    build:
-      context: .
-      dockerfile: ./deployer.Dockerfile
+    image: jensendarren/contract-deployer:develop
     depends_on:
       blockchain_node:
         condition: service_healthy
