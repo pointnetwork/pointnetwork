@@ -2,6 +2,7 @@ import { task } from "hardhat/config";
 import fs = require('fs');
 import { last } from "lodash";
 import { string } from "hardhat/internal/core/params/argumentTypes";
+import { lock } from "proper-lockfile";
 
 //npx hardhat identityImporter upload 0x001fc9C398BF1846a70938c920d0351722F34c83 --migration-file /Users/alexandremelo/.point/src/pointnetwork/resources/migrations/identity-1647299819.json  --network ynet
 //npx hardhat identityImporter download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --network ynet
@@ -107,18 +108,38 @@ task("identityImporter", "Will download and upload data to point identity contra
 
         const data = JSON.parse(fs.readFileSync(taskArgs.migrationFile).toString());
 
+        let processIdentityFrom = 0;
+        let processIkvFrom = 0;
+        let foundLockFile = false;
+
+        if (!fs.existsSync(lockFilePath)) {
+            console.log('Lockfile not found');
+        }else{
+            const lockFile = JSON.parse(fs.readFileSync(lockFilePath).toString());
+            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString()) {
+                console.log('Previous lock file found');
+                console.log(`Last processed identity ${lockFile.identityLastProcessedIndex}`);
+                console.log(`Last IVK param ${lockFile.ikvLastProcessedIndex}`);
+                console.log(lockFile);
+                foundLockFile = true;
+                processIdentityFrom = lockFile.identityLastProcessedIndex;
+                processIkvFrom = lockFile.ikvLastProcessedIndex;
+            }
+        }
+
+  
         let lastIdentityAddedIndex = 0;
         let lastIkvAddedIndex = 0;
-        
         try {
-            console.log(`found ${data.identities.length} identities `);
+            console.log(`found ${data.identities.length}`);
             for (const identity of data.identities) {
                 lastIdentityAddedIndex++;
-                console.log(`migrating ${identity.handle} identities `);
-                if(lastIdentityAddedIndex == 5) {
-                    throw new Error('test error');
+                if(lastIdentityAddedIndex > processIdentityFrom || processIdentityFrom == 0){
+                    console.log(`${lastIdentityAddedIndex} migrating ${identity.handle}`);
+                    await contract.register(identity.handle, identity.owner, identity.keyPart1, identity.keyPart2);
+                }else{
+                    console.log(`Skipping migrated identity ${identity.handle}`)
                 }
-                //await contract.register(identity.handle, identity.owner, identity.keyPart1, identity.keyPart2);
             }
         } catch (error) {
             lockFileStructure.identityLastProcessedIndex = lastIdentityAddedIndex;
@@ -127,24 +148,37 @@ task("identityImporter", "Will download and upload data to point identity contra
             return false;
         }
 
+        lockFileStructure.identityLastProcessedIndex = lastIdentityAddedIndex;
 
-        /*
         try {
+            console.log(`found ${data.ikv.length} IKV params `);
             for (const ikv of data.ikv) {
                 lastIkvAddedIndex++;
-                console.log('Migrating IKV value for: ' + ikv.handle);
-                if(lastIdentityAddedIndex == 5) {
-                    throw new Error('test error');
+                if(lastIkvAddedIndex > processIkvFrom || processIkvFrom == 0){
+                    if(lastIkvAddedIndex == 30) {
+                        throw new Error('test');
+                    }
+                    console.log(`${lastIkvAddedIndex} Migrating IVK param for ${ikv.handle} ${ikv.key} ${ikv.value}`)
+                    await contract.ikvImportKV(ikv.handle, ikv.key, ikv.value, ikv.version);
+                }else{
+                    console.log(`Skipping migrated IVK param for ${ikv.handle} ${ikv.key} ${ikv.value}`)
                 }
-                //await contract.register(identity.handle, identity.owner, identity.keyPart1, identity.keyPart2);
             }
         } catch (error) {
-            lockFileStructure.lastIkvAddedIndex = lastIkvAddedIndex;
+            lockFileStructure.ikvLastProcessedIndex = lastIkvAddedIndex;
+            fs.writeFileSync(lockFilePath, JSON.stringify(lockFileStructure, null, 4));
+            console.log(`Error on ${lastIkvAddedIndex} of ${data.ikv.length} IVK params restart the process to pick-up from last processed item.`);
+            return false;
         }
-            */
 
-        console.log(lockFileStructure);
-
+        if(lastIdentityAddedIndex == data.identities.length && lastIkvAddedIndex == data.ikv.length) {
+            if(foundLockFile) {
+                fs.unlinkSync(lockFilePath);
+            }
+            console.log('Everything processed and uploaded, lock file removed.');
+            await contract.finishMigrations();
+        }
     }
+
   });
 
