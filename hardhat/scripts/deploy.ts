@@ -6,6 +6,7 @@
 import { ethers } from "hardhat";
 const fs = require('fs');
 
+const build_path = process.env.DEPLOYER_BUILD_PATH || './build/';
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -23,7 +24,7 @@ async function main() {
 
   console.log("Identity deployed to:", identity.address);
 
-  fs.writeFileSync('artifacts/contracts/Identity.sol/Identity-address.json', JSON.stringify({address:identity.address}));
+  fs.writeFileSync('/build/contracts/Identity.sol/Identity-address.json', JSON.stringify({address:identity.address}));
   console.log('Identity abi was copied to build folder');
 };
 
