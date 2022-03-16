@@ -1,6 +1,6 @@
 const path = require('path');
 const Web3 = require('web3');
-const fs = require('fs');
+const {promises: fs} = require('fs');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
@@ -13,6 +13,7 @@ const {compileContract} = require('../util/contract');
 const log = logger.child({module: 'Web3Bridge'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
 const {utils, resolveHome} = require('../core/utils');
+const {getFile} = require('../client/storage');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -64,32 +65,46 @@ class Web3Bridge {
     async start() { }
 
     async loadPointContract(contractName, at) {
-
         if (!(contractName in abisByContractName)) {
-
             const buildDirPath = path.resolve(
                 resolveHome(config.get('datadir')),
-                'contracts'
+                config.get('network.contracts_path')
             );
             
             const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
-            if (!fs.existsSync(abiFileName)) {
-                if (!fs.existsSync(buildDirPath)) {
-                    fs.mkdirSync(buildDirPath, {recursive: true});
+            try {
+                await fs.stat(abiFileName);
+            } catch (e) {
+                log.debug(`${contractName} contract not found`);
+
+                const mode = config.get('mode');
+                if (contractName === 'Identity' && mode !== 'e2e' && mode !== 'zappdev') {
+                    try {
+                        log.debug('Fetching Identity contract from storage');
+                        const abiFile = await getFile(config.get('identity_contract_id'));
+                        await fs.writeFile(abiFileName, abiFile);
+
+                        log.debug('Successfully fetched identity contract from storage');
+                        return;
+                    } catch (e) {
+                        log.error('Failed to fetch Identity contract from storage: ' + e.message);
+                    }
                 }
 
+                log.debug(`Compiling ${contractName} contract`);
                 const contractPath = path.resolve(
                     this.ctx.basepath,
                     '..',
                     'hardhat',
                     'contracts'
                 );
-
                 await compileContract({name: contractName, contractPath, buildDirPath});
+
+                log.debug('Identity contract successfully compiled');
             }
 
-            const abiFile = JSON.parse(fs.readFileSync(abiFileName));
+            const abiFile = JSON.parse(await fs.readFile(abiFileName, 'utf8'));
 
             abisByContractName[contractName] = abiFile.abi;
         }
