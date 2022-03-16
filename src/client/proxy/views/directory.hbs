@@ -1,0 +1,30 @@
+<html>
+
+<body style='background-color: #fafaff; padding: 20px;'>
+  <style>
+    th {
+      text-align: left;
+    }
+  </style>
+  <h1>Index of {{ id }}</h1>
+  <hr>
+  <table style='width: 100%;'>
+    <tr>
+      <th>File</th>
+      <th style='text-align: right;'>Size</th>
+      <th style='text-align: right;'>Hash</th>
+    </tr>
+    {{#each filesInfo}}
+    <tr>
+      <td> {{{ icon }}} <a href='{{ link }}' target='_blank'>
+          {{ name }};
+        </a></td>
+
+      <td style='text-align: right;'>{{ size }}</td>
+      <td style='text-align: right;'><em>{{ fileId }}</em></td>
+    </tr>
+    {{/each}}
+  </table>
+</body>
+
+</html>
