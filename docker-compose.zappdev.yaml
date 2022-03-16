@@ -86,6 +86,7 @@ services:
       - arlocal_data:/home/node/:rw
 
 volumes:
+  blockchain_data_e2e:
   blockchain_data_zappdev:
   shared_contracts_zappdev:
   point_node_data_zappdev:

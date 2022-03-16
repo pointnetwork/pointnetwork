@@ -18,12 +18,16 @@ services:
     ports:
       - '7545:7545'
     volumes:
-      - ./resources/geth_datadir:/root/data
-      - ./resources/geth_passwords.txt:/root/geth_passwords.txt
+      - blockchain_data_e2e:/root/data:rw
+      - ./resources/geth_datadir/keystore:/root/data/keystore
+      - ./resources/geth-genesis.json:/root/geth-genesis.json
+      - ./resources/geth_passwords:/root/geth_passwords.txt
+      - ./resources/geth-init.sh:/root/geth-init.sh
     environment:
       - DOCKER=true
+    entrypoint: sh /root/geth-init.sh
     command: |
-      --nodiscover --datadir /root/data --networkid 15 --ws --ws.addr 0.0.0.0 -ws.port 7545 --ws.api eth,net,web3,personal --ws.origins '*' --http --http.api eth,net,web3,personal --http.addr 0.0.0.0 --http.port 7545 --http.corsdomain '*' --http.vhosts=blockchain_node --allow-insecure-unlock --unlock 8D94F8CAB38168AD421D2CF567c1da72c0ef8414 --password /root/geth_passwords.txt --mine
+      --nodiscover --datadir /root/data --networkid 15 --http --http.api eth,net,web3,personal --http.addr 0.0.0.0 --http.port 7545 --http.corsdomain '*' --http.vhosts=blockchain_node --allow-insecure-unlock --unlock 8D94F8CAB38168AD421D2CF567c1da72c0ef8414 --password /root/geth_passwords.txt --mine
 
   contract_deployer:
     container_name: deployer
