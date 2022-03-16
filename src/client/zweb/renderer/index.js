@@ -5,6 +5,7 @@ const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage')
 const config = require('config');
 const logger = require('../../../core/log');
 const {getNetworkPrivateKey, getNetworkAddress, getNetworkPublicKey} = require('../../../wallet/keystore');
+const readFileByPath = require('../../readFileByPath');
 const log = logger.child({module: 'Renderer'});
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
@@ -329,7 +330,7 @@ class Renderer {
             const templateFileId = await getFileIdByPath(this.rootDirId, templatePath);
             return getFile(templateFileId, 'utf8');
         } else {
-            return this.localDir.readFileByPath(templatePath, 'utf-8');
+            return readFileByPath(this.localDir, templatePath, 'utf-8');
         }
     }
 
