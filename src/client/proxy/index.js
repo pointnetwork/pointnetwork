@@ -23,6 +23,7 @@ const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxy'});
 const detectContentType = require('detect-content-type');
 const {getNetworkAddress} = require('../../wallet/keystore');
+const blockchain = require('../../network/blockchain');
 
 class ZProxy {
     constructor(ctx) {
@@ -801,7 +802,7 @@ class ZProxy {
                     }
 
                     try {
-                        await this.ctx.web3bridge.sendToContract(
+                        await blockchain.sendToContract(
                             host,
                             contractName,
                             methodName,
@@ -830,7 +831,7 @@ class ZProxy {
 
     async getRootDirectoryIdForDomain(host, version = 'latest') {
         const key = '::rootDir';
-        const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key, version);
+        const rootDirId = await blockchain.getKeyValue(host, key, version);
         if (!rootDirId)
             throw Error(
                 'getRootDirectoryIdForDomain failed: key ' + key + ' returned empty: ' + rootDirId
@@ -839,7 +840,7 @@ class ZProxy {
     }
 
     async getZRouteIdFromDomain(host, version = 'latest') {
-        const result = await this.ctx.web3bridge.getZRecord(host, version);
+        const result = await blockchain.getZRecord(host, version);
         return result;
 
         // const records = await this.getZDNSRecordsFromDomain(host);
