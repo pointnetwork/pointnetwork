@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   blockchain_node:
-    image: trufflesuite/ganache-cli:v6.12.2
+    image: ethereum/client-go
     container_name: blockchain
     hostname: blockchain_node
     healthcheck:
@@ -18,12 +18,12 @@ services:
     ports:
       - '7545:7545'
     volumes:
-      - blockchain_data_e2e:/data:rw
+      - ./resources/geth_datadir:/root/data
+      - ./resources/geth_passwords.txt:/root/geth_passwords.txt
     environment:
       - DOCKER=true
     command: |
-      -v -p 7545 -i 256 --keepAliveTimeout 20000 --db /data \
-        --account 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e,0x56bc75e2d63100000
+      --nodiscover --datadir /root/data --networkid 15 --http --http.api eth,net,web3,personal --http.addr 0.0.0.0 --http.port 7545 --allow-insecure-unlock --unlock 8D94F8CAB38168AD421D2CF567c1da72c0ef8414 --password /root/geth_passwords.txt --mine
 
   contract_deployer:
     container_name: deployer
@@ -42,9 +42,9 @@ services:
     environment:
       BLOCKCHAIN_HOST: blockchain_node
       BLOCKCHAIN_PORT: 7545
-      BLOCKCHAIN_NETWORK_ID: 256
+      BLOCKCHAIN_NETWORK_ID: 15
       DEPLOYER_COMPILER_VERSION: native
-      DEPLOYER_ACCOUNT: 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e
+      DEPLOYER_ACCOUNT: 0xcddcfe7e2fe142395313d03381214d9e2eadf79b083b0128aab91fc77826067e
       DEPLOYER_BUILD_PATH: /build
 
   point_node:
