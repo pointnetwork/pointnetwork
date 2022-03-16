@@ -36,7 +36,7 @@ try {
 
 module.exports = Object.assign(logger, {
     close() {
-        for (const {stream} in streams) {
+        for (const {stream} of streams) {
             if (stream && typeof stream.close === 'function') {
                 stream.close();
             }
