@@ -28,7 +28,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 
 
-const privateKey = process.env.DEPLOYER_ACCOUNT || '0xcddcfe7e2fe142395313d03381214d9e2eadf79b083b0128aab91fc77826067e';
+const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
 const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
