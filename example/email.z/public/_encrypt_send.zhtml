@@ -1,10 +1,12 @@
 {{ csrf_guard(request._csrf) }}
 
-{% if identity_check_availability(request.recipient) == false %}
+{% set emailaddr = request.recipient|replace({'@': ''}) %}
 
-  {% set identity_owner = owner_by_identity(request.recipient) %}
+{% if identity_check_availability(emailaddr) == false %}
+
+  {% set identity_owner = owner_by_identity(emailaddr) %}
   {#<p>Identity owner: {{ identity_owner }}#}
-  {% set identity_comm_public_key = public_key_by_identity(request.recipient) %}
+  {% set identity_comm_public_key = public_key_by_identity(emailaddr) %}
   {#<p>Identity comm public key: {{ identity_comm_public_key }}#}
   {% set encrypted_results = encrypt_data(identity_comm_public_key, request.message) %}
   {#<p>Encrypted_results: {{ encrypted_results }}#}
@@ -22,7 +24,7 @@
 
 {% endif %}
 <html>
-    <body>
-      <script>location.href='/'</script>
-    </body>
-  </html>
+  <body>
+    <script>location.href='/'</script>
+  </body>
+</html>
