@@ -1,11 +1,9 @@
 import { task } from "hardhat/config";
 import fs = require('fs');
 
-
-//npx hardhat twitter-importer upload 0x86118C8C26f9a22CB52289B84f431F767bea1656 --migration-file /Users/alexandremelo/.point/src/pointnetwork/resources/migrations/blog-1647479501.json  --network ynet
+//npx hardhat twitter-importer upload NEW_TWITTER_CONTRACT --migration-file ../resources/migrations/twitter-TIMESTAMP.json  --network ynet
 //npx hardhat twitter-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --network ynet
-//npx hardhat twitter-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to /Users/alexandremelo/.point/src/pointnetwork/hardhat/  --network ynet
-
+//npx hardhat twitter-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to ../resources/migrations/  --network ynet
 
 task("twitter-importer", "Will download and upload data to point identity contract")
   .addPositionalParam("action", 'Use with "download" and "upload options"')
@@ -45,21 +43,19 @@ task("twitter-importer", "Will download and upload data to point identity contra
         while(keepSearchingTweets) {
             try{
                 const {from, contents, timestamp, likes} = await twitter.getTweet(tweetCounter.toString());
-                
                 const tweet = {
                     from,
                     contents,
                     timestamp:timestamp.toString(),
                     likes:likes.toString()
                 };
-            
                 tweets.push(tweet);
                 console.log('Found tweet ' + tweetCounter + ' from ' + from);
                 tweetCounter++;
             } catch (error) {
                 console.log('Finished');
                 keepSearchingTweets = false;
-            }   
+            }
         }
 
         fileStructure.tweets = tweets;
@@ -101,7 +97,7 @@ task("twitter-importer", "Will download and upload data to point identity contra
             console.log(`Lockfile not found, adding migrator ${owner.address}`);
         }else{
             const lockFile = JSON.parse(fs.readFileSync(lockFilePath).toString());
-            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() && 
+            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() &&
                 lockFile.contract == taskArgs.contract.toString()) {
                 console.log('Previous lock file found');
                 foundLockFile = true;
@@ -125,7 +121,7 @@ task("twitter-importer", "Will download and upload data to point identity contra
                     console.log(`Skipping migrated twitter from ${tweet.from}`);
                 }
             }
-        
+
             if(fs.existsSync(lockFilePath)) {
                 fs.unlinkSync(lockFilePath);
             }
@@ -134,7 +130,7 @@ task("twitter-importer", "Will download and upload data to point identity contra
         } catch (error) {
             lockFileStructure.lastProcessedTweet = lastProcessedTweet;
             fs.writeFileSync(lockFilePath, JSON.stringify(lockFileStructure, null, 4));
-            console.log(`Error on Blog import restart the process to pick-up from last processed item.`);
+            console.log(`Error on Twitter import restart the process to pick-up from last processed item.`);
             return false;
         }
 
