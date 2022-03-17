@@ -1,11 +1,11 @@
 const path = require('path');
 const Web3 = require('web3');
 const ethereumjs = require('ethereumjs-util');
-const fs = require('fs');
+const {promises: fs} = require('fs');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
-const {getJSON} = require('../client/storage');
+const {getFile, getJSON} = require('../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
@@ -13,7 +13,7 @@ const logger = require('../core/log');
 const {compileAndSaveContract} = require('../util/contract');
 const log = logger.child({module: 'Blockchain'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
-const {utils, resolveHome} = require('../core/utils');
+const utils = require('../core/utils');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -54,24 +54,53 @@ const web3 = createWeb3Instance({
 // Client that consolidates all blockchain-related functionality
 const blockchain = {};
 
-blockchain.loadPointContract = async (contractName, at, basepath) => {
-    basepath = basepath || path.resolve(__dirname, '..');
-
+blockchain.loadPointContract = async (
+    contractName,
+    at,
+    basepath = path.resolve(__dirname, '..')
+) => {
     if (!(contractName in abisByContractName)) {
-        const buildDirPath = path.resolve(resolveHome(config.get('datadir')), 'contracts');
+        const buildDirPath = path.resolve(
+            utils.resolveHome(config.get('datadir')),
+            config.get('network.contracts_path')
+        );
 
         const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
-        if (!fs.existsSync(abiFileName)) {
-            if (!fs.existsSync(buildDirPath)) {
-                fs.mkdirSync(buildDirPath, {recursive: true});
+        try {
+            await fs.stat(abiFileName);
+        } catch (e) {
+            log.debug(`${contractName} contract not found`);
+
+            const mode = config.get('mode');
+            if (contractName === 'Identity' && mode !== 'e2e' && mode !== 'zappdev') {
+                try {
+                    log.debug('Fetching Identity contract from storage');
+                    const abiFile = await getFile(config.get('identity_contract_id'));
+                    await fs.writeFile(abiFileName, abiFile);
+
+                    log.debug('Successfully fetched identity contract from storage');
+
+                    abisByContractName[contractName] = JSON.parse(abiFile).abi;
+                    return new web3.eth.Contract(abisByContractName[contractName], at);
+                } catch (e) {
+                    log.error('Failed to fetch Identity contract from storage: ' + e.message);
+                }
             }
 
-            const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
+            log.debug(`Compiling ${contractName} contract`);
+            const contractPath = path.resolve(
+                basepath,
+                '..',
+                'hardhat',
+                'contracts'
+            );
             await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
+
+            log.debug('Identity contract successfully compiled');
         }
 
-        const abiFile = JSON.parse(fs.readFileSync(abiFileName));
+        const abiFile = JSON.parse(await fs.readFile(abiFileName, 'utf8'));
 
         abisByContractName[contractName] = abiFile.abi;
     }
@@ -616,7 +645,7 @@ blockchain.getTransactionsByAccount = async (account, startBlockNumber, endBlock
     return txs;
 };
 
-blockchain.getOwner = () => getNetworkAddress();
+blockchain.getOwner = () => web3.utils.toChecksumAddress(getNetworkAddress());
 
 blockchain.getGasPrice = async () => {
     const gasPrice = await web3.eth.getGasPrice();
