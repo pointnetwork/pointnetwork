@@ -3,9 +3,9 @@ import fs = require('fs');
 import { BigNumber } from "ethers";
 
 
-//npx hardhat blog-importer upload 0x86118C8C26f9a22CB52289B84f431F767bea1656 --migration-file /Users/alexandremelo/.point/src/pointnetwork/resources/migrations/blog-1647479501.json  --network ynet
+//npx hardhat blog-importer upload BLOG_CONTRACT_ADDRESS --migration-file ..resources/migrations/blog-TIMESTAMP.json--network ynet
 //npx hardhat blog-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --network ynet
-//npx hardhat blog-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to /Users/alexandremelo/.point/src/pointnetwork/hardhat/  --network ynet
+//npx hardhat blog-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to ../resources/migrations/  --network ynet
 
 task("blog-importer", "Will download and upload data to point blog contract")
   .addPositionalParam("action", 'Use with "download" and "upload options"')
@@ -50,19 +50,21 @@ task("blog-importer", "Will download and upload data to point blog contract")
 
         for (const item of data) {
             const {id, author, title, contents, timestamp} = item;
-    
+
             console.log('Fetching post:' + id);
-            const comments = await blog.getCommentsByArticle(id);
-            
+            const commentsRaw = await blog.getCommentsByArticle(id);
+            // convert last element of comments array (timestamp) to string
+            const comments = commentsRaw.map((c:any) => [c[0], c[1], c[2].toString()])
+
             const article = {
                 id:id.toString(),
                 author,
                 title,
                 contents,
-                timestamp,
+                timestamp:timestamp.toString(),
                 comments
             };
-    
+
             articles.push(article);
         }
 
@@ -82,7 +84,7 @@ task("blog-importer", "Will download and upload data to point blog contract")
         }
 
         const data = JSON.parse(fs.readFileSync(taskArgs.migrationFile).toString());
-    
+
         let processCommentsFrom = 0;
         let processArticlesFrom = 0;
         let lastProcessedArticle = 0;
@@ -109,7 +111,7 @@ task("blog-importer", "Will download and upload data to point blog contract")
             console.log(`Lockfile not found, adding migrator ${owner.address}`);
         }else{
             const lockFile = JSON.parse(fs.readFileSync(lockFilePath).toString());
-            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() && 
+            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() &&
                 lockFile.contract == taskArgs.contract.toString()) {
                 console.log('Previous lock file found');
                 foundLockFile = true;
@@ -127,7 +129,7 @@ task("blog-importer", "Will download and upload data to point blog contract")
                 lastProcessedArticle++;
                 if(lastProcessedArticle > processArticlesFrom || processArticlesFrom == 0){
                    console.log(`${lastProcessedArticle} Migrating: Blog post from ${article.author} contents ${article.contents}`);
-                    
+
                     await blog.add(
                         article.id,
                         article.author,
@@ -139,17 +141,17 @@ task("blog-importer", "Will download and upload data to point blog contract")
                     console.log(`Skipping migrated article ${article.title}`);
                 }
             }
-        
+
             for (const postId in articleComments){
                 for (const comment of articleComments[postId]) {
                     lastProcessedComment++;
                     if(lastProcessedComment > processCommentsFrom || processCommentsFrom == 0){
                         const author = comment[0];
                         const contents = comment[1];
-                        const timestamp =  ethers.BigNumber.from(comment[2].hex);
+                        const timestamp =  comment[2];
 
                         console.log(`${lastProcessedComment} Migrating comment from article ${postId} from ${author}`);
-            
+
                         await blog.addComment(
                             postId,
                             author,
@@ -171,7 +173,7 @@ task("blog-importer", "Will download and upload data to point blog contract")
             lockFileStructure.lastProcessedArticle = lastProcessedArticle;
             lockFileStructure.lastProcessedComment = lastProcessedComment;
             fs.writeFileSync(lockFilePath, JSON.stringify(lockFileStructure, null, 4));
-            console.log(`Error on Blog import restart the process to pick-up from last processed item.`);
+            console.log(`Error on Blog import restart the process to pick-up from last processed item ${error}`);
             return false;
         }
     }
