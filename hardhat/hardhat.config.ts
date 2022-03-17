@@ -3,10 +3,15 @@ import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
-import "hardhat-gas-reporter";
-import "solidity-coverage";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
+import "./tasks/importer/identity";
+import "./tasks/importer/blog";
+import "./tasks/importer/pointSocial";
+import "./tasks/importer/twitter";
+import "./tasks/deploy/upgradable";
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
@@ -28,25 +33,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-
-task("deploy-upgradable", "Deploy Upgradable Contract")
-  .addParam("zapp", "Zapp that will be deployed")
-  .setAction(async (taskArgs, hre) => {
-    console.log("Deploying upgradable " + taskArgs.zapp);
-    //2.fazer deploy dos contratos
-    console.log('1');
-    let PointSocial = await hre.ethers.getContractFactory("PointSocial");
-    console.log('2');
-    let pointsocial = await hre.upgrades.deployProxy(PointSocial, [], { kind: 'uups' });
-    console.log('3');
-    await pointsocial.deployed();
-    console.log('4');
-  });
-
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
 const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
-const networkid = process.env.BLOCKCHAIN_NETWORK_ID || '*';
+const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
 
 const devaddress = 'http://' + host + ':' + port
 
@@ -69,13 +59,22 @@ const config: HardhatUserConfig = {
             }
         ],
     },
-  networks: {
-    development: {
-      url: devaddress,
-      accounts:
-        [privateKey],
+    paths: {
+        artifacts:build_path
     },
-  }
+    networks: {
+        development: {
+            url: devaddress,
+            accounts:
+            [privateKey],
+        },
+        ynet: {
+          url: 'http://ynet.point.space:44444',
+          accounts:
+            ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
+        },
+    },
+    
 };
 
 

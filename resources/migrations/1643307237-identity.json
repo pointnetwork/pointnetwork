@@ -281,197 +281,236 @@
         {
             "handle": "hello",
             "key": "zweb/contracts/address/Hello",
-            "value": "0xDaF0079DA200DC465B737e11001b8aE257722699"
+            "value": "0xDaF0079DA200DC465B737e11001b8aE257722699",
+            "version": "0.1.0"
         },
         {
             "handle": "hello",
             "key": "zweb/contracts/abi/Hello",
-            "value": "70a7ebdb4f6a1d6c9e55a3e2c4d4c5734373dc8a8b3ee519be440542f59bbb75"
+            "value": "70a7ebdb4f6a1d6c9e55a3e2c4d4c5734373dc8a8b3ee519be440542f59bbb75",
+            "version": "0.1.0"
         },
         {
             "handle": "hello",
             "key": "::rootDir",
-            "value": "015100004bbebef821240482c31b2a33006d40f47f0d30bb8741051357df0061"
+            "value": "015100004bbebef821240482c31b2a33006d40f47f0d30bb8741051357df0061",
+            "version": "0.1.0"
         },
         {
             "handle": "hello",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "twitter",
             "key": "zweb/contracts/address/Twitter",
-            "value": "0x53C2b12804cbAC0D98396F6c798220Fc2c436c4c"
+            "value": "0x53C2b12804cbAC0D98396F6c798220Fc2c436c4c",
+            "version": "0.1.0"
         },
         {
             "handle": "twitter",
             "key": "zweb/contracts/abi/Twitter",
-            "value": "03575fe9938f7bb2160d998eee3fecf3452f99917fe37e07189c7bf95bb04947"
+            "value": "03575fe9938f7bb2160d998eee3fecf3452f99917fe37e07189c7bf95bb04947",
+            "version": "0.1.0"
         },
         {
             "handle": "twitter",
             "key": "::rootDir",
-            "value": "95984d57d8064735ddcec9b06105072a841b844c8f7a0622857eb3b58e7e83d5"
+            "value": "95984d57d8064735ddcec9b06105072a841b844c8f7a0622857eb3b58e7e83d5",
+            "version": "0.1.0"
         },
         {
             "handle": "twitter",
             "key": "zdns/routes",
-            "value": "0x1782fd9de28bff7ed5fffffd702caa022c851d89f019d54e7706512a469a5d3a"
+            "value": "0x1782fd9de28bff7ed5fffffd702caa022c851d89f019d54e7706512a469a5d3a",
+            "version": "0.1.0"
         },
         {
             "handle": "blog",
             "key": "zweb/contracts/address/Blog",
-            "value": "0xf3Edb6Da3BCD308a15A2863d2447920727C2A496"
+            "value": "0xf3Edb6Da3BCD308a15A2863d2447920727C2A496",
+            "version": "0.1.0"
         },
         {
             "handle": "blog",
             "key": "zweb/contracts/abi/Blog",
-            "value": "5649852df4a7aa07db645ae980ee110af37f0196dada8c3060b1093683f767cf"
+            "value": "5649852df4a7aa07db645ae980ee110af37f0196dada8c3060b1093683f767cf",
+            "version": "0.1.0"
         },
         {
             "handle": "blog",
             "key": "::rootDir",
-            "value": "e624a2f9001fcd324b2041128501d76b08d43a93c8164d9986da9e08e02d1eb3"
+            "value": "e624a2f9001fcd324b2041128501d76b08d43a93c8164d9986da9e08e02d1eb3",
+            "version": "0.1.0"
         },
         {
             "handle": "blog",
             "key": "zdns/routes",
-            "value": "0x8fd491e39b7e26ad37b7e64799beffd4f3dc60661b17ea99920d8cd20d1b9e85"
+            "value": "0x8fd491e39b7e26ad37b7e64799beffd4f3dc60661b17ea99920d8cd20d1b9e85",
+            "version": "0.1.0"
         },
         {
             "handle": "zengarden",
             "key": "::rootDir",
-            "value": "baa461f44b9ef418fb21460e091432c5932fe89d9ddb42da659719a5d6bb1c9c"
+            "value": "baa461f44b9ef418fb21460e091432c5932fe89d9ddb42da659719a5d6bb1c9c",
+            "version": "0.1.0"
         },
         {
             "handle": "zengarden",
             "key": "zdns/routes",
-            "value": "0xd0f1e505dbd753fd4a256fe710155520ee65db1067b9f1322b6c0209d0db9872"
+            "value": "0xd0f1e505dbd753fd4a256fe710155520ee65db1067b9f1322b6c0209d0db9872",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zweb/contracts/address/PointSocial",
-            "value": "0xdD1Cc0d16217D7681C426e7F861277F8D0F6b5ED"
+            "value": "0xdD1Cc0d16217D7681C426e7F861277F8D0F6b5ED",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zweb/contracts/abi/PointSocial",
-            "value": "105a6b1df72983776daf50324c39b88e3a07b3b1695132d54ff0416736c2755c"
+            "value": "105a6b1df72983776daf50324c39b88e3a07b3b1695132d54ff0416736c2755c",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "::rootDir",
-            "value": "37344693d49963cb84787dbde590007787d23f1552910564c7c71565bb8d72b2"
+            "value": "37344693d49963cb84787dbde590007787d23f1552910564c7c71565bb8d72b2",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "twitter",
             "key": "zweb/contracts/address/Twitter",
-            "value": "0x3D04Db3A9Ff6B2D1A01C52C4E074B33023464aa1"
+            "value": "0x3D04Db3A9Ff6B2D1A01C52C4E074B33023464aa1",
+            "version": "0.1.0"
         },
         {
             "handle": "hello",
             "key": "::rootDir",
-            "value": "916e7eb9e187027245cff0af9caacbd326937d60bfd2a45826dcaa0bc3198b28"
+            "value": "916e7eb9e187027245cff0af9caacbd326937d60bfd2a45826dcaa0bc3198b28",
+            "version": "0.1.0"
         },
         {
             "handle": "hello",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "email",
             "key": "zweb/contracts/address/PointEmail",
-            "value": "0x4C3538E365aED861717EDD7665D6DA0EfE9224bA"
+            "value": "0x4C3538E365aED861717EDD7665D6DA0EfE9224bA",
+            "version": "0.1.0"
         },
         {
             "handle": "email",
             "key": "zweb/contracts/abi/PointEmail",
-            "value": "024372b3ddbb8cabe176c55816097d7e89bf6355a62053fa3104aec3951622d5"
+            "value": "024372b3ddbb8cabe176c55816097d7e89bf6355a62053fa3104aec3951622d5",
+            "version": "0.1.0"
         },
         {
             "handle": "email",
             "key": "::rootDir",
-            "value": "faf00cc6d2adcc5e8802a780bc866ed7755bbb30246ae319269265dad51d667f"
+            "value": "faf00cc6d2adcc5e8802a780bc866ed7755bbb30246ae319269265dad51d667f",
+            "version": "0.1.0"
         },
         {
             "handle": "email",
             "key": "zdns/routes",
-            "value": "0xd2d4a39a4d2af70fc3ad6402f1e8b6334f8eff13e1f6f952397354df117764af"
+            "value": "0xd2d4a39a4d2af70fc3ad6402f1e8b6334f8eff13e1f6f952397354df117764af",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "::rootDir",
-            "value": "f7a7b5a411ef9bf390d05ac484ff4949149b80f11256bd23942eac3e4c7fc001"
+            "value": "f7a7b5a411ef9bf390d05ac484ff4949149b80f11256bd23942eac3e4c7fc001",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "::rootDir",
-            "value": "672c29c9b012df3ded33c12d21be7c5564044a23e94fde025e4447c1f91062e9"
+            "value": "672c29c9b012df3ded33c12d21be7c5564044a23e94fde025e4447c1f91062e9",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "::rootDir",
-            "value": "82dba9115987ba33f164279346b7c5fc4ca403fbb1247a34f27ac57e42a9a665"
+            "value": "82dba9115987ba33f164279346b7c5fc4ca403fbb1247a34f27ac57e42a9a665",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "::rootDir",
-            "value": "27a530b5372dda406955eec4ec289ddc4feb1bd57737ed8cfa07d80cfd1b1b84"
+            "value": "27a530b5372dda406955eec4ec289ddc4feb1bd57737ed8cfa07d80cfd1b1b84",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "::rootDir",
-            "value": "12b05307c23cc2d0cacae6bb60624ecb5c6c2286339909db3e4f6a15eeb41340"
+            "value": "12b05307c23cc2d0cacae6bb60624ecb5c6c2286339909db3e4f6a15eeb41340",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "::rootDir",
-            "value": "12b05307c23cc2d0cacae6bb60624ecb5c6c2286339909db3e4f6a15eeb41340"
+            "value": "12b05307c23cc2d0cacae6bb60624ecb5c6c2286339909db3e4f6a15eeb41340",
+            "version": "0.1.0"
         },
         {
             "handle": "pointsocial",
             "key": "zdns/routes",
-            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d"
+            "value": "0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d",
+            "version": "0.1.0"
         },
         {
             "handle": "email",
             "key": "::rootDir",
-            "value": "536b8ab6655eff689baf86c56dcb455b8e1c3c35d6011203f1c6c015148d7283"
+            "value": "536b8ab6655eff689baf86c56dcb455b8e1c3c35d6011203f1c6c015148d7283",
+            "version": "0.1.0"
         },
         {
             "handle": "email",
             "key": "zdns/routes",
-            "value": "0xd2d4a39a4d2af70fc3ad6402f1e8b6334f8eff13e1f6f952397354df117764af"
+            "value": "0xd2d4a39a4d2af70fc3ad6402f1e8b6334f8eff13e1f6f952397354df117764af",
+            "version": "0.1.0"
         }
     ]
 }

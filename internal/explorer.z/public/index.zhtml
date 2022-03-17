@@ -13,26 +13,6 @@
     <p>If you can see this page, this means you've successfully installed the alpha! You're amazing! Please send the screenshot to the group.</p>
     <p>There's not much content in here, but we will be filling it up from now on</p>
 
-    <h5>Statistics</h5>
-
-    {% set identity_handles = contract_list('@', 'Identity', 'identityList') %}
-
-    {% set zapp_counter = 0 %}
-
-    {% for identity_handle in identity_handles %}
-        {% set zapp_routes = contract_get('@', 'Identity', 'ikvGet', [identity_handle,'zdns/routes']) %}
-        {% if(zapp_routes) %}
-        {% set zapp_counter = zapp_counter + 1 %}
-        {% endif %}
-    {% endfor %}
-
-    <ul>
-        <li>Total Identities: {{ identity_handles|length }}</li>
-        <li>Total Deployed Zapps: {{ zapp_counter }}</li>
-    </ul>
-
-    <br>
-
     <h5>Explore deployed websites</h5>
 
     {% set websites = {
@@ -46,7 +26,8 @@
     <style>ul { margin-bottom: 0; }</style>
     {% set zapp_listed_counter = 0 %}
     {% for k,v in websites %}
-        {% if (k|replace({'.z': ''})) in identity_handles %}
+        {% set zapp_routes = contract_get('@', 'Identity', 'ikvGet', [k|replace({'.z': ''}),'zdns/routes']) %}
+        {% if(zapp_routes) %}
             <ul>
                 <li><a href="{{ 'https://' ~ k }}" target="_blank">{{ k }} &mdash; {{ v }}</a></li>
             </ul>

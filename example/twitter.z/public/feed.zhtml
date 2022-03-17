@@ -3,7 +3,7 @@
 {% block contents %}
     {% set username = request.username %}
     {% set owner = owner_by_identity( request.username ) %}
-    {% set tweets = contract_list(host, 'Twitter', 'getTweetByOwner', [owner]) %}
+    {% set tweets = contract_get(host, 'Twitter', 'getTweetsByOwner', [owner], version) %}
 
     {% for tweet in tweets %}
         {% include 'tweet.zhtml' %}

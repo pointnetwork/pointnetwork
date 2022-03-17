@@ -36,8 +36,22 @@ jobs:
     - run: npm i -g npm
     - run: npm install
 
+    - name: Installing Slither
+      run: pip3 install slither-analyzer
+
+    - name: Installing Solc-select
+      run: pip3 install solc-select
+
+    - name: Installing Solc 0.8.0
+      run: solc-select install 0.8.0
+    
+    - name: Setting up right solc version
+      run: solc-select use 0.8.0
+
     - name: Run Lint
       run: npm run lint
     - name: Run Solhint
       run: npm run lint:sol
+    - name: Run Slither
+      run: npm run slither
 

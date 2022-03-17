@@ -6,6 +6,7 @@ alias point-zappdev="docker compose --env-file .env.zappdev -f docker-compose.za
 alias point-browser-owner="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 alias point-browser-visitor="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 
+# build a local image from the current working branch
 build-image() {
     local image=$(git branch --show-current | sed 's/[^a-zA-Z0-9]/-/g');
 

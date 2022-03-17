@@ -1,6 +1,7 @@
 {
   "name": "hardhat-project",
   "devDependencies": {
+    "@openzeppelin/contracts": "^4.4.2",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.1",
     "@nomiclabs/hardhat-waffle": "^2.0.2",
@@ -33,5 +34,8 @@
     "ts-node": "^10.5.0",
     "typechain": "^5.2.0",
     "typescript": "^4.5.5"
+  },
+  "scripts": {
+    "start": "npx hardhat run scripts/deploy.ts --network development"
   }
 }

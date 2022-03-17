@@ -1,25 +1,13 @@
 import {Sequelize} from 'sequelize';
 import {Umzug, SequelizeStorage, MigrationError} from 'umzug';
-import config from 'config';
 import path from 'path';
-import {resolveHome} from '../core/utils';
 import logger from '../core/log';
+import {Database} from '../db';
 
 const log = logger.child({module: 'migrate'});
 
 export default (async () => {
-    const dbConfig: DatabaseConfig = config.get('db');
-    const storage = path.join(resolveHome(config.get('datadir')), dbConfig.storage);
-    const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
-        host: dbConfig.host,
-        port: dbConfig.port,
-        dialect: dbConfig.dialect,
-        define: dbConfig.define,
-        storage,
-        logQueryParameters: true,
-        logging: false
-    });
-
+    const sequelize = Database.init();
     const migrations = path.resolve(__dirname, '..', '..', 'migrations', 'database', '*.js');
     const umzug = new Umzug({
         migrations: {
@@ -41,7 +29,6 @@ export default (async () => {
 
     try {
         await umzug.up();
-        await sequelize.close();
     } catch (e) {
         log.error(e);
         if (e instanceof MigrationError) {

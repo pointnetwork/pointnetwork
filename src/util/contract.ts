@@ -5,8 +5,7 @@ const defaultBuildPath = path.resolve(__dirname, '..', '..', 'hardhat', 'build',
 const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
 
 export function getContractAddress(name: string, buildPath = defaultBuildPath) {
-    
-    const filename = path.resolve(buildPath, `${name}-address.json`);
+    const filename = path.resolve(buildPath, `${name}.sol/${name}-address.json`);
 
     if (!existsSync(filename)) {
         return;
@@ -27,38 +26,50 @@ export function getPragmaVersion(source: string) {
     }
 }
 
-// TODO: unify with the same function from Deployer
-export function getImports(dependency: string) {
-    const dependencyNodeModulesPath = path.join(__dirname, '..', '..', 'node_modules', dependency);
-    if (!existsSync(dependencyNodeModulesPath)) {
+type GetImportsFunc = (dependency: string) => {contents: string};
+export function getImportsFactory(nodeModulesPath: string, originalPath: string): GetImportsFunc {
+    return function(dependency) {
+        const dependencyNodeModulesPath = path.join(nodeModulesPath, dependency);
+        if (existsSync(dependencyNodeModulesPath)) {
+            return {contents: readFileSync(dependencyNodeModulesPath, 'utf8')};
+        }
+
+        if (originalPath) {
+            const dependencyOriginalPath = path.join(originalPath, dependency);
+            if (existsSync(dependencyOriginalPath)) {
+                return {contents: readFileSync(dependencyOriginalPath, 'utf8')};
+            }
+        }
+
         throw new Error(
             `Could not find contract dependency "${dependency}", have you tried npm install?`
         );
-    }
-    return {contents: readFileSync(dependencyNodeModulesPath, 'utf8')};
+    };
 }
 
 export type ContractCompilerArgs = {
-    name: string,
-    contractPath?: string,
-    buildDirPath?: string
+    name: string;
+    contractPath?: string;
+    buildDirPath?: string;
 };
 
-export async function compileContract({
+type CompilationArgs = Omit<ContractCompilerArgs, 'buildDirPath'> & {getImports: GetImportsFunc};
+
+export function compileContract({
     name,
     contractPath = defaultContractPath,
-    buildDirPath = defaultBuildPath
-}: ContractCompilerArgs) {
+    getImports
+}: CompilationArgs) {
     const sourceFileName = `${name}.sol`;
-    const buildPath = path.join(buildDirPath, `${name}.json`);
     const filepath = path.join(contractPath, sourceFileName);
-    if (existsSync(buildPath)) {
-        return;
-    }
-
     const content = readFileSync(filepath, 'utf8');
+
     const version = getPragmaVersion(content);
-    const solc = require(`solc${version.split('.').slice(0, 2).join('_')}`);
+    const solc = require(`solc${version
+        .split('.')
+        .slice(0, 2)
+        .join('_')}`);
+
     const compilerProps = {
         language: 'Solidity',
         sources: {[sourceFileName]: {content}},
@@ -66,6 +77,25 @@ export async function compileContract({
     };
 
     const artefact = solc.compile(JSON.stringify(compilerProps), {import: getImports});
+    return artefact;
+}
+
+export async function compileAndSaveContract({
+    name,
+    contractPath = defaultContractPath,
+    buildDirPath = defaultBuildPath
+}: ContractCompilerArgs) {
+    const sourceFileName = `${name}.sol`;
+    const buildPath = path.join(buildDirPath, `${name}.json`);
+    if (existsSync(buildPath)) {
+        return;
+    }
+
+    const nodeModulesPath = path.join(__dirname, '..', '..', 'node_modules');
+    const originalPath = '';
+    const getImports = getImportsFactory(nodeModulesPath, originalPath);
+
+    const artefact = compileContract({name, contractPath, getImports});
 
     if (!artefact) {
         throw new Error('Compiled contract is empty');

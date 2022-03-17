@@ -1,7 +1,7 @@
 const sequelize_lib = require('sequelize');
 const _ = require('lodash');
-const SequelizeFactory = require('./models');
-const logger = require('../core/log');
+const {Database} = require('..');
+const logger = require('../../core/log');
 
 const addUnderscoreIdFields = {};
 
@@ -13,7 +13,7 @@ class Model extends sequelize_lib.Model {
 
     static get connection() {
         if (!Model._connection) {
-            Model._connection = SequelizeFactory.init();
+            Model._connection = Database.init();
         }
         return Model._connection;
     }
@@ -72,10 +72,9 @@ class Model extends sequelize_lib.Model {
         return await this.reload();
     }
 
-    static async allBy(field, value) {
-        return await this.findAll({where: {[field]: value}});
+    static async allBy(field, value, logging = true) {
+        return await this.findAll({where: {[field]: value}, logging});
     }
-
     static async findOneBy(field, value) {
         const collection = await this.findAll({
             where: {[field]: value},

@@ -1,3 +1,4 @@
+const blockchain = require('./blockchain');
 const logger = require('../core/log');
 const log = logger.child({module: 'KeyValue'});
 
@@ -35,7 +36,7 @@ class KeyValue {
 
     async ask(identity, key) {
         log.debug('asking keyvalue', identity + '/' + key);
-        const result = await this.ctx.web3bridge.getKeyValue(identity, key);
+        const result = await blockchain.getKeyValue(identity, key);
         log.debug('result:', result);
         return result;
     }
@@ -57,7 +58,7 @@ class KeyValue {
     async propagate(identity, key, value) {
         log.debug('propagating keyvalue', identity + '/' + key, '=', value);
         await this.update(identity, key, value);
-        return await this.ctx.web3bridge.putKeyValue(identity, key, value);
+        return await blockchain.putKeyValue(identity, key, value);
     }
 }
 

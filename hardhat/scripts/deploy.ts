@@ -6,6 +6,7 @@
 import { ethers } from "hardhat";
 const fs = require('fs');
 
+const build_path = process.env.DEPLOYER_BUILD_PATH || './build/';
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -23,17 +24,9 @@ async function main() {
 
   console.log("Identity deployed to:", identity.address);
 
-  // File destination.txt will be created or overwritten by default.
-  fs.copyFile('artifacts/contracts/Identity.sol/Identity.json', 'build/contracts/Identity.json', (err: any) => {
-    if (err) {
-        throw err;
-    } 
-
-    fs.writeFileSync('build/contracts/Identity-address.json', JSON.stringify({address:identity.address}));
-
-    console.log('Identity abi was copied to build folder');
-  });
-}
+  fs.writeFileSync(build_path+'/contracts/Identity.sol/Identity-address.json', JSON.stringify({address:identity.address}));
+  console.log('Identity abi was copied to build folder');
+};
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.

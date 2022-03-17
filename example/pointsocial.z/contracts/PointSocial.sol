@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -36,6 +36,13 @@ contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         uint256 createdAt;
     }
 
+    event StateChange(
+        uint256 postId,
+        address indexed from,
+        uint256 indexed date,
+        Action indexed action
+    );
+
     uint256[] public postIds;
     mapping(address => uint256[]) public postIdsByOwner;
     mapping(uint256 => Post) public postById;
@@ -47,6 +54,8 @@ contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     address private _migrator;
 
+    enum Action {Migrator, Post, Like, Comment}
+
     function initialize() public initializer {
         __Ownable_init();
         __UUPSUpgradeable_init();
@@ -57,6 +66,7 @@ contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     function addMigrator(address migrator) public onlyOwner {
         require(_migrator == address(0), "Access Denied");
         _migrator = migrator;
+        emit StateChange(0, msg.sender, block.timestamp, Action.Migrator);
     }
 
     // Post data functions
@@ -75,6 +85,8 @@ contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         postIds.push(newPostId);
         postById[newPostId] = _post;
         postIdsByOwner[msg.sender].push(newPostId);
+
+        emit StateChange(newPostId, msg.sender, block.timestamp, Action.Post);
     }
 
     function getAllPosts() public view returns (Post[] memory) {
@@ -153,6 +165,8 @@ contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         commentById[newCommentId] = _comment;
         commentIdsByOwner[msg.sender].push(newCommentId);
         postById[postId].commentsCount += 1;
+
+        emit StateChange(postId, msg.sender, block.timestamp, Action.Comment);
     }
 
     function getAllCommentsForPost(uint256 postId) public view returns (Comment[] memory)
@@ -201,6 +215,9 @@ contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         _likeIdsOnPost.push(newLikeId);
         likeById[newLikeId] = _like;
         postById[postId].likesCount += 1;
+
+        emit StateChange(postId, msg.sender, block.timestamp, Action.Like);
+
         return true;
     }
 
@@ -228,6 +245,8 @@ contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
             postIdsByOwner[_post.from].push(id);
             postById[_post.id] = _post;
             _postIds.increment();
+
+            emit StateChange(id, author, block.timestamp, Action.Post);
     }
 
     function addComment(
@@ -251,5 +270,7 @@ contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
             commentIdsByOwner[_comment.from].push(id);
             _commentIds.increment();
             postById[postId].commentsCount += 1;
+
+            emit StateChange(postId, author, block.timestamp, Action.Comment);
     }
 }

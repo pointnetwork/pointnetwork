@@ -1,7 +1,14 @@
 {{ csrf_guard(request._csrf) }}
+
+{% if (request is not empty) and ('__point_version' in request|keys)  %}
+    {% set version = request.__point_version %}
+{% else %}
+    {% set version = 'latest' %}
+{% endif %}
+
 {% set tweet_contents_id = storage_put(request.contents) %}
 {<p>Tweet contents id: {{ tweet_contents_id }}#}
-{% set result = contract_call(host, 'Twitter', 'tweet', [ tweet_contents_id ]) %}
+{% set result = contract_call(host, 'Twitter', 'tweet', [ tweet_contents_id ], version) %}
 
 <html>
   <body>
