@@ -3,6 +3,7 @@ wallet:
   keystore_path: /data/keystore
 mode: zappdev
 log:
+  sendLogs: false
   level: debug
 storage:
   arweave_host: arlocal
