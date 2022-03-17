@@ -1,5 +1,6 @@
 datadir: ~/.point
 mode: ""
+identity_contract_id: f4c8b0cda3a767e0682d3e757ace260d66e386cf80387d8ae953278692054c6a
 api:
   address: 127.0.0.1
   port: 2468
@@ -58,6 +59,7 @@ wallet:
   id: 58225300-cf00-494a-be15-8a15e42d3758 # TODO: remove
   passcode: BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9 # TODO: remove
 network:
+  contracts_path: contracts
   web3: "http://ynet.point.space:44444"
   web3_call_retry_limit: 4
   identity_contract_address: "0x1411f3dC11D60595097b53eCa3202c34dbee0CdA"
