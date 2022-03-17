@@ -24,9 +24,9 @@ task("identity-importer", "Will download and upload data to point identity contr
         migrationFolder = taskArgs.saveTo;
     }
     const contract = await hre.ethers.getContractAt("Identity", taskArgs.contract);
-      
+
     if(taskArgs.action == "download") {
-        
+
         const fileStructure = {
             identities: [],
             ikv: []
@@ -36,7 +36,7 @@ task("identity-importer", "Will download and upload data to point identity contr
         let identityCreatedEvents = await contract.queryFilter(identitiesFilter);
         let ikvSetFilter = contract.filters.IKVSet()
         let ikvSetEvents = await contract.queryFilter(ikvSetFilter);
-    
+
         if(identityCreatedEvents.length == 0) {
             console.log('No identities found.');
             return false;
@@ -46,38 +46,42 @@ task("identity-importer", "Will download and upload data to point identity contr
 
         let identityData = [];
         for (const e of identityCreatedEvents) {
-            const {handle, identityOwner, commPublicKey} = e.args;
+            if(e.args) {
+                const {handle, identityOwner, commPublicKey} = e.args;
 
-            console.log(`migrating handle ${handle} from ${identityOwner}`);
+                console.log(`migrating handle ${handle} from ${identityOwner}`);
 
-            const identity = {
-                handle,
-                owner: identityOwner,
-                keyPart1: commPublicKey.part1,
-                keyPart2: commPublicKey.part2
-            };
+                const identity = {
+                    handle,
+                    owner: identityOwner,
+                    keyPart1: commPublicKey.part1,
+                    keyPart2: commPublicKey.part2
+                };
 
-            identityData.push(identity);
+                identityData.push(identity);
+            }
         }
-        
+
         fileStructure.identities = identityData;
 
         console.log(`Found ${ikvSetEvents.length} IKV parameters`);
 
         const ikvData = [];
         for(const e of ikvSetEvents) {
-            const {identity, key, value, version} = e.args;
+            if(e.args) {
+                const {identity, key, value, version} = e.args;
 
-            console.log(`migrating key ${key} with value of ${value}`);
+                console.log(`migrating key ${key} with value of ${value}`);
 
-            const ikv = {
-                handle: identity,
-                key,
-                value,
-                version
-            };
+                const ikv = {
+                    handle: identity,
+                    key,
+                    value,
+                    version
+                };
 
-            ikvData.push(ikv);
+                ikvData.push(ikv);
+            }
         }
 
         fileStructure.ikv = ikvData;
@@ -116,7 +120,7 @@ task("identity-importer", "Will download and upload data to point identity contr
             console.log('Lockfile not found');
         }else{
             const lockFile = JSON.parse(fs.readFileSync(lockFilePath).toString());
-            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() && 
+            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() &&
                 lockFile.contract == taskArgs.contract.toString()) {
                 console.log('Previous lock file found');
                 console.log(`Last processed identity ${lockFile.identityLastProcessedIndex}`);
