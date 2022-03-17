@@ -1,43 +1,19 @@
 version: '3.9'
 
 services:
-  database:
-    image: postgres:13.3
-    container_name: pointnetwork_database
-    environment:
-      - POSTGRES_USER=$DB_USERNAME
-      - POSTGRES_PASSWORD=$DB_PASSWORD
-      - POSTGRES_DB=$DB_USERNAME
-      - DATABASE=$DB_TEST
-    ports:
-      - '5432:5432'
-    volumes:
-      - test_database_data:/var/lib/postgresql/data/
-      - ./scripts/postgres-init.sh:/docker-entrypoint-initdb.d/init.sh
-
-  tests:
-    image: pointnetwork/pointnetwork_node:$POINT_NODE_VERSION
-    container_name: pointnetwork_tests
+  point_node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: point_node
+    command: npm start
     depends_on:
-      - database
-    entrypoint: 'npm'
-    command: 'run test:db:docker'
-    environment:
-      - DB_ENV=test
-      - DATADIR=/data
-      - BLOCKCHAIN_URL=$BLOCKCHAIN_URL
-      - BLOCKCHAIN_NETWORK_ID=$BLOCKCHAIN_NETWORK_ID
-      - DB_TEST=$DB_TEST
-      - DB_USERNAME=$DB_USERNAME
-      - DB_PASSWORD=$DB_PASSWORD
-      - DB_HOST=database
-      - DATABASE_URL=postgres://$DB_USERNAME:$DB_PASSWORD@database:5432/$DB_TEST
-    volumes:
-      - .:/app:ro
-      - ./resources/sequelizeConfig.docker.json:/app/resources/sequelizeConfig.json:ro
-      - test_pointnetwork_node_modules:/app/node_modules
-      - ./resources/demo-docker/config.test2.json:/data/config.json:ro
-
-volumes:
-  test_database_data:
-  test_pointnetwork_node_modules:
+      contract_deployer:
+        condition: service_completed_successfully
+      buckets:
+        condition: service_completed_successfully
+  test:
+    image: point_node
+    command: run test
+    depends_on:
+      - point_node
