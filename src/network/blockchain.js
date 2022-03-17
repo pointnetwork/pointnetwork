@@ -616,7 +616,7 @@ blockchain.getTransactionsByAccount = async (account, startBlockNumber, endBlock
     return txs;
 };
 
-blockchain.getOwner = () => getNetworkAddress();
+blockchain.getOwner = () => web3.utils.toChecksumAddress(getNetworkAddress());
 
 blockchain.getGasPrice = async () => {
     const gasPrice = await web3.eth.getGasPrice();
