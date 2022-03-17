@@ -72,7 +72,6 @@ task("blog-importer", "Will download and upload data to point blog contract")
         const filename =  `blog-${timestamp}.json`;
 
         fs.writeFileSync(migrationFolder + filename, JSON.stringify(fileStructure, null, 4));
-
         console.log('Downloaded');
     }else{
         const lockFilePath = '../resources/migrations/blog-lock.json';
