@@ -45,16 +45,30 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  #TODO: Check if --upgradable was passed or verify deploy.json of zapp.
-  cd hardhat
-  echo "npx hardhat compile"
-  npx hardhat compile
-  echo "npx hardhat deploy-upgradable --zapp $SITE "
-  npx hardhat deploy-upgradable --zapp $SITE 
-  cd ..
+  grep -q upgradable.*true.* ${SITE}/point.deploy.json
+  if [ "${DEPLOY_CONTRACTS}" != "" ] && [ $? ];then
+      echo "Upgradable ZApp deployment started"
 
-  echo "./point deploy $SITE $DEPLOY_CONTRACTS $DEV"
-  ./point deploy $SITE $DEPLOY_CONTRACTS $DEV
+      cp ${SITE}/contracts/*.sol ./hardhat/contracts/
+      for contract in ${SITE}/contracts/*.sol; do
+          CONTRACTS=${CONTRACTS:+$CONTRACTS ,}$contract
+      done
+
+      cd hardhat
+      echo "npx hardhat compile"
+      npx hardhat compile
+
+      echo "npx hardhat deploy-upgradable --contract-list $CONTRACTS"
+      npx hardhat deploy-upgradable --contract-list $CONTRACTS
+      cd ..
+
+      #TODO: get the addresses of the proxies
+  fi
+
+  
+  
+  #echo "./point deploy $SITE $DEPLOY_CONTRACTS $DEV"
+  #./point deploy $SITE $DEPLOY_CONTRACTS $DEV
 
   echo
   echo "FINISHED: ${SITE}"
