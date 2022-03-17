@@ -23,9 +23,9 @@ const log = logger.child({module: 'ZProxy'});
 const detectContentType = require('detect-content-type');
 const {getNetworkAddress} = require('../../wallet/keystore');
 const {match} = require('node-match-path');
-const readFileByPath =  require('../readFileByPath');
 const blockchain = require('../../network/blockchain');
 const {templateManager, Template} = require('./templateManager');
+const {readFileByPath} = require('../../util');
 
 class ZProxy {
     constructor(ctx) {

@@ -4,7 +4,6 @@ const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
 const config = require('config');
 const logger = require('../../../core/log');
-const readFileByPath = require('../../readFileByPath');
 const {
     getNetworkPrivateKey,
     getNetworkAddress,
@@ -12,6 +11,7 @@ const {
 } = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/blockchain');
+const {readFileByPath} = require('../../../util');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
