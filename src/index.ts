@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
-import {existsSync, mkdirSync, promises} from 'fs';
+import {existsSync, mkdirSync, promises as fs} from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
 import {resolveHome} from './core/utils';
-import {getContractAddress, compileContract} from './util/contract';
+import {getContractAddress, compileAndSaveContract} from './util/contract';
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
@@ -40,9 +40,7 @@ program.description(`
 program.option('-d, --datadir <path>', 'path to the data directory');
 program.option('-v, --verbose', 'force the logger to show debug level messages', false);
 
-program
-    .command('start', {isDefault: true})
-    .description('start the node');
+program.command('start', {isDefault: true}).description('start the node');
 program
     .command('attach')
     .description('attach to the running point process')
@@ -77,6 +75,12 @@ program
     })
     .option('--contracts', '(re)deploy contracts too', false)
     .option('--dev', 'deploy zapp to dev too', false);
+program
+    .command('upload <path>')
+    .description('uploads a file or directory')
+    .action(path => {
+        program.upload = path;
+    });
 
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
@@ -126,9 +130,46 @@ if (program.attach) {
 if (program.deploy) {
     const Deploy = require('./core/deploy');
     const deploy = new Deploy();
-    deploy.deploy(program.deploy, program.deploy_contracts, program.dev)
+    deploy
+        .deploy(program.deploy, program.deploy_contracts, program.dev)
         .then(ctx.exit)
         .catch(ctx.die);
+    // @ts-ignore
+    return;
+}
+
+// -------------------- Uploader --------------------- //
+
+if (program.upload) {
+    const {init, uploadFile, uploadDir} = require('./client/storage');
+
+    const main = async () => {
+        await init();
+
+        const filePath = path.isAbsolute(program.upload!)
+            ? program.upload!
+            : path.resolve(__dirname, '..', program.upload!);
+
+        const stat = await fs.stat(filePath);
+        if (stat.isDirectory()) {
+            return uploadDir(filePath);
+        } else {
+            const file = await fs.readFile(filePath);
+            return uploadFile(file);
+        }
+    };
+
+    main()
+        .then(id => {
+            log.info({id}, 'Upload finished successfully');
+            process.exit(0);
+        })
+        .catch(e => {
+            log.error('Upload failed');
+            log.error(e);
+            process.exit(1);
+        });
+
     // @ts-ignore
     return;
 }
@@ -168,12 +209,17 @@ if (program.compile) {
     const contractPath = path.resolve(__dirname, '..', 'truffle', 'contracts');
     const contracts = ['Identity', 'Migrations', 'StorageProviderRegistry'];
 
-    Promise.all(contracts.map(name => compileContract({name, contractPath, buildDirPath})
-        .then(compiled => log.debug(compiled
-            ? `Contract ${name} successfully compiled`
-            : `Contract ${name} is already compiled`
-        ))
-    ))
+    Promise.all(
+        contracts.map(name =>
+            compileAndSaveContract({name, contractPath, buildDirPath}).then(compiled =>
+                log.debug(
+                    compiled
+                        ? `Contract ${name} successfully compiled`
+                        : `Contract ${name} is already compiled`
+                )
+            )
+        )
+    )
         .then(() => ctx.exit(0))
         .catch(ctx.die);
 
@@ -225,8 +271,8 @@ const sigs = [
     'SIGUSR2',
     'SIGTERM'
 ] as const;
-sigs.forEach(function (sig) {
-    process.on(sig, function () {
+sigs.forEach(function(sig) {
+    process.on(sig, function() {
         _exit(sig);
     });
 });
@@ -249,7 +295,7 @@ const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
     await initFolders();
     try {
         if (!existsSync(lockfilePath)) {
-            await promises.writeFile(lockfilePath, 'point');
+            await fs.writeFile(lockfilePath, 'point');
         }
         await lockfile.lock(lockfilePath);
     } catch (err) {

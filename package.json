@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.1.47",
+  "version": "0.1.48",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -35,6 +35,7 @@
     "fs-extra": "^10.0.0",
     "graphql": "^16.2.0",
     "graphql-request": "^4.0.0",
+    "handlebars": "^4.7.7",
     "html-entities": "^2.3.2",
     "js-yaml": "^4.1.0",
     "level": "^7.0.0",
@@ -113,10 +114,17 @@
     "znet:local": "docker-compose -f docker-compose.znet.local.yaml",
     "volume:backup": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu tar -czvf /backup/$VOLUME-$(date \"+%Y-%m-%dT%H:%M:%S\").tar.gz /data",
     "volume:restore": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu bash -c \"cd /data && tar -xvf /backup/$FILE --strip 1\"",
+<<<<<<< HEAD
     "fix": "eslint --ext .js --fix src/ && eslint --fix point",
     "lint": "eslint --ext .js src/ && eslint point",
     "lint:sol": "solhint 'example/**/contracts/*.sol' 'hardhat/contracts/*.sol'",
     "slither": "find example -type f -name '*.sol' -exec slither '{}' --print human-summary --solc-remaps @openzeppelin=node_modules/@openzeppelin --config slither.config.json  ';'",
+=======
+    "fix": "eslint --ext .js --fix src/ && eslint --ext .js --fix truffle/ && eslint --fix point",
+    "lint": "eslint --ext .js src/ && eslint --ext .js truffle/ && eslint point",
+    "lint:sol": "solhint 'example/**/contracts/*.sol' 'hardhat/contracts/*.sol'",
+    "slither": "find example -type f -name '*.sol' -exec slither '{}' --solc-remaps @openzeppelin=node_modules/@openzeppelin --config slither.config.json  ';'",
+>>>>>>> b4dbed267bcb7d5b816f099464ae0ec01321d3d6
     "generateMigration": "npm run build && npx sequelize-mig migration:make --name ${npm_config_name}  --indexFilePath dist/db/makeMigrationsEntrypoint.js"
   },
   "jest": {
@@ -145,7 +153,8 @@
       "migrations/**/*",
       "internal/**/*",
       "resources/certs/*.{crt,key,srl}",
-      "node_modules/sqlite3/**/*"
+      "node_modules/sqlite3/**/*",
+      "src/client/proxy/views/*"
     ],
     "scripts": [
       ".sequelizerc",

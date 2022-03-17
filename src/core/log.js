@@ -28,7 +28,7 @@ streams.push(
 let logger = pino(options, multistream(streams));
 
 try {
-    const account = getNetworkAddress();
+    const account = getNetworkAddress().toLowerCase();
     logger = logger.child({account});
 } catch (e) {
     logger.error('Couldn\'t get network address for logging');
@@ -36,7 +36,7 @@ try {
 
 module.exports = Object.assign(logger, {
     close() {
-        for (const {stream} in streams) {
+        for (const {stream} of streams) {
             if (stream && typeof stream.close === 'function') {
                 stream.close();
             }
