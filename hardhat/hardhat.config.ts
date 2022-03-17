@@ -6,6 +6,9 @@ import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "./tasks/importer/identity";
+import "./tasks/importer/blog";
+import "./tasks/importer/pointSocial";
+import "./tasks/importer/twitter";
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
@@ -68,7 +71,8 @@ const config: HardhatUserConfig = {
           accounts:
             ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
         },
-    }
+    },
+    
 };
 
 export default config;
