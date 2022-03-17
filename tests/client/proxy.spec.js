@@ -1,6 +1,8 @@
 const ZProxy = require('../../src/client/proxy');
 const {encryptData, decryptData} = require('../../src/client/encryptIdentityUtils');
 
+// TODO: Jest report gracefully exit failure even if I only leave imports and mock all the tests
+// TODO: figure out what is wrong
 describe('Client/ZProxy', () => {
     test('it should correctly sanitize the text/html inputs', () => {
         const tests = {
@@ -18,8 +20,7 @@ describe('Client/ZProxy', () => {
             '<a href="https://google.com">Test</a>'
         ];
 
-        mockedCtx = {config: {client: {zproxy: {port: 0}}}};
-        zproxy = new ZProxy(mockedCtx);
+        const zproxy = new ZProxy({});
 
         for (const input in tests) {
             const expectedOutput = tests[input];
