@@ -1,18 +1,6 @@
-import {promises as fs} from 'fs';
 import path from 'path';
-import {HttpNotFoundError} from './core/exceptions';
-
-export const makeSurePathExists = async (pathToCheck: string, createIfNotExists = false) => {
-    try {
-        await fs.stat(pathToCheck);
-    } catch (e) {
-        if (e.code === 'ENOENT' && createIfNotExists) {
-            await fs.mkdir(pathToCheck, {recursive: true});
-        } else {
-            throw e;
-        }
-    }
-};
+import {promises as fs} from 'fs';
+import {HttpNotFoundError} from '../core/exceptions';
 
 export const readFileByPath = async (localRoot: string, filePath: string, encoding = 'utf-8') => {
     const fullPath = path.join(localRoot, filePath);
