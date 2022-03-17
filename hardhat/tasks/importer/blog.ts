@@ -1,6 +1,5 @@
 import { task } from "hardhat/config";
 import fs = require('fs');
-import { BigNumber } from "ethers";
 
 
 //npx hardhat blog-importer upload BLOG_CONTRACT_ADDRESS --migration-file ..resources/migrations/blog-TIMESTAMP.json--network ynet

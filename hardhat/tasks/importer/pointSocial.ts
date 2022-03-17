@@ -1,10 +1,9 @@
 import { task } from "hardhat/config";
 import fs = require('fs');
-import { BigNumber } from "ethers";
 
-//npx hardhat pointsocial-importer upload 0xE6856F25deBdd7d2ccBEBF5d5750a7aD545251Dc --migration-file /Users/alexandremelo/.point/src/pointnetwork/resources/migrations/pointsocial-1647484455.json  --network ynet
+//npx hardhat pointsocial-importer upload POINTSOCIAL_CONTRACT --migration-file ../resources/migrations/pointsocial-TIMESTAMP.json --network ynet
 //npx hardhat pointsocial-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --network ynet
-//npx hardhat pointsocial-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to /Users/alexandremelo/.point/src/pointnetwork/hardhat/  --network ynet
+//npx hardhat pointsocial-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to ../resources/migrations/ --network ynet
 
 task("pointsocial-importer", "Will download and upload data to point  pointSocial contract")
   .addPositionalParam("action", 'Use with "download" and "upload options"')
@@ -49,20 +48,22 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
 
         for (const item of data) {
             const {id, from, contents, image, likesCount, createdAt} = item;
-    
+
             console.log('Fetching post:' + id);
-            const comments = await pointSocial.getAllCommentsForPost(id);
-            
+            const commentsRaw = await pointSocial.getAllCommentsForPost(id);
+            // convert last element of comments array (timestamp) to string
+            const comments = commentsRaw.map((c:any) => [c[0].toString(), c[1], c[2], c[3].toString()])
+
             const post = {
                 id:id.toString(),
                 from,
                 contents,
                 image,
                 likesCount,
-                createdAt,
+                createdAt:createdAt.toString(),
                 comments
             };
-    
+
             posts.push(post);
         }
 
@@ -83,7 +84,7 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
         }
 
         const data = JSON.parse(fs.readFileSync(taskArgs.migrationFile).toString());
-    
+
         let processCommentsFrom = 0;
         let processPostsFrom = 0;
         let lastProcessedPost = 0;
@@ -110,7 +111,7 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
             console.log(`Lockfile not found, adding migrator ${owner.address}`);
         }else{
             const lockFile = JSON.parse(fs.readFileSync(lockFilePath).toString());
-            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() && 
+            if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() &&
                 lockFile.contract == taskArgs.contract.toString()) {
                 console.log('Previous lock file found');
                 foundLockFile = true;
@@ -128,7 +129,7 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
                 lastProcessedPost++;
                 if(lastProcessedPost > processPostsFrom || processPostsFrom == 0){
                    console.log(`${lastProcessedPost} Migrating: PointSocial post from ${post.from} contents ${post.contents}`);
-                    
+
                     await pointSocial.add(
                         post.id,
                         post.from,
@@ -141,7 +142,7 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
                     console.log(`Skipping migrated post from ${post.from}`);
                 }
             }
-        
+
             for (const postId in postComments){
                 for (const comment of postComments[postId]) {
                     lastProcessedComment++;
@@ -149,10 +150,10 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
                         const id = comment[0];
                         const from = comment[1];
                         const contents = comment[2];
-                        const createdAt =  ethers.BigNumber.from(comment[3].hex);
+                        const createdAt =  comment[3];
 
                         console.log(`${lastProcessedComment} Migrating comment of post ${postId} from ${from}`);
-            
+
                         await pointSocial.addComment(
                             id,
                             postId,
