@@ -38,7 +38,7 @@ services:
       - ./nodemon.json:/app/nodemon.json:ro
       - ./tsconfig.json:/app/tsconfig.json:ro
       - point_node_data_zappdev:/data
-      - shared_contracts_zappdev:/app/truffle/build/contracts
+      - shared_contracts_zappdev:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     ports:
@@ -68,8 +68,8 @@ services:
       - ./package.json:/app/package.json:ro
       - ./nodemon.json:/app/nodemon.json:ro
       - ./tsconfig.json:/app/tsconfig.json:ro
-      - website_visitor_data_zappdev:/data
-      - shared_contracts_zappdev:/app/truffle/build/contracts
+      - website_visitor_data_zappdev:/data   
+      - shared_contracts_zappdev:/app/hardhat/build
       - ./resources/blockchain-test-key2.json:/data/keystore/key.json
       - ./resources/arweave-test-key2.json:/data/keystore/arweave.json
     ports:

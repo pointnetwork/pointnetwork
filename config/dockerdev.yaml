@@ -1,5 +1,11 @@
 datadir: /data
+wallet:
+  keystore_path: /data/keystore
 db:
   env: development
 log:
   level: debug
+api:
+  address: 0.0.0.0
+zproxy:
+  host: 0.0.0.0

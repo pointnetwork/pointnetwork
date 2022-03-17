@@ -5,6 +5,7 @@ const log = logger.child({module: 'Deploy'});
 
 class Deploy {
     async deploy(deploy_path, deploy_contracts = false, dev = false) {
+
         const deploy_path_absolute = path.resolve(deploy_path);
         if (!deploy_path_absolute) {
             throw new Error('invalid path');

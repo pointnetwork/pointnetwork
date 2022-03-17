@@ -4,12 +4,16 @@ FROM node:14.17.5-alpine
 
 COPY --from=solc /usr/bin/solc /usr/bin/solc
 
-WORKDIR /truffle
+WORKDIR /hardhat
 
-RUN npm i -g truffle && \
-truffle init && \
-npm i @openzeppelin/contracts@4.3.0 \
-@truffle/hdwallet-provider \
-web3@1.5.2
+#is this even safe bro?
+RUN npm -g config set user root
 
-ENTRYPOINT [ "truffle" ]
+RUN apk update && apk add --no-cache git
+
+COPY hardhat/package.json ./
+COPY hardhat/package-lock.json ./
+RUN npm install
+
+ENTRYPOINT ["npm", "start"]
+

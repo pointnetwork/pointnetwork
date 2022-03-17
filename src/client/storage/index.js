@@ -5,7 +5,6 @@ import {request} from 'graphql-request';
 import {
     hashFn,
     merkle,
-    makeSurePathExistsAsync,
     delay,
     areScalarArraysEqual,
     escape,
@@ -36,12 +35,7 @@ const uploadCacheDir = path.join(resolveHome(config.get('datadir')), config.get(
 const downloadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.download_cache_path'));
 const filesDir = path.join(resolveHome(config.get('datadir')), config.get('storage.files_path'));
 
-const init = async () => {
-    await Promise.all([
-        makeSurePathExistsAsync(uploadCacheDir),
-        makeSurePathExistsAsync(downloadCacheDir),
-        makeSurePathExistsAsync(filesDir)
-    ]);
+const init = () => {
     uploadLoop();
 };
 

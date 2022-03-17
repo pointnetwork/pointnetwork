@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.0;
+pragma solidity >=0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -16,6 +16,14 @@ contract Template  {
         uint createdAt;
     }
 
+    enum Action {Example}
+
+    event StateChange(
+        address indexed from,
+        uint256 indexed date,
+        Action indexed action
+    );
+
     Example[] public examples;
     mapping(address => Example[]) public examplesByOwner;
     mapping(uint => Example) public exampleById;
@@ -29,6 +37,7 @@ contract Template  {
         examples.push(_example);
         exampleById[newExampleId] = _example;
         examplesByOwner[msg.sender].push(_example);
+        emit StateChange(msg.sender, block.timestamp, Action.Example);
     }
 
     function getAllExamples() external view returns(Example[] memory) {

@@ -23,6 +23,8 @@ const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxy'});
 const detectContentType = require('detect-content-type');
 const {getNetworkAddress} = require('../../wallet/keystore');
+const blockchain = require('../../network/blockchain');
+const {templateManager, Template} = require('./templateManager');
 
 class ZProxy {
     constructor(ctx) {
@@ -166,24 +168,24 @@ class ZProxy {
         return this.doubleServer;
     }
 
-    abort404(response, message = 'domain not found') {
+    async abort404(response, message = 'domain not found') {
         const headers = {'Content-Type': 'text/html;charset=UTF-8'};
         response.writeHead(404, headers);
-        response.write(this._errorMsgHtml(message, 404));
+        response.write(await this._errorMsgHtml(message, 404));
         response.end();
     }
 
-    abortCode(response, message = 'Forbidden', HTTPStatusCode) {
+    async abortCode(response, message = 'Forbidden', HTTPStatusCode) {
         const headers = {'Content-Type': 'text/html;charset=UTF-8'};
         response.writeHead(HTTPStatusCode, headers);
-        response.write(this._errorMsgHtml(message, HTTPStatusCode));
+        response.write(await this._errorMsgHtml(message, HTTPStatusCode));
         response.end();
     }
 
-    abortError(response, err) {
+    async abortError(response, err) {
         const headers = {'Content-Type': 'text/html;charset=UTF-8'};
         response.writeHead(500, headers);
-        response.write(this._errorMsgHtml(err, 500)); // better code
+        response.write(await this._errorMsgHtml(err, 500)); // better code
         log.error(err, `ZProxy 500 Error`);
         response.end();
     }
@@ -235,7 +237,7 @@ class ZProxy {
                     if (ext === 'zhtml') contentType = 'text/plain';
 
                     if (this._isThisDirectoryJson(rendered) && noExt) {
-                        rendered = this._renderDirectory(hash, rendered);
+                        rendered = await this._renderDirectory(hash, rendered);
                         contentType = 'text/html';
                     }
                 }
@@ -253,7 +255,7 @@ class ZProxy {
                         return this.abortCode(response, e.message, 403);
                     } else {
                         return this.abortError(response, e);
-                    } 
+                    }
                 }
             } else if (_.startsWith(parsedUrl.pathname, '/v1/api/')) {
                 try {
@@ -279,11 +281,11 @@ class ZProxy {
                 // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
                 // Side effect: versionig of zapps will not work for Zapp files in this env since files are loaded from local file system.
                 let version = 'latest';
-                
-                if (parsedUrl.searchParams !== undefined && 
+
+                if (parsedUrl.searchParams !== undefined &&
                     parsedUrl.searchParams.has('__point_version')){
                     version = parsedUrl.searchParams.get('__point_version');
-                    
+
                 }
 
                 // First try route file (and check if this domain even exists)
@@ -364,7 +366,7 @@ class ZProxy {
         }
     }
 
-    _renderDirectory(id, text) {
+    async _renderDirectory(id, text) {
         if (!this._isThisDirectoryJson(text)) throw Error('_renderDirectory: not a directory');
 
         const obj = JSON.parse(text);
@@ -553,16 +555,16 @@ class ZProxy {
             request.on('end', async () => {
                 try {
                     let version = 'latest';
-                    
-                    if (parsedUrl.searchParams !== undefined && 
+
+                    if (parsedUrl.searchParams !== undefined &&
                         parsedUrl.searchParams.has('__point_version')){
                         version = parsedUrl.searchParams.get('__point_version');
-                        
+
                     }
-                    
+
                     // First try route file (and check if this domain even exists)
                     const zroute_id = await this.getZRouteIdFromDomain(host, version);
-                    
+
                     if (
                         zroute_id === null ||
                         zroute_id === '' ||
@@ -637,17 +639,13 @@ class ZProxy {
                         // managed routes and not part of ZProxy managed routes. In this case, simple solution is
                         // to redirect the user back to the site home page.
                         if (request.headers.referer === undefined) {
-                            const redirect = '/';
+                            const redirectUrl = '/';
                             log.debug(
-                                {redirect},
+                                {redirectUrl},
                                 'Page reload detected from unknown referer. Redirecting to'
                             );
                             response._contentType = 'text/html';
-                            const redirectHtml =
-                                '<html><head><meta http-equiv="refresh" content="0;url=' +
-                                redirect +
-                                '" /></head></html>';
-                            resolve(redirectHtml);
+                            resolve(templateManager.render(Template.REDIRECT, {redirectUrl}));
                         }
 
                         const renderedId = await getFileIdByPath(rootDirId, parsedUrl.pathname);
@@ -700,11 +698,11 @@ class ZProxy {
                         postData[entry[0]] = entry[1];
                     }
 
-                    let redirect = request.headers.referer;
+                    let redirectUrl = request.headers.referer;
                     for (const k in postData) {
                         const v = postData[k];
                         if (k === '__redirect') {
-                            redirect = v;
+                            redirectUrl = v;
                             delete postData[k];
                         } else if (_.startsWith(k, 'storage[')) {
                             const uploadedId = await uploadFile(v);
@@ -721,12 +719,8 @@ class ZProxy {
 
                     await this.ctx.keyvalue.propagate(host, newKey, data);
 
-                    log.debug({host, redirect}, 'Redirecting after keyValueAppend');
-                    const redirectHtml =
-                        '<html><head><meta http-equiv="refresh" content="0;url=' +
-                        redirect +
-                        '" /></head></html>'; // todo: sanitize! don't trust it
-                    resolve(redirectHtml);
+                    log.debug({host, redirectUrl}, 'Redirecting after keyValueAppend');
+                    resolve(templateManager.render(Template.REDIRECT, {redirectUrl}));
                 } catch (e) {
                     reject(e);
                 }
@@ -746,7 +740,7 @@ class ZProxy {
             request.on('end', async () => {
                 try {
                     if (request.method.toUpperCase() !== 'POST') reject(new Error('Must be POST'));
-                    
+
                     let parsedUrl;
                     try {
                         parsedUrl = new URL(request.url, `http://${request.headers.host}`);
@@ -759,7 +753,7 @@ class ZProxy {
                     paramsTogether = decodeURI(paramsTogether);
                     paramsTogether = paramsTogether.replace(')', '');
                     const paramNames = paramsTogether.split(',').map(e => e.trim()); // trim is so that we can do _contract_send/Blog.postArticle(title, contents)
-                    
+
                     if (parsedUrl.searchParams.has('__point_version') &&
                         parsedUrl.searchParams.get('__point_version') !== 'latest'){
                         const version = parsedUrl.searchParams.get('__point_version');
@@ -772,12 +766,12 @@ class ZProxy {
                         postData[entry[0]] = entry[1];
                     }
 
-                    let redirect = request.headers.referer;
+                    let redirectUrl = request.headers.referer;
 
                     for (const k in postData) {
                         const v = postData[k];
                         if (k === '__redirect') {
-                            redirect = v;
+                            redirectUrl = v;
                             delete postData[k];
                         } else if (_.startsWith(k, 'storage[')) {
                             const uploaded_id = await uploadFile(v);
@@ -801,7 +795,7 @@ class ZProxy {
                     }
 
                     try {
-                        await this.ctx.web3bridge.sendToContract(
+                        await blockchain.sendToContract(
                             host,
                             contractName,
                             methodName,
@@ -811,13 +805,9 @@ class ZProxy {
                         reject(e);
                     }
 
-                    log.debug({host, redirect}, 'Redirecting after contractSend');
+                    log.debug({host, redirectUrl}, 'Redirecting after contractSend');
 
-                    const redirectHtml =
-                        '<html><head><meta http-equiv="refresh" content="0;url=' +
-                        redirect +
-                        '" /></head></html>';
-                    resolve(redirectHtml); // todo: sanitize! don't trust it
+                    resolve(templateManager.render(Template.REDIRECT, {redirectUrl}));
                 } catch (e) {
                     reject(e);
                 }
@@ -830,7 +820,7 @@ class ZProxy {
 
     async getRootDirectoryIdForDomain(host, version = 'latest') {
         const key = '::rootDir';
-        const rootDirId = await this.ctx.web3bridge.getKeyValue(host, key, version);
+        const rootDirId = await blockchain.getKeyValue(host, key, version);
         if (!rootDirId)
             throw Error(
                 'getRootDirectoryIdForDomain failed: key ' + key + ' returned empty: ' + rootDirId
@@ -839,7 +829,7 @@ class ZProxy {
     }
 
     async getZRouteIdFromDomain(host, version = 'latest') {
-        const result = await this.ctx.web3bridge.getZRecord(host, version);
+        const result = await blockchain.getZRecord(host, version);
         return result;
 
         // const records = await this.getZDNSRecordsFromDomain(host);
@@ -854,44 +844,34 @@ class ZProxy {
         // return null;
     }
 
-    _directoryHtml(id, files) {
-        let html = '<html><body style=\'background-color: #fafaff; padding: 20px;\'>';
-        html += '<style>th {text-align: left;}</style>';
-        html += '<h1>Index of ' + utils.escape(id) + '</h1>';
-        html += '<hr><table style=\'width: 100%;\'>';
-        html +=
-            '<tr><th>File</th><th style=\'text-align: right;\'>Size</th><th style=\'text-align: right;\'>Hash</th></tr>';
-        for (const f of files) {
-            let icon = '';
-            switch (f.type) {
-                case FILE_TYPE.fileptr:
-                    icon += '&#128196; ';
-                    break; // https://www.compart.com/en/unicode/U+1F4C4
-                case FILE_TYPE.dirptr:
-                    icon += '&#128193; ';
-                    break; // https://www.compart.com/en/unicode/U+1F4C1
-                default:
-                    icon += '&#10067; '; // https://www.compart.com/en/unicode/U+2753 - question mark
-            }
-
-            const name = f.name;
-            const ext = utils.escape(name.split('.').slice(-1));
-            const link = '/_storage/' + f.id + (f.type === FILE_TYPE.fileptr ? '.' + ext : '');
-
-            html += '<tr><td>' + icon + ' <a href=\'' + link + '\' target=\'_blank\'>';
-            html += utils.escape(f.name);
-            html += '</a></td>';
-
-            html += '<td style=\'text-align: right;\'>' + f.size + '</td>';
-            html += '<td style=\'text-align: right;\'><em>' + f.id + '</em></td>';
-
-            html += '</tr>';
+    _getIcon(fileType) {
+        switch (fileType) {
+            case FILE_TYPE.fileptr:
+                return '&#128196; ';
+            case FILE_TYPE.dirptr:
+                return '&#128193; ';
+            default:
+                return '&#10067; ';
         }
-        html += '</table></body></html>';
-        return html;
     }
 
-    _errorMsgHtml(message, code = 500) {
+    _formatFileInfo(file){
+        const ext = file.name.split('.').slice(-1);
+        return {
+            icon: this._getIcon(file.type),
+            fileId: file.id,
+            link: `/_storage/${file.id}${file.type === FILE_TYPE.fileptr ? '.' + ext : ''}`,
+            name: file.name,
+            size: file.size
+        };
+    }
+
+    async _directoryHtml(id, files) {
+        const filesInfo = files.map(this._formatFileInfo);
+        return templateManager.render(Template.DIRECTORY, {id, filesInfo});
+    }
+
+    async _errorMsgHtml(message, code = 500) {
         let formattedMsg;
         if (typeof message === 'string') {
             formattedMsg = utils.escape(message);
@@ -905,18 +885,10 @@ class ZProxy {
         } else {
             formattedMsg = JSON.stringify(message);
         }
-
-        return (
-            '<html><body style=\'background-color: #222233;\'>' +
-            '<div style=\'text-align:center; margin-top: 20%;\'>' +
-            '<h1 style=\'font-size: 300px; color: #ccc; margin: 0; padding: 0;\'>' +
-            code +
-            '</h1>' +
-            '<div style=\'padding: 0 20%; color: #e8e8e8; margin-top: 10px; font-family: sans-serif;\'><strong>Error: </strong>' +
-            formattedMsg +
-            '</div></div>' +
-            '</body></html>'
-        );
+        return templateManager.render(Template.ERROR, {
+            code,
+            message: formattedMsg
+        });
     }
 }
 

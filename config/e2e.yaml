@@ -1,4 +1,6 @@
 datadir: /data
+wallet:
+  keystore_path: /data/keystore
 mode: e2e
 log:
   level: debug
@@ -12,3 +14,7 @@ storage:
   arweave_port: 1984
 network:
   web3: http://blockchain_node:7545
+api:
+  address: 0.0.0.0
+zproxy:
+  host: 0.0.0.0
