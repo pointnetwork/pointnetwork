@@ -96,12 +96,20 @@ module.exports = {
         // 'import/extensions': ['error', 'never'],
         // 'import/no-unresolved': 'off',
     },
-    overrides: [{
-        files: [
-            'scripts/**/*.js',
-            'truffle/scripts/*.js',
-            'point'
-        ],
-        rules: {'no-console': 'off'}
-    }]
+    overrides: [
+        {
+            files: [
+                'scripts/**/*.js',
+                'truffle/scripts/*.js',
+                'point'
+            ],
+            rules: {'no-console': 'off'}
+        },
+        {
+            files: [
+                'tests/**/*.js'
+            ],
+            rules: {'no-console': ['error', {allow: ['error']}]}
+        }
+    ]
 };

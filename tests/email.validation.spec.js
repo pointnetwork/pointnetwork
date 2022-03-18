@@ -90,6 +90,8 @@ function _isAlphaNumeric(char) {
 
 describe('Email validation', () => {
     test('should validate email address according to a set of common rules', () => {
+        expect.assertions(29);
+
         expect(_isValidEmail('foo@bar.z')).toEqual(true);
         expect(_isValidEmail('foo@bar_baz.z')).toEqual(true);
         expect(_isValidEmail('foo@bar-bah.z')).toEqual(true);

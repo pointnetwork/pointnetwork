@@ -77,6 +77,7 @@
 // }
 
 describe('Encrypt decrypt is broken, test is mocked', () => {
+    expect.assertions(1);
     it('Dummy test', () => {
         expect(true).toBeTruthy();
     });
