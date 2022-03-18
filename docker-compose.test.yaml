@@ -22,6 +22,7 @@ services:
       - '2468:2468'
     environment:
       NODE_CONFIG_ENV: dockertest
+      MODE: e2e
 
   test:
     image: point_node
@@ -36,6 +37,7 @@ services:
       - ./tests:/app/tests:ro
     environment:
       NODE_CONFIG_ENV: dockertest
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
 
   blockchain_node:
     extends:
