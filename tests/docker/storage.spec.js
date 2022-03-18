@@ -5,9 +5,6 @@ import {get, post} from 'axios';
 jest.setTimeout(300000);
 jest.retryTimes(60);
 
-// beforeAll(() => {
-// });
-
 describe('Storage upload/download', () => {
     let id;
     it('Should upload a file', async () => {
