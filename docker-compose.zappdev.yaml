@@ -45,8 +45,11 @@ services:
       - '12346:9685'
       - '65501:8666'
       - '24681:2468'
-    environment:
+    environment:  
       NODE_CONFIG_ENV: zappdev
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: 7545
+      BLOCKCHAIN_NETWORK_ID: 256
 
   website_visitor:
     extends:

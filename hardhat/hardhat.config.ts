@@ -39,7 +39,7 @@ const port = process.env.BLOCKCHAIN_PORT || 7545;
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
 
 const devaddress = 'http://' + host + ':' + port
-
+console.log(devaddress);
 const wallet = ethers.Wallet.fromMnemonic(keystore.phrase);
 
 // You need to export an object to set up your config
@@ -69,9 +69,9 @@ const config: HardhatUserConfig = {
             [privateKey],
         },
         ynet: {
-          url: 'http://ynet.point.space:44444',
-          accounts:
-            ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
+            url: 'http://ynet.point.space:44444',
+            accounts:
+                ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
         },
     },
     
