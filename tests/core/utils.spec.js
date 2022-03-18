@@ -8,6 +8,8 @@ describe('Core/Utils', () => {
             '1': '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b'
         };
 
+        expect.assertions(Object.keys(vectors).length * 2);
+
         for (const input in vectors) {
             const expectedOutput = vectors[input];
             expect(utils.sha256hex(input)).toEqual(expectedOutput);
@@ -20,6 +22,8 @@ describe('Core/Utils', () => {
             '': 'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
             '1': 'c89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6'
         };
+
+        expect.assertions(Object.keys(vectors).length * 2);
 
         for (const input in vectors) {
             const expectedOutput = vectors[input];
