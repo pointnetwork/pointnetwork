@@ -38,7 +38,6 @@ services:
       - shared_contracts_e2e:/build:rw
       - ./hardhat/contracts:/hardhat/contracts:ro
       - ./hardhat/scripts:/hardhat/scripts:ro
-      - ./hardhat/tasks:/hardhat/tasks:ro
       - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
     environment:
       BLOCKCHAIN_HOST: blockchain_node
