@@ -28,4 +28,17 @@ describe('Proxy', () => {
         expect(res.data).toMatch('<title>Point Explorer</title>');
         expect(res.data).toMatch('Welcome to Web 3.0');
     });
+
+    it('Should return 404 for host other than point and not ending on .z', async () => {
+        expect.assertions(1);
+
+        const res = await get(
+            'https://something.net',
+            {
+                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                validateStatus: () => true
+            }
+        );
+        expect(res.status).toEqual(404);
+    });
 });
