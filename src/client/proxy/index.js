@@ -865,7 +865,7 @@ class ZProxy {
     }
 
     async _directoryHtml(id, files) {
-        const filesInfo = files.map(this._formatFileInfo);
+        const filesInfo = files.map(this._formatFileInfo.bind(this));
         return templateManager.render(Template.DIRECTORY, {id, filesInfo});
     }
 
