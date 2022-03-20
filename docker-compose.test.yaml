@@ -17,6 +17,8 @@ services:
       - shared_contracts_test:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
+    entrypoint: bash
+    command: ./docker-test.sh # Starts node and deploys hello contract
     ports:
       - '8666:8666'
       - '2468:2468'
