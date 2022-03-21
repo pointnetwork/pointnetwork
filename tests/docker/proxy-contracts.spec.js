@@ -1,7 +1,6 @@
 import {post} from 'axios';
 import {delay} from '../../src/core/utils';
 
-jest.setTimeout(300000);
 jest.retryTimes(60);
 
 describe('Proxy keyvalue', () => {
@@ -29,5 +28,5 @@ describe('Proxy contract send', () => {
         );
 
         expect(res.status).toEqual(200);
-    });
+    }, 300000);
 });

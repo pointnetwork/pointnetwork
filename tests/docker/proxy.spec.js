@@ -1,7 +1,6 @@
 import {get} from 'axios';
 import {delay} from '../../src/core/utils';
 
-jest.setTimeout(300000);
 jest.retryTimes(60);
 
 describe('Proxy', () => {
@@ -44,13 +43,26 @@ describe('Proxy', () => {
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<html>/);
         expect(res.data).toMatch('<title>Hello World from Point Network!</title>');
-    });
+    }, 300000);
 
     it('Should return 404 for host other than point and not ending on .z', async () => {
         expect.assertions(1);
 
         const res = await get(
             'https://something.net',
+            {
+                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                validateStatus: () => true
+            }
+        );
+        expect(res.status).toEqual(404);
+    });
+
+    it('Should return 404 for host non-existing .z domain', async () => {
+        expect.assertions(1);
+
+        const res = await get(
+            'https://notexists.z',
             {
                 proxy: {host: 'point_node', port: 8666, protocol: 'http'},
                 validateStatus: () => true
