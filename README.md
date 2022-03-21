@@ -58,6 +58,19 @@ Run the browser and set proxy and certificates as described in the section above
 
 Also, you can add our bash [aliases](https://pointnetwork.github.io/docs/build-build-with-point-network#open-the-deployed-site-in-point-browser), which can be useful for develpopment.
 
+## Running tests
+
+To run unit tests:
+
+`npm run test`
+
+To run end-to-end tests:
+
+`docker compose -f docker-compose.test.yaml build &&
+docker compose -f docker-compose.test.yaml up -d`
+
+Then watch for `test` container logs and exit status
+
 ## Troubleshooting
 
 For details on troubleshooting, please refer to the [troubleshooting](https://pointnetwork.github.io/docs/troubleshooting#troubleshooting) page in our wiki.
