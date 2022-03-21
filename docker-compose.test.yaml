@@ -6,14 +6,102 @@ services:
       context: .
       dockerfile: Dockerfile
     image: point_node
-    command: npm start
+    hostname: point_node
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
       buckets:
         condition: service_completed_successfully
+    volumes:
+      - point_node_data_test:/data
+      - shared_contracts_test:/app/hardhat/build
+      - ./resources/blockchain-test-key.json:/data/keystore/key.json
+      - ./resources/arweave-test-key.json:/data/keystore/arweave.json
+    entrypoint: bash
+    command: ./docker-test.sh # Starts node and deploys hello contract
+    ports:
+      - '8666:8666'
+      - '2468:2468'
+    environment:
+      NODE_CONFIG_ENV: dockertest
+      MODE: e2e
+
   test:
     image: point_node
-    command: run test
+    command: run test:docker
     depends_on:
       - point_node
+    volumes:
+      - point_node_data_test:/data
+      - shared_contracts_test:/app/hardhat/build
+      - ./resources/blockchain-test-key.json:/data/keystore/key.json:ro
+      - ./resources/arweave-test-key.json:/data/keystore/arweave.json:ro
+      - ./tests:/app/tests:ro
+    environment:
+      NODE_CONFIG_ENV: dockertest
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+
+  blockchain_node:
+    extends:
+      file: docker-compose.e2e.yaml
+      service: blockchain_node
+    volumes:
+      - blockchain_data_test:/data:rw
+
+  contract_deployer:
+    extends:
+      file: docker-compose.e2e.yaml
+      service: contract_deployer
+    volumes:
+      - shared_contracts_test:/build:rw
+      - ./hardhat/contracts:/hardhat/contracts:ro
+      - ./hardhat/scripts:/hardhat/scripts:ro
+      - ./hardhat/tasks:/hardhat/tasks:ro
+      - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
+
+  arweave:
+    extends:
+      file: docker-compose.storage.yaml
+      service: arweave
+    volumes:
+      - arweave_data_test:/mnt/arweave-data
+
+  gateway:
+    extends:
+      file: docker-compose.storage.yaml
+      service: gateway
+    volumes:
+      - gateway_data_test:/app
+
+  gateway_db:
+    extends:
+      file: docker-compose.storage.yaml
+      service: gateway_db
+    volumes:
+      - gateway_db_data_test:/var/lib/postgresql/data
+
+  bundler:
+    extends:
+      file: docker-compose.storage.yaml
+      service: bundler
+
+  cache:
+    extends:
+      file: docker-compose.storage.yaml
+      service: cache
+    volumes:
+      - bundler_data_test:/data
+
+  buckets:
+    extends:
+      file: docker-compose.storage.yaml
+      service: buckets
+
+volumes:
+  blockchain_data_test:
+  shared_contracts_test:
+  point_node_data_test:
+  arweave_data_test:
+  gateway_data_test:
+  bundler_data_test:
+  gateway_db_data_test:

@@ -2,9 +2,23 @@ version: '3.9'
 
 services:
   blockchain_node:
-    extends:
-        file: docker-compose.e2e.yaml
-        service: blockchain_node
+    image: trufflesuite/ganache-cli:v6.12.2
+    container_name: blockchain
+    hostname: blockchain_node
+    healthcheck:
+      test: |
+        wget -qO- http://localhost:7545 \
+          --header='Content-Type: application/json' \
+          --header="Accept: application/json" \
+          --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}'
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    ports:
+      - '7545:7545'
+    environment:
+      - DOCKER=true
     volumes:
       - blockchain_data_zappdev:/data:rw
     command: |

@@ -6,7 +6,7 @@ const {multistream} = require('pino-multi-stream');
 const ecsFormat = require('@elastic/ecs-pino-format');
 const config = require('config');
 const {resolveHome} = require('../core/utils');
-const {getNetworkAddress} = require('../wallet/keystore');
+const {getIdentifier} = require('../util/getIdentifier');
 const datadir = config.get('datadir');
 const {level, enabled, sendLogs, sendLogsTo} = config.get('log');
 const options = {enabled, formatters: ecsFormat(), level: pino.levels.values[level]};
@@ -28,8 +28,8 @@ streams.push(
 let logger = pino(options, multistream(streams));
 
 try {
-    const account = getNetworkAddress().toLowerCase();
-    logger = logger.child({account});
+    const identifier = getIdentifier();
+    logger = logger.child({identifier});
 } catch (e) {
     logger.error('Couldn\'t get network address for logging');
 }
