@@ -24,6 +24,7 @@
     "commander": "^8.1.0",
     "config": "^3.3.7",
     "detect-content-type": "^1.2.0",
+    "dockerode": "^3.3.1",
     "eccrypto": "^1.1.6",
     "ethereumjs-util": "^7.1.0",
     "ethereumjs-wallet": "^1.0.2",
@@ -37,6 +38,7 @@
     "graphql-request": "^4.0.0",
     "handlebars": "^4.7.7",
     "html-entities": "^2.3.2",
+    "jest-junit": "^13.0.0",
     "js-yaml": "^4.1.0",
     "level": "^7.0.0",
     "lodash": "^4.17.21",
@@ -96,7 +98,7 @@
   },
   "scripts": {
     "test": "jest",
-    "test:docker": "jest tests/docker/*.spec.js --modulePathIgnorePatterns []",
+    "test:docker": "jest tests/docker/*.spec.js --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
     "start": "node dist/index.js",
     "start:zappdev": "MODE=zappdev npm run watch",
     "start:dev": "NODE_ENV=development npm run watch",
@@ -145,6 +147,10 @@
   },
   "author": "Point Network",
   "license": "MIT",
+  "jest-unit": {
+    "outputDirectory": ".",
+    "outputName": "junit.xml"
+  },
   "pkg": {
     "outputPath": "bin",
     "assets": [
