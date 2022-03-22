@@ -54,16 +54,10 @@ do
       #avoid to compile delete identity address
       cp /app/hardhat/build/contracts/Identity.sol/Identity-address.json /app/hardhat/Identity-address.json
 
-      #cd hardhat
       echo "npx hardhat compile"
       npx hardhat compile
       
-      #TODO: need to pass which network will be used for deployment.
-      #echo "npx hardhat  --network development deploy-upgradable --zapp $SITE  "
-      #npx hardhat  --network development deploy-upgradable --zapp $SITE 
-      #cd ..
-
-      ./#restore identity address file
+      #restore identity address file
       cp /app/hardhat/Identity-address.json /app/hardhat/build/contracts/Identity.sol/Identity-address.json 
 
   fi

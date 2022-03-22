@@ -4,14 +4,12 @@ import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
-import "@openzeppelin/hardhat-upgrades";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "./tasks/importer/identity";
 import "./tasks/importer/blog";
 import "./tasks/importer/pointSocial";
 import "./tasks/importer/twitter";
-import "./tasks/deploy/upgradable";
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};

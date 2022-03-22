@@ -42,7 +42,6 @@
     "graphql-request": "^4.0.0",
     "handlebars": "^4.7.7",
     "hardhat": "^2.9.1",
-    "hardhat-change-network": "^0.0.7",
     "html-entities": "^2.3.2",
     "js-yaml": "^4.1.0",
     "level": "^7.0.0",
