@@ -5,6 +5,7 @@ const log = logger.child({module: 'Deployer'});
 const {compileContract, getImportsFactory} = require('../../../util/contract');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 const blockchain = require('../../../network/blockchain');
+const hre = require('hardhat');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -99,6 +100,8 @@ class Deployer {
             );
         }
 
+        
+
         const target = dev ? `${deployConfig.target.replace('.z', 'dev')}.z` : deployConfig.target;
         const identity = target.replace(/\.z$/, '');
 
@@ -168,22 +171,61 @@ class Deployer {
             if (!contractNames) contractNames = [];
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                
                 try {
-                    const {contract, artifacts} = await this.compileContract(
-                        contractName,
-                        fileName,
-                        deployPath
-                    );
+                    let address;
+                    let artifactsDeployed;
+                    if(deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable == true){
 
-                    const address = await blockchain.deployContract(
-                        contract,
-                        artifacts,
-                        contractName
-                    );
+                        //TODO:set the signer wallet for deployment.
+                        //use blockchain.getOwner() to deploy from the right address
+
+                        //TODO: configure to proper set the right network.
+                        hre.changeNetwork('development');
+                        
+                        const proxyAddress = await blockchain.getKeyValue(
+                            target,
+                            'zweb/contracts/address/' + contractName,
+                            version,
+                            'equalOrBefore'
+                        );
+                        
+                        let proxy;
+                        let contractF = await hre.ethers.getContractFactory(contractName);
+                        if(proxyAddress == null){
+                            console.log('deployProxy call');
+                            proxy = await hre.upgrades.deployProxy(contractF, [], { kind: 'uups' });
+                        }else{
+                            console.log('upgradeProxy call');
+                            proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                        }
+                        await proxy.deployed();                            
+                        address = proxy.address;
+                        
+                        //TODO: improve this path 
+                        artifactsDeployed = JSON.parse(fs.readFileSync(
+                                `/app/hardhat/build/hardhat/contracts/${contractName}.sol/${contractName}.json`
+                            , 'utf8'));
+
+                    }else{
+                        const {contract, artifacts} = await this.compileContract(
+                            contractName,
+                            fileName,
+                            deployPath
+                        );
+
+                        artifactsDeployed = artifacts;
+
+                        address = await blockchain.deployContract(
+                            contract,
+                            artifacts,
+                            contractName
+                        );
+                    }
                     this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
                     const artifactsStorageId = await this.storeContractArtifacts(
-                        artifacts,
+                        artifactsDeployed,
                         fileName,
                         contractName,
                         version,
