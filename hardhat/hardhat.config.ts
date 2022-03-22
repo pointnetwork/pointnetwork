@@ -37,7 +37,8 @@ const port = process.env.BLOCKCHAIN_PORT || 7545;
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
 
 const devaddress = 'http://' + host + ':' + port
-console.log(devaddress);
+console.log(devaddress)
+
 const wallet = ethers.Wallet.fromMnemonic(keystore.phrase);
 
 // You need to export an object to set up your config

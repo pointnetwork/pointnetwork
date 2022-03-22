@@ -3,7 +3,7 @@ const http = require('http');
 const https = require('https');
 const tls = require('tls');
 const _ = require('lodash');
-const fs = require('fs-extra');
+const {promises: fs} = require('fs');
 const path = require('path');
 const Renderer = require('../zweb/renderer');
 const sanitizeHtml = require('sanitize-html');
@@ -12,7 +12,6 @@ const sanitizingConfig = require('./sanitizing-config');
 const WebSocketServer = require('websocket').server;
 const ZProxySocketController = require('../../api/sockets/ZProxySocketController');
 const certificates = require('./certificates');
-const LocalDirectory = require('../../db/models/local_directory');
 const qs = require('query-string');
 const Console = require('../../console');
 const utils = require('../../core/utils');
@@ -23,8 +22,10 @@ const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxy'});
 const detectContentType = require('detect-content-type');
 const {getNetworkAddress} = require('../../wallet/keystore');
+const {match} = require('node-match-path');
 const blockchain = require('../../network/blockchain');
 const {templateManager, Template} = require('./templateManager');
+const {readFileByPath} = require('../../util');
 
 class ZProxy {
     constructor(ctx) {
@@ -386,7 +387,7 @@ class ZProxy {
                         for (const key in files) {
                             // TODO: properly handle multiple file uploads
                             const uploadedFilePath = files[key].path;
-                            const fileData = fs.readFileSync(uploadedFilePath);
+                            const fileData = await fs.readFile(uploadedFilePath);
                             const uploadedId = await uploadFile(fileData);
 
                             const response = {status: 200, data: uploadedId};
@@ -467,11 +468,10 @@ class ZProxy {
             request.on('end', async () => {
                 try {
                     const routesJsonPath = path.resolve(filePath, '..', 'routes.json');
-                    const routes = fs.readJSONSync(routesJsonPath);
+                    const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
                     let route_params = {};
                     let template_filename = null;
-                    const {match} = require('node-match-path');
                     for (const k in routes) {
                         const matched = match(k, parsedUrl.pathname);
                         if (matched.matches) {
@@ -482,17 +482,15 @@ class ZProxy {
                     }
 
                     if (template_filename) {
-                        // Use a LocalDirectory object since we are rendering locally
-                        const directory = new LocalDirectory(this.ctx);
-                        directory.setLocalRoot(filePath);
 
                         // const template_file_path = `${filePath}/${template_filename}`;
-                        const template_file_contents = await directory.readFileByPath(
+                        const template_file_contents = await readFileByPath(
+                            filePath,
                             `${template_filename}`,
                             'utf-8'
                         );
 
-                        const renderer = new Renderer(this.ctx, {localDir: directory});
+                        const renderer = new Renderer(this.ctx, {localDir: filePath});
                         let request_params = {};
 
                         // Add params from route matching
@@ -522,11 +520,11 @@ class ZProxy {
                         // If not, try root dir
                         // in parsedUrl.pathname will be something like "/index.css"
 
-                        // Use a LocalDirectory object since we are rendering locally
-                        const directory = new LocalDirectory(this.ctx);
-                        directory.setLocalRoot(filePath);
-
-                        const rendered = await directory.readFileByPath(parsedUrl.pathname, null); // todo: encoding?
+                        const rendered = await readFileByPath(
+                            filePath,
+                            parsedUrl.pathname,
+                            null // todo: encoding?
+                        );
 
                         response._contentType = this.getContentTypeFromExt(
                             this.getExtFromFilename(parsedUrl.pathname)
@@ -867,7 +865,7 @@ class ZProxy {
     }
 
     async _directoryHtml(id, files) {
-        const filesInfo = files.map(this._formatFileInfo);
+        const filesInfo = files.map(this._formatFileInfo.bind(this));
         return templateManager.render(Template.DIRECTORY, {id, filesInfo});
     }
 

@@ -11,6 +11,7 @@ const {
 } = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/blockchain');
+const {readFileByPath} = require('../../../util');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -328,7 +329,7 @@ class Renderer {
             const templateFileId = await getFileIdByPath(this.rootDirId, templatePath);
             return getFile(templateFileId, 'utf8');
         } else {
-            return this.localDir.readFileByPath(templatePath, 'utf-8');
+            return readFileByPath(this.localDir, templatePath, 'utf-8');
         }
     }
 
