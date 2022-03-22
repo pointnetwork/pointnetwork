@@ -155,7 +155,7 @@ class Deployer {
                 owner,
                 Buffer.from(publicKey, 'hex')
             );
-
+            log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
