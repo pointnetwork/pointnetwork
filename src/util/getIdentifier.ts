@@ -6,7 +6,8 @@ import config from 'config';
 
 let identifier: string;
 
-export function getIdentifier(): string {
+export function getIdentifier(): [string, boolean] {
+    let isNew = false;
     if (!identifier) {
         const liveProfilePath = path.join(resolveHome(config.get('datadir')), 'keystore', 'liveprofile');
         const identifierPath = path.join(liveProfilePath, 'identifier');
@@ -15,10 +16,11 @@ export function getIdentifier(): string {
         }
         if (!fs.existsSync(identifierPath)) {
             identifier = nanoid();
+            isNew = true;
             fs.writeFileSync(identifierPath, identifier);
         } else {
             identifier = fs.readFileSync(identifierPath, 'utf8');
         }
     }
-    return identifier;
+    return [identifier, isNew];
 }

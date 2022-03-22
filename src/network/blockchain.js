@@ -534,6 +534,14 @@ blockchain.registerIdentity = async (identity, address, commPublicKey) => {
 
         const result = await blockchain.web3send(method);
         log.info(result, 'Identity registration result');
+        log.sendMetric({
+            identityRegistrationResult: {
+                from: identityRegistrationResult.from,
+                to: identityRegistrationResult.to,
+                transactionHash: identityRegistrationResult.transactionHash,
+                account: identityRegistrationResult.account
+            }
+        });
 
         return result;
     } catch (e) {
@@ -541,6 +549,7 @@ blockchain.registerIdentity = async (identity, address, commPublicKey) => {
             {error: e, stack: e.stack, identity, address, commPublicKey},
             'Identity registration error'
         );
+
         throw e;
     }
 };

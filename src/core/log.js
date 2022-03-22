@@ -1,20 +1,43 @@
 const {createWriteStream} = require('fs');
 const path = require('path');
 const pino = require('pino');
-const udpTransport = require('pino-udp');
+const UdpTransport = require('pino-udp');
 const {multistream} = require('pino-multi-stream');
 const ecsFormat = require('@elastic/ecs-pino-format');
 const config = require('config');
 const {resolveHome} = require('../core/utils');
 const {getIdentifier} = require('../util/getIdentifier');
+const {getNetworkAddress} = require('../wallet/keystore');
+const account = getNetworkAddress().toLowerCase();
 const datadir = config.get('datadir');
 const {level, enabled, sendLogs, sendLogsTo} = config.get('log');
 const options = {enabled, formatters: ecsFormat(), level: pino.levels.values[level]};
 const streams = [];
+const noop = () => {};
+let sendMetric = noop;
+let identifier;
+let isNewIdentifier;
+
+try {
+    [identifier, isNewIdentifier] = getIdentifier();
+} catch (e) {
+    logger.error('Couldn\'t get network address for logging');
+}
+
+
+const tags = {
+    identifier,
+    account
+};
 
 if (sendLogs && sendLogsTo) {
     const [address, port] = sendLogsTo.split('://').pop().split(':');
-    streams.push(new udpTransport({address, port}));
+    const udpTransport = new UdpTransport({address, port});
+    streams.push(udpTransport);
+    sendMetric = (obj) => {
+        udpTransport.write(Buffer.from(JSON.stringify({...tags, ...obj})), noop);
+    };
+    sendMetric({isNewIdentifier});
 }
 
 streams.push(
@@ -26,13 +49,7 @@ streams.push(
 );
 
 let logger = pino(options, multistream(streams));
-
-try {
-    const identifier = getIdentifier();
-    logger = logger.child({identifier});
-} catch (e) {
-    logger.error('Couldn\'t get network address for logging');
-}
+logger = logger.child(tags);
 
 module.exports = Object.assign(logger, {
     close() {
@@ -42,4 +59,4 @@ module.exports = Object.assign(logger, {
             }
         }
     }
-});
+}, {sendMetric});
