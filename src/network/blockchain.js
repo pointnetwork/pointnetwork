@@ -444,12 +444,13 @@ blockchain.getLastVersionOrBefore = (version, events) => {
     );
     if (filteredEvents.length > 0) {
         const maxObj = filteredEvents.reduce((prev, current) =>
-            blockchain.compareVersions(prev.returnValues.version, current.returnValues.version) === 1
+            blockchain.compareVersions(prev.returnValues.version, 
+                current.returnValues.version) === 1
                 ? prev
                 : current
         );
         return maxObj.returnValues.value;
-    }else{
+    } else {
         return null;
     }
 };

@@ -101,8 +101,6 @@ class Deployer {
             );
         }
 
-        
-
         const target = dev ? `${deployConfig.target.replace('.z', 'dev')}.z` : deployConfig.target;
         const identity = target.replace(/\.z$/, '');
 
@@ -176,7 +174,7 @@ class Deployer {
                 try {
                     let address;
                     let artifactsDeployed;
-                    if(deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable == true){
+                    if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
 
                         const proxyAddress = await blockchain.getKeyValue(
                             target,
@@ -186,14 +184,14 @@ class Deployer {
                         );
                         
                         let proxy;
-                        let contractF = await hre.ethers.getContractFactory(contractName);
-                        if(proxyAddress == null){
+                        const contractF = await hre.ethers.getContractFactory(contractName);
+                        if (proxyAddress == null){
                             log.debug('deployProxy call');
-                            proxy = await hre.upgrades.deployProxy(contractF, [], { kind: 'uups' });
-                        }else{
+                            proxy = await hre.upgrades.deployProxy(contractF, [], {kind: 'uups'});
+                        } else {
                             log.debug('upgradeProxy call');
                             //restore from blockchain upgradable contracts and proxy metadata if does not exist. 
-                            if(!fs.existsSync(path.join('.', '.openzeppelin', 'unknown-1337.json'))){
+                            if (!fs.existsSync(path.join('.', '.openzeppelin', 'unknown-1337.json'))){
                                 const proxyDescriptionFileId = await blockchain.getKeyValue(
                                     target,
                                     PROXY_METADATA_KEY,
@@ -210,7 +208,7 @@ class Deployer {
                         address = proxy.address;
                         
                         artifactsDeployed = await hre.artifacts.readArtifact(contractName);
-                    }else{
+                    } else {
                         const {contract, artifacts} = await this.compileContract(
                             contractName,
                             fileName,
@@ -245,8 +243,8 @@ class Deployer {
                 }
             }
 
-            if(deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable == true){
-                try{
+            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
+                try {
                     // Upload proxy metadata
                     const proxyMetadataFilePath = path.join('.', '.openzeppelin', 'unknown-1337.json');
                     const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
@@ -254,7 +252,8 @@ class Deployer {
 
                     log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
                     this.ctx.client.deployerProgress.update(proxyMetadataFilePath, 0, 'uploading');
-                    const proxyMetadataFileUploadedId = await storage.uploadFile(JSON.stringify(proxyMetadata));
+                    const proxyMetadataFileUploadedId = 
+                        await storage.uploadFile(JSON.stringify(proxyMetadata));
                     this.ctx.client.deployerProgress.update(
                         proxyMetadataFilePath,
                         100,
