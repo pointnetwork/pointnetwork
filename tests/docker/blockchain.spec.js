@@ -5,6 +5,7 @@ import blockchain from '../../src/network/blockchain';
 import {getNetworkPublicKey, getNetworkAddress} from '../../src/wallet/keystore';
 import {uploadFile} from '../../src/client/storage';
 import {delay} from '../../src/core/utils';
+import {getContractAddress} from '../../src/util/contract';
 
 jest.setTimeout(300000);
 jest.retryTimes(60);
@@ -19,7 +20,12 @@ async function initTestData() {
     testData.deployConfig = JSON.parse(deployConfigFile);
 }
 
-beforeAll(() => initTestData());
+beforeAll(() => {
+    if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
+        process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
+    }
+    return initTestData();
+});
 
 describe('Register identity and deploy site', () => {
     const hexRegExp = /^[0-9A-Fa-f]{16,}$/;
@@ -46,7 +52,9 @@ describe('Register identity and deploy site', () => {
     });
 
     it('Should find the new identity in the blockchain', async () => {
-        expect.assertions(2);
+        const expectedRegisteredIdentities = ['why', 'hello'];
+        expect.assertions(expectedRegisteredIdentities.length);
+
         const identity0 = await blockchain.callContract(
             '@',
             'Identity',
@@ -54,6 +62,7 @@ describe('Register identity and deploy site', () => {
             [0],
             'latest'
         );
+
         const identity1 = await blockchain.callContract(
             '@',
             'Identity',
@@ -62,12 +71,11 @@ describe('Register identity and deploy site', () => {
             'latest'
         );
 
-        console.log(`@@@ identityList`); // eslint-disable-line no-console
-        console.log({identity0, identity1}); // eslint-disable-line no-console
+        const got = [identity0, identity1];
 
-        // Just a placeholder, will be changed.
-        expect(identity0).toBeTruthy();
-        expect(identity1).toBeTruthy();
+        for (let i = 0; i < expectedRegisteredIdentities.length; i++) {
+            expect(got).toContain(expectedRegisteredIdentities[i]);
+        }
     });
 
     it('Should deploy the sample site index.html site to arweave', async () => {

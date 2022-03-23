@@ -40,6 +40,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
     web3.eth.accounts.wallet.add(account);
     web3.eth.defaultAccount = account.address;
 
+    log.debug({blockchainUrl}, '@@@ Created web3 instance');
     return web3;
 }
 
@@ -89,7 +90,7 @@ blockchain.loadPointContract = async (
                 }
             }
 
-            log.debug(`Compiling ${contractName} contract`);
+            log.debug(`Compiling ${contractName} contract at ${at}`);
             const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
             await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
 
@@ -105,7 +106,9 @@ blockchain.loadPointContract = async (
 };
 
 blockchain.loadIdentityContract = async () => {
-    const at = config.get('network.identity_contract_address');
+    const addressFromEnv = process.env.IDENTITY_CONTRACT_ADDRESS;
+    const at = addressFromEnv || config.get('network.identity_contract_address');
+    log.debug({address: at}, '@@@ Identity contract address');
     return await blockchain.loadPointContract('Identity', at);
 };
 
@@ -544,7 +547,10 @@ blockchain.registerIdentity = async (identity, address, commPublicKey) => {
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const contract = await blockchain.loadIdentityContract();
-        log.debug('Loaded "identity contract" successfully');
+        log.debug(
+            {address: contract.options.address},
+            '@@@ Loaded "identity contract" successfully'
+        );
 
         const method = contract.methods.register(
             identity,
