@@ -3,7 +3,7 @@ import {readFile} from 'fs/promises';
 import axios from 'axios';
 import blockchain from '../../src/network/blockchain';
 import {getNetworkPublicKey, getNetworkAddress} from '../../src/wallet/keystore';
-import {uploadFile} from '../../src/client/storage';
+import {uploadFile, uploadDir} from '../../src/client/storage';
 import {delay} from '../../src/core/utils';
 import {getContractAddress} from '../../src/util/contract';
 
@@ -29,12 +29,12 @@ beforeAll(() => {
 
 describe('Register identity and deploy site', () => {
     const hexRegExp = /^[0-9A-Fa-f]{16,}$/;
-    let indexHTMLStorageId;
+    let publicDirStorageId;
     let routesStorageId;
 
     it('Should register a new identity', async () => {
         expect.assertions(4);
-        await delay(10_000);
+        await delay(5000);
 
         const {target} = testData.deployConfig;
         const identity = target.replace(/\.z$/, '');
@@ -78,22 +78,30 @@ describe('Register identity and deploy site', () => {
         }
     });
 
-    it('Should deploy the sample site index.html site to arweave', async () => {
+    // it('Should deploy the sample site index.html site to arweave', async () => {
+    //     expect.assertions(1);
+    //     const indexHTMLPath = path.join(
+    //         __dirname,
+    //         '..',
+    //         'resources',
+    //         'sample_site',
+    //         'public',
+    //         'index.html'
+    //     );
+    //
+    //     const indexHTMLAsBuffer = await readFile(indexHTMLPath);
+    //     indexHTMLStorageId = await uploadFile(indexHTMLAsBuffer);
+    //     const {target, version} = testData.deployConfig;
+    //     await blockchain.putKeyValue(target, '::rootDir', indexHTMLStorageId, version);
+    //     expect(indexHTMLStorageId).toMatch(hexRegExp);
+    // });
+    it('Should deploy the sample site to arweave', async () => {
         expect.assertions(1);
-        const indexHTMLPath = path.join(
-            __dirname,
-            '..',
-            'resources',
-            'sample_site',
-            'public',
-            'index.html'
-        );
-
-        const indexHTMLAsBuffer = await readFile(indexHTMLPath);
-        indexHTMLStorageId = await uploadFile(indexHTMLAsBuffer);
+        const publicDir = path.join(__dirname, '..', 'resources', 'sample_site', 'public');
+        const publicDirStorageId = await uploadDir(publicDir);
         const {target, version} = testData.deployConfig;
-        await blockchain.putKeyValue(target, '::rootDir', indexHTMLStorageId, version);
-        expect(indexHTMLStorageId).toMatch(hexRegExp);
+        await blockchain.putKeyValue(target, '::rootDir', publicDirStorageId, version);
+        expect(publicDirStorageId).toMatch(hexRegExp);
     });
 
     it('Should add route to `routes.json` and deploy it', async () => {
@@ -101,7 +109,7 @@ describe('Register identity and deploy site', () => {
         const routesPath = path.join(__dirname, '..', 'resources', 'sample_site', 'routes.json');
         const routesStr = await readFile(routesPath, 'utf-8');
         const routesObj = JSON.parse(routesStr);
-        const newRoute = `/${indexHTMLStorageId}`;
+        const newRoute = `/${publicDirStorageId}`;
         routesObj[newRoute] = 'index.html';
         const routesFileAsBuffer = Buffer.from(JSON.stringify(routesObj, null, 2));
         routesStorageId = await uploadFile(routesFileAsBuffer);
@@ -114,21 +122,6 @@ describe('Register identity and deploy site', () => {
             const {target, version} = testData.deployConfig;
             await blockchain.putZRecord(target, `0x${routesStorageId}`, version);
         }).not.toThrow();
-    });
-
-    it('Should fetch index.html using `_storage` API', async () => {
-        expect.assertions(3);
-        await delay(5_000);
-
-        const res = await axios.get(`https://point/_storage/${indexHTMLStorageId}`, {
-            proxy: {host: 'point_node', port: 8666, protocol: 'https'},
-            maxRedirects: 0,
-            validateStatus: () => true
-        });
-
-        expect(res.status).toEqual(200);
-        expect(res.data).toMatch(/^<!DOCTYPE html>/);
-        expect(res.data).toMatch('<title>E2E Test Site</title>');
     });
 
     it('Should fetch index.html making a GET request to the new domain', async () => {
