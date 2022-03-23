@@ -336,15 +336,7 @@ class ZProxy {
             
             // if requesting a file directly from storage and the accept headers are wide open 
             // and the file is not an image or video then return as a file attachment
-            if (_.startsWith(parsedUrl.pathname, '/_storage/') && // request directly from storage
-                !_.startsWith(contentType, 'image') && // not an image
-                !_.startsWith(contentType, 'video') && // not a video
-                (
-                    request.headers.accept.includes('text/html') || 
-                    request.headers.accept.includes('application/xhtml+xml') || 
-                    request.headers.accept.includes('application/xml') || 
-                    request.headers.accept.includes('*/*')
-                )) {
+            if (this.setAsAttachment(parsedUrl.pathname, contentType, acceptHeaders)) {
                 headers['Content-Disposition'] = 'attachment'; 
             }
             
@@ -366,6 +358,18 @@ class ZProxy {
         }
 
         // todo:?
+    }
+
+    setAsAttachment(urlPathname, contentType, acceptHeaders) {
+        return (_.startsWith(urlPathname, '/_storage/') && // request directly from storage
+        !_.startsWith(contentType, 'image') && // not an image
+        !_.startsWith(contentType, 'video') && // not a video
+        (
+            acceptHeaders.includes('text/html') || 
+            acceptHeaders.includes('application/xhtml+xml') || 
+            acceptHeaders.includes('application/xml') || 
+            acceptHeaders.includes('*/*')
+        ));
     }
 
     _isThisDirectoryJson(text) {

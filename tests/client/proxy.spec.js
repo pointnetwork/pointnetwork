@@ -87,4 +87,22 @@ describe('Client/ZProxy', () => {
             throw e;
         }
     });
+
+    describe('setAsAttachment', () => {
+        const zproxy = new ZProxy({});
+        describe('when requesting directly from storage', () => {
+            const urlPathname = '/_storage/';
+            describe('when acceept headers allow application types or wildcards', () => {
+                const acceptHeaders = 'text/html;application/xml;application/xhtml+xml;*/*';
+                test.only('when contentType is video or image it should return FALSE', () => {
+                    expect(zproxy.setAsAttachment(urlPathname, 'video', acceptHeaders)).toBeFalsy();
+                    expect(zproxy.setAsAttachment(urlPathname, 'image', acceptHeaders)).toBeFalsy();
+                });
+                test.only('when contentType is not video or image it should return TRUE', () => {
+                    expect(zproxy.setAsAttachment(urlPathname, 'javascript', acceptHeaders)).toBeTruthy();
+                    expect(zproxy.setAsAttachment(urlPathname, 'application/xml', acceptHeaders)).toBeTruthy();
+                });
+            });
+        });
+    });
 });
