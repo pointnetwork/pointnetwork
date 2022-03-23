@@ -334,9 +334,17 @@ class ZProxy {
             if (typeof sanitized === 'undefined') sanitized = ''; // to avoid "response expected a string but got undefined"
             const headers = {'Content-Type': contentType};
             
-            // if requesting a file directly from storage and the accept headers are wide open then return as a file attachment
-            if (_.startsWith(parsedUrl.pathname, '/_storage/') && 
-                request.headers.accept === 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8') {
+            // if requesting a file directly from storage and the accept headers are wide open 
+            // and the file is not an image or video then return as a file attachment
+            if (_.startsWith(parsedUrl.pathname, '/_storage/') && // request directly from storage
+                !_.startsWith(contentType, 'image') && // not an image
+                !_.startsWith(contentType, 'video') && // not a video
+                (
+                    request.headers.accept.includes('text/html') || 
+                    request.headers.accept.includes('application/xhtml+xml') || 
+                    request.headers.accept.includes('application/xml') || 
+                    request.headers.accept.includes('*/*')
+                )) {
                 headers['Content-Disposition'] = 'attachment'; 
             }
             
