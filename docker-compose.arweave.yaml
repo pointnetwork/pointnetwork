@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  arweave-node:
+    container_name: arweave-node
+    image: arweave-node:latest
+    build:
+      context: .
+      dockerfile: ar.dockerfile
+    ports:
+      - "1984:1984"
+    healthcheck:
+      test: |
+        wget -qO- http://localhost:1984/info
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    volumes:
+      - arweave_data_ar:/mnt/arweave-data
+      - ./scripts/start-arweave-node.sh:/opt/arweave/start.sh
+    entrypoint: /opt/arweave/start.sh
+    environment:
+      MINER_ADDRESS: EvcYcqk9vR-aZ-tzyysxvPKHkrBZZDVFryRODdlygbk
+      DATA_DIR: /mnt/arweave-data
+      DISK_SPACE: 100
+      MAX_REQUESTS_PER_MIN: 3000
+
+  gateway:
+    extends:
+      file: docker-compose.storage.yaml
+      service: gateway
+    depends_on:
+      gateway_db:
+        condition: service_healthy
+      arweave-node:
+        condition: service_healthy
+    volumes:
+      - gateway_data_ar:/app
+    environment:
+      ARWEAVE_NODES: '["http://arweave-node:1984"]'
+
+  gateway_db:
+    extends:
+      file: docker-compose.storage.yaml
+      service: gateway_db
+    volumes:
+      - gateway_db_data_ar:/var/lib/postgresql/data
+
+volumes:
+  arweave_data_ar:
+  gateway_data_ar:
+  gateway_db_data_ar:
