@@ -21,9 +21,7 @@ async function initTestData() {
 }
 
 beforeAll(() => {
-    if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
-        process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
-    }
+    process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
     return initTestData();
 });
 
@@ -33,7 +31,7 @@ describe('Register identity and deploy site', () => {
     let routesStorageId;
 
     it('Should register a new identity', async () => {
-        expect.assertions(4);
+        expect.assertions(5);
         await delay(5000);
 
         const {target} = testData.deployConfig;
@@ -49,11 +47,11 @@ describe('Register identity and deploy site', () => {
         expect(result.from).toEqual(testData.address);
         expect(result.blockNumber).toBeGreaterThan(0);
         expect(result.gasUsed).toBeGreaterThan(0);
+        expect(result.status).toBe(true);
     });
 
     it('Should find the new identity in the blockchain', async () => {
-        const expectedRegisteredIdentities = ['why', 'hello'];
-        expect.assertions(expectedRegisteredIdentities.length);
+        expect.assertions(1);
 
         const identity0 = await blockchain.callContract(
             '@',
@@ -72,33 +70,13 @@ describe('Register identity and deploy site', () => {
         );
 
         const got = [identity0, identity1];
-
-        for (let i = 0; i < expectedRegisteredIdentities.length; i++) {
-            expect(got).toContain(expectedRegisteredIdentities[i]);
-        }
+        expect(got).toContain(testData.deployConfig.target.replace(/\.z$/, ''));
     });
 
-    // it('Should deploy the sample site index.html site to arweave', async () => {
-    //     expect.assertions(1);
-    //     const indexHTMLPath = path.join(
-    //         __dirname,
-    //         '..',
-    //         'resources',
-    //         'sample_site',
-    //         'public',
-    //         'index.html'
-    //     );
-    //
-    //     const indexHTMLAsBuffer = await readFile(indexHTMLPath);
-    //     indexHTMLStorageId = await uploadFile(indexHTMLAsBuffer);
-    //     const {target, version} = testData.deployConfig;
-    //     await blockchain.putKeyValue(target, '::rootDir', indexHTMLStorageId, version);
-    //     expect(indexHTMLStorageId).toMatch(hexRegExp);
-    // });
     it('Should deploy the sample site to arweave', async () => {
         expect.assertions(1);
         const publicDir = path.join(__dirname, '..', 'resources', 'sample_site', 'public');
-        const publicDirStorageId = await uploadDir(publicDir);
+        publicDirStorageId = await uploadDir(publicDir);
         const {target, version} = testData.deployConfig;
         await blockchain.putKeyValue(target, '::rootDir', publicDirStorageId, version);
         expect(publicDirStorageId).toMatch(hexRegExp);
@@ -133,6 +111,23 @@ describe('Register identity and deploy site', () => {
             maxRedirects: 0,
             validateStatus: () => true
         });
+
+        expect(res.status).toEqual(200);
+        expect(res.data).toMatch(/^<!DOCTYPE html>/);
+        expect(res.data).toMatch('<title>E2E Test Site</title>');
+    });
+
+    it('Should fetch index.html making a GET request to the "dynamicly created route"', async () => {
+        expect.assertions(3);
+
+        const res = await axios.get(
+            `https://${testData.deployConfig.target}/${publicDirStorageId}`,
+            {
+                proxy: {host: 'point_node', port: 8666, protocol: 'https'},
+                maxRedirects: 0,
+                validateStatus: () => true
+            }
+        );
 
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<!DOCTYPE html>/);
