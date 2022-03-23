@@ -2,7 +2,6 @@ import { HardhatUserConfig} from "hardhat/config";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
-import "hardhat-change-network";
 
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
 const host = process.env.BLOCKCHAIN_HOST || 'blockchain_node';
