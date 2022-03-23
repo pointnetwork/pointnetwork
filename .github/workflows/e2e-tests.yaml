@@ -3,6 +3,7 @@ on:
   pull_request:
     branches: [ develop ]
 
+
 jobs:
   e2e-tests:
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
