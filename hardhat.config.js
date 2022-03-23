@@ -1,7 +1,6 @@
-import { HardhatUserConfig} from "hardhat/config";
-import "@typechain/hardhat";
-import "@nomiclabs/hardhat-ethers";
-import "@openzeppelin/hardhat-upgrades";
+require("@typechain/hardhat");
+require("@nomiclabs/hardhat-ethers");
+require("@openzeppelin/hardhat-upgrades");
 
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
 const host = process.env.BLOCKCHAIN_HOST || 'blockchain_node';
@@ -12,14 +11,14 @@ const devaddress = 'http://' + host + ':' + port
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
-let defaultNetwork: string;
+let defaultNetwork;
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     defaultNetwork = 'development';
 }else{
     defaultNetwork = 'ynet';
 }
 
-const config: HardhatUserConfig = {
+const config = {
     solidity: {
         compilers: [
             {
@@ -54,4 +53,4 @@ const config: HardhatUserConfig = {
     defaultNetwork: defaultNetwork
 };
 
-export default config;
+module.exports = config;

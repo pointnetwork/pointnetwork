@@ -55,7 +55,7 @@ services:
       - shared_contracts_zappdev:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
-      - ./hardhat.config.ts:/app/hardhat.config.ts
+      - ./hardhat.config.js:/app/hardhat.config.js
     ports:
       - '12346:9685'
       - '65501:8666'
