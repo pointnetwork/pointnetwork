@@ -57,6 +57,7 @@ services:
     environment:
       LOG_LEVEL: info
       NODE_CONFIG_ENV: dockertest
+      MODE: e2e
       NODE_TLS_REJECT_UNAUTHORIZED: 0
 
   blockchain_node:
