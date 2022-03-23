@@ -90,12 +90,7 @@ blockchain.loadPointContract = async (
             }
 
             log.debug(`Compiling ${contractName} contract`);
-            const contractPath = path.resolve(
-                basepath,
-                '..',
-                'hardhat',
-                'contracts'
-            );
+            const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
             await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
 
             log.debug('Identity contract successfully compiled');
@@ -161,18 +156,36 @@ blockchain.web3send = async (method, optons = {}) => {
         try {
             account = web3.eth.defaultAccount;
             gasPrice = await web3.eth.getGasPrice();
-            log.debug({gasLimit, gasPrice, account}, 'Prepared to send tx to contract method');
+            log.debug(
+                {gasLimit, gasPrice, account, method: method._method.name},
+                'Prepared to send tx to contract method'
+            );
             // if (!gasLimit) {
             gasLimit = await method.estimateGas({from: account, value: amountInWei});
             log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
             // }
             requestStart = Date.now();
-            return await method.send({
-                from: account,
-                gasPrice,
-                gas: gasLimit,
-                value: amountInWei
-            });
+            return await method
+                .send({
+                    from: account,
+                    gasPrice,
+                    gas: gasLimit,
+                    value: amountInWei
+                })
+                .on('confirmation', (confirmationNumber, receipt) => {
+                    const {transactionHash, blockNumber, status} = receipt;
+                    log.debug(
+                        {confirmationNumber, transactionHash, blockNumber, status},
+                        'registerIdentity: confirmation of blockchain tx'
+                    );
+                })
+                .on('error', (error, receipt) => {
+                    const {transactionHash, blockNumber, status} = receipt;
+                    log.debug(
+                        {error, transactionHash, blockNumber, status},
+                        'registerIdentity: error sending tx'
+                    );
+                });
         } catch (error) {
             log.error(
                 {
@@ -531,6 +544,8 @@ blockchain.registerIdentity = async (identity, address, commPublicKey) => {
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const contract = await blockchain.loadIdentityContract();
+        log.debug('Loaded "identity contract" successfully');
+
         const method = contract.methods.register(
             identity,
             address,
@@ -538,6 +553,7 @@ blockchain.registerIdentity = async (identity, address, commPublicKey) => {
             `0x${commPublicKey.slice(32).toString('hex')}`
         );
 
+        log.debug({identity, address}, 'Registering identity');
         const result = await blockchain.web3send(method);
         log.info(result, 'Identity registration result');
         log.sendMetric({

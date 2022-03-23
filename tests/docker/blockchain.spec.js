@@ -45,6 +45,31 @@ describe('Register identity and deploy site', () => {
         expect(result.gasUsed).toBeGreaterThan(0);
     });
 
+    it('Should find the new identity in the blockchain', async () => {
+        expect.assertions(2);
+        const identity0 = await blockchain.callContract(
+            '@',
+            'Identity',
+            'identityList',
+            [0],
+            'latest'
+        );
+        const identity1 = await blockchain.callContract(
+            '@',
+            'Identity',
+            'identityList',
+            [1],
+            'latest'
+        );
+
+        console.log(`@@@ identityList`); // eslint-disable-line no-console
+        console.log({identity0, identity1}); // eslint-disable-line no-console
+
+        // Just a placeholder, will be changed.
+        expect(identity0).toBeTruthy();
+        expect(identity1).toBeTruthy();
+    });
+
     it('Should deploy the sample site index.html site to arweave', async () => {
         expect.assertions(1);
         const indexHTMLPath = path.join(
