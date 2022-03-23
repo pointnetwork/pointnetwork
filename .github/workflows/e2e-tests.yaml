@@ -4,7 +4,8 @@ on:
     branches: [ develop ]
 
 jobs:
-  docker:
+  e2e-tests:
+    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     timeout-minutes: 30
     runs-on: ubuntu-latest
 

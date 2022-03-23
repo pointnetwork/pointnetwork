@@ -5,7 +5,6 @@ import FormData from 'form-data';
 import {delay} from '../../src/core/utils';
 import {uploadDir} from '../../src/client/storage';
 
-jest.setTimeout(300000);
 jest.retryTimes(60);
 
 describe('Storage requests through proxy', () => {
@@ -53,7 +52,7 @@ describe('Storage requests through proxy', () => {
             {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
         );
         expect(res.status).toEqual(200);
-    });
+    }, 300000);
 
     // TODO: neither proxy nor API don't handle directory upload, we can only do it
     // using storage method
@@ -78,5 +77,5 @@ describe('Storage requests through proxy', () => {
         expect(res.data).toMatch(`<h1>Index of ${dirId}</h1>`);
         expect(res.data).toMatch('sample-image-2.jpg;');
         expect(res.data).toMatch('sample-image-3.jpg;');
-    });
+    }, 300000);
 });
