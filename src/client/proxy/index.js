@@ -633,6 +633,8 @@ class ZProxy {
                         // If not, try root dir
                         // in parsedUrl.pathname will be something like "/index.css"
 
+                        // TODO: this doesn't look like a good solution, as it leads to
+                        // unexpected return of a blank HTML instead of 404
                         // This condition is when a user of a SPA hits refresh and the url is part of the SPA
                         // managed routes and not part of ZProxy managed routes. In this case, simple solution is
                         // to redirect the user back to the site home page.
