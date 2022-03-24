@@ -1,22 +1,38 @@
 import {get} from 'axios';
 import {delay} from '../../src/core/utils';
+import HttpAgent from 'http-proxy-agent';
+import HttpsAgent from 'https-proxy-agent';
 
 jest.retryTimes(60);
 
+const httpsAgent = new HttpsAgent({
+    host: 'point_node',
+    port: 8666,
+    protocol: 'http'
+});
+
+const httpAgent = new HttpAgent({
+    host: 'point_node',
+    port: 8666,
+    protocol: 'http'
+});
+
 describe('Proxy', () => {
+    // TODO: test api
+
     it('Should redirect from http://point to https://point', async () => {
         expect.assertions(2);
 
         const res = await get(
             'http://point',
             {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                httpAgent,
                 maxRedirects: 0,
                 validateStatus: () => true
             }
         );
         expect(res.status).toEqual(301);
-        expect(res.headers.location).toEqual('https://point/');
+        expect(res.headers.location).toEqual('https://point');
     });
 
     it('Should return https://point HTML', async () => {
@@ -24,7 +40,7 @@ describe('Proxy', () => {
 
         const res = await get(
             'https://point',
-            {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<html>/);
@@ -38,7 +54,7 @@ describe('Proxy', () => {
         await delay(5000);
         const res = await get(
             'https://blog.z',
-            {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<!doctype html>/);
@@ -54,7 +70,7 @@ describe('Proxy', () => {
         const res = await get(
             'https://blog.z/index.css',
             {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                httpsAgent,
                 headers: {Referer: 'https://blog.z'}
             }
         );
@@ -69,7 +85,7 @@ describe('Proxy', () => {
         const res = await get(
             'https://blog.z/img/star_icon.png',
             {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                httpsAgent,
                 headers: {Referer: 'https://blog.z'}
             }
         );
@@ -83,7 +99,7 @@ describe('Proxy', () => {
         const res = await get(
             'https://something.net',
             {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                httpsAgent,
                 validateStatus: () => true
             }
         );
@@ -96,7 +112,7 @@ describe('Proxy', () => {
         const res = await get(
             'https://notexists.z',
             {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                httpsAgent,
                 validateStatus: () => true
             }
         );
