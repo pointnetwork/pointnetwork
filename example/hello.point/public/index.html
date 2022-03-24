@@ -1,0 +1,275 @@
+<html>
+  <head>
+    <title>Hello World from Point Network!</title>
+    <!-- Use the script below to load pointSDKDemo.js if the Point SDK browser extention is not available
+    The pointSDKDemo.js makes calls to the Node ZProxy and can be used to assist development of Node APIs
+    Comment out the script tag below that loads pointSDKDemo.js if you want to test using the PointSDK extention-->
+    <!-- <script type="text/javascript" src="pointSDKDemo.js"></script> -->
+    <style>
+      html {
+        background-color: black;
+        color: white;
+        border-color: #333;
+      }
+      h1, h2, h3, h4, b, a {
+        color:gold;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>Hello World Example (WebSockets Disabled)</h1>
+      <h2>Demo Storage Layer features and the Point Browser SDK</h2>
+
+      <h4 style="color: pink">Using Point SDK Version: <span id="pointSDKVersion"></span></h4>
+
+      <!-- <table>
+        <tr>
+          <td>Test <b>HelloWorld</b> Event</td>
+          <td>Test <b>UpdatedValue</b> Event</td>
+        </tr>
+        <tr>
+          <td><button id="btnSubscribeHelloWorld" onclick="subscribeContractEvent('Hello', 'HelloWorld')">Subscribe</button><button id="btnUnsubscribeHelloWorld" onclick="unsubscribeContractEvent('Hello', 'HelloWorld')">Unsubscribe</button></td>
+          <td><button id="btnSubscribeUpdatedValue" onclick="subscribeContractEvent('Hello', 'UpdatedValue')">Subscribe</button><button id="btnUnsubscribeUpdatedValue" onclick="unsubscribeContractEvent('Hello', 'UpdatedValue')">Unsubscribe</button></td>
+        </tr>
+        <tr>
+          <td><button id="btnEmitHelloWorld" onclick="emitHelloWorld()">Emit</button><input type="text" id="txtHelloWorld" value="Tiger" ></input></td>
+          <td><button id="btnEmitUpdatedValue" onclick="emitUpdatedValue()">Emit</button><input type="text" id="txtUpdatedValue" value="Durian" ></input></td>
+        </tr>
+      </table> -->
+      <br />
+      <a href="#">Click Here to Test Notifications Extention (check README in 'hello.point/extension')</a>
+      <br />
+      <br />
+      <b>Try uploading a file!</b>
+      <br>
+      <br>
+      <input id="fileupload" type="file" name="fileupload"></input>
+      <br><br>
+      <button id="btnFileupload" onclick="uploadFile()">Upload File</button>
+      <br>
+      <br />
+      <img id='storageImg'/>
+      <br />
+      <br />
+      <div>
+        <b>Try updating the value in contract!</b>
+      </div>
+      <br />
+      <div>
+        <input id="valueInput" type="text" name="valueInput" placeholder="Enter some text" />
+      </div>
+      <br />
+      <button id="btnStorageValueUpdate" onclick="updateStorageValue()">Update Value</button>
+      <p id="valueText"></p>
+      <br />
+      <br />
+      <br />
+      <!-- <b>WebSocket Events</b>
+      <ul id="wsevents"></ul> -->
+      <b>API Responses</b>
+      <p id="results"></p>
+    </div>
+    <script>
+      // Test upload am image file using FormData and rendering in an image tag
+      async function uploadFile() {
+        const formData = new FormData()
+        // its also possible to new Blob to send text that will be saved in a fle like so:
+        // formData.append('blob', new Blob(['Hello Cafe DADOU HAMMOCK\n']), 'somefile.txt')
+        formData.append("hellofile", fileupload.files[0]);
+        const res = await window.point.storage.postFile(formData);
+        // save the image file id in the contract
+        await window.point.contract.send({contract: 'Hello', method: 'setStorageImage', params: [res.data]});
+
+        // fetch the storage layer image id from the contract (for testing - it should be the same id)
+        let {data: storageImageId} = await window.point.contract.call({contract: 'Hello', method: 'storageImage'});
+
+        // set the src attribute of the image to render the uploaded image (for visual testing)
+        document.getElementById('storageImg').setAttribute('src', `/_storage/${storageImageId}`)
+      }
+
+      (async () => {
+        // initialize websocket connect to point network node via PointSDK
+        // the idea here is to initalize websockets for the app only if needed
+        // and to specify the callback that will handle the incomming websocket messages
+        const RUN_WS_TEST = false; // run web sockets test block below?
+
+        if(RUN_WS_TEST && window.point.websocket) {
+          socket = window.point.websocket.open(websocketMessageHandler);
+          socket.onopen = function() { console.log('WebSocket Client Connected'); }
+        }
+        let elements = []
+
+        /* START API TEST */
+        const RUN_API_TEST = true; // run api test block below?
+        if(RUN_API_TEST) {
+          // let balance = await window.point.wallet.balance();
+          let ping = await window.point.status.ping();
+          let address = await window.point.wallet.address();
+          let contract = await window.point.contract.load({contract: 'Hello'});
+          let hash = await window.point.wallet.hash();
+          let callValue = await window.point.contract.call({contract: 'Hello', method: 'value'});
+          let callCounter = await window.point.contract.call({contract: 'Hello', method: 'counter'});
+          let callEcho = await window.point.contract.call({contract: 'Hello', method: 'echo', params: ['ello??']});
+          let callSquare= await window.point.contract.call({contract: 'Hello', method: 'square', params: [2]});
+          let callAdd = await window.point.contract.call({contract: 'Hello', method: 'add', params: [3,4]});
+          await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000});
+          /* STORAGE API */
+
+          // 1. Put the string data onto the storage layer
+          let {data: putStringId} = await window.point.storage.putString({data: 'Testing Storage Layer PutString'});
+          // 2. Save the string storage id in the Smart Contract
+          await window.point.contract.send({contract: 'Hello', method: 'setStorageValue', params: [putStringId]});
+          // 3. Get the storage id back from the Smart Contract (will be the same id, of course)
+          let {data: stringIdFromContract} = await window.point.contract.call({contract: 'Hello', method: 'storageValue'});
+          // 4. Finally get the original string back from the storage layer using the id returned by the contracts
+          // window.point.storage.getFile returns a blob object since its fetching the file from the proxy layer
+          // let textFileBlob = await window.point.storage.getFile({id: stringIdFromContract});
+          // alternatively use the getString function which returns a json object containing the text
+          let {data: textData} = await window.point.storage.getString({id: stringIdFromContract})
+
+          /* UNCOMMENT THE FUNCTIONS BELOW TO TEST EVM REVERTS */
+
+          // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 1}); // test 'Gas Limit Too Low
+          // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 21272}); // test 'Out of Gas'
+          // let sendIncrementCounter = await window.point.contract.send({contract: 'Hello', method: 'incrementCounter', gasLimit: 200000, amountInWei: '10000000'}); // test VM revert
+          // elements.push(`<p>Wallet Balance: ${balance.data.balance}</p>`)
+
+          elements.push(`<p>Point SDK Version: ${point.version}</p>`)
+          elements.push(`<p>Ping Test: ${ping.data.ping}</p>`)
+          elements.push(`<p>Wallet Address: ${address.data.address}</p>`)
+          elements.push(`<p>Hello Smart Contract Address: ${contract.data.address}</p>`)
+          elements.push(`<p>Wallet Hash: ${hash.data.hash}</p>`)
+          elements.push(`<p>Contract Call Value: ${callValue.data}</p>`)
+          elements.push(`<p>Contract Call Counter: ${callCounter.data}</p>`)
+          elements.push(`<p>Contract Call Echo: ${callEcho.data}</p>`)
+          elements.push(`<p>Contract Call Square: ${callSquare.data}</p>`)
+          elements.push(`<p>Contract Call Add: ${callAdd.data}</p>`)
+          elements.push(`<p>Storage Id (storage.putString): ${putStringId}</p>`)
+          elements.push(`<p>Storage Id (contract.call) ${stringIdFromContract}</p>`)
+          // elements.push(`<p>Storage Value (storage.getFile): ${await textFileBlob.text()}</p>`)
+          elements.push(`<p>Storage Value (storage.getText): ${textData}</p>`)
+        }
+        /* END API TEST */
+
+        let elementsStr = elements.join('')
+        document.getElementById("results").innerHTML = `<div>${elementsStr}</div>`
+        // render out the version of Point SDK being used
+        document.getElementById("pointSDKVersion").innerText = point.version;
+      })()
+
+      // subscriptions manager (which could be part of Point SDK of course)
+      // in this example we will set this with the contract name, 'Hello' hardcoded
+      // this object should also be persisted into local storage so that
+      // the subscription ids for each contract / event pair are still known after referesh
+      let contractEventSubscriptions = { 'Hello': {} };
+
+      function addNewContractEventSubscription(contract, event, subscriptionId) {
+        contractEventSubscriptions[contract][event] = subscriptionId;
+        console.log('contractEventSubscriptions updated', contractEventSubscriptions)
+      }
+
+      const SUBSCRIPTION_EVENT_TYPES = {
+          CONFIRMATION: 'subscription_confirmation',
+          CANCELLATION: 'subscription_cancellation',
+          EVENT: 'subscription_event',
+          ERROR: 'subscription_error',
+      };
+
+      // example of a callback function that can be used to handle data from a websocket
+      function websocketMessageHandler(_payload) {
+        const payload = JSON.parse(_payload);
+        console.log('Received Payload: ', payload);
+
+        const { type, subscriptionId, request, data } = payload;
+        const { hostname, params: { contract, event } = {} } = request;
+        let msg = '';
+        // check this message is for us by checking the hostname
+        if(hostname === 'hello.point') {
+          switch (type) {
+            // if this is a SUBSCRIBED_EVENT then add this new subscription id to the subscriptions manager
+            case SUBSCRIPTION_EVENT_TYPES.CONFIRMATION: {
+              msg = `SUBSCRIBED: ${contract} contract ${event} events with subscription id ${subscriptionId}`;
+              addNewContractEventSubscription(contract, event, subscriptionId);
+              break;
+            }
+            // if this is a UNSUBSCRIBED_EVENT just update the msg for display to the user
+            case SUBSCRIPTION_EVENT_TYPES.CANCELLATION: {
+              msg = `UNSUBSCRIBED: ${contract} contract ${event} events using subscription id ${subscriptionId}`;
+              break;
+            }
+            // if this is a DATA_EVENT then check the type of the event and switch on that
+            case SUBSCRIPTION_EVENT_TYPES.EVENT: {
+              // if this is a subscribeContractEvent ...
+              if (request.type === 'subscribeContractEvent') {
+                // since this is type: 'subscribeContractEvent'
+                // we know the params will contain the same keys we used to subscribe to the event
+                // which is 'contract' and 'event' so therefore we can check the evnet key
+                switch(event) {
+                  case 'UpdatedValue':
+                    // returnValues will contain an object with oldValue and newValue key
+                    // as defined by the Hello Smart Contract UpdatedValue event
+                    const {oldValue, newValue} = data.returnValues;
+                    msg = `EMIT: UpdatedValue Event - old value: ${oldValue} was changed to ${newValue}`;
+                    break;
+                  case 'HelloWorld':
+                    // returnValues will contain an object with just a message key
+                    // as defined by the Hello Smart Contract HelloWorld event
+                    const {message} = data.returnValues;
+                    msg = `EMIT: HelloWorld Event - Contract says hello: ${message}`
+                    break;
+                  default:
+                    msg = data.message;
+                    break;
+                }
+              }
+              break;
+            }
+
+            case SUBSCRIPTION_EVENT_TYPES.ERROR:
+            default: {
+              msg = `SUBSCRIPTION_ERROR: ${data.message}`;
+              break;
+            }
+          }
+          let li = document.createElement("li");
+          let wsmsg = document.createTextNode(msg);
+          li.appendChild(wsmsg);
+          document.getElementById("wsevents").appendChild(li);
+        }
+      }
+
+      async function subscribeContractEvent(contract, event) {
+        window.point.contract.subscribe({contract, event});
+      }
+
+      async function unsubscribeContractEvent(contract, event) {
+        subscriptionId = contractEventSubscriptions[contract][event];
+        window.point.subscriptions.removeSubscriptionById({contract, event, subscriptionId});
+      }
+
+      async function emitUpdatedValue() {
+        document.getElementById('btnEmitUpdatedValue').innerText = 'Processing';
+        let value = document.getElementById('txtUpdatedValue').value;
+        await window.point.contract.send({contract: 'Hello', method: 'setValue', params: [value]});
+        document.getElementById('btnEmitUpdatedValue').innerText = 'Emit';
+      }
+
+      async function emitHelloWorld() {
+        document.getElementById('btnEmitHelloWorld').innerText = 'Processing';
+        let value = document.getElementById('txtHelloWorld').value;
+        await window.point.contract.send({contract: 'Hello', method: 'emitHelloWorldEvent', params: [value]});
+        document.getElementById('btnEmitHelloWorld').innerText = 'Emit';
+      }
+
+      async function updateStorageValue() {
+        const input = document.getElementById('valueInput');
+        const display = document.getElementById('valueText');
+        display.innerHTML = `<p>Storing...</p>`;
+        await window.point.contract.send({contract:'Hello',method:'setValue',params:[input.value]});
+        display.innerHTML = `<p>Stored value: ${input.value}</p>`;
+        input.value = null;
+      }
+    </script>
+  </body>
+</html>

@@ -138,7 +138,7 @@ class Renderer {
                 version = 'latest'
             ) {
                 return await blockchain.sendToContract(
-                    host.replace('.z', ''),
+                    host.replace('.point', ''),
                     contractName,
                     methodName,
                     params,
@@ -151,7 +151,7 @@ class Renderer {
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
                 const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
                 const events = await blockchain.getPastEvents(
-                    host.replace('.z', ''),
+                    host.replace('.point', ''),
                     contractName,
                     event,
                     options

@@ -1,0 +1,8 @@
+{
+  "version": 0.1,
+  "target": "email.point",
+  "keyvalue": {},
+  "contracts": [
+    "PointEmail"
+  ]
+}

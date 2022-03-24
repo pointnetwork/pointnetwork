@@ -24,6 +24,6 @@ sleep 10
 ./point --datadir ~/.point/test3 -v &
 sleep 10
 
-./point deploy example/blog.z --datadir ~/.point/test2 -v
+./point deploy example/blog.point --datadir ~/.point/test2 -v
 
 wait

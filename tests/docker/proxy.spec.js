@@ -32,12 +32,12 @@ describe('Proxy', () => {
         expect(res.data).toMatch('Welcome to Web 3.0');
     });
 
-    it('Should return https://blog.z HTML', async () => {
+    it('Should return https://blog.point HTML', async () => {
         expect.assertions(3);
 
         await delay(5000);
         const res = await get(
-            'https://blog.z',
+            'https://blog.point',
             {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
         );
         expect(res.status).toEqual(200);
@@ -47,37 +47,37 @@ describe('Proxy', () => {
 
     // TODO: non-existing file returs 500 instead of 404
     // TODO: omitting referer leads to returning blank HTML instead of 404/403
-    it('Should return https://blog.z file in a root folder', async () => {
+    it('Should return https://blog.point file in a root folder', async () => {
         expect.assertions(2);
 
         await delay(5000);
         const res = await get(
-            'https://blog.z/index.css',
+            'https://blog.point/index.css',
             {
                 proxy: {host: 'point_node', port: 8666, protocol: 'http'},
-                headers: {Referer: 'https://blog.z'}
+                headers: {Referer: 'https://blog.point'}
             }
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^html, body/);
     }, 300000);
 
-    it('Should return https://blog.z file in a nested folder', async () => {
+    it('Should return https://blog.point file in a nested folder', async () => {
         expect.assertions(2);
 
         await delay(5000);
         const res = await get(
-            'https://blog.z/img/star_icon.png',
+            'https://blog.point/img/star_icon.png',
             {
                 proxy: {host: 'point_node', port: 8666, protocol: 'http'},
-                headers: {Referer: 'https://blog.z'}
+                headers: {Referer: 'https://blog.point'}
             }
         );
         expect(res.status).toEqual(200);
         expect(res.headers['content-type']).toEqual('image/png');
     }, 300000);
 
-    it('Should return 404 for host other than point and not ending on .z', async () => {
+    it('Should return 404 for host other than point and not ending on .point', async () => {
         expect.assertions(1);
 
         const res = await get(
@@ -90,11 +90,11 @@ describe('Proxy', () => {
         expect(res.status).toEqual(404);
     });
 
-    it('Should return 404 for host non-existing .z domain', async () => {
+    it('Should return 404 for host non-existing .point domain', async () => {
         expect.assertions(1);
 
         const res = await get(
-            'https://notexists.z',
+            'https://notexists.point',
             {
                 proxy: {host: 'point_node', port: 8666, protocol: 'http'},
                 validateStatus: () => true

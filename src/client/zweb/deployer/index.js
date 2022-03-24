@@ -101,8 +101,8 @@ class Deployer {
             );
         }
 
-        const target = dev ? `${deployConfig.target.replace('.z', 'dev')}.z` : deployConfig.target;
-        const identity = target.replace(/\.z$/, '');
+        const target = dev ? `${deployConfig.target.replace('.point', 'dev')}.point` : deployConfig.target;
+        const identity = target.replace(/\.point$/, '');
 
         //get the last version.
         const lastVersion = await blockchain.getKeyLastVersion(identity, '::rootDir');
@@ -379,13 +379,13 @@ class Deployer {
     }
 
     async updateZDNS(host, id, version) {
-        const target = host.replace('.z', '');
+        const target = host.replace('.point', '');
         log.info({target, id}, 'Updating ZDNS');
         await blockchain.putZRecord(target, '0x' + id, version);
     }
 
     async updateProxyMetadata(host, id, version) {
-        const target = host.replace('.z', '');
+        const target = host.replace('.point', '');
         log.info({target, id}, 'Updating Proxy Metatada');
         await blockchain.putKeyValue(target, PROXY_METADATA_KEY, id, version);
     }
