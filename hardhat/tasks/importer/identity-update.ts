@@ -1,7 +1,9 @@
 import { task } from "hardhat/config";
 import fs = require('fs');
 
-//npx hardhat identity-update 0x001fc9C398BF1846a70938c920d0351722F34c83 ./resources/unknown-1337.json --network ynet
+
+//npx hardhat complie
+//npx hardhat identity-update 0xD61e5eFcB183418E1f6e53D0605eed8167F90D4d ./resources/unknown-1337.json --network development
 
 task("identity-update", "Will update point identity contract and metadata file")
   .addPositionalParam("address","Identity contract source address")
