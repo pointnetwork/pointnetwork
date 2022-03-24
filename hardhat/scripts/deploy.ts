@@ -3,7 +3,7 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 const fs = require('fs');
 
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build/';
@@ -18,13 +18,13 @@ async function main() {
 
   // We get the contract to deploy
   const Identity = await ethers.getContractFactory("Identity");
-  const identity = await Identity.deploy();
-
+  const identity = await upgrades.deployProxy(Identity, [], {kind: 'uups'});
   await identity.deployed();
 
   console.log("Identity deployed to:", identity.address);
 
   fs.writeFileSync(build_path+'/contracts/Identity.sol/Identity-address.json', JSON.stringify({address:identity.address}));
+  fs.copyFileSync('.openzeppelin/unknown-1337.json', '/hardhat/resources/unknown-1337.json', );
   console.log('Identity abi was copied to build folder');
 };
 

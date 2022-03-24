@@ -40,6 +40,7 @@ services:
       - ./hardhat/scripts:/hardhat/scripts:ro
       - ./hardhat/tasks:/hardhat/tasks:ro
       - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
+      - ./hardhat/resources:/hardhat/resources:rw
     environment:
       BLOCKCHAIN_HOST: blockchain_node
       BLOCKCHAIN_PORT: 7545
@@ -63,6 +64,7 @@ services:
       - shared_contracts_e2e:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
+      - ./hardhat/resources:/hardhat/resources:rw
     environment:
       NODE_CONFIG_ENV: e2e
 
