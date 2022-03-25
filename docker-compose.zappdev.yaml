@@ -55,11 +55,12 @@ services:
       - shared_contracts_zappdev:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
+      - ./hardhat.config.js:/app/hardhat.config.js
     ports:
       - '12346:9685'
       - '65501:8666'
       - '24681:2468'
-    environment:
+    environment:  
       NODE_CONFIG_ENV: zappdev
 
   website_visitor:

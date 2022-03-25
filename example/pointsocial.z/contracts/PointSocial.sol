@@ -3,9 +3,11 @@ pragma solidity >=0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-
-contract PointSocial {
+contract PointSocial is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     using Counters for Counters.Counter;
     Counters.Counter internal _postIds;
     Counters.Counter internal _commentIds;
@@ -34,8 +36,6 @@ contract PointSocial {
         uint256 createdAt;
     }
 
-    enum Action {Migrator, Post, Like, Comment}
-
     event StateChange(
         uint256 postId,
         address indexed from,
@@ -43,22 +43,27 @@ contract PointSocial {
         Action indexed action
     );
 
-    Post[] public posts;
-    mapping(address => Post[]) public postsByOwner;
+    uint256[] public postIds;
+    mapping(address => uint256[]) public postIdsByOwner;
     mapping(uint256 => Post) public postById;
-    mapping(uint256 => Comment[]) public commentsByPost;
+    mapping(uint256 => uint256[]) public commentIdsByPost;
     mapping(uint256 => Comment) public commentById;
-    mapping(address => Comment[]) public commentsByOwner;
-    mapping(uint256 => Like[]) public likesByPost;
-    address private _owner;
+    mapping(address => uint256[]) public commentIdsByOwner;
+    mapping(uint256 => uint256[]) public likeIdsByPost;
+    mapping(uint256 => Like) public likeById;
+
     address private _migrator;
 
-    constructor() {
-        _owner = msg.sender;
+    enum Action {Migrator, Post, Like, Comment}
+
+    function initialize() public initializer {
+        __Ownable_init();
+        __UUPSUpgradeable_init();
     }
 
-    function addMigrator(address migrator) public {
-        require(msg.sender == _owner, "Access Denied");
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    function addMigrator(address migrator) public onlyOwner {
         require(_migrator == address(0), "Access Denied");
         _migrator = migrator;
         emit StateChange(0, msg.sender, block.timestamp, Action.Migrator);
@@ -77,35 +82,35 @@ contract PointSocial {
             0,
             0
         );
-        posts.push(_post);
+        postIds.push(newPostId);
         postById[newPostId] = _post;
-        postsByOwner[msg.sender].push(_post);
+        postIdsByOwner[msg.sender].push(newPostId);
 
         emit StateChange(newPostId, msg.sender, block.timestamp, Action.Post);
     }
 
     function getAllPosts() public view returns (Post[] memory) {
-        Post[] memory _posts = new Post[](posts.length);
-        for (uint256 i = 0; i < posts.length; i++) {
-            _posts[i] = postById[posts[i].id];
+        Post[] memory _posts = new Post[](postIds.length);
+        for (uint256 i = 0; i < postIds.length; i++) {
+            _posts[i] = postById[postIds[i]];
         }
         return _posts;
     }
 
     function getAllPostsLength() public view returns (uint256) {
-        return posts.length;
+        return postIds.length;
     }
 
 
     function getPaginatedPosts(uint256 cursor, uint256 howMany) public view returns (Post[] memory) {
         uint256 length = howMany;
-        if(length > posts.length - cursor) {
-            length = posts.length - cursor;
+        if(length > postIds.length - cursor) {
+            length = postIds.length - cursor;
         }
 
         Post[] memory _posts = new Post[](length);
         for (uint256 i = length; i > 0; i--) {
-            _posts[length-i] = postById[posts[posts.length - cursor - i].id];
+            _posts[length-i] = postById[postIds[postIds.length - cursor - i]];
         }
         return _posts;
     }
@@ -115,20 +120,20 @@ contract PointSocial {
         view
         returns (Post[] memory)
     {
-        Post[] memory _posts = new Post[](postsByOwner[owner].length);
-        for (uint256 i = 0; i < postsByOwner[owner].length; i++) {
-            _posts[i] = postById[postsByOwner[owner][i].id];
+        Post[] memory _posts = new Post[](postIdsByOwner[owner].length);
+        for (uint256 i = 0; i < postIdsByOwner[owner].length; i++) {
+            _posts[i] = postById[postIdsByOwner[owner][i]];
         }
         return _posts;
     }
 
     function getAllPostsByOwnerLength(address owner) public view returns (uint256) {
-        return postsByOwner[owner].length;
+        return postIdsByOwner[owner].length;
     }
 
     function getPaginatedPostsByOwner(address owner, uint256 cursor, uint256 howMany)
     public view returns (Post[] memory) {
-        uint256 _ownerPostLength = postsByOwner[owner].length;
+        uint256 _ownerPostLength = postIdsByOwner[owner].length;
 
         uint256 length = howMany;
         if(length > _ownerPostLength - cursor) {
@@ -137,7 +142,7 @@ contract PointSocial {
 
         Post[] memory _posts = new Post[](length);
         for (uint256 i = length; i > 0; i--) {
-            _posts[length-i] = postById[postsByOwner[owner][_ownerPostLength - cursor - i].id];
+            _posts[length-i] = postById[postIdsByOwner[owner][_ownerPostLength - cursor - i]];
         }
         return _posts;
     }
@@ -156,9 +161,9 @@ contract PointSocial {
             contents,
             block.timestamp
         );
-        commentsByPost[postId].push(_comment);
+        commentIdsByPost[postId].push(newCommentId);
         commentById[newCommentId] = _comment;
-        commentsByOwner[msg.sender].push(_comment);
+        commentIdsByOwner[msg.sender].push(newCommentId);
         postById[postId].commentsCount += 1;
 
         emit StateChange(postId, msg.sender, block.timestamp, Action.Comment);
@@ -166,32 +171,40 @@ contract PointSocial {
 
     function getAllCommentsForPost(uint256 postId) public view returns (Comment[] memory)
     {
-        return commentsByPost[postId];
+        Comment[] memory _comments = new Comment[](commentIdsByPost[postId].length);
+        for (uint256 i = 0; i < commentIdsByPost[postId].length; i++) {
+            _comments[i] = commentById[commentIdsByPost[postId][i]];
+        }
+        return _comments;
     }
 
     // Likes data functions
     function addLikeToPost(uint256 postId) public returns(bool) {
         // Get the post and likes for the postId from the mapping
-        Like[] storage _likesOnPost = likesByPost[postId];
+        uint256[] storage _likeIdsOnPost = likeIdsByPost[postId];
         Post storage _post = postById[postId];
 
         uint256 _removeIndex;
         bool _isLiked = false;
+        uint256 _removeId;
 
         // Check if msg.sender has already liked
-        for (uint256 i = 0; i < _likesOnPost.length; i++) {
-            if(_likesOnPost[i].from == msg.sender) {
+        for (uint256 i = 0; i < _likeIdsOnPost.length; i++) {
+            if(likeById[_likeIdsOnPost[i]].from == msg.sender) {
                 _isLiked = true;
                 _removeIndex = i;
+                _removeId = _likeIdsOnPost[i];
                 break;
             }
         }
         // If yes, then we remove that like and decrement the likesCount for the post
         if(_isLiked) {
-            for (uint256 i = _removeIndex; i < _likesOnPost.length - 1; i++) {
-                _likesOnPost[i] = _likesOnPost[i+1];
+            for (uint256 i = _removeIndex; i < _likeIdsOnPost.length - 1; i++) {
+                _likeIdsOnPost[i] = _likeIdsOnPost[i+1];
             }
-            _likesOnPost.pop();
+            
+            _likeIdsOnPost.pop();
+            delete likeById[_removeId];
             _post.likesCount--;
             return false;
         }
@@ -199,7 +212,8 @@ contract PointSocial {
         _likeIds.increment();
         uint256 newLikeId = _likeIds.current();
         Like memory _like = Like(newLikeId, msg.sender, block.timestamp);
-        _likesOnPost.push(_like);
+        _likeIdsOnPost.push(newLikeId);
+        likeById[newLikeId] = _like;
         postById[postId].likesCount += 1;
 
         emit StateChange(postId, msg.sender, block.timestamp, Action.Like);
@@ -227,8 +241,8 @@ contract PointSocial {
                 commentsCount: 0
             });
 
-            posts.push(_post);
-            postsByOwner[_post.from].push(_post);
+            postIds.push(id);
+            postIdsByOwner[_post.from].push(id);
             postById[_post.id] = _post;
             _postIds.increment();
 
@@ -251,9 +265,9 @@ contract PointSocial {
                 createdAt: createdAt
             });
 
-            commentsByPost[postId].push(_comment);
+            commentIdsByPost[postId].push(id);
             commentById[_comment.id] = _comment;
-            commentsByOwner[_comment.from].push(_comment);
+            commentIdsByOwner[_comment.from].push(id);
             _commentIds.increment();
             postById[postId].commentsCount += 1;
 

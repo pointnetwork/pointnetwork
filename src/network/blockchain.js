@@ -442,12 +442,17 @@ blockchain.getLastVersionOrBefore = (version, events) => {
     const filteredEvents = events.filter(e =>
         [-1, 0].includes(blockchain.compareVersions(e.returnValues.version, version))
     );
-    const maxObj = filteredEvents.reduce((prev, current) =>
-        blockchain.compareVersions(prev.returnValues.version, current.returnValues.version) === 1
-            ? prev
-            : current
-    );
-    return maxObj.returnValues.value;
+    if (filteredEvents.length > 0) {
+        const maxObj = filteredEvents.reduce((prev, current) =>
+            blockchain.compareVersions(prev.returnValues.version, 
+                current.returnValues.version) === 1
+                ? prev
+                : current
+        );
+        return maxObj.returnValues.value;
+    } else {
+        return null;
+    }
 };
 
 blockchain.getKeyValue = async (

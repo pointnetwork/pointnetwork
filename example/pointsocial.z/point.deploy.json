@@ -4,5 +4,6 @@
     "keyvalue": {},
     "contracts": [
       "PointSocial"
-    ]
+    ],
+    "upgradable": true
   }
