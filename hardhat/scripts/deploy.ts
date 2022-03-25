@@ -4,7 +4,10 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
-const fs = require('fs');
+import {getProxyMetadataFileName, getProxyMetadataFilePath} from '../utils';
+import fs from 'fs';
+import path from 'path';
+import { deepStrictEqual } from "assert";
 
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build/';
 
@@ -16,6 +19,22 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
+  const identityAddressPath = path.join('/', 'hardhat', 'resources', 'Identity-address.json');
+  
+  if(fs.existsSync(identityAddressPath)){
+    const identityAddress = require(identityAddressPath).address;
+    const codeAt = await ethers.provider.getCode(identityAddress);
+    if (codeAt !== '0x'){
+      console.log("Identity already deployed to:", identityAddress);
+      console.log('If you want a new identity deploy clean your blockchain data or delete hardhat/resources/Identity-address.json file');
+      return;
+    }
+  }
+
+  //attach
+  const proxyMetadataFileName = await getProxyMetadataFileName(ethers.provider);
+  const proxyMetadataFilePath = await getProxyMetadataFilePath(ethers.provider);
+
   // We get the contract to deploy
   const Identity = await ethers.getContractFactory("Identity");
   const identity = await upgrades.deployProxy(Identity, [], {kind: 'uups'});
@@ -23,8 +42,8 @@ async function main() {
 
   console.log("Identity deployed to:", identity.address);
 
-  fs.writeFileSync(build_path+'/contracts/Identity.sol/Identity-address.json', JSON.stringify({address:identity.address}));
-  fs.copyFileSync('.openzeppelin/unknown-1337.json', '/hardhat/resources/unknown-1337.json', );
+  fs.writeFileSync(identityAddressPath, JSON.stringify({address:identity.address}));
+  fs.copyFileSync(proxyMetadataFilePath, path.join('/', 'hardhat', 'resources',  proxyMetadataFileName));
   console.log('Identity abi was copied to build folder');
 };
 

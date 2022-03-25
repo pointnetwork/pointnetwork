@@ -3,9 +3,10 @@ import {existsSync, readFileSync, writeFileSync} from 'fs';
 
 const defaultBuildPath = path.resolve(__dirname, '..', '..', 'hardhat', 'build', 'contracts');
 const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
+const defaultHardhatResourcesPath = path.resolve(__dirname, '..', '..', 'hardhat', 'resources');
 
-export function getContractAddress(name: string, buildPath = defaultBuildPath) {
-    const filename = path.resolve(buildPath, `${name}.sol/${name}-address.json`);
+export function getContractAddress(name: string, hardhatResourcesPath = defaultHardhatResourcesPath) {
+    const filename = path.resolve(hardhatResourcesPath, `${name}-address.json`);
 
     if (!existsSync(filename)) {
         return;
