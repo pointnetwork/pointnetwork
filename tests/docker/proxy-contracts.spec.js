@@ -72,6 +72,7 @@ describe('Proxy contract send', () => {
         expect(res.status).toEqual(200);
     }, 300000);
 
+    // TODO: this is useless, returns nothing.
     it('Should retrieve articles in blog contract', async () => {
         expect.assertions(1);
 
