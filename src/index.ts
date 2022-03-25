@@ -5,17 +5,19 @@ import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
 import {resolveHome} from './core/utils';
-import {statAsync} from './util';
 import {getContractAddress, compileAndSaveContract} from './util/contract';
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
+console.log({RUNNING_PKG_MODE});
 if (RUNNING_PKG_MODE) {
+
     // when running inside the packaged version the configuration should be
     // retrieved from the internal packaged config
     // by default config library uses process.cwd() to reference the config folder
     // when using vercel/pkg process.cwd references real folder and not packaged folder
     // overwriting this env variable fixes the problems
+    console.log({NODE_CONFIG_DIR: path.resolve(__dirname, '..', 'config')});
     process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
 }
 
@@ -106,6 +108,7 @@ import logger from './core/log.js';
 import Point from './core/index.js';
 import migrate from './util/migrate';
 import initFolders from './initFolders';
+import {statAsync} from './util';
 
 // ------------------- Init Logger ----------------- //
 
