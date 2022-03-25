@@ -5,9 +5,11 @@ const log = logger.child({module: 'Deployer'});
 const {compileContract, getImportsFactory} = require('../../../util/contract');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 const blockchain = require('../../../network/blockchain');
+const hre = require('hardhat');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
+const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 
 class Deployer {
     constructor(ctx) {
@@ -155,7 +157,7 @@ class Deployer {
                 owner,
                 Buffer.from(publicKey, 'hex')
             );
-
+            log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
@@ -168,22 +170,63 @@ class Deployer {
             if (!contractNames) contractNames = [];
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                
                 try {
-                    const {contract, artifacts} = await this.compileContract(
-                        contractName,
-                        fileName,
-                        deployPath
-                    );
+                    let address;
+                    let artifactsDeployed;
+                    if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
 
-                    const address = await blockchain.deployContract(
-                        contract,
-                        artifacts,
-                        contractName
-                    );
+                        const proxyAddress = await blockchain.getKeyValue(
+                            target,
+                            'zweb/contracts/address/' + contractName,
+                            version,
+                            'equalOrBefore'
+                        );
+                        
+                        let proxy;
+                        const contractF = await hre.ethers.getContractFactory(contractName);
+                        if (proxyAddress == null){
+                            log.debug('deployProxy call');
+                            proxy = await hre.upgrades.deployProxy(contractF, [], {kind: 'uups'});
+                        } else {
+                            log.debug('upgradeProxy call');
+                            //restore from blockchain upgradable contracts and proxy metadata if does not exist. 
+                            if (!fs.existsSync(path.join('.', '.openzeppelin', 'unknown-1337.json'))){
+                                const proxyDescriptionFileId = await blockchain.getKeyValue(
+                                    target,
+                                    PROXY_METADATA_KEY,
+                                    version,
+                                    'equalOrBefore'
+                                );
+                                fs.writeFileSync(path.join('.', '.openzeppelin', 'unknown-1337.json'), 
+                                    await storage.getFile(proxyDescriptionFileId));
+                            }
+                            
+                            proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                        }
+                        await proxy.deployed();                            
+                        address = proxy.address;
+                        
+                        artifactsDeployed = await hre.artifacts.readArtifact(contractName);
+                    } else {
+                        const {contract, artifacts} = await this.compileContract(
+                            contractName,
+                            fileName,
+                            deployPath
+                        );
+
+                        artifactsDeployed = artifacts;
+
+                        address = await blockchain.deployContract(
+                            contract,
+                            artifacts,
+                            contractName
+                        );
+                    }
                     this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
                     const artifactsStorageId = await this.storeContractArtifacts(
-                        artifacts,
+                        artifactsDeployed,
                         fileName,
                         contractName,
                         version,
@@ -194,6 +237,30 @@ class Deployer {
                     log.debug(
                         `Contract ${contractName} with Artifacts Storage ID ${artifactsStorageId} is deployed to ${address}`
                     );
+                } catch (e) {
+                    log.error(e, 'Zapp contract deployment error');
+                    throw e;
+                }
+            }
+
+            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
+                try {
+                    // Upload proxy metadata
+                    const proxyMetadataFilePath = path.join('.', '.openzeppelin', 'unknown-1337.json');
+                    const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
+                    const proxyMetadata = JSON.parse(proxyMetadataFile);
+
+                    log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
+                    this.ctx.client.deployerProgress.update(proxyMetadataFilePath, 0, 'uploading');
+                    const proxyMetadataFileUploadedId = 
+                        await storage.uploadFile(JSON.stringify(proxyMetadata));
+                    this.ctx.client.deployerProgress.update(
+                        proxyMetadataFilePath,
+                        100,
+                        `uploaded::${proxyMetadataFileUploadedId}`
+                    );
+                    await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
+                    log.debug('Proxy metadata updated');
                 } catch (e) {
                     log.error(e, 'Zapp contract deployment error');
                     throw e;
@@ -315,6 +382,12 @@ class Deployer {
         const target = host.replace('.z', '');
         log.info({target, id}, 'Updating ZDNS');
         await blockchain.putZRecord(target, '0x' + id, version);
+    }
+
+    async updateProxyMetadata(host, id, version) {
+        const target = host.replace('.z', '');
+        log.info({target, id}, 'Updating Proxy Metatada');
+        await blockchain.putKeyValue(target, PROXY_METADATA_KEY, id, version);
     }
 
     async updateKeyValue(target, values = {}, deployPath, deployContracts = false, version) {
