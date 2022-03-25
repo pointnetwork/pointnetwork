@@ -59,11 +59,11 @@ class KeyValue {
         }
     }
 
-    async propagate(identity, key, value) {
-        log.sendMetric({identity, key, propagate: true});
-        log.debug('propagating keyvalue', identity + '/' + key, '=', value);
+    async propagate(identity, key, value, version) {
+        log.sendMetric({identity, key, propagate: true, version});
+        log.debug(`propagating keyvalue: ${identity}/${key}=${value}, version ${version}`);
         await this.update(identity, key, value);
-        return await blockchain.putKeyValue(identity, key, value);
+        return await blockchain.putKeyValue(identity, key, value, version);
     }
 }
 

@@ -61,7 +61,7 @@ describe('Proxy', () => {
         expect(res.data).toMatch('<title>Example Blog</title>');
     }, 300000);
 
-    // TODO: non-existing file returs 500 instead of 404
+    // TODO: non-existing file returns 500 instead of 404
     // TODO: omitting referer leads to returning blank HTML instead of 404/403
     it('Should return https://blog.z file in a root folder', async () => {
         expect.assertions(2);
@@ -69,10 +69,7 @@ describe('Proxy', () => {
         await delay(5000);
         const res = await get(
             'https://blog.z/index.css',
-            {
-                httpsAgent,
-                headers: {Referer: 'https://blog.z'}
-            }
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^html, body/);
@@ -84,10 +81,7 @@ describe('Proxy', () => {
         await delay(5000);
         const res = await get(
             'https://blog.z/img/star_icon.png',
-            {
-                httpsAgent,
-                headers: {Referer: 'https://blog.z'}
-            }
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.headers['content-type']).toEqual('image/png');
