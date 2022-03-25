@@ -11,17 +11,15 @@ const httpsAgent = new HttpsAgent({
 });
 
 describe('Proxy keyvalue', () => {
+    // TODO: add test for storage upload
     it('Should append keyvalue', async () => {
         expect.assertions(2);
 
         await delay(5000);
         const res = await post(
             'https://blog.z/_keyvalue_append/foo',
-            JSON.stringify({foo: 'bar', baz: 123}),
-            {
-                headers: {'content-type': 'application/json'},
-                httpsAgent
-            }
+            'foo=bar&baz=123',
+            {httpsAgent}
         );
 
         expect(res.status).toEqual(200);
@@ -39,7 +37,8 @@ describe('Proxy keyvalue', () => {
 
         expect(res.status).toEqual(200);
         expect(res.data.foo).toEqual('bar');
-        expect(res.data.baz).toEqual(123);
+        // TODO: this is the problem with x-www-form-urlencoded: numbers are not parsed correctly
+        expect(res.data.baz).toEqual('123');
     }, 300000);
 
     it('Should return null for non-existing keyvalue', async () => {
@@ -55,51 +54,47 @@ describe('Proxy keyvalue', () => {
     }, 300000);
 });
 
-// describe('Proxy contract send', () => {
-//     // TODO: contract send for point host seems not possible, bc host argument is passed incorrectly
-//     // is it a bug or is it intended?
-//
-//     it('Should store value in blog contract', async () => {
-//         expect.assertions(1);
-//
-//         await delay(5000);
-//         const res = await post(
-//             'https://blog.z/_contract_send/Blog.createArticle(title,contents)',
-//             'title=test_title&storage[contents]=some_contents',
-//             // TODO: same issue with https as in proxy-storage
-//             {proxy: {host: 'point_node', port: 8666, protocol: 'https'}}
-//         );
-//
-//         expect(res.status).toEqual(200);
-//     }, 300000);
-//
-//     // TODO: trying to call a contract method without arguments fails with 500
-//     // it('Should retrieve articles in blog contract', async () => {
-//     //     expect.assertions(1);
-//     //
-//     //     await delay(5000);
-//     //     const res = await post(
-//     //         'https://blog.z/_contract_send/Blog.getArticles()',
-//     //         '',
-//     //         // TODO: same issue with https as in proxy-storage
-//     //         {proxy: {host: 'point_node', port: 8666, protocol: 'https'}}
-//     //     );
-//     //
-//     //     expect(res.status).toEqual(200);
-//     // }, 300000);
-//
-//     // TODO: this method works, but it's useless, as it returns nothing
-//     it('Should retrieve stored atricle in blog contract', async () => {
-//         expect.assertions(1);
-//
-//         await delay(5000);
-//         const res = await post(
-//             'https://blog.z/_contract_send/Blog.getArticle(id)',
-//             'id=1',
-//             // TODO: same issue with https as in proxy-storage
-//             {proxy: {host: 'point_node', port: 8666, protocol: 'https'}}
-//         );
-//
-//         expect(res.status).toEqual(200);
-//     }, 300000);
-// });
+describe('Proxy contract send', () => {
+    // TODO: add test for storage upload
+    // TODO: contract send for point host seems not possible, bc host argument is passed incorrectly
+    // is it a bug or is it intended?
+
+    it('Should store value in blog contract', async () => {
+        expect.assertions(1);
+
+        await delay(5000);
+        const res = await post(
+            'https://blog.z/_contract_send/Blog.createArticle(title,contents)',
+            'title=test_title&storage[contents]=some_contents',
+            {httpsAgent}
+        );
+
+        expect(res.status).toEqual(200);
+    }, 300000);
+
+    it('Should retrieve articles in blog contract', async () => {
+        expect.assertions(1);
+
+        await delay(5000);
+        const res = await post(
+            'https://blog.z/_contract_send/Blog.getArticles()',
+            '',
+            {httpsAgent}
+        );
+
+        expect(res.status).toEqual(200);
+    }, 300000);
+
+    it('Should retrieve stored article in blog contract', async () => {
+        expect.assertions(1);
+
+        await delay(5000);
+        const res = await post(
+            'https://blog.z/_contract_send/Blog.getArticle(id)',
+            'id=1',
+            {httpsAgent}
+        );
+
+        expect(res.status).toEqual(200);
+    }, 300000);
+});

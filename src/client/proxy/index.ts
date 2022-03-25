@@ -7,6 +7,7 @@ import net from 'net';
 import attachHandlers from './handlers';
 import fastifyUrlData from 'fastify-url-data';
 import fastifyMultipart from 'fastify-multipart';
+import fastifyFormBody from 'fastify-formbody';
 
 const log = logger.child({module: 'ZProxy'});
 
@@ -38,6 +39,7 @@ const server = Fastify({
 });
 server.register(fastifyUrlData);
 server.register(fastifyMultipart);
+server.register(fastifyFormBody);
 
 // Redirects http to https to the same host
 const redirectToHttpsServer = Fastify();

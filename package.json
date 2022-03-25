@@ -34,6 +34,7 @@
     "ethereumjs-util": "^7.1.0",
     "ethereumjs-wallet": "^1.0.2",
     "fastify": "^3.20.2",
+    "fastify-formbody": "^5.2.0",
     "fastify-http-proxy": "^6.2.1",
     "fastify-multipart": "^5.3.1",
     "fastify-url-data": "^3.0.3",
