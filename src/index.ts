@@ -5,6 +5,7 @@ import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
 import {resolveHome} from './core/utils';
+import {statAsync} from './util';
 import {getContractAddress, compileAndSaveContract} from './util/contract';
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
@@ -150,7 +151,7 @@ if (program.upload) {
             ? program.upload!
             : path.resolve(__dirname, '..', program.upload!);
 
-        const stat = await fs.stat(filePath);
+        const stat = await statAsync(filePath);
         if (stat.isDirectory()) {
             return uploadDir(filePath);
         } else {

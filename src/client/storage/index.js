@@ -16,6 +16,7 @@ import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
 import {uploadLoop} from './uploader';
+import {statAsync} from '../../util';
 
 const log = logger.child({module: 'Storage'});
 
@@ -145,7 +146,7 @@ const uploadChunk = async data => {
         await check();
         await delay(UPLOAD_LOOP_INTERVAL);
     }
-    
+
     return chunkId;
 };
 
@@ -276,7 +277,7 @@ const uploadFile = async data => {
 
 const uploadDir = async dirPath => {
     try {
-        const stat = await fs.stat(dirPath);
+        const stat = await statAsync(dirPath);
         const isDir = stat.isDirectory();
         if (!isDir) {
             throw new Error(`Path ${escape(dirPath)} is not a directory`);
@@ -299,7 +300,7 @@ const uploadDir = async dirPath => {
     await Promise.all(
         files.map(async fileName => {
             const filePath = path.join(dirPath, fileName);
-            const stat = await fs.stat(filePath);
+            const stat = await statAsync(filePath);
 
             if (stat.isDirectory()) {
                 const dirId = await uploadDir(filePath);
