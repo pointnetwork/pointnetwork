@@ -34,9 +34,9 @@ if (sendLogs && sendLogsTo) {
     const udpTransport = new UdpTransport({address, port});
     streams.push(udpTransport);
     sendMetric = function (obj)  {
-        const chindings = `{${this[pino.symbols.chindingsSym]?.slice(1) || ''}}`;
         let originalChilds;
         try {
+            const chindings = `{${this?.[pino.symbols.chindingsSym]?.slice(1) || ''}}`;
             originalChilds = JSON.parse(chindings);
         } catch  {
             // do nothing
