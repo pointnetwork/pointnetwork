@@ -14,6 +14,7 @@ const {compileAndSaveContract} = require('../util/contract');
 const log = logger.child({module: 'Blockchain'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
 const utils = require('../core/utils');
+const {statAsync} = require('../util');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -68,7 +69,7 @@ blockchain.loadPointContract = async (
         const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
         try {
-            await fs.stat(abiFileName);
+            await statAsync(abiFileName);
         } catch (e) {
             log.debug(`${contractName} contract not found`);
 
@@ -444,7 +445,7 @@ blockchain.getLastVersionOrBefore = (version, events) => {
     );
     if (filteredEvents.length > 0) {
         const maxObj = filteredEvents.reduce((prev, current) =>
-            blockchain.compareVersions(prev.returnValues.version, 
+            blockchain.compareVersions(prev.returnValues.version,
                 current.returnValues.version) === 1
                 ? prev
                 : current
