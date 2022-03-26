@@ -7,7 +7,6 @@ import { ethers, upgrades } from "hardhat";
 import {getProxyMetadataFileName, getProxyMetadataFilePath} from '../utils';
 import fs from 'fs';
 import path from 'path';
-import { deepStrictEqual } from "assert";
 
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build/';
 
