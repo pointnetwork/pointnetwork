@@ -19,10 +19,10 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  const identityAddressPath = path.join('/', 'hardhat', 'resources', 'Identity-address.json');
+  const identityAddressPath = path.join('resources', 'Identity-address.json');
   
   if(fs.existsSync(identityAddressPath)){
-    const identityAddress = require(identityAddressPath).address;
+    const identityAddress = require(`../${identityAddressPath}`).address;
     const codeAt = await ethers.provider.getCode(identityAddress);
     if (codeAt !== '0x'){
       console.log("Identity already deployed to:", identityAddress);
@@ -43,7 +43,7 @@ async function main() {
   console.log("Identity deployed to:", identity.address);
 
   fs.writeFileSync(identityAddressPath, JSON.stringify({address:identity.address}));
-  fs.copyFileSync(proxyMetadataFilePath, path.join('/', 'hardhat', 'resources',  proxyMetadataFileName));
+  fs.copyFileSync(proxyMetadataFilePath, path.join('resources',  proxyMetadataFileName));
   console.log('Identity abi was copied to build folder');
 };
 
