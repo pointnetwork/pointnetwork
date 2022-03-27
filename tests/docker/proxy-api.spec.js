@@ -2,7 +2,7 @@ import {get} from 'axios';
 import {delay} from '../../src/core/utils';
 import HttpsAgent from 'https-proxy-agent';
 
-jest.retryTimes(12);
+jest.retryTimes(60);
 
 const httpsAgent = new HttpsAgent({
     host: 'point_node',
@@ -23,7 +23,7 @@ describe('API requests through proxy', () => {
         expect(res.status).toEqual(200);
         expect(res.data.data.nodeJsVersion).toBeTruthy();
         expect(res.data.data.pointNodeVersion).toBeTruthy();
-    }, 30000);
+    }, 300000);
 
     // TODO: this is broken on API side
     // it('API POST: should make a contract call', async () => {
