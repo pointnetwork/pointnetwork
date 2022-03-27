@@ -10,7 +10,7 @@ import {Template, templateManager} from '../templateManager';
 const attachStorageHandlers = (server: FastifyInstance) => {
     ['/_storage/', '/_storage'].forEach(route => {
         server.post(route, async (req, res) => {
-            if (req.headers['content-type'] !== 'multipart/form-data') {
+            if (!(req.headers['content-type']?.match('multipart/form-data'))) {
                 return res.status(415).send('Only multipart/form-data is supported');
             }
 

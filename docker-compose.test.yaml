@@ -18,7 +18,7 @@ services:
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
     entrypoint: bash
-    command: ./docker-test.sh # Starts node and deploys hello contract
+    command: ./docker-test.sh # Starts node and deploys blog contract
     ports:
       - '8666:8666'
       - '2468:2468'
