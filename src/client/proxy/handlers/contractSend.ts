@@ -4,7 +4,7 @@ import utils from '../../../core/utils';
 import blockchain from '../../../network/blockchain';
 const {uploadFile} = require('../../storage');
 
-const attachContractSend = (server: FastifyInstance) => {
+const attachContractSendHandler = (server: FastifyInstance) => {
     server.post(
         '/_contract_send/:contractAndMethod',
         async (req: FastifyRequest<{Params: {contractAndMethod: string}; Body: Record<string, unknown>}>, res) => {
@@ -66,4 +66,4 @@ const attachContractSend = (server: FastifyInstance) => {
         });
 };
 
-export default attachContractSend;
+export default attachContractSendHandler;

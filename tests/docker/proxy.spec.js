@@ -18,8 +18,6 @@ const httpAgent = new HttpAgent({
 });
 
 describe('Proxy', () => {
-    // TODO: test api
-
     it('Should redirect from http://point to https://point', async () => {
         expect.assertions(2);
 

@@ -3,6 +3,7 @@ import {getNetworkAddress} from '../../../wallet/keystore';
 import blockchain from '../../../network/blockchain';
 const {uploadFile} = require('../../storage');
 
+// TODO: ctx is needed for keyvalue, remove it
 const attachKeyValueHanlders = (server: FastifyInstance, ctx: any) => {
     server.post(
         '/_keyvalue_append/:key',
