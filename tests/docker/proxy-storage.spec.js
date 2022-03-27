@@ -15,11 +15,34 @@ const httpsAgent = new HttpsAgent({
 });
 
 describe('Storage requests through proxy', () => {
-    // These cases are not handled properly with the current proxy implementation
-    // TODO: no response if there are no files
     // TODO: multiple files are not handled
-    // TODO: anything but form-data will fail with 500
-    // TODO: trying to get a non-existing file fails with 500 instead of 404
+
+    it('Should return 415 if body is not form-data', async () => {
+        expect.assertions(1);
+
+        const res = await post(
+            'https://somehost.z/_storage',
+            'foo',
+            {
+                httpsAgent,
+                validateStatus: () => true
+            }
+        );
+        expect(res.status).toEqual(415);
+    }, 10000);
+
+    it('Should return 404 for non-existing file', async () => {
+        expect.assertions(1);
+
+        const res = await get(
+            `https://somehost.z/_storage/notexists`,
+            {
+                httpsAgent,
+                validateStatus: () => true
+            }
+        );
+        expect(res.status).toEqual(404);
+    }, 10000);
 
     let fileId;
     it('Should upload file through proxy', async () => {

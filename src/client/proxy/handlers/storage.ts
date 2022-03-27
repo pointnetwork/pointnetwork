@@ -9,8 +9,16 @@ import {Template, templateManager} from '../templateManager';
 // we should change the response format
 const attachStorageHandlers = (server: FastifyInstance) => {
     ['/_storage/', '/_storage'].forEach(route => {
-        server.post(route, async req => {
+        server.post(route, async (req, res) => {
+            if (req.headers['content-type'] !== 'multipart/form-data') {
+                return res.status(415).send('Only multipart/form-data is supported');
+            }
+
             const file = await req.file();
+            if (!file) {
+                return res.status(400).send('No files in the body');
+            }
+
             const fileBuf = await file.toBuffer();
             const uploadedId = await uploadFile(fileBuf);
             return {data: uploadedId};
