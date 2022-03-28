@@ -303,6 +303,7 @@ class Renderer {
                     {identity, owner, publicKey: publicKey.toString('hex')},
                     'Successfully registered new identity'
                 );
+                log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
 
                 return true;
             }

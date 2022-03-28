@@ -6,6 +6,7 @@ const {compileContract, getImportsFactory} = require('../../../util/contract');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 const blockchain = require('../../../network/blockchain');
 const hre = require('hardhat');
+const BN = require('bn.js');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
@@ -71,6 +72,28 @@ class Deployer {
         } else {
             return newBaseVersion + '.0';
         }
+    }
+
+    async getChainId(){
+        const id = await hre.ethers.provider.send('eth_chainId', []);
+        return new BN(id.replace(/^0x/, ''), 'hex').toNumber();
+    }
+
+    //code to return exact the same file path of openzeppelin upgradable plugin
+    async getProxyMetadataFilePath() {
+        const networkNames = {
+            1: 'mainnet',
+            2: 'morden',
+            3: 'ropsten',
+            4: 'rinkeby',
+            5: 'goerli',
+            42: 'kovan'
+        };
+        const manifestDir = '.openzeppelin';
+
+        const chainId = await this.getChainId();
+        const name = networkNames[chainId] ?? `unknown-${chainId}`;
+        return path.join('.', manifestDir, `${name}.json`);
     }
 
     async deploy(deployPath, deployContracts = false, dev = false) {
@@ -157,7 +180,7 @@ class Deployer {
                 owner,
                 Buffer.from(publicKey, 'hex')
             );
-
+            log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
@@ -166,6 +189,11 @@ class Deployer {
 
         // Deploy contracts
         if (deployContracts) {
+            let proxyMetadataFilePath = '';
+            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
+                proxyMetadataFilePath = await this.getProxyMetadataFilePath();
+            }
+            
             let contractNames = deployConfig.contracts;
             if (!contractNames) contractNames = [];
             for (const contractName of contractNames) {
@@ -182,23 +210,27 @@ class Deployer {
                             version,
                             'equalOrBefore'
                         );
+
+                        const proxyDescriptionFileId = await blockchain.getKeyValue(
+                            target,
+                            PROXY_METADATA_KEY,
+                            version,
+                            'equalOrBefore'
+                        );
                         
                         let proxy;
                         const contractF = await hre.ethers.getContractFactory(contractName);
-                        if (proxyAddress == null){
+                        if (proxyAddress == null || proxyDescriptionFileId == null){
                             log.debug('deployProxy call');
                             proxy = await hre.upgrades.deployProxy(contractF, [], {kind: 'uups'});
                         } else {
                             log.debug('upgradeProxy call');
                             //restore from blockchain upgradable contracts and proxy metadata if does not exist. 
-                            if (!fs.existsSync(path.join('.', '.openzeppelin', 'unknown-1337.json'))){
-                                const proxyDescriptionFileId = await blockchain.getKeyValue(
-                                    target,
-                                    PROXY_METADATA_KEY,
-                                    version,
-                                    'equalOrBefore'
-                                );
-                                fs.writeFileSync(path.join('.', '.openzeppelin', 'unknown-1337.json'), 
+                            if (!fs.existsSync(proxyMetadataFilePath)){
+                                if (!fs.existsSync('./.openzeppelin')){
+                                    fs.mkdirSync('./.openzeppelin');    
+                                }
+                                fs.writeFileSync(proxyMetadataFilePath, 
                                     await storage.getFile(proxyDescriptionFileId));
                             }
                             
@@ -246,7 +278,7 @@ class Deployer {
             if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
                 try {
                     // Upload proxy metadata
-                    const proxyMetadataFilePath = path.join('.', '.openzeppelin', 'unknown-1337.json');
+                    
                     const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
                     const proxyMetadata = JSON.parse(proxyMetadataFile);
 

@@ -13,11 +13,13 @@ class KeyValue {
 
     update(identity, key, value) {
         log.debug('KeyValue locally updated:', key, '=', value);
+        log.sendMetric({identity, key, update: true});
         this.data[identity + '/' + key] = value;
     }
 
     async get(identity, key, recursive = true, alwaysUpdate = false) {
         log.debug('getting keyvalue', identity + '/' + key);
+        log.sendMetric({identity, key, get: true});
         if (identity + '/' + key in this.data && !alwaysUpdate) {
             return this.data[identity + '/' + key];
         } else if (recursive) {
@@ -36,12 +38,14 @@ class KeyValue {
 
     async ask(identity, key) {
         log.debug('asking keyvalue', identity + '/' + key);
+        log.sendMetric({identity, key, ask: true});
         const result = await blockchain.getKeyValue(identity, key);
         log.debug('result:', result);
         return result;
     }
 
     async list(identity, key) {
+        log.sendMetric({identity, key, list: true});
         const list = [];
         let i = 0;
         while (true) {
@@ -56,6 +60,7 @@ class KeyValue {
     }
 
     async propagate(identity, key, value) {
+        log.sendMetric({identity, key, propagate: true});
         log.debug('propagating keyvalue', identity + '/' + key, '=', value);
         await this.update(identity, key, value);
         return await blockchain.putKeyValue(identity, key, value);

@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.1.48",
+  "version": "0.1.50",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -24,6 +24,7 @@
     "axios": "^0.21.2",
     "bip32": "^2.0.6",
     "bip39": "^3.0.4",
+    "bn.js": "^5.2.0",
     "bootstrap": "^5.1.0",
     "bson": "^4.5.0",
     "commander": "^8.1.0",

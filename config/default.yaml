@@ -1,6 +1,6 @@
 datadir: ~/.point
 mode: ""
-identity_contract_id: f4c8b0cda3a767e0682d3e757ace260d66e386cf80387d8ae953278692054c6a
+identity_contract_id: 31715318ded2445b406367d86cc8da43b0c25ce668a97ac1b3abdeb5249ccfac
 api:
   address: 127.0.0.1
   port: 2468
@@ -62,7 +62,7 @@ network:
   contracts_path: contracts
   web3: "http://ynet.point.space:44444"
   web3_call_retry_limit: 4
-  identity_contract_address: "0x1411f3dC11D60595097b53eCa3202c34dbee0CdA"
+  identity_contract_address: "0xA84AAaC12FffbCaFe49339466803c64E4a4A72a5"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
   simulation_delay: 10 # TODO: not used
 payments:
