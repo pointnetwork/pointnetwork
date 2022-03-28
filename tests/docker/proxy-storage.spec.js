@@ -31,7 +31,7 @@ describe('Storage requests through proxy', () => {
             // axios will perform GET instead of POST if there's a trailing slash in the URL,
             // and, as mentioned above, proxy expects a slash after /_storage,
             // so we should add some path in order this to work
-            'https://somehost.z/_storage/something',
+            'https://somehost.point/_storage/something',
             form,
             {
                 headers: form.getHeaders(),
@@ -48,7 +48,7 @@ describe('Storage requests through proxy', () => {
 
         await delay(5000);
         const res = await get(
-            `https://somehost.z/_storage/${fileId}`,
+            `https://somehost.point/_storage/${fileId}`,
             {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
         );
         expect(res.status).toEqual(200);
@@ -68,7 +68,7 @@ describe('Storage requests through proxy', () => {
         await delay(5000);
 
         const res = await get(
-            `https://somehost.z/_storage/${dirId}`,
+            `https://somehost.point/_storage/${dirId}`,
             {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
         );
 

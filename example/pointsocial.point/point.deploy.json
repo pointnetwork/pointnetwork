@@ -1,0 +1,9 @@
+{
+    "version": 0.1,
+    "target": "pointsocial.point",
+    "keyvalue": {},
+    "contracts": [
+      "PointSocial"
+    ],
+    "upgradable": true
+  }

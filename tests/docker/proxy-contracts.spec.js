@@ -21,7 +21,7 @@ describe('Proxy contract send', () => {
 
         await delay(5000);
         const res = await post(
-            'https://blog.z/_contract_send/Blog.createArticle(title,contents)',
+            'https://blog.point/_contract_send/Blog.createArticle(title,contents)',
             'title=test_title&storage[contents]=some_contents',
             // TODO: same issue with https as in proxy-storage
             {proxy: {host: 'point_node', port: 8666, protocol: 'https'}}
@@ -36,7 +36,7 @@ describe('Proxy contract send', () => {
     //
     //     await delay(5000);
     //     const res = await post(
-    //         'https://blog.z/_contract_send/Blog.getArticles()',
+    //         'https://blog.point/_contract_send/Blog.getArticles()',
     //         '',
     //         // TODO: same issue with https as in proxy-storage
     //         {proxy: {host: 'point_node', port: 8666, protocol: 'https'}}
@@ -51,7 +51,7 @@ describe('Proxy contract send', () => {
 
         await delay(5000);
         const res = await post(
-            'https://blog.z/_contract_send/Blog.getArticle(id)',
+            'https://blog.point/_contract_send/Blog.getArticle(id)',
             'id=1',
             // TODO: same issue with https as in proxy-storage
             {proxy: {host: 'point_node', port: 8666, protocol: 'https'}}

@@ -191,9 +191,20 @@ class ZProxy {
         response.end();
     }
 
+    async redirectToDotPoint(request, response) {
+        // Redirect from .z to .point
+        const reqUrl = request.headers.host;
+        const dotPointUrl = reqUrl.replace(/\.z/, '.point');
+        response.writeHead(301, {Location: 'https://' + dotPointUrl});
+        response.end();
+    }
+
     async request(request, response) {
         const host = request.headers.host;
-        if (host !== 'point' && !_.endsWith(host, '.z')) return this.abort404(response);
+        if (host !== 'point' && !(_.endsWith(host, '.point') || _.endsWith(host, '.z'))) return this.abort404(response);
+        if (_.endsWith(host, '.z')){
+            this.redirectToDotPoint(request, response);
+        }
         try {
             let rendered;
             let parsedUrl;
@@ -268,8 +279,8 @@ class ZProxy {
                     return this.abortError(response, e);
                 }
             } else if (host === 'point') {
-                // handle the point welcome page by rendering explorer.z
-                const localPath = path.resolve(__dirname, '..', '..', '..', 'internal', 'explorer.z', 'public');
+                // handle the point welcome page by rendering explorer.point
+                const localPath = path.resolve(__dirname, '..', '..', '..', 'internal', 'explorer.point', 'public');
                 rendered = await this.processLocalRequest(
                     host,
                     localPath,
@@ -303,7 +314,7 @@ class ZProxy {
                 }
 
                 // If host contains `dev`, then we slice the zapp name out of the host to serve from local example folder
-                const zappName = host.includes('dev') ? `${host.split('dev')[0]}.z` : host;
+                const zappName = host.includes('dev') ? `${host.split('dev')[0]}.point` : host;
                 const localPath = `example/${zappName}/public`; // hardcode to render the zapp host
                 rendered = await this.processLocalRequest(
                     host,

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-//node scripts/blockchain/migrate-alpha-data.js twitter.z
+//node scripts/blockchain/migrate-alpha-data.js twitter.point
 
 const {readFileSync} = require('fs');
 const Web3 = require('web3');
@@ -30,17 +30,17 @@ let config;
 let identity_contract_address;
 
 const allowedSites = {
-    'twitter.z': {
+    'twitter.point': {
         abi:`${pointNodePath}/truffle/build/contracts/TwitterMigrations.json`,
         contract:'0x9EF1BEcF1e63BAB97F883bA3C5fDf8f761eD41F8',
         handle:'twitter'
     }, 
-    'blog.z': {
+    'blog.point': {
         abi:`${pointNodePath}/truffle/build/contracts/BlogMigrations.json`,
         contract:'0x506d6A079856A6EF444c99dAef1bf15fcbc37bbb',
         handle:'blog'
     }, 
-    'pointsocial.z': {
+    'pointsocial.point': {
         abi:`${pointNodePath}/truffle/build/contracts/PointSocialMigrations.json`,
         contract:'0x59BDA94F762c9227cC426Ea29C0aC1c196f1d7b6',
         handle:'pointsocial'
@@ -65,7 +65,7 @@ const minimal_contract_abi = [
 
 const init = () => {
     if(process.argv[2] === undefined){
-        console.log(`Please inform the zapp to migrate eg: blog.z`);
+        console.log(`Please inform the zapp to migrate eg: blog.point`);
         return;
     }
 
