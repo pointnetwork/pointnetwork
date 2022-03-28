@@ -191,9 +191,20 @@ class ZProxy {
         response.end();
     }
 
+    async redirectToDotPoint(request, response) {
+        // Redirect from .z to .point
+        const reqUrl = request.headers.host;
+        const dotPointUrl = reqUrl.replace(/\.z/, '.point');
+        response.writeHead(301, {Location: 'https://' + dotPointUrl});
+        response.end();
+    };
+
     async request(request, response) {
         const host = request.headers.host;
-        if (host !== 'point' && !_.endsWith(host, '.point')) return this.abort404(response);
+        if (host !== 'point' && !(_.endsWith(host, '.point') || _.endsWith(host, '.z') )) return this.abort404(response);
+        if (_.endsWith(host, '.z')){
+            this.redirectToDotPoint(request, response);
+        }
         try {
             let rendered;
             let parsedUrl;
