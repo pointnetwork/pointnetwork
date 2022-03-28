@@ -10,7 +10,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "./tasks/importer/identity";
 import "./tasks/importer/blog";
 import "./tasks/importer/pointSocial";
-import "./tasks/importer/twitter";
+import "./tasks/importer/sms";
 import "./tasks/importer/identity-update";
 
 const ethers = require('ethers');

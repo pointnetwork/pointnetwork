@@ -123,7 +123,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 
             /*
             // NOTE: above code can be replaced with below when mentioned arlocal bug is resolved
-            // It works in twitter.point, but brokes in pointsocial.point, for example.
+            // It works in sms.point, but brokes in pointsocial.point, for example.
             const data = await arweave.transactions.getData(txid, {decode: true});
             const buf = Buffer.from(data);
             */

@@ -16,7 +16,6 @@
     <h5>Explore deployed websites</h5>
 
     {% set websites = {
-        'twitter.point': "Twitter Demo",
         'blog.point': "Blog",
         'pointsocial.point': 'Point Social',
         'email.point': 'Email',

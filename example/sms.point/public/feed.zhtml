@@ -3,12 +3,12 @@
 {% block contents %}
     {% set username = request.username %}
     {% set owner = owner_by_identity( request.username ) %}
-    {% set tweets = contract_get(host, 'Twitter', 'getTweetsByOwner', [owner], version) %}
+    {% set tweets = contract_get(host, 'Sms', 'getTweetsByOwner', [owner], version) %}
 
     {% for tweet in tweets %}
         {% include 'tweet.zhtml' %}
     {% else %}
-        <b>No tweets.</b>
+        <b>No short messages.</b>
     {% endfor %}
 
     {% include 'create.zhtml' %}

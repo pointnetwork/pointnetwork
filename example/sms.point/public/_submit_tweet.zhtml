@@ -7,8 +7,8 @@
 {% endif %}
 
 {% set tweet_contents_id = storage_put(request.contents) %}
-{<p>Tweet contents id: {{ tweet_contents_id }}#}
-{% set result = contract_call(host, 'Twitter', 'tweet', [ tweet_contents_id ], version) %}
+{<p>Short message contents id: {{ tweet_contents_id }}#}
+{% set result = contract_call(host, 'Sms', 'tweet', [ tweet_contents_id ], version) %}
 
 <html>
   <body>

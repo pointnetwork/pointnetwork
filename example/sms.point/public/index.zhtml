@@ -2,12 +2,12 @@
 
 {% block contents %}
     
-    {% set tweets = contract_list(host, 'Twitter', 'getTweet', [], version ) %}
+    {% set tweets = contract_list(host, 'Sms', 'getTweet', [], version ) %}
 
     {% for tweet in tweets %}
         {% include 'tweet.zhtml' %}
     {% else %}
-        <b>No tweets here. Let's post something!</b>
+        <b>No short message here. Let's post something!</b>
     {% endfor %}
 
     {% include 'create.zhtml' %}
