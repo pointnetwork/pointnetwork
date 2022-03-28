@@ -105,6 +105,7 @@ import logger from './core/log.js';
 import Point from './core/index.js';
 import migrate from './util/migrate';
 import initFolders from './initFolders';
+import {statAsync} from './util';
 
 // ------------------- Init Logger ----------------- //
 
@@ -150,7 +151,7 @@ if (program.upload) {
             ? program.upload!
             : path.resolve(__dirname, '..', program.upload!);
 
-        const stat = await fs.stat(filePath);
+        const stat = await statAsync(filePath);
         if (stat.isDirectory()) {
             return uploadDir(filePath);
         } else {
