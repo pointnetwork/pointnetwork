@@ -2,8 +2,11 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract Identity {
+contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     struct PubKey64 {
         bytes32 part1;
         bytes32 part2;
@@ -18,7 +21,7 @@ contract Identity {
     mapping(string => PubKey64) public identityToCommPublicKey;
     string[] public identityList;
 
-    bool public migrationApplied = false;
+    bool public migrationApplied;
 
     uint public constant MAX_HANDLE_LENGTH = 16;
 
@@ -30,6 +33,14 @@ contract Identity {
         uint256 date
     );
     event IKVSet(string identity, string key, string value, string version);
+
+    function initialize() public initializer {
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+        migrationApplied = false;
+    }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     modifier onlyIdentityOwner(string memory identity) {
 

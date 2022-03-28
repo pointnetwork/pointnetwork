@@ -8,6 +8,9 @@ COPY . /app/
 RUN chmod 1777 /tmp && apt update && apt install -y python3 tor git build-essential && \
     npm install -g npm && PYTHON=$(which python3) npm i && npm run build
 
+WORKDIR /app/hardhat
+RUN npm i
+WORKDIR /app
 
 FROM node:14.17.5-stretch-slim
 
