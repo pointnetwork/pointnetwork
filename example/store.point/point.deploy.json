@@ -1,0 +1,67 @@
+{
+  "version": 0.1,
+  "target": "store.point",
+  "keyvalue": {
+    "store1": {
+      "contract_send": "Store.registerStore(name,description,logo)",
+      "metadata": {
+        "name": "My Store",
+        "description": "My Store: Is Your Store Too!",
+        "storage[logo]": {
+          "file": "images/store-logo-0.jpg",
+          "type": "image/jpeg"
+        }
+      }
+    },
+    "store2": {
+      "contract_send": "Store.registerStore(name,description,logo)",
+      "metadata": {
+        "name": "A.N. Other Ltd",
+        "description": "A.N. Other: Is like no other!",
+        "storage[logo]": {
+          "file": "images/store-logo-1.png",
+          "type": "image/jpeg"
+        }
+      }
+    },
+    "store1_product0": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 1,
+        "name": "Toothbrush",
+        "description": "A tooth cleaner",
+        "price": "1000000000000000000"
+      }
+    },
+    "store1_product1": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 1,
+        "name": "Book",
+        "description": "A page turner",
+        "price": "2000000000000000000"
+      }
+    },
+    "store1_product2": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 1,
+        "name": "MacBook Pro",
+        "description": "A new computer",
+        "price": "12000000000000000000"
+      }
+    },
+    "store2_product1": {
+      "contract_send": "Store.addProductToStore(storeId,name,price,metadataHash)",
+      "metadata": {
+        "storeId": 2,
+        "name": "Official A.N. Other T-Shirt",
+        "description": "Gonna be worth a lot!",
+        "price": "1000000000000000000"
+      }
+    }
+  },
+  "contracts": [
+    "Store"
+  ]
+}

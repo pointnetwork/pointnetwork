@@ -1,0 +1,17 @@
+<div class="tweet">
+    <div class="identity"><a href="/@{{ identity_by_owner(tweet.from) }}?__point_version={{version}}">@{{ identity_by_owner(tweet.from) }}</a></div>
+    <div class="from">{{ tweet.from }}</div>
+
+    {% set contents = storage_get(tweet.contents) %}
+
+    <div class="contents">
+        {{ contents|length <= 280 ? contents : 'N/A' }}
+    </div>
+
+    <div class="time">{{ tweet.timestamp | date('Y-m-d H:i:s') }}</div>
+
+    <form method="post" action="/_contract_send/Sms.like(tweet_id)?__point_version={{version}}">
+        <input type="hidden" name="tweet_id" value="{{ tweet.id }}" />
+        <input type="submit" value="{{ tweet.likes }} likes" value="Send Tweet" />
+    </form>
+</div>

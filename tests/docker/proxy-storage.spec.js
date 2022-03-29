@@ -53,7 +53,7 @@ describe('Storage requests through proxy', () => {
         form.append('my_file', file);
 
         const res = await post(
-            'https://somehost.z/_storage',
+            'https://somehost.point/_storage/something',
             form,
             {
                 headers: form.getHeaders(),
@@ -69,7 +69,7 @@ describe('Storage requests through proxy', () => {
 
         await delay(5000);
         const res = await get(
-            `https://somehost.z/_storage/${fileId}`,
+            `https://somehost.point/_storage/${fileId}`,
             {httpsAgent}
         );
         expect(res.status).toEqual(200);
@@ -89,7 +89,7 @@ describe('Storage requests through proxy', () => {
         await delay(5000);
 
         const res = await get(
-            `https://somehost.z/_storage/${dirId}`,
+            `https://somehost.point/_storage/${dirId}`,
             {httpsAgent}
         );
 

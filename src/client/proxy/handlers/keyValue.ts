@@ -12,7 +12,7 @@ const attachKeyValueHanlders = (server: FastifyInstance, ctx: any) => {
                 return res.status(415).send('Only application/x-www-form-urlencoded is supported');
             }
 
-            const identity = req.headers.host!.replace('.z', '');
+            const identity = req.headers.host!.replace('.point', '');
             const key = req.params.key;
             const entries = req.body;
 
@@ -44,7 +44,7 @@ const attachKeyValueHanlders = (server: FastifyInstance, ctx: any) => {
     server.get(
         '/_keyvalue_get/:key',
         async (req: FastifyRequest<{Params: {key: string}}>) =>
-            ctx.keyvalue.get(req.headers.host!.replace('.z', ''), req.params.key)
+            ctx.keyvalue.get(req.headers.host!.replace('.point', ''), req.params.key)
     );
 };
 

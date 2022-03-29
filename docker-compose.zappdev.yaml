@@ -56,6 +56,7 @@ services:
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
       - ./hardhat.config.js:/app/hardhat.config.js
+      - ./hardhat/resources:/app/hardhat/resources:rw
     ports:
       - '12346:9685'
       - '65501:8666'

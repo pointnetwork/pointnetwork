@@ -1,0 +1,40 @@
+{% extends 'layout.zhtml' %}
+
+{% set active_section = 'dashboard' %}
+
+{% block contents %}
+
+    {% if not is_identity_registered() %}
+        <script>location.href = '/final'</script>
+    {% endif %}
+
+    <h1>Welcome to Web 3.0, <strong>@{{ get_current_identity() }}</strong>!</h1>
+
+    <p>If you can see this page, this means you've successfully installed the alpha! You're amazing! Please send the screenshot to the group.</p>
+    <p>There's not much content in here, but we will be filling it up from now on</p>
+
+    <h5>Explore deployed websites</h5>
+
+    {% set websites = {
+        'blog.point': "Blog",
+        'pointsocial.point': 'Point Social',
+        'email.point': 'Email',
+    }
+    %}
+
+    <style>ul { margin-bottom: 0; }</style>
+    {% set zapp_listed_counter = 0 %}
+    {% for k,v in websites %}
+        {% set zapp_routes = contract_get('@', 'Identity', 'ikvGet', [k|replace({'.point': ''}),'zdns/routes']) %}
+        {% if(zapp_routes) %}
+            <ul>
+                <li><a href="{{ 'https://' ~ k }}" target="_blank">{{ k }} &mdash; {{ v }}</a></li>
+            </ul>
+            {% set zapp_listed_counter = zapp_listed_counter + 1 %}
+        {% endif %}
+    {% endfor %}
+    {% if zapp_listed_counter == 0 %}
+        <p>No ZApp deployed yet.</p>
+    {% endif %}
+
+{% endblock %}

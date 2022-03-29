@@ -8,7 +8,7 @@ class ContractController extends PointSDKController {
         this.req = req;
         this.host = this.req.headers.host;
         // TODO: also verify the domain is registered in the Identity contract
-        if (!_.endsWith(this.host, '.z')) return reply.callNotFound();
+        if (!_.endsWith(this.host, '.point')) return reply.callNotFound();
 
         this.payload = req.body;
         this.reply = reply;

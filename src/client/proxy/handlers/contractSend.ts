@@ -58,7 +58,7 @@ const attachContractSendHandler = (server: FastifyInstance) => {
             }
 
             return blockchain.sendToContract(
-                req.headers.host!.replace('.z', ''),
+                req.headers.host!.replace('.point', ''),
                 contractName,
                 methodName,
                 paramValues

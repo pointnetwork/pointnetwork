@@ -1,0 +1,32 @@
+{% if (request is not empty) and ('__point_version' in request|keys)  %}
+    {% set version = request.__point_version %}
+{% else %}
+    {% set version = 'latest' %}
+{% endif %}
+<html>
+<head>
+    <title>Short Messages</title>
+    <link type="text/css" rel="stylesheet" href="/css/bootstrap.min.css?__point_version={{version}}"/>
+    <link type="text/css" rel="stylesheet" href="/css/index.css?__point_version={{version}}"/>
+</head>
+<body>
+<header>
+    <h1>Decentralized Short Messages</h1>
+</header>
+
+<div class="container">
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4">
+            {% block contents %}
+            {% endblock %}
+        </div>
+        <div class="col-4">
+            {% block sidebar %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

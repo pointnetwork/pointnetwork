@@ -28,7 +28,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
         if (host === 'point') {
             // Process internal point webpage
-            const publicPath = path.resolve(__dirname, '../../../../internal/explorer.z/public');
+            const publicPath = path.resolve(__dirname, '../../../../internal/explorer.point/public');
             const routesJsonPath = path.resolve(publicPath, '../routes.json');
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
@@ -84,7 +84,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                 res.status(404).send('Domain not found (Route file not specified for this domain)');
             }
 
-            const zappName = host.includes('dev') ? `${host.split('dev')[0]}.z` : host;
+            const zappName = host.includes('dev') ? `${host.split('dev')[0]}.point` : host;
             
             const publicPath = path.resolve(__dirname, `../../../../example/${zappName}/public`);
             const routesJsonPath = path.resolve(publicPath, '../routes.json');
@@ -130,7 +130,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                 res.header('content-type', contentType);
                 return file;
             }
-        } else if (host.endsWith('.z')) {
+        } else if (host.endsWith('.point')) {
             // process other domains
             const version = queryParams.__point_version as string ?? 'latest';
 

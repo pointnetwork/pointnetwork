@@ -1,0 +1,9 @@
+{
+  "version": 0.1,
+  "target": "sms.point",
+  "keyvalue": {
+  },
+  "contracts": [
+    "Sms"
+  ]
+}

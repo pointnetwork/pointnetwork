@@ -1,0 +1,12 @@
+{
+  "version": 0.1,
+  "target": "blog.point",
+  "upload": {
+    "redundancy": 10,
+    "timeperiod": 10000
+  },
+  "keyvalue": {},
+  "contracts": [
+    "Blog"
+  ]
+}

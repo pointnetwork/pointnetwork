@@ -6,10 +6,12 @@ import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "@openzeppelin/hardhat-upgrades";
 import "./tasks/importer/identity";
 import "./tasks/importer/blog";
 import "./tasks/importer/pointSocial";
-import "./tasks/importer/twitter";
+import "./tasks/importer/sms";
+import "./tasks/importer/identity-update";
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
@@ -32,7 +34,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 });
 
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
-const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
+const host = process.env.BLOCKCHAIN_HOST || 'blockchain_node';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
 

@@ -1,0 +1,52 @@
+{
+  "name": "template.point",
+  "version": "0.0.1",
+  "author": "Point Network",
+  "description": "Template example zapp - use as a scaffold to create more Zapps!",
+  "dependencies": {
+    "@material-ui/icons": "^4.11.2",
+    "@openzeppelin/contracts": "^4.4.2",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "bootstrap": "^5.1.2",
+    "react": "^17.0.2",
+    "react-bootstrap": "^2.0.0-rc.0",
+    "react-bootstrap-icons": "^1.5.0",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "timeago.js": "^4.0.2",
+    "web-vitals": "^1.0.1",
+    "wouter": "^2.7.4"
+  },
+  "scripts": {
+    "clear": "mkdir -p ./public && rm -rf ./public/* .cache .parcel-cache",
+    "start": "react-scripts start",
+    "watch:docker": "./watch.docker.js",
+    "build": "npm run clear && cp src/*.html ./public/. && cp src/*.css ./public/. && parcel build src/index.js --dist-dir ./public --no-source-maps",
+    "watch": "npm run clear && cp src/*.html ./public/. && cp src/*.css ./public/. && parcel watch src/index.js --dist-dir ./public/",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@parcel/transformer-image": "^2.0.0-rc.0",
+    "parcel": "^2.0.0-rc.0"
+  }
+}

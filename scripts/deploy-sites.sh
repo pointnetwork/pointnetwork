@@ -51,15 +51,8 @@ do
 
       cp ${SITE}/contracts/*.sol ./hardhat/contracts/
 
-      #avoid to compile delete identity address
-      cp /app/hardhat/build/contracts/Identity.sol/Identity-address.json /app/hardhat/Identity-address.json
-
       echo "npx hardhat compile"
       npx hardhat compile
-      
-      #restore identity address file
-      cp /app/hardhat/Identity-address.json /app/hardhat/build/contracts/Identity.sol/Identity-address.json 
-
   fi
 
   #TODO: Pass the .openzeppeling file to be uploaded to arweave 

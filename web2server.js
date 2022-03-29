@@ -85,7 +85,7 @@ server.register(proxy, {
             const {rawHeaders} = request;
             const host = rawHeaders[rawHeaders.indexOf('Host') + 1];
             const [subdomain] = host.split('.');
-            return {...headers, host: `${subdomain}.z`};
+            return {...headers, host: `${subdomain}.point`};
         },
         onError: (reply, error) => {
             try {

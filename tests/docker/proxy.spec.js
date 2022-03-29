@@ -46,12 +46,12 @@ describe('Proxy', () => {
         expect(res.data).toMatch('Welcome to Web 3.0');
     });
 
-    it('Should return https://blog.z HTML', async () => {
+    it('Should return https://blog.point HTML', async () => {
         expect.assertions(3);
 
         await delay(5000);
         const res = await get(
-            'https://blog.z',
+            'https://blog.point',
             {httpsAgent}
         );
         expect(res.status).toEqual(200);
@@ -73,31 +73,31 @@ describe('Proxy', () => {
         expect(res.status).toEqual(404);
     }, 300000);
 
-    it('Should return https://blog.z file in a root folder', async () => {
+    it('Should return https://blog.point file in a root folder', async () => {
         expect.assertions(2);
 
         await delay(5000);
         const res = await get(
-            'https://blog.z/index.css',
+            'https://blog.point/index.css',
             {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^html, body/);
     }, 300000);
 
-    it('Should return https://blog.z file in a nested folder', async () => {
+    it('Should return https://blog.point file in a nested folder', async () => {
         expect.assertions(2);
 
         await delay(5000);
         const res = await get(
-            'https://blog.z/img/star_icon.png',
+            'https://blog.point/img/star_icon.png',
             {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.headers['content-type']).toEqual('image/png');
     }, 300000);
 
-    it('Should return 404 for host other than point and not ending on .z', async () => {
+    it('Should return 404 for host other than point and not ending on .point', async () => {
         expect.assertions(1);
 
         const res = await get(
@@ -110,11 +110,11 @@ describe('Proxy', () => {
         expect(res.status).toEqual(404);
     });
 
-    it('Should return 404 for host non-existing .z domain', async () => {
+    it('Should return 404 for host non-existing .point domain', async () => {
         expect.assertions(1);
 
         const res = await get(
-            'https://notexists.z',
+            'https://notexists.point',
             {
                 httpsAgent,
                 validateStatus: () => true

@@ -14,6 +14,7 @@ const {compileAndSaveContract} = require('../util/contract');
 const log = logger.child({module: 'Blockchain'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
 const utils = require('../core/utils');
+const {statAsync} = require('../util');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -68,7 +69,7 @@ blockchain.loadPointContract = async (
         const abiFileName = path.resolve(buildDirPath, contractName + '.json');
 
         try {
-            await fs.stat(abiFileName);
+            await statAsync(abiFileName);
         } catch (e) {
             log.debug(`${contractName} contract not found`);
 
@@ -397,14 +398,14 @@ blockchain.commPublicKeyByIdentity = async identity => {
 };
 
 blockchain.getZRecord = async (domain, version = 'latest') => {
-    domain = domain.replace('.z', ''); // todo: rtrim instead
+    domain = domain.replace('.point', ''); // todo: rtrim instead
     let result = await blockchain.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
     if (result != null && result.substr(0, 2) === '0x') result = result.substr(2);
     return result;
 };
 
 blockchain.putZRecord = async (domain, routesFile, version) => {
-    domain = domain.replace('.z', ''); // todo: rtrim instead
+    domain = domain.replace('.point', ''); // todo: rtrim instead
     return await blockchain.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile, version);
 };
 
@@ -444,7 +445,7 @@ blockchain.getLastVersionOrBefore = (version, events) => {
     );
     if (filteredEvents.length > 0) {
         const maxObj = filteredEvents.reduce((prev, current) =>
-            blockchain.compareVersions(prev.returnValues.version, 
+            blockchain.compareVersions(prev.returnValues.version,
                 current.returnValues.version) === 1
                 ? prev
                 : current
@@ -468,7 +469,7 @@ blockchain.getKeyValue = async (
         if (typeof version !== 'string')
             throw Error('blockchain.getKeyValue(): version must be a string');
 
-        identity = identity.replace('.z', ''); // todo: rtrim instead
+        identity = identity.replace('.point', ''); // todo: rtrim instead
 
         if (version === 'latest') {
             const contract = await blockchain.loadIdentityContract();
@@ -509,7 +510,7 @@ blockchain.getKeyValue = async (
 blockchain.putKeyValue = async (identity, key, value, version) => {
     try {
         // todo: only send transaction if it's different. if it's already the same value, no need
-        identity = identity.replace('.z', ''); // todo: rtrim instead
+        identity = identity.replace('.point', ''); // todo: rtrim instead
         const contract = await blockchain.loadIdentityContract();
         const method = contract.methods.ikvPut(identity, key, value, version);
         log.debug({identity, key, value, version}, 'Ready to put key value');
@@ -528,7 +529,7 @@ blockchain.registerIdentity = async (identity, address, commPublicKey) => {
             throw Error('registerIdentity: commPublicKey must be 64 bytes');
         // todo: validate identity and address
 
-        identity = identity.replace('.z', ''); // todo: rtrim instead
+        identity = identity.replace('.point', ''); // todo: rtrim instead
         const contract = await blockchain.loadIdentityContract();
         const method = contract.methods.register(
             identity,

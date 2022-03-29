@@ -64,7 +64,7 @@ describe('Proxy contract send', () => {
 
         await delay(5000);
         const res = await post(
-            'https://blog.z/_contract_send/Blog.createArticle(title,contents)',
+            'https://blog.point/_contract_send/Blog.createArticle(title,contents)',
             'title=test_title&storage[contents]=some_contents',
             {httpsAgent}
         );
@@ -86,12 +86,26 @@ describe('Proxy contract send', () => {
         expect(res.status).toEqual(200);
     }, 300000);
 
-    it('Should retrieve stored article in blog contract', async () => {
+    it('Should retrieve articles in blog contract', async () => {
         expect.assertions(1);
 
         await delay(5000);
         const res = await post(
-            'https://blog.z/_contract_send/Blog.getArticle(id)',
+            'https://blog.point/_contract_send/Blog.getArticles()',
+            '',
+            {httpsAgent}
+        );
+
+        expect(res.status).toEqual(200);
+    }, 300000);
+
+    // TODO: this method works, but it's useless, as it returns nothing
+    it('Should retrieve stored atricle in blog contract', async () => {
+        expect.assertions(1);
+
+        await delay(5000);
+        const res = await post(
+            'https://blog.point/_contract_send/Blog.getArticle(id)',
             'id=1',
             {httpsAgent}
         );
