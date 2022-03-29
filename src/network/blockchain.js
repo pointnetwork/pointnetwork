@@ -90,12 +90,7 @@ blockchain.loadPointContract = async (
             }
 
             log.debug(`Compiling ${contractName} contract`);
-            const contractPath = path.resolve(
-                basepath,
-                '..',
-                'hardhat',
-                'contracts'
-            );
+            const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
             await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
 
             log.debug('Identity contract successfully compiled');
@@ -263,6 +258,11 @@ blockchain.getPastEvents = async (
         }
     }
     return events;
+};
+
+blockchain.getBlockNumber = async () => {
+    const n = await web3.eth.getBlockNumber();
+    return n;
 };
 
 blockchain.getBlockTimestamp = async blockNumber => {
@@ -445,8 +445,8 @@ blockchain.getLastVersionOrBefore = (version, events) => {
     );
     if (filteredEvents.length > 0) {
         const maxObj = filteredEvents.reduce((prev, current) =>
-            blockchain.compareVersions(prev.returnValues.version,
-                current.returnValues.version) === 1
+            blockchain.compareVersions(prev.returnValues.version, current.returnValues.version) ===
+            1
                 ? prev
                 : current
         );
@@ -590,8 +590,8 @@ blockchain.sendTransaction = async ({from, to, value, gas}) => {
     return receipt;
 };
 
-blockchain.getBalance = async address => {
-    const balance = await web3.eth.getBalance(address);
+blockchain.getBalance = async (address, blockIdentifier = 'latest') => {
+    const balance = await web3.eth.getBalance(address, blockIdentifier);
     return balance;
 };
 
@@ -681,5 +681,7 @@ blockchain.deployContract = async (contract, artifacts, contractName) => {
     log.debug({contractName, address}, 'Deployed Contract Instance');
     return address;
 };
+
+blockchain.toHex = n => web3.utils.toHex(n);
 
 module.exports = blockchain;
