@@ -2,7 +2,7 @@ import {uploadFile, getFile} from '../../src/client/storage';
 import {delay} from '../../src/core/utils';
 import {get, post} from 'axios';
 
-jest.retryTimes(60);
+jest.retryTimes(24);
 
 describe('Storage upload/download', () => {
     let id;
@@ -19,7 +19,7 @@ describe('Storage upload/download', () => {
         await delay(5000);
         const file = await getFile(id);
         expect(file).toEqual('Test string');
-    }, 300000);
+    }, 10000);
 });
 
 describe('Storage upload/download through API', () => {
@@ -42,5 +42,5 @@ describe('Storage upload/download through API', () => {
         const res = await get(
             `http://point_node:2468/v1/api/storage/getString/${id}`);
         expect(res.data.data).toEqual('Test string 2');
-    }, 300000);
+    }, 10000);
 });

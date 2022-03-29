@@ -2,7 +2,7 @@ import {get, post} from 'axios';
 import {delay} from '../../src/core/utils';
 import HttpsAgent from 'https-proxy-agent';
 
-jest.retryTimes(60);
+jest.retryTimes(24);
 
 const httpsAgent = new HttpsAgent({
     host: 'point_node',
@@ -24,7 +24,7 @@ describe('Proxy keyvalue', () => {
 
         expect(res.status).toEqual(200);
         expect(res.data).toEqual('Success');
-    }, 300000);
+    }, 10000);
 
     it('Should get keyvalue', async () => {
         expect.assertions(3);
@@ -39,7 +39,7 @@ describe('Proxy keyvalue', () => {
         expect(res.data.foo).toEqual('bar');
         // TODO: this is the problem with x-www-form-urlencoded: numbers are not parsed correctly
         expect(res.data.baz).toEqual('123');
-    }, 300000);
+    }, 10000);
 
     it('Should return null for non-existing keyvalue', async () => {
         expect.assertions(2);
@@ -51,7 +51,7 @@ describe('Proxy keyvalue', () => {
 
         expect(res.status).toEqual(200);
         expect(res.data).toEqual(null);
-    }, 300000);
+    }, 10000);
 });
 
 describe('Proxy contract send', () => {
@@ -70,7 +70,7 @@ describe('Proxy contract send', () => {
         );
 
         expect(res.status).toEqual(200);
-    }, 300000);
+    }, 10000);
 
     // TODO: this is useless, returns nothing.
     it('Should retrieve articles in blog contract', async () => {
@@ -84,7 +84,7 @@ describe('Proxy contract send', () => {
         );
 
         expect(res.status).toEqual(200);
-    }, 300000);
+    }, 10000);
 
     it('Should retrieve articles in blog contract', async () => {
         expect.assertions(1);
@@ -97,7 +97,7 @@ describe('Proxy contract send', () => {
         );
 
         expect(res.status).toEqual(200);
-    }, 300000);
+    }, 10000);
 
     // TODO: this method works, but it's useless, as it returns nothing
     it('Should retrieve stored atricle in blog contract', async () => {
@@ -111,5 +111,5 @@ describe('Proxy contract send', () => {
         );
 
         expect(res.status).toEqual(200);
-    }, 300000);
+    }, 10000);
 });

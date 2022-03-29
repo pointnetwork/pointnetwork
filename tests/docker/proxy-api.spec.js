@@ -68,5 +68,5 @@ describe('API requests through proxy', () => {
     //     );
     //
     //     expect(res.status).toEqual(200);
-    // }, 300000);
+    // }, 10000);
 });
