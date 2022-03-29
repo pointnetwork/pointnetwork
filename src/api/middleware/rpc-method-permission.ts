@@ -1,13 +1,13 @@
 import {FastifyReply, FastifyRequest} from 'fastify';
-import {RPCRequestBody} from '../controllers/BlockchainController';
+import {RPCRequest} from '../../rpc/rpc-handlers';
 import blockchain from '../../network/blockchain';
 import permissionStore from '../../permissions/PermissionStore';
 
-const RESTRICTED_METHODS = ['eth_sendTransaction'];
+const RESTRICTED_METHODS = [''];
 
 async function methodPermissionMdw(req: FastifyRequest, reply: FastifyReply) {
     if (req.body) {
-        const {method} = req.body as RPCRequestBody;
+        const {method} = req.body as RPCRequest;
 
         if (RESTRICTED_METHODS.includes(method)) {
             const dappDomain = req.headers.origin;
@@ -33,5 +33,4 @@ async function methodPermissionMdw(req: FastifyRequest, reply: FastifyReply) {
     }
 }
 
-// Need to keep it like this because of the way it's imported.
-module.exports = methodPermissionMdw;
+export default methodPermissionMdw;
