@@ -257,7 +257,25 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
     const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) =>
         void new ZProxySocketController(ctx, socket, server.websocketServer, hostname);
 
-    server.route({method: 'GET', url: '*', handler, wsHandler});
+    // Handle websocket requests.
+    server.route({
+        method: 'GET',
+        url: '/ws',
+        preValidation: async (
+            req: FastifyRequest<{Querystring: Record<string, string>}>,
+            reply
+        ) => {
+            if (req.query.token !== config.get('api.sdk_auth_key')) {
+                log.error('Invalid Client KEY for websocket connection.');
+                await reply.status(401).send('not authenticated');
+            }
+        },
+        handler: async () => undefined, // to avoid 'handler not defined' error.
+        wsHandler
+    });
+
+    // Handle REST API requests.
+    server.route({method: 'GET', url: '*', handler});
     server.route({method: 'POST', url: '*', handler});
 };
 
