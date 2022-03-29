@@ -1,9 +1,9 @@
 {
   "version": 0.1,
-  "target": "twitter.point",
+  "target": "sms.point",
   "keyvalue": {
   },
   "contracts": [
-    "Twitter"
+    "Sms"
   ]
 }
