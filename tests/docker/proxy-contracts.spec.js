@@ -17,7 +17,7 @@ describe('Proxy keyvalue', () => {
 
         await delay(5000);
         const res = await post(
-            'https://blog.z/_keyvalue_append/foo',
+            'https://blog.point/_keyvalue_append/foo',
             'foo=bar&baz=123',
             {httpsAgent}
         );
@@ -31,7 +31,7 @@ describe('Proxy keyvalue', () => {
 
         await delay(5000);
         const res = await get(
-            'https://blog.z/_keyvalue_get/foo0',
+            'https://blog.point/_keyvalue_get/foo0',
             {httpsAgent}
         );
 
@@ -45,7 +45,7 @@ describe('Proxy keyvalue', () => {
         expect.assertions(2);
 
         const res = await get(
-            'https://blog.z/_keyvalue_get/notexists',
+            'https://blog.point/_keyvalue_get/notexists',
             {httpsAgent}
         );
 
@@ -78,7 +78,7 @@ describe('Proxy contract send', () => {
 
         await delay(5000);
         const res = await post(
-            'https://blog.z/_contract_send/Blog.getArticles()',
+            'https://blog.point/_contract_send/Blog.getArticles()',
             '',
             {httpsAgent}
         );

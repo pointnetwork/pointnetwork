@@ -21,7 +21,7 @@ describe('Storage requests through proxy', () => {
         expect.assertions(1);
 
         const res = await post(
-            'https://somehost.z/_storage',
+            'https://somehost.point/_storage',
             'foo',
             {
                 httpsAgent,
@@ -35,7 +35,7 @@ describe('Storage requests through proxy', () => {
         expect.assertions(1);
 
         const res = await get(
-            `https://somehost.z/_storage/notexists`,
+            `https://somehost.point/_storage/notexists`,
             {
                 httpsAgent,
                 validateStatus: () => true
@@ -53,7 +53,7 @@ describe('Storage requests through proxy', () => {
         form.append('my_file', file);
 
         const res = await post(
-            'https://somehost.point/_storage/something',
+            'https://somehost.point/_storage/',
             form,
             {
                 headers: form.getHeaders(),
@@ -82,7 +82,7 @@ describe('Storage requests through proxy', () => {
         expect.assertions(1);
         dirId = await uploadDir(path.join(__dirname, '../resources/sample_folder'));
         expect(dirId).toBeTruthy();
-    });
+    }, 10000);
 
     it('Should download uploaded folder', async () => {
         expect.assertions(5);

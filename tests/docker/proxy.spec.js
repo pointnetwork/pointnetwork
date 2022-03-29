@@ -64,7 +64,7 @@ describe('Proxy', () => {
 
         await delay(5000);
         const res = await get(
-            'https://blog.z/notexists',
+            'https://blog.point/notexists',
             {
                 httpsAgent,
                 validateStatus: () => true
