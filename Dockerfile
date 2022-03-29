@@ -19,5 +19,7 @@ COPY --from=builder /app /app
 RUN mkdir -p /data/db
 RUN npm install -g npm
 
+RUN apt update && apt install -y curl
+
 ENTRYPOINT [ "npm" ]
 CMD [ "run", "start" ]

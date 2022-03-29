@@ -5,9 +5,10 @@ const defaultBuildPath = path.resolve(__dirname, '..', '..', 'hardhat', 'build',
 const defaultContractPath = path.resolve(__dirname, '..', '..', 'hardhat', 'contracts');
 const defaultHardhatResourcesPath = path.resolve(__dirname, '..', '..', 'hardhat', 'resources');
 
-export function getContractAddress(name: string, hardhatResourcesPath = defaultHardhatResourcesPath) {
-    const filename = path.resolve(hardhatResourcesPath, `${name}-address.json`);
-
+export function getContractAddress(name: string, buildPath = defaultHardhatResourcesPath) {
+    const filename = path.resolve(buildPath, `${name}-address.json`);
+    // eslint-disable-next-line
+    console.log('Get contract address from file:', {name, buildPath, filename, existsSync: existsSync(filename)});
     if (!existsSync(filename)) {
         return;
     }

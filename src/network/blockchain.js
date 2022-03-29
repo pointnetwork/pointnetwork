@@ -60,6 +60,7 @@ blockchain.loadPointContract = async (
     at,
     basepath = path.resolve(__dirname, '..')
 ) => {
+    log.info({contractName, at, isCached: contractName in abisByContractName}, 'Loading point contract');
     if (!(contractName in abisByContractName)) {
         const buildDirPath = path.resolve(
             utils.resolveHome(config.get('datadir')),
