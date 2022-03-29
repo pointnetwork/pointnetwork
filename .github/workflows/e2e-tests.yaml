@@ -35,7 +35,7 @@ jobs:
 
     - name: Copy test reports
       if: always()
-      run: mkdir -p reports && docker cp pointnetwork-test-1:/app/junit.xml ./reports
+      run: mkdir -p reports && docker cp test:/app/junit.xml ./reports
 
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
