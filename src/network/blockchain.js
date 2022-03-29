@@ -271,6 +271,11 @@ blockchain.getPastEvents = async (
     return events;
 };
 
+blockchain.getBlockNumber = async () => {
+    const n = await web3.eth.getBlockNumber();
+    return n;
+};
+
 blockchain.getBlockTimestamp = async blockNumber => {
     const block = await web3.eth.getBlock(blockNumber);
     return block.timestamp;
@@ -610,8 +615,8 @@ blockchain.sendTransaction = async ({from, to, value, gas}) => {
     return receipt;
 };
 
-blockchain.getBalance = async address => {
-    const balance = await web3.eth.getBalance(address);
+blockchain.getBalance = async (address, blockIdentifier = 'latest') => {
+    const balance = await web3.eth.getBalance(address, blockIdentifier);
     return balance;
 };
 
@@ -701,5 +706,7 @@ blockchain.deployContract = async (contract, artifacts, contractName) => {
     log.debug({contractName, address}, 'Deployed Contract Instance');
     return address;
 };
+
+blockchain.toHex = n => web3.utils.toHex(n);
 
 module.exports = blockchain;
