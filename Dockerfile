@@ -2,23 +2,27 @@ FROM node:14.17.5-stretch-slim as builder
 
 ENV GRANAX_USE_SYSTEM_TOR="1"
 
-WORKDIR /app
-COPY . /app/
-
 RUN chmod 1777 /tmp && apt update && apt install -y python3 tor git build-essential && \
-    npm install -g npm && PYTHON=$(which python3) npm i && npm run build
+    npm install -g npm && PYTHON=$(which python3) 
 
 WORKDIR /app/hardhat
+COPY hardhat/package.json /app/hardhat
 RUN npm i
 WORKDIR /app
 
+COPY package.json /app/
+RUN npm i 
+
 FROM node:14.17.5-stretch-slim
 
+RUN npm install -g npm
+
 WORKDIR /app
-COPY --from=builder /app /app
 RUN apt update && apt install -y curl
 RUN mkdir -p /data/db
-RUN npm install -g npm
+COPY --from=builder /app /app
+COPY . /app
+RUN npm run build
 
 ENTRYPOINT [ "npm" ]
 CMD [ "run", "start" ]
