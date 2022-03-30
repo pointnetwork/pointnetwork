@@ -242,7 +242,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                         res.header('content-type', contentType);
                         return file;
                     }
-                } else if (host === 'web3.test') {
+                } else if (req.method.toUpperCase() === 'POST' && host === 'web3.test') {
                     const BASE = `http://${config.get('api.address')}:${config.get('api.port')}`;
                     const URL = `${BASE}/v1/api/blockchain`;
 
