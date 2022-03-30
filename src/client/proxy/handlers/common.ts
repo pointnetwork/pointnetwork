@@ -231,6 +231,68 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                             ...queryParams,
                             ...((req.body as Record<string, unknown>) ?? {})
                         });
+                    } else {
+                        // This is a static asset
+                        let renderedId;
+                        try {
+                            renderedId = await getFileIdByPath(rootDirId, urlPath);
+                        } catch (e) {
+                            // Handling the case with SPA reloaded on non-index page:
+                            // we have to return index file, but without changin the URL
+                            // to make client-side routing work
+                            if (Object.keys(routes).length === 1) {
+                                const {templateFilename: indexTemplate} = getParamsAndTemplate(
+                                    routes,
+                                    '/'
+                                );
+
+                                const templateFileId = await getFileIdByPath(
+                                    rootDirId,
+                                    indexTemplate
+                                );
+
+                                const templateFileContents = await getFile(templateFileId);
+                                const renderer = new Renderer(ctx, {rootDirId} as any);
+
+                                res.header('Content-Type', 'text/html');
+                                // TODO: sanitize
+                                return renderer.render(templateFileId, templateFileContents, host, {
+                                    ...routeParams,
+                                    ...queryParams,
+                                    ...((req.body as Record<string, unknown>) ?? {})
+                                });
+                            }
+                        }
+                        if (!renderedId) {
+                            return res.status(404).send('Not found');
+                        }
+                        const file = await getFile(renderedId, null);
+
+                        const contentType = ext
+                            ? getContentTypeFromExt(ext)
+                            : detectContentType(file);
+                        res.header('content-type', contentType);
+                        return file;
+                    }
+                } else if (req.method.toUpperCase() === 'POST' && host === 'web3.test') {
+                    const BASE = `http://${config.get('api.address')}:${config.get('api.port')}`;
+                    const URL = `${BASE}/v1/api/blockchain`;
+
+                    const headers: Record<string, string> = {'Content-Type': 'application/json'};
+                    if (origin) {
+                        headers.origin = origin;
+                    }
+
+                    try {
+                        const resp = await axios.post(URL, req.body, {headers});
+                        res.status(resp.data.status).send(resp.data);
+                    } catch (err) {
+                        if (err.response) {
+                            res.status(err.response.status).send(err.response.data);
+                        } else {
+                            res.status(500).send(err);
+                        }
+>>>>>>> Change * handler to just `/`.
                     }
                 }
                 if (!renderedId) {
