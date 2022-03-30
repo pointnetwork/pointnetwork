@@ -1,6 +1,7 @@
 import path from 'path';
 import {promises as fs} from 'fs';
 import {parse} from 'query-string';
+import axios from 'axios';
 import {makeSurePathExists, readFileByPath} from '../../../util';
 import {FastifyInstance} from 'fastify';
 import Renderer from '../../zweb/renderer';
@@ -22,21 +23,22 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
         const queryParams = parse(urlData.query ?? '');
         const urlPath = urlData.path!;
         const fileName = urlPath.split('/')[urlPath.split('/').length - 1];
-        const ext = fileName.split('.').length > 1
-            ? fileName.split('.')[fileName.split('.').length - 1]
-            : null;
+        const ext =
+            fileName.split('.').length > 1
+                ? fileName.split('.')[fileName.split('.').length - 1]
+                : null;
 
         if (host === 'point') {
             // Process internal point webpage
-            const publicPath = path.resolve(__dirname, '../../../../internal/explorer.point/public');
+            const publicPath = path.resolve(
+                __dirname,
+                '../../../../internal/explorer.point/public'
+            );
             const routesJsonPath = path.resolve(publicPath, '../routes.json');
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
-            const {
-                routeParams,
-                templateFilename
-            } = getParamsAndTemplate(routes, urlPath);
-            
+            const {routeParams, templateFilename} = getParamsAndTemplate(routes, urlPath);
+
             if (templateFilename) {
                 // This is a ZHTML file
                 const templateFileContents = await readFileByPath(
@@ -49,15 +51,10 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
-                return renderer.render(
-                    templateFilename,
-                    templateFileContents,
-                    host,
-                    {
-                        ...routeParams,
-                        ...queryParams
-                    }
-                );
+                return renderer.render(templateFilename, templateFileContents, host, {
+                    ...routeParams,
+                    ...queryParams
+                });
             } else {
                 // This is a static asset
                 const filePath = path.join(publicPath, urlPath);
@@ -75,7 +72,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
         } else if (config.get('mode') === 'zappdev') {
             // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
             // Side effect: versionig of zapps will not work for Zapp files in this env since files are loaded from local file system.
-            const version = queryParams.__point_version as string ?? 'latest';
+            const version = (queryParams.__point_version as string) ?? 'latest';
 
             // First try route file (and check if this domain even exists)
             const zrouteId = await blockchain.getZRecord(host, version);
@@ -85,15 +82,12 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
             }
 
             const zappName = host.includes('dev') ? `${host.split('dev')[0]}.point` : host;
-            
+
             const publicPath = path.resolve(__dirname, `../../../../example/${zappName}/public`);
             const routesJsonPath = path.resolve(publicPath, '../routes.json');
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
-            const {
-                routeParams,
-                templateFilename
-            } = getParamsAndTemplate(routes, urlPath);
+            const {routeParams, templateFilename} = getParamsAndTemplate(routes, urlPath);
 
             if (templateFilename) {
                 // This is a ZHTML file
@@ -107,15 +101,10 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
-                return renderer.render(
-                    templateFilename,
-                    templateFileContents,
-                    host,
-                    {
-                        ...routeParams,
-                        ...queryParams
-                    }
-                );
+                return renderer.render(templateFilename, templateFileContents, host, {
+                    ...routeParams,
+                    ...queryParams
+                });
             } else {
                 // This is a static asset
                 const filePath = path.join(publicPath, urlPath);
@@ -132,7 +121,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
             }
         } else if (host.endsWith('.point')) {
             // process other domains
-            const version = queryParams.__point_version as string ?? 'latest';
+            const version = (queryParams.__point_version as string) ?? 'latest';
 
             // First try route file (and check if this domain even exists)
             const zrouteId = await blockchain.getZRecord(host, version);
@@ -145,9 +134,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
             const routes = await getJSON(zrouteId); // todo: check result
             if (!routes) {
-                res.status(404).send(
-                    `Cannot parse json of zrouteId ${zrouteId}`
-                );
+                res.status(404).send(`Cannot parse json of zrouteId ${zrouteId}`);
             }
 
             // Download info about root dir
@@ -157,16 +144,10 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                 throw new Error(`Root dir id not found for host ${host}`);
             }
 
-            const {
-                routeParams,
-                templateFilename
-            } = getParamsAndTemplate(routes, urlPath);
+            const {routeParams, templateFilename} = getParamsAndTemplate(routes, urlPath);
 
             if (templateFilename) {
-                const templateFileId = await getFileIdByPath(
-                    rootDirId,
-                    templateFilename
-                );
+                const templateFileId = await getFileIdByPath(rootDirId, templateFilename);
 
                 const templateFileContents = await getFile(templateFileId);
 
@@ -174,15 +155,10 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
-                return renderer.render(
-                    templateFileId,
-                    templateFileContents,
-                    host,
-                    {
-                        ...routeParams,
-                        ...queryParams
-                    }
-                );
+                return renderer.render(templateFileId, templateFileContents, host, {
+                    ...routeParams,
+                    ...queryParams
+                });
             } else {
                 // This is a static asset
                 let renderedId;
@@ -195,10 +171,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                     if (Object.keys(routes).length === 1) {
                         const {templateFilename: indexTemplate} = getParamsAndTemplate(routes, '/');
 
-                        const templateFileId = await getFileIdByPath(
-                            rootDirId,
-                            indexTemplate
-                        );
+                        const templateFileId = await getFileIdByPath(rootDirId, indexTemplate);
 
                         const templateFileContents = await getFile(templateFileId);
 
@@ -206,15 +179,10 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                         res.header('Content-Type', 'text/html');
                         // TODO: sanitize
-                        return renderer.render(
-                            templateFileId,
-                            templateFileContents,
-                            host,
-                            {
-                                ...routeParams,
-                                ...queryParams
-                            }
-                        );
+                        return renderer.render(templateFileId, templateFileContents, host, {
+                            ...routeParams,
+                            ...queryParams
+                        });
                     }
                 }
                 if (!renderedId) {
@@ -226,6 +194,17 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                 res.header('content-type', contentType);
                 return file;
             }
+        } else {
+            res.status(404).send('Not Found');
+        }
+    });
+
+    server.post('*', async (req, res) => {
+        const host = req.headers.host!;
+        if (host === 'web3.test') {
+            const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
+            const resp = await axios.post(`${API_URL}/v1/api/blockchain`, req.body);
+            res.status(resp.data.status).send(resp.data);
         } else {
             res.status(404).send('Not Found');
         }
