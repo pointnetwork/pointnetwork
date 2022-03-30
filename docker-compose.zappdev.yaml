@@ -88,6 +88,8 @@ services:
       - shared_contracts_zappdev:/app/hardhat/build
       - ./resources/blockchain-test-key2.json:/data/keystore/key.json
       - ./resources/arweave-test-key2.json:/data/keystore/arweave.json
+      - ./hardhat.config.js:/app/hardhat.config.js
+      - ./hardhat/resources:/app/hardhat/resources:rw
     ports:
       - '12347:9685'
       - '65502:8666'
