@@ -10,7 +10,7 @@ const attachHandlers = (server: FastifyInstance, ctx: any) => {
     attachStorageHandlers(server);
     attachApiHandler(server);
     attachContractSendHandler(server);
-    attachKeyValueHanlders(server, ctx);
+    attachKeyValueHanlders(server);
     attachCommonHandler(server, ctx);
 };
 
