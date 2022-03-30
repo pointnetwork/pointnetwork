@@ -199,7 +199,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
         }
     });
 
-    server.post('*', async (req, res) => {
+    server.post('/', async (req, res) => {
         const host = req.headers.host!;
         if (host === 'web3.test') {
             const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
