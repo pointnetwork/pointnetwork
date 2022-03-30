@@ -1,15 +1,11 @@
-const blockchain = require('./blockchain');
-const logger = require('../core/log');
+import blockchain from './blockchain';
+import logger from '../core/log';
 const log = logger.child({module: 'KeyValue'});
 
 class KeyValue {
-    constructor(ctx, network) {
-        this.ctx = ctx;
-        this.network = network;
+    constructor() {
         this.data = {};
     }
-
-    async start() {}
 
     update(identity, key, value) {
         log.debug('KeyValue locally updated:', key, '=', value);
@@ -67,4 +63,6 @@ class KeyValue {
     }
 }
 
-module.exports = KeyValue;
+const keyValue = new KeyValue();
+
+export default keyValue;

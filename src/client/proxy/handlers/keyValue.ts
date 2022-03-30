@@ -1,10 +1,10 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
 import {getNetworkAddress} from '../../../wallet/keystore';
 import blockchain from '../../../network/blockchain';
+import keyValue from '../../../network/keyvalue';
 const {uploadFile} = require('../../storage');
 
-// TODO: ctx is needed for keyvalue, remove it
-const attachKeyValueHanlders = (server: FastifyInstance, ctx: any) => {
+const attachKeyValueHanlders = (server: FastifyInstance) => {
     server.post(
         '/_keyvalue_append/:key',
         async (req: FastifyRequest<{Params: {key: string}; Body: Record<string, unknown>}>, res) => {
@@ -16,7 +16,7 @@ const attachKeyValueHanlders = (server: FastifyInstance, ctx: any) => {
             const key = req.params.key;
             const entries = req.body;
 
-            const currentList = await ctx.keyvalue.list(identity, key);
+            const currentList = await keyValue.list(identity, key);
             const newKey = `${key}${currentList?.length ?? 0}`;
 
             for (const k in entries) {
@@ -32,7 +32,7 @@ const attachKeyValueHanlders = (server: FastifyInstance, ctx: any) => {
                 // TODO: is it correct?
                 .getKeyLastVersion(identity, '::rootDir') ?? 'latest';
 
-            await ctx.keyvalue.propagate(identity, newKey, JSON.stringify({
+            await keyValue.propagate(identity, newKey, JSON.stringify({
                 ...entries,
                 __from: getNetworkAddress(),
                 __time: Math.floor(Date.now() / 1000)
@@ -44,7 +44,7 @@ const attachKeyValueHanlders = (server: FastifyInstance, ctx: any) => {
     server.get(
         '/_keyvalue_get/:key',
         async (req: FastifyRequest<{Params: {key: string}}>) =>
-            ctx.keyvalue.get(req.headers.host!.replace('.point', ''), req.params.key)
+            keyValue.get(req.headers.host!.replace('.point', ''), req.params.key)
     );
 };
 
