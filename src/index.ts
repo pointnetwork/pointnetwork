@@ -202,13 +202,13 @@ if (program.makemigration) {
 if (program.compile) {
     log.info('Compiling contracts...');
 
-    const buildDirPath = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts');
+    const buildDirPath = path.resolve(__dirname, '..', 'hardhat', 'build');
     if (!existsSync(buildDirPath)) {
         mkdirSync(buildDirPath);
     }
 
-    const contractPath = path.resolve(__dirname, '..', 'truffle', 'contracts');
-    const contracts = ['Identity', 'Migrations', 'StorageProviderRegistry'];
+    const contractPath = path.resolve(__dirname, '..', 'hardhat', 'contracts');
+    const contracts = ['Identity'];
 
     Promise.all(
         contracts.map(name =>

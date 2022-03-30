@@ -125,8 +125,8 @@
     "znet:local": "docker-compose -f docker-compose.znet.local.yaml",
     "volume:backup": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu tar -czvf /backup/$VOLUME-$(date \"+%Y-%m-%dT%H:%M:%S\").tar.gz /data",
     "volume:restore": "docker run --rm -v $(pwd):/backup -v $VOLUME:/data ubuntu bash -c \"cd /data && tar -xvf /backup/$FILE --strip 1\"",
-    "fix": "eslint --ext .js --fix src/ && eslint --ext .js --fix tests/ && eslint --ext .js --fix truffle/ && eslint --fix point",
-    "lint": "eslint --ext .js src/ && eslint --ext .js tests/ && eslint --ext .js truffle/ && eslint point",
+    "fix": "eslint --ext .js --fix src/ && eslint --ext .js --fix tests/ && eslint --fix point",
+    "lint": "eslint --ext .js src/ && eslint --ext .js tests/ && eslint point",
     "lint:sol": "solhint 'example/**/contracts/*.sol' 'hardhat/contracts/*.sol'",
     "slither": "find example -type f -name '*.sol' -exec slither '{}' --solc-remaps @openzeppelin=node_modules/@openzeppelin --config slither.config.json  ';'",
     "generateMigration": "npm run build && npx sequelize-mig migration:make --name ${npm_config_name}  --indexFilePath dist/db/makeMigrationsEntrypoint.js"
