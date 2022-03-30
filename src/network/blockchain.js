@@ -709,4 +709,23 @@ blockchain.deployContract = async (contract, artifacts, contractName) => {
 
 blockchain.toHex = n => web3.utils.toHex(n);
 
+blockchain.send = (method, params = []) =>
+    new Promise((resolve, reject) => {
+        web3.currentProvider.send(
+            {
+                method,
+                params,
+                jsonrpc: '2.0',
+                id: new Date().getTime()
+            },
+            (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            }
+        );
+    });
+
 module.exports = blockchain;
