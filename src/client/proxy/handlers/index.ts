@@ -1,0 +1,17 @@
+import {FastifyInstance} from 'fastify';
+import attachCommonHandler from './common';
+import attachStorageHandlers from './storage';
+import attachKeyValueHanlders from './keyValue';
+import attachContractSendHandler from './contractSend';
+import attachApiHandler from './api';
+
+// TODO: ctx is needed for Renderer and keyvalue, remove it later
+const attachHandlers = (server: FastifyInstance, ctx: any) => {
+    attachStorageHandlers(server);
+    attachApiHandler(server);
+    attachContractSendHandler(server);
+    attachKeyValueHanlders(server, ctx);
+    attachCommonHandler(server, ctx);
+};
+
+export default attachHandlers;

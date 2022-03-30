@@ -27,3 +27,6 @@ geth
 .env.zappdev
 
 config/*local*
+
+hardhat/resources
+!hardhat/resources/unknown-10700.json

@@ -360,7 +360,7 @@ blockchain.sendToContract = async (
 
     // Now call the method
     const method = contract.methods[methodName](...params);
-    await blockchain.web3send(method, options);
+    return blockchain.web3send(method, options);
 };
 
 blockchain.identityByOwner = async owner => {

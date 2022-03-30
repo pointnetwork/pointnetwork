@@ -47,6 +47,9 @@ storage:
   arweave_port: 443
 zproxy:
   port: 8666
+  # 2 ports below are not used to receive requests and should not be exposed
+  server_port: 8777
+  server_http_port: 8778
   host: 127.0.0.1
   sanitize_html: false
   redirect_to_https: true

@@ -1,4 +1,5 @@
 db:
   env: development
 log:
+  sendLogs: false
   level: debug
