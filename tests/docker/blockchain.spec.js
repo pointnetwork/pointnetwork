@@ -31,7 +31,7 @@ describe('Register identity and deploy site', () => {
         await delay(5000);
 
         const {target} = testData.deployConfig;
-        const identity = target.replace(/\.z$/, '');
+        const identity = target.replace(/\.point$/, '');
 
         const result = await blockchain.registerIdentity(
             identity,
@@ -44,29 +44,6 @@ describe('Register identity and deploy site', () => {
         expect(result.blockNumber).toBeGreaterThan(0);
         expect(result.gasUsed).toBeGreaterThan(0);
         expect(result.status).toBe(true);
-    });
-
-    it('Should find the new identity in the blockchain', async () => {
-        expect.assertions(1);
-
-        const identity0 = await blockchain.callContract(
-            '@',
-            'Identity',
-            'identityList',
-            [0],
-            'latest'
-        );
-
-        const identity1 = await blockchain.callContract(
-            '@',
-            'Identity',
-            'identityList',
-            [1],
-            'latest'
-        );
-
-        const got = [identity0, identity1];
-        expect(got).toContain(testData.deployConfig.target.replace(/\.z$/, ''));
     });
 
     it('Should deploy the sample site to arweave', async () => {
