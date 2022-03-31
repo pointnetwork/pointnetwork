@@ -14,12 +14,12 @@ export default {
               id: 0,
               name: 'Walmart',
               description: 'Walmart: Save Money. Live Better.',
-              logo: 'images/store-logo-0.jpg',
+              logo: 'store-logo-0.jpg',
             }, {
               id: 1,
               name: 'Sears',
               description: 'Sears: Making Moments Matter.',
-              logo: 'images/store-logo-1.png',
+              logo: 'store-logo-1.png',
             }],
             getProducts: (store) => [{
               storeId: '0',
