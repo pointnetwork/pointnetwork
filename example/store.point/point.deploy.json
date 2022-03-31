@@ -8,7 +8,7 @@
         "name": "My Store",
         "description": "My Store: Is Your Store Too!",
         "storage[logo]": {
-          "file": "images/store-logo-0.jpg",
+          "file": "store-logo-0.jpg",
           "type": "image/jpeg"
         }
       }
@@ -19,7 +19,7 @@
         "name": "A.N. Other Ltd",
         "description": "A.N. Other: Is like no other!",
         "storage[logo]": {
-          "file": "images/store-logo-1.png",
+          "file": "store-logo-1.png",
           "type": "image/jpeg"
         }
       }
