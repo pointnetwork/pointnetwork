@@ -2,8 +2,6 @@
   "/": "index.zhtml",
   "/identities": "identities.zhtml",
   "/identities/:handle": "identity.zhtml",
-  "/identities_check_availability": "identity_check_availability.zhtml",
-  "/identity_register": "identity_register.zhtml",
   "/wallet": "wallet.zhtml",
   "/wallet/requestDevSol": "wallet_requestDevSol.zhtml",
   "/wallet/send": "wallet_send.zhtml",

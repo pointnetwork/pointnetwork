@@ -68,6 +68,7 @@ services:
       - ./hardhat/resources:/app/hardhat/resources:rw
     environment:
       NODE_CONFIG_ENV: e2e
+      MODE: e2e
 
   arweave:
     extends:

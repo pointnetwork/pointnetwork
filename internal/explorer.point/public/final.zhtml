@@ -38,14 +38,20 @@
                 // denyButtonText: `Don't save`,
             }).then((result) => {
                 if (result.isConfirmed) {
-                    csrfPost('/identity_register', { identity }, function() {
-                        location.reload();
-                    }, function() {
-                        Swal.fire({
-                            title: 'Something went wrong',
-                            // text: 'Perhaps you\'re requesting the airdrop too often?'
-                        });
-                    });
+                    $.ajax({
+                        url: '/v1/api/identity/register',
+                        type: 'POST',
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        data: `{"identity": "${identity}"}`,
+                        success: () => {
+                            window.location = '/'
+                        },
+                        error: err => {
+                            console.error(err)
+                            Swal.fire({title: 'Something went wrong'})
+                        }
+                    })
                 }
             })
         }
@@ -87,13 +93,15 @@
             $('#handle').keyup(function(e, a) {
                 const identity = $('#handle').val();
                 if (!validate_identity(identity)) return;
-                $.post('/identities_check_availability', {identity}, function(data) {
-                    if (data === 'true') {
-                        available(identity);
-                    } else {
+                $.get(`/v1/api/identity/identityToOwner/${identity}`, function(data) {
+                    if (
+                        !(data && data.data && data.data.owner)
+                        || data.data.owner === 0x0000000000000000000000000000000000000000
+                    ) {
                         not_available(identity);
+                    } else {
+                        available(identity);
                     }
-                    console.log(data);
                 });
             });
         });

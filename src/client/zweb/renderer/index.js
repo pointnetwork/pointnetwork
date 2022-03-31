@@ -6,8 +6,7 @@ const config = require('config');
 const logger = require('../../../core/log');
 const {
     getNetworkPrivateKey,
-    getNetworkAddress,
-    getNetworkPublicKey
+    getNetworkAddress
 } = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/blockchain');
@@ -216,12 +215,6 @@ class Renderer {
             get_current_identity: async function() {
                 return await blockchain.getCurrentIdentity();
             },
-            identity_check_availability: async function(identity) {
-                const owner = await blockchain.ownerByIdentity(identity);
-                log.debug({identity, owner}, 'identity_check_availability');
-                if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
-                return false;
-            },
 
             csrf_value: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
@@ -280,33 +273,6 @@ class Renderer {
             wallet_send: async function(code, recipient, amount) {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
-            },
-            identity_register: async function(identity) {
-                this.renderer.#ensurePrivilegedAccess();
-
-                const publicKey = getNetworkPublicKey();
-                const owner = getNetworkAddress();
-
-                log.info(
-                    {
-                        identity,
-                        owner,
-                        publicKey,
-                        len: Buffer.byteLength(publicKey, 'utf-8'),
-                        parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
-                    },
-                    'Registering a new identity'
-                );
-
-                await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
-
-                log.info(
-                    {identity, owner, publicKey: publicKey.toString('hex')},
-                    'Successfully registered new identity'
-                );
-                log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
-
-                return true;
             }
         };
     }

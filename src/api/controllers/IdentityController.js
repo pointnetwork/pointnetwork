@@ -1,5 +1,8 @@
 const PointSDKController = require('./PointSDKController');
 const blockchain = require('../../network/blockchain');
+const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
+const logger = require('../../core/log');
+const log = logger.child({Module: 'IdentityController'});
 
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
@@ -18,6 +21,41 @@ class IdentityController extends PointSDKController {
         const owner = this.req.params.owner;
         const identity = await blockchain.identityByOwner(owner);
         return this._response({identity});
+    }
+
+    async registerIdentity() {
+        if (this.req.headers.host !== 'point') {
+            return this.rep.status(403).send('Forbidden');
+        }
+
+        const publicKey = getNetworkPublicKey();
+        const owner = getNetworkAddress();
+        
+        const {identity} = this.req.body;
+
+        log.info(
+            {
+                identity,
+                owner,
+                publicKey,
+                len: Buffer.byteLength(publicKey, 'utf-8'),
+                parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
+            },
+            'Registering a new identity'
+        );
+
+        await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
+
+        log.info(
+            {identity, owner, publicKey: publicKey.toString('hex')},
+            'Successfully registered new identity'
+        );
+        log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+
+        return {
+            status: 200,
+            data: 'OK'
+        };
     }
 }
 
