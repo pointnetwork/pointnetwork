@@ -3,19 +3,20 @@ import {delay} from '../../src/core/utils';
 import HttpAgent from 'http-proxy-agent';
 import HttpsAgent from 'https-proxy-agent';
 
+const DOCKER_POINT_NODE = 'point_node';
+const POINT_NODE = process.env.TEST_POINT_NODE || DOCKER_POINT_NODE;
+
+const httpAgentCfg = {
+    host: POINT_NODE,
+    port: 8666,
+    protocol: 'http'
+};
+
 jest.retryTimes(24);
 
-const httpsAgent = new HttpsAgent({
-    host: 'point_node',
-    port: 8666,
-    protocol: 'http'
-});
+const httpsAgent = new HttpsAgent(httpAgentCfg);
 
-const httpAgent = new HttpAgent({
-    host: 'point_node',
-    port: 8666,
-    protocol: 'http'
-});
+const httpAgent = new HttpAgent(httpAgentCfg);
 
 describe('Proxy', () => {
     it('Should redirect from http://point to https://point', async () => {
