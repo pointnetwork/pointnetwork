@@ -174,18 +174,11 @@ blockchain.web3send = async (method, optons = {}) => {
                     gas: gasLimit,
                     value: amountInWei
                 })
-                .on('confirmation', (confirmationNumber, receipt) => {
-                    const {transactionHash, blockNumber, status} = receipt;
-                    log.debug(
-                        {confirmationNumber, transactionHash, blockNumber, status},
-                        'registerIdentity: confirmation of blockchain tx'
-                    );
-                })
                 .on('error', (error, receipt) => {
                     const {transactionHash, blockNumber, status} = receipt;
                     log.debug(
-                        {error, transactionHash, blockNumber, status},
-                        'registerIdentity: error sending tx'
+                        {error, transactionHash, blockNumber, status, method: method._method.name},
+                        'error sending tx to contract method'
                     );
                 });
         } catch (error) {
