@@ -5,7 +5,6 @@ import blockchain from '../../src/network/blockchain';
 import {getNetworkPublicKey, getNetworkAddress} from '../../src/wallet/keystore';
 import {uploadFile, uploadDir} from '../../src/client/storage';
 import {delay} from '../../src/core/utils';
-import {getContractAddress} from '../../src/util/contract';
 
 jest.setTimeout(300000);
 jest.retryTimes(60);
@@ -20,10 +19,7 @@ async function initTestData() {
     testData.deployConfig = JSON.parse(deployConfigFile);
 }
 
-beforeAll(() => {
-    process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
-    return initTestData();
-});
+beforeAll(() => initTestData());
 
 describe('Register identity and deploy site', () => {
     const hexRegExp = /^[0-9A-Fa-f]{16,}$/;

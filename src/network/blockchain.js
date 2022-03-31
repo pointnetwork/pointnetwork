@@ -106,8 +106,7 @@ blockchain.loadPointContract = async (
 };
 
 blockchain.loadIdentityContract = async () => {
-    const addressFromEnv = process.env.IDENTITY_CONTRACT_ADDRESS;
-    const at = addressFromEnv || config.get('network.identity_contract_address');
+    const at = config.get('network.identity_contract_address');
     log.debug({address: at}, 'Identity contract address');
     return await blockchain.loadPointContract('Identity', at);
 };
@@ -461,8 +460,8 @@ blockchain.getLastVersionOrBefore = (version, events) => {
     );
     if (filteredEvents.length > 0) {
         const maxObj = filteredEvents.reduce((prev, current) =>
-            blockchain.compareVersions(prev.returnValues.version,
-                current.returnValues.version) === 1
+            blockchain.compareVersions(prev.returnValues.version, current.returnValues.version) ===
+            1
                 ? prev
                 : current
         );
