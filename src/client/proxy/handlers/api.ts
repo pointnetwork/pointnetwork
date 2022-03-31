@@ -9,7 +9,10 @@ const attachApiHandler = (server: FastifyInstance) => {
         const urlData = req.urlData();
         const apiRes = await axios.get(
             `${API_URL}${urlData.path}`,
-            {validateStatus: () => true}
+            {
+                validateStatus: () => true,
+                headers: req.headers
+            }
         );
 
         for (const key in apiRes.headers) {
@@ -25,7 +28,10 @@ const attachApiHandler = (server: FastifyInstance) => {
             const apiRes = await axios.post(
                 `${API_URL}${urlData.path}`,
                 req.body,
-                {validateStatus: () => true}
+                {
+                    validateStatus: () => true,
+                    headers: req.headers
+                }
             );
 
             for (const key in apiRes.headers) {
