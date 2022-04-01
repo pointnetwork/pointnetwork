@@ -14,8 +14,9 @@ class BlockchainController extends PointSDKController {
             const result = await blockchain.send(method, params);
             return this._status(200)._response(result);
         } catch (err) {
-            // TODO: improve error handling so a more appropriate error code can be sent in the response.
-            return this._status(400)._response(err);
+            // As per EIP-1474, -32603 means internal error.
+            const statusCode = err.code === -32603 ? 500 : 400;
+            return this._status(statusCode)._response(err);
         }
     }
 }
