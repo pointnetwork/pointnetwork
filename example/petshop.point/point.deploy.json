@@ -1,0 +1,8 @@
+{
+    "version": 0.1,
+    "target": "petshop.point",
+    "keyvalue": {},
+    "contracts": [
+      "Adoption"
+    ]
+  }
