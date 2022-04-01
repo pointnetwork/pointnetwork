@@ -3,6 +3,7 @@ const fastifyWs = require('fastify-websocket');
 const config = require('config');
 const logger = require('../core/log');
 const log = logger.child({module: 'ApiServer'});
+const methodPermissionMdw = require('./middleware/rpc-method-permission');
 
 class ApiServer {
     constructor(ctx) {
@@ -23,7 +24,7 @@ class ApiServer {
 
             this.connectRoutes();
 
-            this.server.setErrorHandler(function (error, request, reply) {
+            this.server.setErrorHandler(function(error, request, reply) {
                 request.log.error(error, 'ApiServer error handler');
 
                 const statusCode = error.statusCode >= 400 ? error.statusCode : 500;
@@ -39,7 +40,10 @@ class ApiServer {
             });
 
             this.server.decorate('notFound', (request, reply) => {
-                reply.code(404).type('text/html').send('Not Found');
+                reply
+                    .code(404)
+                    .type('text/html')
+                    .send('Not Found');
             });
 
             this.server.setNotFoundHandler(this.server.notFound);
@@ -66,11 +70,7 @@ class ApiServer {
             this.server.route({
                 method: apiRoute[0],
                 url: apiRoute[1],
-
-                // this function is executed for every request before the handler is executed
-                preHandler: async () => {
-                    // E.g. check authentication
-                },
+                preHandler: [methodPermissionMdw],
                 handler: async (request, reply) => {
                     const controller = new (require('./controllers/' + controllerName))(
                         this.ctx,
