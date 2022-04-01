@@ -6,6 +6,14 @@ import {promises as fs} from 'fs';
 import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
+import Arweave from 'arweave';
+
+const arweave = Arweave.init({
+    port: Number(config.get('storage.arweave_port')),
+    protocol: config.get('storage.arweave_protocol'),
+    host: config.get('storage.arweave_host'),
+    timeout: config.get('storage.request_timeout')
+});
 
 const log = logger.child({module: 'StorageUploader'});
 
@@ -52,17 +60,20 @@ export const startChunkUpload = async (chunkId: string) => {
         );
 
         // TODO: check status from bundler
-        if (response.data.status !== 'ok') {
+        if (response.data.status !== 'ok' || !response.data.txid) {
             throw new Error(`Chunk ${chunkId} uploading failed: arweave endpoint error: ${
                 JSON.stringify(response.data, null, 2)
             }`);
         }
 
+        const txid = response.data.txid;
+
         chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
+        chunk.txid = txid;
         chunk.size = data.length;
         await chunk.save();
 
-        log.debug({chunkId}, 'Chunk successfully uploaded');
+        log.debug({chunkId, txid}, 'Chunk successfully uploaded');
 
         delete chunksBeingUploaded[chunkId];
     } catch (e) {
@@ -89,4 +100,22 @@ export const uploadLoop = async () => {
     });
 
     setTimeout(uploadLoop, UPLOAD_LOOP_INTERVAL);
+};
+
+export const chunkValidatorLoop = async () => {
+
+    const allCompletedChunks: any[] = await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.COMPLETED, false);
+    allCompletedChunks.forEach(async (chunk) => {
+
+        try {
+            await arweave.transactions.getData(chunk.txid, {decode: true});
+            chunk.ul_status = CHUNK_UPLOAD_STATUS.VALIDATED;
+        } catch (error) {
+            log.error({txid: chunk.txid, message: error.message, stack: error.stack}, 'Arweave validation failed');
+            chunk.ul_status = CHUNK_UPLOAD_STATUS.INVALID;
+        }
+        await chunk.save();
+    });
+
+    setTimeout(chunkValidatorLoop, UPLOAD_LOOP_INTERVAL);
 };

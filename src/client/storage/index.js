@@ -15,7 +15,7 @@ import {promises as fs} from 'fs';
 import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
-import {uploadLoop} from './uploader';
+import {uploadLoop, chunkValidatorLoop} from './uploader';
 import {statAsync} from '../../util';
 
 const log = logger.child({module: 'Storage'});
@@ -38,6 +38,7 @@ const filesDir = path.join(resolveHome(config.get('datadir')), config.get('stora
 
 const init = () => {
     uploadLoop();
+    chunkValidatorLoop();
 };
 
 const arweave = Arweave.init({
@@ -136,7 +137,10 @@ const uploadChunk = async data => {
                 updatedChunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
                 await updatedChunk.save();
             }
-        } else if (updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.COMPLETED) {
+        } else if (
+            updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.COMPLETED ||
+            updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.VALIDATED
+        ) {
             log.debug({chunkId}, 'Chunk successfully uploaded');
             uploaded = true;
         }

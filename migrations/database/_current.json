@@ -114,6 +114,11 @@
                     "field": "retry_count",
                     "seqType": "Sequelize.INTEGER"
                 },
+                "txid": {
+                    "allowNull": true,
+                    "field": "txid",
+                    "seqType": "Sequelize.STRING"
+                },
                 "expires": {
                     "allowNull": true,
                     "field": "expires",
@@ -157,5 +162,5 @@
     "path": "/Users/brian/pn/pointnetwork/migrations/database/_current.json",
     "backupPath": "/Users/brian/pn/pointnetwork/migrations/database/_current_bak.json",
     "exists": true,
-    "revision": 3
+    "revision": 4
 }
