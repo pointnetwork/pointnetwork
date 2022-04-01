@@ -95,7 +95,12 @@ if (program.datadir) {
 }
 
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
-    process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
+    const identityContractAddress = getContractAddress('Identity');
+
+    if (!identityContractAddress) {
+        throw new Error('Could not get Identity contract address');
+    }
+    process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
 }
 
 // Warning: the below imports should take place after the above config patch!

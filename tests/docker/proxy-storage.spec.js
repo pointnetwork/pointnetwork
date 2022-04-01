@@ -1,25 +1,50 @@
 import {get, post} from 'axios';
+import HttpsAgent from 'https-proxy-agent';
 import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
 import {delay} from '../../src/core/utils';
 import {uploadDir} from '../../src/client/storage';
 
-jest.retryTimes(60);
+jest.retryTimes(24);
+
+const httpsAgent = new HttpsAgent({
+    host: 'point_node',
+    port: 8666,
+    protocol: 'http'
+});
 
 describe('Storage requests through proxy', () => {
-    // These cases are not handled properly with the current proxy implementation
-    // TODO: no response if there are no files
     // TODO: multiple files are not handled
-    // TODO: anything but form-data will fail with 500
-    // TODO: posting to /_storage (without trailing slash) will trigger wrong handler
-    // TODO: trying to get a non-existing file fails with 500 instead of 404
+
+    it('Should return 415 if body is not form-data', async () => {
+        expect.assertions(1);
+
+        const res = await post(
+            'https://somehost.point/_storage',
+            'foo',
+            {
+                httpsAgent,
+                validateStatus: () => true
+            }
+        );
+        expect(res.status).toEqual(415);
+    }, 10000);
+
+    it('Should return 404 for non-existing file', async () => {
+        expect.assertions(1);
+
+        const res = await get(
+            `https://somehost.point/_storage/notexists`,
+            {
+                httpsAgent,
+                validateStatus: () => true
+            }
+        );
+        expect(res.status).toEqual(404);
+    }, 10000);
 
     let fileId;
-    // TODO: super weird behavior in this test! If we change proxy protocol to http,
-    // it returns 500! While localhost proxy cannot be https! This can be either related to
-    // improper axios handling of redirects, or issues inside proxy on a low level
-    // This should be investigated and, if needed, fixed during refactoring
     it('Should upload file through proxy', async () => {
         expect.assertions(1);
 
@@ -28,20 +53,16 @@ describe('Storage requests through proxy', () => {
         form.append('my_file', file);
 
         const res = await post(
-            // axios will perform GET instead of POST if there's a trailing slash in the URL,
-            // and, as mentioned above, proxy expects a slash after /_storage,
-            // so we should add some path in order this to work
-            'https://somehost.point/_storage/something',
+            'https://somehost.point/_storage/',
             form,
             {
                 headers: form.getHeaders(),
-                proxy: {host: 'point_node', port: 8666, protocol: 'https'},
-                validateStatus: () => true
+                httpsAgent
             }
         );
         fileId = res.data.data;
         expect(res.status).toEqual(200);
-    });
+    }, 10000);
 
     it('Should download file through proxy', async () => {
         expect.assertions(1);
@@ -49,10 +70,10 @@ describe('Storage requests through proxy', () => {
         await delay(5000);
         const res = await get(
             `https://somehost.point/_storage/${fileId}`,
-            {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
-    }, 300000);
+    }, 10000);
 
     // TODO: neither proxy nor API don't handle directory upload, we can only do it
     // using storage method
@@ -61,7 +82,7 @@ describe('Storage requests through proxy', () => {
         expect.assertions(1);
         dirId = await uploadDir(path.join(__dirname, '../resources/sample_folder'));
         expect(dirId).toBeTruthy();
-    });
+    }, 10000);
 
     it('Should download uploaded folder', async () => {
         expect.assertions(5);
@@ -69,7 +90,7 @@ describe('Storage requests through proxy', () => {
 
         const res = await get(
             `https://somehost.point/_storage/${dirId}`,
-            {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
+            {httpsAgent}
         );
 
         expect(res.status).toEqual(200);
@@ -77,5 +98,5 @@ describe('Storage requests through proxy', () => {
         expect(res.data).toMatch(`<h1>Index of ${dirId}</h1>`);
         expect(res.data).toMatch('sample-image-2.jpg;');
         expect(res.data).toMatch('sample-image-3.jpg;');
-    }, 300000);
+    }, 10000);
 });

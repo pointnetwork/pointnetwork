@@ -18,6 +18,7 @@ FROM node:14.17.5-stretch-slim
 RUN npm install -g npm
 
 WORKDIR /app
+RUN apt update && apt install -y curl
 RUN mkdir -p /data/db
 COPY --from=builder /app /app
 COPY . /app

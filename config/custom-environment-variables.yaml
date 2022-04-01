@@ -6,7 +6,7 @@ api:
 db:
   env: DB_ENV
 log:
-  log: LOG_LEVEL
+  level: LOG_LEVEL
   sendLogs: SEND_LOGS
   sendLogsTo: SEND_LOGS_TO
 deployer:

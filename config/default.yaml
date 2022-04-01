@@ -47,6 +47,9 @@ storage:
   arweave_port: 443
 zproxy:
   port: 8666
+  # 2 ports below are not used to receive requests and should not be exposed
+  server_port: 8777
+  server_http_port: 8778
   host: 127.0.0.1
   sanitize_html: false
   redirect_to_https: true
@@ -64,6 +67,5 @@ network:
   web3_call_retry_limit: 4
   identity_contract_address: "0xA84AAaC12FffbCaFe49339466803c64E4a4A72a5"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
-  simulation_delay: 10 # TODO: not used
 payments:
   token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"

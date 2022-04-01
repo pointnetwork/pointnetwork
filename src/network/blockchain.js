@@ -90,12 +90,7 @@ blockchain.loadPointContract = async (
             }
 
             log.debug(`Compiling ${contractName} contract`);
-            const contractPath = path.resolve(
-                basepath,
-                '..',
-                'hardhat',
-                'contracts'
-            );
+            const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
             await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
 
             log.debug('Identity contract successfully compiled');
@@ -265,6 +260,11 @@ blockchain.getPastEvents = async (
     return events;
 };
 
+blockchain.getBlockNumber = async () => {
+    const n = await web3.eth.getBlockNumber();
+    return n;
+};
+
 blockchain.getBlockTimestamp = async blockNumber => {
     const block = await web3.eth.getBlock(blockNumber);
     return block.timestamp;
@@ -360,7 +360,7 @@ blockchain.sendToContract = async (
 
     // Now call the method
     const method = contract.methods[methodName](...params);
-    await blockchain.web3send(method, options);
+    return blockchain.web3send(method, options);
 };
 
 blockchain.identityByOwner = async owner => {
@@ -445,8 +445,8 @@ blockchain.getLastVersionOrBefore = (version, events) => {
     );
     if (filteredEvents.length > 0) {
         const maxObj = filteredEvents.reduce((prev, current) =>
-            blockchain.compareVersions(prev.returnValues.version,
-                current.returnValues.version) === 1
+            blockchain.compareVersions(prev.returnValues.version, current.returnValues.version) ===
+            1
                 ? prev
                 : current
         );
@@ -590,8 +590,8 @@ blockchain.sendTransaction = async ({from, to, value, gas}) => {
     return receipt;
 };
 
-blockchain.getBalance = async address => {
-    const balance = await web3.eth.getBalance(address);
+blockchain.getBalance = async (address, blockIdentifier = 'latest') => {
+    const balance = await web3.eth.getBalance(address, blockIdentifier);
     return balance;
 };
 
@@ -681,5 +681,26 @@ blockchain.deployContract = async (contract, artifacts, contractName) => {
     log.debug({contractName, address}, 'Deployed Contract Instance');
     return address;
 };
+
+blockchain.toHex = n => web3.utils.toHex(n);
+
+blockchain.send = (method, params = []) =>
+    new Promise((resolve, reject) => {
+        web3.currentProvider.send(
+            {
+                method,
+                params,
+                jsonrpc: '2.0',
+                id: new Date().getTime()
+            },
+            (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            }
+        );
+    });
 
 module.exports = blockchain;
