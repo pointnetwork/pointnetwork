@@ -96,7 +96,7 @@ if (program.datadir) {
 
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     const identityContractAddress = getContractAddress('Identity');
-    console.log('Got Identity Contract Address: ', identityContractAddress);
+
     if (!identityContractAddress) {
         throw new Error('Could not get Identity contract address');
     }

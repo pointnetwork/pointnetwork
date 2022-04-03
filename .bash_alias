@@ -12,7 +12,8 @@ build-image() {
 
     docker image inspect pointnetwork/pointnetwork_node:$image > /dev/null 2>&1;
 
-    if [[ $? != 0 ]] || [ "$1" == "--force" ]; then
+    if [[ $status -ne 0 ]] || [[ "$1" == "--force" ]]
+    then
         echo "Building image: pointnetwork/pointnetwork_node:$image";
         docker build -t "pointnetwork/pointnetwork_node:$image" .;
     else
