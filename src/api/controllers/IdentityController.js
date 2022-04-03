@@ -24,14 +24,18 @@ class IdentityController extends PointSDKController {
     }
 
     async registerIdentity() {
-        if (this.req.headers.host !== 'point') {
+        const {identity, _csrf} = this.req.body;
+        const {host} = this.req.headers;
+
+        if (host !== 'point') {
             return this.rep.status(403).send('Forbidden');
+        }
+        if (_csrf !== this.ctx.csrf_tokens.point) {
+            return this.rep.status(403).send('CSRF token invalid');
         }
 
         const publicKey = getNetworkPublicKey();
         const owner = getNetworkAddress();
-        
-        const {identity} = this.req.body;
 
         log.info(
             {
