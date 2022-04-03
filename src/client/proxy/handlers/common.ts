@@ -3,7 +3,7 @@ import {promises as fs} from 'fs';
 import {parse} from 'query-string';
 import {makeSurePathExists, readFileByPath} from '../../../util';
 import {FastifyInstance} from 'fastify';
-import Renderer from '../../zweb/renderer';
+import Renderer from '../../web/renderer';
 import logger from '../../../core/log';
 import blockchain from '../../../network/blockchain';
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');

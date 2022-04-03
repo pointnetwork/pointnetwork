@@ -45,7 +45,7 @@ storage:
   arweave_host: arweave.net
   arweave_protocol: https
   arweave_port: 443
-zproxy:
+proxy:
   port: 8666
   # 2 ports below are not used to receive requests and should not be exposed
   server_port: 8777

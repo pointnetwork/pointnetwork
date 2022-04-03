@@ -10,7 +10,7 @@ class StorageController extends PointSDKController {
         super(ctx);
 
         this.req = req;
-        this.config = config.get('zproxy');
+        this.config = config.get('proxy');
 
         this.payload = req.body;
     }

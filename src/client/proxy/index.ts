@@ -9,11 +9,11 @@ import fastifyUrlData from 'fastify-url-data';
 import fastifyMultipart from 'fastify-multipart';
 import fastifyFormBody from 'fastify-formbody';
 
-const log = logger.child({module: 'ZProxy'});
+const log = logger.child({module: 'Proxy'});
 
-const PROXY_PORT = Number(config.get('zproxy.port'));
-const SERVER_PORT = Number(config.get('zproxy.server_port'));
-const SERVER_HTTP_PORT = Number(config.get('zproxy.server_http_port'));
+const PROXY_PORT = Number(config.get('proxy.port'));
+const SERVER_PORT = Number(config.get('proxy.server_port'));
+const SERVER_HTTP_PORT = Number(config.get('proxy.server_http_port'));
 
 // The main server, processing all the business logic
 const server = Fastify({

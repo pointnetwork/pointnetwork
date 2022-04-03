@@ -22,7 +22,7 @@ class Renderer {
 
     constructor(ctx, {rootDirId, localDir}) {
         this.ctx = ctx;
-        this.config = config.get('zproxy');
+        this.config = config.get('proxy');
         this.rootDirId = rootDirId;
         this.localDir = localDir;
     }

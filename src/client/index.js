@@ -1,4 +1,4 @@
-import DeployerProgress from './zweb/deployer/progress';
+import DeployerProgress from './web/deployer/progress';
 import startProxy from './proxy';
 import {init} from './storage';
 

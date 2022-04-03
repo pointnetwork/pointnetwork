@@ -8,5 +8,5 @@ log:
   level: debug
 api:
   address: 0.0.0.0
-zproxy:
+proxy:
   host: 0.0.0.0
