@@ -201,10 +201,25 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
     server.post('/', async (req, res) => {
         const host = req.headers.host!;
+        const origin = req.headers.origin;
         if (host === 'web3.test') {
             const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
-            const resp = await axios.post(`${API_URL}/v1/api/blockchain`, req.body);
-            res.status(resp.data.status).send(resp.data);
+
+            const headers: Record<string, string> = {'Content-Type': 'application/json'};
+            if (origin) {
+                headers.origin = origin;
+            }
+
+            try {
+                const resp = await axios.post(`${API_URL}/v1/api/blockchain`, req.body, {headers});
+                res.status(resp.data.status).send(resp.data);
+            } catch (err) {
+                if (err.response) {
+                    res.status(err.response.status).send(err.response.data);
+                } else {
+                    res.status(500).send(err);
+                }
+            }
         } else {
             res.status(404).send('Not Found');
         }
