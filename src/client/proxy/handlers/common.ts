@@ -204,9 +204,14 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
         const origin = req.headers.origin;
         if (host === 'web3.test') {
             const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
-            const headers = {headers: origin ? {origin} : {}};
+
+            const headers: Record<string, string> = {'Content-Type': 'application/json'};
+            if (origin) {
+                headers.origin = origin;
+            }
+
             try {
-                const resp = await axios.post(`${API_URL}/v1/api/blockchain`, req.body, headers);
+                const resp = await axios.post(`${API_URL}/v1/api/blockchain`, req.body, {headers});
                 res.status(resp.data.status).send(resp.data);
             } catch (err) {
                 if (err.response) {
