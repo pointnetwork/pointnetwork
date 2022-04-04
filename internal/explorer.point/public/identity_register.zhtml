@@ -1,5 +1,0 @@
-{{ csrf_guard(request._csrf) }}
-{{ identity_register(request.identity) }}
-<script>
-    window.history.back();
-</script>
