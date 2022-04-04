@@ -8,14 +8,14 @@ export type RPCRequestBody = {
     params?: unknown[];
 };
 
-type PermissionHandlerFunc = (
+type HandlerFunc = (
     req: FastifyRequest
 ) => Promise<{
     status: number;
     result: unknown;
 }>;
 
-const permissionHandlers: Record<string, PermissionHandlerFunc> = {
+const permissionHandlers: Record<string, HandlerFunc> = {
     wallet_requestPermissions: async (req: FastifyRequest) => {
         try {
             const dappDomain = req.headers.origin;
@@ -60,6 +60,21 @@ const permissionHandlers: Record<string, PermissionHandlerFunc> = {
     }
 };
 
+// Handlers for methods that are not defined in EIP-1474 but that we still support.
+// For example, for compatibility with MetaMask's API.
+const specialHandlers: Record<string, HandlerFunc> = {
+    eth_requestAccounts: async (req: FastifyRequest) => {
+        const {params} = req.body as RPCRequestBody;
+        try {
+            const result = await blockchain.send('eth_accounts', params);
+            return {status: 200, result};
+        } catch (err) {
+            const statusCode = err.code === -32603 ? 500 : 400;
+            return {status: statusCode, result: err};
+        }
+    }
+};
+
 class BlockchainController extends PointSDKController {
     private req: FastifyRequest;
     private reply: FastifyReply;
@@ -73,14 +88,21 @@ class BlockchainController extends PointSDKController {
     async request() {
         const {method, params} = this.req.body as RPCRequestBody;
 
-        // If `method` is about permissions, use the corresponding handler.
+        // Check for methods related to permissions.
         const permissionHandler = permissionHandlers[method];
         if (permissionHandler) {
             const {status, result} = await permissionHandler(this.req);
             return this._status(status)._response(result);
         }
 
-        // `method` is not about permissions.
+        // Check for non-standard (EIP-1474) methods.
+        const specialHandler = specialHandlers[method];
+        if (specialHandler) {
+            const {status, result} = await specialHandler(this.req);
+            return this._status(status)._response(result);
+        }
+
+        // `method` is a standard RPC method (EIP-1474).
         try {
             // TODO: do some input validation because sending wrong params could cause a crash.
             const result = await blockchain.send(method, params);
