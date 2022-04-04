@@ -4,11 +4,16 @@ import HttpsAgent from 'https-proxy-agent';
 
 jest.retryTimes(24);
 
-const httpsAgent = new HttpsAgent({
-    host: 'point_node',
+const DOCKER_POINT_NODE = 'point_node';
+const POINT_NODE = process.env.TEST_POINT_NODE || DOCKER_POINT_NODE;
+
+const httpAgentCfg = {
+    host: POINT_NODE,
     port: 8666,
     protocol: 'http'
-});
+};
+
+const httpsAgent = new HttpsAgent(httpAgentCfg);
 
 describe('Proxy keyvalue', () => {
     // TODO: add test for storage upload

@@ -1,11 +1,16 @@
 import {get, post} from 'axios';
 import HttpsAgent from 'https-proxy-agent';
 
-const httpsAgent = new HttpsAgent({
-    host: 'point_node',
+const DOCKER_POINT_NODE = 'point_node';
+const POINT_NODE = process.env.TEST_POINT_NODE || DOCKER_POINT_NODE;
+
+const httpAgentCfg = {
+    host: POINT_NODE,
     port: 8666,
     protocol: 'http'
-});
+};
+
+const httpsAgent = new HttpsAgent(httpAgentCfg);
 
 describe('API requests through proxy', () => {
     // TODO: check cases for malformed body and other inappropriate requests
