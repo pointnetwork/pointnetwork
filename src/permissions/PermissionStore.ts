@@ -50,6 +50,15 @@ class PermissionStore {
         const record = await this.storer.find(id);
         return record;
     }
+
+    /**
+     * Revoke all permissions that the dApp has for the current account.
+     */
+    async revoke(dappDomain: string, address: string): Promise<string> {
+        const id = this.getId(dappDomain, address);
+        await this.storer.remove(id);
+        return id;
+    }
 }
 
 const memoryStorer = new MemoryStorer();
