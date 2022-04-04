@@ -42,6 +42,7 @@
                 <textarea name="storage[contents]" required rows=5 cols=40></textarea>
                 <input type="submit" value="Add" />
                 <input type="hidden" value="{{article.id}}" name="articleId" />
+                <input type="hidden" name="__redirect" value="/article?id={{article.id}}" />
             </form>
         </div>
 
