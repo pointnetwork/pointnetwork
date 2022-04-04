@@ -3,7 +3,7 @@ import {PermissionRecord} from './types';
 import {Storer} from './Storer';
 import MemoryStorer from './MemoryStorer';
 
-class PermissionStore {
+export class PermissionStore {
     private storer: Storer<PermissionRecord>;
 
     constructor(storer: Storer<PermissionRecord>) {
