@@ -23,12 +23,27 @@ const permissionHandlers: Record<string, PermissionHandlerFunc> = {
                 return {status: 400, result: {message: '`Origin` header is required.'}};
             }
 
-            const {params} = req.body as RPCRequestBody;
             const address = blockchain.getOwner();
-            const allowedMethods = params ? Object.keys(params[0] as Record<string, object>) : [];
+            const {params} = req.body as RPCRequestBody;
 
+            // If params is not provided or it's an empty array, revoke all permissions.
+            if (!params || !Array.isArray(params) || params.length === 0) {
+                const id = await permissionStore.revoke(dappDomain, address);
+                return {
+                    status: 200,
+                    result: {permissionsId: id, message: 'Revoked all permissions.'}
+                };
+            }
+
+            const allowedMethods = params ? Object.keys(params[0] as Record<string, object>) : [];
             const id = await permissionStore.upsert(dappDomain, address, allowedMethods);
-            return {status: 200, result: {permissionsId: id}};
+            return {
+                status: 200,
+                result: {
+                    permissionsId: id,
+                    message: `Permission granted for ${allowedMethods.join(', ')}`
+                }
+            };
         } catch (err) {
             return {status: 400, result: err};
         }
