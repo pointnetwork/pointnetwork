@@ -12,6 +12,7 @@ const {
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/blockchain');
 const {readFileByPath} = require('../../../util');
+const keyValue = require('../../../network/keyvalue');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -61,10 +62,10 @@ class Renderer {
         // These functions will be available for zApps to call in ZHTML
         return {
             keyvalue_list: async function(host, key) {
-                return await this.renderer.ctx.keyvalue.list(host, key);
+                return keyValue.list(host, key);
             },
             keyvalue_get: async function(host, key) {
-                return await this.renderer.ctx.keyvalue.get(host, key);
+                return keyValue.get(host, key);
             },
             storage_get_by_ikv: async function(identity, key) {
                 try {

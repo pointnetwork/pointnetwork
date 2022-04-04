@@ -4,7 +4,7 @@ const Docker = require('dockerode');
 const {promisify} = require('util');
 const {exec} = require('child_process');
 const DELAY_TIME = 10; //seconds
-const TEST_CONTAINER = 'pointnetwork-test-1';
+const TEST_CONTAINER = 'test';
 
 function delay(time) {
     return new Promise((res) => setTimeout(res, time * 1000));

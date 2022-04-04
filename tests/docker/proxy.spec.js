@@ -1,7 +1,21 @@
 import {get} from 'axios';
 import {delay} from '../../src/core/utils';
+import HttpAgent from 'http-proxy-agent';
+import HttpsAgent from 'https-proxy-agent';
 
-jest.retryTimes(60);
+jest.retryTimes(24);
+
+const httpsAgent = new HttpsAgent({
+    host: 'point_node',
+    port: 8666,
+    protocol: 'http'
+});
+
+const httpAgent = new HttpAgent({
+    host: 'point_node',
+    port: 8666,
+    protocol: 'http'
+});
 
 describe('Proxy', () => {
     it('Should redirect from http://point to https://point', async () => {
@@ -10,13 +24,13 @@ describe('Proxy', () => {
         const res = await get(
             'http://point',
             {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                httpAgent,
                 maxRedirects: 0,
                 validateStatus: () => true
             }
         );
         expect(res.status).toEqual(301);
-        expect(res.headers.location).toEqual('https://point/');
+        expect(res.headers.location).toEqual('https://point');
     });
 
     it('Should return https://point HTML', async () => {
@@ -24,7 +38,7 @@ describe('Proxy', () => {
 
         const res = await get(
             'https://point',
-            {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<html>/);
@@ -38,29 +52,38 @@ describe('Proxy', () => {
         await delay(5000);
         const res = await get(
             'https://blog.point',
-            {proxy: {host: 'point_node', port: 8666, protocol: 'http'}}
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<!doctype html>/);
         expect(res.data).toMatch('<title>Example Blog</title>');
-    }, 300000);
+    }, 10000);
 
-    // TODO: non-existing file returs 500 instead of 404
-    // TODO: omitting referer leads to returning blank HTML instead of 404/403
+    it('Should return 404 for non-existing file', async () => {
+        expect.assertions(1);
+
+        await delay(5000);
+        const res = await get(
+            'https://blog.point/notexists',
+            {
+                httpsAgent,
+                validateStatus: () => true
+            }
+        );
+        expect(res.status).toEqual(404);
+    }, 10000);
+
     it('Should return https://blog.point file in a root folder', async () => {
         expect.assertions(2);
 
         await delay(5000);
         const res = await get(
             'https://blog.point/index.css',
-            {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
-                headers: {Referer: 'https://blog.point'}
-            }
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^html, body/);
-    }, 300000);
+    }, 10000);
 
     it('Should return https://blog.point file in a nested folder', async () => {
         expect.assertions(2);
@@ -68,14 +91,11 @@ describe('Proxy', () => {
         await delay(5000);
         const res = await get(
             'https://blog.point/img/star_icon.png',
-            {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
-                headers: {Referer: 'https://blog.point'}
-            }
+            {httpsAgent}
         );
         expect(res.status).toEqual(200);
         expect(res.headers['content-type']).toEqual('image/png');
-    }, 300000);
+    }, 10000);
 
     it('Should return 404 for host other than point and not ending on .point', async () => {
         expect.assertions(1);
@@ -83,7 +103,7 @@ describe('Proxy', () => {
         const res = await get(
             'https://something.net',
             {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                httpsAgent,
                 validateStatus: () => true
             }
         );
@@ -96,7 +116,7 @@ describe('Proxy', () => {
         const res = await get(
             'https://notexists.point',
             {
-                proxy: {host: 'point_node', port: 8666, protocol: 'http'},
+                httpsAgent,
                 validateStatus: () => true
             }
         );
