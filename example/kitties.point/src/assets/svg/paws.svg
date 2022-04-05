@@ -1,0 +1,13 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 382.53 412.55">
+  <path d="M238.53,397.41c-8.69,0-29,0-29-20.49a29,29,0,0,1,58,0C267.54,397.41,247.21,397.41,238.53,397.41Z" class="main-fill"/>
+  <path d="M238.53,355.41a21.52,21.52,0,0,1,21.52,21.51c0,11.89-9.64,13-21.52,13s-21.52-1.1-21.52-13a21.51,21.51,0,0,1,21.52-21.51m0-15A36.56,36.56,0,0,0,202,376.92c0,11.3,5.51,20.28,15.12,24.62,6.88,3.11,14.65,3.37,21.4,3.37s14.52-.26,21.39-3.37c9.61-4.34,15.13-13.32,15.13-24.62a36.56,36.56,0,0,0-36.52-36.51Z" class="main-dark-fill"/>
+  <line x1="226.53" y1="392.47" x2="226.53" y2="381.99" class="main-stroke" style="fill:none;stroke-linecap:round;stroke-miterlimit:10;stroke-width:7px"/>
+  <line x1="238.53" y1="392.47" x2="238.53" y2="381.99" class="main-stroke" style="fill:none;stroke-linecap:round;stroke-miterlimit:10;stroke-width:7px"/>
+  <line x1="250.53" y1="392.47" x2="250.53" y2="381.99" class="main-stroke" style="fill:none;stroke-linecap:round;stroke-miterlimit:10;stroke-width:7px"/>
+  <path d="M144,397.41c-8.68,0-29,0-29-20.49a29,29,0,0,1,58,0C173,397.41,152.69,397.41,144,397.41Z"  class="main-fill"/>
+  <path d="M144,355.41a21.51,21.51,0,0,1,21.52,21.51c0,11.89-9.63,13-21.52,13s-21.52-1.1-21.52-13A21.52,21.52,0,0,1,144,355.41m0-15a36.56,36.56,0,0,0-36.52,36.51c0,11.3,5.52,20.28,15.13,24.62,6.87,3.11,14.64,3.37,21.39,3.37s14.52-.26,21.4-3.37c9.61-4.34,15.12-13.32,15.12-24.62A36.56,36.56,0,0,0,144,340.41Z" class="main-dark-fill"/>
+  <line x1="132" y1="392.47" x2="132" y2="381.99" class="main-stroke" style="fill:none;stroke-linecap:round;stroke-miterlimit:10;stroke-width:7px"/>
+  <line x1="144" y1="392.47" x2="144" y2="381.99" class="main-stroke" style="fill:none;stroke-linecap:round;stroke-miterlimit:10;stroke-width:7px"/>
+  <line x1="156" y1="392.47" x2="156" y2="381.99" class="main-stroke" style="fill:none;stroke-linecap:round;stroke-miterlimit:10;stroke-width:7px"/>
+</svg>
