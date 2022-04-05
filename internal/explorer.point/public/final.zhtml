@@ -90,11 +90,11 @@
                 $.get(`/v1/api/identity/identityToOwner/${identity}`, function(data) {
                     if (
                         !(data && data.data && data.data.owner)
-                        || data.data.owner === 0x0000000000000000000000000000000000000000
+                        || data.data.owner === "0x0000000000000000000000000000000000000000"
                     ) {
-                        not_available(identity);
-                    } else {
                         available(identity);
+                    } else {
+                        not_available(identity);
                     }
                 });
             });
