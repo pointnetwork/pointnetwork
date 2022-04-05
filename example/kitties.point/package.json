@@ -1,0 +1,79 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@ethersproject/contracts": "^5.0.3",
+    "@ethersproject/providers": "^5.0.7",
+    "@ethersproject/units": "^5.0.3",
+    "@fortawesome/fontawesome-svg-core": "^1.2.30",
+    "@fortawesome/free-brands-svg-icons": "^5.14.0",
+    "@fortawesome/free-solid-svg-icons": "^5.14.0",
+    "@fortawesome/react-fontawesome": "^0.1.11",
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/icons": "^4.9.1",
+    "@material-ui/styles": "^4.10.0",
+    "@metamask/jazzicon": "^2.0.0",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@web3-react/abstract-connector": "^6.0.7",
+    "@web3-react/core": "^6.1.1",
+    "@web3-react/injected-connector": "^6.0.7",
+    "@web3-react/network-connector": "^6.1.3",
+    "@web3-react/walletconnect-connector": "^6.1.6",
+    "add": "^2.0.6",
+    "color": "^3.1.2",
+    "color-name-list": "^6.14.0",
+    "hash.js": "^1.1.7",
+    "luxon": "^1.25.0",
+    "mobx-react": "^6.3.0",
+    "mobx-state-tree": "^3.17.2",
+    "nearest-color": "^0.4.4",
+    "notistack": "^1.0.0",
+    "prettier": "^2.1.1",
+    "react": "^16.13.1",
+    "react-dnd": "^11.1.3",
+    "react-dnd-html5-backend": "^11.1.3",
+    "react-dom": "^16.13.1",
+    "react-router": "^5.2.0",
+    "react-router-dom": "^5.2.0",
+    "react-scripts": "3.4.3",
+    "styled-components": "^5.1.1",
+    "typescript": "~3.7.2",
+    "yarn": "^1.22.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "format": "prettier --write . --loglevel error"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/color": "^3.0.1",
+    "@types/jest": "^24.0.0",
+    "@types/luxon": "^1.24.4",
+    "@types/node": "^12.0.0",
+    "@types/reach__router": "^1.3.5",
+    "@types/react": "^16.9.0",
+    "@types/react-dom": "^16.9.0",
+    "@types/react-router-dom": "^5.1.5",
+    "@types/styled-components": "^5.1.2"
+  }
+}
