@@ -2,6 +2,7 @@ import {FastifyInstance, FastifyRequest} from 'fastify';
 import {getNetworkAddress} from '../../../wallet/keystore';
 import blockchain from '../../../network/blockchain';
 import keyValue from '../../../network/keyvalue';
+import {Template, templateManager} from '../templateManager';
 const {uploadFile} = require('../../storage');
 
 const attachKeyValueHanlders = (server: FastifyInstance) => {
@@ -19,12 +20,16 @@ const attachKeyValueHanlders = (server: FastifyInstance) => {
             const currentList = await keyValue.list(identity, key);
             const newKey = `${key}${currentList?.length ?? 0}`;
 
+            let redirectUrl;
             for (const k in entries) {
                 if (k.startsWith('storage[')) {
                     const uploadedId = await uploadFile(entries[k]);
 
                     delete entries[k];
                     entries[k.replace('storage[', '').replace(']', '')] = uploadedId;
+                } else if (k === '__redirect') {
+                    redirectUrl = entries[k];
+                    delete entries[k];
                 }
             }
 
@@ -38,6 +43,10 @@ const attachKeyValueHanlders = (server: FastifyInstance) => {
                 __time: Math.floor(Date.now() / 1000)
             }), version);
 
+            if (redirectUrl) {
+                res.header('content-type', 'text/html');
+                return templateManager.render(Template.REDIRECT, {redirectUrl});
+            }
             res.status(200).send('Success');
         });
 

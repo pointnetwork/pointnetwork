@@ -5,14 +5,22 @@ import path from 'path';
 import FormData from 'form-data';
 import {delay} from '../../src/core/utils';
 import {uploadDir} from '../../src/client/storage';
+// import {uploadLoop} from '../../dist/client/storage/uploader';
+
+// uploadLoop();
 
 jest.retryTimes(24);
 
-const httpsAgent = new HttpsAgent({
-    host: 'point_node',
+const DOCKER_POINT_NODE = 'point_node';
+const POINT_NODE = process.env.TEST_POINT_NODE || DOCKER_POINT_NODE;
+
+const httpAgentCfg = {
+    host: POINT_NODE,
     port: 8666,
     protocol: 'http'
-});
+};
+
+const httpsAgent = new HttpsAgent(httpAgentCfg);
 
 describe('Storage requests through proxy', () => {
     // TODO: multiple files are not handled

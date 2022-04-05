@@ -6,8 +6,7 @@ const config = require('config');
 const logger = require('../../../core/log');
 const {
     getNetworkPrivateKey,
-    getNetworkAddress,
-    getNetworkPublicKey
+    getNetworkAddress
 } = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/blockchain');
@@ -280,33 +279,6 @@ class Renderer {
             wallet_send: async function(code, recipient, amount) {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
-            },
-            identity_register: async function(identity) {
-                this.renderer.#ensurePrivilegedAccess();
-
-                const publicKey = getNetworkPublicKey();
-                const owner = getNetworkAddress();
-
-                log.info(
-                    {
-                        identity,
-                        owner,
-                        publicKey,
-                        len: Buffer.byteLength(publicKey, 'utf-8'),
-                        parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
-                    },
-                    'Registering a new identity'
-                );
-
-                await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
-
-                log.info(
-                    {identity, owner, publicKey: publicKey.toString('hex')},
-                    'Successfully registered new identity'
-                );
-                log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
-
-                return true;
             }
         };
     }

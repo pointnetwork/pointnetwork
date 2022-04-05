@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.1.53",
+  "version": "0.1.54",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -16,7 +16,8 @@
     "@openzeppelin/hardhat-upgrades": "^1.16.1",
     "@solana/web3.js": "^1.29.2",
     "@truffle/hdwallet-provider": "^1.5.0",
-    "@typechain/hardhat": "^5.0.0",
+    "@typechain/ethers-v5": "^10.0.0",
+    "@typechain/hardhat": "^6.0.0",
     "arweave": "^1.10.17",
     "arweave-mnemonic-keys": "^0.0.9",
     "axios": "^0.21.2",

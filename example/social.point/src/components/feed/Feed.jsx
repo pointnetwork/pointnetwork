@@ -84,10 +84,15 @@ const Feed = ({account}) =>{
       )
 
       const postsContent = await Promise.all(_posts.map(async (post) => {
-        const {data: contents} = await window.point.storage.getString({ id: post.contents, encoding: 'utf-8' });
-        const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: post.from});
-        post.identity = identity;
-        post.contents = contents;
+          try {
+              const {data: contents} = await window.point.storage.getString({ id: post.contents, encoding: 'utf-8' });
+              const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: post.from});
+              post.identity = identity;
+              post.contents = contents;
+          } catch (e) {
+              console.error('Failed to load post ' + JSON.stringify(post));
+              post.contents = 'Failed to load post';
+          }
         return post;
       }))
 
