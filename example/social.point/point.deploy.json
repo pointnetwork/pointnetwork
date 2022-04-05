@@ -1,6 +1,6 @@
 {
     "version": 0.1,
-    "target": "pointsocial.point",
+    "target": "social.point",
     "keyvalue": {},
     "contracts": [
       "PointSocial"

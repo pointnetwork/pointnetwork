@@ -17,7 +17,7 @@
 
     {% set websites = {
         'blog.point': "Blog",
-        'pointsocial.point': 'Point Social',
+        'social.point': 'Point Social',
         'email.point': 'Email',
     }
     %}
