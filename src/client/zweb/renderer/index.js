@@ -215,6 +215,12 @@ class Renderer {
             get_current_identity: async function() {
                 return await blockchain.getCurrentIdentity();
             },
+            identity_check_availability: async function(identity) {
+                const owner = await blockchain.ownerByIdentity(identity);
+                log.debug({identity, owner}, 'identity_check_availability');
+                if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
+                return false;
+            },
 
             csrf_value: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
