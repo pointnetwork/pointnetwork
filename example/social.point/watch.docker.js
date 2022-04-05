@@ -21,7 +21,7 @@ const options = {
 };
 
 const container = 'pointnetwork_website_owner';
-const website = '/app/example/pointsocial.point';
+const website = '/app/example/social.point';
 
 const bundler = new Bundler(target, options);
 
