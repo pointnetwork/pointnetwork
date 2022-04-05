@@ -23,6 +23,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
         handler: async (req, res) => {
             try {
                 const host = req.headers.host!;
+                const origin = req.headers.origin;
                 const urlData = req.urlData();
                 const queryParams = parse(urlData.query ?? '');
                 const urlPath = urlData.path!;
