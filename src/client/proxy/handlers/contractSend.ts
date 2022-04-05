@@ -2,6 +2,7 @@ import {FastifyInstance, FastifyRequest} from 'fastify';
 import {parse} from 'query-string';
 import utils from '../../../core/utils';
 import blockchain from '../../../network/blockchain';
+import {Template, templateManager} from '../templateManager';
 const {uploadFile} = require('../../storage');
 
 const attachContractSendHandler = (server: FastifyInstance) => {
@@ -38,12 +39,16 @@ const attachContractSendHandler = (server: FastifyInstance) => {
                 return res.status(403).send('Contract send does not allowed for versions different than latest');
             }
 
+            let redirectUrl;
             for (const k in entries) {
                 if (k.startsWith('storage[')) {
                     const uploadedId = await uploadFile(entries[k]);
 
                     delete entries[k];
                     entries[k.replace('storage[', '').replace(']', '')] = uploadedId;
+                } else if (k === '__redirect') {
+                    redirectUrl = entries[k];
+                    delete entries[k];
                 }
             }
 
@@ -57,12 +62,18 @@ const attachContractSendHandler = (server: FastifyInstance) => {
                 }
             }
 
-            return blockchain.sendToContract(
+            const callRes = await blockchain.sendToContract(
                 req.headers.host!.replace('.point', ''),
                 contractName,
                 methodName,
                 paramValues
             );
+
+            if (redirectUrl) {
+                res.header('content-type', 'text/html');
+                return templateManager.render(Template.REDIRECT, {redirectUrl});
+            }
+            return callRes;
         });
 };
 

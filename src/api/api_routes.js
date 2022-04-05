@@ -1,6 +1,7 @@
 module.exports = [
     ['GET', '/v1/api/identity/identityToOwner/:identity', 'IdentityController@identityToOwner'],
     ['GET', '/v1/api/identity/ownerToIdentity/:owner', 'IdentityController@ownerToIdentity'],
+    ['POST', '/v1/api/identity/register', 'IdentityController@registerIdentity'],
     ['GET', '/v1/api/status/ping', 'PingController@ping'],
     ['GET', '/v1/api/status/meta', 'StatusController@meta'],
     ['GET', '/v1/api/deploy', 'DeployController@deploy'],

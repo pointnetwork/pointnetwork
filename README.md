@@ -26,7 +26,7 @@ Generate a mnemonic key with 12 words. Again, the easiest way to do this is to r
 
 Create a `key.json` file inside the keystore directory you created, and insert text there: `{"phrase": "<YOUR_MNEMONIC_KEY>"}`
 
-Run the executable you downloaded using the command: 
+Run the executable you downloaded using the command:
 
 `DATADIR=<YOUR_DATA_DIR> POINT_KEYSTORE=<YOUR_KEYSTORE_DIR> ./<PATH_TO_EXECUTABLE>`
 
@@ -70,6 +70,20 @@ To run end-to-end tests:
 docker compose -f docker-compose.test.yaml up -d`
 
 Then watch for `test` container logs and exit status
+
+
+To run end-to-end outside docker container:
+
+`docker compose -f docker-compose.e2e.yaml build &&
+`docker compose -f docker-compose.e2e.yaml up -d`
+
+You need to manually deploy the blog contract in the point_node container.
+Then you can run the tests this way:
+
+```
+npm run build && NODE_ENV=teste2e NODE_TLS_REJECT_UNAUTHORIZED=0 TEST_POINT_NODE=127.0.0.1 npm run test:docker
+```
+
 
 ## Troubleshooting
 
