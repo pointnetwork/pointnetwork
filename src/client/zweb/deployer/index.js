@@ -190,12 +190,17 @@ class Deployer {
         // Deploy contracts
         if (deployContracts) {
             let proxyMetadataFilePath = '';
-            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
-                proxyMetadataFilePath = await this.getProxyMetadataFilePath();
-            }
-            
             let contractNames = deployConfig.contracts;
             if (!contractNames) contractNames = [];
+
+            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
+                proxyMetadataFilePath = await this.getProxyMetadataFilePath();
+                for (const contractName of contractNames) {
+                    const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                    fs.copyFileSync(fileName, path.resolve(__dirname, '..', '..', '..', '..', 'hardhat', 'contracts', contractName + '.sol'));
+                }
+                await hre.run('compile');
+            }
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
                 
