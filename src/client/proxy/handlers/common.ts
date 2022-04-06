@@ -117,7 +117,8 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                             host,
                             {
                                 ...routeParams,
-                                ...queryParams
+                                ...queryParams,
+                                ...(req.body as Record<string, unknown> ?? {})
                             }
                         );
                     } else {

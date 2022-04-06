@@ -31,6 +31,7 @@ const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
 const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
 const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
 const GATEWAY_URL = config.get('storage.arweave_gateway_url');
+const MODE = config.get('mode');
 
 const uploadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.upload_cache_path'));
 const downloadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.download_cache_path'));
@@ -450,7 +451,7 @@ const getFileIdByPath = async (dirId, filePath) => {
     }
 };
 
-module.exports = process.env.NODE_CONFIG_ENV === 'zappdev' ? require('./index-arlocal') : {
+module.exports = MODE === 'zappdev' ? require('./index-arlocal') : {
     FILE_TYPE,
     init,
     getFile,
