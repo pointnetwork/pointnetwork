@@ -2,9 +2,16 @@
 alias point-e2e="docker compose -f docker-compose.e2e.yaml "
 alias point-zappdev="docker compose --env-file .env.zappdev -f docker-compose.zappdev.yaml "
 
+# point-dev and point-deploy are alias for use when running the node outside of Docker
+alias point-dev="NODE_CONFIG_ENV=devlocal MODE=zappdev npm run watch"
+alias point-deploy="NODE_CONFIG_ENV=devlocal MODE=zappdev ./scripts/deploy-sites.sh "
+
 # point-browser-docker-owner / visitor starts a point browser using one saved zappdev environment Firefox profiles
 alias point-browser-owner="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 alias point-browser-visitor="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
+
+# point-browser can be used when running the node outside of Docker
+alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url https://point/"
 
 # build a local image from the current working branch
 build-image() {
