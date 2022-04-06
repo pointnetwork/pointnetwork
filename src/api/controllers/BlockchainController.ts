@@ -8,9 +8,7 @@ export type RPCRequestBody = {
     params?: unknown[];
 };
 
-type HandlerFunc = (
-    req: FastifyRequest
-) => Promise<{
+type HandlerFunc = (req: FastifyRequest) => Promise<{
     status: number;
     result: unknown;
 }>;
@@ -92,6 +90,7 @@ class BlockchainController extends PointSDKController {
         const permissionHandler = permissionHandlers[method];
         if (permissionHandler) {
             const {status, result} = await permissionHandler(this.req);
+            this.reply.status(status);
             return this._status(status)._response(result);
         }
 
@@ -99,6 +98,7 @@ class BlockchainController extends PointSDKController {
         const specialHandler = specialHandlers[method];
         if (specialHandler) {
             const {status, result} = await specialHandler(this.req);
+            this.reply.status(status);
             return this._status(status)._response(result);
         }
 
