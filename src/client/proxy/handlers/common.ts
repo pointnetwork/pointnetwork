@@ -219,25 +219,6 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                         res.header('content-type', contentType);
                         return file;
                     }
-                } else if (req.method.toUpperCase() === 'POST' && host === 'web3.test') {
-                    const BASE = `http://${config.get('api.address')}:${config.get('api.port')}`;
-                    const URL = `${BASE}/v1/api/blockchain`;
-
-                    const headers: Record<string, string> = {'Content-Type': 'application/json'};
-                    if (origin) {
-                        headers.origin = origin;
-                    }
-
-                    try {
-                        const resp = await axios.post(URL, req.body, {headers});
-                        res.status(resp.data.status).send(resp.data);
-                    } catch (err) {
-                        if (err.response) {
-                            res.status(err.response.status).send(err.response.data);
-                        } else {
-                            res.status(500).send(err);
-                        }
-                    }
                 } else {
                     res.status(404).send('Not Found');
                 }
