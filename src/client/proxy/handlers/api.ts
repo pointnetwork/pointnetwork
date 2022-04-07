@@ -8,7 +8,8 @@ const attachApiHandler = (server: FastifyInstance) => {
     server.get('/v1/api/*', async (req, res) => {
         const urlData = req.urlData();
         const apiRes = await axios.get(
-            `${API_URL}${urlData.path}`,
+            // In some cases, urlData is parsed incorrectly and looks like //point/v1/api...
+            `${API_URL}${urlData.path!.replace(/^\/\/point/, '')}`,
             {
                 validateStatus: () => true,
                 headers: req.headers
@@ -26,7 +27,8 @@ const attachApiHandler = (server: FastifyInstance) => {
         async (req, res) => {
             const urlData = req.urlData();
             const apiRes = await axios.post(
-                `${API_URL}${urlData.path}`,
+                // In some cases, urlData is parsed incorrectly and looks like //point/v1/api...
+                `${API_URL}${urlData.path!.replace(/^\/\/point/, '')}`,
                 req.body,
                 {
                     validateStatus: () => true,
