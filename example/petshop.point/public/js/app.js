@@ -26,11 +26,13 @@ App = {
   initWeb3: async function() {
     // Modern dapp browsers...
     if (window.ethereum) {
-      App.web3Provider = window.ethereum;
+      App.web3Provider = new Web3.providers.HttpProvider('https://petshop.point/v1/api/blockchain');
       try {
         // Request account access
-        await window.ethereum.request({ method: "eth_requestAccounts" });;
+        const resp = await window.ethereum.request({ method: "eth_requestAccounts" });
+        console.log(resp);
       } catch (error) {
+        console.error(error);
         // User denied account access...
         console.error("User denied account access")
       }
@@ -43,7 +45,8 @@ App = {
     else {
       App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
     }
-    web3 = new Web3(App.web3Provider);
+    // web3 = new Web3(App.web3Provider);
+    web3 = new Web3(new Web3.providers.HttpProvider('https://petshop.point/v1/api/blockchain'));
 
     return App.initContract();
   },
@@ -82,6 +85,7 @@ App = {
         }
       }
     }).catch(function(err) {
+      console.error(err);
       console.log(err.message);
     });
   },
@@ -111,7 +115,7 @@ App = {
         console.log(err.message);
       });
     });
-    
+
   }
 
 };

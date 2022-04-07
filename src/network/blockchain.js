@@ -347,10 +347,7 @@ blockchain.sendToContract = async (
         if (k.split('(')[0] === methodName && k.includes('(')) {
             // example of k: send(address,bytes32,string)
             let paramIdx = 0;
-            const kArgTypes = k
-                .split('(')[1]
-                .replace(')', '')
-                .split(',');
+            const kArgTypes = k.split('(')[1].replace(')', '').split(',');
             for (const kArgType of kArgTypes) {
                 if (kArgType === 'bytes32') {
                     // Potential candidate for conversion
@@ -648,7 +645,7 @@ blockchain.getTransactionsByAccount = async (account, startBlockNumber, endBlock
 
         var block = web3.eth.getBlock(i, true);
         if (block != null && block.transactions != null) {
-            block.transactions.forEach(function(e) {
+            block.transactions.forEach(function (e) {
                 if (account === '*' || account === e.from || account === e.to) {
                     txs.push(e);
                     // log.debug('   tx hash         : ' + e.hash + '\n'
@@ -698,14 +695,14 @@ blockchain.deployContract = async (contract, artifacts, contractName) => {
 
 blockchain.toHex = n => web3.utils.toHex(n);
 
-blockchain.send = (method, params = []) =>
+blockchain.send = (method, params = [], id) =>
     new Promise((resolve, reject) => {
         web3.currentProvider.send(
             {
+                id,
                 method,
                 params,
-                jsonrpc: '2.0',
-                id: new Date().getTime()
+                jsonrpc: '2.0'
             },
             (err, result) => {
                 if (err) {
