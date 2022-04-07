@@ -2,8 +2,10 @@ version: '3.9'
 
 services:
   blockchain_node:
-    image: trufflesuite/ganache-cli:v6.12.2
-    container_name: blockchain
+    build:
+        context: ./polygon_docker
+        dockerfile: Dockerfile
+    container_name: blockchain_polygon
     hostname: blockchain_node
     healthcheck:
       test: |
@@ -18,13 +20,7 @@ services:
     ports:
       - '7545:7545'
     volumes:
-      - blockchain_data_e2e:/data:rw
-    environment:
-      - DOCKER=true
-    command: |
-      -v -p 7545 -i 256 --keepAliveTimeout 20000 --db /data \
-        --account 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e,0x56bc75e2d63100000
-
+      - blockchain_data_e2e_polygon:/cluster/data:rw
   contract_deployer:
     container_name: deployer
     image: jensendarren/contract-deployer:v0.1.0
@@ -115,7 +111,7 @@ services:
       service: buckets
 
 volumes:
-  blockchain_data_e2e:
+  blockchain_data_e2e_polygon:
   shared_contracts_e2e:
   point_node_data_e2e:
   arweave_data_e2e:

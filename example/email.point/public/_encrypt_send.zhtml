@@ -2,7 +2,7 @@
 
 {% set emailaddr = request.recipient|replace({'@': ''}) %}
 
-{% if identity_check_availability(emailaddr) == false %}
+{% if owner_by_identity(emailaddr) != '0x0000000000000000000000000000000000000000' %}
 
   {% set identity_owner = owner_by_identity(emailaddr) %}
   {#<p>Identity owner: {{ identity_owner }}#}
