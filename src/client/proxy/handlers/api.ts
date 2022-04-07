@@ -1,14 +1,13 @@
-import {FastifyInstance} from 'fastify';
+import {FastifyInstance, FastifyRequest} from 'fastify';
 import axios from 'axios';
 import config from 'config';
 
 const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
 const attachApiHandler = (server: FastifyInstance) => {
-    server.get('/v1/api/*', async (req, res) => {
+    server.get('/v1/api/*', async (req: FastifyRequest<{Params: {'*': string}}>, res) => {
         const apiRes = await axios.get(
-            // Built-in req.urlData() is broken when host is https://point, not https://point.something
-            `${API_URL}${new URL(req.url).pathname}`,
+            `${API_URL}/v1/api/${req.params['*']}`,
             {
                 validateStatus: () => true,
                 headers: req.headers
@@ -23,10 +22,9 @@ const attachApiHandler = (server: FastifyInstance) => {
 
     server.post(
         '/v1/api/*',
-        async (req, res) => {
+        async (req: FastifyRequest<{Params: {'*': string}}>, res) => {
             const apiRes = await axios.post(
-                // Built-in req.urlData() is broken when host is https://point, not https://point.something
-                `${API_URL}${new URL(req.url).pathname}`,
+                `${API_URL}/v1/api/${req.params['*']}`,
                 req.body,
                 {
                     validateStatus: () => true,
