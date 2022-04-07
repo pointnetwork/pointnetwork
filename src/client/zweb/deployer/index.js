@@ -310,7 +310,12 @@ class Deployer {
 
         // Upload public - root dir
         log.debug('Uploading root directory...');
-        const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
+        let rootDirFolder = 'public'
+        if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== ''){
+            rootDirFolder = deployConfig.rootDir;
+        }
+
+        const publicDirId = await storage.uploadDir(path.join(deployPath, rootDirFolder));
         await this.updateKeyValue(
             target,
             {'::rootDir': publicDirId},

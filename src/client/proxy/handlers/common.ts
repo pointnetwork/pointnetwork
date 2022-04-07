@@ -90,7 +90,14 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                     const zappName = host.includes('dev') ? `${host.split('dev')[0]}.point` : host;
 
-                    const publicPath = path.resolve(__dirname, `../../../../example/${zappName}/public`);
+                    const deployJsonPath = path.resolve(__dirname, `../../../../example/${zappName}/point.deploy.json`);
+                    const deployConfig = JSON.parse(await fs.readFile(deployJsonPath, 'utf8'));
+                    let rootDir = 'public';
+                    if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== ''){
+                        rootDir = deployConfig.rootDir;
+                    }
+
+                    const publicPath = path.resolve(__dirname, `../../../../example/${zappName}/${rootDir}`);
                     const routesJsonPath = path.resolve(publicPath, '../routes.json');
                     const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
