@@ -20,9 +20,9 @@ COPY --from=0 /opt/arweave/dist /opt/arweave
 
 WORKDIR /opt/arweave
 
-RUN echo 'fs.file-max=100000000' > /etc/sysctl.conf
-RUN mkdir -p /etc/systemd && echo 'DefaultLimitNOFILE=100000000' > /etc/systemd/system.conf
-
+RUN echo 'session required pam_limits.so' > /etc/pam.d/common-session
+RUN echo 'fs.file-max=1048576' > /etc/sysctl.conf
+RUN mkdir -p /etc/systemd && echo 'DefaultLimitNOFILE=1048576' > /etc/systemd/system.conf
 EXPOSE 1984
 
 ENTRYPOINT ["/opt/arweave/bin/start"]

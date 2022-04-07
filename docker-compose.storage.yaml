@@ -27,7 +27,7 @@ services:
     depends_on:
       gateway_db:
         condition: service_healthy
-      arweave:
+      arweave-node:
         condition: service_healthy
     ports:
       - '3000:3000'
