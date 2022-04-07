@@ -30,11 +30,11 @@ services:
     extends:
       file: docker-compose.storage.yaml
       service: gateway
-    depends_on:
-      gateway_db:
-        condition: service_healthy
-      arweave-node:
-        condition: service_healthy
+    # depends_on:
+    #   gateway_db:
+    #     condition: service_healthy
+    #   arweave-node:
+    #     condition: service_healthy
     volumes:
       - gateway_data_ar:/app
     environment:
