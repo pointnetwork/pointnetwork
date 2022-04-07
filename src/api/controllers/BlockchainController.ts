@@ -4,6 +4,7 @@ import blockchain from '../../network/blockchain';
 import permissionStore from '../../permissions/PermissionStore';
 
 export type RPCRequestBody = {
+    id: number;
     method: string;
     params?: unknown[];
 };
@@ -62,9 +63,9 @@ const permissionHandlers: Record<string, HandlerFunc> = {
 // For example, for compatibility with MetaMask's API.
 const specialHandlers: Record<string, HandlerFunc> = {
     eth_requestAccounts: async (req: FastifyRequest) => {
-        const {params} = req.body as RPCRequestBody;
+        const {params, id} = req.body as RPCRequestBody;
         try {
-            const result = await blockchain.send('eth_accounts', params);
+            const result = await blockchain.send('eth_accounts', params, id);
             return {status: 200, result};
         } catch (err) {
             const statusCode = err.code === -32603 ? 500 : 400;
@@ -84,14 +85,14 @@ class BlockchainController extends PointSDKController {
     }
 
     async request() {
-        const {method, params} = this.req.body as RPCRequestBody;
+        const {method, params, id} = this.req.body as RPCRequestBody;
 
         // Check for methods related to permissions.
         const permissionHandler = permissionHandlers[method];
         if (permissionHandler) {
             const {status, result} = await permissionHandler(this.req);
             this.reply.status(status);
-            return this._status(status)._response(result);
+            return result;
         }
 
         // Check for non-standard (EIP-1474) methods.
@@ -99,14 +100,14 @@ class BlockchainController extends PointSDKController {
         if (specialHandler) {
             const {status, result} = await specialHandler(this.req);
             this.reply.status(status);
-            return this._status(status)._response(result);
+            return result;
         }
 
         // `method` is a standard RPC method (EIP-1474).
         try {
             // TODO: do some input validation because sending wrong params could cause a crash.
-            const result = await blockchain.send(method, params);
-            return this._response(result);
+            const result = await blockchain.send(method, params, id);
+            return result;
         } catch (err) {
             // As per EIP-1474, -32603 means internal error.
             const statusCode = err.code === -32603 ? 500 : 400;
