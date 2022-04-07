@@ -6,10 +6,9 @@ const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
 const attachApiHandler = (server: FastifyInstance) => {
     server.get('/v1/api/*', async (req, res) => {
-        const urlData = req.urlData();
         const apiRes = await axios.get(
-            // In some cases, urlData is parsed incorrectly and looks like //point/v1/api...
-            `${API_URL}${urlData.path!.replace(/^\/\/point/, '')}`,
+            // Built-in req.urlData() is broken when host is https://point, not https://point.something
+            `${API_URL}${new URL(req.url).pathname}`,
             {
                 validateStatus: () => true,
                 headers: req.headers
@@ -25,10 +24,9 @@ const attachApiHandler = (server: FastifyInstance) => {
     server.post(
         '/v1/api/*',
         async (req, res) => {
-            const urlData = req.urlData();
             const apiRes = await axios.post(
-                // In some cases, urlData is parsed incorrectly and looks like //point/v1/api...
-                `${API_URL}${urlData.path!.replace(/^\/\/point/, '')}`,
+                // Built-in req.urlData() is broken when host is https://point, not https://point.something
+                `${API_URL}${new URL(req.url).pathname}`,
                 req.body,
                 {
                     validateStatus: () => true,
