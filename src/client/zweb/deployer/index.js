@@ -200,6 +200,9 @@ class Deployer {
                     fs.copyFileSync(fileName, path.resolve(__dirname, '..', '..', '..', '..', 'hardhat', 'contracts', contractName + '.sol'));
                 }
                 await hre.run('compile');
+                for (const contractName of contractNames) {
+                    fs.unlinkSync(path.resolve(__dirname, '..', '..', '..', '..', 'hardhat', 'contracts', contractName + '.sol'));
+                }
             }
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
