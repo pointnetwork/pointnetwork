@@ -1,0 +1,52 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button [text]="getBackButtonText()" defaultHref="/"></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" *ngIf="petition">
+  <ion-item>
+    <ion-icon name="person-circle" color="primary"></ion-icon>
+    <ion-label class="ion-text-wrap">
+      <h2>
+        @{{ petition.author | identity | async }}
+        <span class="date">
+          <ion-note>{{ (petition.timestamp  * 1000) | date }}</ion-note>
+        </span>
+      </h2>
+      <h3>Supporters: <ion-note>{{ supporters && supporters.length || 0 }}</ion-note></h3>
+    </ion-label>
+  </ion-item>
+  
+  <div class="ion-padding">
+    <h1>{{ petition.title }}</h1>
+    <p>
+      {{ petition.content }}
+    </p>
+  </div>
+
+  <ion-card *ngIf="supporters && supporters.length > 0">
+    <ion-card-header>
+      <ion-card-title>Supporters</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list>
+        <ion-item *ngFor="let supporter of supporters">
+          <ion-icon name="person-circle" color="primary"></ion-icon>
+          <ion-label>@{{ supporter.supporter | identity | async }}</ion-label>
+          <ion-note slot="end">{{ ( supporter.timestamp * 1000) | date }}</ion-note>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+
+
+</ion-content>
+<ion-footer>
+  <ion-button expand="block" (click)="supportPetition()" [disabled]="isPetitionSupported">
+    <ion-icon slot="start" name="create-outline"></ion-icon>
+    Sign this petition
+  </ion-button>
+</ion-footer>

@@ -1,0 +1,15 @@
+<ion-item *ngIf="petition" [routerLink]="'/petition/' + petition.id" [detail]="false">
+  <!-- [class]="!message.read ? 'dot dot-unread' : 'dot'" -->
+  <div slot="start"></div>
+  <ion-label class="ion-text-wrap">
+    <h2>
+      @{{ petition.author | identity | async  }}
+      <span class="date">
+        <ion-note>{{ (petition.timestamp  * 1000) | date }}</ion-note>
+        <ion-icon name="chevron-forward" size="small" *ngIf="isIos()"></ion-icon>
+      </span>
+    </h2>
+    <h3>{{ petition.title }}</h3>
+    <p>{{ petition.content }}</p>
+  </ion-label>
+  </ion-item>
