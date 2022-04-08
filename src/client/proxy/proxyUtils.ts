@@ -33,3 +33,19 @@ export const isDirectoryJson = (text: string) => {
         return false;
     }
 };
+
+export const setAsAttachment = (
+    urlPathname: string, 
+    contentType: string, 
+    acceptHeaders: string) => {
+    const isAttachment = urlPathname.startsWith('/_storage/') && // request directly from storage
+    !contentType.startsWith('image') && // not an image
+    !contentType.startsWith('video') && // not a video
+    (
+        acceptHeaders.includes('text/html') || 
+        acceptHeaders.includes('application/xhtml+xml') || 
+        acceptHeaders.includes('application/xml') || 
+        acceptHeaders.includes('*/*')
+    );
+    return isAttachment;
+};
