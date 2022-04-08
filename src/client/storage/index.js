@@ -10,12 +10,12 @@ import {
     escape,
     resolveHome
 } from '../../core/utils';
-import Arweave from 'arweave';
+import {storage} from './storage';
 import {promises as fs} from 'fs';
 import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
-import {uploadLoop} from './uploader';
+import {uploadLoop, chunkValidatorLoop} from './uploader';
 import {statAsync} from '../../util';
 
 const log = logger.child({module: 'Storage'});
@@ -39,14 +39,8 @@ const filesDir = path.join(resolveHome(config.get('datadir')), config.get('stora
 
 const init = () => {
     uploadLoop();
+    chunkValidatorLoop();
 };
-
-const arweave = Arweave.init({
-    port: Number(config.get('storage.arweave_port')),
-    protocol: config.get('storage.arweave_protocol'),
-    host: config.get('storage.arweave_host'),
-    timeout: config.get('storage.request_timeout')
-});
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
 const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
@@ -77,7 +71,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const txid = edge.node.id;
             log.debug({chunkId, txid}, 'Downloading data from arweave');
 
-            const data = await arweave.transactions.getData(txid, {decode: true});
+            const data = await storage.getDataByTxId(txid);
             log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
 
             const buf = Buffer.from(data);
@@ -133,7 +127,9 @@ const uploadChunk = async data => {
         if (updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.FAILED) {
             if (updatedChunk.retry_count >= UPLOAD_RETRY_LIMIT) {
                 throw new Error(`Failed to upload chunk ${chunkId}`);
-            } else {
+            } if (updatedChunk.validate_retry_count >= UPLOAD_RETRY_LIMIT) {
+                throw new Error(`Failed to validate chunk ${chunkId}`);
+            } else  {
                 updatedChunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
                 await updatedChunk.save();
             }
