@@ -20,6 +20,7 @@
     "@typechain/hardhat": "^6.0.0",
     "arweave": "^1.10.17",
     "arweave-mnemonic-keys": "^0.0.9",
+    "async": "^3.2.3",
     "axios": "^0.21.2",
     "bip32": "^2.0.6",
     "bip39": "^3.0.4",
@@ -71,6 +72,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
+    "@types/async": "^3.2.12",
     "@types/commander": "^2.12.2",
     "@types/config": "^0.0.41",
     "@types/fs-extra": "^9.0.13",
