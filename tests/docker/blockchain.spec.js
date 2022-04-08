@@ -65,7 +65,7 @@ describe('Register identity and deploy site', () => {
         expect(result.blockNumber).toBeGreaterThan(0);
         expect(result.gasUsed).toBeGreaterThan(0);
         expect(result.status).toBe(true);
-    }, 10000);
+    }, 20000);
 
     it('Should deploy the sample site to arweave', async () => {
         expect.assertions(1);
