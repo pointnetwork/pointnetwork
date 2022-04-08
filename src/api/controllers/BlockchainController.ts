@@ -112,7 +112,7 @@ class BlockchainController extends PointSDKController {
             // As per EIP-1474, -32603 means internal error.
             const statusCode = err.code === -32603 ? 500 : 400;
             this.reply.status(statusCode);
-            return this._status(statusCode)._response(err);
+            return err;
         }
     }
 }
