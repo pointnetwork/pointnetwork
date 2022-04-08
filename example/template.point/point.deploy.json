@@ -1,0 +1,30 @@
+{
+    "version": 0.1,
+    "target": "template.point",
+    "keyvalue": {
+      "example0": {
+        "contract_send": "Template.addExample(contents)",
+        "storage[contents]": {
+          "blob": "Point Network with React Bootstrap is awesome!",
+          "type": "text/plain"
+        }
+      },
+      "example1": {
+        "contract_send": "Template.addExample(contents)",
+        "storage[contents]": {
+          "blob": "Please try Point Social if you have not already.",
+          "type": "text/plain"
+        }
+      },
+      "example2": {
+        "contract_send": "Template.addExample(contents)",
+        "storage[contents]": {
+          "blob": "Another example of contents from Point Network.",
+          "type": "text/plain"
+        }
+      }
+    },
+    "contracts": [
+      "Template"
+    ]
+  }

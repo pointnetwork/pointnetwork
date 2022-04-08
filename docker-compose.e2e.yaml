@@ -27,7 +27,7 @@ services:
 
   contract_deployer:
     container_name: deployer
-    image: jensendarren/contract-deployer:develop
+    image: jensendarren/contract-deployer:v0.1.0
     depends_on:
       blockchain_node:
         condition: service_healthy
@@ -40,6 +40,8 @@ services:
       - ./hardhat/scripts:/hardhat/scripts:ro
       - ./hardhat/tasks:/hardhat/tasks:ro
       - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
+      - ./hardhat/utils.ts:/hardhat/utils.ts:ro
+      - ./hardhat/resources:/hardhat/resources:rw
     environment:
       BLOCKCHAIN_HOST: blockchain_node
       BLOCKCHAIN_PORT: 7545
@@ -63,8 +65,10 @@ services:
       - shared_contracts_e2e:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
+      - ./hardhat/resources:/app/hardhat/resources:rw
     environment:
       NODE_CONFIG_ENV: e2e
+      MODE: e2e
 
   arweave:
     extends:

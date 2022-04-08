@@ -2,8 +2,9 @@ const PointSDKController = require('./PointSDKController');
 const File = require('../../db/models/file');
 const Chunk = require('../../db/models/chunk');
 const DEFAULT_ENCODING = 'utf-8';
-const {getFile, uploadFile, DOWNLOAD_UPLOAD_STATUS} = require('../../client/storage');
+const {getFile, uploadFile} = require('../../client/storage');
 const config = require('config');
+const {FILE_DOWNLOAD_STATUS} = require('../../db/models/file');
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
@@ -35,7 +36,7 @@ class StorageController extends PointSDKController {
 
     // Returns all file metadata stored in the nodes leveldb
     async files() {
-        const allFiles = await File.allBy('dl_status', DOWNLOAD_UPLOAD_STATUS.COMPLETED);
+        const allFiles = await File.allBy('dl_status', FILE_DOWNLOAD_STATUS.COMPLETED);
         return this._response(
             allFiles.map(({id, originalPath, size}) => ({id, originalPath, size}))
         );

@@ -1,1 +1,1 @@
-npm run start & (sleep 15 && ./point deploy example/hello.z --contracts && sleep 10000)
+npm run start & (sleep 15 && ./point deploy example/blog.point --contracts && sleep 10000)

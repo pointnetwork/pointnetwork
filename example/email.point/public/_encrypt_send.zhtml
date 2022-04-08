@@ -1,0 +1,30 @@
+{{ csrf_guard(request._csrf) }}
+
+{% set emailaddr = request.recipient|replace({'@': ''}) %}
+
+{% if owner_by_identity(emailaddr) != '0x0000000000000000000000000000000000000000' %}
+
+  {% set identity_owner = owner_by_identity(emailaddr) %}
+  {#<p>Identity owner: {{ identity_owner }}#}
+  {% set identity_comm_public_key = public_key_by_identity(emailaddr) %}
+  {#<p>Identity comm public key: {{ identity_comm_public_key }}#}
+  {% set encrypted_results = encrypt_data(identity_comm_public_key, request.message) %}
+  {#<p>Encrypted_results: {{ encrypted_results }}#}
+  {% set stored_encrypted_message_id = storage_put(encrypted_results.encryptedMessage) %}
+  {#<p>Stored encrypted message: {{ stored_encrypted_message_id }}#}
+  {% set result = contract_call(host, 'PointEmail', 'send', [ identity_owner, stored_encrypted_message_id, encrypted_results.encryptedSymmetricObjJSON ]) %}
+
+
+{% else %}
+  <html>
+    <body>
+      <script>location.href='/compose?recipient={{request.recipient|url_encode}}&message={{request.message|url_encode}}&recipient_error=This recipient identity does not exist!'</script>
+    </body>
+  </html>
+
+{% endif %}
+<html>
+  <body>
+    <script>location.href='/'</script>
+  </body>
+</html>

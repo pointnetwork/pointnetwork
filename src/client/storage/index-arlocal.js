@@ -16,6 +16,7 @@ const path = require('path');
 const axios = require('axios');
 const config = require('config');
 const logger = require('../../core/log');
+const {statAsync} = require('../../util');
 const log = logger.child({module: 'Storage'});
 
 // TODO: for some reason docker fails to resolve module if I move it to another file
@@ -116,14 +117,14 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 
             // TODO: Remove the axios hack below when this bug of arlocal is resolved.
             // https://github.com/textury/arlocal/issues/63
-            // It is fixed, but don't seems to work in all cases. 
+            // It is fixed, but don't seems to work in all cases.
             const data = (await axios.get('http://' +  config.get('storage.arweave_host') +
                 ':' + config.get('storage.arweave_port') + '/tx/' +  txid + '/data')).data;
             const buf = Buffer.from(data, 'base64');
 
             /*
             // NOTE: above code can be replaced with below when mentioned arlocal bug is resolved
-            // It works in twitter.z, but brokes in pointsocial.z, for example.
+            // It works in sms.point, but brokes in pointsocial.point, for example.
             const data = await arweave.transactions.getData(txid, {decode: true});
             const buf = Buffer.from(data);
             */
@@ -376,7 +377,7 @@ const uploadFile = async data => {
 
 const uploadDir = async dirPath => {
     try {
-        const stat = await fs.stat(dirPath);
+        const stat = await statAsync(dirPath);
         const isDir = stat.isDirectory();
         if (!isDir) {
             throw new Error(`Path ${escape(dirPath)} is not a directory`);
@@ -399,7 +400,7 @@ const uploadDir = async dirPath => {
     await Promise.all(
         files.map(async fileName => {
             const filePath = path.join(dirPath, fileName);
-            const stat = await fs.stat(filePath);
+            const stat = await statAsync(filePath);
 
             if (stat.isDirectory()) {
                 const dirId = await uploadDir(filePath);

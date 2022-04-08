@@ -95,7 +95,12 @@ if (program.datadir) {
 }
 
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
-    process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
+    const identityContractAddress = getContractAddress('Identity');
+
+    if (!identityContractAddress) {
+        throw new Error('Could not get Identity contract address');
+    }
+    process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
 }
 
 // Warning: the below imports should take place after the above config patch!
@@ -105,6 +110,7 @@ import logger from './core/log.js';
 import Point from './core/index.js';
 import migrate from './util/migrate';
 import initFolders from './initFolders';
+import {statAsync} from './util';
 
 // ------------------- Init Logger ----------------- //
 
@@ -150,7 +156,7 @@ if (program.upload) {
             ? program.upload!
             : path.resolve(__dirname, '..', program.upload!);
 
-        const stat = await fs.stat(filePath);
+        const stat = await statAsync(filePath);
         if (stat.isDirectory()) {
             return uploadDir(filePath);
         } else {
@@ -201,13 +207,13 @@ if (program.makemigration) {
 if (program.compile) {
     log.info('Compiling contracts...');
 
-    const buildDirPath = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts');
+    const buildDirPath = path.resolve(__dirname, '..', 'hardhat', 'build');
     if (!existsSync(buildDirPath)) {
         mkdirSync(buildDirPath);
     }
 
-    const contractPath = path.resolve(__dirname, '..', 'truffle', 'contracts');
-    const contracts = ['Identity', 'Migrations', 'StorageProviderRegistry'];
+    const contractPath = path.resolve(__dirname, '..', 'hardhat', 'contracts');
+    const contracts = ['Identity'];
 
     Promise.all(
         contracts.map(name =>

@@ -6,12 +6,12 @@ const config = require('config');
 const logger = require('../../../core/log');
 const {
     getNetworkPrivateKey,
-    getNetworkAddress,
-    getNetworkPublicKey
+    getNetworkAddress
 } = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/blockchain');
 const {readFileByPath} = require('../../../util');
+const keyValue = require('../../../network/keyvalue');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -61,10 +61,10 @@ class Renderer {
         // These functions will be available for zApps to call in ZHTML
         return {
             keyvalue_list: async function(host, key) {
-                return await this.renderer.ctx.keyvalue.list(host, key);
+                return keyValue.list(host, key);
             },
             keyvalue_get: async function(host, key) {
-                return await this.renderer.ctx.keyvalue.get(host, key);
+                return keyValue.get(host, key);
             },
             storage_get_by_ikv: async function(identity, key) {
                 try {
@@ -138,7 +138,7 @@ class Renderer {
                 version = 'latest'
             ) {
                 return await blockchain.sendToContract(
-                    host.replace('.z', ''),
+                    host.replace('.point', ''),
                     contractName,
                     methodName,
                     params,
@@ -151,7 +151,7 @@ class Renderer {
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
                 const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
                 const events = await blockchain.getPastEvents(
-                    host.replace('.z', ''),
+                    host.replace('.point', ''),
                     contractName,
                     event,
                     options
@@ -279,32 +279,6 @@ class Renderer {
             wallet_send: async function(code, recipient, amount) {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
-            },
-            identity_register: async function(identity) {
-                this.renderer.#ensurePrivilegedAccess();
-
-                const publicKey = getNetworkPublicKey();
-                const owner = getNetworkAddress();
-
-                log.info(
-                    {
-                        identity,
-                        owner,
-                        publicKey,
-                        len: Buffer.byteLength(publicKey, 'utf-8'),
-                        parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
-                    },
-                    'Registering a new identity'
-                );
-
-                await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
-
-                log.info(
-                    {identity, owner, publicKey: publicKey.toString('hex')},
-                    'Successfully registered new identity'
-                );
-
-                return true;
             }
         };
     }

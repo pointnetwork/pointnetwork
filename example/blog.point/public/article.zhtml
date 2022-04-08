@@ -1,0 +1,51 @@
+{% extends 'layout.zhtml' %}
+
+{% block contents %}
+
+    {% set article = contract_get(host, 'Blog', 'getArticle', [request.id]) %}
+
+    {% if article is null %}
+        404 Not Found
+    {% else %}
+
+        {% set article_text = storage_get(article.contents) %}
+
+        <p><em><small>Note: this html was compiled dynamically from several things: the website template+css fetched from the storage layer based on blockchain information, then it asked the blockchain to give a pointer to the article's content, downloaded it from the storage layer, and then the same thing was done for comments.</small></em></p>
+
+        <h1>{{ article.title }}</h1>
+
+        <div class='article'>
+            {{ article_text | nl2br }}
+        </div>
+
+        <hr>
+
+        <div class="comments">
+            <h4>Comments:</h4>
+
+            {% set comments = contract_get(host, 'Blog', 'getCommentsByArticle', [request.id]) %}
+
+            {% for comment in comments %}
+
+                <div class="comment">
+                    <div><strong>From:</strong> <em>{{ comment.author }}</em></div>
+                    <div><strong>Time:</strong> <em>{{ comment.timestamp | date('F j, Y, g:i a') }}</em></div>
+
+                    {% set comment_text = storage_get(comment.contents) %}
+                    <div class="comment-body">
+                        {{ comment_text | nl2br }}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <form method="post" action="/_contract_send/Blog.createCommentByArticle(articleId,contents)" class="comments-form">
+                <textarea name="storage[contents]" required rows=5 cols=40></textarea>
+                <input type="submit" value="Add" />
+                <input type="hidden" value="{{article.id}}" name="articleId" />
+                <input type="hidden" name="__redirect" value="/article?id={{article.id}}" />
+            </form>
+        </div>
+
+    {% endif %}
+
+{% endblock %}

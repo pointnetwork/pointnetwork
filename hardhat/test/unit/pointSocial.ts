@@ -4,7 +4,7 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { PointSocial__factory } from "../../typechain"
 
-describe("Token identity contract", function () {
+describe("PointSocial contract", function () {
 
     let pointSocial: any;
 	let owner: SignerWithAddress;
@@ -19,6 +19,7 @@ describe("Token identity contract", function () {
 		[owner, addr1, addr2, ...addrs] = await ethers.getSigners();
         const factory = await ethers.getContractFactory("PointSocial") as PointSocial__factory;
         pointSocial = await factory.deploy()
+        pointSocial.initialize();
     });
 
 
@@ -232,7 +233,8 @@ describe("Token identity contract", function () {
                 "0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe"
             )
             
-            const postComments = await pointSocial.commentsByPost(1, 0);
+            const postCommentId = await pointSocial.commentIdsByPost(1, 0);
+            const postComments = await pointSocial.commentById(postCommentId);
 
             expect(postComments.contents).to.be.equal("0x0090916c0e6846d5dc8d22560e90782ded96e4efdeb53db214f612a54d4f5fbe");
         });

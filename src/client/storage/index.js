@@ -16,6 +16,7 @@ import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
 import {uploadLoop} from './uploader';
+import {statAsync} from '../../util';
 
 const log = logger.child({module: 'Storage'});
 
@@ -30,6 +31,7 @@ const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
 const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
 const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
 const GATEWAY_URL = config.get('storage.arweave_gateway_url');
+const MODE = config.get('mode');
 
 const uploadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.upload_cache_path'));
 const downloadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.download_cache_path'));
@@ -145,7 +147,7 @@ const uploadChunk = async data => {
         await check();
         await delay(UPLOAD_LOOP_INTERVAL);
     }
-    
+
     return chunkId;
 };
 
@@ -276,7 +278,7 @@ const uploadFile = async data => {
 
 const uploadDir = async dirPath => {
     try {
-        const stat = await fs.stat(dirPath);
+        const stat = await statAsync(dirPath);
         const isDir = stat.isDirectory();
         if (!isDir) {
             throw new Error(`Path ${escape(dirPath)} is not a directory`);
@@ -299,7 +301,7 @@ const uploadDir = async dirPath => {
     await Promise.all(
         files.map(async fileName => {
             const filePath = path.join(dirPath, fileName);
-            const stat = await fs.stat(filePath);
+            const stat = await statAsync(filePath);
 
             if (stat.isDirectory()) {
                 const dirId = await uploadDir(filePath);
@@ -449,7 +451,7 @@ const getFileIdByPath = async (dirId, filePath) => {
     }
 };
 
-module.exports = process.env.NODE_CONFIG_ENV === 'zappdev' ? require('./index-arlocal') : {
+module.exports = MODE === 'zappdev' ? require('./index-arlocal') : {
     FILE_TYPE,
     init,
     getFile,

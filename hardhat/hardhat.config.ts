@@ -3,12 +3,15 @@ import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
+import "@nomiclabs/hardhat-ethers";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "@openzeppelin/hardhat-upgrades";
 import "./tasks/importer/identity";
 import "./tasks/importer/blog";
 import "./tasks/importer/pointSocial";
-import "./tasks/importer/twitter";
+import "./tasks/importer/sms";
+import "./tasks/importer/identity-update";
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
@@ -18,6 +21,7 @@ if (typeof keystore !== 'object') {
 }
 
 dotenv.config();
+
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -29,10 +33,8 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-
-
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
-const host = process.env.BLOCKCHAIN_HOST || '127.0.0.1';
+const host = process.env.BLOCKCHAIN_HOST || 'blockchain_node';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
 
@@ -68,12 +70,14 @@ const config: HardhatUserConfig = {
             [privateKey],
         },
         ynet: {
-          url: 'http://ynet.point.space:44444',
-          accounts:
-            ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
+            url: 'http://ynet.point.space:44444',
+            accounts:
+                ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
         },
     },
     
 };
+
+
 
 export default config;

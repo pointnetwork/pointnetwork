@@ -28,3 +28,9 @@ geth
 .env.zappdev
 
 config/*local*
+
+hardhat/resources
+hardhat/build
+!hardhat/resources/unknown-10700.json
+resources/liveprofile/
+.openzeppelin

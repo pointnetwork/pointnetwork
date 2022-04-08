@@ -35,7 +35,7 @@ services:
 
   contract_deployer:
     container_name: deployer
-    image: jensendarren/contract-deployer:develop
+    image: jensendarren/contract-deployer:v0.1.0
     depends_on:
       blockchain_node:
         condition: service_healthy

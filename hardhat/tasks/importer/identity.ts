@@ -1,9 +1,9 @@
 import { task } from "hardhat/config";
 import fs = require('fs');
 
-//npx hardhat identity-importer upload 0x001fc9C398BF1846a70938c920d0351722F34c83 --migration-file /Users/alexandremelo/.point/src/pointnetwork/resources/migrations/identity-1647299819.json  --network ynet
+//npx hardhat identity-importer upload 0x001fc9C398BF1846a70938c920d0351722F34c83 --migration-file ../resources/migrations/identity-1647299819.json  --network ynet
 //npx hardhat identity-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --network ynet
-//npx hardhat identity-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to /Users/alexandremelo/.point/src/pointnetwork/hardhat/  --network ynet
+//npx hardhat identity-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to ../resources  --network ynet
 
 task("identity-importer", "Will download and upload data to point identity contract")
   .addPositionalParam("action", 'Use with "download" and "upload options"')

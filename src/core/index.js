@@ -1,5 +1,4 @@
 const ApiServer = require('../api');
-const Network = require('../network');
 const Client = require('../client');
 const Wallet = require('../wallet');
 
@@ -11,7 +10,6 @@ class Core {
     async start() {
         await this.initApiServer();
         await this.initWallet();
-        await this.initNetwork();
         await this.initClient();
         await this.postInit();
     }
@@ -28,11 +26,6 @@ class Core {
         const api_server = new ApiServer(this.ctx);
         this.ctx.api_server = api_server;
         await api_server.start();
-    }
-
-    async initNetwork() {
-        this.ctx.network = new Network(this.ctx);
-        await this.ctx.network.start();
     }
 
     async initClient() {

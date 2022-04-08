@@ -1,6 +1,7 @@
 import path from 'path';
 import {promises as fs} from 'fs';
 import {HttpNotFoundError} from '../core/exceptions';
+import {statAsync} from './statAsync';
 
 export const readFileByPath = async (localRoot: string, filePath: string, encoding = 'utf-8') => {
     const fullPath = path.join(localRoot, filePath);
@@ -17,7 +18,7 @@ export const readFileByPath = async (localRoot: string, filePath: string, encodi
     }
 
     try {
-        await fs.stat(fullPath);
+        await statAsync(fullPath);
     } catch (e) {
         throw new HttpNotFoundError('This route or file is not found');
     }
