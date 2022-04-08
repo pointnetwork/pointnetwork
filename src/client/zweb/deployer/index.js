@@ -210,21 +210,21 @@ class Deployer {
                 try {
                     let address;
                     let artifactsDeployed;
-                    if(deployConfig.hasOwnProperty('useIDE')){
+                    if (deployConfig.hasOwnProperty('useIDE')){
                         let abiPath = '';
-                        if(deployConfig.useIDE.name === 'truffle'){
+                        if (deployConfig.useIDE.name === 'truffle'){
                             abiPath = path.join(deployPath, deployConfig.useIDE.projectDir, 'build', 'contracts', contractName + '.json');
-                        }else if (deployConfig.useIDE.name === 'hardhat'){
+                        } else if (deployConfig.useIDE.name === 'hardhat'){
                             abiPath = path.join(deployPath, deployConfig.useIDE.projectDir, 'build', 'contracts', contractName + '.sol', contractName + '.json');
                         }
                         
-                        if(abiPath !== '' && fs.existsSync(abiPath)){
+                        if (abiPath !== '' && fs.existsSync(abiPath)){
                             const abiFile = fs.readFileSync(abiPath, 'utf-8');
                             artifactsDeployed = JSON.parse(abiFile);
                         }
 
                         address = deployConfig.useIDE.addresses[contractName];
-                    }else{
+                    } else {
                         if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
 
                             const proxyAddress = await blockchain.getKeyValue(
@@ -326,7 +326,7 @@ class Deployer {
 
         // Upload public - root dir
         log.debug('Uploading root directory...');
-        let rootDirFolder = 'public'
+        let rootDirFolder = 'public';
         if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== ''){
             rootDirFolder = deployConfig.rootDir;
         }
