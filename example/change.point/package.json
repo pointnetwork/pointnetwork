@@ -1,11 +1,12 @@
 {
   "name": "change.point",
   "version": "0.0.1",
-  "author": "Ionic Framework",
-  "homepage": "https://ionicframework.com/",
+  "author": "Point Labs",
+  "homepage": "https://pointnetwork.io/",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "clean-icons": "node clean.js",
     "build": "ng run app:build:production",
     "test": "ng test",
     "lint": "ng lint",
@@ -62,5 +63,5 @@
     "ts-node": "~8.3.0",
     "typescript": "~4.4.4"
   },
-  "description": "An Ionic project"
+  "description": "An petition site running on Point Network"
 }
