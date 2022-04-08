@@ -13,6 +13,7 @@ export const CHUNK_UPLOAD_STATUS = {
     ENQUEUED: 'ENQUEUED',
     IN_PROGRESS: 'IN_PROGRESS',
     COMPLETED: 'COMPLETED',
+    VALIDATING: 'VALIDATING',
     FAILED: 'FAILED'
 };
 
@@ -35,6 +36,8 @@ Chunk.init(
             defaultValue: CHUNK_UPLOAD_STATUS.NOT_STARTED
         },
         retry_count: {type: Sequelize.DataTypes.INTEGER, defaultValue: 0},
+        validation_retry_count: {type: Sequelize.DataTypes.INTEGER, defaultValue: 0},
+        txid: {type: Sequelize.DataTypes.STRING, allowNull: true},
         expires: {type: Sequelize.DataTypes.BIGINT, allowNull: true}
     },
     {

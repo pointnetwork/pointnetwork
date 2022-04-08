@@ -76,6 +76,9 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                         res.header('content-type', contentType);
                         return file;
                     }
+                } else if (host.endsWith('.z')) {
+                    res.header('Location', 'https://' + host.replace(/\.z/, '.point'));
+                    res.status(301).send();
                 } else if (config.get('mode') === 'zappdev') {
                     // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
                     // Side effect: versionig of zapps will not work for Zapp files in this env since files are loaded from local file system.
