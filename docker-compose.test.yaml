@@ -26,13 +26,13 @@ services:
       start_period: 8s
     volumes:
       - point_node_data_test:/data
-      - shared_contracts_test:/app/hardhat/build
-      - ./resources/blockchain-test-key.json:/data/keystore/key.json
-      - ./resources/arweave-test-key.json:/data/keystore/arweave.json
-      - ./resources/certs/ca.crt:/app/pointnetwork/resources/certs/ca.crt
+      - shared_contracts_test:/app/hardhat/build:ro
+      - ./resources/blockchain-test-key.json:/data/keystore/key.json:ro
+      - ./resources/arweave-test-key.json:/data/keystore/arweave.json:ro
+      - ./resources/certs/ca.crt:/app/pointnetwork/resources/certs/ca.crt:ro
       - hardhat_resources_test:/app/hardhat/resources:ro
     entrypoint: bash
-    command: ./docker-test.sh # Starts node and deploys blog contract
+    command: ./docker-test-node.sh # Starts node and deploys blog contract
     ports:
       - '8666:8666'
       - '2468:2468'
@@ -43,19 +43,21 @@ services:
   test:
     image: point_node
     container_name: test
-    command: run test:docker
+    entrypoint: bash
+    command: ./docker-test-test.sh # Starts node and runs tests
     depends_on:
       point_node:
         condition: service_healthy
     volumes:
-      - point_node_data_test:/data
-      - shared_contracts_test:/app/hardhat/build
+      - test_data_test:/data
+      - shared_contracts_test:/app/hardhat/build:ro
       - ./resources/blockchain-test-key.json:/data/keystore/key.json:ro
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json:ro
       - ./tests:/app/tests:ro
       - hardhat_resources_test:/hardhat/resources:ro
     environment:
       LOG_LEVEL: info
+      MODE: e2e
       NODE_CONFIG_ENV: dockertest
       NODE_TLS_REJECT_UNAUTHORIZED: 0
 
@@ -120,6 +122,7 @@ volumes:
   blockchain_data_test:
   shared_contracts_test:
   point_node_data_test:
+  test_data_test:
   arweave_data_test:
   gateway_data_test:
   bundler_data_test:
