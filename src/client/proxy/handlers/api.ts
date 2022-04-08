@@ -1,14 +1,13 @@
-import {FastifyInstance} from 'fastify';
+import {FastifyInstance, FastifyRequest} from 'fastify';
 import axios from 'axios';
 import config from 'config';
 
 const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
 const attachApiHandler = (server: FastifyInstance) => {
-    server.get('/v1/api/*', async (req, res) => {
-        const urlData = req.urlData();
+    server.get('/v1/api/*', async (req: FastifyRequest<{Params: {'*': string}}>, res) => {
         const apiRes = await axios.get(
-            `${API_URL}${urlData.path}`,
+            `${API_URL}/v1/api/${req.params['*']}`,
             {
                 validateStatus: () => true,
                 headers: req.headers
@@ -23,10 +22,9 @@ const attachApiHandler = (server: FastifyInstance) => {
 
     server.post(
         '/v1/api/*',
-        async (req, res) => {
-            const urlData = req.urlData();
+        async (req: FastifyRequest<{Params: {'*': string}}>, res) => {
             const apiRes = await axios.post(
-                `${API_URL}${urlData.path}`,
+                `${API_URL}/v1/api/${req.params['*']}`,
                 req.body,
                 {
                     validateStatus: () => true,
