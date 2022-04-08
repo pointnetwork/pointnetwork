@@ -76,7 +76,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                         res.header('content-type', contentType);
                         return file;
                     }
-                } else if (config.get('mode') === 'zappdev') {
+                } else if (config.get('mode') === 'zappdev' && host.endsWith('.point')) {
                     // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
                     // Side effect: versionig of zapps will not work for Zapp files in this env since files are loaded from local file system.
                     const version = queryParams.__point_version as string ?? 'latest';
@@ -90,15 +90,27 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                     const zappName = host.includes('dev') ? `${host.split('dev')[0]}.point` : host;
 
-                    const deployJsonPath = path.resolve(__dirname, `../../../../example/${zappName}/point.deploy.json`);
+                    let zappsDir: string = config.get('zappsdir');
+                    let zappDir: string;
+                    if(zappsDir !== undefined && zappsDir !== ''){
+                        if(zappsDir.startsWith("/") || zappsDir.startsWith("~")){
+                            zappDir = path.resolve(zappsDir, zappName);
+                        }else{
+                            zappDir = path.resolve(__dirname, `../../../../${zappsDir}/${zappName}`);
+                        }
+                    }else{
+                        zappDir = path.resolve(__dirname, `../../../../example/${zappName}`);
+                    }
+
+                    const deployJsonPath = path.resolve(zappDir, 'point.deploy.json');
                     const deployConfig = JSON.parse(await fs.readFile(deployJsonPath, 'utf8'));
                     let rootDir = 'public';
                     if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== ''){
                         rootDir = deployConfig.rootDir;
                     }
 
-                    const publicPath = path.resolve(__dirname, `../../../../example/${zappName}/${rootDir}`);
-                    const routesJsonPath = path.resolve(publicPath, '../routes.json');
+                    const publicPath = path.resolve(zappDir, rootDir);
+                    const routesJsonPath = path.resolve(zappDir, 'routes.json');
                     const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
                     const {
