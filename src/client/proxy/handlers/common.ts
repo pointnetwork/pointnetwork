@@ -93,15 +93,15 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                     const zappName = host.includes('dev') ? `${host.split('dev')[0]}.point` : host;
 
-                    let zappsDir: string = config.get('zappsdir');
+                    const zappsDir: string = config.get('zappsdir');
                     let zappDir: string;
-                    if(zappsDir !== undefined && zappsDir !== ''){
-                        if(zappsDir.startsWith("/") || zappsDir.startsWith("~")){
+                    if (zappsDir !== undefined && zappsDir !== ''){
+                        if (zappsDir.startsWith('/') || zappsDir.startsWith('~')){
                             zappDir = path.resolve(zappsDir, zappName);
-                        }else{
+                        } else {
                             zappDir = path.resolve(__dirname, `../../../../${zappsDir}/${zappName}`);
                         }
-                    }else{
+                    } else {
                         zappDir = path.resolve(__dirname, `../../../../example/${zappName}`);
                     }
 
