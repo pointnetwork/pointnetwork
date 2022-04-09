@@ -1,0 +1,48 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>
+      Petitions
+    </ion-title>
+    <ion-buttons>
+      <ion-button (click)="refresh(null)">
+        <ion-icon slot="icon-only" name="refresh-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="refresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+  
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">
+        Petitions
+      </ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ng-container *ngIf="contract.isPointAvailable(); else noPetitions">
+    <ng-container *ngIf="(contract.petition$ | async) as petitions">
+      <ion-list *ngIf="petitions.length > 0; else noPetitions">
+        <app-petition *ngFor="let petition of petitions" [petition]="petition"></app-petition>
+      </ion-list>
+    </ng-container>
+  </ng-container>
+
+  <ng-template #noPetitions>
+    <div id="container">
+      <strong>No petitions yet!</strong>
+      <p (click)="addPetition()">Start a new Petition</p>
+    </div>
+  </ng-template>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="addPetition()">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+</ion-content>
