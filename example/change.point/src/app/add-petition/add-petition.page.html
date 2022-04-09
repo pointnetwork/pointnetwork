@@ -1,0 +1,30 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Add New Petition</ion-title>
+    <ion-buttons slot="secondary">
+      <ion-button (click)="close()">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="petitionForm">
+    <ion-item>
+      <ion-label position="floating">Petition title</ion-label>
+      <ion-input type="text" formControlName="title"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label position="floating">Petition description</ion-label>
+      <ion-textarea type="text"  rows="10" formControlName="content" placeholder="Explain the problem and why it is important. Explain how it affects those involved and potential solutions."></ion-textarea>
+    </ion-item>
+  </form>
+  
+</ion-content>
+<ion-footer>
+  <ion-button expand="block" (click)="createPetition()" [disabled]="!petitionForm.valid">
+    <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
+    Start petition
+  </ion-button>
+</ion-footer>

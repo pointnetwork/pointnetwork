@@ -2,7 +2,7 @@ import {FastifyInstance, FastifyRequest} from 'fastify';
 const {uploadFile, getFile, FILE_TYPE} = require('../../storage');
 // @ts-expect-error no types for package
 import detectContentType from 'detect-content-type';
-import {isDirectoryJson} from '../proxyUtils';
+import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
 import {Template, templateManager} from '../templateManager';
 
 // TODO: we don't handle multiple files upload. But if we want to,
@@ -54,7 +54,17 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             return templateManager.render(Template.DIRECTORY, {id: req.params.hash, filesInfo});
         }
 
-        res.header('content-type', detectContentType(file));
+        const contentType = detectContentType(file);
+        const acceptHeaders = req.headers.accept === undefined ? '' : req.headers.accept;
+
+        res.header('content-type', contentType);
+
+        // if requesting a file directly from storage and the accept headers are wide open 
+        // and the file is not an image or video then return as a file attachment
+        if (setAsAttachment(req.routerPath, contentType, acceptHeaders)) {
+            res.header('Content-Disposition', 'attachment');
+        }
+
         return file;
     });
 };
