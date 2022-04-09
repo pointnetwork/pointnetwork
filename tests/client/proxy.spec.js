@@ -1,4 +1,5 @@
 const {encryptData, decryptData} = require('../../src/client/encryptIdentityUtils');
+const {setAsAttachment} = require('../../src/client/proxy/proxyUtils');
 
 // TODO: Jest report gracefully exit failure even if I only leave imports and mock all the tests
 // TODO: figure out what is wrong
@@ -86,5 +87,22 @@ describe('Client/ZProxy', () => {
             console.error(e);
             throw e;
         }
+    });
+
+    describe('setAsAttachment', () => {
+        describe('when requesting directly from storage', () => {
+            const urlPathname = '/_storage/';
+            describe('when acceept headers allow application types or wildcards', () => {
+                const acceptHeaders = 'text/html;application/xml;application/xhtml+xml;*/*';
+                test('when contentType is video or image it should return FALSE', () => {
+                    expect(setAsAttachment(urlPathname, 'video', acceptHeaders)).toBeFalsy();
+                    expect(setAsAttachment(urlPathname, 'image', acceptHeaders)).toBeFalsy();
+                });
+                test('when contentType is not video or image it should return TRUE', () => {
+                    expect(setAsAttachment(urlPathname, 'javascript', acceptHeaders)).toBeTruthy();
+                    expect(setAsAttachment(urlPathname, 'application/xml', acceptHeaders)).toBeTruthy();
+                });
+            });
+        });
     });
 });
