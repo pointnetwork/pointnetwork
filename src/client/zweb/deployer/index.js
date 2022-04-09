@@ -190,70 +190,94 @@ class Deployer {
         // Deploy contracts
         if (deployContracts) {
             let proxyMetadataFilePath = '';
-            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
-                proxyMetadataFilePath = await this.getProxyMetadataFilePath();
-            }
-            
             let contractNames = deployConfig.contracts;
             if (!contractNames) contractNames = [];
+
+            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
+                proxyMetadataFilePath = await this.getProxyMetadataFilePath();
+                for (const contractName of contractNames) {
+                    const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                    fs.copyFileSync(fileName, path.resolve(__dirname, '..', '..', '..', '..', 'hardhat', 'contracts', contractName + '.sol'));
+                }
+                await hre.run('compile');
+                for (const contractName of contractNames) {
+                    fs.unlinkSync(path.resolve(__dirname, '..', '..', '..', '..', 'hardhat', 'contracts', contractName + '.sol'));
+                }
+            }
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
                 
                 try {
                     let address;
                     let artifactsDeployed;
-                    if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
-
-                        const proxyAddress = await blockchain.getKeyValue(
-                            target,
-                            'zweb/contracts/address/' + contractName,
-                            version,
-                            'equalOrBefore'
-                        );
-
-                        const proxyDescriptionFileId = await blockchain.getKeyValue(
-                            target,
-                            PROXY_METADATA_KEY,
-                            version,
-                            'equalOrBefore'
-                        );
-                        
-                        let proxy;
-                        const contractF = await hre.ethers.getContractFactory(contractName);
-                        if (proxyAddress == null || proxyDescriptionFileId == null){
-                            log.debug('deployProxy call');
-                            proxy = await hre.upgrades.deployProxy(contractF, [], {kind: 'uups'});
-                        } else {
-                            log.debug('upgradeProxy call');
-                            //restore from blockchain upgradable contracts and proxy metadata if does not exist. 
-                            if (!fs.existsSync(proxyMetadataFilePath)){
-                                if (!fs.existsSync('./.openzeppelin')){
-                                    fs.mkdirSync('./.openzeppelin');    
-                                }
-                                fs.writeFileSync(proxyMetadataFilePath, 
-                                    await storage.getFile(proxyDescriptionFileId));
-                            }
-                            
-                            proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                    if (deployConfig.hasOwnProperty('useIDE')){
+                        let abiPath = '';
+                        if (deployConfig.useIDE.name === 'truffle'){
+                            abiPath = path.join(deployPath, deployConfig.useIDE.projectDir, 'build', 'contracts', contractName + '.json');
+                        } else if (deployConfig.useIDE.name === 'hardhat'){
+                            abiPath = path.join(deployPath, deployConfig.useIDE.projectDir, 'build', 'contracts', contractName + '.sol', contractName + '.json');
                         }
-                        await proxy.deployed();                            
-                        address = proxy.address;
                         
-                        artifactsDeployed = await hre.artifacts.readArtifact(contractName);
+                        if (abiPath !== '' && fs.existsSync(abiPath)){
+                            const abiFile = fs.readFileSync(abiPath, 'utf-8');
+                            artifactsDeployed = JSON.parse(abiFile);
+                        }
+
+                        address = deployConfig.useIDE.addresses[contractName];
                     } else {
-                        const {contract, artifacts} = await this.compileContract(
-                            contractName,
-                            fileName,
-                            deployPath
-                        );
+                        if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
 
-                        artifactsDeployed = artifacts;
+                            const proxyAddress = await blockchain.getKeyValue(
+                                target,
+                                'zweb/contracts/address/' + contractName,
+                                version,
+                                'equalOrBefore'
+                            );
 
-                        address = await blockchain.deployContract(
-                            contract,
-                            artifacts,
-                            contractName
-                        );
+                            const proxyDescriptionFileId = await blockchain.getKeyValue(
+                                target,
+                                PROXY_METADATA_KEY,
+                                version,
+                                'equalOrBefore'
+                            );
+                            
+                            let proxy;
+                            const contractF = await hre.ethers.getContractFactory(contractName);
+                            if (proxyAddress == null || proxyDescriptionFileId == null){
+                                log.debug('deployProxy call');
+                                proxy = await hre.upgrades.deployProxy(contractF, [], {kind: 'uups'});
+                            } else {
+                                log.debug('upgradeProxy call');
+                                //restore from blockchain upgradable contracts and proxy metadata if does not exist. 
+                                if (!fs.existsSync(proxyMetadataFilePath)){
+                                    if (!fs.existsSync('./.openzeppelin')){
+                                        fs.mkdirSync('./.openzeppelin');    
+                                    }
+                                    fs.writeFileSync(proxyMetadataFilePath, 
+                                        await storage.getFile(proxyDescriptionFileId));
+                                }
+                                
+                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                            }
+                            await proxy.deployed();                            
+                            address = proxy.address;
+                            
+                            artifactsDeployed = await hre.artifacts.readArtifact(contractName);
+                        } else {
+                            const {contract, artifacts} = await this.compileContract(
+                                contractName,
+                                fileName,
+                                deployPath
+                            );
+
+                            artifactsDeployed = artifacts;
+
+                            address = await blockchain.deployContract(
+                                contract,
+                                artifacts,
+                                contractName
+                            );
+                        }
                     }
                     this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
@@ -302,7 +326,12 @@ class Deployer {
 
         // Upload public - root dir
         log.debug('Uploading root directory...');
-        const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
+        let rootDirFolder = 'public';
+        if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== ''){
+            rootDirFolder = deployConfig.rootDir;
+        }
+
+        const publicDirId = await storage.uploadDir(path.join(deployPath, rootDirFolder));
         await this.updateKeyValue(
             target,
             {'::rootDir': publicDirId},
