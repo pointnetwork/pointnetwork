@@ -55,15 +55,16 @@ const proxyServer = net.createServer();
 proxyServer.on('connection', clientToProxySocket => {
     // We need only the data once, the starting packet
     clientToProxySocket.once('data', data => {
-        const isTLSConnection = data.toString().indexOf('CONNECT') !== -1;
+        const isTLSConnect = data.toString().indexOf('CONNECT') !== -1;
+        const isHTTPSConnection = data[0] === 22;
 
         const proxyToServerSocket = net.createConnection(
             {
                 host: 'localhost',
-                port: isTLSConnection ? SERVER_PORT : SERVER_HTTP_PORT
+                port: isTLSConnect || isHTTPSConnection ? SERVER_PORT : SERVER_HTTP_PORT
             },
             () => {
-                if (isTLSConnection) {
+                if (isTLSConnect) {
                     //Send Back OK to HTTPS CONNECT Request
                     clientToProxySocket.write(
                         'HTTP/1.1 200 Connection Established\r\n' +
