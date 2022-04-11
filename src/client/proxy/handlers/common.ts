@@ -1,7 +1,6 @@
 import path from 'path';
 import {promises as fs} from 'fs';
 import {parse} from 'query-string';
-import axios from 'axios';
 import {makeSurePathExists, readFileByPath} from '../../../util';
 import {FastifyInstance} from 'fastify';
 import Renderer from '../../zweb/renderer';
@@ -23,7 +22,6 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
         handler: async (req, res) => {
             try {
                 const host = req.headers.host!;
-                const origin = req.headers.origin;
                 const urlData = req.urlData();
                 const queryParams = parse(urlData.query ?? '');
                 const urlPath = urlData.path!;
