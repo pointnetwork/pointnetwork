@@ -2,39 +2,46 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/utils/Counters.sol";
+import '@openzeppelin/contracts/utils/Counters.sol';
 
-contract PointEmail  {
+contract PointEmail2 {
     using Counters for Counters.Counter;
     Counters.Counter internal _emailIds;
 
     struct Email {
-        uint id;
+        uint256 id;
         address from;
         address to;
         bytes32 encryptedMessageId;
         string encryptedSymmetricObj;
-        uint createdAt;
+        uint256 createdAt;
     }
 
     // Email mappings
     mapping(bytes32 => Email) public encryptedMessageIdToEmail;
     mapping(address => Email[]) public toEmails; // mapping to address to emails
 
-    enum Action {Send}
+    enum Action {
+        Send
+    }
 
     event StateChange(
         address indexed from,
         address indexed to,
         uint256 indexed date,
-        Action  action
+        Action action
     );
 
-    function send(address to, bytes32 encryptedMessageId, string memory encryptedSymmetricObj) external {
+    function send(
+        address to,
+        bytes32 encryptedMessageId,
+        string memory encryptedSymmetricObj
+    ) external {
         _emailIds.increment();
-        uint newEmailId = _emailIds.current();
+        uint256 newEmailId = _emailIds.current();
         Email memory _email = Email(
-            newEmailId, msg.sender,
+            newEmailId,
+            msg.sender,
             to,
             encryptedMessageId,
             encryptedSymmetricObj,
@@ -47,12 +54,16 @@ contract PointEmail  {
         emit StateChange(msg.sender, to, block.timestamp, Action.Send);
     }
 
-    function getAllEmailsByToAddress(address to) external view returns(Email[] memory) {
+    function getAllEmailsByToAddress(address to) external view returns (Email[] memory) {
         return toEmails[to];
     }
 
     // example "0x0000000000000000000000000000000000000000000068692066726f6d20706e"
     function getMessageById(bytes32 encryptedMessageId) external view returns (Email memory email) {
         return encryptedMessageIdToEmail[encryptedMessageId];
+    }
+
+    function getInboxEmails() external view returns (Email[] memory) {
+        return toEmails[msg.sender];
     }
 }
