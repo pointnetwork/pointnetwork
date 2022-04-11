@@ -43,8 +43,7 @@ services:
   test:
     image: point_node
     container_name: test
-    entrypoint: bash
-    command: ./docker-test-test.sh # Starts node and runs tests
+    command: run test:docker
     depends_on:
       point_node:
         condition: service_healthy

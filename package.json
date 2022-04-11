@@ -135,7 +135,8 @@
       "docker"
     ],
     "testEnvironment": "node",
-    "testRunner": "jest-circus/runner"
+    "testRunner": "jest-circus/runner",
+    "globalSetup": "./tests/globalSetup.js"
   },
   "nodemonConfig": {
     "ignore": [
