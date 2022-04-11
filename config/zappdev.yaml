@@ -1,4 +1,5 @@
 datadir: /data
+zappsdir: ./example
 wallet:
   keystore_path: /data/keystore
 mode: zappdev

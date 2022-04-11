@@ -45,16 +45,6 @@ do
   echo "DEPLOYING: ${SITE}"
   echo
 
-  grep -q upgradable.*true.* ${SITE}/point.deploy.json
-  if [ $? == 0 ] && [ "${DEPLOY_CONTRACTS}" != "" ];then
-      echo "Upgradable ZApp deployment started"
-
-      cp ${SITE}/contracts/*.sol ./hardhat/contracts/
-
-      echo "npx hardhat compile"
-      npx hardhat compile
-  fi
-
   #TODO: Pass the .openzeppeling file to be uploaded to arweave 
   echo "./point deploy $SITE $DEPLOY_CONTRACTS $DEV "
   ./point deploy $SITE $DEPLOY_CONTRACTS $DEV
