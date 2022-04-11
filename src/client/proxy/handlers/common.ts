@@ -6,12 +6,12 @@ import {FastifyInstance} from 'fastify';
 import Renderer from '../../zweb/renderer';
 import logger from '../../../core/log';
 import blockchain from '../../../network/blockchain';
-const {getJSON, getFileIdByPath, getFile} = require('../../storage');
 import {getContentTypeFromExt, getParamsAndTemplate} from '../proxyUtils';
 // @ts-expect-error no types for package
 import {detectContentType} from 'detect-content-type';
 import config from 'config';
 
+const {getJSON, getFileIdByPath, getFile} = require('../../storage');
 const log = logger.child({module: 'ZProxy'});
 
 // TODO: ctx is needed for Renderer, remove it later
@@ -72,7 +72,10 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                         }
 
                         const file = await fs.readFile(filePath);
-                        const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
+                        const contentType = ext
+                            ? getContentTypeFromExt(ext)
+                            : detectContentType(file);
+
                         res.header('content-type', contentType);
                         return file;
                     }
