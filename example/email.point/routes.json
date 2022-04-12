@@ -1,6 +1,0 @@
-{
-  "/": "inbox.zhtml",
-  "/compose": "compose.zhtml",
-  "/show": "show.zhtml",
-  "/encrypt_send": "_encrypt_send.zhtml"
-}
