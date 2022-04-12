@@ -18,7 +18,7 @@ export async function publicKeyByIdentity(identity: Identity): Promise<PublicKey
   const {
     data: { publicKey },
   } = await windowWithPoint.point.identity.publicKeyByIdentity({
-    identity: 'email2',
+    identity,
   });
 
   return publicKey;

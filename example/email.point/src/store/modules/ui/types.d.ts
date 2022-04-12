@@ -7,7 +7,7 @@ type State = {
 
 export type Notification = {
   status: NotifactionStatuses;
-  title: string;
+  title?: string;
   message: string;
 };
 

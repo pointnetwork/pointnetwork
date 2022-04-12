@@ -1,10 +1,12 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { ThemeContext } from '@hooks/ThemeProvider';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
+// pages
 import Compose from '@pages/Compose';
 import Inbox from '@pages/Inbox';
 import Show from '@pages/Show';
+import Error from '@pages/Error';
 
 import Header from '@components/Header';
 import Sidebar from '@components/Sidebar';
@@ -21,6 +23,8 @@ export default function App() {
     getIdentity();
   }, []);
 
+  const location = useLocation();
+
   return (
     <div
       className={`
@@ -29,27 +33,19 @@ export default function App() {
         flex h-screen bg-gray-50
       `}
     >
-      <BrowserRouter>
-        <Sidebar isOpen={isSideMenuOpen} openSidebar={setIsSideMenuOpen} />
-        <div className="flex flex-col flex-1 w-full">
-          <Header />
-          <main className="h-full overflow-y-auto dark:bg-gray-900 py-3">
-            <Routes>
-              <Route path="/" element={<Inbox />} />
-              <Route path="/compose" element={<Compose />} />
-              <Route path="/show" element={<Show />} />
-              <Route
-                path="*"
-                element={
-                  <main style={{ padding: '1rem' }}>
-                    <p>There's nothing here!</p>
-                  </main>
-                }
-              />
-            </Routes>
-          </main>
-        </div>
-      </BrowserRouter>
+      <Sidebar isOpen={isSideMenuOpen} openSidebar={setIsSideMenuOpen} />
+      <div className="flex flex-col flex-1 w-full">
+        <Header />
+        <main className="h-full overflow-y-auto dark:bg-gray-900 py-3">
+          <Routes>
+            <Route path="/" element={<Inbox />} />
+            <Route path="/compose" element={<Compose />} />
+            <Route path="/show" element={<Show />} />
+            <Route path="*" element={<Error />} />
+          </Routes>
+        </main>
+        <Notification />
+      </div>
     </div>
   );
 }

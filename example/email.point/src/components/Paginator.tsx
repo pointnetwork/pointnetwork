@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowCircleLeftIcon, ArrowCircleRightIcon } from '@heroicons/react/solid';
 
-const Paginator: React.FC<{}> = () => {
+const Paginator: React.FC<{ disabled: boolean }> = () => {
   return (
     <div
       className="

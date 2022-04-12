@@ -9,7 +9,7 @@ import { Notification, NotificationProps, NotificationWithoutStatus } from './ty
 export const showNotificationFactory = (status: NotifactionStatuses) => {
   return (notification: NotificationWithoutStatus, props?: NotificationProps) => {
     return (dispatch: Dispatch) => {
-      const { title = 'Success', message = '' } = notification;
+      const { title, message = '' } = notification;
       const { delay = 0, timeout } = props || {};
       setTimeout(() => {
         dispatch(
