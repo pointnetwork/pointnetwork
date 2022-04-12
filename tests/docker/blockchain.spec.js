@@ -5,7 +5,7 @@ import {delay} from '../../src/core/utils';
 import {getContractAddress} from '../../src/util';
 import HttpsAgent from 'https-proxy-agent';
 
-jest.retryTimes(24);
+jest.retryTimes(30);
 
 const DOCKER_POINT_NODE = 'point_node';
 const POINT_NODE = process.env.TEST_POINT_NODE || DOCKER_POINT_NODE;
