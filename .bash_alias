@@ -7,16 +7,16 @@ alias point-zappdev="docker compose --env-file .env.zappdev -f docker-compose.za
 alias point-test="docker compose -f docker-compose.test.yaml "
 
 # point-dev and point-deploy are alias for use when running the node outside of Docker
-alias point-dev="NODE_CONFIG_ENV=devlocal MODE=zappdev BLOCKCHAIN_HOST=localhost npm run watch"
-alias point-visit="NODE_CONFIG_ENV=visitlocal MODE=zappdev BLOCKCHAIN_HOST=localhost npm run watch"
-alias point-deploy="NODE_CONFIG_ENV=devlocal MODE=zappdev BLOCKCHAIN_HOST=localhost ./point deploy "
+alias point-dev="NODE_CONFIG_ENV=devlocal MODE=zappdev npm run watch"
+alias point-visit="NODE_CONFIG_ENV=visitlocal MODE=zappdev npm run watch"
+alias point-deploy="NODE_CONFIG_ENV=devlocal MODE=zappdev ./point deploy "
+
+# point-browser can be used when running the node outside of Docker
+alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url https://point/"
 
 # point-browser-docker-owner / visitor starts a point browser using one saved zappdev environment Firefox profiles
 alias point-browser-owner="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
 alias point-browser-visitor="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
-
-# point-browser can be used when running the node outside of Docker
-alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url https://point/"
 
 # build a local image from the current working branch
 build-image() {
@@ -32,9 +32,6 @@ build-image() {
         echo "Docker Image for current branch exists. To rebuild the image run 'build-image --force'";
     fi;
 }
-
-# point-browser opens a point browser instance using the pointnetwork profile that should be pointing to the default live network of pointnetwork (currently YNet but eventually this would be mainnet)
-alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url https://point/"
 
 # point-browser-dev starts a point browser instance loading the pointsdk extention from the dist folder so that it can also be worked on by the developer using extention hot reloading provided by web-ext. See the pointsdk repo for details.
 alias point-browser-dev="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist --url https://point/"
