@@ -31,7 +31,7 @@ describe('Proxy', () => {
             }
         );
         expect(res.status).toEqual(301);
-        expect(res.headers.location).toEqual('https://point');
+        expect(res.headers.location).toEqual('https://point/');
     });
 
     it('Should return https://point HTML', async () => {
