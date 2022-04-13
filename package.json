@@ -101,7 +101,7 @@
   },
   "scripts": {
     "test": "jest",
-    "test:docker": "jest tests/docker/*.spec.js --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
+    "test:docker": "jest tests/docker/*.spec.js --forceExit --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
     "start": "node dist/index.js",
     "start:zappdev": "MODE=zappdev npm run watch",
     "start:dev": "NODE_ENV=development npm run watch",
@@ -135,7 +135,8 @@
       "docker"
     ],
     "testEnvironment": "node",
-    "testRunner": "jest-circus/runner"
+    "testRunner": "jest-circus/runner",
+    "globalSetup": "./tests/globalSetup.js"
   },
   "nodemonConfig": {
     "ignore": [
