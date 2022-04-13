@@ -8,7 +8,10 @@ const {uploadFile} = require('../../storage');
 const attachContractSendHandler = (server: FastifyInstance) => {
     server.post(
         '/_contract_send/:contractAndMethod',
-        async (req: FastifyRequest<{Params: {contractAndMethod: string}; Body: Record<string, unknown>}>, res) => {
+        async (req: FastifyRequest<{
+            Params: {contractAndMethod: string};
+            Body: Record<string, unknown>
+        }>, res) => {
             if (req.headers['content-type'] !== 'application/x-www-form-urlencoded') {
                 return res.status(415).send('Only application/x-www-form-urlencoded is supported');
             }
