@@ -93,6 +93,7 @@ const Comments = ({ postId, commentsCount, setCommentsCount }) => {
           <input
               id="contents"
               name="contents"
+              maxlength="140"
               placeholder={"Any comment?"}
               className="commentCorners"
               onChange={onContentsChange}

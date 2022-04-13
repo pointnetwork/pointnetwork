@@ -81,6 +81,7 @@ export default function Share({getPosts, renderPostsImmediate}) {
             id="contents"
             name="contents"
             placeholder={"What's in your mind " + identity + "?"}
+            maxlength="140"
             className="shareInput"
             value={contents}
             onChange={onContentsChange}
