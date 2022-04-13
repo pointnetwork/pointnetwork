@@ -1,13 +1,15 @@
+import config from 'config';
+
 class PointSDKController {
     constructor(ctx, req) {
         this.ctx = ctx;
 
         const host = req.headers.host;
-        const method = req.method.toUpperCase()
+        const method = req.method.toUpperCase();
 
-        if(method === 'POST') {
+        if (method === 'POST' && config.get('api.csrf_enabled')) {
             const csrfToken = req.body.csrfToken;
-            this.csrfTokenGuard(host, csrfToken)
+            this.csrfTokenGuard(host, csrfToken);
         }
     }
 
