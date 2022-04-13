@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import '@openzeppelin/contracts/utils/Counters.sol';
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract PointEmail {
     using Counters for Counters.Counter;
@@ -131,7 +131,7 @@ contract PointEmail {
         require(
             encryptedMessageIdToEmail[_encryptedMessageId].from == msg.sender ||
                 encryptedMessageIdToEmail[_encryptedMessageId].to == msg.sender,
-            'Permission Denied'
+            "Permission Denied"
         );
         _;
     }
