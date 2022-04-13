@@ -17,7 +17,7 @@ const Comments = ({ postId, commentsCount, setCommentsCount }) => {
     const onContentsChange = event => {
       let newContents = event.target.value;
       setContents(newContents)
-      setBtnEnabled(newContents && newContents.length > 0)
+      setBtnEnabled(newContents && newContents.trim().length > 0)
     }
 
     const setSaving = (saving) => {
