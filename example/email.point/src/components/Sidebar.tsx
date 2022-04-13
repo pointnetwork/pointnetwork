@@ -74,10 +74,10 @@ const Sidebar: React.FC<{ isOpen: boolean; openSidebar: Function }> = (props) =>
 
   const menus = [
     { title: 'Inbox', icon: <InboxInIconSolid />, url: '/' },
-    { title: 'Sent', icon: <MailIcon />, url: '/sent' },
-    { title: 'Important', icon: <ExclamationCircleIcon />, url: '/important' },
+    // { title: 'Sent', icon: <MailIcon />, url: '/sent' },
+    // { title: 'Important', icon: <ExclamationCircleIcon />, url: '/important' },
     // { title: 'Drafts 30', icon: <PencilAltIcon />, url: '/drafts' },
-    { title: 'Trash', icon: <TrashIcon />, url: '/trash' },
+    // { title: 'Trash', icon: <TrashIcon />, url: '/trash' },
   ];
 
   const identity = useSelector(identitySelectors.getIdentity);

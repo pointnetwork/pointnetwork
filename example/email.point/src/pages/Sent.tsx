@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import Table from '@components/Table';
 
-import EmailMapping from '@mappers/Email';
+import EmailMapper from '@mappers/Email';
 
 import { actions as uiActions } from '@store/modules/ui';
 import { selectors as identitySelectors } from '@store/modules/identity';
@@ -30,7 +30,7 @@ const Sent: React.FC<{}> = () => {
       params: [walletAddress],
     });
 
-    emails = await Promise.all(emails.map(EmailMapping));
+    emails = await Promise.all(emails.map(EmailMapper));
 
     return emails.sort(
       ({ createdAt: ca1 }: { createdAt: number }, { createdAt: ca2 }: { createdAt: number }) =>

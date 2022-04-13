@@ -12,11 +12,13 @@ export const loadIdentity = () => {
     try {
       const walletAddress = await WalletService.getAddress();
       const identity = await IdentityService.ownerToIdentity(walletAddress);
+      const publicKey = await IdentityService.publicKeyByIdentity(identity);
 
       dispatch(
         identityActions.loadIdentity({
           walletAddress,
           identity,
+          publicKey,
         })
       );
     } catch (error) {

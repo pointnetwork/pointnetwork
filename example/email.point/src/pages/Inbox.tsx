@@ -10,7 +10,7 @@ import Table from '@components/Table';
 
 import * as ContractService from '@services/ContractService';
 
-import EmailMapping from '@mappers/Email';
+import EmailMapper from '@mappers/Email';
 
 import { selectors as identitySelectors } from '@store/modules/identity';
 
@@ -30,7 +30,7 @@ const Inbox: React.FC<{}> = () => {
       params: [walletAddress],
     });
 
-    emails = await Promise.all(emails.map(EmailMapping));
+    emails = await Promise.all(emails.map(EmailMapper));
 
     return emails.sort(
       ({ createdAt: ca1 }: { createdAt: number }, { createdAt: ca2 }: { createdAt: number }) =>

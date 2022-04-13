@@ -6,7 +6,7 @@ import { selectors as identitySelectors } from '@store/modules/identity';
 
 import { InboxIcon } from '@heroicons/react/solid';
 
-import EmailMapping from '@mappers/Email';
+import EmailMapper from '@mappers/Email';
 
 import * as ContractService from '@services/ContractService';
 
@@ -27,7 +27,7 @@ const Important: React.FC<{}> = () => {
       method: 'getImportantEmails',
     });
 
-    emails = await Promise.all(emails.map(EmailMapping));
+    emails = await Promise.all(emails.map(EmailMapper));
 
     return emails.sort(
       ({ createdAt: ca1 }: { createdAt: number }, { createdAt: ca2 }: { createdAt: number }) =>

@@ -8,10 +8,14 @@ import Spinner from './Spinner';
 
 import * as ContractService from '@services/ContractService';
 
-const InboxRow: React.FC<{ email: Email; onChecked?: MouseEventHandler<HTMLButtonElement> }> = (
-  props
-) => {
-  const { email, onChecked } = props;
+type Props = {
+  email: Email;
+  onChecked?: MouseEventHandler<HTMLButtonElement>;
+  onMarkedAsImportant?: MouseEventHandler<HTMLButtonElement>;
+};
+
+const InboxRow: React.FC<Props> = (props) => {
+  const { email, onChecked, onMarkedAsImportant } = props;
   const [marking, setMarking] = useState<Boolean>(false);
 
   function onMarkedAsImportantHandler() {
@@ -41,13 +45,15 @@ const InboxRow: React.FC<{ email: Email; onChecked?: MouseEventHandler<HTMLButto
             {email.checked && <CheckIcon className="w-5 h-5" />}
           </button>
         )}
-        <button className="border-1 w-10 h-10 text-sm p-2 text-gray-400">
-          {email.important ? (
-            <StarIcon className="w-5 h-5" />
-          ) : (
-            <StarIconOutline className="w-5 h-5" />
-          )}
-        </button>
+        {onMarkedAsImportant && (
+          <button className="border-1 w-10 h-10 text-sm p-2 text-gray-400">
+            {email.important ? (
+              <StarIcon className="w-5 h-5" />
+            ) : (
+              <StarIconOutline className="w-5 h-5" />
+            )}
+          </button>
+        )}
       </td>
       <td className="px-4 py-3 text-sm">
         <span className="w-full">@{email.fromIdentity}</span>

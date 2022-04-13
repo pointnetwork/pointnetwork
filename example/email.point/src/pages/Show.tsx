@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 
 import * as ContractService from '@services/ContractService';
 
-import EmailMapping from '@mappers/Email';
+import EmailMapper from '@mappers/Email';
 
 import { actions as uiActions } from '@store/modules/ui';
 
@@ -28,7 +28,7 @@ const Show: React.FC<{}> = () => {
       params: [messageId],
     });
 
-    const email = await EmailMapping(rawEmail);
+    const email = await EmailMapper(rawEmail);
     console.log(email);
     return email;
   }
