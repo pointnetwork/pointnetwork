@@ -1,3 +1,6 @@
+# used so that hardhat console and deploy scripts will deploy to your local blockchain
+export BLOCKCHAIN_HOST=localhost
+
 # point-e2e is used for starting the e2e environment (for development and testing usage only)
 alias point-e2e="docker compose -f docker-compose.e2e.yaml "
 alias point-zappdev="docker compose --env-file .env.zappdev -f docker-compose.zappdev.yaml "
