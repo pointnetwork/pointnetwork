@@ -1,5 +1,5 @@
 import {get} from 'axios';
-import {delay} from '../../src/core/utils';
+import {delay} from '../../src/util';
 import HttpAgent from 'http-proxy-agent';
 import HttpsAgent from 'https-proxy-agent';
 

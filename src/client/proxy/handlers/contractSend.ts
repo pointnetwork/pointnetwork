@@ -1,8 +1,8 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
 import {parse} from 'query-string';
-import utils from '../../../core/utils';
 import blockchain from '../../../network/blockchain';
 import {Template, templateManager} from '../templateManager';
+import {encode} from 'html-entities';
 const {uploadFile} = require('../../storage');
 
 const attachContractSendHandler = (server: FastifyInstance) => {
@@ -61,7 +61,7 @@ const attachContractSendHandler = (server: FastifyInstance) => {
                     paramValues.push(entries[paramName]);
                 } else {
                     return res.status(400).send(`Error: no ${
-                        utils.escape(paramName)} param in the data, but exists as an argument to the contract call.`);
+                        encode(paramName)} param in the data, but exists as an argument to the contract call.`);
                 }
             }
 

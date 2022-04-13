@@ -1,22 +1,22 @@
 import File from '../../db/models/file';
 import Chunk from '../../db/models/chunk';
-
-const {request, gql} = require('graphql-request');
-const {
-    hashFn,
+import {keccak256} from 'ethereumjs-util';
+import {encode} from 'html-entities';
+import {
     merkle,
     delay,
     areScalarArraysEqual,
-    escape,
-    resolveHome
-} = require('../../core/utils');
+    resolveHome,
+    statAsync
+} from '../../util';
+
+const {request, gql} = require('graphql-request');
 const Arweave = require('arweave');
 const {promises: fs} = require('fs');
 const path = require('path');
 const axios = require('axios');
 const config = require('config');
 const logger = require('../../core/log');
-const {statAsync} = require('../../util');
 const log = logger.child({module: 'Storage'});
 
 // TODO: for some reason docker fails to resolve module if I move it to another file
@@ -131,7 +131,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
 
             log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
 
-            const hash = hashFn(buf).toString('hex');
+            const hash = keccak256(buf).toString('hex');
             if (hash !== chunk.id) {
                 log.warn(
                     {chunkId, hash, query, buf: buf.toString()},
@@ -191,7 +191,7 @@ async function uploadArweave (data, tags) {
 }
 
 const uploadChunk = async data => {
-    const chunkId = hashFn(data).toString('hex');
+    const chunkId = keccak256(data).toString('hex');
 
     const chunk = await Chunk.findByIdOrCreate(chunkId);
     if (chunk.dl_status === DOWNLOAD_UPLOAD_STATUS.COMPLETED) {
@@ -254,7 +254,7 @@ const uploadFile = async data => {
     const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
 
     if (totalChunks === 1) {
-        const fileId = hashFn(buf).toString('hex');
+        const fileId = keccak256(buf).toString('hex');
         log.debug({fileId}, 'File to be uploaded and consists only from 1 chunk');
 
         const filePath = path.join(filesDir, `file_${fileId}`);
@@ -302,10 +302,10 @@ const uploadFile = async data => {
         chunks.push(buf.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));
     }
 
-    const chunkHashes = chunks.map(chunk => hashFn(chunk).toString('hex'));
-    const merkleTree = merkle.merkle(
+    const chunkHashes = chunks.map(chunk => keccak256(chunk).toString('hex'));
+    const merkleTree = merkle(
         chunkHashes.map(x => Buffer.from(x, 'hex')),
-        hashFn
+        keccak256
     );
     const chunkInfoContents =
         CHUNKINFO_PROLOGUE +
@@ -319,7 +319,7 @@ const uploadFile = async data => {
     const chunkInfoBuffer = Buffer.from(chunkInfoContents, 'utf-8');
 
     // File id always matches it's index chunk id
-    const fileId = hashFn(chunkInfoBuffer).toString('hex');
+    const fileId = keccak256(chunkInfoBuffer).toString('hex');
 
     log.debug({fileId}, 'Successfully chunkified file');
     const filePath = path.join(filesDir, `file_${fileId}`);
@@ -380,16 +380,16 @@ const uploadDir = async dirPath => {
         const stat = await statAsync(dirPath);
         const isDir = stat.isDirectory();
         if (!isDir) {
-            throw new Error(`Path ${escape(dirPath)} is not a directory`);
+            throw new Error(`Path ${encode(dirPath)} is not a directory`);
         }
     } catch (e) {
         if (e.code === 'ENOENT') {
-            throw new Error(`Directory ${escape(dirPath)} does not exist`);
+            throw new Error(`Directory ${encode(dirPath)} does not exist`);
         }
         throw e;
     }
 
-    log.debug({dirPath: escape(dirPath)}, 'Uploading directory');
+    log.debug({dirPath: encode(dirPath)}, 'Uploading directory');
 
     const files = await fs.readdir(dirPath);
     const dirInfo = {
@@ -427,7 +427,7 @@ const uploadDir = async dirPath => {
 
     const id = await uploadFile(JSON.stringify(dirInfo));
 
-    log.debug({dirPath: escape(dirPath)}, 'Successfully uploaded directory');
+    log.debug({dirPath: encode(dirPath)}, 'Successfully uploaded directory');
 
     return id;
 };
@@ -485,11 +485,10 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
         if (hash !== 'keccak256') {
             throw new Error('Bad hash type');
         }
-        const merkleReassembled = merkle
-            .merkle(
-                chunks.map(x => Buffer.from(x, 'hex')),
-                hashFn
-            )
+        const merkleReassembled = merkle(
+            chunks.map(x => Buffer.from(x, 'hex')),
+            keccak256
+        )
             .map(x => x.toString('hex'));
         if (!areScalarArraysEqual(merkleReassembled, merkleHash)) {
             throw new Error('Incorrect Merkle hash');

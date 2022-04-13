@@ -3,7 +3,7 @@ import HttpsAgent from 'https-proxy-agent';
 import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
-import {delay} from '../../src/core/utils';
+import {delay} from '../../src/util';
 import {uploadDir} from '../../src/client/storage';
 
 jest.retryTimes(24);

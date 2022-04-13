@@ -1,12 +1,12 @@
 import path from 'path';
 import fs from 'fs-extra';
 import {nanoid} from 'nanoid';
-import {resolveHome} from '../core/utils';
+import {resolveHome} from './resolveHome';
 import config from 'config';
 
 let identifier: string;
 
-export function getIdentifier(): [string, boolean] {
+export const getIdentifier = (): [string, boolean] => {
     let isNew = false;
     if (!identifier) {
         const liveProfilePath = path.join(resolveHome(config.get('datadir')), 'keystore', 'liveprofile');
@@ -23,4 +23,4 @@ export function getIdentifier(): [string, boolean] {
         }
     }
     return [identifier, isNew];
-}
+};

@@ -1,8 +1,7 @@
 import path from 'path';
 import {readFile} from 'fs/promises';
 import axios from 'axios';
-import {delay} from '../../src/core/utils';
-import {getContractAddress} from '../../src/util';
+import {delay, getContractAddress} from '../../src/util';
 import HttpsAgent from 'https-proxy-agent';
 
 jest.retryTimes(30);

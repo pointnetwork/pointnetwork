@@ -1,5 +1,5 @@
 import {get, post} from 'axios';
-import {delay} from '../../src/core/utils';
+import {delay} from '../../src/util';
 import HttpsAgent from 'https-proxy-agent';
 
 jest.retryTimes(24);
