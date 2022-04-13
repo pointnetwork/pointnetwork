@@ -8,6 +8,8 @@ import config from 'config';
 import logger from '../../core/log';
 import {storage} from './storage';
 import {eachLimit} from 'async';
+import getDownloadQuery from './query';
+import {request} from 'graphql-request';
 
 const log = logger.child({module: 'StorageUploader'});
 
@@ -20,6 +22,7 @@ const UPLOAD_EXPIRE = Number(config.get('storage.upload_expire'));
 const VERSION_MAJOR = config.get('storage.arweave_experiment_version_major');
 const VERSION_MINOR = config.get('storage.arweave_experiment_version_minor');
 const BUNDLER_URL = config.get('storage.arweave_bundler_url');
+const GATEWAY_URL: string = config.get('storage.arweave_gateway_url');
 
 const chunksBeingUploaded: Record<string, boolean> = {};
 
@@ -33,6 +36,31 @@ export const startChunkUpload = async (chunkId: string) => {
     try {
         log.debug({chunkId}, 'Starting chunk upload');
         const data = await fs.readFile(chunkPath);
+
+        // check if chunk already exists in arweave
+        try {
+            const query = getDownloadQuery(chunkId);
+            const queryResult = await request(GATEWAY_URL, query);
+
+            for (const edge of queryResult.transactions.edges) {
+                try {
+                    const txid = edge.node.id;
+                    await storage.getDataByTxId(txid);
+
+                    log.debug({chunkId}, 'Chunk already uploaded to arweave, cancelling upload');
+                    chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
+                    chunk.txid = txid;
+                    chunk.size = data.length;
+                    await chunk.save();
+                    delete chunksBeingUploaded[chunkId];
+                    return;
+                } catch (e) {
+                    // do nothing
+                }
+            }
+        } catch (e) {
+            // do nothing
+        }
 
         chunk.ul_status = CHUNK_UPLOAD_STATUS.IN_PROGRESS;
         chunk.expires = new Date().getTime() + UPLOAD_EXPIRE;
