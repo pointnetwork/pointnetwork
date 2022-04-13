@@ -12,7 +12,7 @@ services:
     volumes:
       - gateway_data_ar:/app
     environment:
-      ARWEAVE_NODES: '["http://0.0.0.0:1984/"]'
+      ARWEAVE_NODES: '["http://lon-4.eu-west-1.arweave.net:1984"]'
 
   gateway_db:
     extends:
