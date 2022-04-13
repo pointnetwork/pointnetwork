@@ -1,6 +1,6 @@
-const DeployerProgress = require('./zweb/deployer/progress');
-const ZProxy = require('./proxy');
-const {init: initStorage} = require('./storage');
+import DeployerProgress from './zweb/deployer/progress';
+import startProxy from './proxy';
+import {init} from './storage';
 
 class Client {
     constructor(ctx) {
@@ -8,12 +8,11 @@ class Client {
     }
 
     async start() {
-        await initStorage();
-
-        this.proxy = new ZProxy(this.ctx);
-        this.proxy.start();
-
         this.deployerProgress = new DeployerProgress(this.ctx);
+        await Promise.all([
+            init(),
+            startProxy(this.ctx)
+        ]);
     }
 }
 

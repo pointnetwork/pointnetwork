@@ -1,0 +1,10 @@
+{
+    "version": 0.1,
+    "target": "social.point",
+    "keyvalue": {},
+    "contracts": [
+      "PointSocial"
+    ],
+    "upgradable": true,
+    "rootDir": "public"
+  }

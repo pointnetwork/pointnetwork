@@ -1,0 +1,127 @@
+version: '3.9'
+
+services:
+  blockchain_node:
+    image: ethereum/client-go
+    container_name: blockchain
+    hostname: blockchain_node
+    healthcheck:
+      test: |
+        wget -qO- http://blockchain_node:7545 \
+          --header='Content-Type: application/json' \
+          --header="Accept: application/json" \
+          --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}'
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    ports:
+      - '7545:7545'
+    volumes:
+      - blockchain_data_e2e:/root/data:rw
+      - ./resources/geth_datadir/keystore:/root/data/keystore
+      - ./resources/geth-genesis.json:/root/geth-genesis.json
+      - ./resources/geth_passwords:/root/geth_passwords.txt
+      - ./resources/geth-init.sh:/root/geth-init.sh
+    environment:
+      - DOCKER=true
+    entrypoint: sh /root/geth-init.sh
+    command: >
+      --nodiscover --datadir /root/data --networkid 15 --http 
+        --http.api eth,net,web3,personal --http.addr 0.0.0.0 
+        --http.port 7545 --http.corsdomain '*' --http.vhosts=blockchain_node 
+        --allow-insecure-unlock --unlock 8D94F8CAB38168AD421D2CF567c1da72c0ef8414 
+        --password /root/geth_passwords.txt --mine
+
+  contract_deployer:
+    container_name: deployer
+    image: jensendarren/contract-deployer:v0.1.0
+    depends_on:
+      blockchain_node:
+        condition: service_healthy
+    deploy:
+      restart_policy:
+        condition: 'no'
+    volumes:
+      - shared_contracts_e2e:/build:rw
+      - ./hardhat/contracts:/hardhat/contracts:ro
+      - ./hardhat/scripts:/hardhat/scripts:ro
+      - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
+    environment:
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: 7545
+      BLOCKCHAIN_NETWORK_ID: 15
+      DEPLOYER_COMPILER_VERSION: native
+      DEPLOYER_ACCOUNT: 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e
+      DEPLOYER_BUILD_PATH: /build
+
+  point_node:
+    extends:
+      file: docker-compose.dev.yaml
+      service: point_node
+    depends_on:
+      contract_deployer:
+        condition: service_completed_successfully
+      buckets:
+        condition: service_completed_successfully
+    command: 'run start:e2e'
+    volumes:
+      - point_node_data_e2e:/data
+      - shared_contracts_e2e:/app/hardhat/build
+      - ./resources/blockchain-test-key.json:/data/keystore/key.json
+      - ./resources/arweave-test-key.json:/data/keystore/arweave.json
+    environment:
+      NODE_CONFIG_ENV: e2e
+
+  arweave:
+    extends:
+      file: docker-compose.storage.yaml
+      service: arweave
+    volumes:
+      - arweave_data_e2e:/mnt/arweave-data
+
+  gateway:
+    extends:
+      file: docker-compose.storage.yaml
+      service: gateway
+    volumes:
+      - gateway_data_e2e:/app
+
+  gateway_db:
+    extends:
+      file: docker-compose.storage.yaml
+      service: gateway_db
+    volumes:
+      - gateway_db_data_e2e:/var/lib/postgresql/data
+
+  bundler:
+    extends:
+      file: docker-compose.storage.yaml
+      service: bundler
+    # volumes:
+    #   - ../arweave-bundler/src:/app/src
+    #   - ../arweave-bundler/config:/app/config
+    #   - ../arweave-bundler/package.json:/app/package.json
+    # entrypoint: >
+    #   /bin/bash -c "ARWEAVE_KEY=$$(cat /app/keystore/key.json) npm run develop"
+
+  cache:
+    extends:
+      file: docker-compose.storage.yaml
+      service: cache
+    volumes:
+      - bundler_data_e2e:/data
+
+  buckets:
+    extends:
+      file: docker-compose.storage.yaml
+      service: buckets
+
+volumes:
+  blockchain_data_e2e:
+  shared_contracts_e2e:
+  point_node_data_e2e:
+  arweave_data_e2e:
+  gateway_data_e2e:
+  bundler_data_e2e:
+  gateway_db_data_e2e:

@@ -1,32 +1,35 @@
-import {Command} from 'commander';
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
-import {existsSync, writeFileSync} from 'fs';
+import {existsSync, mkdirSync, promises as fs} from 'fs';
 import lockfile from 'proper-lockfile';
+import {Command} from 'commander';
 import disclaimer from './disclaimer';
-import { resolveHome } from './core/utils';
+import {resolveHome} from './core/utils';
+import {getContractAddress, compileAndSaveContract} from './util/contract';
 
-export const RUNNING_PKG_MODE = (process as any).pkg ? true : false;;
+export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
 if (RUNNING_PKG_MODE) {
-  // when running inside the packaged version the configuration should be
-  // retrieved from the internal packaged config
-  // by default config library uses process.cwd() to reference the config folder
-  // when using vercel/pkg process.cwd references real folder and not packaged folder
-  // overwriting this env variable fixes the problems
-  process.env.NODE_CONFIG_DIR = path.resolve(__dirname, 'config');
+    // when running inside the packaged version the configuration should be
+    // retrieved from the internal packaged config
+    // by default config library uses process.cwd() to reference the config folder
+    // when using vercel/pkg process.cwd references real folder and not packaged folder
+    // overwriting this env variable fixes the problems
+    process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
 }
 
-
-const program: any = new Command();
+disclaimer.output();
 
 // Disable https://nextjs.org/telemetry
 process.env['NEXT_TELEMETRY_DISABLED'] = '1';
 
+const program: ProgramType<typeof Command> = new Command();
+
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-program.version(process.env.npm_package_version);
-
+const app = require(path.resolve(__dirname, '..', 'package.json'));
+program.version(app.version || 'No version is specified');
 program.description(`
     Point Network
     https://pointnetwork.io/
@@ -34,55 +37,201 @@ program.description(`
     Licensed under MIT license.
 `);
 
-// Print disclaimer
-disclaimer.output();
+program.option('-d, --datadir <path>', 'path to the data directory');
+program.option('-v, --verbose', 'force the logger to show debug level messages', false);
 
-program.option('--datadir <path>', 'path to the data directory');
+program.command('start', {isDefault: true}).description('start the node');
+program
+    .command('attach')
+    .description('attach to the running point process')
+    .action(() => void (program.attach = true));
+program
+    .command('makemigration')
+    .description('[dev mode] auto create db migrations from models')
+    .action(() => void (program.makemigration = true));
+program
+    .command('migrate')
+    .description('[dev mode] run migrations')
+    .action(() => void (program.migrate = true));
+program
+    .command('compile')
+    .description('compile contracts')
+    .action(() => void (program.compile = true));
+program
+    .command('migrate:undo')
+    .description('[dev mode] undo migration')
+    .action(() => void (program.migrate = program.migrate_undo = true));
+program
+    .command('debug-destroy-everything')
+    .description('destroys everything in datadir: database and files. dangerous!')
+    .action(() => void (program.debug_destroy_everything = true));
+program
+    .command('deploy <path>')
+    .description('deploy a website')
+    .action((path, cmd) => {
+        program.deploy = path;
+        program.deploy_contracts = Boolean(cmd.contracts);
+        program.dev = Boolean(cmd.dev);
+    })
+    .option('--contracts', '(re)deploy contracts too', false)
+    .option('--dev', 'deploy zapp to dev too', false);
+program
+    .command('upload <path>')
+    .description('uploads a file or directory')
+    .action(path => {
+        program.upload = path;
+    });
+
+// program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
+// program.option('--daemon', 'sends the daemon to the background'); // todo
+// program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
+
 program.parse(process.argv);
 
-const ctx: Record<string, any> = {};
+// ------------------ Patch Config ------------ //
 
 if (program.datadir) {
     process.env.DATADIR = program.datadir;
 }
 
-const getContractAddress = (name: string) => {
-    const filename = path.resolve(__dirname, '..', 'truffle', 'build', 'contracts', `${name}.json`);
-
-    if (!existsSync(filename)) {
-        return;
-    }
-
-    const {networks} = require(filename);
-
-    for (const network in networks) {
-        const {address} = networks[network];
-        if (address && typeof address === 'string') {
-            return address;
-        }
-    }
-};
-
-// ------------------ Patch Config ------------ //
-
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
-    process.env.IDENTITY_CONTRACT_ADDRESS = getContractAddress('Identity');
-    process.env.STORAGE_PROVIDER_REGISTRY_CONTRACT_ADDRESS = getContractAddress('StorageProviderRegistry');
+    const identityContractAddress = getContractAddress('Identity');
+
+    if (!identityContractAddress) {
+        throw new Error('Could not get Identity contract address');
+    }
+    process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
 }
 
-const config = require('config');
-const logger = require('./core/log.js');
-const Model = require('./db/model.js');
-const Point = require('./core/index.js');
+// Warning: the below imports should take place after the above config patch!
 
-ctx.basepath = __dirname;
+import config from 'config';
+import logger from './core/log.js';
+import Point from './core/index.js';
+import migrate from './util/migrate';
+import initFolders from './initFolders';
+import {statAsync} from './util';
 
 // ------------------- Init Logger ----------------- //
 
 const log = logger.child({module: 'point'});
+const ctx: CtxType = {
+    basepath: __dirname,
+    exit: (code: number) => (log.close(), process.exit(code)),
+    die: (err: Error) => (log.fatal(err), ctx.exit(1))
+};
 
-ctx.exit = (code: number) => (log.close(), process.exit(code));
-ctx.die = (err: Error) => (log.fatal(err), ctx.exit(1));
+// ----------------- Console Mode -------------------- //
+
+if (program.attach) {
+    const Console = require('./console');
+    const console = new Console();
+    console.start();
+    // @ts-ignore
+    return;
+}
+
+// -------------------- Deployer --------------------- //
+
+if (program.deploy) {
+    const Deploy = require('./core/deploy');
+    const deploy = new Deploy();
+    deploy
+        .deploy(program.deploy, program.deploy_contracts, program.dev)
+        .then(ctx.exit)
+        .catch(ctx.die);
+    // @ts-ignore
+    return;
+}
+
+// -------------------- Uploader --------------------- //
+
+if (program.upload) {
+    const {init, uploadFile, uploadDir} = require('./client/storage');
+
+    const main = async () => {
+        await init();
+
+        const filePath = path.isAbsolute(program.upload!)
+            ? program.upload!
+            : path.resolve(__dirname, '..', program.upload!);
+
+        const stat = await statAsync(filePath);
+        if (stat.isDirectory()) {
+            return uploadDir(filePath);
+        } else {
+            const file = await fs.readFile(filePath);
+            return uploadFile(file);
+        }
+    };
+
+    main()
+        .then(id => {
+            log.info({id}, 'Upload finished successfully');
+            process.exit(0);
+        })
+        .catch(e => {
+            log.error('Upload failed');
+            log.error(e);
+            process.exit(1);
+        });
+
+    // @ts-ignore
+    return;
+}
+
+// ---------------- Migration Modes ---------------- //
+
+if (program.makemigration) {
+    // A little hack: prepare sequelize-auto-migrations for reading from the current datadir config
+    process.argv = [
+        './point',
+        'makemigration',
+        '--models-path',
+        './db/models',
+        '--migrations-path',
+        './db/migrations',
+        '--name',
+        'automigration'
+    ];
+    const {Database} = require('./db/models');
+    Database.init();
+
+    require('sequelize-auto-migrations/bin/makemigration.js');
+    // @ts-ignore
+    return;
+}
+
+// ------------------ Compile Contracts ------------ //
+
+if (program.compile) {
+    log.info('Compiling contracts...');
+
+    const buildDirPath = path.resolve(__dirname, '..', 'hardhat', 'build');
+    if (!existsSync(buildDirPath)) {
+        mkdirSync(buildDirPath);
+    }
+
+    const contractPath = path.resolve(__dirname, '..', 'hardhat', 'contracts');
+    const contracts = ['Identity'];
+
+    Promise.all(
+        contracts.map(name =>
+            compileAndSaveContract({name, contractPath, buildDirPath}).then(compiled =>
+                log.debug(
+                    compiled
+                        ? `Contract ${name} successfully compiled`
+                        : `Contract ${name} is already compiled`
+                )
+            )
+        )
+    )
+        .then(() => ctx.exit(0))
+        .catch(ctx.die);
+
+    // @ts-ignore
+    return;
+}
 
 // ------------------ Gracefully exit ---------------- //
 
@@ -128,39 +277,50 @@ const sigs = [
     'SIGUSR2',
     'SIGTERM'
 ] as const;
-sigs.forEach(function (sig) {
-    process.on(sig, function () {
+sigs.forEach(function(sig) {
+    process.on(sig, function() {
         _exit(sig);
     });
 });
 
 process.on('uncaughtException', err => {
-    log.error({message: err.message, stack: err.stack}, 'Error: uncaught exception');
+    log.error(err, 'Error: uncaught exception');
 });
 
-process.on('unhandledRejection', (err: Error, second) => {
-    log.debug(err, second);
-    log.error({message: err.message, stack: err.stack}, 'Error: unhandled rejection');
+process.on('unhandledRejection', (err: Error) => {
+    log.error(err, 'Error: unhandled rejection');
 });
-
-Model.setCtx(ctx);
 
 // ------------------- Start Point ------------------- //
 
 // This is just a dummy file: proper-lockfile handles the lockfile creation,
 // but it's intended to lock some existing file
-
 const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
 
-if (!existsSync(lockfilePath)) {
-    writeFileSync(lockfilePath, 'point');
-}
-lockfile.lock(lockfilePath)
-    .then(() => {
+(async () => {
+    await initFolders();
+    try {
+        if (!existsSync(lockfilePath)) {
+            await fs.writeFile(lockfilePath, 'point');
+        }
+        await lockfile.lock(lockfilePath);
+    } catch (err) {
+        log.fatal(err, 'Failed to create lockfile, is point already running?');
+        ctx.exit(1);
+    }
+
+    try {
+        await migrate();
+    } catch (err) {
+        log.fatal(err, 'Failed to run database migrations');
+        ctx.exit(1);
+    }
+    try {
+        log.info({env: config.util.getEnv('NODE_ENV')}, 'Starting Point Node');
         const point = new Point(ctx);
-        point.start();
-    })
-    .catch(err => {
-        log.error({err}, 'Failed to create lockfile, is point already running?');
-        process.exit(1);
-    });
+        await point.start();
+    } catch (err) {
+        log.fatal(err, 'Failed to start Point Node');
+        ctx.exit(1);
+    }
+})();

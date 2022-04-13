@@ -1,12 +1,16 @@
 const path = require('path');
 const fs = require('fs');
-const utils = require('../../../core/utils');
-const config = require('config');
 const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
+const {compileContract, getImportsFactory} = require('../../../util/contract');
+const {getNetworkPublicKey} = require('../../../wallet/keystore');
+const blockchain = require('../../../network/blockchain');
+const hre = require('hardhat');
+const BN = require('bn.js');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
+const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 
 class Deployer {
     constructor(ctx) {
@@ -21,8 +25,75 @@ class Deployer {
 
     getCacheDir() {
         const cache_dir = path.join(config.get('datadir'), config.get('deployer.cache_path'));
-        utils.makeSurePathExists(cache_dir);
         return cache_dir;
+    }
+
+    isVersionFormated(baseVersion) {
+        return /^\d+\.\d+$/.test(String(baseVersion));
+    }
+
+    getVersionParts(version) {
+        const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
+        const found = version.match(regex);
+        if (found) {
+            return {
+                major: found.groups.major,
+                minor: found.groups.minor,
+                patch: found.groups.patch
+            };
+        } else {
+            throw new Error('Version in wrong format ');
+        }
+    }
+
+    isNewBaseVersionValid(oldVersion, newBaseVersion) {
+        if (oldVersion === null || oldVersion === undefined || oldVersion === '') {
+            return true;
+        }
+
+        const oldP = this.getVersionParts(oldVersion);
+        const oldBaseVersion = new Number(oldP.major + '.' + oldP.minor);
+        if (oldBaseVersion <= new Number(newBaseVersion)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    getNewPatchedVersion(oldVersion, newBaseVersion) {
+        if (oldVersion === null || oldVersion === undefined || oldVersion === '') {
+            return newBaseVersion + '.0';
+        }
+
+        const oldP = this.getVersionParts(oldVersion);
+        const oldBaseVersion = oldP.major + '.' + oldP.minor;
+        if (oldBaseVersion === newBaseVersion) {
+            return oldBaseVersion + '.' + (new Number(oldP.patch) + 1);
+        } else {
+            return newBaseVersion + '.0';
+        }
+    }
+
+    async getChainId(){
+        const id = await hre.ethers.provider.send('eth_chainId', []);
+        return new BN(id.replace(/^0x/, ''), 'hex').toNumber();
+    }
+
+    //code to return exact the same file path of openzeppelin upgradable plugin
+    async getProxyMetadataFilePath() {
+        const networkNames = {
+            1: 'mainnet',
+            2: 'morden',
+            3: 'ropsten',
+            4: 'rinkeby',
+            5: 'goerli',
+            42: 'kovan'
+        };
+        const manifestDir = '.openzeppelin';
+
+        const chainId = await this.getChainId();
+        const name = networkNames[chainId] ?? `unknown-${chainId}`;
+        return path.join('.', manifestDir, `${name}.json`);
     }
 
     async deploy(deployPath, deployContracts = false, dev = false) {
@@ -30,47 +101,86 @@ class Deployer {
         const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
         const deployConfig = JSON.parse(deployConfigFile);
+        let baseVersion;
+        if (
+            typeof deployConfig.version === 'number' &&
+            deployConfig.version.toString().indexOf('.') === -1
+        ) {
+            baseVersion = deployConfig.version.toString() + '.0';
+        } else {
+            baseVersion = deployConfig.version.toString();
+        }
 
-        // assert(deployConfig.version === 1); // todo: msg
+        if (!this.isVersionFormated(baseVersion)) {
+            log.error(
+                {
+                    deployConfigFilePath: deployConfigFilePath,
+                    version: baseVersion
+                },
+                'Incorrect format of Version number. Should be MAJOR.MINOR.'
+            );
+            throw new Error(
+                `Incorrect format of Version number ${baseVersion}. Should be MAJOR.MINOR.`
+            );
+        }
 
-        const target = dev ? `${deployConfig.target.replace('.z', 'dev')}.z` : deployConfig.target;
-        const identity = target.replace(/\.z$/, '');
-        const {defaultAccount: owner} = this.ctx.web3.eth;
+        const target = dev ? `${deployConfig.target.replace('.point', 'dev')}.point` : deployConfig.target;
+        const identity = target.replace(/\.point$/, '');
 
-        const registeredOwner = await this.ctx.web3bridge.ownerByIdentity(identity);
+        //get the last version.
+        const lastVersion = await blockchain.getKeyLastVersion(identity, '::rootDir');
+
+        //get the new version with patch.
+        let version;
+        if (this.isNewBaseVersionValid(lastVersion, baseVersion)) {
+            version = this.getNewPatchedVersion(lastVersion, baseVersion);
+        } else {
+            log.error(
+                {
+                    deployConfigFilePath: deployConfigFilePath,
+                    baseVersion: baseVersion,
+                    lastVersion: lastVersion
+                },
+                'Base version should be greater or equal to MAJOR.MINOR of lastVersion.'
+            );
+            throw new Error(
+                `'Base version ${baseVersion} should be greater or equal to MAJOR.MINOR of lastVersion ${lastVersion}.'`
+            );
+        }
+
+        const owner = blockchain.getOwner();
+
+        const registeredOwner = await blockchain.ownerByIdentity(identity);
         const identityIsRegistered =
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
         if (identityIsRegistered && registeredOwner !== owner) {
-            log.error(
-                {identity, registeredOwner, owner},
-                'Identity is already registered'
-            );
+            log.error({identity, registeredOwner, owner}, 'Identity is already registered');
             throw new Error(
                 `Identity ${identity} is already registered, please choose a new one and try again`
             );
         }
 
         if (!identityIsRegistered) {
-            const publicKey = this.ctx.wallet.getNetworkAccountPublicKey();
+            const publicKey = getNetworkPublicKey();
 
-            log.info({
-                identity,
-                owner,
-                publicKey,
-                len: Buffer.byteLength(publicKey, 'utf-8'),
-                parts: [
-                    `0x${publicKey.slice(0, 32)}`,
-                    `0x${publicKey.slice(32)}`
-                ]
-            }, 'Registring new identity');
+            log.info(
+                {
+                    identity,
+                    owner,
+                    publicKey,
+                    len: Buffer.byteLength(publicKey, 'utf-8'),
+                    parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
+                },
+                'Registering new identity'
+            );
 
-            await this.ctx.web3bridge.registerIdentity(
+            await blockchain.registerIdentity(
                 identity,
                 owner,
                 Buffer.from(publicKey, 'hex')
             );
-
+            log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
@@ -79,20 +189,136 @@ class Deployer {
 
         // Deploy contracts
         if (deployContracts) {
+            let proxyMetadataFilePath = '';
             let contractNames = deployConfig.contracts;
             if (!contractNames) contractNames = [];
+
+            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
+                proxyMetadataFilePath = await this.getProxyMetadataFilePath();
+                for (const contractName of contractNames) {
+                    const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                    fs.copyFileSync(fileName, path.resolve(__dirname, '..', '..', '..', '..', 'hardhat', 'contracts', contractName + '.sol'));
+                }
+                await hre.run('compile');
+                for (const contractName of contractNames) {
+                    fs.unlinkSync(path.resolve(__dirname, '..', '..', '..', '..', 'hardhat', 'contracts', contractName + '.sol'));
+                }
+            }
             for (const contractName of contractNames) {
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                
                 try {
-                    await this.deployContract(target, contractName, fileName, deployPath);
-                } catch (e) {
-                    log.error(
-                        {
-                            message: e.message,
-                            stack: e.stack
-                        },
-                        'Zapp contract deployment error'
+                    let address;
+                    let artifactsDeployed;
+                    if (deployConfig.hasOwnProperty('useIDE')){
+                        let abiPath = '';
+                        if (deployConfig.useIDE.name === 'truffle'){
+                            abiPath = path.join(deployPath, deployConfig.useIDE.projectDir, 'build', 'contracts', contractName + '.json');
+                        } else if (deployConfig.useIDE.name === 'hardhat'){
+                            abiPath = path.join(deployPath, deployConfig.useIDE.projectDir, 'build', 'contracts', contractName + '.sol', contractName + '.json');
+                        }
+                        
+                        if (abiPath !== '' && fs.existsSync(abiPath)){
+                            const abiFile = fs.readFileSync(abiPath, 'utf-8');
+                            artifactsDeployed = JSON.parse(abiFile);
+                        }
+
+                        address = deployConfig.useIDE.addresses[contractName];
+                    } else {
+                        if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
+
+                            const proxyAddress = await blockchain.getKeyValue(
+                                target,
+                                'zweb/contracts/address/' + contractName,
+                                version,
+                                'equalOrBefore'
+                            );
+
+                            const proxyDescriptionFileId = await blockchain.getKeyValue(
+                                target,
+                                PROXY_METADATA_KEY,
+                                version,
+                                'equalOrBefore'
+                            );
+                            
+                            let proxy;
+                            const contractF = await hre.ethers.getContractFactory(contractName);
+                            if (proxyAddress == null || proxyDescriptionFileId == null){
+                                log.debug('deployProxy call');
+                                proxy = await hre.upgrades.deployProxy(contractF, [], {kind: 'uups'});
+                            } else {
+                                log.debug('upgradeProxy call');
+                                //restore from blockchain upgradable contracts and proxy metadata if does not exist. 
+                                if (!fs.existsSync(proxyMetadataFilePath)){
+                                    if (!fs.existsSync('./.openzeppelin')){
+                                        fs.mkdirSync('./.openzeppelin');    
+                                    }
+                                    fs.writeFileSync(proxyMetadataFilePath, 
+                                        await storage.getFile(proxyDescriptionFileId));
+                                }
+                                
+                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                            }
+                            await proxy.deployed();                            
+                            address = proxy.address;
+                            
+                            artifactsDeployed = await hre.artifacts.readArtifact(contractName);
+                        } else {
+                            const {contract, artifacts} = await this.compileContract(
+                                contractName,
+                                fileName,
+                                deployPath
+                            );
+
+                            artifactsDeployed = artifacts;
+
+                            address = await blockchain.deployContract(
+                                contract,
+                                artifacts,
+                                contractName
+                            );
+                        }
+                    }
+                    this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
+
+                    const artifactsStorageId = await this.storeContractArtifacts(
+                        artifactsDeployed,
+                        fileName,
+                        contractName,
+                        version,
+                        address,
+                        target
                     );
+
+                    log.debug(
+                        `Contract ${contractName} with Artifacts Storage ID ${artifactsStorageId} is deployed to ${address}`
+                    );
+                } catch (e) {
+                    log.error(e, 'Zapp contract deployment error');
+                    throw e;
+                }
+            }
+
+            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true){
+                try {
+                    // Upload proxy metadata
+                    
+                    const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
+                    const proxyMetadata = JSON.parse(proxyMetadataFile);
+
+                    log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
+                    this.ctx.client.deployerProgress.update(proxyMetadataFilePath, 0, 'uploading');
+                    const proxyMetadataFileUploadedId = 
+                        await storage.uploadFile(JSON.stringify(proxyMetadata));
+                    this.ctx.client.deployerProgress.update(
+                        proxyMetadataFilePath,
+                        100,
+                        `uploaded::${proxyMetadataFileUploadedId}`
+                    );
+                    await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
+                    log.debug('Proxy metadata updated');
+                } catch (e) {
+                    log.error(e, 'Zapp contract deployment error');
                     throw e;
                 }
             }
@@ -100,8 +326,19 @@ class Deployer {
 
         // Upload public - root dir
         log.debug('Uploading root directory...');
-        const publicDirId = await storage.uploadDir(path.join(deployPath, 'public'));
-        await this.updateKeyValue(target, {'::rootDir': publicDirId}, deployPath, deployContracts);
+        let rootDirFolder = 'public';
+        if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== ''){
+            rootDirFolder = deployConfig.rootDir;
+        }
+
+        const publicDirId = await storage.uploadDir(path.join(deployPath, rootDirFolder));
+        await this.updateKeyValue(
+            target,
+            {'::rootDir': publicDirId},
+            deployPath,
+            deployContracts,
+            version
+        );
 
         // Upload routes
         const routesFilePath = path.join(deployPath, 'routes.json');
@@ -116,65 +353,28 @@ class Deployer {
             100,
             `uploaded::${routeFileUploadedId}`
         );
-        await this.updateZDNS(target, routeFileUploadedId);
-
-        await this.updateKeyValue(target, deployConfig.keyvalue, deployPath, deployContracts);
+        await this.updateZDNS(target, routeFileUploadedId, version);
+        await this.updateKeyValue(
+            target,
+            deployConfig.keyvalue,
+            deployPath,
+            deployContracts,
+            version
+        );
 
         log.info('Deploy finished');
     }
 
-    static async getPragmaVersion(source) {
-        const regex = /pragma solidity [\^~><]?=?(?<version>[0-9.]*);/;
-        const found = source.match(regex);
-        if (found) {
-            return found.groups.version;
-        } else {
-            throw new Error('Contract has no compiler version');
-        }
-    }
-
-    async deployContract(target, contractName, fileName, deployPath) {
+    async compileContract(contractName, fileName, deployPath) {
         this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
-        const fs = require('fs-extra');
-
-        const contractSource = fs.readFileSync(fileName, 'utf8');
-
-        const version = await Deployer.getPragmaVersion(contractSource);
-        const versionArray = version.split('.');
-        const SOLC_MAJOR_VERSION = versionArray[0];
-        const SOLC_MINOR_VERSION = versionArray[1];
-        const SOLC_FULL_VERSION = `solc${SOLC_MAJOR_VERSION}_${SOLC_MINOR_VERSION}`;
-
-        const path = require('path');
-        const solc = require(SOLC_FULL_VERSION);
-
-        const compileConfig = {
-            language: 'Solidity',
-            sources: {[contractName + '.sol']: {content: contractSource}},
-            settings: {
-                outputSelection: {
-                    // return everything
-                    '*': {'*': ['*']}
-                }
-            }
-        };
-
-        const getImports = function (dependency) {
-            const dependencyOriginalPath = path.join(deployPath, 'contracts', dependency);
-            const dependencyNodeModulesPath = path.join(deployPath, 'node_modules/', dependency);
-            if (fs.existsSync(dependencyOriginalPath)) {
-                return {contents: fs.readFileSync(dependencyOriginalPath, 'utf8')};
-            } else if (fs.existsSync(dependencyNodeModulesPath)) {
-                return {contents: fs.readFileSync(dependencyNodeModulesPath, 'utf8')};
-            } else {
-                throw new Error('Could not find contract dependency, have you tried npm install?');
-            }
-        };
-
+        const contractPath = path.join(deployPath, 'contracts');
+        const nodeModulesPath = path.join(deployPath, 'node_modules');
+        const originalPath = path.join(deployPath, 'contracts');
+        const getImports = getImportsFactory(nodeModulesPath, originalPath);
         const compiledSources = JSON.parse(
-            solc.compile(JSON.stringify(compileConfig), {import: getImports})
+            compileContract({name: contractName, contractPath, getImports})
         );
-        this.ctx.client.deployerProgress.update(fileName, 20, 'compiled');
+
         if (!compiledSources) {
             throw new Error(
                 '>>>>>>>>>>>>>>>>>>>>>>>> SOLIDITY COMPILATION ERRORS <<<<<<<<<<<<<<<<<<<<<<<<\nNO OUTPUT'
@@ -196,61 +396,62 @@ class Deployer {
             if (found) throw new Error(msg);
         }
 
+        this.ctx.client.deployerProgress.update(fileName, 20, 'compiled');
+
         let artifacts;
         for (const contractFileName in compiledSources.contracts) {
-            const fileName = contractFileName.split('\\').pop().split('/').pop();
+            const fileName = contractFileName
+                .split('\\')
+                .pop()
+                .split('/')
+                .pop();
             const _contractName = fileName.replace('.sol', '');
             if (contractName === _contractName) {
                 artifacts = compiledSources.contracts[contractFileName][_contractName];
             }
         }
 
-        const contract = new this.ctx.web3.eth.Contract(artifacts.abi);
+        const contract = blockchain.getContractFromAbi(artifacts.abi);
+        return {contract, artifacts};
+    }
 
-        const deploy = contract.deploy({data: artifacts.evm.bytecode.object});
-        const gasPrice = await this.ctx.web3.eth.getGasPrice();
-        const estimate = await deploy.estimateGas();
-        const tx = await deploy.send({
-            from: this.ctx.web3.eth.defaultAccount,
-            gasPrice,
-            gas: Math.floor(estimate * 1.1)
-        });
-        const address = tx.options && tx.options.address;
-
-        log.debug({contractName, address}, 'Deployed Contract Instance');
-        this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
-
+    async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
         const artifactsJSON = JSON.stringify(artifacts);
 
         this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts');
-        const artifacts_storage_id = await storage.uploadFile(artifactsJSON);
+        const artifactsStorageId = await storage.uploadFile(artifactsJSON);
 
         this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
-        await this.ctx.web3bridge.putKeyValue(
+        await blockchain.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
-            address
+            address,
+            version
         );
-        await this.ctx.web3bridge.putKeyValue(
+        await blockchain.putKeyValue(
             target,
             'zweb/contracts/abi/' + contractName,
-            artifacts_storage_id
+            artifactsStorageId,
+            version
         );
 
-        this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifacts_storage_id}`);
-
-        log.debug(
-            `Contract ${contractName} with Artifacts Storage ID ${artifacts_storage_id} is deployed to ${address}`
-        );
+        this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifactsStorageId}`);
+        return artifactsStorageId;
     }
 
-    async updateZDNS(host, id) {
-        const target = host.replace('.z', '');
+    async updateZDNS(host, id, version) {
+        const target = host.replace('.point', '');
         log.info({target, id}, 'Updating ZDNS');
-        await this.ctx.web3bridge.putZRecord(target, '0x' + id);
+        await blockchain.putZRecord(target, '0x' + id, version);
     }
 
-    async updateKeyValue(target, values = {}, deployPath, deployContracts = false) {
+    async updateProxyMetadata(host, id, version) {
+        const target = host.replace('.point', '');
+        log.info({target, id}, 'Updating Proxy Metatada');
+        await blockchain.putKeyValue(target, PROXY_METADATA_KEY, id, version);
+    }
+
+    async updateKeyValue(target, values = {}, deployPath, deployContracts = false, version) {
         const replaceContentsWithCids = async obj => {
             const result = {};
 
@@ -317,7 +518,7 @@ class Deployer {
                             params.push(value[paramName]);
                         }
                     }
-                    await this.ctx.web3bridge.sendToContract(
+                    await blockchain.sendToContract(
                         target,
                         contractName,
                         methodName,
@@ -326,7 +527,7 @@ class Deployer {
                 }
                 value = JSON.stringify(value);
             }
-            await this.ctx.web3bridge.putKeyValue(target, key, String(value));
+            await blockchain.putKeyValue(target, key, String(value), version);
         }
     }
 }

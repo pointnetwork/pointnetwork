@@ -1,0 +1,5 @@
+<form method="post" action="/submit_tweet?__point_version={{version}}">
+    <input name="_csrf" type="hidden" value="{{ csrf_value() }}" />
+    <textarea name="contents" required maxlength="280"></textarea>
+    <input type="submit"/>
+</form>

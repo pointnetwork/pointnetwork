@@ -1,0 +1,98 @@
+{
+    "version": 0.1,
+    "target": "profile.point",
+    "upload": {
+        "redundancy": 10,
+        "timeperiod": 10000
+    },
+    "keyvalue": {
+        "firstName": "Ralf",
+        "lastName": "Golfman",
+        "position": "Golf Champion",
+        "storage[photo]": {
+            "file": "img/photo.jpg",
+            "type": "image/jpeg"
+        },
+        "contacts0": {
+            "key": "Location",
+            "value": "Kingston, Jamaica"
+        },
+        "contacts1": {
+            "key": "Phone",
+            "value": "+876-934-8972"
+        },
+        "contacts2": {
+            "key": "Email",
+            "value": "ralf@profile.point"
+        },
+        "links0": {
+            "href": "http://profile.point",
+            "title": "Personal website"
+        },
+        "links1": {
+            "href": "http://blog.point",
+            "title": "Blog"
+        },
+        "storage[summary]": {
+            "blob": "Nunc lobortis mattis aliquam faucibus purus. Diam quis enim lobortis scelerisque fermentum dui faucibus in ornare. Elementum nisi quis eleifend quam adipiscing. Vel pretium lectus quam id leo in vitae. Odio ut enim blandit volutpat maecenas volutpat blandit aliquam etiam. Gravida neque convallis a cras. Mi in nulla posuere sollicitudin aliquam ultrices sagittis orci. Id faucibus nisl tincidunt eget nullam non nisi est.",
+            "type": "text/plain"
+        },
+        "employments0": {
+            "position": "Senior Golf Player",
+            "company": "Qux Inc",
+            "location": "San Salvador, El Salvador",
+            "start": "2019-01",
+            "end": "",
+            "storage[description]": {
+                "blob": "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.",
+                "type": "text/plain"
+            }
+        },
+        "employments1": {
+            "position": "Lead Golf Player",
+            "company": "Baz LLC",
+            "location": "Ouagadougou, Burkina Faso",
+            "start": "2016-06",
+            "end": "2018-12",
+            "storage[description]": {
+                "blob": "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur.",
+                "type": "text/plain"
+            }
+        },
+        "projects0": {
+            "title": "Good Luck",
+            "href": "#",
+            "storage[photo]": {
+                "file": "img/pro1.jpg",
+                "type": "image/jpeg"
+            },
+            "storage[description]": {
+                "blob": "Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus.",
+                "type": "text/plain"
+            }
+        },
+        "projects1": {
+            "title": "Success",
+            "href": "#",
+            "storage[photo]": {
+                "file": "img/pro2.jpg",
+                "type":  "image/jpeg"
+            },
+            "storage[description]": {
+                "blob": "Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.",
+                "type": "text/plain"
+            }
+        },
+        "educations0": {
+            "degree": "Golf Engineer",
+            "institution": "The Tee and Clubs Institute",
+            "location": "Nuuk, Greenland",
+            "start": "2011-09",
+            "end": "2016-05",
+            "storage[description]": {
+                "blob": "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga.",
+                "type": "text/plain"
+            }
+        }
+    }
+}

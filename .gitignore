@@ -3,10 +3,12 @@ _local/
 .idea/
 .DS_Store
 resources/demo/config.test4.json
+resources/liveprofile
 .next/
 debug
 sessions/
 dist/
+bin/
 .cache/
 .parcel-cache/
 dist
@@ -26,3 +28,9 @@ geth
 .env.zappdev
 
 config/*local*
+
+hardhat/resources
+hardhat/build
+!hardhat/resources/unknown-10700.json
+resources/liveprofile/
+.openzeppelin

@@ -30,7 +30,7 @@ To test out Sequelize and Postgres using Docker:
 1. Run the database migrations for the **website_owner** postgres db using `./point migrate`
 1. Connect another terminal to **storage_provider** node: `docker exec -it pointnetwork_storage_provider bash`
 1. Run the database migrations for the **storage_provider** postgres db using `./point migrate`
-1. Now within the running container terminal for **website_owner** node run a simple example deployment: `./scripts/deploy-sites.sh hello.z --contracts`
+1. Now within the running container terminal for **website_owner** node run a simple example deployment: `./scripts/deploy-sites.sh hello.point --contracts`
 
 ## Check data in Postgres
 

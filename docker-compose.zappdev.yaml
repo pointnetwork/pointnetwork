@@ -2,9 +2,23 @@ version: '3.9'
 
 services:
   blockchain_node:
-    extends:
-        file: docker-compose.e2e.yaml
-        service: blockchain_node
+    image: trufflesuite/ganache-cli:v6.12.2
+    container_name: blockchain
+    hostname: blockchain_node
+    healthcheck:
+      test: |
+        wget -qO- http://localhost:7545 \
+          --header='Content-Type: application/json' \
+          --header="Accept: application/json" \
+          --post-data='{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":0}'
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    ports:
+      - '7545:7545'
+    environment:
+      - DOCKER=true
     volumes:
       - blockchain_data_zappdev:/data:rw
     command: |
@@ -17,7 +31,7 @@ services:
           service: contract_deployer
     volumes:
       - shared_contracts_zappdev:/build:rw
-    
+
   point_node:
     extends:
       file: docker-compose.base.yaml
@@ -25,26 +39,31 @@ services:
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
-    command: 'run start:docker:zappdev'
+    command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
       - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
+      - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./package.json:/app/package.json:ro
-      - ./point:/app/point:ro
       - ./src:/app/src:ro
+      - ./package.json:/app/package.json:ro
+      - ./nodemon.json:/app/nodemon.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
       - point_node_data_zappdev:/data
-      - shared_contracts_zappdev:/app/truffle/build/contracts
+      - shared_contracts_zappdev:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
+      - ./hardhat.config.js:/app/hardhat.config.js
+      - ./hardhat/resources:/app/hardhat/resources:rw
     ports:
       - '12346:9685'
       - '65501:8666'
       - '24681:2468'
-    environment:
+    environment:  
       NODE_CONFIG_ENV: zappdev
-  
+
   website_visitor:
     extends:
       file: docker-compose.base.yaml
@@ -53,19 +72,24 @@ services:
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
-    command: 'run start:docker:zappdev'
+    command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
       - ./example:/app/example:ro
+      - ./internal:/app/internal:ro
+      - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro
       - ./scripts:/app/scripts:ro
-      - ./package.json:/app/package.json:ro
-      - ./point:/app/point:ro
       - ./src:/app/src:ro
-      - website_visitor_data_zappdev:/data
-      - shared_contracts_zappdev:/app/truffle/build/contracts
+      - ./package.json:/app/package.json:ro
+      - ./nodemon.json:/app/nodemon.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - website_visitor_data_zappdev:/data   
+      - shared_contracts_zappdev:/app/hardhat/build
       - ./resources/blockchain-test-key2.json:/data/keystore/key.json
       - ./resources/arweave-test-key2.json:/data/keystore/arweave.json
+      - ./hardhat.config.js:/app/hardhat.config.js
+      - ./hardhat/resources:/app/hardhat/resources:rw
     ports:
       - '12347:9685'
       - '65502:8666'
@@ -75,7 +99,7 @@ services:
       DATADIR: /data
 
   arlocal:
-    image: textury/arlocal
+    image: textury/arlocal:v1.1.21
     container_name: arlocal
     command: node bin/index.js --persist=true
     ports:

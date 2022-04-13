@@ -1,18 +1,28 @@
 # point-e2e is used for starting the e2e environment (for development and testing usage only)
 alias point-e2e="docker compose -f docker-compose.e2e.yaml "
 alias point-zappdev="docker compose --env-file .env.zappdev -f docker-compose.zappdev.yaml "
+alias point-test="docker compose -f docker-compose.test.yaml "
 
-# point-browser-docker-N starts a point browser instance for one of the locally saved zappdev environment profiles.
-alias point-browser-docker-1="web-ext run --firefox-profile=storage_provider_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
-alias point-browser-docker-2="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
-alias point-browser-docker-3="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
+# point-dev and point-deploy are alias for use when running the node outside of Docker
+alias point-dev="NODE_CONFIG_ENV=devlocal MODE=zappdev BLOCKCHAIN_HOST=localhost npm run watch"
+alias point-visit="NODE_CONFIG_ENV=visitlocal MODE=zappdev BLOCKCHAIN_HOST=localhost npm run watch"
+alias point-deploy="NODE_CONFIG_ENV=devlocal MODE=zappdev BLOCKCHAIN_HOST=localhost ./point deploy "
 
+# point-browser-docker-owner / visitor starts a point browser using one saved zappdev environment Firefox profiles
+alias point-browser-owner="web-ext run --firefox-profile=website_owner_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
+alias point-browser-visitor="web-ext run --firefox-profile=website_visitor_docker --keep-profile-changes --source-dir dist/prod --url https://point/"
+
+# point-browser can be used when running the node outside of Docker
+alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url https://point/"
+
+# build a local image from the current working branch
 build-image() {
     local image=$(git branch --show-current | sed 's/[^a-zA-Z0-9]/-/g');
 
     docker image inspect pointnetwork/pointnetwork_node:$image > /dev/null 2>&1;
 
-    if [[ $? != 0 ]] || [ "$1" == "--force" ]; then
+    if [[ $status -ne 0 ]] || [[ "$1" == "--force" ]]
+    then
         echo "Building image: pointnetwork/pointnetwork_node:$image";
         docker build -t "pointnetwork/pointnetwork_node:$image" .;
     else

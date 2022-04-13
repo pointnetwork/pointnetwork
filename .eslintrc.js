@@ -89,18 +89,26 @@ module.exports = {
         '@typescript-eslint/no-empty-function': 'off', // TODO: fix all and enable
         'no-shadow': 'off',
         '@typescript-eslint/no-unused-vars': 'error',
-        'no-unused-vars': 'off'
+        'no-unused-vars': 'off',
+        '@typescript-eslint/keyword-spacing': ['error']
         // 'import/no-extraneous-dependencies': 'error',
         // 'import/imports-first': ['error', 'absolute-first'],
         // 'import/extensions': ['error', 'never'],
         // 'import/no-unresolved': 'off',
     },
-    overrides: [{
-        files: [
-            'scripts/**/*.js',
-            'truffle/scripts/*.js',
-            'point'
-        ],
-        rules: {'no-console': 'off'}
-    }]
+    overrides: [
+        {
+            files: [
+                'scripts/**/*.js',
+                'point'
+            ],
+            rules: {'no-console': 'off'}
+        },
+        {
+            files: [
+                'tests/**/*.js'
+            ],
+            rules: {'no-console': ['error', {allow: ['error']}]}
+        }
+    ]
 };

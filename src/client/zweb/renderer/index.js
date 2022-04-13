@@ -4,7 +4,14 @@ const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
 const config = require('config');
 const logger = require('../../../core/log');
+const {
+    getNetworkPrivateKey,
+    getNetworkAddress
+} = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
+const blockchain = require('../../../network/blockchain');
+const {readFileByPath} = require('../../../util');
+const keyValue = require('../../../network/keyvalue');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -53,15 +60,15 @@ class Renderer {
     #defineAvailableFunctions() {
         // These functions will be available for zApps to call in ZHTML
         return {
-            keyvalue_list: async function (host, key) {
-                return await this.renderer.ctx.keyvalue.list(host, key);
+            keyvalue_list: async function(host, key) {
+                return keyValue.list(host, key);
             },
-            keyvalue_get: async function (host, key) {
-                return await this.renderer.ctx.keyvalue.get(host, key);
+            keyvalue_get: async function(host, key) {
+                return keyValue.get(host, key);
             },
             storage_get_by_ikv: async function(identity, key) {
                 try {
-                    const fileKey = await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
+                    const fileKey = await blockchain.getKeyValue(identity, key);
                     log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
                     return await getFile(fileKey);
                 } catch (e) {
@@ -69,26 +76,26 @@ class Renderer {
                     return 'Invalid Content';
                 }
             },
-            storage_get: async function (key) {
+            storage_get: async function(key) {
                 try {
                     return await getFile(key);
                 } catch (e) {
                     return 'Invalid Content';
                 }
             },
-            storage_get_parsed: async function (key) {
+            storage_get_parsed: async function(key) {
                 return await getJSON(key);
             },
-            storage_put: async function (content) {
+            storage_put: async function(content) {
                 return uploadFile(content);
             },
-            encrypt_data: async function (publicKey, data) {
+            encrypt_data: async function(publicKey, data) {
                 const host = this.host;
                 return await encryptData(host, data, publicKey); // todo: make sure you're not encrypting on something stupid like 0x0 public key
             },
-            decrypt_data: async function (encryptedData, unparsedEncryptedSymmetricObjJSON) {
+            decrypt_data: async function(encryptedData, unparsedEncryptedSymmetricObjJSON) {
                 const host = this.host;
-                const privateKey = this.renderer.ctx.wallet.getNetworkAccountPrivateKey();
+                const privateKey = getNetworkPrivateKey();
 
                 const encryptedSymmetricObjJS = JSON.parse(unparsedEncryptedSymmetricObjJSON);
                 const encryptedSymmetricObj = {};
@@ -103,56 +110,56 @@ class Renderer {
                 );
                 return decryptedData.plaintext.toString();
             },
-            isHash: async function (str) {
+            isHash: async function(str) {
                 const s = _.startsWith(str, '0x') ? str.substr(2) : str;
                 if (s.length !== 64) return false;
                 return new RegExp('^[0-9a-fA-F]+$').test(s);
             },
-            identity_by_owner: async function (owner) {
-                return await this.renderer.ctx.web3bridge.identityByOwner(owner);
+            identity_by_owner: async function(owner) {
+                return await blockchain.identityByOwner(owner);
             },
-            owner_by_identity: async function (identity) {
-                return await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
+            owner_by_identity: async function(identity) {
+                return await blockchain.ownerByIdentity(identity);
             },
-            public_key_by_identity: async function (identity) {
-                return await this.renderer.ctx.web3bridge.commPublicKeyByIdentity(identity);
+            public_key_by_identity: async function(identity) {
+                return await blockchain.commPublicKeyByIdentity(identity);
             },
-            identity_ikv_get: async function (identity, key) {
-                return await this.renderer.ctx.web3bridge.getKeyValue(identity, key);
+            identity_ikv_get: async function(identity, key) {
+                return await blockchain.getKeyValue(identity, key);
             },
-            contract_get: async function (target, contractName, method, params) {
-                return await this.renderer.ctx.web3bridge.callContract(
-                    target,
-                    contractName,
-                    method,
-                    params
-                );
+            contract_get: async function(target, contractName, method, params) {
+                return await blockchain.callContract(target, contractName, method, params);
             },
-            contract_call: async function (host, contractName, methodName, params) {
-                return await this.renderer.ctx.web3bridge.sendToContract(
-                    host.replace('.z', ''),
+            contract_call: async function(
+                host,
+                contractName,
+                methodName,
+                params,
+                version = 'latest'
+            ) {
+                return await blockchain.sendToContract(
+                    host.replace('.point', ''),
                     contractName,
                     methodName,
-                    params
+                    params,
+                    {},
+                    version
                 );
             },
-            contract_events: async function (host, contractName, event, filter = {}) {
+            contract_events: async function(host, contractName, event, filter = {}) {
                 //delete keys property inserted by twig
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
-
-                const options = {filter, fromBlock: 1, toBlock: 'latest'};
-                const events = await this.renderer.ctx.web3bridge.getPastEvents(
-                    host.replace('.z', ''),
+                const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
+                const events = await blockchain.getPastEvents(
+                    host.replace('.point', ''),
                     contractName,
                     event,
                     options
                 );
-                let eventData = [];
+                const eventData = [];
                 for (const ev of events) {
                     //console.log(ev, ev.raw);
-                    const eventTimestamp = await this.renderer.ctx.web3bridge.getBlockTimestamp(
-                        ev.blockNumber
-                    );
+                    const eventTimestamp = blockchain.getBlockTimestamp(ev.blockNumber);
 
                     eventData.push({
                         data: ev.returnValues,
@@ -160,32 +167,32 @@ class Renderer {
                     });
                 }
 
-                //filter non-indexed properties from return value for convenience
-                if (Object.keys(filter).length > 0) {
-                    for (const k in filter) {
-                        eventData = eventData.filter(e => e.data[k] === filter[k]);
-                    }
-                }
-
                 return eventData;
             },
-            default_wallet_address: async function () {
-                return this.renderer.ctx.wallet.getNetworkAccount();
+            default_wallet_address: async function() {
+                return getNetworkAddress();
             },
-            is_authenticated: async function (auth) {
+            is_authenticated: async function(auth) {
                 return auth.walletid !== undefined;
             },
-            contract_list: async function (target, contractName, method, params = []) {
+            contract_list: async function(
+                target,
+                contractName,
+                method,
+                params = [],
+                version = 'latest'
+            ) {
                 let i = 0;
                 const results = [];
                 while (true) {
                     try {
                         results.push(
-                            await this.renderer.ctx.web3bridge.callContract(
+                            await blockchain.callContract(
                                 target,
                                 contractName,
                                 method,
-                                params.concat([i])
+                                params.concat([i]),
+                                version
                             )
                         );
                     } catch (e) {
@@ -202,20 +209,20 @@ class Renderer {
                 return results;
             },
 
-            is_identity_registered: async function () {
-                return await this.renderer.ctx.web3bridge.isCurrentIdentityRegistered();
+            is_identity_registered: async function() {
+                return await blockchain.isCurrentIdentityRegistered();
             },
-            get_current_identity: async function () {
-                return await this.renderer.ctx.web3bridge.getCurrentIdentity();
+            get_current_identity: async function() {
+                return await blockchain.getCurrentIdentity();
             },
-            identity_check_availability: async function (identity) {
-                const owner = await this.renderer.ctx.web3bridge.ownerByIdentity(identity);
+            identity_check_availability: async function(identity) {
+                const owner = await blockchain.ownerByIdentity(identity);
                 log.debug({identity, owner}, 'identity_check_availability');
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
 
-            csrf_value: async function () {
+            csrf_value: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (!this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
                 if (!this.renderer.ctx.csrf_tokens[this.host])
@@ -224,18 +231,16 @@ class Renderer {
                         .toString('hex');
                 return this.renderer.ctx.csrf_tokens[this.host];
             },
-            csrf_field: async function () {
+            csrf_field: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (!this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
                 if (!this.renderer.ctx.csrf_tokens[this.host])
                     this.renderer.ctx.csrf_tokens[this.host] = require('crypto')
                         .randomBytes(64)
                         .toString('hex');
-                return (
-                    '<input name=\'_csrf\' value=\'' + this.renderer.ctx.csrf_tokens[this.host] + ' />'
-                );
+                return `<input name="_csrf" value="${this.renderer.ctx.csrf_tokens[this.host]}" />`;
             },
-            csrf_guard: async function (submitted_token) {
+            csrf_guard: async function(submitted_token) {
                 if (!this.renderer.ctx.csrf_tokens)
                     throw new Error(
                         'No csrf token generated for this host (rather, no tokens at all)'
@@ -254,34 +259,12 @@ class Renderer {
             get_wallet_info: async function() {
                 this.renderer.#ensurePrivilegedAccess();
 
-                const walletService = this.renderer.ctx.wallet;
-
                 const wallets = [];
                 wallets.push({
                     currency_name: 'Point',
                     currency_code: 'POINT',
-                    address:
-                        (await this.renderer.ctx.web3bridge.getCurrentIdentity()) + '.point' ||
-                        'N/A',
-                    balance: 0
-                });
-                wallets.push({
-                    currency_name: 'Solana',
-                    currency_code: 'SOL',
-                    address: walletService.getSolanaAccount(),
-                    balance: await walletService.getSolanaMainnetBalanceInSOL()
-                });
-                wallets.push({
-                    currency_name: 'Solana - Devnet',
-                    currency_code: 'devSOL',
-                    address: walletService.getSolanaAccount(),
-                    balance: await walletService.getSolanaDevnetBalanceInSOL()
-                });
-                wallets.push({
-                    currency_name: 'Neon',
-                    currency_code: 'NEON',
-                    address: walletService.getNetworkAccount(),
-                    balance: await walletService.getNetworkAccountBalanceInEth()
+                    address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
+                    balance: await this.renderer.ctx.wallet.getNetworkAccountBalanceInEth()
                 });
                 return wallets;
             },
@@ -296,39 +279,6 @@ class Renderer {
             wallet_send: async function(code, recipient, amount) {
                 this.renderer.#ensurePrivilegedAccess();
                 await this.renderer.ctx.wallet.send(code, recipient, amount);
-            },
-            identity_register: async function(identity) {
-                this.renderer.#ensurePrivilegedAccess();
-
-                const publicKey = this.renderer.ctx.wallet.getNetworkAccountPublicKey();
-                const owner = this.renderer.ctx.wallet.getNetworkAccount();
-
-                log.info(
-                    {
-                        identity,
-                        owner,
-                        publicKey,
-                        len: Buffer.byteLength(publicKey, 'utf-8'),
-                        parts: [
-                            `0x${publicKey.slice(0, 32)}`,
-                            `0x${publicKey.slice(32)}`
-                        ]
-                    },
-                    'Registering a new identity'
-                );
-
-                await this.renderer.ctx.web3bridge.registerIdentity(
-                    identity,
-                    owner,
-                    Buffer.from(publicKey, 'hex')
-                );
-
-                log.info(
-                    {identity, owner, publicKey: publicKey.toString('hex')},
-                    'Successfully registered new identity'
-                );
-
-                return true;
             }
         };
     }
@@ -340,7 +290,7 @@ class Renderer {
 
     #defineAvailableFilters() {
         return {
-            unjson: function (value) {
+            unjson: function(value) {
                 return JSON.parse(value);
             }
         };
@@ -353,7 +303,7 @@ class Renderer {
             const templateFileId = await getFileIdByPath(this.rootDirId, templatePath);
             return getFile(templateFileId, 'utf8');
         } else {
-            return this.localDir.readFileByPath(templatePath, 'utf-8');
+            return readFileByPath(this.localDir, templatePath, 'utf-8');
         }
     }
 
@@ -413,7 +363,7 @@ class Renderer {
             regex: /^extends\s+(.+)$/,
             next: [],
             open: true,
-            compile: function (token) {
+            compile: function(token) {
                 var expression = token.match[1].trim();
                 delete token.match;
                 token.stack = Twig.expression.compile.call(this, {
@@ -422,7 +372,7 @@ class Renderer {
                 }).stack;
                 return token;
             },
-            parse: function (token, context, chain) {
+            parse: function(token, context, chain) {
                 var template,
                     that = this;
 
@@ -439,7 +389,7 @@ class Renderer {
                 // Resolve filename
                 return Twig.expression.parseAsync
                     .call(that, token.stack, context)
-                    .then(function (file) {
+                    .then(function(file) {
                         if (file instanceof Twig.Template) {
                             template = file;
                         } else {
@@ -453,10 +403,10 @@ class Renderer {
                         // Render the template in case it puts anything in its context
                         return template;
                     })
-                    .then(function (template) {
+                    .then(function(template) {
                         return template.renderAsync(innerContext);
                     })
-                    .then(function () {
+                    .then(function() {
                         // Extend the parent context with the extended context
                         context = {
                             ...context,
@@ -543,43 +493,46 @@ class Renderer {
                         }
                         return files;
                     })
-                    .then(files => files.reduce(async (previousPromise, file) => {
-                        const acc = await previousPromise;
+                    .then(files =>
+                        files.reduce(
+                            async (previousPromise, file) => {
+                                const acc = await previousPromise;
 
-                        const tryToRender = async file => {
-                            if (acc.render === null) {
-                                if (file instanceof Twig.Template) {
-                                    const res = {
-                                        render: await file.renderAsync(
-                                            innerContext,
-                                            {isInclude: true}
-                                        ),
-                                        lastError: null
-                                    };
-                                    return res;
-                                }
+                                const tryToRender = async file => {
+                                    if (acc.render === null) {
+                                        if (file instanceof Twig.Template) {
+                                            const opts = {isInclude: true};
+                                            const res = {
+                                                render: await file.renderAsync(innerContext, opts),
+                                                lastError: null
+                                            };
+                                            return res;
+                                        }
 
-                                try {
-                                    const res = {
-                                        render: await (
-                                            await state.template.importFile(file)
-                                        ).renderAsync(innerContext, {isInclude: true}),
-                                        lastError: null
-                                    };
-                                    return res;
-                                } catch (error) {
-                                    return {
-                                        render: null,
-                                        lastError: error
-                                    };
-                                }
-                            }
+                                        try {
+                                            const res = {
+                                                render: await (
+                                                    await state.template.importFile(file)
+                                                ).renderAsync(innerContext, {isInclude: true}),
+                                                lastError: null
+                                            };
+                                            return res;
+                                        } catch (error) {
+                                            return {
+                                                render: null,
+                                                lastError: error
+                                            };
+                                        }
+                                    }
 
-                            return acc;
-                        };
+                                    return acc;
+                                };
 
-                        return await tryToRender(file);
-                    }, {render: null, lastError: null}))
+                                return await tryToRender(file);
+                            },
+                            {render: null, lastError: null}
+                        )
+                    )
                     .then(finalResultReduce => {
                         if (finalResultReduce.render !== null) {
                             return finalResultReduce.render;
@@ -603,21 +556,18 @@ class Renderer {
     }
 
     #registerPointStorageFsLoader(Twig) {
-        Twig.Templates.registerLoader(
-            'fs',
-            async (location, params, callback) => {
-                // ... load the template ...
-                const src = await this.fetchTemplateByPath(params.path);
-                params.data = src;
-                params.allowInlineIncludes = true;
-                // create and return the template
-                var template = new Twig.Template(params);
-                if (typeof callback === 'function') {
-                    callback(template);
-                }
-                return template;
+        Twig.Templates.registerLoader('fs', async (location, params, callback) => {
+            // ... load the template ...
+            const src = await this.fetchTemplateByPath(params.path);
+            params.data = src;
+            params.allowInlineIncludes = true;
+            // create and return the template
+            var template = new Twig.Template(params);
+            if (typeof callback === 'function') {
+                callback(template);
             }
-        );
+            return template;
+        });
     }
 }
 

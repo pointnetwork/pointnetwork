@@ -12,4 +12,3 @@ services:
 volumes:
   point_contracts:
   point_node_data:
-  database_data:
