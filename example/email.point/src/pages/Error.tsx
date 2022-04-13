@@ -2,21 +2,16 @@ import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import RedirectWithTimeout from '@components/RedirectWithTimeout';
 
-import { actions as uiActions, constants as uiConstants } from '@store/modules/ui';
+import { actions as uiActions } from '@store/modules/ui';
 
 const Error: React.FC<{}> = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(
-      uiActions.showErrorNotification(
-        {
-          message: `Invalid path.`,
-        },
-        {
-          timeout: 1000 * 3,
-        }
-      )
+      uiActions.showErrorNotification({
+        message: `Invalid path.`,
+      })
     );
   }, []);
 

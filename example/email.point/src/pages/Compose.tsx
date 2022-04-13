@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useAppContext } from '@hooks/AppContext';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { MailIcon, UserIcon } from '@heroicons/react/outline';
 import { UploadIcon } from '@heroicons/react/solid';
 
@@ -12,12 +12,17 @@ import * as StorageService from '@services/StorageService';
 import * as WalletService from '@services/WalletService';
 
 import { actions as uiActions, constants as uiConstants } from '@store/modules/ui';
+import { selectors as identitySelectors } from '@store/modules/identity';
 
 import CONSTANTS from '../constants';
 
+enum ERRORS {
+  INVALID_RECIPIENT,
+}
+
 const Compose: React.FC<{}> = () => {
   const [loading, setLoading] = useState<boolean>(false);
-  const { identity } = useAppContext();
+  const identity = useSelector(identitySelectors.getIdentity);
 
   const dispatch = useDispatch();
 
@@ -64,11 +69,15 @@ const Compose: React.FC<{}> = () => {
         setLoading(false);
       })
       .catch((error) => {
-        console.log(error);
+        console.error(error);
+        let message = 'Something went wrong, try again later.';
+        if (error === ERRORS.INVALID_RECIPIENT) {
+          message = 'Invalid Recipient';
+        }
         dispatch(
           uiActions.showNotification({
             status: uiConstants.NotifactionStatuses.ERROR,
-            message: 'Something went wrong, try again later.',
+            message,
           })
         );
         setLoading(false);
@@ -82,7 +91,7 @@ const Compose: React.FC<{}> = () => {
     ]);
 
     if (owner === CONSTANTS.AddressZero) {
-      throw new Error('This recipient identity does not exist!');
+      throw ERRORS.INVALID_RECIPIENT;
     }
 
     const { encryptedMessage, encryptedSymmetricObjJSON } = await WalletService.encryptData(
@@ -95,13 +104,11 @@ const Compose: React.FC<{}> = () => {
 
     const storedEncryptedMessageId = await StorageService.putString(encryptedMessage);
 
-    const response = await ContractService.sendContract({
+    await ContractService.sendContract({
       contract: 'PointEmail',
       method: 'send',
       params: [owner, storedEncryptedMessageId, encryptedSymmetricObjJSON],
     });
-
-    console.log(response);
   }
 
   return (

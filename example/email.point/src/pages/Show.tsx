@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import dayjs from 'dayjs';
 
 import * as ContractService from '@services/ContractService';
-import * as StorageService from '@services/StorageService';
-import * as WalletService from '@services/WalletService';
-import * as IdentityService from '@services/IdentityService';
 
-import RedirectWithTimeout from '@components/RedirectWithTimeout';
+import EmailMapping from '@mappers/Email';
 
 import { actions as uiActions } from '@store/modules/ui';
 
+import RedirectWithTimeout from '@components/RedirectWithTimeout';
 import Spinner from '@components/Spinner';
 
 const Show: React.FC<{}> = () => {
@@ -23,63 +22,23 @@ const Show: React.FC<{}> = () => {
   const dispatch = useDispatch();
 
   async function getEmailData(messageId: string) {
-    const [id, from, to, encryptedMessageId, encryptedSymmetricObj, createdAt]: [
-      number,
-      string,
-      string,
-      string,
-      string,
-      number
-    ] = await ContractService.callContract({
+    const rawEmail: EmailInputData = await ContractService.callContract({
       contract: 'PointEmail',
       method: 'getMessageById',
       params: [messageId],
     });
 
-    const encryptedData = await StorageService.getString(encryptedMessageId);
-
-    const [decryptedMessage, fromIdentity, toIdentity] = await Promise.all([
-      WalletService.decryptData(encryptedData, encryptedSymmetricObj),
-      IdentityService.ownerToIdentity(from),
-      IdentityService.ownerToIdentity(to),
-    ]);
-
-    let message = decryptedMessage;
-    let subject = '';
-
-    try {
-      const json = JSON.parse(decryptedMessage);
-      message = json.message;
-      subject = json.subject;
-    } catch (error) {}
-
-    const emailData = {
-      id,
-      from,
-      fromIdentity,
-      to,
-      toIdentity,
-      encryptedMessageId,
-      encryptedSymmetricObj,
-      subject,
-      message,
-      createdAt,
-    };
-
-    return emailData;
+    const email = await EmailMapping(rawEmail);
+    console.log(email);
+    return email;
   }
 
   useEffect(() => {
     if (!messageId) {
       dispatch(
-        uiActions.showErrorNotification(
-          {
-            message: 'The message id is invalid',
-          },
-          {
-            timeout: 1000 * 3,
-          }
-        )
+        uiActions.showErrorNotification({
+          message: 'The message id is invalid',
+        })
       );
       return;
     }
@@ -92,14 +51,9 @@ const Show: React.FC<{}> = () => {
       .catch((error) => {
         console.error(error);
         dispatch(
-          uiActions.showErrorNotification(
-            {
-              message: 'Something went wrong.',
-            },
-            {
-              timeout: 1000 * 3,
-            }
-          )
+          uiActions.showErrorNotification({
+            message: 'Something went wrong.',
+          })
         );
         setLoading(false);
       });
@@ -119,16 +73,16 @@ const Show: React.FC<{}> = () => {
         <div className="container px-6 mx-auto grid">
           <h2 className="my-3 text-gray-700 dark:text-gray-200">
             <div className="text-2xl font-semibold mb-5">
-              Message from @{emailData?.fromIdentity}
+              Message from @{emailData.fromIdentity}
             </div>
-            <div className="mb-5">Message Id: @{emailData?.encryptedMessageId}</div>
-            <div className="mb-5">Time: {emailData?.createdAt}</div>
-            {emailData?.subject && <div className="mb-5">Subject: {emailData?.subject}</div>}
+            <div className="mb-5">Message Id: @{emailData.encryptedMessageId}</div>
+            <div className="mb-5">Time: {dayjs(emailData.createdAt).format('MMMM DD, hh:mm')}</div>
+            {emailData?.subject && <div className="mb-5">Subject: {emailData.subject}</div>}
           </h2>
           <div
             className="
-              px-4
-              py-3
+              px-10
+              py-10
               mb-8
               bg-white
               rounded-lg
@@ -136,7 +90,7 @@ const Show: React.FC<{}> = () => {
               dark:bg-gray-800
             "
           >
-            {emailData?.message}
+            {emailData.message}
           </div>
         </div>
       )}

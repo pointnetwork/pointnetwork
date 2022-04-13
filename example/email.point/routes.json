@@ -1,5 +1,8 @@
 {
   "/": "index.html",
   "/compose": "index.html",
-  "/show": "index.html"
+  "/show": "index.html",
+  "/sent": "index.html",
+  "/important": "index.html",
+  "/trash": "index.html"
 }

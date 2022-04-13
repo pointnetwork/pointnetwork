@@ -1,7 +1,6 @@
 import { NotifactionStatuses } from './constants';
 
 type State = {
-  loading: boolean;
   notification: Notification | null;
 };
 

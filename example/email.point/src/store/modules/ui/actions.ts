@@ -10,7 +10,7 @@ export const showNotificationFactory = (status: NotifactionStatuses) => {
   return (notification: NotificationWithoutStatus, props?: NotificationProps) => {
     return (dispatch: Dispatch) => {
       const { title, message = '' } = notification;
-      const { delay = 0, timeout } = props || {};
+      const { delay = 0, timeout = 1000 * 2 } = props || {};
       setTimeout(() => {
         dispatch(
           uiActions.showNotification({

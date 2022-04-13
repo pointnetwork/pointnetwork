@@ -1,11 +1,3 @@
-type TodoItem = {
-  id: number;
-  owner: string;
-  text: string;
-  deleted: boolean;
-  completed: boolean;
-};
-
 type WindowWithPoint = Window & {
   point: any;
 };
@@ -21,3 +13,20 @@ type EncryptedData = {
 type Address = string;
 
 type Identity = string;
+
+type EmailInputData = [number, string, string, string, string, number];
+
+type Email = {
+  id: number;
+  from: string;
+  fromIdentity?: string;
+  to: string;
+  toIdentity?: string;
+  subject?: string;
+  message?: string;
+  encryptedMessageId: string;
+  createdAt: number;
+  checked?: boolean;
+  important?: boolean;
+  deleted?: boolean;
+};

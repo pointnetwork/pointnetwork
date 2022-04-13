@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 
 import { ThemeProvider } from '@hooks/ThemeProvider';
-import { AppContextProvider } from '@hooks/AppContext';
 
 import store from '@store/index';
 
@@ -15,11 +14,9 @@ ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
       <ThemeProvider>
-        <AppContextProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </AppContextProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
       </ThemeProvider>
     </Provider>
   </React.StrictMode>,

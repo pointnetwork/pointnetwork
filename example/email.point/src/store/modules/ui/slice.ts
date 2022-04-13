@@ -16,7 +16,6 @@ const hideNotification: CaseReducer<State, PayloadAction<void>> = (state) => {
 };
 
 const initialState: State = {
-  loading: false,
   notification: null,
 };
 

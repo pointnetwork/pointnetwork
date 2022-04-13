@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect, useState } from 'react';
+import React, { ReactElement } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { ExclamationIcon, BanIcon, CheckCircleIcon, XIcon } from '@heroicons/react/outline';
 import { NotifactionStatuses } from '@store/modules/ui/constants';
@@ -10,7 +10,7 @@ const Notification: React.FC<{}> = () => {
 
   const statuses: Record<string, { icon: ReactElement; classes: string }> = {
     [NotifactionStatuses.SUCCESS]: {
-      icon: <CheckCircleIcon className="w-10 h-10" />,
+      icon: <CheckCircleIcon className="w-6 h-6" />,
       classes: `
         bg-green-500
         border-green-600
@@ -18,7 +18,7 @@ const Notification: React.FC<{}> = () => {
       `,
     },
     [NotifactionStatuses.ERROR]: {
-      icon: <BanIcon className="w-10 h-10" />,
+      icon: <BanIcon className="w-6 h-6" />,
       classes: `
         bg-red-500
         border-red-600
@@ -26,7 +26,7 @@ const Notification: React.FC<{}> = () => {
       `,
     },
     [NotifactionStatuses.WARNING]: {
-      icon: <ExclamationIcon className="w-10 h-10" />,
+      icon: <ExclamationIcon className="w-6 h-6" />,
       classes: `
         bg-yellow-500
         border-yellow-600
@@ -56,6 +56,7 @@ const Notification: React.FC<{}> = () => {
           className={`
           relative
           bottom-0
+          bg-transparent
         `}
         >
           <div
@@ -78,7 +79,7 @@ const Notification: React.FC<{}> = () => {
             }
           >
             {icon}
-            <div className="flex flex-col flex-1 ml-5">
+            <div className="flex flex-col flex-1 ml-2">
               {notification.title ? (
                 <span className="text-lg font-semibold">{notification.title}</span>
               ) : (
