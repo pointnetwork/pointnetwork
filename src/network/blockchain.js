@@ -40,6 +40,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
     web3.eth.accounts.wallet.add(account);
     web3.eth.defaultAccount = account.address;
 
+    log.debug({blockchainUrl}, 'Created web3 instance');
     return web3;
 }
 
@@ -89,13 +90,8 @@ blockchain.loadPointContract = async (
                 }
             }
 
-            log.debug(`Compiling ${contractName} contract`);
-            const contractPath = path.resolve(
-                basepath,
-                '..',
-                'hardhat',
-                'contracts'
-            );
+            log.debug(`Compiling ${contractName} contract at ${at}`);
+            const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
             await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
 
             log.debug('Identity contract successfully compiled');
@@ -111,6 +107,7 @@ blockchain.loadPointContract = async (
 
 blockchain.loadIdentityContract = async () => {
     const at = config.get('network.identity_contract_address');
+    log.debug({address: at}, 'Identity contract address');
     return await blockchain.loadPointContract('Identity', at);
 };
 
@@ -161,18 +158,29 @@ blockchain.web3send = async (method, optons = {}) => {
         try {
             account = web3.eth.defaultAccount;
             gasPrice = await web3.eth.getGasPrice();
-            log.debug({gasLimit, gasPrice, account}, 'Prepared to send tx to contract method');
+            log.debug(
+                {gasLimit, gasPrice, account, method: method._method.name},
+                'Prepared to send tx to contract method'
+            );
             // if (!gasLimit) {
             gasLimit = await method.estimateGas({from: account, value: amountInWei});
             log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
             // }
             requestStart = Date.now();
-            return await method.send({
-                from: account,
-                gasPrice,
-                gas: gasLimit,
-                value: amountInWei
-            });
+            return await method
+                .send({
+                    from: account,
+                    gasPrice,
+                    gas: gasLimit,
+                    value: amountInWei
+                })
+                .on('error', (error, receipt) => {
+                    const {transactionHash, blockNumber, status} = receipt;
+                    log.debug(
+                        {error, transactionHash, blockNumber, status, method: method._method.name},
+                        'error sending tx to contract method'
+                    );
+                });
         } catch (error) {
             log.error(
                 {
@@ -445,8 +453,8 @@ blockchain.getLastVersionOrBefore = (version, events) => {
     );
     if (filteredEvents.length > 0) {
         const maxObj = filteredEvents.reduce((prev, current) =>
-            blockchain.compareVersions(prev.returnValues.version,
-                current.returnValues.version) === 1
+            blockchain.compareVersions(prev.returnValues.version, current.returnValues.version) ===
+            1
                 ? prev
                 : current
         );
@@ -531,6 +539,8 @@ blockchain.registerIdentity = async (identity, address, commPublicKey) => {
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const contract = await blockchain.loadIdentityContract();
+        log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
+
         const method = contract.methods.register(
             identity,
             address,
@@ -538,6 +548,7 @@ blockchain.registerIdentity = async (identity, address, commPublicKey) => {
             `0x${commPublicKey.slice(32).toString('hex')}`
         );
 
+        log.debug({identity, address}, 'Registering identity');
         const result = await blockchain.web3send(method);
         log.info(result, 'Identity registration result');
         log.sendMetric({
