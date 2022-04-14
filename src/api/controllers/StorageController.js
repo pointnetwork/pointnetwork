@@ -7,7 +7,7 @@ const config = require('config');
 const {FILE_DOWNLOAD_STATUS} = require('../../db/models/file');
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
-        super(ctx);
+        super(ctx, req);
 
         this.req = req;
         this.config = config.get('zproxy');

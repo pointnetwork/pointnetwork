@@ -5,7 +5,7 @@ const {encryptData, decryptData} = require('../../client/encryptIdentityUtils');
 
 class WalletController extends PointSDKController {
     constructor(ctx, req, reply) {
-        super(ctx);
+        super(ctx, req);
         this.req = req;
         this.payload = req.body;
         this.reply = reply;
