@@ -4,6 +4,7 @@ identity_contract_id: 31715318ded2445b406367d86cc8da43b0c25ce668a97ac1b3abdeb524
 api:
   address: 127.0.0.1
   port: 2468
+  csrf_enabled: false
 db:
   define:
     underscored: true

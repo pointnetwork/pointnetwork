@@ -4,7 +4,7 @@ const blockchain = require('../../network/blockchain');
 
 class WalletController extends PointSDKController {
     constructor(ctx, req, reply) {
-        super(ctx);
+        super(ctx, req);
         this.payload = req.body;
         this.reply = reply;
         this.defaultWallet = blockchain.getWallet();

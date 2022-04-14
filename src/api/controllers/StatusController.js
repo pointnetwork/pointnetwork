@@ -5,8 +5,8 @@ const PointSDKController = require('./PointSDKController');
 const app = require(path.resolve(__dirname, '..', '..', '..', 'package.json'));
 
 class StatusController extends PointSDKController {
-    constructor(ctx) {
-        super(ctx);
+    constructor(ctx, req) {
+        super(ctx, req);
     }
 
     async meta() {

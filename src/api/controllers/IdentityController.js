@@ -6,7 +6,7 @@ const log = logger.child({Module: 'IdentityController'});
 
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
-        super(ctx);
+        super(ctx, req);
         this.req = req;
         this.rep = rep;
     }
