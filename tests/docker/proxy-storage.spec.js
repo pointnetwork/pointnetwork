@@ -5,9 +5,6 @@ import path from 'path';
 import FormData from 'form-data';
 import {delay} from '../../src/core/utils';
 import {uploadDir} from '../../src/client/storage';
-// import {uploadLoop} from '../../dist/client/storage/uploader';
-
-// uploadLoop();
 
 jest.retryTimes(24);
 

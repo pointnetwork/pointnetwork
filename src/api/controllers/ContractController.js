@@ -4,7 +4,7 @@ const blockchain = require('../../network/blockchain');
 
 class ContractController extends PointSDKController {
     constructor(ctx, req, reply) {
-        super(ctx);
+        super(ctx, req);
         this.req = req;
         this.host = this.req.headers.host;
         // TODO: also verify the domain is registered in the Identity contract

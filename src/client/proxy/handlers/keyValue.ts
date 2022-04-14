@@ -8,7 +8,10 @@ const {uploadFile} = require('../../storage');
 const attachKeyValueHanlders = (server: FastifyInstance) => {
     server.post(
         '/_keyvalue_append/:key',
-        async (req: FastifyRequest<{Params: {key: string}; Body: Record<string, unknown>}>, res) => {
+        async (req: FastifyRequest<{
+            Params: {key: string};
+            Body: Record<string, unknown>
+        }>, res) => {
             if (req.headers['content-type'] !== 'application/x-www-form-urlencoded') {
                 return res.status(415).send('Only application/x-www-form-urlencoded is supported');
             }

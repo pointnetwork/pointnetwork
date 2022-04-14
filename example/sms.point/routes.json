@@ -1,5 +1,0 @@
-{
-  "/": "index.zhtml",
-  "/@:username": "feed.zhtml",
-  "/submit_tweet": "_submit_tweet.zhtml"
-}

@@ -156,7 +156,9 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                         }
 
                         const file = await fs.readFile(filePath);
-                        const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
+                        const contentType = ext
+                            ? getContentTypeFromExt(ext)
+                            : detectContentType(file);
                         res.header('content-type', contentType);
                         return file;
                     }
@@ -254,7 +256,9 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                         }
                         const file = await getFile(renderedId, null);
 
-                        const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
+                        const contentType = ext
+                            ? getContentTypeFromExt(ext)
+                            : detectContentType(file);
                         res.header('content-type', contentType);
                         return file;
                     }
