@@ -1,10 +1,3 @@
 {
-  "/": "index.zhtml",
-  "/identities": "identities.zhtml",
-  "/identities/:handle": "identity.zhtml",
-  "/wallet": "wallet.zhtml",
-  "/wallet/requestDevSol": "wallet_requestDevSol.zhtml",
-  "/wallet/send": "wallet_send.zhtml",
-  "/wallet/history/:code": "wallet_history.zhtml",
-  "/final": "final.zhtml"
+    "/": "index.zhtml"
 }

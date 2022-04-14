@@ -52,6 +52,20 @@ class WalletController extends PointSDKController {
 
         return this._response({hash});
     }
+
+    async getWalletInfo() {
+        //TODO: Check how to do that.
+        //this.renderer.#ensurePrivilegedAccess();
+
+        const wallets = [];
+        wallets.push({
+            currency_name: 'Point',
+            currency_code: 'POINT',
+            address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
+            balance: await this.ctx.wallet.getNetworkAccountBalanceInEth()
+        });
+        return this._response({wallets});
+    }
 }
 
 module.exports = WalletController;
