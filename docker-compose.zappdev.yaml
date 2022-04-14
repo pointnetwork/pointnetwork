@@ -42,7 +42,7 @@ services:
     command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
-      - ./example:/app/example:ro
+      - ../zapps:/app/example:ro
       - ./internal:/app/internal:ro
       - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro

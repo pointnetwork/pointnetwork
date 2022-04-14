@@ -1,8 +1,0 @@
-{
-    "version": 0.1,
-    "target": "zengarden.point",
-    "upload": {
-        "redundancy": 10,
-        "timeperiod": 10000
-    }
-}

@@ -1,7 +1,0 @@
-{
-  "name": "change.point",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular"
-}

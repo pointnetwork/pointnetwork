@@ -1,9 +1,0 @@
-module.exports = {
-  darkMode: 'media',
-  mode: 'jit',
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
