@@ -6,7 +6,7 @@ const log = logger.child({Module: 'IdentityController'});
 
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
-        super(ctx, req);
+        super(ctx);
         this.req = req;
         this.rep = rep;
     }
@@ -21,6 +21,12 @@ class IdentityController extends PointSDKController {
         const owner = this.req.params.owner;
         const identity = await blockchain.identityByOwner(owner);
         return this._response({identity});
+    }
+
+    async publicKeyByIdentity() {
+        const identity = this.req.params.identity;
+        const publicKey = await blockchain.commPublicKeyByIdentity(identity);
+        return this._response({publicKey});
     }
 
     async registerIdentity() {
