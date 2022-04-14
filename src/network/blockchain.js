@@ -608,6 +608,18 @@ blockchain.getBalance = async address => {
 
 blockchain.getWallet = () => web3.eth.accounts.wallet[0];
 
+blockchain.getPublicKey = () => {
+    const privateKey = web3.eth.accounts.wallet[0];
+    const privateKeyBuffer = Buffer.from(privateKey.replace('0x', ''), 'hex');
+    const isValidPrivate = ethereumjs.isValidPrivate(privateKeyBuffer);
+    if (!isValidPrivate) {
+        throw Error('invalid private key');
+    }
+    const publicKeyBuffer = ethereumjs.privateToPublic(privateKeyBuffer);
+    const publicKey = ethereumjs.bufferToHex(publicKeyBuffer);
+    return publicKey;
+};
+
 blockchain.createAccountAndAddToWallet = () => {
     const account = web3.eth.accounts.create(web3.utils.randomHex(32));
     const wallet = web3.eth.accounts.wallet.add(account);

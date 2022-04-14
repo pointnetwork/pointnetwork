@@ -1,7 +1,11 @@
 const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
 const blockchain = require('../../network/blockchain');
-const {encryptData, decryptData} = require('../../client/encryptIdentityUtils');
+const {
+    encryptData,
+    decryptData,
+    getEncryptedSymetricObjFromJSON
+} = require('../../client/encryptIdentityUtils');
 
 class WalletController extends PointSDKController {
     constructor(ctx, req, reply) {
@@ -24,31 +28,19 @@ class WalletController extends PointSDKController {
     }
 
     publicKey() {
-        // '0x' should be removed
-        const privateKeyBuffer = Buffer.from(this.defaultWallet.privateKey.slice(2), 'hex');
-        const isValidPrivate = ethereumjs.isValidPrivate(privateKeyBuffer);
-        if (!isValidPrivate) {
-            throw Error('invalid private key');
-        }
+        const publicKey = blockchain.getPublicKey();
 
-        const publicKeyBuffer = ethereumjs.privateToPublic(privateKeyBuffer);
-        const publicKey = ethereumjs.bufferToHex(publicKeyBuffer);
-
-        // return the public key
         return this._response({publicKey});
     }
 
     address() {
         const address = this.defaultWallet.address;
 
-        // return the public key
         return this._response({address});
     }
 
     async balance() {
-        const balance = (
-            await blockchain.getBalance(this.defaultWallet.address)
-        ).toString();
+        const balance = (await blockchain.getBalance(this.defaultWallet.address)).toString();
 
         // return the wallet balance
         return this._response({balance});
@@ -68,23 +60,17 @@ class WalletController extends PointSDKController {
         const encryptedData = await encryptData(host, data, publicKey);
         return this._response(encryptedData);
     }
-    
+
     async decryptData() {
-        const {
-            encryptedData, 
-            encryptedSymmetricObj: unparsedEncryptedSymmetricObjJSON
-        } = this.payload;
         const {host} = this.req.headers;
         const privateKey = this.defaultWallet.privateKey;
 
-        const encryptedSymmetricObjJS = JSON.parse(unparsedEncryptedSymmetricObjJSON);
-        const encryptedSymmetricObj = {};
-        for (const k in encryptedSymmetricObjJS) {
-            encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricObjJS[k], 'hex');
-        }
+        const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
+            JSON.parse(this.payload.encryptedSymmetricObj)
+        );
         const decryptedData = await decryptData(
             host,
-            Buffer.from(encryptedData, 'hex'),
+            Buffer.from(this.payload.encryptedData, 'hex'),
             encryptedSymmetricObj,
             privateKey.slice(2)
         );
