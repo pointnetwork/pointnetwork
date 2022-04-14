@@ -1,8 +1,0 @@
-{
-  "/": "index.zhtml",
-  "/welcome": "welcome.zhtml",
-  "/article": "article.zhtml",
-  "/admin": "admin.zhtml",
-  "/submit_comment": "_submit_comment.zhtml",
-  "/submit_article": "_submit_article.zhtml"
-}
