@@ -36,9 +36,6 @@ jobs:
     - run: npm i -g npm
     - run: npm install
 
-    - name: Installing Slither
-      run: pip3 install slither-analyzer
-
     - name: Installing Solc-select
       run: pip3 install solc-select
 
@@ -52,6 +49,3 @@ jobs:
       run: npm run lint
     - name: Run Solhint
       run: npm run lint:sol
-    - name: Run Slither
-      run: npm run slither
-
