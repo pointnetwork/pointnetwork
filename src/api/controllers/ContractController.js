@@ -22,7 +22,7 @@ class ContractController extends PointSDKController {
         // since this is passed via url params the type will be string
         // params=["String Param", 999, true, "Another string"] etc...
         const params = this.payload.params ? this.payload.params : [];
-        const host = this.payload.host === '@' ? '@': this.host; //allow call identity contract
+        const host = this.payload.host === '@' ? '@' : this.host; //allow call identity contract
 
         const data = await blockchain.callContract(host, contract, method, params);
 
@@ -85,7 +85,6 @@ class ContractController extends PointSDKController {
         for (const ev of events) {  
             //console.log(ev, ev.raw);
             const eventTimestamp = await blockchain.getBlockTimestamp(ev.blockNumber);
-            console.log(ev.returnValues);
             eventData.push({
                 data: ev.returnValues,
                 timestamp: eventTimestamp
