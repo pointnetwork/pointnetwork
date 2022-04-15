@@ -1,5 +1,6 @@
 module.exports = [
     ['GET', '/v1/api/identity/identityToOwner/:identity', 'IdentityController@identityToOwner'],
+    ['GET', '/v1/api/identity/publicKeyByIdentity/:identity', 'IdentityController@publicKeyByIdentity'],
     ['GET', '/v1/api/identity/ownerToIdentity/:owner', 'IdentityController@ownerToIdentity'],
     ['POST', '/v1/api/identity/register', 'IdentityController@registerIdentity'],
     ['GET', '/v1/api/status/ping', 'PingController@ping'],
@@ -17,6 +18,8 @@ module.exports = [
     ['GET', '/v1/api/wallet/hash', 'WalletController@hash'],
     ['GET', '/v1/api/wallet/address', 'WalletController@address'],
     ['POST', '/v1/api/wallet/tx', 'WalletController@tx'],
+    ['POST', '/v1/api/wallet/encryptData', 'WalletController@encryptData'],
+    ['POST', '/v1/api/wallet/decryptData', 'WalletController@decryptData'],
     ['POST', '/v1/api/contract/call', 'ContractController@call'],
     ['POST', '/v1/api/contract/send', 'ContractController@send'],
     ['GET', '/v1/api/contract/load/:contract', 'ContractController@load']

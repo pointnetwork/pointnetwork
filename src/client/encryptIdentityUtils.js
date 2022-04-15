@@ -21,7 +21,10 @@ module.exports.encryptData = async (host, plaintext, publicKey) => {
     ]);
 
     // Hash host name
-    const hostNameHashHex = crypto.createHash('sha256').update(host).digest('hex');
+    const hostNameHashHex = crypto
+        .createHash('sha256')
+        .update(host)
+        .digest('hex');
 
     // Encrypt secret information for the recipient with their public key
     const messageForPublicKeyEncryption = `|${hostNameHashHex}|${symmetricKey.toString(
@@ -64,4 +67,12 @@ module.exports.decryptData = async (host, cyphertext, encryptedSymmetricObj, pri
     const plaintext = Buffer.concat([decipher.update(cyphertext), decipher.final()]);
 
     return {plaintext, hostNameHash, symmetricKey, iv};
+};
+
+module.exports.getEncryptedSymetricObjFromJSON = encryptedSymmetricObjJSON => {
+    const encryptedSymmetricObj = {};
+    for (const k in encryptedSymmetricObjJSON) {
+        encryptedSymmetricObj[k] = Buffer.from(encryptedSymmetricObjJSON[k], 'hex');
+    }
+    return encryptedSymmetricObj;
 };
