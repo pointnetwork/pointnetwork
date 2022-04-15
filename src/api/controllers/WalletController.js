@@ -1,6 +1,7 @@
 const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
 const blockchain = require('../../network/blockchain');
+const {getNetworkPublicKey} = require('../../wallet/keystore');
 const {
     encryptData,
     decryptData,
@@ -28,7 +29,7 @@ class WalletController extends PointSDKController {
     }
 
     publicKey() {
-        const publicKey = blockchain.getPublicKey();
+        const publicKey = getNetworkPublicKey();
 
         return this._response({publicKey});
     }
