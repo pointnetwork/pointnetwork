@@ -28,6 +28,12 @@ class IdentityController extends PointSDKController {
         return this._response({identity});
     }
 
+    async publicKeyByIdentity() {
+        const identity = this.req.params.identity;
+        const publicKey = await blockchain.commPublicKeyByIdentity(identity);
+        return this._response({publicKey});
+    }
+
     async registerIdentity() {
         const {identity, _csrf} = this.req.body;
         const {host} = this.req.headers;
