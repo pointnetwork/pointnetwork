@@ -47,19 +47,6 @@ describe('Proxy', () => {
         expect(res.data).toMatch('Welcome to Web 3.0');
     });
 
-    it('Should return https://blog.point HTML', async () => {
-        expect.assertions(3);
-
-        await delay(5000);
-        const res = await get(
-            'https://blog.point',
-            {httpsAgent}
-        );
-        expect(res.status).toEqual(200);
-        expect(res.data).toMatch(/^<!doctype html>/);
-        expect(res.data).toMatch('<title>Example Blog</title>');
-    }, 10000);
-
     it('Should return 404 for non-existing file', async () => {
         expect.assertions(1);
 
@@ -72,30 +59,6 @@ describe('Proxy', () => {
             }
         );
         expect(res.status).toEqual(404);
-    }, 10000);
-
-    it('Should return https://blog.point file in a root folder', async () => {
-        expect.assertions(2);
-
-        await delay(5000);
-        const res = await get(
-            'https://blog.point/index.css',
-            {httpsAgent}
-        );
-        expect(res.status).toEqual(200);
-        expect(res.data).toMatch(/^html, body/);
-    }, 10000);
-
-    it('Should return https://blog.point file in a nested folder', async () => {
-        expect.assertions(2);
-
-        await delay(5000);
-        const res = await get(
-            'https://blog.point/img/star_icon.png',
-            {httpsAgent}
-        );
-        expect(res.status).toEqual(200);
-        expect(res.headers['content-type']).toEqual('image/png');
     }, 10000);
 
     it('Should return 404 for host other than point and not ending on .point', async () => {
