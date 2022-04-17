@@ -7,3 +7,5 @@ export * from './delay';
 export * from './areScalarArraysEqual';
 export * from './resolveHome';
 export * from './merkle';
+export * from './hashFn';
+export * from './escapeString';

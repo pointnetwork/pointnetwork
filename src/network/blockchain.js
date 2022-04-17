@@ -12,8 +12,7 @@ const config = require('config');
 const logger = require('../core/log');
 const log = logger.child({module: 'Blockchain'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
-const {statAsync, resolveHome, compileAndSaveContract} = require('../util');
-const {encode} = require('html-entities');
+const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../util');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -139,7 +138,7 @@ blockchain.loadWebsiteContract = async (target, contractName, version = 'latest'
     } catch (e) {
         throw Error(
             'Could not read abi of the contract ' +
-                encode(contractName) +
+                escapeString(contractName) +
                 '. Reason: ' +
                 e +
                 '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'
