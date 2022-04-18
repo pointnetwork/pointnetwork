@@ -1,4 +1,4 @@
-import https from 'https';
+import https, {Server} from 'https';
 import http, {RequestListener} from 'http';
 import config from 'config';
 import Fastify from 'fastify';
@@ -10,11 +10,59 @@ import attachHandlers from './handlers';
 import fastifyUrlData from 'fastify-url-data';
 import fastifyMultipart from 'fastify-multipart';
 import fastifyFormBody from 'fastify-formbody';
+import {server as WebSocketServer} from 'websocket';
+import ZProxySocketController from '../../api/sockets/ZProxySocketController';
 
-const log = logger.child({module: 'ZProxy'});
+const log = logger.child({module: 'Proxy'});
 const PROXY_PORT = Number(config.get('zproxy.port'));
+const createWsServer = (httpServer: Server, ctx: any) => {
+    const wssLog = log.child({module: 'Proxy.WsServer'});
+    try {
+        const wss = new WebSocketServer({httpServer});
 
-const server = Fastify({
+        wss.on('request', (request) => {
+            const socket = request.accept(null, request.origin);
+            const parsedUrl = new URL(request.origin);
+
+            wssLog.debug({parsedUrl, hostname: parsedUrl.hostname}, 'WS request accepted');
+
+            new ZProxySocketController(ctx, socket, wss, parsedUrl.hostname);
+
+            socket.on('message', (msg) => wssLog.debug({msg}, 'WS message received'));
+            socket.on('close', code => wssLog.debug({code}, 'WS Client disconnected'));
+            socket.on('error', error => wssLog.error(error, 'WS request error'));
+        });
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        wss.on('error', e => void wssLog.error(e, 'Error from WebSocketServer:'));
+
+        httpServer.on('upgrade', (request, socket, head) => {
+            wss.handleUpgrade(
+                request,
+                socket,
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                head,
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                ws => void wss.emit('connection', ws, request)
+            );
+        });
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        wss.on('upgradeError', e => void wssLog.error(e, 'WS server upgrade error'));
+        wss.on('connect', () => wssLog.debug('WS server connection'));
+
+        return wss;
+    } catch (e) {
+        wssLog.error(e, 'WS server error');
+        throw e;
+    }
+};
+
+const httpsServer = Fastify({
     serverFactory(handler) {
         const server = https.createServer({
             SNICallback: (servername, cb) => {
@@ -33,9 +81,7 @@ const server = Fastify({
 
                 cb(null, ctx);
             }
-        }, (req, res) => {
-            handler(req, res);
-        });
+        }, handler);
 
         server.on('error', e => log.error(e, 'HTTPS server error:'));
 
@@ -44,9 +90,9 @@ const server = Fastify({
     trustProxy: '127.0.0.1',
     logger: log
 });
-server.register(fastifyUrlData);
-server.register(fastifyMultipart);
-server.register(fastifyFormBody);
+httpsServer.register(fastifyUrlData);
+httpsServer.register(fastifyMultipart);
+httpsServer.register(fastifyFormBody);
 
 // Redirects http to https to the same host
 const redirectToHttpsHandler: RequestListener = function(request, response) {
@@ -88,7 +134,7 @@ proxyServer.on('connection', socket => {
         let proxy;
         if (byte === 22) {
             // HTTPS
-            proxy = server.server;
+            proxy = httpsServer.server;
         } else if (32 < byte && byte < 127) {
             // HTTP
             proxy = redirectToHttpsServer;
@@ -121,11 +167,16 @@ proxyServer.on('error', error => {
 
 // TODO: ctx is needed for Renderer, remove it later
 const startProxy = async (ctx: any) => {
-    // TODO: move it to the root once we get rid of ctx
     // Main logic is here
-    attachHandlers(server, ctx);
 
-    await server.listen(0);
+    // TODO: move it to the root once we get rid of ctx
+    attachHandlers(httpsServer, ctx);
+
+    await httpsServer.listen(0);
+
+    // TODO: move it to the root once we get rid of ctx
+    createWsServer(httpsServer.server, ctx);
+
     await proxyServer.listen(PROXY_PORT);
 
     log.info(`Proxy started on port ${PROXY_PORT}`);
