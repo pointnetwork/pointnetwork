@@ -5,7 +5,8 @@ const UdpTransport = require('pino-udp');
 const {multistream} = require('pino-multi-stream');
 const ecsFormat = require('@elastic/ecs-pino-format');
 const config = require('config');
-const {resolveHome} = require('../core/utils');
+// TODO: for some reason just ../util doesn't work
+const {resolveHome} = require('../util/resolveHome');
 const {getIdentifier} = require('../util/getIdentifier');
 const {getNetworkAddress} = require('../wallet/keystore');
 const account = getNetworkAddress().toLowerCase();
@@ -21,7 +22,9 @@ let isNewIdentifier;
 try {
     [identifier, isNewIdentifier] = getIdentifier();
 } catch (e) {
-    logger.error('Couldn\'t get network address for logging');
+    // TODO: if we get here, the logger is not defined and we get another breaking error
+    // eslint-disable-next-line no-console
+    console.error('Couldn\'t get network address for logging');
 }
 
 const tags = {

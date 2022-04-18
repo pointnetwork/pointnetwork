@@ -1,4 +1,5 @@
-import Container from 'react-bootstrap/Container'
+import Container from 'react-bootstrap/Container';
+import Loading from '../components/Loading';
 import { useState,useEffect } from "react";
 import { Link } from "wouter";
 
@@ -6,13 +7,14 @@ export default function Identities() {
   
   const [identities, setIdentities] = useState([])
   const [ikvset, setIkvset] = useState([])
-
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(()=>{
     fetchIdentities();
   },[])
 
   const fetchIdentities = async () => {
+    setIsLoading(true);
     let identitiesFetched = await window.point.contract.events(
         {host: '@', contract: 'Identity', event: 'IdentityRegistered'});
     if (identitiesFetched.data != ''){
@@ -24,7 +26,7 @@ export default function Identities() {
     if (ikvsetFetched.data != ''){
         setIkvset(ikvsetFetched.data);
     } 
-      
+    setIsLoading(false);
   }
  
   const renderIdentityEntry = (id) => {
@@ -56,9 +58,10 @@ export default function Identities() {
                     <th>Owner</th>
                     <th>Zapp</th>
                 </tr>
-                {identities.map((e) => renderIdentityEntry(e.data))}
+                {isLoading ? null : identities.map((e) => renderIdentityEntry(e.data))}
             </tbody>
         </table>
+        {isLoading ? <Loading/> : null}
       </Container>
     </>
   );

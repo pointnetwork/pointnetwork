@@ -1,3 +1,5 @@
 {
-    "/": "index.zhtml"
+    "/": "index.zhtml",
+    "/wallet": "index.zhtml",
+    "/identities": "index.zhtml"
 }

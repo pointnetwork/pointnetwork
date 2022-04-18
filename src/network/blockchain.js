@@ -10,11 +10,9 @@ const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
 const logger = require('../core/log');
-const {compileAndSaveContract} = require('../util/contract');
 const log = logger.child({module: 'Blockchain'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../wallet/keystore');
-const utils = require('../core/utils');
-const {statAsync} = require('../util');
+const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../util');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -63,7 +61,7 @@ blockchain.loadPointContract = async (
 ) => {
     if (!(contractName in abisByContractName)) {
         const buildDirPath = path.resolve(
-            utils.resolveHome(config.get('datadir')),
+            resolveHome(config.get('datadir')),
             config.get('network.contracts_path')
         );
 
@@ -140,7 +138,7 @@ blockchain.loadWebsiteContract = async (target, contractName, version = 'latest'
     } catch (e) {
         throw Error(
             'Could not read abi of the contract ' +
-                utils.escape(contractName) +
+                escapeString(contractName) +
                 '. Reason: ' +
                 e +
                 '. If you are the website developer, are you sure you have specified in point.deploy.json config that you want this contract to be deployed?'

@@ -1,10 +1,12 @@
 import Container from 'react-bootstrap/Container'
 import { useState,useEffect } from "react";
 import { useAppContext } from '../context/AppContext';
+import Loading from '../components/Loading';
 
 export default function Home() {
   const { walletIdentity } = useAppContext();
   const [zapps, setZapps] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const featuredZapps = {
     'blog.point': "Blog",
@@ -17,6 +19,7 @@ export default function Home() {
   },[])
 
   const fetchZappsDeployed = async () => {
+    setIsLoading(true);
     let zappsDeployed = [];
     for (let k in featuredZapps){
 
@@ -27,11 +30,12 @@ export default function Home() {
       }
     }
     setZapps(zappsDeployed);
+    setIsLoading(false);
   }
 
   const renderZappEntry = (k) => {
     return (
-        <li><a href={ 'https://' + k } target="_blank">{ k } &mdash; { featuredZapps[k] }</a></li>
+        <li key={k}><a href={ 'https://' + k } target="_blank">{ k } &mdash; { featuredZapps[k] }</a></li>
     )
   }
 
@@ -50,7 +54,7 @@ export default function Home() {
         <p>There's not much content in here, but we will be filling it up from now on</p>
 
         <h5>Explore deployed websites</h5>
-        {zappsList}
+        {isLoading ? <Loading /> : zappsList}
       </Container>
     </>
   );

@@ -1,11 +1,17 @@
-import Container from 'react-bootstrap/Container'
+import Container from 'react-bootstrap/Container';
+import BlockTime from '../components/BlockTime';
 import { useState,useEffect } from "react";
+import Loading from '../components/Loading';
+
 
 export default function Identity({params: {handle}}) {
     
     const [ikvset, setIkvset] = useState([])
     const [owner, setOwner] = useState()
     const [publicKey, setPublicKey] = useState('')
+    const [isLoadingOwner, setIsLoadingOwner] = useState(true)
+    const [isLoadingPublicKey, setIsLoadingPublicKey] = useState(true)
+    const [isLoadingIkv, setIsLoadingIkv] = useState(true)
 
     useEffect(()=>{
         fetchOwner();
@@ -14,23 +20,27 @@ export default function Identity({params: {handle}}) {
     },[])
 
     const fetchOwner = async () => {
-        const result = await window.point.identity.IdentityToOwner({identity: handle});
+        setIsLoadingOwner(true);
+        const result = await window.point.identity.identityToOwner({identity: handle});
         setOwner(result.data.owner);
+        setIsLoadingOwner(false);
     }
 
     const fetchPublicKey = async () => {
+        setIsLoadingPublicKey(true);
         const result = await window.point.identity.publicKeyByIdentity({identity: handle});
         setPublicKey(result.data.publicKey);
+        setIsLoadingPublicKey(false);
     }
 
     const fetchIkv = async () => {
+        setIsLoadingIkv(true)
         let ikvsetFetched = await window.point.contract.events(
                 {host: '@', contract: 'Identity', event: 'IKVSet', filter: {identity: handle}})
         if (ikvsetFetched.data != ''){
-            console.log(ikvsetFetched.data);
             setIkvset(ikvsetFetched.data);
-            console.log(ikvset.map((e) => e.data.key));
         } 
+        setIsLoadingIkv(false)
     }
 
     const isHash = (str) => {
@@ -42,7 +52,7 @@ export default function Identity({params: {handle}}) {
     const renderIkvEntry = (key) => {
 
         const lastEntry = ikvset.filter((e) => e.data.key === key).reduce((prev, current) =>
-            prev.timestamp > current.timestamp ? prev : current
+            prev.blockNumber > current.blockNumber ? prev : current
         );
         return (
             <tr key={key}>
@@ -55,7 +65,7 @@ export default function Identity({params: {handle}}) {
                     }
                 </td>
                 <td>
-                    {new Date(lastEntry.timestamp * 1000).toUTCString()}
+                    <BlockTime blockNumber={lastEntry.blockNumber}/>
                 </td>
                 <td>
                     {lastEntry.data.version}
@@ -64,7 +74,7 @@ export default function Identity({params: {handle}}) {
         )
     }
 
-    const emptyMsg = ikvset.length === 0 ? <div><em>No records found</em></div> : '';
+    const EmptyMsg = () => ikvset.length === 0 ? <div><em>No records found</em></div> : '';
 
     return (
         <Container className="p-3">
@@ -79,7 +89,7 @@ export default function Identity({params: {handle}}) {
                 </tr>
                 <tr>
                     <th>Owner:</th>
-                    <td>{owner}</td>
+                    <td>{isLoadingOwner ? <Loading /> : owner}</td>
                 </tr>
                 <tr>
                     <th>Domain Space:</th>
@@ -88,7 +98,7 @@ export default function Identity({params: {handle}}) {
                 <tr>
                     <th>Communication Public Key:</th>
                     <td className="overflow-wrap: break-word;">
-                        {publicKey.replace('0x', '').match(/.{1,8}/g)?.map((part) => part + ' ')}
+                        {isLoadingPublicKey ? <Loading /> : publicKey.replace('0x', '').match(/.{1,8}/g)?.map((part) => part + ' ')}
                     </td>
                 </tr>
                 </tbody>
@@ -96,13 +106,20 @@ export default function Identity({params: {handle}}) {
 
             <h3>Identity Key Value Store (ikv):</h3>
 
-            <table className="table table-bordered table-primary table-striped table-hover table-responsive">
-                <tbody>
-                    {[...new Set(ikvset.map((e) => e.data.key))].map((key) => renderIkvEntry(key))}
-                </tbody>
-            </table>
-
-            {emptyMsg}
+            {
+                isLoadingIkv
+                ?
+                <Loading />
+                :
+                <>
+                    <table className="table table-bordered table-primary table-striped table-hover table-responsive">
+                        <tbody>
+                            {[...new Set(ikvset.map((e) => e.data.key))].map((key) => renderIkvEntry(key))}
+                        </tbody>
+                    </table>
+                    <EmptyMsg />
+                </>
+            }
 
         </Container>
     );

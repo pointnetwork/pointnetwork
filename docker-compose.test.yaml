@@ -31,8 +31,6 @@ services:
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json:ro
       - ./resources/certs/ca.crt:/app/pointnetwork/resources/certs/ca.crt:ro
       - hardhat_resources_test:/app/hardhat/resources:ro
-    entrypoint: bash
-    command: ./docker-test-node.sh # Starts node and deploys blog contract
     ports:
       - '8666:8666'
       - '2468:2468'

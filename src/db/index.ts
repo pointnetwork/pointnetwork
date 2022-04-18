@@ -4,7 +4,7 @@ import path from 'path';
 import {Sequelize} from 'sequelize';
 import config from 'config';
 import logger from '../core/log';
-import {resolveHome} from '../core/utils';
+import {resolveHome} from '../util';
 
 const log = logger.child({module: 'Sequelize'});
 
