@@ -68,11 +68,6 @@ class WalletController extends PointSDKController {
         });
         return this._response({wallets});
     }
-<<<<<<< HEAD
-
-=======
-    
->>>>>>> 1212223d4a1ad50071464ea9fef64eaf68c05f55
     async encryptData() {
         const {publicKey, data} = this.payload;
         const {host} = this.req.headers;

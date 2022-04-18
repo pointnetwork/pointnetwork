@@ -89,7 +89,7 @@ class ContractController extends PointSDKController {
         for (const ev of events) {  
             //console.log(ev, ev.raw);
             let timestamp = null;
-            if(addTimestamp){
+            if (addTimestamp){
                 timestamp = await blockchain.getBlockTimestamp(ev.blockNumber);
             }
             eventData.push({
