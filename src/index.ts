@@ -4,7 +4,6 @@ import {existsSync, mkdirSync, promises as fs} from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
-import {resolveHome} from './core/utils';
 import {getContractAddress, compileAndSaveContract} from './util/contract';
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
@@ -110,7 +109,7 @@ import logger from './core/log.js';
 import Point from './core/index.js';
 import migrate from './util/migrate';
 import initFolders from './initFolders';
-import {statAsync} from './util';
+import {statAsync, resolveHome} from './util';
 
 // ------------------- Init Logger ----------------- //
 

@@ -1,6 +1,7 @@
 {
   "version": "0.1.0",
   "target": "why.point",
-  "keyvalue": {}
+  "keyvalue": {},
+  "contracts": ["Why"]
 }
 

@@ -3,20 +3,20 @@ import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/fi
 import getDownloadQuery from './query';
 import {request} from 'graphql-request';
 import {
-    hashFn,
     merkle,
     delay,
     areScalarArraysEqual,
-    escape,
-    resolveHome
-} from '../../core/utils';
+    resolveHome,
+    statAsync,
+    escapeString,
+    hashFn
+} from '../../util';
 import {storage} from './storage';
 import {promises as fs} from 'fs';
 import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
 import {uploadLoop, chunkValidatorLoop} from './uploader';
-import {statAsync} from '../../util';
 
 const log = logger.child({module: 'Storage'});
 
@@ -201,7 +201,7 @@ const uploadFile = async data => {
     }
 
     const chunkHashes = chunks.map(chunk => hashFn(chunk).toString('hex'));
-    const merkleTree = merkle.merkle(
+    const merkleTree = merkle(
         chunkHashes.map(x => Buffer.from(x, 'hex')),
         hashFn
     );
@@ -277,16 +277,16 @@ const uploadDir = async dirPath => {
         const stat = await statAsync(dirPath);
         const isDir = stat.isDirectory();
         if (!isDir) {
-            throw new Error(`Path ${escape(dirPath)} is not a directory`);
+            throw new Error(`Path ${escapeString(dirPath)} is not a directory`);
         }
     } catch (e) {
         if (e.code === 'ENOENT') {
-            throw new Error(`Directory ${escape(dirPath)} does not exist`);
+            throw new Error(`Directory ${escapeString(dirPath)} does not exist`);
         }
         throw e;
     }
 
-    log.debug({dirPath: escape(dirPath)}, 'Uploading directory');
+    log.debug({dirPath: escapeString(dirPath)}, 'Uploading directory');
 
     const files = await fs.readdir(dirPath);
     const dirInfo = {
@@ -324,7 +324,7 @@ const uploadDir = async dirPath => {
 
     const id = await uploadFile(JSON.stringify(dirInfo));
 
-    log.debug({dirPath: escape(dirPath)}, 'Successfully uploaded directory');
+    log.debug({dirPath: escapeString(dirPath)}, 'Successfully uploaded directory');
 
     return id;
 };
@@ -382,11 +382,10 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
         if (hash !== 'keccak256') {
             throw new Error('Bad hash type');
         }
-        const merkleReassembled = merkle
-            .merkle(
-                chunks.map(x => Buffer.from(x, 'hex')),
-                hashFn
-            )
+        const merkleReassembled = merkle(
+            chunks.map(x => Buffer.from(x, 'hex')),
+            hashFn
+        )
             .map(x => x.toString('hex'));
         if (!areScalarArraysEqual(merkleReassembled, merkleHash)) {
             throw new Error('Incorrect Merkle hash');

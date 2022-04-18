@@ -1,4 +1,5 @@
-import {resolveHome} from '../core/utils';
+// TODO: for some reason, just ../util doesn't work
+import {resolveHome} from '../util/resolveHome';
 import path from 'path';
 import config from 'config';
 import Wallet, {hdkey} from 'ethereumjs-wallet';

@@ -1,5 +1,5 @@
 import {uploadFile, getFile} from '../../src/client/storage';
-import {delay} from '../../src/core/utils';
+import {delay} from '../../src/util';
 import {get, post} from 'axios';
 
 jest.retryTimes(24);

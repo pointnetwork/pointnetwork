@@ -1,4 +1,4 @@
-import {resolveHome} from '../../core/utils';
+import {resolveHome} from '../../util';
 import Chunk, {CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
 import FormData from 'form-data';
 import axios from 'axios';
