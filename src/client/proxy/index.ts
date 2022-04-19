@@ -1,4 +1,4 @@
-import https, {Server} from 'https';
+import https from 'https';
 import http, {RequestListener} from 'http';
 import config from 'config';
 import Fastify from 'fastify';
@@ -10,57 +10,46 @@ import attachHandlers from './handlers';
 import fastifyUrlData from 'fastify-url-data';
 import fastifyMultipart from 'fastify-multipart';
 import fastifyFormBody from 'fastify-formbody';
-import {server as WebSocketServer} from 'websocket';
+// import {WebSocketServer} from 'ws';
+import fastifyWs from 'fastify-websocket';
 import ZProxySocketController from '../../api/sockets/ZProxySocketController';
 
 const log = logger.child({module: 'Proxy'});
 const PROXY_PORT = Number(config.get('zproxy.port'));
-const createWsServer = (httpServer: Server, ctx: any) => {
-    const wssLog = log.child({module: 'Proxy.WsServer'});
-    try {
-        const wss = new WebSocketServer({httpServer});
+// const createWsServer = (server: Server, ctx: any) => {
+//     const wssLog = log.child({module: 'Proxy.WsServer'});
+//     try {
+//         const wss = new WebSocketServer({noServer: true});
 
-        wss.on('request', (request) => {
-            const socket = request.accept(null, request.origin);
-            const parsedUrl = new URL(request.origin);
+//         wss.on('request', (request) => {
+//             const socket = request.accept(null, request.origin);
+//             const parsedUrl = new URL(request.origin);
 
-            wssLog.debug({parsedUrl, hostname: parsedUrl.hostname}, 'WS request accepted');
+//             wssLog.debug({parsedUrl, h: parsedUrl.hostname}, 'WS request accepted');
 
-            new ZProxySocketController(ctx, socket, wss, parsedUrl.hostname);
+//             new ZProxySocketController(ctx, socket, wss, parsedUrl.hostname);
 
-            socket.on('message', (msg) => wssLog.debug({msg}, 'WS message received'));
-            socket.on('close', code => wssLog.debug({code}, 'WS Client disconnected'));
-            socket.on('error', error => wssLog.error(error, 'WS request error'));
-        });
+//             socket.on('message', (msg: any) => wssLog.debug({msg}, 'Clumsy message'));
+//             socket.on('close', (code: number) => wssLog.debug({code}, 'WS Client disconnected'));
+//             socket.on('error', (error: Error) => wssLog.error(error, 'WS request error'));
+//         });
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        wss.on('error', e => void wssLog.error(e, 'Error from WebSocketServer:'));
+//         wss.on('error', e => void wssLog.error(e, 'Error from WebSocketServer:'));
+//         wss.on('message', (msg) => wssLog.debug({msg}, 'Clumsy message 22222222'));
 
-        httpServer.on('upgrade', (request, socket, head) => {
-            wss.handleUpgrade(
-                request,
-                socket,
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                head,
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                ws => void wss.emit('connection', ws, request)
-            );
-        });
+//         server.on('upgrade', (req, socket, head) => (
+//             wss.handleUpgrade(req, socket, head, ws => void wss.emit('connection', ws, req))
+//         ));
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        wss.on('upgradeError', e => void wssLog.error(e, 'WS server upgrade error'));
-        wss.on('connect', () => wssLog.debug('WS server connection'));
+//         wss.on('upgradeError', e => void wssLog.error(e, 'WS server upgrade error'));
+//         wss.on('connect', () => void wssLog.debug('WS server connection'));
 
-        return wss;
-    } catch (e) {
-        wssLog.error(e, 'WS server error');
-        throw e;
-    }
-};
+//         return wss;
+//     } catch (e) {
+//         wssLog.error(e, 'WS server error');
+//         throw e;
+//     }
+// };
 
 const httpsServer = Fastify({
     serverFactory(handler) {
@@ -93,12 +82,13 @@ const httpsServer = Fastify({
 httpsServer.register(fastifyUrlData);
 httpsServer.register(fastifyMultipart);
 httpsServer.register(fastifyFormBody);
+httpsServer.register(fastifyWs);
 
 // Redirects http to https to the same host
 const redirectToHttpsHandler: RequestListener = function(request, response) {
     // Redirect to https
     const Location = request.url!.replace(/^(http:\/\/)/, 'https://');
-    log.debug({Location}, 'Redirecting to https');
+    log.trace({Location}, 'Redirecting to https');
     response.writeHead(301, {Location});
     response.end();
 };
@@ -171,11 +161,19 @@ const startProxy = async (ctx: any) => {
 
     // TODO: move it to the root once we get rid of ctx
     attachHandlers(httpsServer, ctx);
+    httpsServer.route({
+        method: 'GET',
+        url: '/',
+        handler: () => undefined, // needed otherwise 'handler not defined error' is thrown by fastify
+        wsHandler: conn => {
+            new ZProxySocketController(ctx, conn.socket, httpsServer.websocketServer, 'point');
+        }
+    });
 
     await httpsServer.listen(0);
 
     // TODO: move it to the root once we get rid of ctx
-    createWsServer(httpsServer.server, ctx);
+    // createWsServer(httpsServer.server, ctx);
 
     await proxyServer.listen(PROXY_PORT);
 
