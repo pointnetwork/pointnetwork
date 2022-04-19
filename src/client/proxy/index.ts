@@ -10,47 +10,10 @@ import attachHandlers from './handlers';
 import fastifyUrlData from 'fastify-url-data';
 import fastifyMultipart from 'fastify-multipart';
 import fastifyFormBody from 'fastify-formbody';
-// import {WebSocketServer} from 'ws';
 import fastifyWs from 'fastify-websocket';
-import ZProxySocketController from '../../api/sockets/ZProxySocketController';
 
 const log = logger.child({module: 'Proxy'});
 const PROXY_PORT = Number(config.get('zproxy.port'));
-// const createWsServer = (server: Server, ctx: any) => {
-//     const wssLog = log.child({module: 'Proxy.WsServer'});
-//     try {
-//         const wss = new WebSocketServer({noServer: true});
-
-//         wss.on('request', (request) => {
-//             const socket = request.accept(null, request.origin);
-//             const parsedUrl = new URL(request.origin);
-
-//             wssLog.debug({parsedUrl, h: parsedUrl.hostname}, 'WS request accepted');
-
-//             new ZProxySocketController(ctx, socket, wss, parsedUrl.hostname);
-
-//             socket.on('message', (msg: any) => wssLog.debug({msg}, 'Clumsy message'));
-//             socket.on('close', (code: number) => wssLog.debug({code}, 'WS Client disconnected'));
-//             socket.on('error', (error: Error) => wssLog.error(error, 'WS request error'));
-//         });
-
-//         wss.on('error', e => void wssLog.error(e, 'Error from WebSocketServer:'));
-//         wss.on('message', (msg) => wssLog.debug({msg}, 'Clumsy message 22222222'));
-
-//         server.on('upgrade', (req, socket, head) => (
-//             wss.handleUpgrade(req, socket, head, ws => void wss.emit('connection', ws, req))
-//         ));
-
-//         wss.on('upgradeError', e => void wssLog.error(e, 'WS server upgrade error'));
-//         wss.on('connect', () => void wssLog.debug('WS server connection'));
-
-//         return wss;
-//     } catch (e) {
-//         wssLog.error(e, 'WS server error');
-//         throw e;
-//     }
-// };
-
 const httpsServer = Fastify({
     serverFactory(handler) {
         const server = https.createServer({
@@ -97,8 +60,6 @@ const redirectToHttpsServer = http.createServer(redirectToHttpsHandler);
 redirectToHttpsServer.on('error', (err) => log.error(err, 'redirectToHttpsServer Error:'));
 redirectToHttpsServer.on('connect', (req, cltSocket, head) => {
     // connect to an origin server
-    // const srvUrl = url.parse(`https://${req.url}`);
-    // const srvSocket = net.connect(srvUrl.port, srvUrl.hostname, () => {
     const srvSocket = net.connect(PROXY_PORT, 'localhost', () => {
         cltSocket.write('HTTP/1.1 200 Connection Established\r\n' +
             'Proxy-agent: Node.js-Proxy\r\n' +
@@ -161,20 +122,8 @@ const startProxy = async (ctx: any) => {
 
     // TODO: move it to the root once we get rid of ctx
     attachHandlers(httpsServer, ctx);
-    httpsServer.route({
-        method: 'GET',
-        url: '/',
-        handler: () => undefined, // needed otherwise 'handler not defined error' is thrown by fastify
-        wsHandler: conn => {
-            new ZProxySocketController(ctx, conn.socket, httpsServer.websocketServer, 'point');
-        }
-    });
 
     await httpsServer.listen(0);
-
-    // TODO: move it to the root once we get rid of ctx
-    // createWsServer(httpsServer.server, ctx);
-
     await proxyServer.listen(PROXY_PORT);
 
     log.info(`Proxy started on port ${PROXY_PORT}`);
