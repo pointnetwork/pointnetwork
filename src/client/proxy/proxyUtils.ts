@@ -12,9 +12,18 @@ export const getParamsAndTemplate = (routes: Record<string, string>, path: strin
             break;
         }
     }
+    let rewritedPath = null;
+    if (templateFilename?.startsWith('rewrite:')){
+        rewritedPath = templateFilename.replace('rewrite:', '');
+        for (const param in routeParams){
+            rewritedPath = rewritedPath.replace(':' + param, routeParams[param]);
+        }
+        templateFilename = null;
+    }
     return {
         routeParams,
-        templateFilename
+        templateFilename,
+        rewritedPath
     };
 };
 

@@ -24,7 +24,7 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                 const host = req.headers.host!;
                 const urlData = req.urlData();
                 const queryParams = parse(urlData.query ?? '');
-                const urlPath = urlData.path!;
+                let urlPath = urlData.path!;
                 const fileName = urlPath.split('/')[urlPath.split('/').length - 1];
                 const ext = fileName.split('.').length > 1
                     ? fileName.split('.')[fileName.split('.').length - 1]
@@ -36,10 +36,11 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
                     const routesJsonPath = path.resolve(publicPath, '../routes.json');
                     const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
-                    const {
-                        routeParams,
-                        templateFilename
-                    } = getParamsAndTemplate(routes, urlPath);
+                    const {routeParams, templateFilename, rewritedPath} = getParamsAndTemplate(routes, urlPath);
+                    
+                    if (rewritedPath){
+                        urlPath = rewritedPath;
+                    }
 
                     if (templateFilename) {
                         // This is a ZHTML file
@@ -121,8 +122,13 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                     const {
                         routeParams,
-                        templateFilename
+                        templateFilename,
+                        rewritedPath
                     } = getParamsAndTemplate(routes, urlPath);
+
+                    if (rewritedPath){
+                        urlPath = rewritedPath;
+                    }
 
                     if (templateFilename) {
                         // This is a ZHTML file
@@ -191,8 +197,13 @@ const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
 
                     const {
                         routeParams,
-                        templateFilename
+                        templateFilename,
+                        rewritedPath
                     } = getParamsAndTemplate(routes, urlPath);
+
+                    if (rewritedPath){
+                        urlPath = rewritedPath;
+                    }
 
                     if (templateFilename) {
                         const templateFileId = await getFileIdByPath(

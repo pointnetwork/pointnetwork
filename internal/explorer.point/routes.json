@@ -1,5 +1,7 @@
 {
     "/": "index.zhtml",
     "/wallet": "index.zhtml",
-    "/identities": "index.zhtml"
+    "/identities": "index.zhtml",
+    "/identities/[a-zA-Z]+": "index.zhtml",
+    "/identities/:static.:ext": "rewrite:/:static.:ext"
 }
