@@ -11,6 +11,11 @@ class IdentityController extends PointSDKController {
         this.rep = rep;
     }
 
+    async isIdentityRegistered(){
+        const identityRegistred =  await blockchain.isCurrentIdentityRegistered();
+        return this._response({identityRegistred: identityRegistred});
+    }
+
     async identityToOwner() {
         const identity = this.req.params.identity;
         const owner = await blockchain.ownerByIdentity(identity);
@@ -27,6 +32,12 @@ class IdentityController extends PointSDKController {
         const identity = this.req.params.identity;
         const publicKey = await blockchain.commPublicKeyByIdentity(identity);
         return this._response({publicKey});
+    }
+
+    async blockTimestamp(){
+        const blockNumber = this.req.body.blockNumber;
+        const timestamp = await blockchain.getBlockTimestamp(blockNumber);
+        return this._response({timestamp});
     }
 
     async registerIdentity() {

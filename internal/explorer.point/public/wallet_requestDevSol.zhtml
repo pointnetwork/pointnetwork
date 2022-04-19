@@ -1,5 +1,0 @@
-{{ csrf_guard(request._csrf) }}
-{% set result = wallet_request_dev_sol() %}
-<script>
-    window.history.back();
-</script>

@@ -10,3 +10,8 @@ a {
 a.nav-link.active {
     background: linear-gradient(to bottom, #aaa 0%, transparent 100%);
 }
+
+.imgLogo {
+    height: 1.6em; 
+    margin-right: 0.8em;
+}

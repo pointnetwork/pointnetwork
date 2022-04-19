@@ -1,7 +1,6 @@
 {
-  "version": 1,
-  "target": "explorer.point",
-  "keyvalue": {},
-  "contracts": [
-  ]
-}
+    "version": 0.1,
+    "target": "explorer.point",
+    "keyvalue": {},
+    "contracts": []
+  }

@@ -159,14 +159,12 @@ class Renderer {
                 const eventData = [];
                 for (const ev of events) {
                     //console.log(ev, ev.raw);
-                    const eventTimestamp = blockchain.getBlockTimestamp(ev.blockNumber);
-
+                    const eventTimestamp = await blockchain.getBlockTimestamp(ev.blockNumber);
                     eventData.push({
                         data: ev.returnValues,
                         timestamp: eventTimestamp
                     });
                 }
-
                 return eventData;
             },
             default_wallet_address: async function() {

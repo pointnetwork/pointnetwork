@@ -1,0 +1,17 @@
+.navbar {
+    padding: 0;
+}
+.mono {
+    font-family: "Lucida Console", Courier, monospace;
+}
+a {
+    color: #438fa6;
+}
+a.nav-link.active {
+    background: linear-gradient(to bottom, #aaa 0%, transparent 100%);
+}
+
+.imgLogo {
+    height: 1.6em; 
+    margin-right: 0.8em;
+}
