@@ -66,7 +66,7 @@ class ZProxySocketController {
                 case SUBSCRIPTION_REQUEST_TYPES.RPC: {
                     const {method, params, id} = request;
                     const {result} = await handleRPC({method, params, id});
-                    return this.pushSubscriptionEvent({
+                    return this.pushRPCMessage({
                         request,
                         subscriptionId: null,
                         type: SUBSCRIPTION_EVENT_TYPES.RPC,
@@ -98,6 +98,17 @@ class ZProxySocketController {
                 }
             });
         }
+    }
+
+    pushToSender(msg) {
+        if (this.ws) {
+            this.ws.send(JSON.stringify(msg));
+        }
+    }
+
+    pushRPCMessage(msg) {
+        log.info(msg, 'Pushing RPC message');
+        return this.pushToSender(msg);
     }
 
     pushSubscriptionEvent({type, subscriptionId, request, data}) {
