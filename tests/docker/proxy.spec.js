@@ -35,16 +35,15 @@ describe('Proxy', () => {
     });
 
     it('Should return https://point HTML', async () => {
-        expect.assertions(4);
+        expect.assertions(3);
 
         const res = await get(
             'https://point',
             {httpsAgent}
         );
         expect(res.status).toEqual(200);
-        expect(res.data).toMatch(/^<html>/);
-        expect(res.data).toMatch('<title>Point Explorer</title>');
-        expect(res.data).toMatch('Welcome to Web 3.0');
+        expect(res.data).toMatch(/^<!DOCTYPE html>/);
+        expect(res.data).toMatch('<title>Welcome to Template App</title>');
     });
 
     it('Should return 404 for non-existing file', async () => {
