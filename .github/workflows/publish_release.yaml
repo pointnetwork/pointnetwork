@@ -8,7 +8,7 @@ on:
 
 jobs:
   publish:
-    name: Publish Latest Draft Releas
+    name: Publish Latest Draft Release
     runs-on: ubuntu-latest
     steps:
     - uses: ivangabriele/publish-latest-release@v3
