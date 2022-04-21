@@ -59,8 +59,8 @@ jobs:
       with:
         tag_name: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
         release_name: Release ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
-        draft: false
-        prerelease: true
+        draft: true
+        prerelease: false
 
     - name: upload linux artefact
       uses: actions/upload-release-asset@v1
