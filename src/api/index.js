@@ -3,7 +3,6 @@ const fastifyWs = require('fastify-websocket');
 const config = require('config');
 const logger = require('../core/log');
 const log = logger.child({module: 'ApiServer'});
-const methodPermissionMdw = require('./middleware/rpc-method-permission');
 
 class ApiServer {
     constructor(ctx) {
@@ -70,7 +69,6 @@ class ApiServer {
             this.server.route({
                 method: apiRoute[0],
                 url: apiRoute[1],
-                preHandler: [methodPermissionMdw],
                 handler: async (request, reply) => {
                     const controller = new (require('./controllers/' + controllerName))(
                         this.ctx,

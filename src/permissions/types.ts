@@ -5,3 +5,8 @@ export type PermissionRecord = {
     parentCapabilities: string[]; // allowed RPC methods
     account: string; // wallet address
 };
+
+export type PendingTx = {
+    expiresAt: Date;
+    params: unknown[];
+};

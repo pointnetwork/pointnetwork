@@ -5,6 +5,7 @@ api:
   address: 127.0.0.1
   port: 2468
   csrf_enabled: false
+  sdk_auth_key: "POINTSDK_TOKEN"
 db:
   define:
     underscored: true
@@ -71,3 +72,5 @@ network:
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
 payments:
   token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
+rpc:
+  send_transaction_timeout_secs: 120
