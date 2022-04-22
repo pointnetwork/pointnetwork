@@ -43,7 +43,7 @@ describe('Proxy', () => {
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<!DOCTYPE html>/);
-        expect(res.data).toMatch('<title>Welcome to Template App</title>');
+        expect(res.data).toMatch('<title>Point Explorer</title>');
     });
 
     it('Should return 404 for non-existing file', async () => {

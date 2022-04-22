@@ -20,7 +20,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
         const host = req.headers.host!;
         const urlData = req.urlData();
         const queryParams = parse(urlData.query ?? '');
-        const urlPath = urlData.path!;
+        let urlPath = urlData.path!;
         const fileName = urlPath.split('/')[urlPath.split('/').length - 1];
         const ext = fileName.split('.').length > 1
             ? fileName.split('.')[fileName.split('.').length - 1]
@@ -34,8 +34,13 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             const {
                 routeParams,
-                templateFilename
+                templateFilename, 
+                rewritedPath
             } = getParamsAndTemplate(routes, urlPath);
+
+            if (rewritedPath){
+                urlPath = rewritedPath;
+            }
 
             if (templateFilename) {
                 // This is a ZHTML file
@@ -117,8 +122,13 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             const {
                 routeParams,
-                templateFilename
+                templateFilename, 
+                rewritedPath
             } = getParamsAndTemplate(routes, urlPath);
+
+            if (rewritedPath){
+                urlPath = rewritedPath;
+            }
 
             if (templateFilename) {
                 // This is a ZHTML file
@@ -187,8 +197,13 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             const {
                 routeParams,
-                templateFilename
+                templateFilename, 
+                rewritedPath
             } = getParamsAndTemplate(routes, urlPath);
+
+            if (rewritedPath){
+                urlPath = rewritedPath;
+            }
 
             if (templateFilename) {
                 const templateFileId = await getFileIdByPath(
