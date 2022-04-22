@@ -25,6 +25,8 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     uint public constant MAX_HANDLE_LENGTH = 16;
 
+    mapping(string => mapping(address => bool)) private _isIdentityDeployer;
+
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
     event IdentityOwnershipTransferred(
         string indexed handle, 
@@ -34,6 +36,8 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     );
     event IKVSet(string identity, string key, string value, string version);
 
+    event IdentityDeployerChanged(string identity, address deployer, bool allowed);
+    
     function initialize() public initializer {
         __Ownable_init();
         __UUPSUpgradeable_init();
@@ -46,6 +50,12 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
         require(msg.sender == getOwnerByIdentity(identity), "You are not the owner of this identity");
         // todo: identityToOwner[identity] == address(0) ?
+        _;
+    }
+
+    modifier onlyIdendityDeployer(string memory identity) {
+        require(msg.sender == getOwnerByIdentity(identity) || 
+                _isIdentityDeployer[identity][msg.sender] == true, "You are not deployer of this identity");
         _;
     }
 
@@ -96,7 +106,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     // todo: put or set? decide
     function ikvPut(string memory identity, string memory key, string memory value, string memory version) public 
-        onlyIdentityOwner(identity) {
+        onlyIdendityDeployer(identity) {
         ikvSet(identity,key,value,version);
     }
     
@@ -127,6 +137,34 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
         emit IdentityOwnershipTransferred(handle, oldOwner, newOwner, block.timestamp);
     }
+
+    function addIdentityDeployer(string memory handle, address deployer) public onlyIdentityOwner(handle) {
+        require(deployer != address(0), "Can't set address 0 as deployer"); 
+        require(deployer != getOwnerByIdentity(handle), "Owner is already a deployer");
+        require(_isIdentityDeployer[handle][deployer] != true, "Address already setted as deployer");
+
+        _isIdentityDeployer[handle][deployer] = true;
+
+        emit IdentityDeployerChanged(handle, deployer, true);
+    }
+
+    function removeIdentityDeployer(string memory handle, address deployer) public onlyIdentityOwner(handle) {
+        require(deployer != address(0), "Can't remove address 0 as deployer");
+        require(deployer != getOwnerByIdentity(handle), "Owner can't be removed as a deployer");
+        require(_isIdentityDeployer[handle][deployer] == true, "Address is not a deployer");
+
+        _isIdentityDeployer[handle][deployer] = false;
+
+        emit IdentityDeployerChanged(handle, deployer, false);
+    }
+
+    function isIdentityDeployer(string memory handle, address deployer) public view returns (bool){
+        if(deployer == getOwnerByIdentity(handle)){
+            return true;
+        }
+        return _isIdentityDeployer[handle][deployer];
+    }
+
 
     //*** Internal functions ***//
     function _isAlphaNumeric(bytes1 char) internal pure returns (bool) {
