@@ -28,10 +28,10 @@ class ZProxySocketController {
     }
 
     init() {
-        this.ws.on('message', async ({utf8Data}) => {
+        this.ws.on('message', async (msg) => {
             const {hostname} = this;
             const request = {
-                ...JSON.parse(utf8Data),
+                ...JSON.parse(msg),
                 hostname // add the hostname to the `request` object to be echoed back via the callback closure
             };
 

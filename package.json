@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.1.58",
+  "version": "0.1.59",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -81,6 +81,7 @@
     "@types/proper-lockfile": "^4.1.2",
     "@types/sequelize": "^4.28.11",
     "@types/umzug": "^2.3.3",
+    "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "eslint": "^8.9.0",

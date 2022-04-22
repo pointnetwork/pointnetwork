@@ -10,11 +10,11 @@ import attachHandlers from './handlers';
 import fastifyUrlData from 'fastify-url-data';
 import fastifyMultipart from 'fastify-multipart';
 import fastifyFormBody from 'fastify-formbody';
+import fastifyWs from 'fastify-websocket';
 
-const log = logger.child({module: 'ZProxy'});
+const log = logger.child({module: 'Proxy'});
 const PROXY_PORT = Number(config.get('zproxy.port'));
-
-const server = Fastify({
+const httpsServer = Fastify({
     serverFactory(handler) {
         const server = https.createServer({
             SNICallback: (servername, cb) => {
@@ -33,9 +33,7 @@ const server = Fastify({
 
                 cb(null, ctx);
             }
-        }, (req, res) => {
-            handler(req, res);
-        });
+        }, handler);
 
         server.on('error', e => log.error(e, 'HTTPS server error:'));
 
@@ -44,15 +42,16 @@ const server = Fastify({
     trustProxy: '127.0.0.1',
     logger: log
 });
-server.register(fastifyUrlData);
-server.register(fastifyMultipart);
-server.register(fastifyFormBody);
+httpsServer.register(fastifyUrlData);
+httpsServer.register(fastifyMultipart);
+httpsServer.register(fastifyFormBody);
+httpsServer.register(fastifyWs);
 
 // Redirects http to https to the same host
 const redirectToHttpsHandler: RequestListener = function(request, response) {
     // Redirect to https
     const Location = request.url!.replace(/^(http:\/\/)/, 'https://');
-    log.debug({Location}, 'Redirecting to https');
+    log.trace({Location}, 'Redirecting to https');
     response.writeHead(301, {Location});
     response.end();
 };
@@ -61,8 +60,6 @@ const redirectToHttpsServer = http.createServer(redirectToHttpsHandler);
 redirectToHttpsServer.on('error', (err) => log.error(err, 'redirectToHttpsServer Error:'));
 redirectToHttpsServer.on('connect', (req, cltSocket, head) => {
     // connect to an origin server
-    // const srvUrl = url.parse(`https://${req.url}`);
-    // const srvSocket = net.connect(srvUrl.port, srvUrl.hostname, () => {
     const srvSocket = net.connect(PROXY_PORT, 'localhost', () => {
         cltSocket.write('HTTP/1.1 200 Connection Established\r\n' +
             'Proxy-agent: Node.js-Proxy\r\n' +
@@ -88,7 +85,7 @@ proxyServer.on('connection', socket => {
         let proxy;
         if (byte === 22) {
             // HTTPS
-            proxy = server.server;
+            proxy = httpsServer.server;
         } else if (32 < byte && byte < 127) {
             // HTTP
             proxy = redirectToHttpsServer;
@@ -121,11 +118,12 @@ proxyServer.on('error', error => {
 
 // TODO: ctx is needed for Renderer, remove it later
 const startProxy = async (ctx: any) => {
-    // TODO: move it to the root once we get rid of ctx
     // Main logic is here
-    attachHandlers(server, ctx);
 
-    await server.listen(0);
+    // TODO: move it to the root once we get rid of ctx
+    attachHandlers(httpsServer, ctx);
+
+    await httpsServer.listen(0);
     await proxyServer.listen(PROXY_PORT);
 
     log.info(`Proxy started on port ${PROXY_PORT}`);
