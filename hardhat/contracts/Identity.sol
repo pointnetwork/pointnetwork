@@ -141,7 +141,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     function addIdentityDeployer(string memory handle, address deployer) public onlyIdentityOwner(handle) {
         require(deployer != address(0), "Can't set address 0 as deployer"); 
         require(deployer != getOwnerByIdentity(handle), "Owner is already a deployer");
-        require(_isIdentityDeployer[handle][deployer] != true, "Address already setted as deployer");
+        require(_isIdentityDeployer[handle][deployer] != true, "Address is already a deployer");
 
         _isIdentityDeployer[handle][deployer] = true;
 

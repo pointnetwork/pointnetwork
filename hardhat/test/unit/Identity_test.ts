@@ -172,7 +172,7 @@ describe("Token identity contract", function () {
             await identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address)
             await expect(
                 identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address)
-              ).to.be.revertedWith('Address already setted as deployer');
+              ).to.be.revertedWith('Address is already a deployer');
         });
 
         it("Owner can remove deployer to their identity", async function () {

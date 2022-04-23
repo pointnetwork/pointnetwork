@@ -1,6 +1,4 @@
 import { task } from "hardhat/config";
-import fs = require('fs');
-import {getProxyMetadataFilePath} from '../../utils';
 
 //npx hardhat complie
 //npx hardhat identity-add-deployer 0xD61e5eFcB183418E1f6e53D0605eed8167F90D4d sms 0x1cDfC3B4112B5077721014A514748e7EDCA920AD 0x916f8E7566Dd63D7c444468CaDeA37e80f7F8048 --network development
@@ -35,7 +33,7 @@ task("identity-add-deployer", "Will add a deployer to an identity")
         }
     }
     if(owner === null){
-        throw new Error('Owner not found. Did you addedd the private key of the owner in hardhat config file?');
+        throw new Error('Owner not found. Did you forget to add the private key of the owner in hardhat config file?');
     }
 
     const contractF = await hre.ethers.getContractFactory("Identity");

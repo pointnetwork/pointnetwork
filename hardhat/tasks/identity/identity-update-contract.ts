@@ -5,7 +5,7 @@ import {getProxyMetadataFilePath} from '../../utils';
 //npx hardhat complie
 //npx hardhat identity-update 0xD61e5eFcB183418E1f6e53D0605eed8167F90D4d ./resources/unknown-1337.json --network development
 
-task("identity-update", "Will update point identity contract and metadata file")
+task("identity-update-contract", "Will update point identity contract and metadata file")
   .addPositionalParam("address","Identity contract source address")
   .addPositionalParam("metadataFile", "Metadata file with information about the proxy")
   .setAction(async (taskArgs, hre) => {

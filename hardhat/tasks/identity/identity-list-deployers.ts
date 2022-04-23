@@ -1,7 +1,4 @@
 import { task } from "hardhat/config";
-import fs = require('fs');
-import {getProxyMetadataFilePath} from '../../utils';
-import { skipPartiallyEmittedExpressions } from "typescript";
 
 //npx hardhat complie
 //npx hardhat identity-list-deployers 0xD61e5eFcB183418E1f6e53D0605eed8167F90D4d sms --network development
