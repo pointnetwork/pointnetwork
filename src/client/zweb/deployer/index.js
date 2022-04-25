@@ -154,11 +154,14 @@ class Deployer {
         const identityIsRegistered =
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
-        if (identityIsRegistered && registeredOwner !== owner) {
-            log.error({identity, registeredOwner, owner}, 'Identity is already registered');
-            throw new Error(
-                `Identity ${identity} is already registered, please choose a new one and try again`
-            );
+        if (identityIsRegistered){
+            const isDeployer = await blockchain.isIdentityDeployer(identity, owner);
+            if (!isDeployer){
+                log.error({identity, owner}, 'The address is not allowed to deploy this identity');
+                throw new Error(
+                    `The address ${owner} is not allowed to deploy on ${identity} identity`
+                );
+            }
         }
 
         if (!identityIsRegistered) {

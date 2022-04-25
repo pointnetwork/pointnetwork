@@ -408,6 +408,17 @@ blockchain.commPublicKeyByIdentity = async identity => {
     }
 };
 
+blockchain.isIdentityDeployer = async (identity, address) => {
+    try {
+        const identityContract = await blockchain.loadIdentityContract();
+        const method = identityContract.methods.isIdentityDeployer(identity, address);
+        return await method.call();
+    } catch (e) {
+        log.error({address}, 'Error: isIdentityDeployer');
+        throw e;
+    }
+};
+
 blockchain.getZRecord = async (domain, version = 'latest') => {
     domain = domain.replace('.point', ''); // todo: rtrim instead
     let result = await blockchain.getKeyValue(domain, ZDNS_ROUTES_KEY, version);

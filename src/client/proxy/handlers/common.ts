@@ -20,7 +20,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
         const host = req.headers.host!;
         const urlData = req.urlData();
         const queryParams = parse(urlData.query ?? '');
-        const urlPath = urlData.path!;
+        let urlPath = urlData.path!;
         const fileName = urlPath.split('/')[urlPath.split('/').length - 1];
         const ext =
             fileName.split('.').length > 1
@@ -36,7 +36,15 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             const routesJsonPath = path.resolve(publicPath, '../routes.json');
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
-            const {routeParams, templateFilename} = getParamsAndTemplate(routes, urlPath);
+            const {
+                routeParams,
+                templateFilename, 
+                rewritedPath
+            } = getParamsAndTemplate(routes, urlPath);
+
+            if (rewritedPath){
+                urlPath = rewritedPath;
+            }
 
             if (templateFilename) {
                 // This is a ZHTML file
@@ -109,7 +117,15 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             const routesJsonPath = path.resolve(zappDir, 'routes.json');
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
-            const {routeParams, templateFilename} = getParamsAndTemplate(routes, urlPath);
+            const {
+                routeParams,
+                templateFilename, 
+                rewritedPath
+            } = getParamsAndTemplate(routes, urlPath);
+
+            if (rewritedPath){
+                urlPath = rewritedPath;
+            }
 
             if (templateFilename) {
                 // This is a ZHTML file
@@ -167,7 +183,15 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 throw new Error(`Root dir id not found for host ${host}`);
             }
 
-            const {routeParams, templateFilename} = getParamsAndTemplate(routes, urlPath);
+            const {
+                routeParams,
+                templateFilename, 
+                rewritedPath
+            } = getParamsAndTemplate(routes, urlPath);
+
+            if (rewritedPath){
+                urlPath = rewritedPath;
+            }
 
             if (templateFilename) {
                 const templateFileId = await getFileIdByPath(rootDirId, templateFilename);

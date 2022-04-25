@@ -124,7 +124,7 @@ describe("PointSocial contract", function () {
         it("Random user can't add migrator", async function () {
             await expect(
                 pointSocial.connect(addr2).addMigrator(addr2.address)
-              ).to.be.revertedWith("Access Denied");
+              ).to.be.revertedWith("Ownable: caller is not the owner");
         });
     });
 
