@@ -131,11 +131,13 @@ blockchain.loadWebsiteContract = async (target, contractName, version = 'latest'
 
     let abi;
     try {
+        console.log('getting abi');
         abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
         // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
-
+        console.log({abi})
         return new web3.eth.Contract(abi.abi, at);
     } catch (e) {
+        console.log({e});
         throw Error(
             'Could not read abi of the contract ' +
                 escapeString(contractName) +

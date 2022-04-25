@@ -1,7 +1,4 @@
-const fastify = require('fastify');
-const proxy = require('fastify-http-proxy');
-const server = fastify({logger: true});
-const point =
+module.exports =
     'window.eval(`window.point=(${(e=>{class r extends Error{}class s' +
     ' extends Error{}class t extends Error{}class n extends Error{}cl' +
     'ass a extends Error{}class o extends Error{}const i=async(s,t)=>' +
@@ -77,43 +74,3 @@ const point =
     'dentity:{ownerToIdentity:({owner:e,...r})=>g.get(`identity/owner' +
     'ToIdentity/${e}`,r,{"wallet-token":"WALLETID-PASSCODE"})}}}).toS' +
     'tring()})(window.location.origin);`)';
-
-server.register(proxy, {
-    upstream: 'https://localhost:8666',
-    replyOptions: {
-        rewriteRequestHeaders: (request, headers) => {
-            const {rawHeaders} = request;
-            const host = rawHeaders[rawHeaders.indexOf('Host') + 1];
-            const [subdomain] = host.split('.');
-            return {...headers, host: `${subdomain}.point`};
-        },
-        onError: (reply, error) => {
-            try {
-                if (JSON.parse(error).code === 'FST_ERR_CTP_INVALID_MEDIA_TYPE') {
-                    reply.send(
-                        'The site is only available in read mode. Please run Point Network to get full access to Web 3.0.'
-                    );
-                } else {
-                    reply.send(error);
-                }
-            } catch (e) {
-                console.error('Proxy error:', e);
-                reply.send(error);
-            }
-        },
-        onResponse: (request, reply, res) => {
-            if (res.includes('<html>')) {
-                res = res.replace('</head>', `<script>${point}</script></head>`);
-            }
-        }
-    },
-    httpMethods: ['GET']
-});
-
-server.listen(5000, (err, address) => {
-    if (err) {
-        console.error(err);
-    } else {
-        console.info({address}, 'Success');
-    }
-});
