@@ -11,7 +11,10 @@ import "./tasks/importer/identity";
 import "./tasks/importer/blog";
 import "./tasks/importer/pointSocial";
 import "./tasks/importer/sms";
-import "./tasks/importer/identity-update";
+import "./tasks/identity/identity-update-contract";
+import './tasks/identity/identity-add-deployer.ts';
+import './tasks/identity/identity-remove-deployer.ts';
+import './tasks/identity/identity-list-deployers.ts';
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
@@ -67,12 +70,16 @@ const config: HardhatUserConfig = {
         development: {
             url: devaddress,
             accounts:
-            [privateKey],
+            [
+                privateKey
+            ]
         },
         ynet: {
             url: 'http://ynet.point.space:44444',
             accounts:
-                ['ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'],
+                [
+                    'ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'
+                ],
         },
     },
     

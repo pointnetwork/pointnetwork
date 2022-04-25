@@ -36,7 +36,7 @@ describe("Token identity contract", function () {
 
 		it("Validating owner can set IKVvalue", async function () {
             const shouldBe = 'has passed?';
-			await identityContract.connect(addr1).ikvPut(handle, 'test', shouldBe)
+			await identityContract.connect(addr1).ikvPut(handle, 'test', shouldBe, 'latest')
             const actual = await identityContract.connect(addr1).ikvGet(handle, 'test')
             expect(actual).to.equal(shouldBe);
         });
@@ -62,12 +62,7 @@ describe("Token identity contract", function () {
               ).to.be.revertedWith("Can't transfer ownership to same address");
         });
 
-		it("Validating only handle owner can set its IKV value", async function () {
-            const shouldBe = 'has passed?';
-            await expect(
-                identityContract.connect(addr2).ikvPut(handle, 'test', shouldBe)
-              ).to.be.revertedWith('You are not the owner of this identity');
-        });
+		
 	});
 
 	describe("Testing helper functions", function () {
@@ -117,7 +112,7 @@ describe("Token identity contract", function () {
 	describe("Testing migrator functions", function () {
         it("Owner can migrate IKV to any user", async function () {
             const shouldBe = 'trusted';
-			await identityContract.connect(owner).ikvImportKV(handle, 'migrated-by-owner', shouldBe)
+			await identityContract.connect(owner).ikvImportKV(handle, 'migrated-by-owner', shouldBe, 'latest')
             const actual = await identityContract.connect(addr1).ikvGet(handle, 'migrated-by-owner')
             expect(actual).to.equal(shouldBe);
         });
@@ -126,9 +121,109 @@ describe("Token identity contract", function () {
             const shouldBe = 'trusted';
             await identityContract.connect(owner).finishMigrations()
             await expect(
-                identityContract.connect(owner).ikvImportKV(handle, 'migrated-by-owner', shouldBe)
+                identityContract.connect(owner).ikvImportKV(handle, 'migrated-by-owner', shouldBe, 'latest')
               ).to.be.revertedWith('Access denied');
         });
+    });
+
+
+    describe("Testing deployer functions", function () {
+        it("Owner can add deployer to its identity", async function () {
+            const shouldBe = 'trusted';
+            await expect(
+                identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address)
+            ).not.to.be.revertedWith('You are not the owner of this identity');
+        });
+
+        it("Deployer can set ikv", async function () {
+            const shouldBe = 'trusted';
+			await identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address)
+            await identityContract.connect(addr2).ikvPut(handle, 'test', shouldBe, 'latest')
+            const actual = await identityContract.connect(addr1).ikvGet(handle, 'test')
+            expect(actual).to.equal(shouldBe);
+        });
+
+        it("Other than deployer can't set its IKV value", async function () {
+            const shouldBe = 'has passed?';
+            await expect(
+                identityContract.connect(addr2).ikvPut(handle, 'test', shouldBe, 'latest')
+              ).to.be.revertedWith('You are not deployer of this identity');
+        });
+
+        it("Other than owner can't add deployer to identity", async function () {
+            await expect(
+                identityContract.connect(addr2).addIdentityDeployer(handle, addr2.address)
+              ).to.be.revertedWith('You are not the owner of this identity');
+        });
+
+        it("Can't set address 0 as deployer", async function () {
+            await expect(
+                identityContract.connect(addr1).addIdentityDeployer(handle, '0x0000000000000000000000000000000000000000')
+              ).to.be.revertedWith('Can\'t set address 0 as deployer');
+        });
+
+        it("Can't set owner as deployer", async function () {
+            await expect(
+                identityContract.connect(addr1).addIdentityDeployer(handle, addr1.address)
+              ).to.be.revertedWith('Owner is already a deployer');
+        });
+
+        it("Can't add deployer twice", async function () {
+            await identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address)
+            await expect(
+                identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address)
+              ).to.be.revertedWith('Address is already a deployer');
+        });
+
+        it("Owner can remove deployer to their identity", async function () {
+            await identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address)
+            await expect(
+                identityContract.connect(addr1).removeIdentityDeployer(handle, addr2.address)
+            ).not.to.be.revertedWith('You are not the owner of this identity');
+        });
+
+        it("Deployer removed can't set ikv", async function () {
+            const shouldBe = 'trusted';
+			await identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address)
+            await identityContract.connect(addr1).removeIdentityDeployer(handle, addr2.address)
+            await expect(
+                identityContract.connect(addr2).ikvPut(handle, 'test', shouldBe, 'latest')
+            ).to.be.revertedWith('You are not deployer of this identity');
+        });
+
+        it("Can't remove 0 as deployer", async function () {
+            await expect(
+                identityContract.connect(addr1).removeIdentityDeployer(handle, '0x0000000000000000000000000000000000000000')
+              ).to.be.revertedWith('Can\'t remove address 0 as deployer');
+        });
+
+        it("Can't remove owner as deployer", async function () {
+            await expect(
+                identityContract.connect(addr1).removeIdentityDeployer(handle, addr1.address)
+              ).to.be.revertedWith('Owner can\'t be removed as a deployer');
+        });
+
+        it("Can't remove a deployer that is not a deployer", async function () {
+            await expect(
+                identityContract.connect(addr1).removeIdentityDeployer(handle, addr2.address)
+              ).to.be.revertedWith('Address is not a deployer');
+        });
+
+        it("Can query if an address is a deployer", async function () {
+            const isOwnerDeployer = await identityContract.connect(addr1)
+                .isIdentityDeployer(handle, addr1.address);
+            expect(isOwnerDeployer).to.equal(true);
+
+            const isNotDeployer = await identityContract.connect(addr1)
+                .isIdentityDeployer(handle, addr2.address);
+            expect(isNotDeployer).to.equal(false);
+            
+            await identityContract.connect(addr1).addIdentityDeployer(handle, addr2.address);
+            const isADeployer = await identityContract.connect(addr1)
+                .isIdentityDeployer(handle, addr2.address);
+            expect(isADeployer).to.equal(true);
+        });
+       
     });
 
 });
