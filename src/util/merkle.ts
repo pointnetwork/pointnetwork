@@ -41,5 +41,5 @@ export const merkle = (values: Uint8Array[], digestFn: (data: Uint8Array) => Uin
         initial_iteration = false;
     } while (level.length > 1);
 
-    return [...levels];
+    return [...levels].flat();
 };
