@@ -1,0 +1,21 @@
+datadir: /home/diogo/workspace/pn/devlocal
+zappsdir: ../zapps
+wallet:
+  keystore_path: /home/diogo/workspace/pn/devlocal/keystore
+mode: zappdev
+log:
+  sendLogs: false
+  level: debug
+storage:
+  arweave_host: localhost
+  arweave_protocol: http
+  arweave_port: 1984
+  use_arweave_bundler: false
+  use_arlocal: true
+  arweave_gateway_url: http://localhost:1984/graphql
+network:
+  web3: http://localhost:7545
+api:
+  address: 127.0.0.1
+zproxy:
+  host: 127.0.0.1

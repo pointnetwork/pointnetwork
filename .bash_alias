@@ -11,6 +11,11 @@ alias point-dev="NODE_CONFIG_ENV=devlocal MODE=zappdev npm run watch"
 alias point-visit="NODE_CONFIG_ENV=visitlocal MODE=zappdev npm run watch"
 alias point-deploy="NODE_CONFIG_ENV=devlocal MODE=zappdev ./point deploy "
 
+alias point-dev-install="./scripts/create-local-env.sh"
+alias point-dev-start="./scripts/start-local.sh"
+alias point-dev-stop="./scripts/stop-local.sh"
+alias point-dev-clean="./scripts/clean-local.sh"
+
 # point-browser can be used when running the node outside of Docker
 alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url https://point/"
 

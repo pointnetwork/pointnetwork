@@ -27,7 +27,6 @@ geth
 .env.local
 .env.zappdev
 
-config/*local*
 
 hardhat/resources
 hardhat/build
