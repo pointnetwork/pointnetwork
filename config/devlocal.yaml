@@ -1,7 +1,7 @@
-datadir: /home/diogo/workspace/pn/devlocal
+datadir: ~/workspace/pn/devlocal
 zappsdir: ../zapps
 wallet:
-  keystore_path: /home/diogo/workspace/pn/devlocal/keystore
+  keystore_path: ~/workspace/pn/devlocal/keystore
 mode: zappdev
 log:
   sendLogs: false
