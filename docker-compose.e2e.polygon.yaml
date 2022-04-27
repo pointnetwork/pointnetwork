@@ -29,6 +29,27 @@ services:
     depends_on:
       blockchain_node:
         condition: service_healthy
+<<<<<<< HEAD
+=======
+    deploy:
+      restart_policy:
+        condition: 'no'
+    volumes:
+      - shared_contracts_e2e:/build:rw
+      - ../point-contracts/contracts:/hardhat/contracts:ro
+      - ../point-contracts/scripts:/hardhat/scripts:ro
+      - ../point-contracts/tasks:/hardhat/tasks:ro
+      - ../point-contracts/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
+      - ../point-contracts/utils.ts:/hardhat/utils.ts:ro
+      - ../point-contracts/resources:/hardhat/resources:rw
+    environment:
+      BLOCKCHAIN_HOST: blockchain_node
+      BLOCKCHAIN_PORT: 7545
+      BLOCKCHAIN_NETWORK_ID: 256
+      DEPLOYER_COMPILER_VERSION: native
+      DEPLOYER_ACCOUNT: 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e
+      DEPLOYER_BUILD_PATH: /build
+>>>>>>> c411bdc7 (moving hardhat folder to other repo)
 
   point_node:
     extends:
