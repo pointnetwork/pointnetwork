@@ -5,12 +5,10 @@ ENV GRANAX_USE_SYSTEM_TOR="1"
 RUN chmod 1777 /tmp && apt update && apt install -y python3 tor git build-essential && \
     npm install -g npm && PYTHON=$(which python3) 
 
-WORKDIR /app/hardhat
-COPY hardhat/package.json /app/hardhat
-RUN npm i
 WORKDIR /app
 
 COPY package.json /app/
+COPY package-lock.json /app/
 RUN npm i 
 
 FROM node:14.17.5-stretch-slim
