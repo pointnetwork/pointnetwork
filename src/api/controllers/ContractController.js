@@ -56,9 +56,10 @@ class ContractController extends PointSDKController {
             amountInWei,
             gasLimit
         };
+        const host = this.payload.host === '@' ? '@' : this.host; //allow call identity contract
 
         const data = await blockchain.sendToContract(
-            this.host,
+            host,
             contract,
             method,
             params,
