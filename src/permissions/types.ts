@@ -9,4 +9,5 @@ export type PermissionRecord = {
 export type PendingTx = {
     expiresAt: Date;
     params: unknown[];
+    network?: string;
 };
