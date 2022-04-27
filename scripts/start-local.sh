@@ -13,13 +13,15 @@ echo "Ganache started, logging to ganache.log."
 #install identity contract
 echo "Installing Identity contract."
 source .bash_alias
-cd hardhat
+cd ../point-contracts
 rm -rf cache
 rm -rf typechain
 rm -rf build
 npx hardhat compile
 npm start
-cd ..
+cp resources/Identity-address.json ../pointnetwork/hardhat/resources/ 
+cp contracts/Identity.sol ../pointnetwork/hardhat/contracts/ 
+cd ../pointnetwork
 
 export NODE_CONFIG_ENV=devlocal 
 export MODE=zappdev 

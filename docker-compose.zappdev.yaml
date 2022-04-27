@@ -56,7 +56,7 @@ services:
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
       - ./hardhat.config.js:/app/hardhat.config.js
-      - ./hardhat/resources:/app/hardhat/resources:rw
+      - ../point-contracts/resources:/app/hardhat/resources:rw
     ports:
       - '12346:9685'
       - '65501:8666'
@@ -89,7 +89,7 @@ services:
       - ./resources/blockchain-test-key2.json:/data/keystore/key.json
       - ./resources/arweave-test-key2.json:/data/keystore/arweave.json
       - ./hardhat.config.js:/app/hardhat.config.js
-      - ./hardhat/resources:/app/hardhat/resources:rw
+      - ../point-contracts/resources:/app/hardhat/resources:rw
     ports:
       - '12347:9685'
       - '65502:8666'
