@@ -37,10 +37,10 @@ export class PendingTxs {
      * Adds a transaction to the pool of pending requests
      * for future processing.
      */
-    add(params: unknown[]) {
+    add(params: unknown[], network?: string) {
         const reqId = this.generateId();
         const expiresAt = this.calculateExpiration();
-        this.pendingTransactions[reqId] = {params, expiresAt};
+        this.pendingTransactions[reqId] = {params, expiresAt, network};
         return reqId;
     }
 

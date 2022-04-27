@@ -7,6 +7,7 @@ export type RPCRequest = {
     method: string;
     params?: unknown[];
     origin?: string;
+    network?: string
 };
 
 type HandlerFunc = (
@@ -19,9 +20,9 @@ type HandlerFunc = (
 // Handlers for non-standard methods, or methods with custom logic.
 const specialHandlers: Record<string, HandlerFunc> = {
     eth_requestAccounts: async data => {
-        const {params, id} = data;
+        const {params, id, network} = data;
         try {
-            const result = await blockchain.send('eth_accounts', params, id);
+            const result = await blockchain.send('eth_accounts', params, id, network);
             return {status: 200, result};
         } catch (err) {
             const statusCode = err.code === -32603 ? 500 : 400;
@@ -29,15 +30,15 @@ const specialHandlers: Record<string, HandlerFunc> = {
         }
     },
     eth_sendTransaction: async data => {
-        const {params} = data;
+        const {params, network} = data;
         if (!params) {
             return {status: 400, result: {message: 'Missing `params` in request body.'}};
         }
 
         // Store request for future processing,
         // and send `reqId` to client so it can ask user approval.
-        const reqId = pendingTxs.add(params);
-        return {status: 200, result: {reqId, params}};
+        const reqId = pendingTxs.add(params, network);
+        return {status: 200, result: {reqId, params, network}};
     },
     eth_confirmTransaction: async data => {
         const {params, id} = data;
@@ -56,7 +57,7 @@ const specialHandlers: Record<string, HandlerFunc> = {
             }
 
             pendingTxs.rm(reqId);
-            const result = await blockchain.send('eth_sendTransaction', tx.params, id);
+            const result = await blockchain.send('eth_sendTransaction', tx.params, id, tx.network);
             return {status: 200, result};
         } catch (err) {
             const statusCode = err.code === -32603 ? 500 : 400;
@@ -70,7 +71,7 @@ const permissionHandlers: Record<string, HandlerFunc> = {
     wallet_requestPermissions: async data => {
         const statusCode = 4200; // As per EIP-1193
         const message = 'Unsupported Method `wallet_requestPermissions`.';
-        return {status: 400, result: {statusCode, message, id: data.id}};
+        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
         /*
         try {
             const {params, origin} = data;
@@ -106,7 +107,7 @@ const permissionHandlers: Record<string, HandlerFunc> = {
     wallet_getPermissions: async data => {
         const statusCode = 4200; // As per EIP-1193
         const message = 'Unsupported Method `wallet_getPermissions`.';
-        return {status: 400, result: {statusCode, message, id: data.id}};
+        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
         /*
         const {origin} = data;
         if (!origin) {
@@ -140,7 +141,7 @@ const handleRPC: HandlerFunc = async data => {
         }
 
         // `method` is a standard RPC method (EIP-1474).
-        const result = await blockchain.send(data.method, data.params, data.id);
+        const result = await blockchain.send(data.method, data.params, data.id, data.network);
         return {status: 200, result};
     } catch (err) {
         // As per EIP-1474, -32603 means internal error.

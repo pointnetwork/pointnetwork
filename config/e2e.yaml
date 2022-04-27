@@ -14,7 +14,8 @@ storage:
   arweave_protocol: http
   arweave_port: 1984
 network:
-  web3: http://blockchain_node:7545
+  web3:
+    ynet: http://blockchain_node:7545
 api:
   address: 0.0.0.0
 zproxy:
