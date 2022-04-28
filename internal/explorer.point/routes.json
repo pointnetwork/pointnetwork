@@ -3,5 +3,6 @@
     "/wallet": "index.zhtml",
     "/identities": "index.zhtml",
     "/identities/[a-zA-Z]+": "index.zhtml",
-    "/identities/:static.:ext": "rewrite:/:static.:ext"
+    "/identities/:static.:ext": "rewrite:/:static.:ext",
+    "/zapps": "index.zhtml"
 }
