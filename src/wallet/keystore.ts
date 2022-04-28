@@ -1,4 +1,5 @@
 // TODO: for some reason, just ../util doesn't work
+import fs from 'fs';
 import {resolveHome} from '../util/resolveHome';
 import path from 'path';
 import config from 'config';
@@ -16,7 +17,7 @@ function getWalletFactory() {
     let secretPhrase: string;
     return (): { wallet: Wallet, secretPhrase: string } => {
         if (!wallet) {
-            secretPhrase = require(path.join(keystorePath, 'key.json')).phrase;
+            secretPhrase = JSON.parse(fs.readFileSync(path.join(keystorePath, 'key.json')).toString()).phrase;
             const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(secretPhrase));
             wallet = hdwallet.getWallet();
         }
