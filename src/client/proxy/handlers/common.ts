@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
 import {promises as fs} from 'fs';
 import {parse} from 'query-string';
@@ -34,7 +35,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             const {
                 routeParams,
-                templateFilename, 
+                templateFilename,
                 rewritedPath
             } = getParamsAndTemplate(routes, urlPath);
 
@@ -122,7 +123,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             const {
                 routeParams,
-                templateFilename, 
+                templateFilename,
                 rewritedPath
             } = getParamsAndTemplate(routes, urlPath);
 
@@ -197,7 +198,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             const {
                 routeParams,
-                templateFilename, 
+                templateFilename,
                 rewritedPath
             } = getParamsAndTemplate(routes, urlPath);
 
