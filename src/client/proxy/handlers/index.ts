@@ -6,6 +6,7 @@ import attachContractSendHandler from './contractSend';
 import attachApiHandler from './api';
 
 // TODO: ctx is needed for Renderer and keyvalue, remove it later
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const attachHandlers = (server: FastifyInstance, ctx: any) => {
     attachStorageHandlers(server);
     attachApiHandler(server);

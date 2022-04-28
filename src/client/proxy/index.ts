@@ -7,9 +7,9 @@ import tls from 'tls';
 import logger from '../../core/log';
 import net from 'net';
 import attachHandlers from './handlers';
-import fastifyUrlData from 'fastify-url-data';
-import fastifyMultipart from 'fastify-multipart';
-import fastifyFormBody from 'fastify-formbody';
+import fastifyUrlData from '@fastify/url-data';
+import fastifyMultipart from '@fastify/multipart';
+import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from 'fastify-websocket';
 
 const log = logger.child({module: 'Proxy'});
@@ -117,6 +117,7 @@ proxyServer.on('error', error => {
 });
 
 // TODO: ctx is needed for Renderer, remove it later
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const startProxy = async (ctx: any) => {
     // Main logic is here
 
