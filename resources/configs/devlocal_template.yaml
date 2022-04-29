@@ -17,5 +17,7 @@ network:
   web3: http://localhost:7545
 api:
   address: 127.0.0.1
+  port: 24681
 zproxy:
   host: 127.0.0.1
+  port: 65501
