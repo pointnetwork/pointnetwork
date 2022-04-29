@@ -56,11 +56,12 @@ npm i
 echo "npm run build"
 npm run build
 
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    echo "Linux detected, replacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
-    sed -i 's|~|'$HOME'|g' config/devlocal.yaml
-    sed -i 's|~|'$HOME'|g' config/visitlocal.yaml
-fi
+echo "Linux detected, replacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
+cp resources/configs/devlocal_template.yaml config/devlocal.yaml
+cp resources/configs/visitlocal_template.yaml config/visitlocal.yaml
+
+perl -i -pe"s|~|$HOME|" config/devlocal.yaml
+perl -i -pe"s|~|$HOME|" config/visitlocal.yaml
 
 echo "Installation of local env ended"
 
