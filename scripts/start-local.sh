@@ -21,18 +21,5 @@ npx hardhat compile
 npm start
 cd ..
 
-export NODE_CONFIG_ENV=devlocal 
-export MODE=zappdev 
-
-#run owner node
-echo "Starting onwer node"
-npm run watch & 
-echo "Point node owner started. Logging to owner.log."
-
-#run visitor node
-export NODE_CONFIG_ENV=visitlocal 
-echo "Starting visitor node"
-npm run watch & 
-echo "Point node visitor started. Logging to visitor.log."
 
 
