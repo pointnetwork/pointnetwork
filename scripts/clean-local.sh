@@ -50,14 +50,3 @@ echo "cp resources/blockchain-test-key2.json ~/workspace/pn/visitlocal/keystore/
 cp resources/blockchain-test-key2.json ~/workspace/pn/visitlocal/keystore/key.json
 echo "cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arweave.json"
 cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arweave.json
-
-
-echo "Removing, coping and replacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
-echo "cp resources/configs/devlocal_template.yaml config/devlocal.yaml"
-cp resources/configs/devlocal_template.yaml config/devlocal.yaml
-echo "cp resources/configs/visitlocal_template.yaml config/visitlocal.yaml"
-cp resources/configs/visitlocal_template.yaml config/visitlocal.yaml
-
-perl -i -pe"s|~|$HOME|" config/devlocal.yaml
-perl -i -pe"s|~|$HOME|" config/visitlocal.yaml
-
