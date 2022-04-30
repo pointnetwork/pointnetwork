@@ -1,0 +1,25 @@
+datadir: ~/workspace/pn/visitlocal
+zappsdir: ../zapps
+wallet:
+  keystore_path: ~/workspace/pn/visitlocal/keystore
+mode: zappdev
+log:
+  sendLogs: false
+  level: debug
+storage:
+  arweave_host: localhost
+  arweave_protocol: http
+  arweave_port: 1984
+  use_arweave_bundler: false
+  use_arlocal: true
+  arweave_gateway_url: http://localhost:1984/graphql
+network:
+  web3: http://localhost:7545
+api:
+  address: 127.0.0.1
+  port: 24682
+zproxy:
+  host: 127.0.0.1
+  port: 65502
+  server_port: 8779
+  server_http_port: 8780
