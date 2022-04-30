@@ -72,6 +72,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
+    "@ethersproject/providers": "^5.6.4",
     "@types/async": "^3.2.12",
     "@types/commander": "^2.12.2",
     "@types/config": "^0.0.41",
@@ -87,6 +88,7 @@
     "eslint": "^8.9.0",
     "eslint-plugin-filenames": "^1.3.2",
     "eslint-plugin-prefer-arrow": "^1.2.3",
+    "ethers": "^5.6.4",
     "hardhat": "^2.8.4",
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.0",
@@ -98,6 +100,7 @@
     "sequelize-mig": "^3.1.3",
     "solhint": "^3.3.7",
     "ts-node": "^10.5.0",
+    "typechain": "^8.0.0",
     "typescript": "^4.6.2"
   },
   "scripts": {
