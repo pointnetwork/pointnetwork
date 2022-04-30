@@ -7,6 +7,7 @@ import Identities from './pages/Identities'
 import Identity from './pages/Identity'
 import Final from './pages/Final'
 import Wallet from './pages/Wallet'
+import Zapps from './pages/Zapps'
 import Loading from "./components/Loading";
 
 const Main = () => {
@@ -45,6 +46,10 @@ const Main = () => {
                                 <Route path='/identities'>
                                     <Identities/>
                                 </Route>
+                                <Route path='/zapps'>
+                                    <Zapps/>
+                                </Route>
+                                
                             </Switch>
                             :
                             <Final/>

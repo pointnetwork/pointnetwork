@@ -22808,6 +22808,8 @@ var _final = require("./pages/Final");
 var _finalDefault = parcelHelpers.interopDefault(_final);
 var _wallet = require("./pages/Wallet");
 var _walletDefault = parcelHelpers.interopDefault(_wallet);
+var _zapps = require("./pages/Zapps");
+var _zappsDefault = parcelHelpers.interopDefault(_zapps);
 var _loading = require("./components/Loading");
 var _loadingDefault = parcelHelpers.interopDefault(_loading);
 var _s = $RefreshSig$();
@@ -22829,7 +22831,7 @@ const Main = ()=>{
         children: isLoading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
         }, void 0, false, {
             fileName: "src/App.js",
-            lineNumber: 31,
+            lineNumber: 32,
             columnNumber: 26
         }, undefined) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_jsxDevRuntime.Fragment, {
             children: [
@@ -22837,7 +22839,7 @@ const Main = ()=>{
                     isRegistered: isRegistered
                 }, void 0, false, {
                     fileName: "src/App.js",
-                    lineNumber: 33,
+                    lineNumber: 34,
                     columnNumber: 21
                 }, undefined),
                 isRegistered ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Switch, {
@@ -22847,12 +22849,12 @@ const Main = ()=>{
                             children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_homeDefault.default, {
                             }, void 0, false, {
                                 fileName: "src/App.js",
-                                lineNumber: 39,
+                                lineNumber: 40,
                                 columnNumber: 37
                             }, undefined)
                         }, void 0, false, {
                             fileName: "src/App.js",
-                            lineNumber: 38,
+                            lineNumber: 39,
                             columnNumber: 33
                         }, undefined),
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
@@ -22860,12 +22862,12 @@ const Main = ()=>{
                             children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_walletDefault.default, {
                             }, void 0, false, {
                                 fileName: "src/App.js",
-                                lineNumber: 42,
+                                lineNumber: 43,
                                 columnNumber: 37
                             }, undefined)
                         }, void 0, false, {
                             fileName: "src/App.js",
-                            lineNumber: 41,
+                            lineNumber: 42,
                             columnNumber: 33
                         }, undefined),
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
@@ -22873,7 +22875,7 @@ const Main = ()=>{
                             component: _identityDefault.default
                         }, void 0, false, {
                             fileName: "src/App.js",
-                            lineNumber: 44,
+                            lineNumber: 45,
                             columnNumber: 33
                         }, undefined),
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
@@ -22881,30 +22883,43 @@ const Main = ()=>{
                             children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_identitiesDefault.default, {
                             }, void 0, false, {
                                 fileName: "src/App.js",
-                                lineNumber: 46,
+                                lineNumber: 47,
                                 columnNumber: 37
                             }, undefined)
                         }, void 0, false, {
                             fileName: "src/App.js",
-                            lineNumber: 45,
+                            lineNumber: 46,
+                            columnNumber: 33
+                        }, undefined),
+                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
+                            path: "/zapps",
+                            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_zappsDefault.default, {
+                            }, void 0, false, {
+                                fileName: "src/App.js",
+                                lineNumber: 50,
+                                columnNumber: 37
+                            }, undefined)
+                        }, void 0, false, {
+                            fileName: "src/App.js",
+                            lineNumber: 49,
                             columnNumber: 33
                         }, undefined)
                     ]
                 }, void 0, true, {
                     fileName: "src/App.js",
-                    lineNumber: 37,
+                    lineNumber: 38,
                     columnNumber: 29
                 }, undefined) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_finalDefault.default, {
                 }, void 0, false, {
                     fileName: "src/App.js",
-                    lineNumber: 50,
+                    lineNumber: 55,
                     columnNumber: 29
                 }, undefined)
             ]
         }, void 0, true)
     }, void 0, false, {
         fileName: "src/App.js",
-        lineNumber: 30,
+        lineNumber: 31,
         columnNumber: 9
     }, undefined));
 };
@@ -22914,12 +22929,12 @@ exports.default = App = ()=>/*#__PURE__*/ _jsxDevRuntime.jsxDEV(_appContext.Prov
         children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(Main, {
         }, void 0, false, {
             fileName: "src/App.js",
-            lineNumber: 58,
+            lineNumber: 63,
             columnNumber: 47
         }, undefined)
     }, void 0, false, {
         fileName: "src/App.js",
-        lineNumber: 58,
+        lineNumber: 63,
         columnNumber: 28
     }, undefined)
 ;
@@ -22931,7 +22946,7 @@ $RefreshReg$(_c, "Main");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","./context/AppContext":"df6oB","wouter":"g6K8g","./components/Header":"4RMOE","./pages/Home":"lfnq7","./pages/Identities":"7THgH","./pages/Identity":"jirQB","./pages/Final":"jGTRl","./pages/Wallet":"kjz8z","./components/Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"df6oB":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","./context/AppContext":"df6oB","wouter":"g6K8g","./components/Header":"4RMOE","./pages/Home":"lfnq7","./pages/Identities":"7THgH","./pages/Identity":"jirQB","./pages/Final":"jGTRl","./pages/Wallet":"kjz8z","./components/Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","./pages/Zapps":"7s09p"}],"df6oB":[function(require,module,exports) {
 var $parcel$ReactRefreshHelpers$6446 = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 var prevRefreshReg = window.$RefreshReg$;
 var prevRefreshSig = window.$RefreshSig$;
@@ -23582,6 +23597,21 @@ const Header = ({ isRegistered  })=>{
                                     }, void 0, false, {
                                         fileName: "src/components/Header.jsx",
                                         lineNumber: 25,
+                                        columnNumber: 29
+                                    }, undefined),
+                                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Link, {
+                                        to: "/zapps",
+                                        children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_navDefault.default.Link, {
+                                            href: "/zapps",
+                                            children: "ZAppps"
+                                        }, void 0, false, {
+                                            fileName: "src/components/Header.jsx",
+                                            lineNumber: 29,
+                                            columnNumber: 33
+                                        }, undefined)
+                                    }, void 0, false, {
+                                        fileName: "src/components/Header.jsx",
+                                        lineNumber: 28,
                                         columnNumber: 29
                                     }, undefined)
                                 ]
@@ -30026,7 +30056,7 @@ $RefreshReg$(_c, "Identity");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","react-bootstrap/Container":"f1oyf","../components/BlockTime":"fwOnQ","react":"6jKMz","../components/Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","../components/OwnerToIdenity":"1WQZ3","sweetalert2":"c6WIC"}],"fwOnQ":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"gij1U","react-bootstrap/Container":"f1oyf","../components/BlockTime":"fwOnQ","react":"6jKMz","../components/Loading":"9ptwk","../components/OwnerToIdenity":"1WQZ3","sweetalert2":"c6WIC","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"fwOnQ":[function(require,module,exports) {
 var $parcel$ReactRefreshHelpers$2e8e = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 var prevRefreshReg = window.$RefreshReg$;
 var prevRefreshSig = window.$RefreshSig$;
@@ -40009,7 +40039,225 @@ $RefreshReg$(_c, "Wallet");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","react-bootstrap/Container":"f1oyf","react":"6jKMz","jquery":"2xo8V","sweetalert2":"c6WIC","../components/Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"4Oc90":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"gij1U","react-bootstrap/Container":"f1oyf","react":"6jKMz","jquery":"2xo8V","sweetalert2":"c6WIC","../components/Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"7s09p":[function(require,module,exports) {
+var $parcel$ReactRefreshHelpers$bf93 = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
+var prevRefreshReg = window.$RefreshReg$;
+var prevRefreshSig = window.$RefreshSig$;
+$parcel$ReactRefreshHelpers$bf93.prelude(module);
+
+try {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _jsxDevRuntime = require("react/jsx-dev-runtime");
+var _container = require("react-bootstrap/Container");
+var _containerDefault = parcelHelpers.interopDefault(_container);
+var _loading = require("../components/Loading");
+var _loadingDefault = parcelHelpers.interopDefault(_loading);
+var _react = require("react");
+var _wouter = require("wouter");
+var _s = $RefreshSig$();
+function Zapps() {
+    _s();
+    const [zapps, setZapps] = _react.useState([]);
+    const [isLoading, setIsLoading] = _react.useState(true);
+    _react.useEffect(()=>{
+        fetchZapps();
+    }, []);
+    const fetchZapps = async ()=>{
+        setIsLoading(true);
+        let zappsFetched = [];
+        let identitiesFetched = await window.point.contract.events({
+            host: '@',
+            contract: 'Identity',
+            event: 'IdentityRegistered'
+        });
+        let ikvsetFetched = await window.point.contract.events({
+            host: '@',
+            contract: 'Identity',
+            event: 'IKVSet'
+        });
+        if (ikvsetFetched.data != '') for (const id of identitiesFetched.data){
+            const domainExists = ikvsetFetched.data.filter((ikve)=>ikve.data.identity == id.data.handle && ikve.data.key == 'zdns/routes'
+            ).length > 0;
+            if (domainExists) zappsFetched.push(id.data);
+        }
+        setZapps(zappsFetched);
+        setIsLoading(false);
+    };
+    const renderZappEntry = (id)=>{
+        return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("tr", {
+            children: [
+                /*#__PURE__*/ _jsxDevRuntime.jsxDEV("td", {
+                    children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Link, {
+                        to: "/identities/" + id.handle,
+                        target: "_blank",
+                        children: [
+                            "@",
+                            id.handle
+                        ]
+                    }, void 0, true, {
+                        fileName: "src/pages/Zapps.jsx",
+                        lineNumber: 40,
+                        columnNumber: 17
+                    }, this)
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 40,
+                    columnNumber: 13
+                }, this),
+                /*#__PURE__*/ _jsxDevRuntime.jsxDEV("td", {
+                    className: "mono",
+                    children: id.identityOwner
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 41,
+                    columnNumber: 13
+                }, this),
+                /*#__PURE__*/ _jsxDevRuntime.jsxDEV("td", {
+                    className: "mono",
+                    children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("b", {
+                        children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("a", {
+                            href: 'https://' + id.handle + '.point',
+                            target: "_blank",
+                            children: id.handle + '.point'
+                        }, void 0, false, {
+                            fileName: "src/pages/Zapps.jsx",
+                            lineNumber: 42,
+                            columnNumber: 37
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "src/pages/Zapps.jsx",
+                        lineNumber: 42,
+                        columnNumber: 34
+                    }, this)
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 42,
+                    columnNumber: 13
+                }, this)
+            ]
+        }, id.handle, true, {
+            fileName: "src/pages/Zapps.jsx",
+            lineNumber: 39,
+            columnNumber: 9
+        }, this));
+    };
+    const EmptyMsg = ()=>zapps.length === 0 ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
+            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("em", {
+                children: "No records found"
+            }, void 0, false, {
+                fileName: "src/pages/Zapps.jsx",
+                lineNumber: 47,
+                columnNumber: 52
+            }, this)
+        }, void 0, false, {
+            fileName: "src/pages/Zapps.jsx",
+            lineNumber: 47,
+            columnNumber: 47
+        }, this) : ''
+    ;
+    return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV(_jsxDevRuntime.Fragment, {
+        children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_containerDefault.default, {
+            className: "p-3",
+            children: [
+                /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 52,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h1", {
+                    children: "ZApps"
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 53,
+                    columnNumber: 9
+                }, this),
+                "Total: ",
+                zapps.length,
+                /*#__PURE__*/ _jsxDevRuntime.jsxDEV("hr", {
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 56,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ _jsxDevRuntime.jsxDEV("table", {
+                    className: "table table-bordered table-striped table-hover table-responsive table-primary",
+                    children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("tbody", {
+                        children: [
+                            /*#__PURE__*/ _jsxDevRuntime.jsxDEV("tr", {
+                                children: [
+                                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV("th", {
+                                        children: "Handle"
+                                    }, void 0, false, {
+                                        fileName: "src/pages/Zapps.jsx",
+                                        lineNumber: 61,
+                                        columnNumber: 21
+                                    }, this),
+                                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV("th", {
+                                        children: "Owner"
+                                    }, void 0, false, {
+                                        fileName: "src/pages/Zapps.jsx",
+                                        lineNumber: 62,
+                                        columnNumber: 21
+                                    }, this),
+                                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV("th", {
+                                        children: "Zapp"
+                                    }, void 0, false, {
+                                        fileName: "src/pages/Zapps.jsx",
+                                        lineNumber: 63,
+                                        columnNumber: 21
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "src/pages/Zapps.jsx",
+                                lineNumber: 60,
+                                columnNumber: 17
+                            }, this),
+                            isLoading ? null : zapps.map((e)=>renderZappEntry(e)
+                            )
+                        ]
+                    }, void 0, true, {
+                        fileName: "src/pages/Zapps.jsx",
+                        lineNumber: 59,
+                        columnNumber: 13
+                    }, this)
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 58,
+                    columnNumber: 9
+                }, this),
+                isLoading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 68,
+                    columnNumber: 22
+                }, this) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(EmptyMsg, {
+                }, void 0, false, {
+                    fileName: "src/pages/Zapps.jsx",
+                    lineNumber: 68,
+                    columnNumber: 35
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "src/pages/Zapps.jsx",
+            lineNumber: 51,
+            columnNumber: 7
+        }, this)
+    }, void 0, false));
+}
+exports.default = Zapps;
+_s(Zapps, "cxS2MjWZPigujRiFfW5pilIp2Ho=");
+_c = Zapps;
+var _c;
+$RefreshReg$(_c, "Zapps");
+
+  $parcel$ReactRefreshHelpers$bf93.postlude(module);
+} finally {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+},{"react/jsx-dev-runtime":"gij1U","react-bootstrap/Container":"f1oyf","../components/Loading":"9ptwk","react":"6jKMz","wouter":"g6K8g","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"4Oc90":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 const reportWebVitals = (onPerfEntry)=>{
