@@ -62,12 +62,8 @@ cp resources/config/devlocal_template.yaml config/devlocal.yaml
 echo "cp resources/config/visitlocal_template.yaml config/visitlocal.yaml"
 cp resources/config/visitlocal_template.yaml config/visitlocal.yaml
 
+echo "Rreplacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
 perl -i -pe"s|~|$HOME|" config/devlocal.yaml
 perl -i -pe"s|~|$HOME|" config/visitlocal.yaml
 
 echo "Installation of local env ended"
-
-
-
-
-
