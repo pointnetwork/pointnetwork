@@ -57,10 +57,10 @@ echo "npm run build"
 npm run build
 
 echo "coping and replacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
-echo "cp resources/configs/devlocal_template.yaml config/devlocal.yaml"
-cp resources/configs/devlocal_template.yaml config/devlocal.yaml
-echo "cp resources/configs/visitlocal_template.yaml config/visitlocal.yaml"
-cp resources/configs/visitlocal_template.yaml config/visitlocal.yaml
+echo "cp resources/config/devlocal_template.yaml config/devlocal.yaml"
+cp resources/config/devlocal_template.yaml config/devlocal.yaml
+echo "cp resources/config/visitlocal_template.yaml config/visitlocal.yaml"
+cp resources/config/visitlocal_template.yaml config/visitlocal.yaml
 
 perl -i -pe"s|~|$HOME|" config/devlocal.yaml
 perl -i -pe"s|~|$HOME|" config/visitlocal.yaml
