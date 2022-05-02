@@ -366,14 +366,14 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
         }
 
         log.debug({fileId: file.id}, 'Processing chunk info');
-
+        const toParse = chunkInfoString.slice(CHUNKINFO_PROLOGUE.length);
         const {
             type,
             hash,
             chunks,
             filesize,
             merkle: merkleHash
-        } = JSON.parse(chunkInfo.slice(CHUNKINFO_PROLOGUE.length + 1));
+        } = JSON.parse(toParse);
 
         if (type !== 'file') {
             throw new Error('Bad file type');
