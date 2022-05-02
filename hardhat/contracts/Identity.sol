@@ -38,7 +38,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     event IdentityDeployerChanged(string identity, address deployer, bool allowed);
     
-    function initialize() public initializer {
+    function initialize() public initializer onlyProxy{
         __Ownable_init();
         __UUPSUpgradeable_init();
         migrationApplied = false;
