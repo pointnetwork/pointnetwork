@@ -5,17 +5,20 @@ See client/proxy/index.js for usage details of ZProxy and setup of the WebSocket
 const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxySocketController'});
 const blockchain = require('../../network/blockchain');
+const handleRPC = require('../../rpc/rpc-handlers').default;
 
 const SUBSCRIPTION_EVENT_TYPES = {
     CONFIRMATION: 'subscription_confirmation',
     CANCELLATION: 'subscription_cancellation',
     EVENT: 'subscription_event',
-    ERROR: 'subscription_error'
+    ERROR: 'subscription_error',
+    RPC: 'rpc_method_response'
 };
 
 const SUBSCRIPTION_REQUEST_TYPES = {
     SUBSCRIBE: 'subscribeContractEvent',
-    UNSUBSCRIBE: 'removeSubscriptionById'
+    UNSUBSCRIBE: 'removeSubscriptionById',
+    RPC: 'rpc'
 };
 
 class ZProxySocketController {
@@ -28,7 +31,7 @@ class ZProxySocketController {
     }
 
     init() {
-        this.ws.on('message', async (msg) => {
+        this.ws.on('message', async msg => {
             const {hostname} = this;
             const request = {
                 ...JSON.parse(msg),
@@ -60,6 +63,17 @@ class ZProxySocketController {
                     );
                 }
 
+                case SUBSCRIPTION_REQUEST_TYPES.RPC: {
+                    const {method, params, id, network} = request;
+                    const {result} = await handleRPC({method, params, id, network});
+                    return this.pushRPCMessage({
+                        request,
+                        subscriptionId: null,
+                        type: SUBSCRIPTION_EVENT_TYPES.RPC,
+                        data: result
+                    });
+                }
+
                 default: {
                     return this.pushSubscriptionEvent({
                         request,
@@ -78,12 +92,23 @@ class ZProxySocketController {
 
     pushToClients(msg) {
         if (this.wss) {
-            this.wss.connections.forEach(client => {
-                if (client.state === 'open') {
+            this.wss.clients.forEach(client => {
+                if (client.readyState === 1) {
                     client.send(JSON.stringify(msg));
                 }
             });
         }
+    }
+
+    pushToSender(msg) {
+        if (this.ws) {
+            this.ws.send(JSON.stringify(msg));
+        }
+    }
+
+    pushRPCMessage(msg) {
+        log.info(msg, 'Pushing RPC message');
+        return this.pushToSender(msg);
     }
 
     pushSubscriptionEvent({type, subscriptionId, request, data}) {

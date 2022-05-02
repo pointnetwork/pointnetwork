@@ -1,6 +1,6 @@
 FROM ethereum/solc:0.8.6 AS solc
 
-FROM node:14.17.5-alpine
+FROM node:16.15.0-alpine
 
 COPY --from=solc /usr/bin/solc /usr/bin/solc
 

@@ -46,10 +46,16 @@ const abisByContractName = {};
 
 const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
 
-const web3 = createWeb3Instance({
-    blockchainUrl: config.get('network.web3'),
-    privateKey: '0x' + getNetworkPrivateKey()
-});
+const blockchainUrls = config.get('network.web3');
+const web3s = Object.keys(blockchainUrls).reduce((acc, cur) => ({
+    ...acc,
+    [cur]: createWeb3Instance({
+        blockchainUrl: blockchainUrls[cur],
+        privateKey: '0x' + getNetworkPrivateKey()
+    })
+}), {});
+
+const getWeb3 = (chain = 'ynet') => web3s[chain];
 
 // Client that consolidates all blockchain-related functionality
 const blockchain = {};
@@ -82,7 +88,7 @@ blockchain.loadPointContract = async (
                     log.debug('Successfully fetched identity contract from storage');
 
                     abisByContractName[contractName] = JSON.parse(abiFile).abi;
-                    return new web3.eth.Contract(abisByContractName[contractName], at);
+                    return new getWeb3().eth.Contract(abisByContractName[contractName], at);
                 } catch (e) {
                     log.error('Failed to fetch Identity contract from storage: ' + e.message);
                 }
@@ -100,6 +106,7 @@ blockchain.loadPointContract = async (
         abisByContractName[contractName] = abiFile.abi;
     }
 
+    const web3 = getWeb3();
     return new web3.eth.Contract(abisByContractName[contractName], at);
 };
 
@@ -134,6 +141,7 @@ blockchain.loadWebsiteContract = async (target, contractName, version = 'latest'
         abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
         // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
 
+        const web3 = getWeb3();
         return new web3.eth.Contract(abi.abi, at);
     } catch (e) {
         throw Error(
@@ -154,8 +162,8 @@ blockchain.web3send = async (method, optons = {}) => {
 
     while (true) {
         try {
-            account = web3.eth.defaultAccount;
-            gasPrice = await web3.eth.getGasPrice();
+            account = getWeb3().eth.defaultAccount;
+            gasPrice = await getWeb3().eth.getGasPrice();
             log.debug(
                 {gasLimit, gasPrice, account, method: method._method.name},
                 'Prepared to send tx to contract method'
@@ -271,8 +279,13 @@ blockchain.getPastEvents = async (
     return events;
 };
 
+blockchain.getBlockNumber = async () => {
+    const n = await getWeb3().eth.getBlockNumber();
+    return n;
+};
+
 blockchain.getBlockTimestamp = async blockNumber => {
-    const block = await web3.eth.getBlock(blockNumber);
+    const block = await getWeb3().eth.getBlock(blockNumber);
     return block.timestamp;
 };
 
@@ -299,7 +312,7 @@ blockchain.subscribeContractEvent = async (
 };
 
 blockchain.removeSubscriptionById = async (subscriptionId, onRemove) => {
-    await web3.eth.removeSubscriptionById(subscriptionId);
+    await getWeb3().eth.removeSubscriptionById(subscriptionId);
     return onRemove({
         subscriptionId,
         data: {message: `Unsubscribed from subscription id: ${subscriptionId}`}
@@ -596,12 +609,12 @@ blockchain.getCurrentIdentity = async () => {
 };
 
 blockchain.toChecksumAddress = async address => {
-    const checksumAddress = web3.utils.toChecksumAddress(address);
+    const checksumAddress = getWeb3().utils.toChecksumAddress(address);
     return checksumAddress;
 };
 
 blockchain.sendTransaction = async ({from, to, value, gas}) => {
-    const receipt = await web3.eth.sendTransaction({
+    const receipt = await getWeb3().eth.sendTransaction({
         from,
         to,
         value,
@@ -610,22 +623,22 @@ blockchain.sendTransaction = async ({from, to, value, gas}) => {
     return receipt;
 };
 
-blockchain.getBalance = async address => {
-    const balance = await web3.eth.getBalance(address);
+blockchain.getBalance = async (address, blockIdentifier = 'latest') => {
+    const balance = await getWeb3().eth.getBalance(address, blockIdentifier);
     return balance;
 };
 
-blockchain.getWallet = () => web3.eth.accounts.wallet[0];
+blockchain.getWallet = () => getWeb3().eth.accounts.wallet[0];
 
 blockchain.createAccountAndAddToWallet = () => {
-    const account = web3.eth.accounts.create(web3.utils.randomHex(32));
-    const wallet = web3.eth.accounts.wallet.add(account);
+    const account = getWeb3().eth.accounts.create(getWeb3().utils.randomHex(32));
+    const wallet = getWeb3().eth.accounts.wallet.add(account);
     return wallet;
 };
 
 /** Returns the wallet using the address in the loaded keystore */
 blockchain.decryptWallet = (keystore, passcode) => {
-    const decryptedWallets = web3.eth.accounts.wallet.decrypt([keystore], passcode);
+    const decryptedWallets = getWeb3().eth.accounts.wallet.decrypt([keystore], passcode);
     const address = ethereumjs.addHexPrefix(keystore.address);
     return decryptedWallets[address];
 };
@@ -633,7 +646,7 @@ blockchain.decryptWallet = (keystore, passcode) => {
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
 blockchain.getTransactionsByAccount = async (account, startBlockNumber, endBlockNumber) => {
     if (endBlockNumber == null) {
-        endBlockNumber = await web3.eth.getBlockNumber();
+        endBlockNumber = await getWeb3().eth.getBlockNumber();
         log.debug({endBlockNumber}, 'Using endBlockNumber');
     }
     if (startBlockNumber == null) {
@@ -641,7 +654,7 @@ blockchain.getTransactionsByAccount = async (account, startBlockNumber, endBlock
         log.debug({startBlockNumber}, 'Using startBlockNumber');
     }
     log.debug(
-        {account, startBlockNumber, endBlockNumber, ethblocknumber: web3.eth.blockNumber},
+        {account, startBlockNumber, endBlockNumber, ethblocknumber: getWeb3().eth.blockNumber},
         'Searching for transactions'
     );
 
@@ -652,7 +665,7 @@ blockchain.getTransactionsByAccount = async (account, startBlockNumber, endBlock
             log.debug('Searching block ' + i);
         }
 
-        var block = web3.eth.getBlock(i, true);
+        var block = getWeb3().eth.getBlock(i, true);
         if (block != null && block.transactions != null) {
             block.transactions.forEach(function(e) {
                 if (account === '*' || account === e.from || account === e.to) {
@@ -679,14 +692,17 @@ blockchain.getTransactionsByAccount = async (account, startBlockNumber, endBlock
     return txs;
 };
 
-blockchain.getOwner = () => web3.utils.toChecksumAddress(getNetworkAddress());
+blockchain.getOwner = () => getWeb3().utils.toChecksumAddress(getNetworkAddress());
 
 blockchain.getGasPrice = async () => {
-    const gasPrice = await web3.eth.getGasPrice();
+    const gasPrice = await getWeb3().eth.getGasPrice();
     return gasPrice;
 };
 
-blockchain.getContractFromAbi = abi => new web3.eth.Contract(abi);
+blockchain.getContractFromAbi = abi => {
+    const web3 = getWeb3();
+    return new web3.eth.Contract(abi);
+};
 
 blockchain.deployContract = async (contract, artifacts, contractName) => {
     const deploy = contract.deploy({data: artifacts.evm.bytecode.object});
@@ -701,5 +717,26 @@ blockchain.deployContract = async (contract, artifacts, contractName) => {
     log.debug({contractName, address}, 'Deployed Contract Instance');
     return address;
 };
+
+blockchain.toHex = n => getWeb3().utils.toHex(n);
+
+blockchain.send = (method, params = [], id, network) =>
+    new Promise((resolve, reject) => {
+        getWeb3(network).currentProvider.send(
+            {
+                id: id ?? new Date().getTime(),
+                method,
+                params,
+                jsonrpc: '2.0'
+            },
+            (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result);
+                }
+            }
+        );
+    });
 
 module.exports = blockchain;

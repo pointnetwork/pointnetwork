@@ -1,6 +1,10 @@
 module.exports = [
     ['GET', '/v1/api/identity/identityToOwner/:identity', 'IdentityController@identityToOwner'],
-    ['GET', '/v1/api/identity/publicKeyByIdentity/:identity', 'IdentityController@publicKeyByIdentity'],
+    [
+        'GET',
+        '/v1/api/identity/publicKeyByIdentity/:identity',
+        'IdentityController@publicKeyByIdentity'
+    ],
     ['GET', '/v1/api/identity/ownerToIdentity/:owner', 'IdentityController@ownerToIdentity'],
     ['GET', '/v1/api/identity/isIdentityRegistered/', 'IdentityController@isIdentityRegistered'],
     ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'],
@@ -26,5 +30,6 @@ module.exports = [
     ['POST', '/v1/api/contract/call', 'ContractController@call'],
     ['POST', '/v1/api/contract/send', 'ContractController@send'],
     ['GET', '/v1/api/contract/load/:contract', 'ContractController@load'],
-    ['POST', '/v1/api/contract/events', 'ContractController@events']    
+    ['POST', '/v1/api/contract/events', 'ContractController@events'],
+    ['POST', '/v1/api/blockchain', 'BlockchainController@request']
 ];

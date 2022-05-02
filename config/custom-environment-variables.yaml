@@ -22,7 +22,8 @@ zproxy:
   port: ZPROXY_PORT
   host: ZPROXY_HOST
 network:
-  web3: BLOCKCHAIN_URL
+  web3:
+    ynet: BLOCKCHAIN_URL
   identity_contract_address: IDENTITY_CONTRACT_ADDRESS
 wallet:
   keystore_path: POINT_KEYSTORE
