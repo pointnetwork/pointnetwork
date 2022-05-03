@@ -33,6 +33,7 @@ const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
 const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
 const GATEWAY_URL = config.get('storage.arweave_gateway_url');
 const MODE = config.get('mode');
+const BUNDLER_DOWNLOAD_URL = `${config.get('storage.arweave_bundler_url')}/download`;
 
 const uploadCacheDir = path.join(
     resolveHome(config.get('datadir')),
@@ -111,12 +112,13 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             'Chunk not found in Arweave. Falling back to requesting it from bundler backup'
         );
 
+        throw new Error('No matching hash found in Arweave');
+    } catch (e) {
         // TODO: refactor before mainnet!!!
         // If we failed to retrieve the chunk from Arweave,
         // retrieve it from the bundler's backup (S3).
         try {
-            const url = `${config.get('storage.arweave_bundler_url')}/download/${chunkId}`;
-            const {data} = await axios.get(url);
+            const {data} = await axios.get(`${BUNDLER_DOWNLOAD_URL}/${chunkId}`);
             log.debug({chunkId}, 'Failed to find it in Arweave but found it in the bundler');
             const buf =
                 typeof data === 'object' ? Buffer.from(JSON.stringify(data)) : Buffer.from(data);
@@ -126,13 +128,14 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             await chunk.save();
             return buf;
         } catch (err) {
-            throw new Error('No matching hash found in Arweave nor bundler');
+            log.error(
+                {chunkId, message: e.message, stack: e.stack},
+                'Chunk not found in bundler backup'
+            );
+            chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
+            await chunk.save();
+            throw e;
         }
-    } catch (e) {
-        log.error({chunkId, message: e.message, stack: e.stack}, 'Chunk download failed');
-        chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
-        await chunk.save();
-        throw e;
     }
 };
 
