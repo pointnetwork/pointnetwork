@@ -10,7 +10,7 @@ import {Template, templateManager} from '../templateManager';
 const attachStorageHandlers = (server: FastifyInstance) => {
     ['/_storage/', '/_storage'].forEach(route => {
         server.post(route, async (req, res) => {
-            if (!(req.headers['content-type']?.match('multipart/form-data'))) {
+            if (!req.headers['content-type']?.match('multipart/form-data')) {
                 return res.status(415).send('Only multipart/form-data is supported');
             }
 
@@ -35,21 +35,22 @@ const attachStorageHandlers = (server: FastifyInstance) => {
         const fileString = file.toString();
 
         if (isDirectoryJson(fileString)) {
-            const filesInfo = JSON.parse(fileString).files.map(
-                (file: Record<string, string>) => {
-                    const ext = file.name.split('.').slice(-1);
-                    return {
-                        icon: file.type === FILE_TYPE.fileptr
-                            ? '&#128196; '
-                            : file.type === FILE_TYPE.dirptr
-                                ? '&#128193; '
-                                : '&#10067; ',
-                        fileId: file.id,
-                        link: `/_storage/${file.id}${file.type === FILE_TYPE.fileptr ? '.' + ext : ''}`,
-                        name: file.name,
-                        size: file.size
-                    };
-                });
+            const filesInfo = JSON.parse(fileString).files.map((file: Record<string, string>) => {
+                const ext = file.name.split('.').slice(-1);
+
+                const icons: Record<typeof FILE_TYPE, string> = {
+                    [FILE_TYPE.fileptr]: '&#128196; ',
+                    [FILE_TYPE.dirptr]: '&#128193; '
+                };
+
+                return {
+                    icon: icons[file.type] || '&#10067; ',
+                    fileId: file.id,
+                    link: `/_storage/${file.id}${file.type === FILE_TYPE.fileptr ? '.' + ext : ''}`,
+                    name: file.name,
+                    size: file.size
+                };
+            });
             res.header('content-type', 'text/html');
             return templateManager.render(Template.DIRECTORY, {id: req.params.hash, filesInfo});
         }
@@ -59,7 +60,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
 
         res.header('content-type', contentType);
 
-        // if requesting a file directly from storage and the accept headers are wide open 
+        // if requesting a file directly from storage and the accept headers are wide open
         // and the file is not an image or video then return as a file attachment
         if (setAsAttachment(req.routerPath, contentType, acceptHeaders)) {
             res.header('Content-Disposition', 'attachment');

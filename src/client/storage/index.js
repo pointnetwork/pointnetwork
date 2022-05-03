@@ -1,3 +1,4 @@
+import axios from 'axios';
 import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
 import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
 import getDownloadQuery from './query';
@@ -16,7 +17,7 @@ import {promises as fs} from 'fs';
 import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
-import {uploadLoop, chunkValidatorLoop} from './uploader';
+import {uploadLoop} from './uploader';
 
 const log = logger.child({module: 'Storage'});
 
@@ -33,17 +34,25 @@ const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
 const GATEWAY_URL = config.get('storage.arweave_gateway_url');
 const MODE = config.get('mode');
 
-const uploadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.upload_cache_path'));
-const downloadCacheDir = path.join(resolveHome(config.get('datadir')), config.get('storage.download_cache_path'));
+const uploadCacheDir = path.join(
+    resolveHome(config.get('datadir')),
+    config.get('storage.upload_cache_path')
+);
+const downloadCacheDir = path.join(
+    resolveHome(config.get('datadir')),
+    config.get('storage.download_cache_path')
+);
 const filesDir = path.join(resolveHome(config.get('datadir')), config.get('storage.files_path'));
 
 const init = () => {
     uploadLoop();
-    chunkValidatorLoop();
+    // TODO: re-enable this validation!
+    // chunkValidatorLoop();
 };
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
 const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
+    log.debug({chunkId}, 'Getting chunk');
     const chunk = await Chunk.findByIdOrCreate(chunkId);
     const chunkPath = path.join(downloadCacheDir, `chunk_${chunkId}`);
 
@@ -68,32 +77,56 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
         log.debug({chunkId}, 'Graphql request success');
 
         for (const edge of queryResult.transactions.edges) {
-            const txid = edge.node.id;
-            log.debug({chunkId, txid}, 'Downloading data from arweave');
+            try {
+                const txid = edge.node.id;
+                log.debug({chunkId, txid}, 'Downloading data from arweave');
 
-            const data = await storage.getDataByTxId(txid);
-            log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
+                const data = await storage.getDataByTxId(txid);
+                log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
 
-            const buf = Buffer.from(data);
+                const buf = Buffer.from(data);
 
-            const hash = hashFn(buf).toString('hex');
-            if (hash !== chunk.id) {
-                log.warn(
-                    {chunkId, hash, query, buf: buf.toString()},
-                    'Chunk id and data do not match'
-                );
-                continue;
+                const hash = hashFn(buf).toString('hex');
+                if (hash !== chunk.id) {
+                    log.warn(
+                        {chunkId, hash, query, buf: buf.toString()},
+                        'Chunk id and data do not match'
+                    );
+                    continue;
+                }
+
+                await fs.writeFile(chunkPath, buf);
+
+                chunk.size = buf.length;
+                chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
+                await chunk.save();
+                return buf;
+            } catch (err) {
+                log.warn({chunkId, err}, 'Trying to download chunk from Arweave threw an error');
             }
+        }
 
+        log.warn(
+            {chunkId},
+            'Chunk not found in Arweave. Falling back to requesting it from bundler backup'
+        );
+
+        // TODO: refactor before mainnet!!!
+        // If we failed to retrieve the chunk from Arweave,
+        // retrieve it from the bundler's backup (S3).
+        try {
+            const url = `${config.get('storage.arweave_bundler_url')}/download/${chunkId}`;
+            const {data} = await axios.get(url);
+            log.debug({chunkId}, 'Failed to find it in Arweave but found it in the bundler');
+            const buf = Buffer.from(data);
             await fs.writeFile(chunkPath, buf);
-
             chunk.size = buf.length;
             chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
             await chunk.save();
             return buf;
+        } catch (err) {
+            throw new Error('No matching hash found in Arweave nor bundler');
         }
-
-        throw new Error('No matching hash found in arweave');
     } catch (e) {
         log.error({chunkId, message: e.message, stack: e.stack}, 'Chunk download failed');
         chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
@@ -127,9 +160,10 @@ const uploadChunk = async data => {
         if (updatedChunk.ul_status === CHUNK_UPLOAD_STATUS.FAILED) {
             if (updatedChunk.retry_count >= UPLOAD_RETRY_LIMIT) {
                 throw new Error(`Failed to upload chunk ${chunkId}`);
-            } if (updatedChunk.validate_retry_count >= UPLOAD_RETRY_LIMIT) {
+            }
+            if (updatedChunk.validate_retry_count >= UPLOAD_RETRY_LIMIT) {
                 throw new Error(`Failed to validate chunk ${chunkId}`);
-            } else  {
+            } else {
                 updatedChunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
                 await updatedChunk.save();
             }
@@ -248,9 +282,8 @@ const uploadFile = async data => {
         chunkIds.forEach((chunkId, index) => {
             if (chunkId !== chunkHashes[index]) {
                 throw new Error(
-                    `Unexpected different chunks ids, should be same: ${
-                        (chunkId, chunkHashes[index])
-                    }`
+                    `Unexpected different chunks ids, should be same: ${(chunkId,
+                    chunkHashes[index])}`
                 );
             }
         });
@@ -330,6 +363,7 @@ const uploadDir = async dirPath => {
 };
 
 const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
+    log.debug({fileId: rawId}, 'Getting file');
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
 
     const filePath = path.join(filesDir, `file_${id}`);
@@ -367,13 +401,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
 
         log.debug({fileId: file.id}, 'Processing chunk info');
         const toParse = chunkInfoString.slice(CHUNKINFO_PROLOGUE.length);
-        const {
-            type,
-            hash,
-            chunks,
-            filesize,
-            merkle: merkleHash
-        } = JSON.parse(toParse);
+        const {type, hash, chunks, filesize, merkle: merkleHash} = JSON.parse(toParse);
 
         if (type !== 'file') {
             throw new Error('Bad file type');
@@ -385,8 +413,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
         const merkleReassembled = merkle(
             chunks.map(x => Buffer.from(x, 'hex')),
             hashFn
-        )
-            .map(x => x.toString('hex'));
+        ).map(x => x.toString('hex'));
         if (!areScalarArraysEqual(merkleReassembled, merkleHash)) {
             throw new Error('Incorrect Merkle hash');
         }
@@ -446,7 +473,7 @@ const getFileIdByPath = async (dirId, filePath) => {
     }
 };
 
-module.exports = MODE === 'zappdev' ? require('./index-arlocal') : {
+const defaultExports = {
     FILE_TYPE,
     init,
     getFile,
@@ -455,3 +482,5 @@ module.exports = MODE === 'zappdev' ? require('./index-arlocal') : {
     uploadDir,
     getFileIdByPath
 };
+
+module.exports = MODE === 'zappdev' ? require('./index-arlocal') : defaultExports;
