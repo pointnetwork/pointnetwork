@@ -27,7 +27,7 @@ const FILE_TYPE = {
 };
 
 const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
-const CONCURRENT_DOWNLOAD_DELAY = config.get('storage.concurrent_download_delay');
+const CONCURRENT_DOWNLOAD_DELAY = Number(config.get('storage.concurrent_download_delay'));
 const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
 const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
 const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
