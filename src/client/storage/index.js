@@ -118,7 +118,8 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const url = `${config.get('storage.arweave_bundler_url')}/download/${chunkId}`;
             const {data} = await axios.get(url);
             log.debug({chunkId}, 'Failed to find it in Arweave but found it in the bundler');
-            const buf = Buffer.from(data);
+            const buf =
+                typeof data === 'object' ? Buffer.from(JSON.stringify(data)) : Buffer.from(data);
             await fs.writeFile(chunkPath, buf);
             chunk.size = buf.length;
             chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
