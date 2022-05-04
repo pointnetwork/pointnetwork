@@ -4,8 +4,6 @@ import {get, post} from 'axios';
 import {delay, getContractAddress} from '../../src/util';
 import HttpsAgent from 'https-proxy-agent';
 
-jest.retryTimes(30);
-
 const DOCKER_POINT_NODE = 'point_node';
 const POINT_NODE = process.env.TEST_POINT_NODE || DOCKER_POINT_NODE;
 
@@ -74,7 +72,7 @@ describe('Register identity and deploy site', () => {
         const {target, version} = testData.deployConfig;
         await blockchain.putKeyValue(target, '::rootDir', publicDirStorageId, version);
         expect(publicDirStorageId).toMatch(hexRegExp);
-    }, 30000);
+    }, 120000);
 
     it('Should add route to `routes.json` and deploy it', async () => {
         expect.assertions(1);
@@ -86,14 +84,14 @@ describe('Register identity and deploy site', () => {
         const routesFileAsBuffer = Buffer.from(JSON.stringify(routesObj, null, 2));
         routesStorageId = await storage.uploadFile(routesFileAsBuffer);
         expect(routesStorageId).toMatch(hexRegExp);
-    });
+    }, 60000);
 
     it('Should add routes to "key-value storage"', async () => {
         expect.assertions(1);
         const {target, version} = testData.deployConfig;
         const res = await blockchain.putZRecord(target, `0x${routesStorageId}`, version);
         expect(res).toBe(undefined);
-    });
+    }, 60000);
 
     it('Should deploy a contract', async () => {
         expect.assertions(1);
@@ -127,7 +125,7 @@ describe('Register identity and deploy site', () => {
         );
 
         expect(address).toMatch(addressRegExp);
-    }, 30000);
+    }, 60000);
 
     it('Should fetch index.html making a GET request to the new domain', async () => {
         expect.assertions(3);
@@ -141,7 +139,7 @@ describe('Register identity and deploy site', () => {
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<!DOCTYPE html>/);
         expect(res.data).toMatch('<title>E2E Test Site</title>');
-    }, 10000);
+    }, 20000);
 
     it('Should fetch a file in the root folder', async () => {
         expect.assertions(2);
@@ -153,7 +151,7 @@ describe('Register identity and deploy site', () => {
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^h1 {/);
-    }, 10000);
+    }, 20000);
 
     it('Should return a file in a nested folder', async () => {
         expect.assertions(2);
@@ -165,7 +163,7 @@ describe('Register identity and deploy site', () => {
         );
         expect(res.status).toEqual(200);
         expect(res.headers['content-type']).toEqual('image/jpeg');
-    }, 10000);
+    }, 20000);
 });
 
 describe('Proxy keyvalue', () => {
