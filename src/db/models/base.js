@@ -2,7 +2,7 @@ const sequelize_lib = require('sequelize');
 const _ = require('lodash');
 const {Database} = require('..');
 const logger = require('../../core/log');
-const log = logger.child({module: 'Model', model: this.constructor.name});
+const log = logger.child({module: 'Model'});
 
 const addUnderscoreIdFields = {};
 
