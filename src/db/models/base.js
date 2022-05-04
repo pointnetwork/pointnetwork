@@ -2,13 +2,13 @@ const sequelize_lib = require('sequelize');
 const _ = require('lodash');
 const {Database} = require('..');
 const logger = require('../../core/log');
+const log = logger.child({module: 'Model', model: this.constructor.name});
 
 const addUnderscoreIdFields = {};
 
 class Model extends sequelize_lib.Model {
     constructor(...args) {
         super(...args);
-        this.log = logger.child({module: 'Model', model: this.constructor.name});
     }
 
     static get connection() {
@@ -52,12 +52,12 @@ class Model extends sequelize_lib.Model {
             });
             return created;
         } catch (e) {
-            this.log.error(e, 'Error in find or create');
+            log.error(e, 'Error in find or create');
             if (!retry && e.name === 'SequelizeUniqueConstraintError') {
                 // We are running into the race condition, caused by concurrent tries
                 // to findOrCreate the same directory. In this case, a single retry
                 // should work, since the entity is already created at this moment
-                this.log.debug('Retrying to find or create');
+                log.debug('Retrying to find or create');
                 return this.findOrCreate({where, defaults}, true);
             }
             throw e;
