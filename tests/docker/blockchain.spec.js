@@ -72,7 +72,7 @@ describe('Register identity and deploy site', () => {
         const {target, version} = testData.deployConfig;
         await blockchain.putKeyValue(target, '::rootDir', publicDirStorageId, version);
         expect(publicDirStorageId).toMatch(hexRegExp);
-    }, 60000);
+    }, 120000);
 
     it('Should add route to `routes.json` and deploy it', async () => {
         expect.assertions(1);
@@ -84,14 +84,14 @@ describe('Register identity and deploy site', () => {
         const routesFileAsBuffer = Buffer.from(JSON.stringify(routesObj, null, 2));
         routesStorageId = await storage.uploadFile(routesFileAsBuffer);
         expect(routesStorageId).toMatch(hexRegExp);
-    }, 15000);
+    }, 60000);
 
     it('Should add routes to "key-value storage"', async () => {
         expect.assertions(1);
         const {target, version} = testData.deployConfig;
         const res = await blockchain.putZRecord(target, `0x${routesStorageId}`, version);
         expect(res).toBe(undefined);
-    });
+    }, 60000);
 
     it('Should deploy a contract', async () => {
         expect.assertions(1);
