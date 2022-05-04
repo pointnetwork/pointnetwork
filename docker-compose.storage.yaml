@@ -60,7 +60,7 @@ services:
       - '5432:5432'
 
   bundler:
-    image: pointnetwork/arweave-bundler:v1.0.2
+    image: pointnetwork/arweave-bundler:v1.0.8
     container_name: bundler
     hostname: bundler
     depends_on:
