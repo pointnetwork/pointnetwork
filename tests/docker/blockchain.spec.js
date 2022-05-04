@@ -125,7 +125,7 @@ describe('Register identity and deploy site', () => {
         );
 
         expect(address).toMatch(addressRegExp);
-    }, 30000);
+    }, 60000);
 
     it('Should fetch index.html making a GET request to the new domain', async () => {
         expect.assertions(3);
@@ -139,7 +139,7 @@ describe('Register identity and deploy site', () => {
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<!DOCTYPE html>/);
         expect(res.data).toMatch('<title>E2E Test Site</title>');
-    }, 10000);
+    }, 20000);
 
     it('Should fetch a file in the root folder', async () => {
         expect.assertions(2);
@@ -151,7 +151,7 @@ describe('Register identity and deploy site', () => {
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^h1 {/);
-    }, 10000);
+    }, 20000);
 
     it('Should return a file in a nested folder', async () => {
         expect.assertions(2);
@@ -163,7 +163,7 @@ describe('Register identity and deploy site', () => {
         );
         expect(res.status).toEqual(200);
         expect(res.headers['content-type']).toEqual('image/jpeg');
-    }, 10000);
+    }, 20000);
 });
 
 describe('Proxy keyvalue', () => {
