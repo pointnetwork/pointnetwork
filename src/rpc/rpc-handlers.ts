@@ -1,6 +1,8 @@
 import pendingTxs from '../permissions/PendingTxs';
 // import permissionStore from '../permissions/PermissionStore';
-import blockchain from '../network/blockchain';
+import ethereum from '../network/providers/ethereum';
+import config from 'config';
+import solana from '../network/providers/solana';
 
 export type RPCRequest = {
     id: number;
@@ -17,12 +19,15 @@ type HandlerFunc = (
     result: unknown;
 }>;
 
+const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
+
 // Handlers for non-standard methods, or methods with custom logic.
 const specialHandlers: Record<string, HandlerFunc> = {
+    // Ethereum
     eth_requestAccounts: async data => {
         const {params, id, network} = data;
         try {
-            const result = await blockchain.send('eth_accounts', params, id, network);
+            const result = await ethereum.send('eth_accounts', params, id, network);
             return {status: 200, result};
         } catch (err) {
             const statusCode = err.code === -32603 ? 500 : 400;
@@ -57,12 +62,29 @@ const specialHandlers: Record<string, HandlerFunc> = {
             }
 
             pendingTxs.rm(reqId);
-            const result = await blockchain.send('eth_sendTransaction', tx.params, id, tx.network);
+            const result = await ethereum.send('eth_sendTransaction', tx.params, id, tx.network);
             return {status: 200, result};
         } catch (err) {
             const statusCode = err.code === -32603 ? 500 : 400;
             return {status: statusCode, result: err};
         }
+    },
+    // Solana
+    // TODO
+    sendTransaction: async data => {
+        const statusCode = 4200; // As per EIP-1193
+        const message = 'Unsupported Method `sendTransaction`.';
+        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
+    },
+    simulateTransaction: async data => {
+        const statusCode = 4200; // As per EIP-1193
+        const message = 'Unsupported Method `simulateTransaction`.';
+        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
+    },
+    requestAirdrop: async data => {
+        const statusCode = 4200; // As per EIP-1193
+        const message = 'Unsupported Method `requestAirdrop`.';
+        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
     }
 };
 
@@ -79,7 +101,7 @@ const permissionHandlers: Record<string, HandlerFunc> = {
                 return {status: 400, result: {message: '`Origin` header is required.'}};
             }
 
-            const address = blockchain.getOwner();
+            const address = ethereum.getOwner();
 
             // If params is not provided or it's an empty array, revoke all permissions.
             if (!params || !Array.isArray(params) || params.length === 0) {
@@ -114,7 +136,7 @@ const permissionHandlers: Record<string, HandlerFunc> = {
             return {status: 400, result: {message: '`Origin` header is required.'}};
         }
 
-        const address = blockchain.getOwner();
+        const address = ethereum.getOwner();
         const permissions = await permissionStore.get(origin, address);
         return {status: 200, result: permissions || null};
         */
@@ -126,22 +148,45 @@ const permissionHandlers: Record<string, HandlerFunc> = {
  */
 const handleRPC: HandlerFunc = async data => {
     try {
+        const network = data.network ?? 'ynet';
+        const {method, params, id} = data;
+
         // Check for methods related to permissions.
-        const permissionHandler = permissionHandlers[data.method];
+        const permissionHandler = permissionHandlers[method];
         if (permissionHandler) {
             const res = await permissionHandler(data);
             return res;
         }
 
         // Check for special/custom methods.
-        const specialHandler = specialHandlers[data.method];
+        const specialHandler = specialHandlers[method];
         if (specialHandler) {
             const res = await specialHandler(data);
             return res;
         }
 
         // `method` is a standard RPC method (EIP-1474).
-        const result = await blockchain.send(data.method, data.params, data.id, data.network);
+        if (!networks[network]) {
+            return {status: 400, result: {message: `Unknown network ${network}`, id, network}};
+        }
+        let result;
+        switch (networks[network].type) {
+            case 'eth':
+                result = await ethereum.send(method, params, id, network);
+                break;
+            case 'solana':
+                result = await solana.send({method, params, id, network});
+                break;
+            default:
+                return {
+                    status: 400, result: {
+                        message: `Unsupported type ${networks[network].type} for network ${network}`,
+                        id,
+                        network
+                    }
+                };
+        }
+
         return {status: 200, result};
     } catch (err) {
         // As per EIP-1474, -32603 means internal error.

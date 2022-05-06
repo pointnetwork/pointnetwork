@@ -1,6 +1,6 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
 import {getNetworkAddress} from '../../../wallet/keystore';
-import blockchain from '../../../network/blockchain';
+import blockchain from '../../../network/providers/ethereum';
 import keyValue from '../../../network/keyvalue';
 import {Template, templateManager} from '../templateManager';
 const {uploadFile} = require('../../storage');

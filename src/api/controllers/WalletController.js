@@ -1,6 +1,6 @@
 const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
-const blockchain = require('../../network/blockchain');
+const blockchain = require('../../network/providers/ethereum');
 const {getNetworkPublicKey} = require('../../wallet/keystore');
 const {
     encryptData,

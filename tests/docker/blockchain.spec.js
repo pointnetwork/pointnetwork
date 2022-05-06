@@ -30,7 +30,7 @@ beforeAll(async () => {
 
     // This hack with require is needed to patch env var before importing config
     const {getNetworkPublicKey, getNetworkAddress} = require('../../src/wallet/keystore');
-    blockchain = require('../../src/network/blockchain');
+    blockchain = require('../../src/network/providers/ethereum');
     storage = require('../../src/client/storage');
 
     testData.address = getNetworkAddress();

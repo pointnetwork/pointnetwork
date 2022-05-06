@@ -67,8 +67,15 @@ wallet:
 network:
   contracts_path: contracts
   web3:
-    ynet: "http://ynet.point.space:44444"
-    rinkeby: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa"
+    ynet:
+      type: "eth"
+      address: "http://ynet.point.space:44444"
+    rinkeby:
+      type: "eth"
+      address: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa" # TODO: project ID
+    solana_devnet:
+      type: "solana"
+      address: "https://api.devnet.solana.com"
   web3_call_retry_limit: 4
   identity_contract_address: "0xA84AAaC12FffbCaFe49339466803c64E4a4A72a5"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"

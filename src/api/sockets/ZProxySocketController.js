@@ -4,7 +4,7 @@ See client/proxy/index.js for usage details of ZProxy and setup of the WebSocket
 */
 const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxySocketController'});
-const blockchain = require('../../network/blockchain');
+const blockchain = require('../../network/providers/ethereum');
 const handleRPC = require('../../rpc/rpc-handlers').default;
 
 const SUBSCRIPTION_EVENT_TYPES = {

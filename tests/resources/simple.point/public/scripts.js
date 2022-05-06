@@ -36,6 +36,9 @@ function setup() {
 
   const getTxReceiptBtn = document.querySelector('#getReceipt');
   getTxReceiptBtn.addEventListener('click', () => handleRequest('getReceipt'));
+
+  const rpcReqBtn = document.querySelector('#rpc_req_btn');
+  rpcReqBtn.addEventListener('click', () => handleRequest('sendRpc'));
 }
 
 function setProvider() {
@@ -71,6 +74,8 @@ function getOutEl(method) {
       return document.querySelector('#txHash');
     case 'getReceipt':
       return document.querySelector('#txReceipt');
+    case 'sendRpc':
+      return document.querySelector('#rpc_result')
     default:
       return null;
   }
@@ -166,6 +171,13 @@ const handlerFuncs = {
       delete resp.logsBloom;
       return resp;
   },
+  sendRpc: async function() {
+    const {method, params} = JSON.parse(document.getElementById("rpc_request").value)
+    if (!method) {
+        throw new Error('Method id required')
+    }
+    return window.ethereum.request({method, params})
+  }
 };
 
 async function handleRequest(method) {

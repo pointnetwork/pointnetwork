@@ -9,7 +9,7 @@ const {
     getNetworkAddress
 } = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
-const blockchain = require('../../../network/blockchain');
+const blockchain = require('../../../network/providers/ethereum');
 const {readFileByPath} = require('../../../util');
 const keyValue = require('../../../network/keyvalue');
 
