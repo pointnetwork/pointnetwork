@@ -23000,18 +23000,41 @@ const ProvideAppContext = ({ children  })=>{
     const [walletIdentity, setWalletIdentity] = _react.useState();
     const [walletError, setWallerError] = _react.useState();
     const [, setLocation] = _wouter.useLocation();
-    _react.useEffect(()=>{
-        (async ()=>{
-            try {
-                const { data: { address  }  } = await window.point.wallet.address();
-                const { data: { identity  }  } = await window.point.identity.ownerToIdentity({
-                    owner: address
-                });
-                setWalletIdentity(identity);
-            } catch (e) {
-                setWallerError(e);
+    const getLastNonZappId = async (owner)=>{
+        let identitiesFetched = await window.point.contract.events({
+            host: '@',
+            contract: 'Identity',
+            event: 'IdentityRegistered',
+            filter: {
+                identityOwner: owner
             }
-        })();
+        });
+        let ikvsetFetched = await window.point.contract.events({
+            host: '@',
+            contract: 'Identity',
+            event: 'IKVSet'
+        });
+        let nonZappIdentities = [];
+        for (const id of identitiesFetched.data)if (ikvsetFetched.data != '') {
+            const domainExists = ikvsetFetched.data.filter((ikve)=>ikve.data.identity == id.data.handle && ikve.data.key == 'zdns/routes'
+            ).length > 0;
+            if (!domainExists) nonZappIdentities.push(id);
+        } else nonZappIdentities.push(id);
+        const lastEntry = nonZappIdentities.reduce((prev, current)=>prev.blockNumber > current.blockNumber ? prev : current
+        );
+        return lastEntry.data.handle;
+    };
+    const fetchData = async ()=>{
+        try {
+            const { data: { address  }  } = await window.point.wallet.address();
+            const identity = await getLastNonZappId(address);
+            setWalletIdentity(identity);
+        } catch (e) {
+            setWallerError(e);
+        }
+    };
+    _react.useEffect(()=>{
+        fetchData();
     }, []);
     const goHome = _react.useCallback(async ()=>{
         setLocation('/');
@@ -23026,7 +23049,7 @@ const ProvideAppContext = ({ children  })=>{
         children: children
     }, void 0, false, {
         fileName: "src/context/AppContext.js",
-        lineNumber: 42,
+        lineNumber: 69,
         columnNumber: 10
     }, undefined));
 };
@@ -29209,7 +29232,12 @@ function Home() {
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV("strong", {
                             children: [
                                 "@",
-                                walletIdentity
+                                !walletIdentity ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
+                                }, void 0, false, {
+                                    fileName: "src/pages/Home.jsx",
+                                    lineNumber: 52,
+                                    columnNumber: 80
+                                }, this) : walletIdentity
                             ]
                         }, void 0, true, {
                             fileName: "src/pages/Home.jsx",
