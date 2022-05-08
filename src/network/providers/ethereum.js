@@ -726,7 +726,7 @@ ethereum.send = (method, params = [], id, network) =>
     new Promise((resolve, reject) => {
         getWeb3(network).currentProvider.send(
             {
-                id: id ?? new Date().getTime(),
+                id,
                 method,
                 params,
                 jsonrpc: '2.0'

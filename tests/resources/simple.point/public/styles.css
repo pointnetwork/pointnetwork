@@ -28,7 +28,8 @@ span {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+textarea {
   font-size: 1.25rem;
   background-color: transparent;
   color: #ddd;
@@ -36,6 +37,10 @@ input[type="number"] {
   border-radius: 4px;
   margin: 8px 0;
   padding: 8px;
+}
+
+textarea {
+    min-width: 600px;
 }
 
 button {

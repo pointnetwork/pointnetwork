@@ -19,7 +19,6 @@ const createSolanaConnection = (blockchainUrl: string) => {
 const createSolanaWallet = () => {
     const seed = mnemonicToSeedSync(getSecretPhrase());
     return web3.Keypair.fromSeed(Uint8Array.from(seed.toJSON().data.slice(0, 32)));
-    // return web3.Keypair.fromSeed(fromSeed(seed).derivePath(`m/44'/501'/0'/0`).privateKey);
 };
 
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
@@ -38,14 +37,33 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
         );
 
 const solana = {
-    sendTransaction: () => {
-        // TODO
-    },
-    simulateTransaction: () => {
-        // TODO
-    },
-    requestAirdrop: () => {
-        // TODO
+    sendTransaction: async (id: number, to: string, lamports: number, network: string) => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network ${network}`);
+        }
+        const {connection, wallet} = provider;
+        const transaction = new web3.Transaction();
+
+        transaction.add(
+            web3.SystemProgram.transfer({
+                fromPubkey: wallet.publicKey,
+                toPubkey: new web3.PublicKey(to),
+                lamports
+            })
+        );
+        
+        const hash = await web3.sendAndConfirmTransaction(
+            connection,
+            transaction,
+            [wallet]
+        );
+        
+        return {
+            jsonrpc: '2.0',
+            result: hash,
+            id
+        };
     },
     send: async ({method, params = [], id = new Date().getTime(), network}: {
         method: string,

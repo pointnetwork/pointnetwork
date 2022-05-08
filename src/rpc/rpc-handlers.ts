@@ -3,13 +3,15 @@ import pendingTxs from '../permissions/PendingTxs';
 import ethereum from '../network/providers/ethereum';
 import config from 'config';
 import solana from '../network/providers/solana';
+import logger from '../core/log';
+const log = logger.child({module: 'RPC'});
 
 export type RPCRequest = {
     id: number;
     method: string;
     params?: unknown[];
     origin?: string;
-    network?: string
+    network: string
 };
 
 type HandlerFunc = (
@@ -20,6 +22,79 @@ type HandlerFunc = (
 }>;
 
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
+
+const storeTransaction: HandlerFunc = async data => {
+    const {params, network} = data;
+    if (!params) {
+        return {status: 400, result: {message: 'Missing `params` in request body.'}};
+    }
+    if (!networks[network]) {
+        return {status: 400, result: {message: `Unknown network ${network}`}};
+    }
+    if (networks[network].type === 'solana' && params.length !== 2) {
+        return {
+            status: 400, result: {
+                message: 
+                    'Wrong number or params for solana transaction, expected 2: toPubKey, lamports'
+            }
+        };
+    }
+
+    // Store request for future processing,
+    // and send `reqId` to client so it can ask user approval.
+    const reqId = pendingTxs.add(params, network);
+    return {status: 200, result: {reqId, params, network}};
+};
+
+const confirmTransaction: HandlerFunc = async data => {
+    const {params, id} = data;
+    if (!params || !Array.isArray(params) || params.length !== 1 || !params[0].reqId) {
+        return {status: 400, result: {message: 'Missing `params[0].reqId` in request body.'}};
+    }
+
+    const {reqId} = params[0] as {reqId: string};
+    const tx = pendingTxs.find(reqId);
+    if (!tx) {
+        return {
+            status: 404,
+            result: {message: `Tx for request id "${reqId}" has not been found.`}
+        };
+    }
+    const network = tx.network ?? 'ynet';
+
+    try {
+        pendingTxs.rm(reqId);
+        let result;
+
+        switch (networks[network].type) {
+            case 'eth':
+                result = await ethereum.send('eth_sendTransaction', tx.params, id, network);
+                break;
+            case 'solana':
+                result = await solana.sendTransaction(
+                    id,
+                    tx.params[0] as string,
+                    tx.params[1] as number,
+                    network
+                );
+                break;
+            default:
+                return {
+                    status: 400, result: {
+                        message: `Unsupported type ${networks[network].type} for network ${network}`,
+                        id,
+                        network
+                    }
+                };
+        }
+
+        return {status: 200, result};
+    } catch (err) {
+        log.error({message: err.message, stack: err.stack, tx}, 'Failed to confirm transaction');
+        const statusCode = err.code === -32603 ? 500 : 400;
+        return {status: statusCode, result: {message: err.message, code: statusCode}};
+    }
+};
 
 // Handlers for non-standard methods, or methods with custom logic.
 const specialHandlers: Record<string, HandlerFunc> = {
@@ -34,58 +109,11 @@ const specialHandlers: Record<string, HandlerFunc> = {
             return {status: statusCode, result: err};
         }
     },
-    eth_sendTransaction: async data => {
-        const {params, network} = data;
-        if (!params) {
-            return {status: 400, result: {message: 'Missing `params` in request body.'}};
-        }
-
-        // Store request for future processing,
-        // and send `reqId` to client so it can ask user approval.
-        const reqId = pendingTxs.add(params, network);
-        return {status: 200, result: {reqId, params, network}};
-    },
-    eth_confirmTransaction: async data => {
-        const {params, id} = data;
-        if (!params || !Array.isArray(params) || params.length !== 1 || !params[0].reqId) {
-            return {status: 400, result: {message: 'Missing `params[0].reqId` in request body.'}};
-        }
-
-        try {
-            const {reqId} = params[0] as {reqId: string};
-            const tx = pendingTxs.find(reqId);
-            if (!tx) {
-                return {
-                    status: 404,
-                    result: {message: `Tx for request id "${reqId}" has not been found.`}
-                };
-            }
-
-            pendingTxs.rm(reqId);
-            const result = await ethereum.send('eth_sendTransaction', tx.params, id, tx.network);
-            return {status: 200, result};
-        } catch (err) {
-            const statusCode = err.code === -32603 ? 500 : 400;
-            return {status: statusCode, result: err};
-        }
-    },
+    eth_sendTransaction: storeTransaction,
+    eth_confirmTransaction: confirmTransaction,
     // Solana
-    // TODO
-    sendTransaction: async data => {
-        const statusCode = 4200; // As per EIP-1193
-        const message = 'Unsupported Method `sendTransaction`.';
-        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
-    },
-    simulateTransaction: async data => {
-        const statusCode = 4200; // As per EIP-1193
-        const message = 'Unsupported Method `simulateTransaction`.';
-        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
-    },
-    requestAirdrop: async data => {
-        const statusCode = 4200; // As per EIP-1193
-        const message = 'Unsupported Method `requestAirdrop`.';
-        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
-    }
+    solana_sendTransaction: storeTransaction,
+    solana_confirmTransaction: confirmTransaction
 };
 
 // Handlers for methods related to permissions.
@@ -149,19 +177,20 @@ const permissionHandlers: Record<string, HandlerFunc> = {
 const handleRPC: HandlerFunc = async data => {
     try {
         const network = data.network ?? 'ynet';
-        const {method, params, id} = data;
+        const id = data.id ?? new Date().getTime();
+        const {method, params, origin} = data;
 
         // Check for methods related to permissions.
         const permissionHandler = permissionHandlers[method];
         if (permissionHandler) {
-            const res = await permissionHandler(data);
+            const res = await permissionHandler({id, method, params, origin, network});
             return res;
         }
 
         // Check for special/custom methods.
         const specialHandler = specialHandlers[method];
         if (specialHandler) {
-            const res = await specialHandler(data);
+            const res = await specialHandler({id, method, params, origin, network});
             return res;
         }
 
