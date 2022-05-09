@@ -1,5 +1,6 @@
 {
-  "name": "hardhat-project",
+  "name": "point-contract-manager",
+  "description": "Point Network contract manager",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.1",
@@ -43,5 +44,9 @@
   },
   "scripts": {
     "start": "npx hardhat run scripts/deploy.ts --network development"
+  },
+  "version": "0.1.1",
+  "dependencies": {
+    "@types/mime-types": "^2.1.1"
   }
 }
