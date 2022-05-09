@@ -7,7 +7,7 @@ import {promises as fs} from 'fs';
 import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
-import {storage} from './storage';
+import * as storage from './storage';
 import {eachLimit} from 'async';
 import getDownloadQuery from './query';
 import {request} from 'graphql-request';

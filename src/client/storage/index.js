@@ -1,23 +1,33 @@
-import axios from 'axios';
-import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
-import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
-import getDownloadQuery from './query';
-import {request} from 'graphql-request';
-import {
-    merkle,
-    delay,
-    areScalarArraysEqual,
-    resolveHome,
-    statAsync,
-    escapeString,
-    hashFn
-} from '../../util';
-import {storage} from './storage';
 import {promises as fs} from 'fs';
 import path from 'path';
 import config from 'config';
+import axios from 'axios';
+import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
+import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
+import {
+    merkle,
+    validateMerkle,
+    delay,
+    resolveHome,
+    statAsync,
+    escapeString,
+    hashFn,
+    validateContentAgainstHash,
+    bufferFromChunks
+} from '../../util';
+import * as storage from './storage';
+import * as errors from './errors';
 import logger from '../../core/log';
 import {uploadLoop} from './uploader';
+import {
+    getFileFromLocalDB,
+    getChunkFromLocalDB,
+    updateChunk,
+    updateFile,
+    saveChunkToLocalDB,
+    saveFileToLocalDB,
+    getFilePath
+} from './localdb';
 
 const log = logger.child({module: 'Storage'});
 
@@ -31,17 +41,12 @@ const CONCURRENT_DOWNLOAD_DELAY = Number(config.get('storage.concurrent_download
 const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
 const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
 const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
-const GATEWAY_URL = config.get('storage.arweave_gateway_url');
 const MODE = config.get('mode');
 const BUNDLER_DOWNLOAD_URL = `${config.get('storage.arweave_bundler_url')}/download`;
 
 const uploadCacheDir = path.join(
     resolveHome(config.get('datadir')),
     config.get('storage.upload_cache_path')
-);
-const downloadCacheDir = path.join(
-    resolveHome(config.get('datadir')),
-    config.get('storage.download_cache_path')
 );
 const filesDir = path.join(resolveHome(config.get('datadir')), config.get('storage.files_path'));
 
@@ -51,24 +56,45 @@ const init = () => {
     // chunkValidatorLoop();
 };
 
-// TODO: add better error handling with custom errors and keeping error messages in DB
+/**
+ * Look for a chunk in the following order:
+ *  - local cache (sqlite)
+ *  - bundler's backup (S3)
+ *  - Arweave's cache
+ *  - Arweave's node
+ *
+ * TODO: add better error handling with custom errors and keeping error messages in DB
+ */
 const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     log.debug({chunkId}, 'Getting chunk');
     const chunk = await Chunk.findByIdOrCreate(chunkId);
-    const chunkPath = path.join(downloadCacheDir, `chunk_${chunkId}`);
 
-    if (useCache && chunk.dl_status === CHUNK_DOWNLOAD_STATUS.COMPLETED) {
-        log.debug({chunkId}, 'Returning chunk from cache');
-        return fs.readFile(chunkPath, {encoding});
-    }
+    // If chunk download is in progress, retry after a delay.
     if (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.IN_PROGRESS) {
-        log.debug({chunkId}, 'Chunk download already in progress, waiting');
+        log.debug(
+            {chunkId},
+            `Chunk download in progress, checking again after ${CONCURRENT_DOWNLOAD_DELAY}ms`
+        );
         await delay(CONCURRENT_DOWNLOAD_DELAY);
-        return getChunk(chunkId, encoding); // use cache should be true in this case
+        return getChunk(chunkId, encoding, true);
     }
 
-    chunk.dl_status = CHUNK_DOWNLOAD_STATUS.IN_PROGRESS;
-    await chunk.save();
+    // If cache is used, try to get chunk from local disk.
+    if (useCache) {
+        try {
+            const data = await getChunkFromLocalDB(chunk, encoding);
+            log.debug({chunkId}, 'Returning chunk from cache');
+            return data;
+        } catch (err) {
+            // Non-critical errors about chunk status can be safely ignored.
+            if (!errors.isRecoverableError(err)) {
+                throw err;
+            }
+        }
+    }
+
+    // Not using cache or chunk not found in cache, download it.
+    await updateChunk(chunk, {dl_status: CHUNK_DOWNLOAD_STATUS.IN_PROGRESS});
 
     // TODO: refactor before mainnet!!!
     // Due to issues with Arweave, we first try to retrieve
@@ -81,10 +107,9 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             responseType: 'arraybuffer'
         });
         log.debug({chunkId}, 'Successfully downloaded chunk from Bundler backup');
-        await fs.writeFile(chunkPath, buf);
         chunk.size = buf.length;
         chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
-        await chunk.save();
+        await saveChunkToLocalDB(chunk, buf);
         return buf;
     } catch (err) {
         log.warn(
@@ -92,9 +117,8 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             'Chunk not found in bundler backup'
         );
     }
-    const query = getDownloadQuery(chunkId);
-    const queryResult = await request(GATEWAY_URL, query);
-    const transactions = queryResult.transactions.edges;
+
+    const transactions = await storage.getTransactionsByChunkId(chunkId);
     log.debug({chunkId, numberOfTxs: transactions.length}, 'Graphql request success');
 
     for (const edge of transactions) {
@@ -103,17 +127,15 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
         try {
             log.debug({chunkId}, 'Downloading chunk from Arweave cache');
             const {data} = await storage.getTxFromCache(txid);
+            const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
             log.debug({chunkId, txid}, 'Successfully downloaded chunk from Arweave cache');
-            const buf = Buffer.from(data);
-            const hash = hashFn(buf).toString('hex');
-            if (hash !== chunk.id) {
-                log.warn({chunkId, hash}, 'Chunk id and data do not match');
+            const isValid = validateContentAgainstHash(buf, chunk.id);
+            if (!isValid) {
+                log.warn({chunkId}, 'Chunk id and data do not match');
                 continue;
             }
-            await fs.writeFile(chunkPath, buf);
-            chunk.size = buf.length;
-            chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
-            await chunk.save();
+
+            await saveChunkToLocalDB(chunk, buf);
             return buf;
         } catch (err) {
             log.warn({chunkId, txid, err}, 'Error fetching transaction data from Arweave cache');
@@ -122,18 +144,18 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
         try {
             log.debug({chunkId, txid}, 'Downloading chunk from Arweave node');
             const data = await storage.getDataByTxId(txid);
+            const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
             log.warn({chunkId, txid}, 'Successfully downloaded chunk from Arweave node');
-            const buf = Buffer.from(data);
-            const hash = hashFn(buf).toString('hex');
-            if (hash !== chunk.id) {
-                log.warn({chunkId, hash}, 'Chunk id and data do not match');
+            const isValid = validateContentAgainstHash(buf, chunk.id);
+            if (!isValid) {
+                log.warn(
+                    {chunkId, hash, query, buf: buf.toString()},
+                    'Chunk id and data do not match'
+                );
                 continue;
             }
 
-            await fs.writeFile(chunkPath, buf);
-            chunk.size = buf.length;
-            chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
-            await chunk.save();
+            await saveChunkToLocalDB(chunk, buf);
             return buf;
         } catch (err) {
             log.warn({chunkId, err}, 'Error fetching transaction data from Arweave node');
@@ -141,8 +163,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     }
 
     log.error({chunkId}, 'Chunk not found in backup, nor Arweave cache, nor Arweave node');
-    chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
-    await chunk.save();
+    await updateChunk(chunk, {dl_status: CHUNK_DOWNLOAD_STATUS.FAILED});
     throw new Error('Chunk not found');
 };
 
@@ -373,88 +394,90 @@ const uploadDir = async dirPath => {
     return id;
 };
 
+/**
+ *
+ * Retrieves a file, downloading it if needed.
+ *
+ * If file consists of multiple chunks, it retrieves them all
+ * and composes them.
+ */
 const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
     log.debug({fileId: rawId}, 'Getting file');
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
-
-    const filePath = path.join(filesDir, `file_${id}`);
+    const filePath = getFilePath(id);
     const file = await File.findByIdOrCreate(id, {original_path: filePath});
-    if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {
-        log.debug({fileId: file.id}, 'Returning file from cache');
-        return await fs.readFile(filePath, {encoding});
-    }
+
+    // If file download is in progress, retry after a delay.
     if (file.dl_status === FILE_DOWNLOAD_STATUS.IN_PROGRESS) {
-        log.debug({fileId: file.id}, 'File download already in progress, waiting');
+        log.debug(
+            {fileId: file.id},
+            `File download in progress, checking again after ${CONCURRENT_DOWNLOAD_DELAY}ms`
+        );
         await delay(CONCURRENT_DOWNLOAD_DELAY);
-        return getFile(id, encoding); // use cache should be true in this case
+        return getFile(rawId, encoding, true);
     }
 
+    // If cache is used, try to get file from local disk.
+    if (useCache) {
+        try {
+            const data = await getFileFromLocalDB(file, encoding);
+            log.debug({fileId: file.id}, 'Returning file from cache');
+            return data;
+        } catch (err) {
+            // Non-critical errors about file status can be safely ignored.
+            if (!errors.isRecoverableError(err)) {
+                throw err;
+            }
+        }
+    }
+
+    // Not using cache or file not found in cache, download it.
+    await updateFile(file, {dl_status: FILE_DOWNLOAD_STATUS.IN_PROGRESS});
     log.debug({fileId: file.id}, 'Downloading file');
     try {
-        file.dl_status = FILE_DOWNLOAD_STATUS.IN_PROGRESS;
-        await file.save();
-
-        log.debug({fileId: file.id}, 'Getting info chunk');
-
         // TODO: retry logic
         const chunkInfo = await getChunk(file.id, encoding);
         const chunkInfoString = chunkInfo.toString();
         if (!chunkInfoString.startsWith(CHUNKINFO_PROLOGUE)) {
             log.debug({fileId: file.id}, 'File consists of a single chunk, returning it');
-            await fs.writeFile(filePath, chunkInfo);
-
-            file.size = chunkInfo.length;
-            file.dl_status = FILE_DOWNLOAD_STATUS.COMPLETED;
-            await file.save();
-
+            await saveFileToLocalDB(file, chunkInfo);
             return encoding === null ? chunkInfo : chunkInfo.toString(encoding);
         }
 
-        log.debug({fileId: file.id}, 'Processing chunk info');
+        log.debug({fileId: file.id}, 'File consists of multiple chunks, processing chunk info');
         const toParse = chunkInfoString.slice(CHUNKINFO_PROLOGUE.length);
-        const {type, hash, chunks, filesize, merkle: merkleHash} = JSON.parse(toParse);
+        const {type, hash, chunks, filesize, merkle: expectedMerkleHash} = JSON.parse(toParse);
+        log.debug(
+            {type, hash, chunks, filesize, merkle: expectedMerkleHash},
+            `Parsed chunks info for file ${file.id}`
+        );
 
         if (type !== 'file') {
             throw new Error('Bad file type');
         }
-
         if (hash !== 'keccak256') {
             throw new Error('Bad hash type');
         }
-        const merkleReassembled = merkle(
-            chunks.map(x => Buffer.from(x, 'hex')),
-            hashFn
-        ).map(x => x.toString('hex'));
-        if (!areScalarArraysEqual(merkleReassembled, merkleHash)) {
+        if (!validateMerkle(chunks, expectedMerkleHash)) {
             throw new Error('Incorrect Merkle hash');
+        } else {
+            log.debug({fileId: file.id}, 'Merkle validation is a PASS');
         }
 
         log.debug({fileId: file.id}, 'Chunk info for file processed, getting chunks');
 
         // TODO: retry logic
         const chunkBuffers = await Promise.all(chunks.map(chunkId => getChunk(chunkId, encoding)));
-        const fileBuffer = Buffer.concat([
-            ...chunkBuffers.slice(0, -1),
-            // We should trim the trailing zeros from the last chunk
-            chunkBuffers[chunkBuffers.length - 1].slice(
-                0,
-                filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
-            )
-        ]);
-
-        log.debug({fileId: file.id}, 'Successfully proceeded file chunks');
-
-        await fs.writeFile(filePath, fileBuffer);
-
-        file.size = filesize;
-        file.dl_status = FILE_DOWNLOAD_STATUS.COMPLETED;
-        await file.save();
-
+        const fileBuffer = bufferFromChunks(chunkBuffers, CHUNK_SIZE, filesize);
+        log.debug(
+            {fileId: file.id, numberfOfChunks: chunkBuffers.length},
+            'Successfully fetched all file chunks'
+        );
+        await saveFileToLocalDB(file, fileBuffer);
         return encoding === null ? fileBuffer : fileBuffer.toString(encoding);
     } catch (e) {
         log.error({fileId: file.id, message: e.message, stack: e.stack}, 'File download failed');
-        file.dl_status = FILE_DOWNLOAD_STATUS.FAILED;
-        await file.save();
+        await updateFile(file, {dl_status: FILE_DOWNLOAD_STATUS.FAILED});
         throw e;
     }
 };
