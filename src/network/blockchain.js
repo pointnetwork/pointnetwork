@@ -27,11 +27,11 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function createWeb3Instance({blockchainUrl, privateKey}) {
     
-    const provider = (blockchainUrl.startsWith("ws://"))?
+    const provider = (blockchainUrl.startsWith('ws://')) ?
         new Web3.providers.WebsocketProvider(blockchainUrl) : blockchainUrl;
 
-    if (blockchainUrl.startsWith("ws://")) {
-        HDWalletProvider.prototype.on = provider.on.bind(provider)
+    if (blockchainUrl.startsWith('ws://')) {
+        HDWalletProvider.prototype.on = provider.on.bind(provider);
     }
 
     const hdWalletProvider = new HDWalletProvider(privateKey, provider);
