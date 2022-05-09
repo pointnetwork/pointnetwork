@@ -4,6 +4,18 @@ const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore'
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
 
+const TwitterOracle = {
+    async isIdentityValidated(/*identity, code*/) {
+        // validate that the code was tweeted
+        return true;
+    },
+
+    async isIdentityAvailable(/*identity*/) {
+        // verify that the identity was not used by a twitter account
+        return {available: false};
+    }
+};
+
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
         super(ctx, req);
@@ -11,8 +23,8 @@ class IdentityController extends PointSDKController {
         this.rep = rep;
     }
 
-    async isIdentityRegistered(){
-        const identityRegistred =  await blockchain.isCurrentIdentityRegistered();
+    async isIdentityRegistered() {
+        const identityRegistred = await blockchain.isCurrentIdentityRegistered();
         return this._response({identityRegistred: identityRegistred});
     }
 
@@ -34,14 +46,14 @@ class IdentityController extends PointSDKController {
         return this._response({publicKey});
     }
 
-    async blockTimestamp(){
+    async blockTimestamp() {
         const blockNumber = this.req.body.blockNumber;
         const timestamp = await blockchain.getBlockTimestamp(blockNumber);
         return this._response({timestamp});
     }
 
     async registerIdentity() {
-        const {identity, _csrf} = this.req.body;
+        const {identity, _csrf, code} = this.req.body;
         const {host} = this.req.headers;
 
         if (host !== 'point') {
@@ -54,29 +66,61 @@ class IdentityController extends PointSDKController {
         const publicKey = getNetworkPublicKey();
         const owner = getNetworkAddress();
 
-        log.info(
-            {
-                identity,
-                owner,
-                publicKey,
-                len: Buffer.byteLength(publicKey, 'utf-8'),
-                parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
-            },
-            'Registering a new identity'
-        );
+        async function register() {
+            log.info(
+                {
+                    identity,
+                    owner,
+                    publicKey,
+                    len: Buffer.byteLength(publicKey, 'utf-8'),
+                    parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
+                },
+                'Registering a new identity'
+            );
+    
+            await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
+    
+            log.info(
+                {identity, owner, publicKey: publicKey.toString('hex')},
+                'Successfully registered new identity'
+            );
+            log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+    
+            return {
+                status: 200,
+                data: 'OK'
+            };
+        }
+        
+        // verify that the identity was validated on twitter
+        if (code) { 
+            const validated = await TwitterOracle.isIdentityValidated(identity, code);
+            if (!validated) {
+                return {
+                    status: 500,
+                    data: {error: 'Identity was not validated yet'}
+                };
+            }
 
-        await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
+            // register that the code was successfuly validated
+            await blockchain.setIdentityAsValidated(code, identity, owner);
 
-        log.info(
-            {identity, owner, publicKey: publicKey.toString('hex')},
-            'Successfully registered new identity'
-        );
-        log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+            return await register();
+        }
 
-        return {
-            status: 200,
-            data: 'OK'
-        };
+        const {available} = await TwitterOracle.isIdentityAvailable(identity);
+        // if the identity is being used on twitter, then ask for a validation tweet
+        if (!available) {
+            const code = `${identity}${new Date().getTime()}`;
+            // register the validation code onchain
+            await blockchain.addValidationCode(code, identity, owner);
+            return {
+                status: 200,
+                data: {code}
+            };
+        }
+
+        return await register();
     }
 }
 
