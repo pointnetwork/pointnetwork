@@ -67,76 +67,95 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
         return getChunk(chunkId, encoding); // use cache should be true in this case
     }
 
-    log.debug({chunkId}, 'Downloading chunk');
+    chunk.dl_status = CHUNK_DOWNLOAD_STATUS.IN_PROGRESS;
+    await chunk.save();
+
+    // TODO: refactor before mainnet!!!
+    // Due to issues with Arweave, we first try to retrieve
+    // chunks from the bundler's backup (S3).
     try {
-        chunk.dl_status = CHUNK_DOWNLOAD_STATUS.IN_PROGRESS;
-        await chunk.save();
+        log.debug({chunkId}, 'Downloading chunk from bundler backup');
+        const {data} = await axios.get(`${BUNDLER_DOWNLOAD_URL}/${chunkId}`);
+        log.debug({chunkId}, 'Successfully downloaded chunk from Bundler backup');
+        const buf =
+            typeof data === 'object' ? Buffer.from(JSON.stringify(data)) : Buffer.from(data);
+        await fs.writeFile(chunkPath, buf);
+        chunk.size = buf.length;
 
-        const query = getDownloadQuery(chunkId);
-
-        const queryResult = await request(GATEWAY_URL, query);
-        log.debug({chunkId}, 'Graphql request success');
-
-        for (const edge of queryResult.transactions.edges) {
-            try {
-                const txid = edge.node.id;
-                log.debug({chunkId, txid}, 'Downloading data from arweave');
-
-                const data = await storage.getDataByTxId(txid);
-                log.debug({chunkId, txid}, 'Successfully downloaded data from arweave');
-
-                const buf = Buffer.from(data);
-
-                const hash = hashFn(buf).toString('hex');
-                if (hash !== chunk.id) {
-                    log.warn(
-                        {chunkId, hash, query, buf: buf.toString()},
-                        'Chunk id and data do not match'
-                    );
-                    continue;
-                }
-
-                await fs.writeFile(chunkPath, buf);
-
-                chunk.size = buf.length;
-                chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
-                await chunk.save();
-                return buf;
-            } catch (err) {
-                log.warn({chunkId, err}, 'Trying to download chunk from Arweave threw an error');
-            }
+        const hash = hashFn(buf).toString('hex');
+        if (hash !== chunk.id) {
+            const errMsg = 'Chunk id and data do not match';
+            log.warn({chunkId: chunk.id, hash}, errMsg);
+            throw new Error(errMsg);
         }
 
+        chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
+        await chunk.save();
+        return buf;
+    } catch (err) {
         log.warn(
-            {chunkId},
-            'Chunk not found in Arweave. Falling back to requesting it from bundler backup'
+            {chunkId, message: err.message, stack: err.stack},
+            'Chunk not found in bundler backup'
         );
+    }
+    const query = getDownloadQuery(chunkId);
+    const queryResult = await request(GATEWAY_URL, query);
+    const transactions = queryResult.transactions.edges;
+    log.debug({chunkId, numberOfTxs: transactions.length}, 'Graphql request success');
 
-        throw new Error('No matching hash found in Arweave');
-    } catch (e) {
-        // TODO: refactor before mainnet!!!
-        // If we failed to retrieve the chunk from Arweave,
-        // retrieve it from the bundler's backup (S3).
+    for (const edge of transactions) {
+        const txid = edge.node.id;
+
         try {
-            const {data} = await axios.get(`${BUNDLER_DOWNLOAD_URL}/${chunkId}`);
-            log.debug({chunkId}, 'Failed to find it in Arweave but found it in the bundler');
-            const buf =
-                typeof data === 'object' ? Buffer.from(JSON.stringify(data)) : Buffer.from(data);
+            log.debug({chunkId}, 'Downloading chunk from Arweave cache');
+            const {data} = await storage.getTxFromCache(txid);
+            log.debug({chunkId, txid}, 'Successfully downloaded chunk from Arweave cache');
+            const buf = Buffer.from(data);
+            const hash = hashFn(buf).toString('hex');
+            if (hash !== chunk.id) {
+                log.warn(
+                    {chunkId, hash, query, buf: buf.toString()},
+                    'Chunk id and data do not match'
+                );
+                continue;
+            }
             await fs.writeFile(chunkPath, buf);
             chunk.size = buf.length;
             chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
             await chunk.save();
             return buf;
         } catch (err) {
-            log.error(
-                {chunkId, message: e.message, stack: e.stack},
-                'Chunk not found in bundler backup'
-            );
-            chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
+            log.warn({chunkId, txid, err}, 'Error fetching transaction data from Arweave cache');
+        }
+
+        try {
+            log.debug({chunkId, txid}, 'Downloading chunk from Arweave node');
+            const data = await storage.getDataByTxId(txid);
+            log.warn({chunkId, txid}, 'Successfully downloaded chunk from Arweave node');
+            const buf = Buffer.from(data);
+            const hash = hashFn(buf).toString('hex');
+            if (hash !== chunk.id) {
+                log.warn(
+                    {chunkId, hash, query, buf: buf.toString()},
+                    'Chunk id and data do not match'
+                );
+                continue;
+            }
+
+            await fs.writeFile(chunkPath, buf);
+            chunk.size = buf.length;
+            chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
             await chunk.save();
-            throw e;
+            return buf;
+        } catch (err) {
+            log.warn({chunkId, err}, 'Error fetching transaction data from Arweave node');
         }
     }
+
+    log.error({chunkId}, 'Chunk not found in backup, nor Arweave cache, nor Arweave node');
+    chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
+    await chunk.save();
+    throw new Error('Chunk not found');
 };
 
 const uploadChunk = async data => {
