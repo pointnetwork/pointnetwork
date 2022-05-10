@@ -17,7 +17,7 @@ const TwitterOracle = {
     },
 
     async regiterFreeIdentity(identity, address) {
-        const url = `${twitterOracleDomain}/activate_free?handle=${identity}&address=${address}`;
+        const url = `${twitterOracleDomain}/api/activate_free?handle=${identity}&address=${address}`;
         log.info(`calling to ${url}`);
         const {data} = await axios.post(url);
         return data;
