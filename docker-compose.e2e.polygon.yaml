@@ -21,30 +21,14 @@ services:
       - '7545:7545'
     volumes:
       - blockchain_data_e2e_polygon:/cluster/data:rw
+
   contract_deployer:
-    container_name: deployer
-    image: jensendarren/contract-deployer:v0.1.0
+    extends:
+      file: docker-compose.e2e.yaml
+      service: contract_deployer
     depends_on:
       blockchain_node:
         condition: service_healthy
-    deploy:
-      restart_policy:
-        condition: 'no'
-    volumes:
-      - shared_contracts_e2e:/build:rw
-      - ./hardhat/contracts:/hardhat/contracts:ro
-      - ./hardhat/scripts:/hardhat/scripts:ro
-      - ./hardhat/tasks:/hardhat/tasks:ro
-      - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
-      - ./hardhat/utils.ts:/hardhat/utils.ts:ro
-      - ./hardhat/resources:/hardhat/resources:rw
-    environment:
-      BLOCKCHAIN_HOST: blockchain_node
-      BLOCKCHAIN_PORT: 7545
-      BLOCKCHAIN_NETWORK_ID: 256
-      DEPLOYER_COMPILER_VERSION: native
-      DEPLOYER_ACCOUNT: 0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e
-      DEPLOYER_BUILD_PATH: /build
 
   point_node:
     extends:

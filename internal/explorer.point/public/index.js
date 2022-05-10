@@ -22816,6 +22816,7 @@ var _s = $RefreshSig$();
 const Main = ()=>{
     _s();
     const [isRegistered, setIsRegistered] = _react.useState(false);
+    const [walletAddr, setWalletAddr] = _react.useState();
     const [isLoading, setIsLoading] = _react.useState(true);
     _react.useEffect(()=>{
         fetchIdentityRegistred();
@@ -22825,13 +22826,17 @@ const Main = ()=>{
         const response = await fetch('/v1/api/identity/isIdentityRegistered/');
         const registred = await response.json();
         setIsRegistered(registred.data.identityRegistred);
+        if (registred.data.identityRegistred) {
+            const resultAddr = await window.point.wallet.address();
+            setWalletAddr(resultAddr.data.address);
+        }
         setIsLoading(false);
     };
     return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("main", {
         children: isLoading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
         }, void 0, false, {
             fileName: "src/App.js",
-            lineNumber: 32,
+            lineNumber: 39,
             columnNumber: 26
         }, undefined) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_jsxDevRuntime.Fragment, {
             children: [
@@ -22839,7 +22844,7 @@ const Main = ()=>{
                     isRegistered: isRegistered
                 }, void 0, false, {
                     fileName: "src/App.js",
-                    lineNumber: 34,
+                    lineNumber: 41,
                     columnNumber: 21
                 }, undefined),
                 isRegistered ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Switch, {
@@ -22847,40 +22852,6 @@ const Main = ()=>{
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
                             path: "/",
                             children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_homeDefault.default, {
-                            }, void 0, false, {
-                                fileName: "src/App.js",
-                                lineNumber: 40,
-                                columnNumber: 37
-                            }, undefined)
-                        }, void 0, false, {
-                            fileName: "src/App.js",
-                            lineNumber: 39,
-                            columnNumber: 33
-                        }, undefined),
-                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
-                            path: "/wallet",
-                            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_walletDefault.default, {
-                            }, void 0, false, {
-                                fileName: "src/App.js",
-                                lineNumber: 43,
-                                columnNumber: 37
-                            }, undefined)
-                        }, void 0, false, {
-                            fileName: "src/App.js",
-                            lineNumber: 42,
-                            columnNumber: 33
-                        }, undefined),
-                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
-                            path: "/identities/:handle",
-                            component: _identityDefault.default
-                        }, void 0, false, {
-                            fileName: "src/App.js",
-                            lineNumber: 45,
-                            columnNumber: 33
-                        }, undefined),
-                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
-                            path: "/identities",
-                            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_identitiesDefault.default, {
                             }, void 0, false, {
                                 fileName: "src/App.js",
                                 lineNumber: 47,
@@ -22892,8 +22863,8 @@ const Main = ()=>{
                             columnNumber: 33
                         }, undefined),
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
-                            path: "/zapps",
-                            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_zappsDefault.default, {
+                            path: "/wallet",
+                            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_walletDefault.default, {
                             }, void 0, false, {
                                 fileName: "src/App.js",
                                 lineNumber: 50,
@@ -22903,38 +22874,86 @@ const Main = ()=>{
                             fileName: "src/App.js",
                             lineNumber: 49,
                             columnNumber: 33
+                        }, undefined),
+                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
+                            path: "/identities/:handle",
+                            component: _identityDefault.default
+                        }, void 0, false, {
+                            fileName: "src/App.js",
+                            lineNumber: 52,
+                            columnNumber: 33
+                        }, undefined),
+                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
+                            path: "/identities",
+                            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_identitiesDefault.default, {
+                            }, void 0, false, {
+                                fileName: "src/App.js",
+                                lineNumber: 54,
+                                columnNumber: 37
+                            }, undefined)
+                        }, void 0, false, {
+                            fileName: "src/App.js",
+                            lineNumber: 53,
+                            columnNumber: 33
+                        }, undefined),
+                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
+                            path: "/zapps",
+                            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_zappsDefault.default, {
+                            }, void 0, false, {
+                                fileName: "src/App.js",
+                                lineNumber: 57,
+                                columnNumber: 37
+                            }, undefined)
+                        }, void 0, false, {
+                            fileName: "src/App.js",
+                            lineNumber: 56,
+                            columnNumber: 33
+                        }, undefined),
+                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Route, {
+                            path: "/myidentities",
+                            children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_identitiesDefault.default, {
+                                owner: walletAddr
+                            }, void 0, false, {
+                                fileName: "src/App.js",
+                                lineNumber: 60,
+                                columnNumber: 37
+                            }, undefined)
+                        }, void 0, false, {
+                            fileName: "src/App.js",
+                            lineNumber: 59,
+                            columnNumber: 33
                         }, undefined)
                     ]
                 }, void 0, true, {
                     fileName: "src/App.js",
-                    lineNumber: 38,
+                    lineNumber: 45,
                     columnNumber: 29
                 }, undefined) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_finalDefault.default, {
                 }, void 0, false, {
                     fileName: "src/App.js",
-                    lineNumber: 55,
+                    lineNumber: 64,
                     columnNumber: 29
                 }, undefined)
             ]
         }, void 0, true)
     }, void 0, false, {
         fileName: "src/App.js",
-        lineNumber: 31,
+        lineNumber: 38,
         columnNumber: 9
     }, undefined));
 };
-_s(Main, "8CBKK1qC5mmFh4ShbyAG8B/ziwU=");
+_s(Main, "ptlYrmUM+15otfJWs2Ky8xjXe7E=");
 _c = Main;
 exports.default = App = ()=>/*#__PURE__*/ _jsxDevRuntime.jsxDEV(_appContext.ProvideAppContext, {
         children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(Main, {
         }, void 0, false, {
             fileName: "src/App.js",
-            lineNumber: 63,
+            lineNumber: 72,
             columnNumber: 47
         }, undefined)
     }, void 0, false, {
         fileName: "src/App.js",
-        lineNumber: 63,
+        lineNumber: 72,
         columnNumber: 28
     }, undefined)
 ;
@@ -22946,7 +22965,7 @@ $RefreshReg$(_c, "Main");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","./context/AppContext":"df6oB","wouter":"g6K8g","./components/Header":"4RMOE","./pages/Home":"lfnq7","./pages/Identities":"7THgH","./pages/Identity":"jirQB","./pages/Final":"jGTRl","./pages/Wallet":"kjz8z","./components/Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","./pages/Zapps":"7s09p"}],"df6oB":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","./context/AppContext":"df6oB","wouter":"g6K8g","./components/Header":"4RMOE","./pages/Home":"lfnq7","./pages/Identities":"7THgH","./pages/Identity":"jirQB","./pages/Final":"jGTRl","./pages/Wallet":"kjz8z","./pages/Zapps":"7s09p","./components/Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"df6oB":[function(require,module,exports) {
 var $parcel$ReactRefreshHelpers$6446 = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 var prevRefreshReg = window.$RefreshReg$;
 var prevRefreshSig = window.$RefreshSig$;
@@ -22981,18 +23000,41 @@ const ProvideAppContext = ({ children  })=>{
     const [walletIdentity, setWalletIdentity] = _react.useState();
     const [walletError, setWallerError] = _react.useState();
     const [, setLocation] = _wouter.useLocation();
-    _react.useEffect(()=>{
-        (async ()=>{
-            try {
-                const { data: { address  }  } = await window.point.wallet.address();
-                const { data: { identity  }  } = await window.point.identity.ownerToIdentity({
-                    owner: address
-                });
-                setWalletIdentity(identity);
-            } catch (e) {
-                setWallerError(e);
+    const getLastNonZappId = async (owner)=>{
+        let identitiesFetched = await window.point.contract.events({
+            host: '@',
+            contract: 'Identity',
+            event: 'IdentityRegistered',
+            filter: {
+                identityOwner: owner
             }
-        })();
+        });
+        let ikvsetFetched = await window.point.contract.events({
+            host: '@',
+            contract: 'Identity',
+            event: 'IKVSet'
+        });
+        let nonZappIdentities = [];
+        for (const id of identitiesFetched.data)if (ikvsetFetched.data != '') {
+            const domainExists = ikvsetFetched.data.filter((ikve)=>ikve.data.identity == id.data.handle && ikve.data.key == 'zdns/routes'
+            ).length > 0;
+            if (!domainExists) nonZappIdentities.push(id);
+        } else nonZappIdentities.push(id);
+        const lastEntry = nonZappIdentities.reduce((prev, current)=>prev.blockNumber > current.blockNumber ? prev : current
+        );
+        return lastEntry.data.handle;
+    };
+    const fetchData = async ()=>{
+        try {
+            const { data: { address  }  } = await window.point.wallet.address();
+            const identity = await getLastNonZappId(address);
+            setWalletIdentity(identity);
+        } catch (e) {
+            setWallerError(e);
+        }
+    };
+    _react.useEffect(()=>{
+        fetchData();
     }, []);
     const goHome = _react.useCallback(async ()=>{
         setLocation('/');
@@ -23007,7 +23049,7 @@ const ProvideAppContext = ({ children  })=>{
         children: children
     }, void 0, false, {
         fileName: "src/context/AppContext.js",
-        lineNumber: 42,
+        lineNumber: 69,
         columnNumber: 10
     }, undefined));
 };
@@ -23612,6 +23654,21 @@ const Header = ({ isRegistered  })=>{
                                     }, void 0, false, {
                                         fileName: "src/components/Header.jsx",
                                         lineNumber: 28,
+                                        columnNumber: 29
+                                    }, undefined),
+                                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Link, {
+                                        to: "/myidentities",
+                                        children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_navDefault.default.Link, {
+                                            href: "/myidentities",
+                                            children: "My Identities"
+                                        }, void 0, false, {
+                                            fileName: "src/components/Header.jsx",
+                                            lineNumber: 32,
+                                            columnNumber: 33
+                                        }, undefined)
+                                    }, void 0, false, {
+                                        fileName: "src/components/Header.jsx",
+                                        lineNumber: 31,
                                         columnNumber: 29
                                     }, undefined)
                                 ]
@@ -29175,7 +29232,12 @@ function Home() {
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV("strong", {
                             children: [
                                 "@",
-                                walletIdentity
+                                !walletIdentity ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
+                                }, void 0, false, {
+                                    fileName: "src/pages/Home.jsx",
+                                    lineNumber: 52,
+                                    columnNumber: 80
+                                }, this) : walletIdentity
                             ]
                         }, void 0, true, {
                             fileName: "src/pages/Home.jsx",
@@ -29286,17 +29348,26 @@ var _loadingDefault = parcelHelpers.interopDefault(_loading);
 var _react = require("react");
 var _wouter = require("wouter");
 var _s = $RefreshSig$();
-function Identities() {
+function Identities({ owner  }) {
     _s();
     const [identities, setIdentities] = _react.useState([]);
     const [ikvset, setIkvset] = _react.useState([]);
     const [isLoading, setIsLoading] = _react.useState(true);
     _react.useEffect(()=>{
         fetchIdentities();
-    }, []);
+    }, [
+        owner
+    ]);
     const fetchIdentities = async ()=>{
         setIsLoading(true);
-        let identitiesFetched = await window.point.contract.events({
+        let identitiesFetched = owner !== undefined ? await window.point.contract.events({
+            host: '@',
+            contract: 'Identity',
+            event: 'IdentityRegistered',
+            filter: {
+                identityOwner: owner
+            }
+        }) : await window.point.contract.events({
             host: '@',
             contract: 'Identity',
             event: 'IdentityRegistered'
@@ -29325,12 +29396,12 @@ function Identities() {
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Identities.jsx",
-                        lineNumber: 38,
+                        lineNumber: 47,
                         columnNumber: 17
                     }, this)
                 }, void 0, false, {
                     fileName: "src/pages/Identities.jsx",
-                    lineNumber: 38,
+                    lineNumber: 47,
                     columnNumber: 13
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("td", {
@@ -29338,7 +29409,7 @@ function Identities() {
                     children: id.identityOwner
                 }, void 0, false, {
                     fileName: "src/pages/Identities.jsx",
-                    lineNumber: 39,
+                    lineNumber: 48,
                     columnNumber: 13
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("td", {
@@ -29350,23 +29421,23 @@ function Identities() {
                             children: id.handle + '.point'
                         }, void 0, false, {
                             fileName: "src/pages/Identities.jsx",
-                            lineNumber: 40,
+                            lineNumber: 49,
                             columnNumber: 53
                         }, this) : ''
                     }, void 0, false, {
                         fileName: "src/pages/Identities.jsx",
-                        lineNumber: 40,
+                        lineNumber: 49,
                         columnNumber: 34
                     }, this)
                 }, void 0, false, {
                     fileName: "src/pages/Identities.jsx",
-                    lineNumber: 40,
+                    lineNumber: 49,
                     columnNumber: 13
                 }, this)
             ]
         }, id.handle, true, {
             fileName: "src/pages/Identities.jsx",
-            lineNumber: 37,
+            lineNumber: 46,
             columnNumber: 9
         }, this));
     };
@@ -29377,14 +29448,17 @@ function Identities() {
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
                 }, void 0, false, {
                     fileName: "src/pages/Identities.jsx",
-                    lineNumber: 48,
+                    lineNumber: 57,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h1", {
-                    children: "Identities"
-                }, void 0, false, {
+                    children: [
+                        owner !== undefined ? 'My ' : '',
+                        "Identities"
+                    ]
+                }, void 0, true, {
                     fileName: "src/pages/Identities.jsx",
-                    lineNumber: 49,
+                    lineNumber: 58,
                     columnNumber: 9
                 }, this),
                 "Total: ",
@@ -29392,7 +29466,7 @@ function Identities() {
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("hr", {
                 }, void 0, false, {
                     fileName: "src/pages/Identities.jsx",
-                    lineNumber: 52,
+                    lineNumber: 61,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("table", {
@@ -29405,27 +29479,27 @@ function Identities() {
                                         children: "Handle"
                                     }, void 0, false, {
                                         fileName: "src/pages/Identities.jsx",
-                                        lineNumber: 57,
+                                        lineNumber: 66,
                                         columnNumber: 21
                                     }, this),
                                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("th", {
                                         children: "Owner"
                                     }, void 0, false, {
                                         fileName: "src/pages/Identities.jsx",
-                                        lineNumber: 58,
+                                        lineNumber: 67,
                                         columnNumber: 21
                                     }, this),
                                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("th", {
                                         children: "Zapp"
                                     }, void 0, false, {
                                         fileName: "src/pages/Identities.jsx",
-                                        lineNumber: 59,
+                                        lineNumber: 68,
                                         columnNumber: 21
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "src/pages/Identities.jsx",
-                                lineNumber: 56,
+                                lineNumber: 65,
                                 columnNumber: 17
                             }, this),
                             isLoading ? null : identities.map((e)=>renderIdentityEntry(e.data)
@@ -29433,24 +29507,24 @@ function Identities() {
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Identities.jsx",
-                        lineNumber: 55,
+                        lineNumber: 64,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "src/pages/Identities.jsx",
-                    lineNumber: 54,
+                    lineNumber: 63,
                     columnNumber: 9
                 }, this),
                 isLoading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                 }, void 0, false, {
                     fileName: "src/pages/Identities.jsx",
-                    lineNumber: 64,
+                    lineNumber: 73,
                     columnNumber: 22
                 }, this) : null
             ]
         }, void 0, true, {
             fileName: "src/pages/Identities.jsx",
-            lineNumber: 47,
+            lineNumber: 56,
             columnNumber: 7
         }, this)
     }, void 0, false));
@@ -40261,7 +40335,7 @@ $RefreshReg$(_c, "Zapps");
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 const reportWebVitals = (onPerfEntry)=>{
-    if (onPerfEntry && onPerfEntry instanceof Function) require("a140690b2365490c").then(({ getCLS , getFID , getFCP , getLCP , getTTFB  })=>{
+    if (onPerfEntry && onPerfEntry instanceof Function) require("68509a75770ad537").then(({ getCLS , getFID , getFCP , getLCP , getTTFB  })=>{
         getCLS(onPerfEntry);
         getFID(onPerfEntry);
         getFCP(onPerfEntry);
@@ -40271,7 +40345,7 @@ const reportWebVitals = (onPerfEntry)=>{
 };
 exports.default = reportWebVitals;
 
-},{"a140690b2365490c":"flqhl","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV"}],"flqhl":[function(require,module,exports) {
+},{"68509a75770ad537":"flqhl","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV"}],"flqhl":[function(require,module,exports) {
 module.exports = require("./helpers/browser/js-loader")(require('./helpers/bundle-url').getBundleURL('ePakp') + "web-vitals.180b7c56.js" + "?" + Date.now()).catch((err)=>{
     delete module.bundle.cache[module.id];
     throw err;

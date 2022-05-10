@@ -16,17 +16,44 @@ export const ProvideAppContext = ({ children }) => {
   const [walletError, setWallerError] = useState();
   const [, setLocation] = useLocation();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const {data: {address}} = await window.point.wallet.address();
-        const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: address});
+  const getLastNonZappId = async (owner) => {
+    let identitiesFetched = await window.point.contract.events(
+      {host: '@', contract: 'Identity', event: 'IdentityRegistered', filter: {
+        identityOwner: owner
+      }});
+    let ikvsetFetched = await window.point.contract.events(
+      {host: '@', contract: 'Identity', event: 'IKVSet'});
+    let nonZappIdentities = [];
+    for (const id of identitiesFetched.data){
+        if (ikvsetFetched.data != ''){
+          const domainExists = ikvsetFetched.data.filter((ikve) => 
+              ikve.data.identity == id.data.handle && ikve.data.key == 'zdns/routes').length > 0;
+          if(!domainExists){
+            nonZappIdentities.push(id);
+          }
+        }else{
+          nonZappIdentities.push(id);
+        }
+    }
+    const lastEntry = nonZappIdentities.reduce((prev, current) =>
+        prev.blockNumber > current.blockNumber ? prev : current
+    );
+    return lastEntry.data.handle;
+  }
 
-        setWalletIdentity(identity);
-      } catch (e) {
-        setWallerError(e);
-      }
-    })()
+  const fetchData = async () => {
+    try {
+      const {data: {address}} = await window.point.wallet.address();
+      const identity = await getLastNonZappId(address);
+
+      setWalletIdentity(identity);
+    } catch (e) {
+      setWallerError(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [])
 
   const goHome = useCallback(async () => {
