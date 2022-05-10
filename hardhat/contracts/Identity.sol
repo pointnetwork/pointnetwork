@@ -5,6 +5,7 @@ pragma abicoder v2;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     struct PubKey64 {
@@ -20,12 +21,12 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     mapping(string => string) public lowercaseToCanonicalIdentities;
     mapping(string => PubKey64) public identityToCommPublicKey;
     string[] public identityList;
-
     bool public migrationApplied;
 
-    uint public constant MAX_HANDLE_LENGTH = 16;
-
+    uint private maxHandleLength;
     mapping(string => mapping(address => bool)) private _isIdentityDeployer;
+    address private oracleAddress;
+
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
     event IdentityOwnershipTransferred(
@@ -42,6 +43,24 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         __Ownable_init();
         __UUPSUpgradeable_init();
         migrationApplied = false;
+        maxHandleLength = 16;
+        oracleAddress = 0x74aEa7B2cE41a932511c4E94fae491274d243e62;
+    }
+
+    function setMaxHandleLength(uint value) public onlyOwner {
+        maxHandleLength = value;
+    }
+
+    function getMaxHandleLength() public view returns (uint) {
+        return maxHandleLength;
+    }
+
+    function setOracleAddress(address addr) public onlyOwner {
+        oracleAddress = addr;
+    }
+
+    function getOracleAddress() public view returns (address) {
+        return oracleAddress;
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -65,26 +84,43 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         _;
     }
 
-    struct ValidationCode {
-        string code;
-        string identity;
-        uint256 expiration;
-        bool validated;
-    }
-
-    function addValidationCode() external onlyOwner {
-        
-    }
-    
-    function setIdentityAsValidated() external onlyOwner {
-
-    }
-
-    function register(
-        string memory handle, 
+    function registerVerified(
+        string calldata handle, 
         address identityOwner, 
         bytes32 commPublicKeyPart1, 
-        bytes32 commPublicKeyPart2) public {
+        bytes32 commPublicKeyPart2,
+        bytes32 _hashedMessage, 
+        uint8 _v, 
+        bytes32 _r, 
+        bytes32 _s) public{
+
+        _validateIdentity(handle, identityOwner, false);
+
+        // Check oracle msg for confirming  hat identity can be registered.
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 prefixedHashMessage = keccak256(abi.encodePacked(prefix, _hashedMessage));
+        address signer = ecrecover(prefixedHashMessage, _v, _r, _s);
+        require(signer == oracleAddress, "Identity claim msg must be signed by the oracle");
+
+        bytes32 expectedMsgFree = keccak256(abi.encodePacked(handle, "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|free"));
+        bytes32 expectedMsgTaken = keccak256(abi.encodePacked(handle, "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|taken"));
+
+        require(_hashedMessage == expectedMsgFree || _hashedMessage == expectedMsgTaken, "Invalid identity claim msg content");
+
+        //ok, go for registering.
+        PubKey64 memory commPublicKey = PubKey64(commPublicKeyPart1, commPublicKeyPart2);
+
+        _selfReg(handle, identityOwner, commPublicKey);
+    }
+
+    function _validateIdentity(string calldata handle, address identityOwner, bool ynet) private view returns (bool){
+        
+        if(ynet == true){
+            require(keccak256(abi.encodePacked(handle[0:4])) == keccak256(abi.encodePacked("ynet")),
+            "ynet handles must start with ynet");
+        }
+
+        require(msg.sender == identityOwner, "Cannot register identities for other address than sender");
 
         if (!_isValidHandle(handle)) revert("Only alphanumeric characters and an underscore allowed");
 
@@ -95,8 +131,21 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         }
 
         // Check if this owner already has an identity attached
-        // if (!_isEmptyString(ownerToIdentity[identityOwner])) revert('This owner already has an identity attached');
+        if (!_isEmptyString(ownerToIdentity[identityOwner])) revert("This owner already has an identity attached");
 
+        return true;
+    }
+
+    function register(
+        string calldata handle, 
+        address identityOwner, 
+        bytes32 commPublicKeyPart1, 
+        bytes32 commPublicKeyPart2
+        ) public {
+            
+        _validateIdentity(handle, identityOwner, true);
+
+        //ok, go for registering.
         PubKey64 memory commPublicKey = PubKey64(commPublicKeyPart1, commPublicKeyPart2);
 
         _selfReg(handle, identityOwner, commPublicKey);
@@ -136,6 +185,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     function finishMigrations() external {
         migrationApplied = true;
+        maxHandleLength = 16;
     }
 
     function transferIdentityOwnership(string memory handle, address newOwner) public onlyIdentityOwner(handle) {
@@ -191,10 +241,10 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         );
     }
 
-    function _isValidHandle(string memory str) internal pure returns (bool) {
+    function _isValidHandle(string memory str) internal view returns (bool) {
 
         bytes memory b = bytes(str);
-        if (b.length > MAX_HANDLE_LENGTH) return false;
+        if (b.length > maxHandleLength) return false;
 
         for (uint i; i < b.length; i++) {
             bytes1 char = b[i];
