@@ -11,11 +11,12 @@ const Final = () => {
     const [available, setAvailable] = useState(false);
     const [activationCode, setActivationCode] = useState('');
     const [tweetUrl, setTweetUrl] = useState('');
+    const [tweetUrlError, setTweetUrlError] = useState('');
+
     const [tweetContent, setTweetContent] = useState('');
+    const [tweetContentError, setTweetContentError] = useState('');
 
-    const defaultTweetContent = `Requesting the registration of this account on @pointnetwork. https://pointnetwork.io/activation/${activationCode}. #pointnetwork, #activation.`;
-
-    function validate_identity(identity) {
+    function validateIdentity(identity) {
         if (identity === '') {
             setError('empty identity');
             return;
@@ -36,18 +37,18 @@ const Final = () => {
 
     function validateTweetUrl(url) {        
         if (url === '') {
-            setError('empty tweet url');
+            setTweetUrlError('empty tweet url');
             return;
         }
 
         const regex = new RegExp(`^https://twitter.com/${identity}/status/[0-9]+$`);
 
         if (!regex.test(url)) {
-            setError('invalid tweet url');
+            setTweetUrlError('invalid tweet url');
             return;
         }
 
-        setError('');
+        setTweetUrlError('');
 
         return true;
     }
@@ -62,7 +63,7 @@ const Final = () => {
     let debounced = useRef(null);
     const onChangeHandler = (event) => {
         const identity = event.target.value;
-        if (!validate_identity(identity)) {
+        if (!validateIdentity(identity)) {
             return;
         }
         cleanForm();
@@ -88,7 +89,7 @@ const Final = () => {
                     setError(DEFAULT_ERROR_MESSAGE);
                 }
             })
-        }, 300);
+        }, 500);
     } 
 
     const onChangeUrlHandler = (event) => {
@@ -101,13 +102,46 @@ const Final = () => {
         setTweetUrl(url);
     }
 
+    const validateTweetContent = (content) => {
+        if (content === '') {
+            setTweetContentError('tweet content cannot be empty');
+            return;
+        }
+
+        if (!/#pointnetwork/g.test(content)) {
+            setTweetContentError('tweet content must have #pointnetwork');
+            return;
+        }
+
+        if (!/#activation/g.test(content)) {
+            setTweetContentError('tweet content must have #activation');
+            return;
+        }
+
+        if (!/@pointnetwork/g.test(content)) {
+            setTweetContentError('tweet content must have @pointnetwork');
+            return;
+        }
+
+        const regex = new RegExp(`https://pointnetwork.io/activation/${activationCode}`, 'g');
+        if (!regex.test(content)) {
+            setTweetContentError(`tweet content must have the activation link https://pointnetwork.io/activation/${activationCode}`);
+            return;
+        }
+
+        setTweetContentError('');
+    }
+
     const onChangeTweetContentHandler = (event) => {
         const newContent = event.target.value;
+        validateTweetContent(newContent);
         setTweetContent(newContent);
     }
 
-    const resetTweetContent = () => {
+    const resetTweetContent = (code) => {
+        const defaultTweetContent = `Activating my Point Network handle! @pointnetwork. https://pointnetwork.io/activation/${activationCode || code}. #pointnetwork, #activation.`;
         setTweetContent(defaultTweetContent);
+        validateTweetContent(defaultTweetContent);
     }
 
     const registerHandler = async () => {
@@ -143,7 +177,7 @@ const Final = () => {
 
             if (code) {
                 setActivationCode(code);
-                setTweetContent(defaultTweetContent);
+                resetTweetContent(code)
                 return;
             }
 
@@ -172,26 +206,33 @@ const Final = () => {
             <h1>Final step</h1>
             <p>Introduce yourself to the world by registering an identity, which will be your public web3 handle:</p>
 
-            <input type="text" name="handle" id="handle" className="p-1" onChange={onChangeHandler} />
+            <div className="py-2">
+                <input type="text" name="handle" id="handle" className="p-1" onChange={onChangeHandler} />
+            </div>
             
-            <br/>
-
-            {activationCode ? (<div className="py-4">
+            {activationCode ? (<div className="py-2">
                 <h3>Twitter validation</h3>
                 <p>Looks like this identity is own by a Twitter account. Twitter accounts have priority on Identity registrations.</p> 
                 <p>If you are the owner please post a tweet with this content and add your tweet url below.</p>
-                <p>It should include the @pointnetwork, the activation link and the hashtags #pointnetwork and #activation</p>
+                <p>It should include the @pointnetwork tag, the activation link and the hashtags #pointnetwork and #activation</p>
                 <div>
-                    <textarea className="my-2 p-1" rows="10" cols="50" value={tweetContent} onChange={onChangeTweetContentHandler} style={{ width: '100%' }} />
+                    <textarea
+                        className="my-2 p-1"
+                        rows="10"
+                        cols="50"
+                        value={tweetContent}
+                        onChange={onChangeTweetContentHandler}
+                        style={{ width: '100%' }}
+                    />
+                    {tweetContentError ? (<p style={{color: 'red'}}>{tweetContentError}</p>) : ''}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between'}} className="my-2 py-2">
                     <button className="btn btn-info" type="button" onClick={() => navigator.clipboard.writeText(tweetContent)}>Copy Tweet content</button>
                     <button className="btn btn-info" type="button" onClick={resetTweetContent}>Reset Tweet Content</button>
                 </div>
                 <input type="text" id="tweet-link" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} className="my-2 p-1" />
+                {tweetUrlError ? (<p style={{color: 'red'}}>{tweetUrlError}</p>) : ''}
             </div>) : ''}
-
-            <br/>
 
             <div id="result" style={resultStyles} className="py-2">
                 {error ? error : identity && !activationCode ? `${identity} ${available ? 'is available' : 'is not available'}`  : ''}
