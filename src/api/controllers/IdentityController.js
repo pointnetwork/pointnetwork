@@ -175,11 +175,11 @@ class IdentityController extends PointSDKController {
         }
 
         if (eligibility === 'tweet') {
-            const code = `0x${crypto
+            const code = crypto
                 .createHash('sha256')
                 .update(owner)
                 .digest('hex')
-                .toLowerCase()}`;
+                .toLowerCase();
             return this._response({code});
         }
 
