@@ -2,7 +2,7 @@ import pendingTxs from '../permissions/PendingTxs';
 // import permissionStore from '../permissions/PermissionStore';
 import ethereum from '../network/providers/ethereum';
 import config from 'config';
-import solana from '../network/providers/solana';
+import solana, {TransactionJSON} from '../network/providers/solana';
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
@@ -28,14 +28,11 @@ const storeTransaction: HandlerFunc = async data => {
     if (!params) {
         return {status: 400, result: {message: 'Missing `params` in request body.'}};
     }
-    if (!networks[network]) {
-        return {status: 400, result: {message: `Unknown network ${network}`}};
-    }
-    if (networks[network].type === 'solana' && params.length !== 2) {
+    if (networks[network].type === 'solana' && params.length !== 1) {
         return {
             status: 400, result: {
                 message: 
-                    'Wrong number or params for solana transaction, expected 2: toPubKey, lamports'
+                    'Wrong number or params for solana transaction, expected 1'
             }
         };
     }
@@ -71,10 +68,9 @@ const confirmTransaction: HandlerFunc = async data => {
                 result = await ethereum.send('eth_sendTransaction', tx.params, id, network);
                 break;
             case 'solana':
-                result = await solana.sendTransaction(
+                result = await solana.signAndSendTransaction(
                     id,
-                    tx.params[0] as string,
-                    tx.params[1] as number,
+                    tx.params[0] as TransactionJSON,
                     network
                 );
                 break;
@@ -106,14 +102,23 @@ const specialHandlers: Record<string, HandlerFunc> = {
             return {status: 200, result};
         } catch (err) {
             const statusCode = err.code === -32603 ? 500 : 400;
-            return {status: statusCode, result: err};
+            return {status: statusCode, result: {code: statusCode, message: err.message}};
         }
     },
     eth_sendTransaction: storeTransaction,
     eth_confirmTransaction: confirmTransaction,
     // Solana
     solana_sendTransaction: storeTransaction,
-    solana_confirmTransaction: confirmTransaction
+    solana_confirmTransaction: confirmTransaction,
+    solana_requestAccount: async ({id}) => {
+        try {
+            const result = await solana.requestAccount(id, 'solana_devnet');
+            return {status: 200, result};
+        } catch (err) {
+            const statusCode = err.code === -32603 ? 500 : 400;
+            return {status: statusCode, result: {code: statusCode, message: err.message}};
+        }
+    }
 };
 
 // Handlers for methods related to permissions.
@@ -218,9 +223,10 @@ const handleRPC: HandlerFunc = async data => {
 
         return {status: 200, result};
     } catch (err) {
+        log.error({message: err.message, stack: err.stack}, 'Error handling RPC');
         // As per EIP-1474, -32603 means internal error.
         const statusCode = err.code === -32603 ? 500 : 400;
-        return {status: statusCode, result: err};
+        return {status: statusCode, result: {code: err.code, message: err.message}};
     }
 };
 

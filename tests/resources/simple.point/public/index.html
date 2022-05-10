@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simple Site</title>
   <link rel="stylesheet" href="./styles.css">
+  <script src="./buffer.min.js"></script>
+  <script>Buffer=buffer.Buffer;</script>
   <script src="./web3.1.7.0.min.js"></script>
   <script src="./ethers.min.js"></script>
+  <script src="./solanaWeb3.min.js"></script>
   <script defer src="./scripts.js"></script>
 </head>
 <body>
@@ -50,6 +53,13 @@
     <button id="getReceipt">Get Receipt</button>
     <br />
     <code><pre id="txReceipt"></pre></code>
+  </section>
+  <section>
+    <p>Solana sign and send tx</p>
+    <input type="text" id="sol_to" placeholder="To"/>
+    <input type="number" id="sol_lamports" placeholder="Amount (lamports)"/>
+    <button id="sol_send_btn">Send</button>
+    <code><pre id="sol_result"></pre></code>
   </section>
   <section>
      <p>Arbitrary RPC request (no-lib only):</p>

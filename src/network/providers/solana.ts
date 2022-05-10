@@ -6,6 +6,30 @@ import axios from 'axios';
 const logger = require('../../core/log');
 const log = logger.child({module: 'SolanaProvider'});
 
+// These interfaces are copied from @solana/web3
+// However, they are not exported in index file, and trying to import them leads to
+// a bunch of ts errors in other library files
+export interface TransactionJSON {
+    recentBlockhash: string | null;
+    feePayer: string | null;
+    nonceInfo: {
+        nonce: string;
+        nonceInstruction: TransactionInstructionJSON;
+    } | null;
+    instructions: TransactionInstructionJSON[];
+    signers: string[];
+}
+
+interface TransactionInstructionJSON {
+    keys: {
+        pubkey: string;
+        isSigner: boolean;
+        isWritable: boolean;
+    }[];
+    programId: string;
+    data: number[];
+}
+
 const createSolanaConnection = (blockchainUrl: string) => {
     const connection = new web3.Connection(
         blockchainUrl,
@@ -36,8 +60,33 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
             {}
         );
 
+const instructionFromJson = (json: TransactionInstructionJSON): web3.TransactionInstruction => ({
+    keys: json.keys.map(({
+        pubkey,
+        isSigner,
+        isWritable
+    }) => ({
+        pubkey: new web3.PublicKey(pubkey),
+        isSigner,
+        isWritable
+    })),
+    programId: new web3.PublicKey(json.programId),
+    data: Buffer.from(json.data)
+});
+
 const solana = {
-    sendTransaction: async (id: number, to: string, lamports: number, network: string) => {
+    requestAccount: async (id: number, network: string) => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network ${network}`);
+        }
+        return {
+            jsonrpc: '2.0',
+            result: {publicKey: provider.wallet.publicKey.toString()},
+            id
+        };
+    },
+    signAndSendTransaction: async (id: number, txProps: TransactionJSON, network: string) => {
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network ${network}`);
@@ -45,20 +94,30 @@ const solana = {
         const {connection, wallet} = provider;
         const transaction = new web3.Transaction();
 
-        transaction.add(
-            web3.SystemProgram.transfer({
-                fromPubkey: wallet.publicKey,
-                toPubkey: new web3.PublicKey(to),
-                lamports
-            })
-        );
-        
+        if (txProps.recentBlockhash) {
+            transaction.recentBlockhash = txProps.recentBlockhash;
+        }
+        if (txProps.feePayer) {
+            transaction.feePayer = new web3.PublicKey(txProps.feePayer);
+        }
+        if (txProps.nonceInfo) {
+            transaction.nonceInfo = {
+                nonce: txProps.nonceInfo.nonce,
+                nonceInstruction: instructionFromJson(txProps.nonceInfo.nonceInstruction)
+            };
+        }
+        transaction.instructions = txProps.instructions.map(instr => instructionFromJson(instr));
+        transaction.signatures = txProps.signers.map(s => ({
+            signature: null,
+            publicKey: new web3.PublicKey(s)
+        }));
+
         const hash = await web3.sendAndConfirmTransaction(
             connection,
             transaction,
             [wallet]
         );
-        
+
         return {
             jsonrpc: '2.0',
             result: hash,
