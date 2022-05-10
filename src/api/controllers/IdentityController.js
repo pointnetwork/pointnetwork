@@ -9,16 +9,16 @@ const TwitterOracle = {
     async isIdentityEligible(identity) {
         log.info(`calling to {ORACLEDOMAIN}/api/eligible?handle=${identity}`);
         // call to ORACLEDOMAIN/api/eligible?handle=[handle]
-        if (identity === 'free') {
+        if (/^free/g.test(identity)) {
             return {eligibility: 'free'};
         }
-        if (identity === 'tweet') {
+        if (/^tweet/g.test(identity)) {
             return {eligibility: 'tweet'};
         }
-        if (identity === 'taken') {
+        if (/^taken/g.test(identity)) {
             return {eligibility: 'taken', reason: 'taken reason'};
         }
-        if (identity === 'unavailable') {
+        if (/^unavailable/g.test(identity)) {
             return {eligibility: 'unavailable', reason: 'unavailable reason'};
         }
         return {eligibility: 'taken', reason: 'taken reason'};
@@ -27,6 +27,9 @@ const TwitterOracle = {
     async regiterFreeIdentity(identity, address) {
         // call to ORACLEDOMAIN/activate_free?handle=[handle]&address=[address]
         log.info(`calling to {ORACLEDOMAIN}/activate_free?handle=${identity}&address=${address}`);
+        if (/error$/g.test(identity)) {
+            return {success: false, reason: 'free validation error reason'};
+        }
         return {success: true, v: 'v', r: 'r', s: 's'};
     },
 
@@ -35,6 +38,9 @@ const TwitterOracle = {
         log.info(
             `calling to {ORACLEDOMAIN}/api/activate_tweet?handle=${identity}&address=${address}&url=${url}`
         );
+        if (/error$/g.test(identity)) {
+            return {success: false, reason: 'twitter confirmation validation error'};
+        }
         return {success: true, v: 'v', r: 'r', s: 's'};
     }
 };
@@ -107,6 +113,8 @@ class IdentityController extends PointSDKController {
                 'Registering a new identity'
             );
 
+            /*
+            TODO: UNCOMMENT THIS CALL
             await blockchain.registerIdentity(
                 identity,
                 owner,
@@ -115,6 +123,9 @@ class IdentityController extends PointSDKController {
                 r,
                 s
             );
+            */
+
+            log.info(v, r, s);
 
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
@@ -122,10 +133,7 @@ class IdentityController extends PointSDKController {
             );
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
 
-            return {
-                status: 200,
-                data: 'OK'
-            };
+            return this._response({success: true});
         }
 
         // verify that the identity was validated on twitter
@@ -137,10 +145,7 @@ class IdentityController extends PointSDKController {
             );
 
             if (!success) {
-                return {
-                    status: 500,
-                    data: {error: reason}
-                };
+                return this._response({success, reason});
             }
 
             return await register(v, r, s);
@@ -149,7 +154,13 @@ class IdentityController extends PointSDKController {
         const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
 
         if (eligibility === 'free') {
-            const {v, r, s} = await TwitterOracle.regiterFreeIdentity(identity, owner);
+            const {success, reason, v, r, s} = await TwitterOracle.regiterFreeIdentity(
+                identity,
+                owner
+            );
+            if (!success) {
+                return this._response({success, reason});
+            }
             return await register(v, r, s);
         }
 
@@ -159,16 +170,10 @@ class IdentityController extends PointSDKController {
                 .update(owner)
                 .digest('hex')
                 .toLowerCase()}`;
-            return {
-                status: 200,
-                data: {code}
-            };
+            return this._response({code});
         }
 
-        return {
-            status: 500,
-            data: {eligibility, reason}
-        };
+        return this._response({eligibility, reason});
     }
 }
 

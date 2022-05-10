@@ -81,7 +81,7 @@ const Final = () => {
             }).catch((thrown) => {
                 if (!axios.isCancel(thrown)) {
                     console.error(thrown);
-                    setError('Something went wrong')
+                    setError('Something went wrong');
                 }
             })
         }, 300);
@@ -124,10 +124,16 @@ const Final = () => {
                 },
             });
 
-            const { code } = data;
+            const { code, success, reason } = data;
+
             if (code) {
                 setError('');
                 setActivationCode(code);
+                return;
+            }
+
+            if (!success) {
+                setError(reason);
                 return;
             }
 
