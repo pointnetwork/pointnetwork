@@ -3,16 +3,39 @@ const blockchain = require('../../network/blockchain');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
+const crypto = require('crypto');
 
 const TwitterOracle = {
-    async isIdentityValidated(/*identity, code*/) {
-        // validate that the code was tweeted
+    async isIdentityEligible(identity) {
+        log.info(`calling to {ORACLEDOMAIN}/api/eligible?handle=${identity}`);
+        // call to ORACLEDOMAIN/api/eligible?handle=[handle]
+        if (identity === 'free') {
+            return {eligibility: 'free'};
+        }
+        if (identity === 'tweet') {
+            return {eligibility: 'tweet'};
+        }
+        if (identity === 'taken') {
+            return {eligibility: 'taken', reason: 'taken reason'};
+        }
+        if (identity === 'unavailable') {
+            return {eligibility: 'unavailable', reason: 'unavailable reason'};
+        }
         return true;
     },
 
-    async isIdentityAvailable(/*identity*/) {
-        // verify that the identity was not used by a twitter account
-        return {available: false};
+    async regiterFreeIdentity(identity, address) {
+        // call to ORACLEDOMAIN/activate_free?handle=[handle]&address=[address]
+        log.info(`calling to {ORACLEDOMAIN}/activate_free?handle=${identity}&address=${address}`);
+        return {success: true, v: 'v', r: 'r', s: 's'};
+    },
+
+    async confirmTwitterValidation(identity, address, url) {
+        // call to ${ORACLEDOMAIN}/api/activate_tweet?handle=[handle]&address=[address]&url=[url]
+        log.info(
+            `calling to {ORACLEDOMAIN}/api/activate_tweet?handle=${identity}&address=${address}&url=${url}`
+        );
+        return {success: true, v: 'v', r: 'r', s: 's'};
     }
 };
 
@@ -53,7 +76,7 @@ class IdentityController extends PointSDKController {
     }
 
     async registerIdentity() {
-        const {identity, _csrf, code} = this.req.body;
+        const {identity, _csrf, code, url} = this.req.body;
         const {host} = this.req.headers;
 
         if (host !== 'point') {
@@ -66,7 +89,7 @@ class IdentityController extends PointSDKController {
         const publicKey = getNetworkPublicKey();
         const owner = getNetworkAddress();
 
-        async function register() {
+        async function register(v, r, s) {
             log.info(
                 {
                     identity,
@@ -77,50 +100,69 @@ class IdentityController extends PointSDKController {
                 },
                 'Registering a new identity'
             );
-    
-            await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
-    
+
+            await blockchain.registerIdentity(
+                identity,
+                owner,
+                Buffer.from(publicKey, 'hex'),
+                v,
+                r,
+                s
+            );
+
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
             );
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
-    
+
             return {
                 status: 200,
                 data: 'OK'
             };
         }
-        
+
         // verify that the identity was validated on twitter
-        if (code) { 
-            const validated = await TwitterOracle.isIdentityValidated(identity, code);
-            if (!validated) {
+        if (code && url) {
+            const {success, reason, v, r, s} = await TwitterOracle.confirmTwitterValidation(
+                identity,
+                owner,
+                url
+            );
+
+            if (!success) {
                 return {
                     status: 500,
-                    data: {error: 'Identity was not validated yet'}
+                    data: {error: reason}
                 };
             }
 
-            // register that the code was successfuly validated
-            await blockchain.setIdentityAsValidated(code, identity, owner);
-
-            return await register();
+            return await register(v, r, s);
         }
 
-        const {available} = await TwitterOracle.isIdentityAvailable(identity);
-        // if the identity is being used on twitter, then ask for a validation tweet
-        if (!available) {
-            const code = `${identity}${new Date().getTime()}`;
-            // register the validation code onchain
-            await blockchain.addValidationCode(code, identity, owner);
+        const {elegibility, reason} = await TwitterOracle.isIdentityEligible(identity);
+
+        if (elegibility === 'free') {
+            const {v, r, s} = await TwitterOracle.regiterFreeIdentity(identity, owner);
+            return await register(v, r, s);
+        }
+
+        if (elegibility === 'tweet') {
+            const code = `0x${crypto
+                .createHash('sha256')
+                .update(owner)
+                .digest('hex')
+                .toLowerCase()}`;
             return {
                 status: 200,
                 data: {code}
             };
         }
 
-        return await register();
+        return {
+            status: 500,
+            data: {elegibility, reason}
+        };
     }
 }
 

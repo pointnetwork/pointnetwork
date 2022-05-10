@@ -7,7 +7,8 @@ const Final = () => {
     const [identity, setIdentity] = useState('');
     const [error, setError] = useState('');
     const [available, setAvailable] = useState(false);
-    const [validationCode, setValidationCode] = useState('');
+    const [activationCode, setActivationCode] = useState('');
+    const [tweetUrl, setTweetUrl] = useState('');
 
     function validate_identity(identity) {
         if (identity === '') {
@@ -15,7 +16,7 @@ const Final = () => {
             return;
         }
             
-        if (! /^[a-zA-Z0-9]+?$/.test(identity)) {
+        if (!/^[a-zA-Z0-9]+?$/.test(identity)) {
             setError('special characters are not allowed');
             return;
         }
@@ -28,6 +29,32 @@ const Final = () => {
         return true;
     }
 
+    function validateTweetUrl(url) {        
+        if (url === '') {
+            setError('empty tweet url');
+            return;
+        }
+
+        const regex = new RegExp(`^https://twitter.com/${identity}/status/[0-9]+$`);
+
+        console.log('test', regex.test(url));
+
+        if (!regex.test(url)) {
+            setError('invalid tweet url');
+            return;
+        }
+
+        setError('');
+
+        return true;
+    }
+
+    const cleanForm = () => {
+        setActivationCode('');
+        setTweetUrl('');
+        setIdentity('');
+    }
+
     const source = useRef(axios.CancelToken.source());
     let debounced = useRef(null);
     const onChangeHandler = (event) => {
@@ -35,11 +62,10 @@ const Final = () => {
         if (!validate_identity(identity)) {
             return;
         }
-        setIdentity('');
+        cleanForm();
         clearTimeout(debounced.current);
         debounced.current = setTimeout(() => {
             setError('');
-            setValidationCode('');
             axios.get(`/v1/api/identity/identityToOwner/${identity}`, {
                 cancelToken: source.current.token
             }).then(({ data }) => {
@@ -55,6 +81,16 @@ const Final = () => {
         }, 300);
     } 
 
+    const onChangeUrlHandler = (event) => {
+        const url = event.target.value;
+
+        if (!validateTweetUrl(url)) {
+            return;
+        }
+
+        setTweetUrl(url);
+    }
+
     const registerHandler = async () => {
         try {
             const { isConfirmed } = await Swal.fire({
@@ -62,6 +98,7 @@ const Final = () => {
                 showCancelButton: true,
                 confirmButtonText: 'Sure!',
             });
+
             if (!isConfirmed) {
                 return;
             }
@@ -76,14 +113,15 @@ const Final = () => {
                 data: {
                     identity,
                     _csrf: csrf_token,
-                    code: validationCode,
+                    code: activationCode,
+                    url: tweetUrl,
                 },
             });
 
             const { code } = data;
             if (code) {
-                console.log('entro aca')
-                setValidationCode(code);
+                setError('');
+                setActivationCode(code);
                 return;
             }
 
@@ -101,7 +139,7 @@ const Final = () => {
         resultStyles = { borderColor: 'green', color: 'green' };
     }
 
-    const validationTweetContent = `Requesting the registration of this account on #pointnetwork. Validation code: ${validationCode}`;
+    const validationTweetContent = `Requesting the registration of this account on @pointnetwork. https://pointnetwork.io/activation/${activationCode}. #pointnetwork, #activation.`;
 
     return (
         <Container className="p-3">
@@ -110,18 +148,19 @@ const Final = () => {
             <p>Introduce yourself to the world by registering an identity, which will be your public web3 handle:</p>
 
             <input type="text" name="handle" id="handle" onChange={onChangeHandler} />
-
-            <div id="result" style={resultStyles}>
-                {error ? error : identity ? `${identity} ${available ? 'is available' : 'is not available'}`  : ''}
-            </div>
             
             <br/>
 
-            {validationCode ? (<div>
+            {activationCode ? (<div className="py-4">
                 <h3>Twitter validation</h3>
                 <p>Looks like this identity is own by a Twitter account. Twitter accounts have priority on Identity registrations.</p> 
-                <p>If you are the owner please <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(validationTweetContent)}`}>Tweet</a> this message and try again. <button className="btn btn-info" type="button" onClick={() => navigator.clipboard.writeText(validationTweetContent)}>Copy Tweet content</button></p>
+                <p>If you are the owner please post this <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(validationTweetContent)}`}>Tweet</a> and add your tweet url below. <button className="btn btn-info" type="button" onClick={() => navigator.clipboard.writeText(validationTweetContent)}>Copy Tweet content</button></p>
+                <input type="text" id="tweet-link" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} />
             </div>) : ''}
+
+            <div id="result" style={resultStyles} className="py-2">
+                {error ? error : identity ? `${identity} ${available ? 'is available' : 'is not available'}`  : ''}
+            </div>
 
             {identity && available && !error ? (<div>
                 <button className="btn btn-info" onClick={registerHandler}>Register</button>
