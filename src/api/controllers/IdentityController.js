@@ -5,6 +5,7 @@ const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
+const ethers = require('ethers');
 
 const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 
@@ -87,7 +88,7 @@ class IdentityController extends PointSDKController {
         const publicKey = getNetworkPublicKey();
         const owner = getNetworkAddress();
 
-        async function register(signData) {
+        async function register(type, signData) {
             log.info(
                 {
                     identity,
@@ -99,10 +100,13 @@ class IdentityController extends PointSDKController {
                 'Registering a new identity'
             );
 
+            const hashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`${identity}|${owner}|${type}`));
+
             await blockchain.registerVerified(
                 identity,
                 owner,
                 Buffer.from(publicKey, 'hex'),
+                hashedMessage,
                 signData
             );
 
@@ -117,7 +121,7 @@ class IdentityController extends PointSDKController {
 
         // verify that the identity was validated on twitter
         if (code && url) {
-            const {success, reason, v, r, s, signature} = await TwitterOracle.confirmTwitterValidation(
+            const {success, reason, v, r, s} = await TwitterOracle.confirmTwitterValidation(
                 identity,
                 owner,
                 url
@@ -128,9 +132,10 @@ class IdentityController extends PointSDKController {
             }
 
             try {
-                await register({v, r, s, signature});
+                await register('tweet', {v, r, s});
                 return this._response({success: true});
             } catch (error) {
+                log.error(error);
                 return this._response({success: false});
             }
         }
@@ -138,7 +143,7 @@ class IdentityController extends PointSDKController {
         const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
 
         if (eligibility === 'free') {
-            const {success, reason, v, r, s, signature} = await TwitterOracle.regiterFreeIdentity(
+            const {success, reason, v, r, s} = await TwitterOracle.regiterFreeIdentity(
                 identity,
                 owner
             );
@@ -148,9 +153,10 @@ class IdentityController extends PointSDKController {
             }
 
             try {
-                await register({v, r, s, signature});
+                await register('free', {v, r, s});
                 return this._response({success: true});
             } catch (error) {
+                log.error(error);
                 return this._response({success: false});
             }
         }

@@ -551,7 +551,7 @@ blockchain.putKeyValue = async (identity, key, value, version) => {
     }
 };
 
-blockchain.registerVerified = async (identity, address, commPublicKey, {s, r, v, signature}) => {
+blockchain.registerVerified = async (identity, address, commPublicKey, hashedMessage, {s, r, v}) => {
     try {
         if (!Buffer.isBuffer(commPublicKey))
             throw Error('registerIdentity: commPublicKey must be a buffer');
@@ -568,7 +568,7 @@ blockchain.registerVerified = async (identity, address, commPublicKey, {s, r, v,
             address,
             `0x${commPublicKey.slice(0, 32).toString('hex')}`,
             `0x${commPublicKey.slice(32).toString('hex')}`,
-            signature,
+            hashedMessage,
             v,
             r,
             s
