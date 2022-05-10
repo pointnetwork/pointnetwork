@@ -4,44 +4,30 @@ const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore'
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
+const axios = require('axios');
+
+const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 
 const TwitterOracle = {
     async isIdentityEligible(identity) {
-        log.info(`calling to {ORACLEDOMAIN}/api/eligible?handle=${identity}`);
-        // call to ORACLEDOMAIN/api/eligible?handle=[handle]
-        if (/^free/g.test(identity)) {
-            return {eligibility: 'free'};
-        }
-        if (/^tweet/g.test(identity)) {
-            return {eligibility: 'tweet'};
-        }
-        if (/^taken/g.test(identity)) {
-            return {eligibility: 'taken', reason: 'taken reason'};
-        }
-        if (/^unavailable/g.test(identity)) {
-            return {eligibility: 'unavailable', reason: 'unavailable reason'};
-        }
-        return {eligibility: 'taken', reason: 'taken reason'};
+        const url = `${twitterOracleDomain}/api/eligible?handle=${identity}`;
+        log.info(`calling to ${url}`);
+        const {data} = await axios.get(url);
+        return data;
     },
 
     async regiterFreeIdentity(identity, address) {
-        // call to ORACLEDOMAIN/activate_free?handle=[handle]&address=[address]
-        log.info(`calling to {ORACLEDOMAIN}/activate_free?handle=${identity}&address=${address}`);
-        if (/error$/g.test(identity)) {
-            return {success: false, reason: 'free validation error reason'};
-        }
-        return {success: true, v: 'v', r: 'r', s: 's'};
+        const url = `${twitterOracleDomain}/api/activate_free?handle=${identity}&address=${address}`;
+        log.info(`calling to ${url}`);
+        const {data} = await axios.post(url);
+        return data;
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        // call to ${ORACLEDOMAIN}/api/activate_tweet?handle=[handle]&address=[address]&url=[url]
-        log.info(
-            `calling to {ORACLEDOMAIN}/api/activate_tweet?handle=${identity}&address=${address}&url=${url}`
-        );
-        if (/error$/g.test(identity)) {
-            return {success: false, reason: 'twitter confirmation validation error'};
-        }
-        return {success: true, v: 'v', r: 'r', s: 's'};
+        const oracleUrl = `${twitterOracleDomain}/api/activate_tweet?handle=${identity}&address=${address}&url=${url}`;
+        log.info(`calling to ${oracleUrl}`);
+        const {data} = await axios.post(oracleUrl);
+        return data;
     }
 };
 
@@ -121,7 +107,7 @@ class IdentityController extends PointSDKController {
                 Buffer.from(publicKey, 'hex'),
                 v,
                 r,
-                s
+                s,
             );
             */
 
