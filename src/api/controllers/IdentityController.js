@@ -87,7 +87,7 @@ class IdentityController extends PointSDKController {
         const publicKey = getNetworkPublicKey();
         const owner = getNetworkAddress();
 
-        async function register(v, r, s) {
+        async function register(signData) {
             log.info(
                 {
                     identity,
@@ -99,17 +99,12 @@ class IdentityController extends PointSDKController {
                 'Registering a new identity'
             );
 
-            /*
-            TODO: UNCOMMENT THIS CALL
-            await blockchain.registerIdentity(
+            await blockchain.registerVerified(
                 identity,
                 owner,
                 Buffer.from(publicKey, 'hex'),
-                v,
-                r,
-                s,
+                signData
             );
-            */
 
             log.info(v, r, s);
 
@@ -122,7 +117,7 @@ class IdentityController extends PointSDKController {
 
         // verify that the identity was validated on twitter
         if (code && url) {
-            const {success, reason, v, r, s} = await TwitterOracle.confirmTwitterValidation(
+            const {success, reason, v, r, s, signature} = await TwitterOracle.confirmTwitterValidation(
                 identity,
                 owner,
                 url
@@ -133,7 +128,7 @@ class IdentityController extends PointSDKController {
             }
 
             try {
-                await register(v, r, s);
+                await register({v, r, s, signature});
                 return this._response({success: true});
             } catch (error) {
                 return this._response({success: false});
@@ -143,7 +138,7 @@ class IdentityController extends PointSDKController {
         const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
 
         if (eligibility === 'free') {
-            const {success, reason, v, r, s} = await TwitterOracle.regiterFreeIdentity(
+            const {success, reason, v, r, s, signature} = await TwitterOracle.regiterFreeIdentity(
                 identity,
                 owner
             );
@@ -153,7 +148,7 @@ class IdentityController extends PointSDKController {
             }
 
             try {
-                await register(v, r, s);
+                await register({v, r, s, signature});
                 return this._response({success: true});
             } catch (error) {
                 return this._response({success: false});
