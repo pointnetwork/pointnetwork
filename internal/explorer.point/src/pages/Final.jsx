@@ -3,6 +3,8 @@ import Container from 'react-bootstrap/Container'
 import Swal from 'sweetalert2';
 import axios from 'axios'; 
 
+const DEFAULT_ERROR_MESSAGE = 'Something went wrong.';
+
 const Final = () => {
     const [identity, setIdentity] = useState('');
     const [error, setError] = useState('');
@@ -79,7 +81,7 @@ const Final = () => {
             }).catch((thrown) => {
                 if (!axios.isCancel(thrown)) {
                     console.error(thrown);
-                    setError('Something went wrong');
+                    setError(DEFAULT_ERROR_MESSAGE);
                 }
             })
         }, 300);
@@ -132,14 +134,14 @@ const Final = () => {
             }
 
             if (!success) {
-                setError(reason);
+                setError(reason || DEFAULT_ERROR_MESSAGE);
                 return;
             }
 
             window.location = '/'; 
         } catch(error) {
             console.error(error);
-            Swal.fire({title: 'Something went wrong'});
+            Swal.fire({title: DEFAULT_ERROR_MESSAGE});
         };
     }
 
