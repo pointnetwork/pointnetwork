@@ -21,7 +21,7 @@ const TwitterOracle = {
         if (identity === 'unavailable') {
             return {eligibility: 'unavailable', reason: 'unavailable reason'};
         }
-        return true;
+        return {eligibility: 'taken', reason: 'taken reason'};
     },
 
     async regiterFreeIdentity(identity, address) {
@@ -73,6 +73,12 @@ class IdentityController extends PointSDKController {
         const blockNumber = this.req.body.blockNumber;
         const timestamp = await blockchain.getBlockTimestamp(blockNumber);
         return this._response({timestamp});
+    }
+
+    async isIdentityEligible() {
+        const {identity} = this.req.params;
+        const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
+        return this._response({eligibility, reason});
     }
 
     async registerIdentity() {
@@ -140,14 +146,14 @@ class IdentityController extends PointSDKController {
             return await register(v, r, s);
         }
 
-        const {elegibility, reason} = await TwitterOracle.isIdentityEligible(identity);
+        const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
 
-        if (elegibility === 'free') {
+        if (eligibility === 'free') {
             const {v, r, s} = await TwitterOracle.regiterFreeIdentity(identity, owner);
             return await register(v, r, s);
         }
 
-        if (elegibility === 'tweet') {
+        if (eligibility === 'tweet') {
             const code = `0x${crypto
                 .createHash('sha256')
                 .update(owner)
@@ -161,7 +167,7 @@ class IdentityController extends PointSDKController {
 
         return {
             status: 500,
-            data: {elegibility, reason}
+            data: {eligibility, reason}
         };
     }
 }

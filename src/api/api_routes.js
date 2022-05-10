@@ -6,6 +6,11 @@ module.exports = [
         'IdentityController@publicKeyByIdentity'
     ],
     ['GET', '/v1/api/identity/ownerToIdentity/:owner', 'IdentityController@ownerToIdentity'],
+    [
+        'GET',
+        '/v1/api/identity/isIdentityEligible/:identity',
+        'IdentityController@isIdentityEligible'
+    ],
     ['GET', '/v1/api/identity/isIdentityRegistered/', 'IdentityController@isIdentityRegistered'],
     ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'],
     ['POST', '/v1/api/identity/register', 'IdentityController@registerIdentity'],

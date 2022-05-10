@@ -66,12 +66,18 @@ const Final = () => {
         clearTimeout(debounced.current);
         debounced.current = setTimeout(() => {
             setError('');
-            axios.get(`/v1/api/identity/identityToOwner/${identity}`, {
+            axios.get(`/v1/api/identity/isIdentityEligible/${identity}`, {
                 cancelToken: source.current.token
             }).then(({ data }) => {
-                const owner = (data || {}).owner;
-                setIdentity(identity);
-                setAvailable(!owner || owner === "0x0000000000000000000000000000000000000000");
+                const { eligibility, reason } = data.data;
+                const available = eligibility === 'free' || eligibility === 'tweet';
+                if (available) {
+                    setIdentity(identity);
+                    setAvailable(true);
+                } else {
+                    setError(reason);
+                    setAvailable(false);
+                }
             }).catch((thrown) => {
                 if (!axios.isCancel(thrown)) {
                     console.error(thrown);
