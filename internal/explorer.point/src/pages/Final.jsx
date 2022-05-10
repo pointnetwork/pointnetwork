@@ -8,8 +8,11 @@ const DEFAULT_ERROR_MESSAGE = 'Something went wrong.';
 const Final = () => {
     const [identity, setIdentity] = useState('');
     const [error, setError] = useState('');
+
     const [available, setAvailable] = useState(false);
+
     const [activationCode, setActivationCode] = useState('');
+
     const [tweetUrl, setTweetUrl] = useState('');
     const [tweetUrlError, setTweetUrlError] = useState('');
 
@@ -218,7 +221,7 @@ const Final = () => {
                 <div>
                     <textarea
                         className="my-2 p-1"
-                        rows="10"
+                        rows="8"
                         cols="50"
                         value={tweetContent}
                         onChange={onChangeTweetContentHandler}
