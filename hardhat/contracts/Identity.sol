@@ -65,6 +65,21 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         _;
     }
 
+    struct ValidationCode {
+        string code;
+        string identity;
+        uint256 expiration;
+        bool validated;
+    }
+
+    function addValidationCode() external onlyOwner {
+        
+    }
+    
+    function setIdentityAsValidated() external onlyOwner {
+
+    }
+
     function register(
         string memory handle, 
         address identityOwner, 

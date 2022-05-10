@@ -718,12 +718,12 @@ blockchain.deployContract = async (contract, artifacts, contractName) => {
     return address;
 };
 
-blockchain.setIdentityAsValidated = async () => {
+blockchain.setIdentityAsValidated = async (code, identity, owner) => {
 
 };
 
-blockchain.addValidationCode = async () => {
-
+blockchain.addValidationCode = async (code, identity, owner) => {
+    
 };
 
 blockchain.toHex = n => getWeb3().utils.toHex(n);
