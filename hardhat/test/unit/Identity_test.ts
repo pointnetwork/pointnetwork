@@ -1,6 +1,6 @@
 
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Identity__factory } from "../../typechain"
 
@@ -9,18 +9,21 @@ describe("Token identity contract", function () {
     let identityContract: any;
 	let owner: SignerWithAddress;
 	let addr1: SignerWithAddress;
-	let addr2: SignerWithAddress
+	let addr2: SignerWithAddress;
+    let addr3: SignerWithAddress;
 	let addrs: SignerWithAddress[];
 	let handle: string;
 
 	beforeEach(async function () {
-		[owner, addr1, addr2, ...addrs] = await ethers.getSigners();
+		[owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+
         const factory = await ethers.getContractFactory("Identity") as Identity__factory;
-        identityContract = await factory.deploy()
+        identityContract = await upgrades.deployProxy(factory, [], {kind: 'uups'});
+        await identityContract.deployed();
 
-        handle = 'unittester';
+        handle = 'ynetunittester';
 
-        await identityContract.register(
+        await identityContract.connect(addr1).register(
             handle,
             addr1.address,
             '0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce',
@@ -77,8 +80,8 @@ describe("Token identity contract", function () {
 
         it("Invalid handle", async function () {
             await expect(
-                identityContract.register(
-                    'invalid*handle',
+                identityContract.connect(addr1).register(
+                    'ynetinvalid*hle',
                     addr1.address,
                     '0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce',
                     '0xe1e032c91d4c8fe6bab1f198871dbafb8842f073acff8ee9b822f748b180d7eb'
@@ -88,7 +91,7 @@ describe("Token identity contract", function () {
 
         it("Repeated handle", async function () {
             await expect(
-                identityContract.register(
+                identityContract.connect(addr2).register(
                     handle,
                     addr2.address,
                     '0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce',
@@ -99,7 +102,7 @@ describe("Token identity contract", function () {
 
         it("Repeated handle uppercase", async function () {
             await expect(
-                identityContract.register(
+                identityContract.connect(addr2).register(
                     handle.toUpperCase(),
                     addr2.address,
                     '0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce',
@@ -224,6 +227,146 @@ describe("Token identity contract", function () {
             expect(isADeployer).to.equal(true);
         });
        
+    });
+
+    describe("Testing register validation", function () {
+
+        it("Can register with a proper signed msg with free status ", async function () {
+            
+            const handle = "twitterhandle";
+            const address = addr3.address;
+            const status = "free";
+            const msg = handle + '|' + address.toLowerCase() + "|" + status;
+            
+            let messageHash = ethers.utils.id(msg);
+            
+            let messageHashBytes = ethers.utils.arrayify(messageHash);
+
+            // Sign the string message
+            let flatSig = await addr1.signMessage(messageHashBytes);
+
+            // For Solidity, we need the expanded-format of a signature
+            let sig = ethers.utils.splitSignature(flatSig);
+
+            await identityContract.connect(owner).setOracleAddress(addr1.address);
+
+            await identityContract.connect(addr3).registerVerified(
+                handle,
+                addr3.address,
+                '0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce',
+                '0xe1e032c91d4c8fe6bab1f198871dbafb8842f073acff8ee9b822f748b180d7eb',
+                messageHash,
+                sig.v,
+                sig.r,
+                sig.s
+            );
+
+        });
+
+        it("Can register with a proper signed msg with taken status ", async function () {
+            
+            const handle = "twitterhandle";
+            const address = addr3.address;
+            const status = "taken";
+            const msg = handle + '|' + address.toLowerCase() + "|" + status;
+            
+            let messageHash = ethers.utils.id(msg);
+            
+            let messageHashBytes = ethers.utils.arrayify(messageHash);
+
+            // Sign the string message
+            let flatSig = await addr1.signMessage(messageHashBytes);
+
+            // For Solidity, we need the expanded-format of a signature
+            let sig = ethers.utils.splitSignature(flatSig);
+
+            await identityContract.connect(owner).setOracleAddress(addr1.address);
+
+            await identityContract.connect(addr3).registerVerified(
+                handle,
+                addr3.address,
+                '0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce',
+                '0xe1e032c91d4c8fe6bab1f198871dbafb8842f073acff8ee9b822f748b180d7eb',
+                messageHash,
+                sig.v,
+                sig.r,
+                sig.s
+            );
+
+        });
+
+        it("Can't register with signed msg by other than oracle", async function () {
+            
+            const handle = "twitterhandle";
+            const address = addr3.address;
+            const status = "free";
+            const msg = handle + '|' + address.toLowerCase() + "|" + status;
+            
+            let messageHash = ethers.utils.id(msg);
+            
+            let messageHashBytes = ethers.utils.arrayify(messageHash);
+
+            // Sign the string message
+            let flatSig = await addr2.signMessage(messageHashBytes);
+
+            // For Solidity, we need the expanded-format of a signature
+            let sig = ethers.utils.splitSignature(flatSig);
+
+            await identityContract.connect(owner).setOracleAddress(addr1.address);
+
+            await expect(
+                identityContract.connect(addr3).registerVerified(
+                    handle,
+                    addr3.address,
+                    '0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce',
+                    '0xe1e032c91d4c8fe6bab1f198871dbafb8842f073acff8ee9b822f748b180d7eb',
+                    messageHash,
+                    sig.v,
+                    sig.r,
+                    sig.s
+                )
+            ).to.be.revertedWith('Identity claim msg must be signed by the oracle');
+
+        });
+
+
+        it("Can't register with signed msg from the oracle with tweet status", async function () {
+            
+            const handle = "twitterhandle";
+            const address = addr3.address;
+            const status = "tweet";
+            const msg = handle + '|' + address.toLowerCase() + "|" + status;
+            
+            let messageHash = ethers.utils.id(msg);
+            
+            let messageHashBytes = ethers.utils.arrayify(messageHash);
+
+            // Sign the string message
+            let flatSig = await addr1.signMessage(messageHashBytes);
+
+            // For Solidity, we need the expanded-format of a signature
+            let sig = ethers.utils.splitSignature(flatSig);
+
+            await identityContract.connect(owner).setOracleAddress(addr1.address);
+
+            await expect(
+                identityContract.connect(addr3).registerVerified(
+                    handle,
+                    addr3.address,
+                    '0xed17268897bbcb67127ed550cee2068a15fdb6f69097eebeb6e2ace46305d1ce',
+                    '0xe1e032c91d4c8fe6bab1f198871dbafb8842f073acff8ee9b822f748b180d7eb',
+                    messageHash,
+                    sig.v,
+                    sig.r,
+                    sig.s
+                )
+            ).to.be.revertedWith('Invalid identity claim msg');
+
+        });
+
+        
+
+
     });
 
 });

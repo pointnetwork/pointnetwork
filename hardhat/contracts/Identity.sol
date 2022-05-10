@@ -44,7 +44,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         __UUPSUpgradeable_init();
         migrationApplied = false;
         maxHandleLength = 16;
-        oracleAddress = 0x74aEa7B2cE41a932511c4E94fae491274d243e62;
+        oracleAddress = 0x8E2Fb20C427b54Bfe8e529484421fAE41fa6c9f6;
     }
 
     function setMaxHandleLength(uint value) public onlyOwner {
@@ -105,7 +105,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         bytes32 expectedMsgFree = keccak256(abi.encodePacked(handle, "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|free"));
         bytes32 expectedMsgTaken = keccak256(abi.encodePacked(handle, "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|taken"));
 
-        require(_hashedMessage == expectedMsgFree || _hashedMessage == expectedMsgTaken, "Invalid identity claim msg content");
+        require(_hashedMessage == expectedMsgFree || _hashedMessage == expectedMsgTaken, "Invalid identity claim msg");
 
         //ok, go for registering.
         PubKey64 memory commPublicKey = PubKey64(commPublicKeyPart1, commPublicKeyPart2);
@@ -116,7 +116,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     function _validateIdentity(string calldata handle, address identityOwner, bool ynet) private view returns (bool){
         
         if(ynet == true){
-            require(keccak256(abi.encodePacked(handle[0:4])) == keccak256(abi.encodePacked("ynet")),
+            require(keccak256(abi.encodePacked(_toLower(handle[0:4]))) == keccak256(abi.encodePacked("ynet")),
             "ynet handles must start with ynet");
         }
 
