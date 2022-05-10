@@ -37,8 +37,6 @@ const Final = () => {
 
         const regex = new RegExp(`^https://twitter.com/${identity}/status/[0-9]+$`);
 
-        console.log('test', regex.test(url));
-
         if (!regex.test(url)) {
             setError('invalid tweet url');
             return;
@@ -109,6 +107,8 @@ const Final = () => {
                 return;
             }
 
+            setError('');
+
             const csrf_token = window.localStorage.getItem('csrf_token');
 
             const { data: { data } } = await axios({
@@ -127,7 +127,6 @@ const Final = () => {
             const { code, success, reason } = data;
 
             if (code) {
-                setError('');
                 setActivationCode(code);
                 return;
             }
@@ -171,10 +170,10 @@ const Final = () => {
             </div>) : ''}
 
             <div id="result" style={resultStyles} className="py-2">
-                {error ? error : identity ? `${identity} ${available ? 'is available' : 'is not available'}`  : ''}
+                {error ? error : identity && !activationCode ? `${identity} ${available ? 'is available' : 'is not available'}`  : ''}
             </div>
 
-            {identity && available && !error ? (<div>
+            {identity && available && !error && (!activationCode || tweetUrl) ? (<div>
                 <button className="btn btn-info" onClick={registerHandler}>Register</button>
             </div>) : ''}
         </Container>

@@ -132,8 +132,6 @@ class IdentityController extends PointSDKController {
                 'Successfully registered new identity'
             );
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
-
-            return this._response({success: true});
         }
 
         // verify that the identity was validated on twitter
@@ -148,7 +146,12 @@ class IdentityController extends PointSDKController {
                 return this._response({success, reason});
             }
 
-            return await register(v, r, s);
+            try {
+                await register(v, r, s);
+                return this._response({success: true});
+            } catch (error) {
+                return this._response({success: false});
+            }
         }
 
         const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
@@ -158,10 +161,17 @@ class IdentityController extends PointSDKController {
                 identity,
                 owner
             );
+
             if (!success) {
                 return this._response({success, reason});
             }
-            return await register(v, r, s);
+
+            try {
+                await register(v, r, s);
+                return this._response({success: true});
+            } catch (error) {
+                return this._response({success: false});
+            }
         }
 
         if (eligibility === 'tweet') {
