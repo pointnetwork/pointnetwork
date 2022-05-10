@@ -11,6 +11,9 @@ const Final = () => {
     const [available, setAvailable] = useState(false);
     const [activationCode, setActivationCode] = useState('');
     const [tweetUrl, setTweetUrl] = useState('');
+    const [tweetContent, setTweetContent] = useState('');
+
+    const defaultTweetContent = `Requesting the registration of this account on @pointnetwork. https://pointnetwork.io/activation/${activationCode}. #pointnetwork, #activation.`;
 
     function validate_identity(identity) {
         if (identity === '') {
@@ -69,6 +72,7 @@ const Final = () => {
             axios.get(`/v1/api/identity/isIdentityEligible/${identity}`, {
                 cancelToken: source.current.token
             }).then(({ data }) => {
+                console.log(data);
                 const { eligibility, reason } = data.data;
                 const available = eligibility === 'free' || eligibility === 'tweet';
                 if (available) {
@@ -97,6 +101,15 @@ const Final = () => {
         setTweetUrl(url);
     }
 
+    const onChangeTweetContentHandler = (event) => {
+        const newContent = event.target.value;
+        setTweetContent(newContent);
+    }
+
+    const resetTweetContent = () => {
+        setTweetContent(defaultTweetContent);
+    }
+
     const registerHandler = async () => {
         try {
             const { isConfirmed } = await Swal.fire({
@@ -113,7 +126,7 @@ const Final = () => {
 
             const csrf_token = window.localStorage.getItem('csrf_token');
 
-            const { data: { data } } = await axios({
+            const { data } = await axios({
                 url: '/v1/api/identity/register',
                 method: 'POST',
                 contentType: 'application/json; charset=utf-8',
@@ -126,10 +139,11 @@ const Final = () => {
                 },
             });
 
-            const { code, success, reason } = data;
+            const { code, success, reason } = data.data;
 
             if (code) {
                 setActivationCode(code);
+                setTweetContent(defaultTweetContent);
                 return;
             }
 
@@ -152,24 +166,32 @@ const Final = () => {
         resultStyles = { borderColor: 'green', color: 'green' };
     }
 
-    const validationTweetContent = `Requesting the registration of this account on @pointnetwork. https://pointnetwork.io/activation/${activationCode}. #pointnetwork, #activation.`;
-
     return (
         <Container className="p-3">
             <br/>
             <h1>Final step</h1>
             <p>Introduce yourself to the world by registering an identity, which will be your public web3 handle:</p>
 
-            <input type="text" name="handle" id="handle" onChange={onChangeHandler} />
+            <input type="text" name="handle" id="handle" className="p-1" onChange={onChangeHandler} />
             
             <br/>
 
             {activationCode ? (<div className="py-4">
                 <h3>Twitter validation</h3>
                 <p>Looks like this identity is own by a Twitter account. Twitter accounts have priority on Identity registrations.</p> 
-                <p>If you are the owner please post this <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(validationTweetContent)}`}>Tweet</a> and add your tweet url below. <button className="btn btn-info" type="button" onClick={() => navigator.clipboard.writeText(validationTweetContent)}>Copy Tweet content</button></p>
-                <input type="text" id="tweet-link" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} />
+                <p>If you are the owner please post a tweet with this content and add your tweet url below.</p>
+                <p>It should include the @pointnetwork, the activation link and the hashtags #pointnetwork and #activation</p>
+                <div>
+                    <textarea className="my-2 p-1" rows="10" cols="50" value={tweetContent} onChange={onChangeTweetContentHandler} style={{ width: '100%' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between'}} className="my-2 py-2">
+                    <button className="btn btn-info" type="button" onClick={() => navigator.clipboard.writeText(tweetContent)}>Copy Tweet content</button>
+                    <button className="btn btn-info" type="button" onClick={resetTweetContent}>Reset Tweet Content</button>
+                </div>
+                <input type="text" id="tweet-link" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} className="my-2 p-1" />
             </div>) : ''}
+
+            <br/>
 
             <div id="result" style={resultStyles} className="py-2">
                 {error ? error : identity && !activationCode ? `${identity} ${available ? 'is available' : 'is not available'}`  : ''}
