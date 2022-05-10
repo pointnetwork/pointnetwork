@@ -563,7 +563,7 @@ blockchain.registerVerified = async (identity, address, commPublicKey, {s, r, v,
         const contract = await blockchain.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
 
-        const method = contract.methods.register(
+        const method = contract.methods.registerVerified(
             identity,
             address,
             `0x${commPublicKey.slice(0, 32).toString('hex')}`,
