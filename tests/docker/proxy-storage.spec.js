@@ -23,27 +23,20 @@ describe('Storage requests through proxy', () => {
     it('Should return 415 if body is not form-data', async () => {
         expect.assertions(1);
 
-        const res = await post(
-            'https://somehost.point/_storage',
-            'foo',
-            {
-                httpsAgent,
-                validateStatus: () => true
-            }
-        );
+        const res = await post('https://somehost.point/_storage', 'foo', {
+            httpsAgent,
+            validateStatus: () => true
+        });
         expect(res.status).toEqual(415);
     }, 10000);
 
     it('Should return 404 for non-existing file', async () => {
         expect.assertions(1);
 
-        const res = await get(
-            `https://somehost.point/_storage/notexists`,
-            {
-                httpsAgent,
-                validateStatus: () => true
-            }
-        );
+        const res = await get(`https://somehost.point/_storage/notexists`, {
+            httpsAgent,
+            validateStatus: () => true
+        });
         expect(res.status).toEqual(404);
     }, 10000);
 
@@ -51,18 +44,16 @@ describe('Storage requests through proxy', () => {
     it('Should upload file through proxy', async () => {
         expect.assertions(1);
 
-        const file = fs.createReadStream(path.join(__dirname, '..', 'resources', 'sample-image.jpg'));
+        const file = fs.createReadStream(
+            path.join(__dirname, '..', 'resources', 'sample-image.jpg')
+        );
         const form = new FormData();
         form.append('my_file', file);
 
-        const res = await post(
-            'https://somehost.point/_storage/',
-            form,
-            {
-                headers: form.getHeaders(),
-                httpsAgent
-            }
-        );
+        const res = await post('https://somehost.point/_storage/', form, {
+            headers: form.getHeaders(),
+            httpsAgent
+        });
         fileId = res.data.data;
         expect(res.status).toEqual(200);
     }, 60000);
@@ -70,13 +61,10 @@ describe('Storage requests through proxy', () => {
     it('Should download file through proxy', async () => {
         expect.assertions(1);
 
-        await delay(5000);
-        const res = await get(
-            `https://somehost.point/_storage/${fileId}`,
-            {httpsAgent}
-        );
+        await delay(10000);
+        const res = await get(`https://somehost.point/_storage/${fileId}`, {httpsAgent});
         expect(res.status).toEqual(200);
-    }, 15000);
+    }, 30000);
 
     // TODO: neither proxy nor API don't handle directory upload, we can only do it
     // using storage method
@@ -91,10 +79,7 @@ describe('Storage requests through proxy', () => {
         expect.assertions(5);
         await delay(5000);
 
-        const res = await get(
-            `https://somehost.point/_storage/${dirId}`,
-            {httpsAgent}
-        );
+        const res = await get(`https://somehost.point/_storage/${dirId}`, {httpsAgent});
 
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<html>/);

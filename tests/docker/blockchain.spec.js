@@ -35,7 +35,13 @@ beforeAll(async () => {
 
     testData.address = getNetworkAddress();
     testData.commPublicKey = getNetworkPublicKey();
-    const filePath = path.join(__dirname, '..', 'resources', 'sample_site', 'point.deploy.json');
+    const filePath = path.join(
+        __dirname,
+        '..',
+        'resources',
+        'ynet_sample_site',
+        'point.deploy.json'
+    );
     const deployConfigFile = await readFile(filePath, 'utf-8');
     testData.deployConfig = JSON.parse(deployConfigFile);
 });
@@ -67,7 +73,7 @@ describe('Register identity and deploy site', () => {
 
     it('Should deploy the sample site to arweave', async () => {
         expect.assertions(1);
-        const publicDir = path.join(__dirname, '..', 'resources', 'sample_site', 'public');
+        const publicDir = path.join(__dirname, '..', 'resources', 'ynet_sample_site', 'public');
         publicDirStorageId = await storage.uploadDir(publicDir);
         const {target, version} = testData.deployConfig;
         await blockchain.putKeyValue(target, '::rootDir', publicDirStorageId, version);
@@ -76,7 +82,13 @@ describe('Register identity and deploy site', () => {
 
     it('Should add route to `routes.json` and deploy it', async () => {
         expect.assertions(1);
-        const routesPath = path.join(__dirname, '..', 'resources', 'sample_site', 'routes.json');
+        const routesPath = path.join(
+            __dirname,
+            '..',
+            'resources',
+            'ynet_sample_site',
+            'routes.json'
+        );
         const routesStr = await readFile(routesPath, 'utf-8');
         const routesObj = JSON.parse(routesStr);
         const newRoute = `/${publicDirStorageId}`;
@@ -98,27 +110,26 @@ describe('Register identity and deploy site', () => {
 
         const artifacts = JSON.parse(
             await readFile(
-                path.join(__dirname, '..', 'resources', 'sample_site', 'contracts', 'Why.json'),
+                path.join(
+                    __dirname,
+                    '..',
+                    'resources',
+                    'ynet_sample_site',
+                    'contracts',
+                    'Why.json'
+                ),
                 'utf8'
             )
         ).contracts['Why.sol'].Why;
         const contract = blockchain.getContractFromAbi(artifacts.abi);
-        const address = await blockchain.deployContract(
-            contract,
-            artifacts,
-            'Why'
-        );
+        const address = await blockchain.deployContract(contract, artifacts, 'Why');
 
         const artifactsStorageId = await storage.uploadFile(JSON.stringify(artifacts));
 
+        const {target} = testData.deployConfig;
+        await blockchain.putKeyValue(target, 'zweb/contracts/address/Why', address, 'latest');
         await blockchain.putKeyValue(
-            'why',
-            'zweb/contracts/address/Why',
-            address,
-            'latest'
-        );
-        await blockchain.putKeyValue(
-            'why',
+            target,
             'zweb/contracts/abi/Why',
             artifactsStorageId,
             'latest'
@@ -129,12 +140,9 @@ describe('Register identity and deploy site', () => {
 
     it('Should fetch index.html making a GET request to the new domain', async () => {
         expect.assertions(3);
-        await delay(5000);
+        await delay(10000);
 
-        const res = await get(
-            `https://${testData.deployConfig.target}`,
-            {httpsAgent}
-        );
+        const res = await get(`https://${testData.deployConfig.target}`, {httpsAgent});
 
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<!DOCTYPE html>/);
@@ -145,10 +153,7 @@ describe('Register identity and deploy site', () => {
         expect.assertions(2);
 
         await delay(5000);
-        const res = await get(
-            `https://${testData.deployConfig.target}/index.css`,
-            {httpsAgent}
-        );
+        const res = await get(`https://${testData.deployConfig.target}/index.css`, {httpsAgent});
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^h1 {/);
     }, 20000);
@@ -157,10 +162,8 @@ describe('Register identity and deploy site', () => {
         expect.assertions(2);
 
         await delay(5000);
-        const res = await get(
-            `https://${testData.deployConfig.target}/images/sample.jpg`,
-            {httpsAgent}
-        );
+        const url = `https://${testData.deployConfig.target}/images/sample.jpg`;
+        const res = await get(url, {httpsAgent});
         expect(res.status).toEqual(200);
         expect(res.headers['content-type']).toEqual('image/jpeg');
     }, 20000);
@@ -186,10 +189,8 @@ describe('Proxy keyvalue', () => {
         expect.assertions(3);
 
         await delay(5000);
-        const res = await get(
-            `https://${testData.deployConfig.target}/_keyvalue_get/foo0`,
-            {httpsAgent}
-        );
+        const url = `https://${testData.deployConfig.target}/_keyvalue_get/foo0`;
+        const res = await get(url, {httpsAgent});
 
         expect(res.status).toEqual(200);
         expect(res.data.foo).toEqual('bar');
@@ -199,12 +200,8 @@ describe('Proxy keyvalue', () => {
 
     it('Should return null for non-existing keyvalue', async () => {
         expect.assertions(2);
-
-        const res = await get(
-            `https://${testData.deployConfig.target}/_keyvalue_get/notexists`,
-            {httpsAgent}
-        );
-
+        const url = `https://${testData.deployConfig.target}/_keyvalue_get/notexists`;
+        const res = await get(url, {httpsAgent});
         expect(res.status).toEqual(200);
         expect(res.data).toEqual(null);
     }, 10000);
