@@ -11,7 +11,7 @@ RUN npm -g config set user root
 
 RUN apk update && apk add --no-cache git
 
-COPY hardhat/package.json ./
+COPY package.json ./
 RUN npm install
 
 ENTRYPOINT ["npm", "start"]

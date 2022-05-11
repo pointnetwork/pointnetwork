@@ -33,6 +33,11 @@ const Final = () => {
             return;
         }
 
+        if (identity.length < 2) {
+            setError('Handle is too short');
+            return;
+        }
+
         if (identity.length > 16) {
             setError('Handle is too long');
             return;
