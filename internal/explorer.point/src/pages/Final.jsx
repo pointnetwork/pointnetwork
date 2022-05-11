@@ -47,15 +47,10 @@ const Final = () => {
     }
 
     function validateTweetUrl(url) {        
-        if (url === '') {
-            setTweetUrlError('Empty tweet url');
-            return;
-        }
-
         const regex = new RegExp(`^https://twitter.com/${identity}/status/[0-9]+$`);
 
         if (!regex.test(url)) {
-            setTweetUrlError('invalid tweet url');
+            setTweetUrlError('The Tweet Url must be a valid tweet status of the same identity name being registered');
             return;
         }
 
@@ -267,7 +262,7 @@ const Final = () => {
                 </div>
                 <div>
                     <input type="text" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} className="my-2 p-1 text-medium" />
-                    {tweetUrlError ? (<p className="red">{tweetUrlError}</p>) : ''}
+                    {tweetUrlError ? (<p className="red text-medium">{tweetUrlError}</p>) : ''}
                 </div>
             </div>) : ''}
 
