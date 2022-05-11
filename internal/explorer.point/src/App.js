@@ -13,6 +13,7 @@ import Loading from "./components/Loading";
 const Main = () => {
 
     const [isRegistered, setIsRegistered] = useState(false);
+    const [walletAddr, setWalletAddr] = useState();
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(()=>{
@@ -24,8 +25,14 @@ const Main = () => {
         const response = await fetch('/v1/api/identity/isIdentityRegistered/');
         const registred = await response.json();
         setIsRegistered(registred.data.identityRegistred);
+        if(registred.data.identityRegistred){
+            const resultAddr = await window.point.wallet.address();
+            setWalletAddr(resultAddr.data.address);
+        }
         setIsLoading(false);
     }
+
+    
 
     return (
         <main>
@@ -49,7 +56,9 @@ const Main = () => {
                                 <Route path='/zapps'>
                                     <Zapps/>
                                 </Route>
-                                
+                                <Route path='/myidentities'>
+                                    <Identities owner={walletAddr}/>
+                                </Route>
                             </Switch>
                             :
                             <Final/>

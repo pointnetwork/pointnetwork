@@ -6,6 +6,23 @@ const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
+const getReferralCode = require('../../util/getReferralCode.ts');
+
+const EMPTY_REFERRAL_CODE = '000000000000';
+
+async function registerBountyReferral(address, type) {
+    const referralCode = await getReferralCode();
+
+    let event = 'free_reg';
+    if (type === 'tweet') {
+        event = 'twitter_reg';
+    }
+
+    const url = `https://bounty.pointnetwork.io/ref_success?event=${event}&ref=${referralCode ||
+        EMPTY_REFERRAL_CODE}&addr=${address}`;
+
+    return await axios.get(url);
+}
 
 const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 
@@ -31,6 +48,15 @@ const TwitterOracle = {
         return data;
     }
 };
+
+function getIdentityValidationCode(owner) {
+    const code = crypto
+        .createHash('sha256')
+        .update(owner)
+        .digest('hex')
+        .toLowerCase();
+    return code;
+}
 
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
@@ -71,7 +97,12 @@ class IdentityController extends PointSDKController {
     async isIdentityEligible() {
         const {identity} = this.req.params;
         const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
-        return this._response({eligibility, reason});
+        let code;
+        if (eligibility === 'tweet') {
+            const owner = getNetworkAddress();
+            code = getIdentityValidationCode(owner);
+        }
+        return this._response({eligibility, reason, code});
     }
 
     async registerIdentity() {
@@ -100,7 +131,9 @@ class IdentityController extends PointSDKController {
                 'Registering a new identity'
             );
 
-            const hashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`${identity}|${owner}|${type}`));
+            const hashedMessage = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(`${identity}|${owner}|${type}`)
+            );
 
             await blockchain.registerVerified(
                 identity,
@@ -116,7 +149,14 @@ class IdentityController extends PointSDKController {
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
             );
+
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+
+            try {
+                await registerBountyReferral(owner, type);
+            } catch (error) {
+                log.error(error);
+            }
         }
 
         // verify that the identity was validated on twitter
@@ -162,11 +202,7 @@ class IdentityController extends PointSDKController {
         }
 
         if (eligibility === 'tweet') {
-            const code = crypto
-                .createHash('sha256')
-                .update(owner)
-                .digest('hex')
-                .toLowerCase();
+            const code = getIdentityValidationCode(owner);
             return this._response({code});
         }
 

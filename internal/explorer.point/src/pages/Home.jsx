@@ -49,7 +49,7 @@ export default function Home() {
       <Container className="p-3">
         <br/>
         <br/>
-        <h1 className="header">Welcome to Web 3.0, <strong>@{walletIdentity}</strong>!</h1>
+        <h1 className="header">Welcome to Web 3.0, <strong>@{!walletIdentity ? <Loading /> : walletIdentity}</strong>!</h1>
         <p>If you can see this page, this means you've successfully installed the alpha! You're amazing! Please send the screenshot to the group.</p>
         <p>There's not much content in here, but we will be filling it up from now on</p>
 

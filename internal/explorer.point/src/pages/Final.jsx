@@ -4,12 +4,15 @@ import Swal from 'sweetalert2';
 import axios from 'axios'; 
 
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong.';
+const MAX_TWEET_SIZE = 280;
 
 const Final = () => {
     const [identity, setIdentity] = useState('');
     const [error, setError] = useState('');
 
-    const [available, setAvailable] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const [eligibility, setEligibility] = useState('');
 
     const [activationCode, setActivationCode] = useState('');
 
@@ -21,17 +24,22 @@ const Final = () => {
 
     function validateIdentity(identity) {
         if (identity === '') {
-            setError('empty identity');
+            setError('Empty identity');
             return;
         }
             
-        if (!/^[a-zA-Z0-9]+?$/.test(identity)) {
-            setError('special characters are not allowed');
+        if (!/^[a-zA-Z0-9_]+?$/.test(identity)) {
+            setError('Special characters are not allowed');
+            return;
+        }
+
+        if (identity.length < 2) {
+            setError('Handle is too short');
             return;
         }
 
         if (identity.length > 16) {
-            setError('handle is too long');
+            setError('Handle is too long');
             return;
         }
 
@@ -40,7 +48,7 @@ const Final = () => {
 
     function validateTweetUrl(url) {        
         if (url === '') {
-            setTweetUrlError('empty tweet url');
+            setTweetUrlError('Empty tweet url');
             return;
         }
 
@@ -60,33 +68,38 @@ const Final = () => {
         setActivationCode('');
         setTweetUrl('');
         setIdentity('');
+        setEligibility('');
     }
 
     const source = useRef(axios.CancelToken.source());
     let debounced = useRef(null);
     const onChangeHandler = (event) => {
+        clearTimeout(debounced.current);
         const identity = event.target.value;
+        cleanForm();
         if (!validateIdentity(identity)) {
             return;
         }
-        cleanForm();
-        clearTimeout(debounced.current);
+        setIdentity(identity);
         debounced.current = setTimeout(() => {
             setError('');
+            setLoading(true);
             axios.get(`/v1/api/identity/isIdentityEligible/${identity}`, {
                 cancelToken: source.current.token
             }).then(({ data }) => {
-                console.log(data);
-                const { eligibility, reason } = data.data;
-                const available = eligibility === 'free' || eligibility === 'tweet';
-                if (available) {
-                    setIdentity(identity);
-                    setAvailable(true);
-                } else {
+                setLoading(false);
+                const { eligibility, reason, code } = data.data;
+                setEligibility(eligibility)
+                if (reason) {
                     setError(reason);
-                    setAvailable(false);
+                } 
+                if (code) {
+                    setActivationCode(code);
+                    resetTweetContent(code)
+                    return;
                 }
             }).catch((thrown) => {
+                setLoading(false);
                 if (!axios.isCancel(thrown)) {
                     console.error(thrown);
                     setError(DEFAULT_ERROR_MESSAGE);
@@ -107,44 +120,48 @@ const Final = () => {
 
     const validateTweetContent = (content) => {
         if (content === '') {
-            setTweetContentError('tweet content cannot be empty');
-            return;
+            setTweetContentError('Tweet content cannot be empty');
+            return false;
         }
 
         if (!/#pointnetwork/g.test(content)) {
-            setTweetContentError('tweet content must have #pointnetwork');
-            return;
+            setTweetContentError('Tweet content must have #pointnetwork');
+            return false;
         }
 
         if (!/#activation/g.test(content)) {
-            setTweetContentError('tweet content must have #activation');
-            return;
+            setTweetContentError('Tweet content must have #activation');
+            return false;
         }
 
         if (!/@pointnetwork/g.test(content)) {
-            setTweetContentError('tweet content must have @pointnetwork');
-            return;
+            setTweetContentError('Tweet content must have @pointnetwork');
+            return false;
         }
 
-        const regex = new RegExp(`https://pointnetwork.io/activation/${activationCode}`, 'g');
+        const regex = new RegExp(`https://pointnetwork.io/activation\\?hash=${activationCode}`, 'g');
+
         if (!regex.test(content)) {
-            setTweetContentError(`tweet content must have the activation link https://pointnetwork.io/activation/${activationCode}`);
-            return;
+            setTweetContentError(`Tweet content must have the activation link https://pointnetwork.io/activation?hash=${activationCode}`);
+            return false;
         }
 
         setTweetContentError('');
+        return true;
     }
 
     const onChangeTweetContentHandler = (event) => {
         const newContent = event.target.value;
-        validateTweetContent(newContent);
-        setTweetContent(newContent);
+        const isValidContent = validateTweetContent(newContent);
+        if (isValidContent) {
+            setTweetContent(newContent);
+        }
     }
 
     const resetTweetContent = (code) => {
-        const defaultTweetContent = `Activating my Point Network handle! @pointnetwork. https://pointnetwork.io/activation/${activationCode || code}. #pointnetwork, #activation.`;
+        const defaultTweetContent = `Activating my Point Network handle! @pointnetwork https://pointnetwork.io/activation?hash=${activationCode || code} #pointnetwork #activation`;
         setTweetContent(defaultTweetContent);
-        validateTweetContent(defaultTweetContent);
+        setTweetContentError('');
     }
 
     const registerHandler = async () => {
@@ -196,53 +213,75 @@ const Final = () => {
         };
     }
 
-    let resultStyles = {};
-    if (error) {
-        resultStyles = { borderColor: 'red', color: 'red' };
-    } else if (available) {
-        resultStyles = { borderColor: 'green', color: 'green' };
-    }
+    const identityAvailable = eligibility === 'free' || eligibility === 'tweet';
+
+    const tweetSize = tweetContent.length;
 
     return (
-        <Container className="p-3">
+        <Container className="p-3 text-dark" style={{color: '#353535'}}>
             <br/>
             <h1>Final step</h1>
-            <p>Introduce yourself to the world by registering an identity, which will be your public web3 handle:</p>
+            <p className="text-medium">Introduce yourself to the world by registering an identity, which will be your public web3 handle:</p>
 
-            <div className="py-2">
-                <input type="text" name="handle" id="handle" className="p-1" onChange={onChangeHandler} />
+            <div>
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <input type="text" name="handle" className="p-1 my-2 text-medium" onChange={onChangeHandler} placeholder="Identity" />
+                    {loading ? <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> : ''}
+                </div>
+
+                {!identityAvailable ? (<ul className="text-medium">
+                    <li className="italic my-1">If you have Twitter: <span className="bold">for the first 6 months after the launch</span> (including now) you have a chance to claim your Twitter handle on web3 by <span className="bold">posting an activation tweet</span>, before it can be grabbed by cybersquatters</li>
+                    <li className="italic my-1">If you don’t have Twitter or has been banned there: you can enter any handle that is not on Twitter</li>
+                </ul>) : ''}
             </div>
             
-            {activationCode ? (<div className="py-2">
-                <h3>Twitter validation</h3>
-                <p>Looks like this identity is own by a Twitter account. Twitter accounts have priority on Identity registrations.</p> 
-                <p>If you are the owner please post a tweet with this content and add your tweet url below.</p>
-                <p>It should include the @pointnetwork tag, the activation link and the hashtags #pointnetwork and #activation</p>
+            {activationCode ? (<div className="py-3">
+                <h3 className="mb-2">Twitter validation</h3>
+                <p>Looks like this handle is registered on Twitter.</p> 
+                <p className="text-medium">If <span className="italic bold">@{identity}</span> on Twitter is you and you want it on web3, we’re saving it from cybersquatters <span className="italic">for the first 6 months from the launch</span>, so you can claim it by posting the activation tweet below (feel free to change the starting text if you want)</p>
+                <p className="text-medium">If <span className="italic bold">@{identity}</span> on Twitter is not you, just select another handle that is not on Twitter (if @username doesn’t claim it in 6 months, you will be able to take it from the automatic auction later)</p>
                 <div>
-                    <textarea
-                        className="my-2 p-1"
-                        rows="8"
-                        cols="50"
-                        value={tweetContent}
-                        onChange={onChangeTweetContentHandler}
-                        style={{ width: '100%' }}
-                    />
-                    {tweetContentError ? (<p style={{color: 'red'}}>{tweetContentError}</p>) : ''}
+                    <div style={{ position: 'relative' }}>
+                        <textarea
+                            className="my-2 p-2 text-medium"
+                            rows="8"
+                            cols="50"
+                            value={tweetContent}
+                            onChange={onChangeTweetContentHandler}
+                            style={{ width: '100%' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', position: 'absolute', left: '0px', bottom: '5px', width: '96%', margin: '0px 2%'}} className="my-2 py-2">
+                            <button className="btn btn-light btn-sm" type="button" onClick={resetTweetContent}>Reset Tweet Content</button>
+                            <button className="btn btn-link btn-sm bold" type="button" title="Copy Tweet content" onClick={() => navigator.clipboard.writeText(tweetContent)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+                                    <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                                    <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center'}} className="py-2">
+                        <div className="red text-medium" style={{paddingRight: '10px', flex: 1, lineBreak: 'anywhere'}}>{tweetContentError}</div>
+                        <div className={tweetSize > MAX_TWEET_SIZE ? 'red bold text-medium' : 'text-medium'} style={{flexShrink: 0}}>{tweetSize} characters</div>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between'}} className="my-2 py-2">
-                    <button className="btn btn-info" type="button" onClick={() => navigator.clipboard.writeText(tweetContent)}>Copy Tweet content</button>
-                    <button className="btn btn-info" type="button" onClick={resetTweetContent}>Reset Tweet Content</button>
+                <div>
+                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} className="my-2 p-1 text-medium" />
+                    {tweetUrlError ? (<p className="red">{tweetUrlError}</p>) : ''}
                 </div>
-                <input type="text" id="tweet-link" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} className="my-2 p-1" />
-                {tweetUrlError ? (<p style={{color: 'red'}}>{tweetUrlError}</p>) : ''}
             </div>) : ''}
 
-            <div id="result" style={resultStyles} className="py-2">
-                {error ? error : identity && !activationCode ? `${identity} ${available ? 'is available' : 'is not available'}`  : ''}
-            </div>
+            {error ? (
+                <div className="py-2 red text-medium">
+                    {error}
+                </div>) : eligibility === 'free' ? (
+                <div className="py-2 green text-medium">
+                    Great, this handle doesn’t seem to belong to a Twitter user! You can claim it right now.
+                </div>
+            ) : ''}
 
-            {identity && available && !error && (!activationCode || tweetUrl) ? (<div>
-                <button className="btn btn-info" onClick={registerHandler}>Register</button>
+            {identity && identityAvailable && !error && (!activationCode || tweetUrl) ? (<div>
+                <button className="btn btn-info mt-2" onClick={registerHandler}>Register</button>
             </div>) : ''}
         </Container>
     )

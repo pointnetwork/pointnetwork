@@ -23,7 +23,8 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     string[] public identityList;
     bool public migrationApplied;
 
-    uint private maxHandleLength;
+    uint private MAX_HANDLE_LENGTH;
+
     mapping(string => mapping(address => bool)) private _isIdentityDeployer;
     address private oracleAddress;
 
@@ -43,16 +44,16 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         __Ownable_init();
         __UUPSUpgradeable_init();
         migrationApplied = false;
-        maxHandleLength = 16;
+        MAX_HANDLE_LENGTH = 16;
         oracleAddress = 0x8E2Fb20C427b54Bfe8e529484421fAE41fa6c9f6;
     }
 
     function setMaxHandleLength(uint value) public onlyOwner {
-        maxHandleLength = value;
+        MAX_HANDLE_LENGTH = value;
     }
 
     function getMaxHandleLength() public view returns (uint) {
-        return maxHandleLength;
+        return MAX_HANDLE_LENGTH;
     }
 
     function setOracleAddress(address addr) public onlyOwner {
@@ -185,7 +186,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     function finishMigrations() external {
         migrationApplied = true;
-        maxHandleLength = 16;
+        MAX_HANDLE_LENGTH = 16;
     }
 
     function transferIdentityOwnership(string memory handle, address newOwner) public onlyIdentityOwner(handle) {
@@ -244,7 +245,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     function _isValidHandle(string memory str) internal view returns (bool) {
 
         bytes memory b = bytes(str);
-        if (b.length > maxHandleLength) return false;
+        if (b.length > MAX_HANDLE_LENGTH) return false;
 
         for (uint i; i < b.length; i++) {
             bytes1 char = b[i];
