@@ -245,7 +245,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     function _isValidHandle(string memory str) internal view returns (bool) {
 
         bytes memory b = bytes(str);
-        if (b.length > maxHandleLength) return false;
+        if (b.length > MAX_HANDLE_LENGTH) return false;
 
         for (uint i; i < b.length; i++) {
             bytes1 char = b[i];
