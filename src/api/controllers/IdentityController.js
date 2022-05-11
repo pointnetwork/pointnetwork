@@ -6,6 +6,23 @@ const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
+const getReferralCode = require('../../util/getReferralCode.ts');
+
+async function registerBountyReferral(address, type) {
+    const referralCode = await getReferralCode();
+    if (!referralCode) {
+        return;
+    }
+
+    let event = 'free_reg';
+    if (type === 'tweet') {
+        event = 'twitter_reg';
+    }
+
+    const url = `https://bounty.pointnetwork.io/ref_success?event=${event}&ref=${referralCode}&addr=${address}`;
+
+    return await axios.get(url);
+}
 
 const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 
@@ -100,7 +117,9 @@ class IdentityController extends PointSDKController {
                 'Registering a new identity'
             );
 
-            const hashedMessage = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(`${identity}|${owner}|${type}`));
+            const hashedMessage = ethers.utils.keccak256(
+                ethers.utils.toUtf8Bytes(`${identity}|${owner}|${type}`)
+            );
 
             await blockchain.registerVerified(
                 identity,
@@ -116,7 +135,14 @@ class IdentityController extends PointSDKController {
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
             );
+
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+
+            try {
+                await registerBountyReferral(owner, type);
+            } catch (error) {
+                log.error(error);
+            }
         }
 
         // verify that the identity was validated on twitter
