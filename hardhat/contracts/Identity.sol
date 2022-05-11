@@ -117,8 +117,8 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     function _validateIdentity(string calldata handle, address identityOwner, bool ynet) private view returns (bool){
         
         if(ynet == true){
-            require(keccak256(abi.encodePacked(_toLower(handle[0:4]))) == keccak256(abi.encodePacked("ynet")),
-            "ynet handles must start with ynet");
+            require(keccak256(abi.encodePacked(_toLower(handle[0:5]))) == keccak256(abi.encodePacked("ynet_")),
+            "ynet handles must start with ynet_");
         }
 
         if(migrationApplied == true){
@@ -133,8 +133,10 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
             revert("This identity has already been registered");
         }
 
-        // Check if this owner already has an identity attached
-        if (!_isEmptyString(ownerToIdentity[identityOwner])) revert("This owner already has an identity attached");
+        if(migrationApplied == true){
+            // Check if this owner already has an identity attached
+            if (!_isEmptyString(ownerToIdentity[identityOwner])) revert("This owner already has an identity attached");
+        }
 
         return true;
     }
@@ -235,12 +237,13 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
 
     //*** Internal functions ***//
-    function _isAlphaNumeric(bytes1 char) internal pure returns (bool) {
+    function _isValidChar(bytes1 char) internal pure returns (bool) {
 
         return (
             (char >= bytes1(uint8(0x30)) && char <= bytes1(uint8(0x39))) || // 9-0
             (char >= bytes1(uint8(0x41)) && char <= bytes1(uint8(0x5A))) || // A-Z
-            (char >= bytes1(uint8(0x61)) && char <= bytes1(uint8(0x7A))) // a-z
+            (char >= bytes1(uint8(0x61)) && char <= bytes1(uint8(0x7A))) || // a-z
+            (char == bytes1(uint8(0x5f))) // '_' 
         );
     }
 
@@ -252,7 +255,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         for (uint i; i < b.length; i++) {
             bytes1 char = b[i];
 
-            if (!_isAlphaNumeric(char) && !(char == bytes1(uint8(0x5f)))) {
+            if (!_isValidChar(char)) {
                 return false; // neither alpha-numeric nor '_'
             }
         }
