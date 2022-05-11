@@ -6,7 +6,7 @@ const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
-const getReferralCode = require('../../util/getReferralCode.ts');
+const getReferralCode = require('../../util/getReferralCode');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
