@@ -121,7 +121,9 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
             "ynet handles must start with ynet");
         }
 
-        require(msg.sender == identityOwner, "Cannot register identities for other address than sender");
+        if(migrationApplied == true){
+            require(msg.sender == identityOwner, "Cannot register identities for other address than sender");
+        }
 
         if (!_isValidHandle(handle)) revert("Only alphanumeric characters and an underscore allowed");
 
