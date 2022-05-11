@@ -72,7 +72,7 @@ describe('Register identity and deploy site', () => {
         const {target, version} = testData.deployConfig;
         await blockchain.putKeyValue(target, '::rootDir', publicDirStorageId, version);
         expect(publicDirStorageId).toMatch(hexRegExp);
-    }, 120000);
+    }, 300000);
 
     it('Should add route to `routes.json` and deploy it', async () => {
         expect.assertions(1);
@@ -84,7 +84,7 @@ describe('Register identity and deploy site', () => {
         const routesFileAsBuffer = Buffer.from(JSON.stringify(routesObj, null, 2));
         routesStorageId = await storage.uploadFile(routesFileAsBuffer);
         expect(routesStorageId).toMatch(hexRegExp);
-    }, 60000);
+    }, 300000);
 
     it('Should add routes to "key-value storage"', async () => {
         expect.assertions(1);
@@ -139,7 +139,7 @@ describe('Register identity and deploy site', () => {
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^<!DOCTYPE html>/);
         expect(res.data).toMatch('<title>E2E Test Site</title>');
-    }, 20000);
+    }, 300000);
 
     it('Should fetch a file in the root folder', async () => {
         expect.assertions(2);
@@ -151,7 +151,7 @@ describe('Register identity and deploy site', () => {
         );
         expect(res.status).toEqual(200);
         expect(res.data).toMatch(/^h1 {/);
-    }, 20000);
+    }, 30000);
 
     it('Should return a file in a nested folder', async () => {
         expect.assertions(2);
@@ -163,7 +163,7 @@ describe('Register identity and deploy site', () => {
         );
         expect(res.status).toEqual(200);
         expect(res.headers['content-type']).toEqual('image/jpeg');
-    }, 20000);
+    }, 30000);
 });
 
 describe('Proxy keyvalue', () => {

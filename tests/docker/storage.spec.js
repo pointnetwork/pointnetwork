@@ -9,7 +9,7 @@ describe('Storage upload/download', () => {
 
         id = await uploadFile('Test string');
         expect(id).toBeTruthy();
-    }, 60000);
+    }, 300000);
 
     it('Should download an uploaded file', async () => {
         expect.assertions(1);
@@ -17,7 +17,7 @@ describe('Storage upload/download', () => {
         await delay(5000);
         const file = await getFile(id);
         expect(file).toEqual('Test string');
-    }, 15000);
+    }, 30000);
 });
 
 describe('Storage upload/download through API', () => {
@@ -31,7 +31,7 @@ describe('Storage upload/download through API', () => {
         );
         id = res.data.data;
         expect(id).toBeTruthy();
-    }, 60000);
+    }, 300000);
 
     it('Should download an uploaded file', async () => {
         expect.assertions(1);
@@ -40,5 +40,5 @@ describe('Storage upload/download through API', () => {
         const res = await get(
             `http://point_node:2468/v1/api/storage/getString/${id}`);
         expect(res.data.data).toEqual('Test string 2');
-    }, 15000);
+    }, 30000);
 });
