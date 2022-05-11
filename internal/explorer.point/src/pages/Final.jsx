@@ -25,7 +25,7 @@ const Final = () => {
             return;
         }
             
-        if (!/^[a-zA-Z0-9]+?$/.test(identity)) {
+        if (!/^[a-zA-Z0-9_]+?$/.test(identity)) {
             setError('special characters are not allowed');
             return;
         }
