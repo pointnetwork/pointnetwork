@@ -110,7 +110,7 @@ class IdentityController extends PointSDKController {
                 signData
             );
 
-            log.info(v, r, s);
+            //log.info(v, r, s);
 
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
