@@ -49,6 +49,15 @@ const TwitterOracle = {
     }
 };
 
+function getIdentityValidationCode(owner) {
+    const code = crypto
+        .createHash('sha256')
+        .update(owner)
+        .digest('hex')
+        .toLowerCase();
+    return code;
+}
+
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
         super(ctx, req);
@@ -88,7 +97,12 @@ class IdentityController extends PointSDKController {
     async isIdentityEligible() {
         const {identity} = this.req.params;
         const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
-        return this._response({eligibility, reason});
+        let code;
+        if (eligibility === 'tweet') {
+            const owner = getNetworkAddress();
+            code = getIdentityValidationCode(owner);
+        }
+        return this._response({eligibility, reason, code});
     }
 
     async registerIdentity() {
@@ -188,11 +202,7 @@ class IdentityController extends PointSDKController {
         }
 
         if (eligibility === 'tweet') {
-            const code = crypto
-                .createHash('sha256')
-                .update(owner)
-                .digest('hex')
-                .toLowerCase();
+            const code = getIdentityValidationCode(owner);
             return this._response({code});
         }
 

@@ -15,3 +15,31 @@ a.nav-link.active {
     height: 1.6em; 
     margin-right: 0.8em;
 }
+
+.text-small {
+    font-size: 12px;
+}
+
+.text-medium {
+    font-size: 14px;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.white {
+    color: white;
+}
+
+.red {
+    color: red;
+}
+
+.green {
+    color: green;
+}
+
+.border-red {
+    border-color: red;
+}
