@@ -47,13 +47,16 @@ const abisByContractName = {};
 const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
 
 const blockchainUrls = config.get('network.web3');
-const web3s = Object.keys(blockchainUrls).reduce((acc, cur) => ({
-    ...acc,
-    [cur]: createWeb3Instance({
-        blockchainUrl: blockchainUrls[cur],
-        privateKey: '0x' + getNetworkPrivateKey()
-    })
-}), {});
+const web3s = Object.keys(blockchainUrls).reduce(
+    (acc, cur) => ({
+        ...acc,
+        [cur]: createWeb3Instance({
+            blockchainUrl: blockchainUrls[cur],
+            privateKey: '0x' + getNetworkPrivateKey()
+        })
+    }),
+    {}
+);
 
 const getWeb3 = (chain = 'ynet') => web3s[chain];
 
@@ -551,7 +554,13 @@ blockchain.putKeyValue = async (identity, key, value, version) => {
     }
 };
 
-blockchain.registerVerified = async (identity, address, commPublicKey, hashedMessage, {s, r, v}) => {
+blockchain.registerVerified = async (
+    identity,
+    address,
+    commPublicKey,
+    hashedMessage,
+    {s, r, v}
+) => {
     try {
         if (!Buffer.isBuffer(commPublicKey))
             throw Error('registerIdentity: commPublicKey must be a buffer');
