@@ -551,6 +551,51 @@ blockchain.putKeyValue = async (identity, key, value, version) => {
     }
 };
 
+blockchain.registerVerified = async (identity, address, commPublicKey, hashedMessage, {s, r, v}) => {
+    try {
+        if (!Buffer.isBuffer(commPublicKey))
+            throw Error('registerIdentity: commPublicKey must be a buffer');
+        if (Buffer.byteLength(commPublicKey) !== 64)
+            throw Error('registerIdentity: commPublicKey must be 64 bytes');
+        // todo: validate identity and address
+
+        identity = identity.replace('.point', ''); // todo: rtrim instead
+        const contract = await blockchain.loadIdentityContract();
+        log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
+
+        const method = contract.methods.registerVerified(
+            identity,
+            address,
+            `0x${commPublicKey.slice(0, 32).toString('hex')}`,
+            `0x${commPublicKey.slice(32).toString('hex')}`,
+            hashedMessage,
+            v,
+            r,
+            s
+        );
+
+        log.debug({identity, address}, 'Registering identity');
+        const result = await blockchain.web3send(method);
+        log.info(result, 'Identity registration result');
+        log.sendMetric({
+            identityRegistration: {
+                identity,
+                address,
+                commPublicKey
+            }
+        });
+
+        return result;
+    } catch (e) {
+        log.error(
+            {error: e, stack: e.stack, identity, address, commPublicKey},
+            'Identity registration error'
+        );
+
+        throw e;
+    }
+};
+
 blockchain.registerIdentity = async (identity, address, commPublicKey) => {
     try {
         if (!Buffer.isBuffer(commPublicKey))

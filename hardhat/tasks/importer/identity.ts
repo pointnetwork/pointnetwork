@@ -139,8 +139,8 @@ task("identity-importer", "Will download and upload data to point identity contr
 
         try {
             console.log(`found ${data.identities.length}`);
-            console.log('setting handle length to 20');
-            await contract.setMaxHandleLength(20);
+            console.log('setting handle length to 21');
+            await contract.setMaxHandleLength(21);
             for (const identity of data.identities) {
                 lastIdentityAddedIndex++;
                 if(lastIdentityAddedIndex > processIdentityFrom || processIdentityFrom == 0){
