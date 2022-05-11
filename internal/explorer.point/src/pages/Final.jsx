@@ -20,11 +20,17 @@ const Final = () => {
     const [tweetContentError, setTweetContentError] = useState('');
 
     function validateIdentity(identity) {
-        if (identity === '') {
+
+        if (!identity || identity === '') {
             setError('empty identity');
             return;
         }
-            
+
+        if (identity.length < 2) {
+            setError('handle is too short');
+            return;
+        }
+
         if (!/^[a-zA-Z0-9_]+?$/.test(identity)) {
             setError('special characters are not allowed');
             return;
