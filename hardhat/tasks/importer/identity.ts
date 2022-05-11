@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import fs = require('fs');
 
-//npx hardhat identity-importer upload 0x001fc9C398BF1846a70938c920d0351722F34c83 --migration-file ../resources/migrations/identity-1647299819.json  --network ynet
+//npx hardhat identity-importer upload 0x001fc9C398BF1846a70938c920d0351722F34c83 --migration-file ../resources/migrations/identity-1647299819.json  --network ynet --handle-prefix ynet
 //npx hardhat identity-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --network ynet
 //npx hardhat identity-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to ../resources  --network ynet
 
@@ -10,6 +10,7 @@ task("identity-importer", "Will download and upload data to point identity contr
   .addPositionalParam("contract","Identity contract source address")
   .addOptionalParam("saveTo", "Saves migration file to specific directory")
   .addOptionalParam("migrationFile", "Migration file to when uploading data")
+  .addOptionalParam("handlePrefix", "Prefix to prepend to all handles when uploading")
   .setAction(async (taskArgs, hre) => {
     const ethers = hre.ethers;
 
@@ -101,6 +102,11 @@ task("identity-importer", "Will download and upload data to point identity contr
             return false;
         }
 
+        let prefix = '';
+        if(taskArgs.handlePrefix !== undefined) {
+            prefix = taskArgs.handlePrefix;
+        }
+
         const lockFileStructure = {
             contract:taskArgs.contract.toString(),
             migrationFilePath:taskArgs.migrationFile.toString(),
@@ -133,13 +139,15 @@ task("identity-importer", "Will download and upload data to point identity contr
 
         try {
             console.log(`found ${data.identities.length}`);
+            console.log('setting handle length to 20');
+            await contract.setMaxHandleLength(20);
             for (const identity of data.identities) {
                 lastIdentityAddedIndex++;
                 if(lastIdentityAddedIndex > processIdentityFrom || processIdentityFrom == 0){
-                    console.log(`${lastIdentityAddedIndex} migrating ${identity.handle}`);
-                    await contract.register(identity.handle, identity.owner, identity.keyPart1, identity.keyPart2);
+                    console.log(`${lastIdentityAddedIndex} migrating ${prefix + identity.handle}`);
+                    await contract.register(prefix + identity.handle, identity.owner, identity.keyPart1, identity.keyPart2);
                 }else{
-                    console.log(`Skipping migrated identity ${identity.handle}`)
+                    console.log(`Skipping migrated identity ${prefix + identity.handle}`)
                 }
             }
         } catch (error) {
@@ -156,10 +164,10 @@ task("identity-importer", "Will download and upload data to point identity contr
             for (const ikv of data.ikv) {
                 lastIkvAddedIndex++;
                 if(lastIkvAddedIndex > processIkvFrom || processIkvFrom == 0){
-                    console.log(`${lastIkvAddedIndex} Migrating IVK param for ${ikv.handle} ${ikv.key} ${ikv.value}`)
-                    await contract.ikvImportKV(ikv.handle, ikv.key, ikv.value, ikv.version);
+                    console.log(`${lastIkvAddedIndex} Migrating IVK param for ${prefix + ikv.handle} ${ikv.key} ${ikv.value}`)
+                    await contract.ikvImportKV(prefix + ikv.handle, ikv.key, ikv.value, ikv.version);
                 }else{
-                    console.log(`Skipping migrated IVK param for ${ikv.handle} ${ikv.key} ${ikv.value}`)
+                    console.log(`Skipping migrated IVK param for ${prefix + ikv.handle} ${ikv.key} ${ikv.value}`)
                 }
             }
         } catch (error) {

@@ -23,7 +23,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     bool public migrationApplied;
 
-    uint public constant MAX_HANDLE_LENGTH = 16;
+    uint private MAX_HANDLE_LENGTH;
 
     mapping(string => mapping(address => bool)) private _isIdentityDeployer;
 
@@ -42,6 +42,15 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         __Ownable_init();
         __UUPSUpgradeable_init();
         migrationApplied = false;
+        MAX_HANDLE_LENGTH = 16;
+    }
+
+    function setMaxHandleLength(uint value) public onlyOwner {
+        MAX_HANDLE_LENGTH = value;
+    }
+
+    function getMaxHandleLength() public view returns (uint) {
+        return MAX_HANDLE_LENGTH;
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -121,6 +130,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     function finishMigrations() external {
         migrationApplied = true;
+        MAX_HANDLE_LENGTH = 16;
     }
 
     function transferIdentityOwnership(string memory handle, address newOwner) public onlyIdentityOwner(handle) {
@@ -176,7 +186,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         );
     }
 
-    function _isValidHandle(string memory str) internal pure returns (bool) {
+    function _isValidHandle(string memory str) internal view returns (bool) {
 
         bytes memory b = bytes(str);
         if (b.length > MAX_HANDLE_LENGTH) return false;
