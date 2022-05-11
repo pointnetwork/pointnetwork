@@ -8,18 +8,18 @@ const axios = require('axios');
 const ethers = require('ethers');
 const getReferralCode = require('../../util/getReferralCode.ts');
 
+const EMPTY_REFERRAL_CODE = '000000000000';
+
 async function registerBountyReferral(address, type) {
     const referralCode = await getReferralCode();
-    if (!referralCode) {
-        return;
-    }
 
     let event = 'free_reg';
     if (type === 'tweet') {
         event = 'twitter_reg';
     }
 
-    const url = `https://bounty.pointnetwork.io/ref_success?event=${event}&ref=${referralCode}&addr=${address}`;
+    const url = `https://bounty.pointnetwork.io/ref_success?event=${event}&ref=${referralCode ||
+        EMPTY_REFERRAL_CODE}&addr=${address}`;
 
     return await axios.get(url);
 }
