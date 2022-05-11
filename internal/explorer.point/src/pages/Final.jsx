@@ -47,15 +47,10 @@ const Final = () => {
     }
 
     function validateTweetUrl(url) {        
-        if (url === '') {
-            setTweetUrlError('Empty tweet url');
-            return;
-        }
-
         const regex = new RegExp(`^https://twitter.com/${identity}/status/[0-9]+$`);
 
         if (!regex.test(url)) {
-            setTweetUrlError('invalid tweet url');
+            setTweetUrlError('The Tweet Url must be a valid tweet status of the same identity name being registered');
             return;
         }
 
