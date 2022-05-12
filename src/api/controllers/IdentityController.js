@@ -56,7 +56,8 @@ function getIdentityActivationCode(owner) {
         .createHash('sha256')
         .update(`${prefix}${lowerCaseOwner}`)
         .digest('hex')
-        .toLowerCase();
+        .toLowerCase()
+        .slice(32);
     return code;
 }
 

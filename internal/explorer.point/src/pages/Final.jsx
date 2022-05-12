@@ -134,10 +134,15 @@ const Final = () => {
             return false;
         }
 
-        const regex = new RegExp(`https://pointnetwork.io/activation\\?hash=${activationCode}`, 'g');
+        if (content.length > MAX_TWEET_SIZE) {
+            setTweetContentError('Tweet content is too long');
+            return false;
+        }
+
+        const regex = new RegExp(`https://pointnetwork.io/activation\\?code=${activationCode}`, 'g');
 
         if (!regex.test(content)) {
-            setTweetContentError(`Tweet content must have the activation link https://pointnetwork.io/activation?hash=${activationCode}`);
+            setTweetContentError(`Tweet content must have the activation link https://pointnetwork.io/activation?code=${activationCode}`);
             return false;
         }
 
@@ -154,7 +159,7 @@ const Final = () => {
     }
 
     const resetTweetContent = (code) => {
-        const defaultTweetContent = `Activating my Point Network handle! @pointnetwork https://pointnetwork.io/activation?hash=${activationCode || code} #pointnetwork #activation`;
+        const defaultTweetContent = `Activating my Point Network handle! @pointnetwork https://pointnetwork.io/activation?code=${activationCode || code} #pointnetwork #activation`;
         setTweetContent(defaultTweetContent);
         setTweetContentError('');
     }
