@@ -90,7 +90,7 @@ const Final = () => {
                 } 
                 if (code) {
                     setActivationCode(code);
-                    resetTweetContent(code)
+                    resetTweetContent(code, identity)
                     return;
                 }
             }).catch((thrown) => {
@@ -139,10 +139,10 @@ const Final = () => {
             return false;
         }
 
-        const regex = new RegExp(`https://pointnetwork.io/activation\\?code=${activationCode}`, 'g');
+        const regex = new RegExp(`https://pointnetwork.io/activation\\?i=0x${activationCode}&handle=${identity}`, 'g');
 
         if (!regex.test(content)) {
-            setTweetContentError(`Tweet content must have the activation link https://pointnetwork.io/activation?code=${activationCode}`);
+            setTweetContentError(`Tweet content must have the activation link https://pointnetwork.io/activation?i=0x${activationCode}&handle=${identity}`);
             return false;
         }
 
@@ -158,8 +158,8 @@ const Final = () => {
         }
     }
 
-    const resetTweetContent = (code) => {
-        const defaultTweetContent = `Activating my Point Network handle! @pointnetwork https://pointnetwork.io/activation?code=${activationCode || code} #pointnetwork #activation`;
+    const resetTweetContent = (code, identity) => {
+        const defaultTweetContent = `Activating my Point Network handle! @pointnetwork https://pointnetwork.io/activation?i=0x${code}&handle=${identity} #pointnetwork #activation`;
         setTweetContent(defaultTweetContent);
         setTweetContentError('');
     }
@@ -197,7 +197,7 @@ const Final = () => {
 
             if (code) {
                 setActivationCode(code);
-                resetTweetContent(code)
+                resetTweetContent(code, identity)
                 return;
             }
 
@@ -251,7 +251,7 @@ const Final = () => {
                             style={{ width: '100%' }}
                         />
                         <div style={{ display: 'flex', justifyContent: 'space-between', position: 'absolute', left: '0px', bottom: '5px', width: '96%', margin: '0px 2%'}} className="my-2 py-2">
-                            <button className="btn btn-light btn-sm" type="button" onClick={resetTweetContent}>Reset Tweet Content</button>
+                            <button className="btn btn-light btn-sm" type="button" onClick={() => resetTweetContent(activationCode, identity)}>Reset Tweet Content</button>
                             <button className="btn btn-link btn-sm bold" type="button" title="Copy Tweet content" onClick={() => navigator.clipboard.writeText(tweetContent)}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
                                     <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
