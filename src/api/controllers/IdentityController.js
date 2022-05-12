@@ -49,10 +49,12 @@ const TwitterOracle = {
     }
 };
 
-function getIdentityValidationCode(owner) {
+function getIdentityActivationCode(owner) {
+    const lowerCaseOwner = owner.toLowerCase();
+    const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
     const code = crypto
         .createHash('sha256')
-        .update(owner)
+        .update(`${prefix}${lowerCaseOwner}`)
         .digest('hex')
         .toLowerCase();
     return code;
@@ -100,7 +102,7 @@ class IdentityController extends PointSDKController {
         let code;
         if (eligibility === 'tweet') {
             const owner = getNetworkAddress();
-            code = getIdentityValidationCode(owner);
+            code = getIdentityActivationCode(owner);
         }
         return this._response({eligibility, reason, code});
     }
@@ -202,7 +204,7 @@ class IdentityController extends PointSDKController {
         }
 
         if (eligibility === 'tweet') {
-            const code = getIdentityValidationCode(owner);
+            const code = getIdentityActivationCode(owner);
             return this._response({code});
         }
 
