@@ -11,6 +11,7 @@ const Final = () => {
     const [error, setError] = useState('');
 
     const [loading, setLoading] = useState(false);
+    const [registering, setRegistering] = useState(false);
 
     const [eligibility, setEligibility] = useState('');
 
@@ -176,6 +177,7 @@ const Final = () => {
                 return;
             }
 
+            setRegistering(true);
             setError('');
 
             const csrf_token = window.localStorage.getItem('csrf_token');
@@ -192,6 +194,8 @@ const Final = () => {
                     url: tweetUrl,
                 },
             });
+            
+            setRegistering(false);
 
             const { code, success, reason } = data.data;
 
@@ -202,12 +206,12 @@ const Final = () => {
             }
 
             if (!success) {
-                setError(reason || DEFAULT_ERROR_MESSAGE);
+                Swal.fire({title: reason || DEFAULT_ERROR_MESSAGE});
                 return;
             }
-
             window.location = '/'; 
         } catch(error) {
+            setRegistering(false);
             console.error(error);
             Swal.fire({title: DEFAULT_ERROR_MESSAGE});
         };
@@ -225,7 +229,7 @@ const Final = () => {
 
             <div>
                 <div style={{display: 'flex', alignItems: 'center'}}>
-                    <input type="text" name="handle" className="p-1 my-2 text-medium" onChange={onChangeHandler} placeholder="Identity" />
+                    <input type="text" name="handle" className="p-1 my-2 text-medium" onChange={onChangeHandler} placeholder="Identity" disabled={!!registering} />
                     {loading ? <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> : ''}
                 </div>
 
@@ -280,8 +284,9 @@ const Final = () => {
                 </div>
             ) : ''}
 
-            {identity && identityAvailable && !error && (!activationCode || tweetUrl) ? (<div>
-                <button className="btn btn-info mt-2" onClick={registerHandler}>Register</button>
+            {identity && identityAvailable && !error && (!activationCode || tweetUrl) ? (<div style={{display: 'flex', alignItems: 'center'}}>
+                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>Register</button>
+                {registering ? <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> : ''}
             </div>) : ''}
         </Container>
     )
