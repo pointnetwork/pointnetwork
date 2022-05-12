@@ -61,6 +61,13 @@ function getIdentityActivationCode(owner) {
     return code;
 }
 
+function getHashedMessage(identity, owner, type) {
+    const lowerCaseOwner = owner.toLowerCase();
+    const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
+    const hashedMessage = ethers.utils.id(`${identity}|${prefix}${lowerCaseOwner}|${type}`);
+    return hashedMessage;
+}
+
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
         super(ctx, req);
@@ -134,9 +141,7 @@ class IdentityController extends PointSDKController {
                 'Registering a new identity'
             );
 
-            const hashedMessage = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(`${identity}|${owner}|${type}`)
-            );
+            const hashedMessage = getHashedMessage(identity, owner, type);
 
             await blockchain.registerVerified(
                 identity,
