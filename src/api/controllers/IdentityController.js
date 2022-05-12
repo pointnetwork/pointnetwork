@@ -61,6 +61,7 @@ function getIdentityActivationCode(owner) {
     return code;
 }
 
+// using 'free' or 'taken' as type here
 function getHashedMessage(identity, owner, type) {
     const lowerCaseOwner = owner.toLowerCase();
     const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
@@ -180,7 +181,7 @@ class IdentityController extends PointSDKController {
             }
 
             try {
-                await register('tweet', {v, r, s});
+                await register('taken', {v, r, s});
                 return this._response({success: true});
             } catch (error) {
                 log.error(error);
