@@ -103,8 +103,8 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         address signer = ecrecover(prefixedHashMessage, _v, _r, _s);
         require(signer == oracleAddress, "Identity claim msg must be signed by the oracle");
 
-        bytes32 expectedMsgFree = keccak256(abi.encodePacked(handle, "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|free"));
-        bytes32 expectedMsgTaken = keccak256(abi.encodePacked(handle, "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|taken"));
+        bytes32 expectedMsgFree = keccak256(abi.encodePacked(_toLower(handle), "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|free"));
+        bytes32 expectedMsgTaken = keccak256(abi.encodePacked(_toLower(handle), "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|taken"));
 
         require(_hashedMessage == expectedMsgFree || _hashedMessage == expectedMsgTaken, "Invalid identity claim msg");
 
