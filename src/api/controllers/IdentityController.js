@@ -49,13 +49,24 @@ const TwitterOracle = {
     }
 };
 
-function getIdentityValidationCode(owner) {
+function getIdentityActivationCode(owner) {
+    const lowerCaseOwner = owner.toLowerCase();
+    const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
     const code = crypto
         .createHash('sha256')
-        .update(owner)
+        .update(`${prefix}${lowerCaseOwner}`)
         .digest('hex')
-        .toLowerCase();
+        .toLowerCase()
+        .slice(32);
     return code;
+}
+
+// using 'free' or 'taken' as type here
+function getHashedMessage(identity, owner, type) {
+    const lowerCaseOwner = owner.toLowerCase();
+    const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
+    const hashedMessage = ethers.utils.id(`${identity}|${prefix}${lowerCaseOwner}|${type}`);
+    return hashedMessage;
 }
 
 class IdentityController extends PointSDKController {
@@ -100,7 +111,7 @@ class IdentityController extends PointSDKController {
         let code;
         if (eligibility === 'tweet') {
             const owner = getNetworkAddress();
-            code = getIdentityValidationCode(owner);
+            code = getIdentityActivationCode(owner);
         }
         return this._response({eligibility, reason, code});
     }
@@ -131,9 +142,7 @@ class IdentityController extends PointSDKController {
                 'Registering a new identity'
             );
 
-            const hashedMessage = ethers.utils.keccak256(
-                ethers.utils.toUtf8Bytes(`${identity}|${owner}|${type}`)
-            );
+            const hashedMessage = getHashedMessage(identity, owner, type);
 
             await blockchain.registerVerified(
                 identity,
@@ -172,7 +181,7 @@ class IdentityController extends PointSDKController {
             }
 
             try {
-                await register('tweet', {v, r, s});
+                await register('taken', {v, r, s});
                 return this._response({success: true});
             } catch (error) {
                 log.error(error);
@@ -202,7 +211,7 @@ class IdentityController extends PointSDKController {
         }
 
         if (eligibility === 'tweet') {
-            const code = getIdentityValidationCode(owner);
+            const code = getIdentityActivationCode(owner);
             return this._response({code});
         }
 
