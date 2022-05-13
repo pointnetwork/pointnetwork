@@ -11,6 +11,7 @@ import "./tasks/importer/identity";
 import "./tasks/importer/blog";
 import "./tasks/importer/pointSocial";
 import "./tasks/importer/sms";
+import "./tasks/importer/identity-clone";
 import "./tasks/identity/identity-update-contract";
 import './tasks/identity/identity-add-deployer.ts';
 import './tasks/identity/identity-remove-deployer.ts';

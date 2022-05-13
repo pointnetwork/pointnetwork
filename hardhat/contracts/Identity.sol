@@ -5,6 +5,7 @@ pragma abicoder v2;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     struct PubKey64 {
@@ -20,12 +21,13 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
     mapping(string => string) public lowercaseToCanonicalIdentities;
     mapping(string => PubKey64) public identityToCommPublicKey;
     string[] public identityList;
-
     bool public migrationApplied;
 
-    uint public constant MAX_HANDLE_LENGTH = 16;
+    uint private MAX_HANDLE_LENGTH;
 
     mapping(string => mapping(address => bool)) private _isIdentityDeployer;
+    address private oracleAddress;
+
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
     event IdentityOwnershipTransferred(
@@ -42,6 +44,24 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         __Ownable_init();
         __UUPSUpgradeable_init();
         migrationApplied = false;
+        MAX_HANDLE_LENGTH = 16;
+        oracleAddress = 0x8E2Fb20C427b54Bfe8e529484421fAE41fa6c9f6;
+    }
+
+    function setMaxHandleLength(uint value) public onlyOwner {
+        MAX_HANDLE_LENGTH = value;
+    }
+
+    function getMaxHandleLength() public view returns (uint) {
+        return MAX_HANDLE_LENGTH;
+    }
+
+    function setOracleAddress(address addr) public onlyOwner {
+        oracleAddress = addr;
+    }
+
+    function getOracleAddress() public view returns (address) {
+        return oracleAddress;
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -65,11 +85,45 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         _;
     }
 
-    function register(
-        string memory handle, 
+    function registerVerified(
+        string calldata handle, 
         address identityOwner, 
         bytes32 commPublicKeyPart1, 
-        bytes32 commPublicKeyPart2) public {
+        bytes32 commPublicKeyPart2,
+        bytes32 _hashedMessage, 
+        uint8 _v, 
+        bytes32 _r, 
+        bytes32 _s) public{
+
+        _validateIdentity(handle, identityOwner, false);
+
+        // Check oracle msg for confirming  hat identity can be registered.
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 prefixedHashMessage = keccak256(abi.encodePacked(prefix, _hashedMessage));
+        address signer = ecrecover(prefixedHashMessage, _v, _r, _s);
+        require(signer == oracleAddress, "Identity claim msg must be signed by the oracle");
+
+        bytes32 expectedMsgFree = keccak256(abi.encodePacked(handle, "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|free"));
+        bytes32 expectedMsgTaken = keccak256(abi.encodePacked(handle, "|", Strings.toHexString(uint256(uint160(identityOwner)), 20), "|taken"));
+
+        require(_hashedMessage == expectedMsgFree || _hashedMessage == expectedMsgTaken, "Invalid identity claim msg");
+
+        //ok, go for registering.
+        PubKey64 memory commPublicKey = PubKey64(commPublicKeyPart1, commPublicKeyPart2);
+
+        _selfReg(handle, identityOwner, commPublicKey);
+    }
+
+    function _validateIdentity(string calldata handle, address identityOwner, bool ynet) private view returns (bool){
+        
+        if(ynet == true){
+            require(keccak256(abi.encodePacked(_toLower(handle[0:5]))) == keccak256(abi.encodePacked("ynet_")),
+            "ynet handles must start with ynet_");
+        }
+
+        if(migrationApplied == true){
+            require(msg.sender == identityOwner, "Cannot register identities for other address than sender");
+        }
 
         if (!_isValidHandle(handle)) revert("Only alphanumeric characters and an underscore allowed");
 
@@ -79,9 +133,24 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
             revert("This identity has already been registered");
         }
 
-        // Check if this owner already has an identity attached
-        // if (!_isEmptyString(ownerToIdentity[identityOwner])) revert('This owner already has an identity attached');
+        if(migrationApplied == true){
+            // Check if this owner already has an identity attached
+            if (!_isEmptyString(ownerToIdentity[identityOwner])) revert("This owner already has an identity attached");
+        }
 
+        return true;
+    }
+
+    function register(
+        string calldata handle, 
+        address identityOwner, 
+        bytes32 commPublicKeyPart1, 
+        bytes32 commPublicKeyPart2
+        ) public {
+            
+        _validateIdentity(handle, identityOwner, true);
+
+        //ok, go for registering.
         PubKey64 memory commPublicKey = PubKey64(commPublicKeyPart1, commPublicKeyPart2);
 
         _selfReg(handle, identityOwner, commPublicKey);
@@ -121,6 +190,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     function finishMigrations() external {
         migrationApplied = true;
+        MAX_HANDLE_LENGTH = 16;
     }
 
     function transferIdentityOwnership(string memory handle, address newOwner) public onlyIdentityOwner(handle) {
@@ -167,16 +237,17 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
 
     //*** Internal functions ***//
-    function _isAlphaNumeric(bytes1 char) internal pure returns (bool) {
+    function _isValidChar(bytes1 char) internal pure returns (bool) {
 
         return (
             (char >= bytes1(uint8(0x30)) && char <= bytes1(uint8(0x39))) || // 9-0
             (char >= bytes1(uint8(0x41)) && char <= bytes1(uint8(0x5A))) || // A-Z
-            (char >= bytes1(uint8(0x61)) && char <= bytes1(uint8(0x7A))) // a-z
+            (char >= bytes1(uint8(0x61)) && char <= bytes1(uint8(0x7A))) || // a-z
+            (char == bytes1(uint8(0x5f))) // '_' 
         );
     }
 
-    function _isValidHandle(string memory str) internal pure returns (bool) {
+    function _isValidHandle(string memory str) internal view returns (bool) {
 
         bytes memory b = bytes(str);
         if (b.length > MAX_HANDLE_LENGTH) return false;
@@ -184,7 +255,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         for (uint i; i < b.length; i++) {
             bytes1 char = b[i];
 
-            if (!_isAlphaNumeric(char) && !(char == bytes1(uint8(0x5f)))) {
+            if (!_isValidChar(char)) {
                 return false; // neither alpha-numeric nor '_'
             }
         }

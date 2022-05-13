@@ -54,3 +54,31 @@ a.nav-link.active {
     white-space: nowrap;
     text-align: center;
 }
+
+.text-small {
+    font-size: 12px;
+}
+
+.text-medium {
+    font-size: 14px;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.white {
+    color: white;
+}
+
+.red {
+    color: red;
+}
+
+.green {
+    color: green;
+}
+
+.border-red {
+    border-color: red;
+}
