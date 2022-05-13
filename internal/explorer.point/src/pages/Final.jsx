@@ -243,7 +243,7 @@ const Final = () => {
                 <h3 className="mb-2">Twitter validation</h3>
                 <p>Looks like this handle is registered on Twitter.</p> 
                 <p className="text-medium">If <span className="italic bold">@{identity}</span> on Twitter is you and you want it on web3, we’re saving it from cybersquatters <span className="italic">for the first 6 months from the launch</span>, so you can claim it by posting the activation tweet below (feel free to change the starting text if you want)</p>
-                <p className="text-medium">If <span className="italic bold">@{identity}</span> on Twitter is not you, just select another handle that is not on Twitter (if @username doesn’t claim it in 6 months, you will be able to take it from the automatic auction later)</p>
+                <p className="text-medium">If <span className="italic bold">@{identity}</span> on Twitter is not you, just select another handle that is not on Twitter (if <span className="italic bold">@{identity}</span> doesn’t claim it in 6 months, you will be able to take it from the automatic auction later)</p>
                 <div>
                     <div style={{ position: 'relative' }}>
                         <textarea
