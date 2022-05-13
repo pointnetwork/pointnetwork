@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "target": "why.point",
+  "target": "ynet_why.point",
   "keyvalue": {},
   "contracts": ["Why"]
 }
