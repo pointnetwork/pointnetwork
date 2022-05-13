@@ -6,7 +6,7 @@ const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
-const getReferralCode = require('../../util/getReferralCode');
+const {getReferralCode} = require('../../util');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
@@ -74,6 +74,7 @@ class IdentityController extends PointSDKController {
         super(ctx, req);
         this.req = req;
         this.rep = rep;
+        
     }
 
     async isIdentityRegistered() {
