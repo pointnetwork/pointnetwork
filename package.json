@@ -5,8 +5,8 @@
   "main": "point",
   "bin": "dist/index.js",
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   },
   "dependencies": {
     "@elastic/ecs-pino-format": "^1.3.0",
