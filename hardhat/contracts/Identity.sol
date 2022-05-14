@@ -27,6 +27,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     mapping(string => mapping(address => bool)) private _isIdentityDeployer;
     address private oracleAddress;
+    bool private devMode;
 
 
     event IdentityRegistered(string handle, address identityOwner, PubKey64 commPublicKey);
@@ -46,6 +47,7 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         migrationApplied = false;
         MAX_HANDLE_LENGTH = 16;
         oracleAddress = 0x8E2Fb20C427b54Bfe8e529484421fAE41fa6c9f6;
+        devMode = false;
     }
 
     function setMaxHandleLength(uint value) public onlyOwner {
@@ -62,6 +64,14 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
 
     function getOracleAddress() public view returns (address) {
         return oracleAddress;
+    }
+
+    function setDevMode(bool value) public onlyOwner {
+        devMode = value;
+    }
+
+    function getDevMode() public view returns (bool) {
+        return devMode;
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -147,9 +157,9 @@ contract Identity is Initializable, UUPSUpgradeable, OwnableUpgradeable{
         bytes32 commPublicKeyPart1, 
         bytes32 commPublicKeyPart2
         ) public {
-            
-        _validateIdentity(handle, identityOwner, true);
-
+        
+        _validateIdentity(handle, identityOwner, !devMode);
+        
         //ok, go for registering.
         PubKey64 memory commPublicKey = PubKey64(commPublicKeyPart1, commPublicKeyPart2);
 

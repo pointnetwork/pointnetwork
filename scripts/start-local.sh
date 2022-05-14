@@ -18,6 +18,7 @@ rm -rf cache
 rm -rf typechain
 rm -rf build
 npx hardhat compile
+export MODE=zappdev
 npm start
 cd ..
 
