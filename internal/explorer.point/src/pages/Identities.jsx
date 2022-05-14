@@ -65,7 +65,7 @@ export default function Identities({owner}) {
                 <tr>
                     <th>Handle</th>
                     <th>Owner</th>
-                    <th>Zapp</th>
+                    <th>App</th>
                 </tr>
                 {isLoading ? null : identities.map((e) => renderIdentityEntry(e.data))}
             </tbody>

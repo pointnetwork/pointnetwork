@@ -52,7 +52,7 @@ export default function Home() {
     )
   }
 
-  let zappsList = <p>No ZApps deployed yet.</p>;
+  let zappsList = <p>No Apps deployed yet.</p>;
   if(zapps.length > 0){
     zappsList = <div className="zapps">{zapps.map((k) => renderZappEntry(k))}</div>;
   }
@@ -66,7 +66,7 @@ export default function Home() {
         <p>If you can see this page, this means you've successfully installed the alpha! You're amazing! Please send the screenshot to the group.</p>
         <p>There's not much content in here, but we will be filling it up from now on</p>
 
-        <h5>Explore deployed websites</h5>
+        <h5>Explore featured Apps</h5>
         {isLoading ? <Loading /> : zappsList}
 
 
