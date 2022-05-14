@@ -65,7 +65,7 @@ function getIdentityActivationCode(owner) {
 function getHashedMessage(identity, owner, type) {
     const lowerCaseOwner = owner.toLowerCase();
     const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
-    const hashedMessage = ethers.utils.id(`${identity}|${prefix}${lowerCaseOwner}|${type}`);
+    const hashedMessage = ethers.utils.id(`${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`);
     return hashedMessage;
 }
 
