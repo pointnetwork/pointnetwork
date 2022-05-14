@@ -39,6 +39,11 @@ async function main() {
   const identity = await upgrades.deployProxy(Identity, [], {kind: 'uups'});
   await identity.deployed();
 
+  if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
+    console.log('Setting dev mode to true');
+    await identity.setDevMode(true);
+  }
+
   console.log("Identity deployed to:", identity.address);
 
   fs.writeFileSync(identityAddressPath, JSON.stringify({address:identity.address}));

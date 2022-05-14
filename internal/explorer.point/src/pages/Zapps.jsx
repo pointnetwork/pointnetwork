@@ -50,7 +50,7 @@ export default function Zapps() {
     <>
       <Container className="p-3">
         <br/>
-        <h1>ZApps</h1>
+        <h1>Apps</h1>
         Total: {zapps.length}
 
         <hr/>
@@ -60,7 +60,7 @@ export default function Zapps() {
                 <tr>
                     <th>Handle</th>
                     <th>Owner</th>
-                    <th>Zapp</th>
+                    <th>App</th>
                 </tr>
                 {isLoading ? null : zapps.map((e) => renderZappEntry(e))}
             </tbody>

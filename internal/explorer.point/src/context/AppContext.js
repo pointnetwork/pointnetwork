@@ -16,17 +16,19 @@ export const ProvideAppContext = ({ children }) => {
   const [walletError, setWallerError] = useState();
   const [, setLocation] = useLocation();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const {data: {address}} = await window.point.wallet.address();
-        const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: address});
+  const fetchData = async () => {
+    try {
+      const {data: {address}} = await window.point.wallet.address();
+      const {data: {identity}} = await window.point.identity.ownerToIdentity({owner: address});
 
-        setWalletIdentity(identity);
-      } catch (e) {
-        setWallerError(e);
-      }
-    })()
+      setWalletIdentity(identity);
+    } catch (e) {
+      setWallerError(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [])
 
   const goHome = useCallback(async () => {

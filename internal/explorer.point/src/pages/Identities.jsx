@@ -3,7 +3,7 @@ import Loading from '../components/Loading';
 import { useState,useEffect } from "react";
 import { Link } from "wouter";
 
-export default function Identities() {
+export default function Identities({owner}) {
   
   const [identities, setIdentities] = useState([])
   const [ikvset, setIkvset] = useState([])
@@ -11,12 +11,21 @@ export default function Identities() {
 
   useEffect(()=>{
     fetchIdentities();
-  },[])
+  },[owner])
 
   const fetchIdentities = async () => {
     setIsLoading(true);
-    let identitiesFetched = await window.point.contract.events(
-        {host: '@', contract: 'Identity', event: 'IdentityRegistered'});
+    let identitiesFetched = owner !== undefined
+        ? 
+        await window.point.contract.events(
+        {host: '@', contract: 'Identity', event: 'IdentityRegistered', filter: {
+          identityOwner: owner
+        }}) 
+        :
+        await window.point.contract.events(
+          {host: '@', contract: 'Identity', event: 'IdentityRegistered'})
+        ;
+
     if (identitiesFetched.data != ''){
         setIdentities(identitiesFetched.data);
     } 
@@ -46,7 +55,7 @@ export default function Identities() {
     <>
       <Container className="p-3">
         <br/>
-        <h1>Identities</h1>
+        <h1>{owner !== undefined ? 'My ' : ''}Identities</h1>
         Total: {identities.length}
 
         <hr/>
@@ -56,7 +65,7 @@ export default function Identities() {
                 <tr>
                     <th>Handle</th>
                     <th>Owner</th>
-                    <th>Zapp</th>
+                    <th>App</th>
                 </tr>
                 {isLoading ? null : identities.map((e) => renderIdentityEntry(e.data))}
             </tbody>

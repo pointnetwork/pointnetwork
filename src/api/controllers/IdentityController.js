@@ -3,16 +3,82 @@ const blockchain = require('../../network/blockchain');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
+const crypto = require('crypto');
+const axios = require('axios');
+const ethers = require('ethers');
+const {getReferralCode} = require('../../util');
+
+const EMPTY_REFERRAL_CODE = '000000000000';
+
+async function registerBountyReferral(address, type) {
+    const referralCode = await getReferralCode();
+
+    let event = 'free_reg';
+    if (type === 'tweet') {
+        event = 'twitter_reg';
+    }
+
+    const url = `https://bounty.pointnetwork.io/ref_success?event=${event}&ref=${referralCode ||
+        EMPTY_REFERRAL_CODE}&addr=${address}`;
+
+    return await axios.get(url);
+}
+
+const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
+
+const TwitterOracle = {
+    async isIdentityEligible(identity) {
+        const url = `${twitterOracleDomain}/api/eligible?handle=${identity}`;
+        log.info(`calling to ${url}`);
+        const {data} = await axios.get(url);
+        return data;
+    },
+
+    async regiterFreeIdentity(identity, address) {
+        const url = `${twitterOracleDomain}/api/activate_free?handle=${identity}&address=${address}`;
+        log.info(`calling to ${url}`);
+        const {data} = await axios.post(url);
+        return data;
+    },
+
+    async confirmTwitterValidation(identity, address, url) {
+        const oracleUrl = `${twitterOracleDomain}/api/activate_tweet?handle=${identity}&address=${address}&url=${url}`;
+        log.info(`calling to ${oracleUrl}`);
+        const {data} = await axios.post(oracleUrl);
+        return data;
+    }
+};
+
+function getIdentityActivationCode(owner) {
+    const lowerCaseOwner = owner.toLowerCase();
+    const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
+    const code = crypto
+        .createHash('sha256')
+        .update(`${prefix}${lowerCaseOwner}`)
+        .digest('hex')
+        .toLowerCase()
+        .slice(32);
+    return code;
+}
+
+// using 'free' or 'taken' as type here
+function getHashedMessage(identity, owner, type) {
+    const lowerCaseOwner = owner.toLowerCase();
+    const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
+    const hashedMessage = ethers.utils.id(`${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`);
+    return hashedMessage;
+}
 
 class IdentityController extends PointSDKController {
     constructor(ctx, req, rep) {
         super(ctx, req);
         this.req = req;
         this.rep = rep;
+        
     }
 
-    async isIdentityRegistered(){
-        const identityRegistred =  await blockchain.isCurrentIdentityRegistered();
+    async isIdentityRegistered() {
+        const identityRegistred = await blockchain.isCurrentIdentityRegistered();
         return this._response({identityRegistred: identityRegistred});
     }
 
@@ -34,14 +100,25 @@ class IdentityController extends PointSDKController {
         return this._response({publicKey});
     }
 
-    async blockTimestamp(){
+    async blockTimestamp() {
         const blockNumber = this.req.body.blockNumber;
         const timestamp = await blockchain.getBlockTimestamp(blockNumber);
         return this._response({timestamp});
     }
 
+    async isIdentityEligible() {
+        const {identity} = this.req.params;
+        const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
+        let code;
+        if (eligibility === 'tweet') {
+            const owner = getNetworkAddress();
+            code = getIdentityActivationCode(owner);
+        }
+        return this._response({eligibility, reason, code});
+    }
+
     async registerIdentity() {
-        const {identity, _csrf} = this.req.body;
+        const {identity, _csrf, code, url} = this.req.body;
         const {host} = this.req.headers;
 
         if (host !== 'point') {
@@ -54,29 +131,92 @@ class IdentityController extends PointSDKController {
         const publicKey = getNetworkPublicKey();
         const owner = getNetworkAddress();
 
-        log.info(
-            {
+        async function register(type, signData) {
+            log.info(
+                {
+                    identity,
+                    owner,
+                    publicKey,
+                    len: Buffer.byteLength(publicKey, 'utf-8'),
+                    parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
+                },
+                'Registering a new identity'
+            );
+
+            const hashedMessage = getHashedMessage(identity, owner, type);
+
+            await blockchain.registerVerified(
                 identity,
                 owner,
-                publicKey,
-                len: Buffer.byteLength(publicKey, 'utf-8'),
-                parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
-            },
-            'Registering a new identity'
-        );
+                Buffer.from(publicKey, 'hex'),
+                hashedMessage,
+                signData
+            );
 
-        await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
+            //log.info(v, r, s);
 
-        log.info(
-            {identity, owner, publicKey: publicKey.toString('hex')},
-            'Successfully registered new identity'
-        );
-        log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+            log.info(
+                {identity, owner, publicKey: publicKey.toString('hex')},
+                'Successfully registered new identity'
+            );
 
-        return {
-            status: 200,
-            data: 'OK'
-        };
+            log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+
+            try {
+                await registerBountyReferral(owner, type);
+            } catch (error) {
+                log.error(error);
+            }
+        }
+
+        // verify that the identity was validated on twitter
+        if (code && url) {
+            const {success, reason, v, r, s} = await TwitterOracle.confirmTwitterValidation(
+                identity,
+                owner,
+                url
+            );
+
+            if (!success) {
+                return this._response({success, reason});
+            }
+
+            try {
+                await register('taken', {v, r, s});
+                return this._response({success: true});
+            } catch (error) {
+                log.error(error);
+                return this._response({success: false});
+            }
+        }
+
+        const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
+
+        if (eligibility === 'free') {
+            const {success, reason, v, r, s} = await TwitterOracle.regiterFreeIdentity(
+                identity,
+                owner
+            );
+
+            if (!success) {
+                return this._response({success, reason});
+            }
+
+            try {
+                await register('free', {v, r, s});
+                return this._response({success: true});
+            } catch (error) {
+                log.error(error);
+                return this._response({success: false});
+            }
+        }
+
+        if (eligibility === 'tweet') {
+            const code = getIdentityActivationCode(owner);
+            return this._response({code});
+        }
+
+        return this._response({eligibility, reason});
     }
 }
 

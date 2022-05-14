@@ -1,7 +1,14 @@
 import { task } from "hardhat/config";
 import fs = require('fs');
+import fetch from "node-fetch";
+import FormData from "form-data";
+import * as https from 'https'
+import mimeTypes from 'mime-types';
+var detectContentType = require('detect-content-type');
+var mimeDb = require("mime-db");
 
-//npx hardhat pointsocial-importer upload POINTSOCIAL_CONTRACT --migration-file ../resources/migrations/pointsocial-TIMESTAMP.json --network ynet
+
+//npx hardhat pointsocial-importer upload POINTSOCIAL_CONTRACT --migration-file ../resources/migrations/pointsocial-TIMESTAMP.json --from-port 8666 --to-port 65501 --network ynet
 //npx hardhat pointsocial-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --network ynet
 //npx hardhat pointsocial-importer download 0x1411f3dC11D60595097b53eCa3202c34dbee0CdA --save-to ../resources/migrations/ --network ynet
 
@@ -10,6 +17,8 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
   .addPositionalParam("contract","Identity contract source address")
   .addOptionalParam("saveTo", "Saves migration file to specific directory")
   .addOptionalParam("migrationFile", "Migration file to when uploading data")
+  .addOptionalParam("fromPort", "Port of point node to download data")
+  .addOptionalParam("toPort", "Port of point node to upload data")
   .setAction(async (taskArgs, hre) => {
     const ethers = hre.ethers;
 
@@ -76,6 +85,84 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
 
         console.log('Downloaded');
     }else{
+        if(taskArgs.fromPort == undefined || taskArgs.toPort == undefined){
+            console.log("Undefined ports do donwload or upload arweave data, please set --from-port and --to-port parameters.");
+            return false;
+        }
+
+        https.globalAgent.options.rejectUnauthorized = false;
+        const importString = async (id: string, type: string): Promise<string> => {
+            type DataRequest = {
+                data: string;
+            };
+            try{
+                console.log('importing type:' + type);
+                if(id !== '0x0000000000000000000000000000000000000000000000000000000000000000'){
+                    //Download the file using point node. 
+                    let response;
+                    if (type === 'image'){
+                        response = await fetch(`https://localhost:${taskArgs.fromPort}/_storage/${id}`);
+                        let buff = await response.buffer()
+                        
+                        const contentType = detectContentType(buff);
+                        if(contentType.toLowerCase().includes('javascript')){
+                            console.log('javascript found, returning zero');
+                            return '0x0000000000000000000000000000000000000000000000000000000000000000';
+                        }
+
+                        const ext = mimeDb[contentType.toLowerCase()]?.extensions[0] ?? 'bin';
+                        fs.writeFileSync(id + '.' + ext, buff);
+                        console.log('file name = ' + id + '.' + ext);
+                        const formData = new FormData();
+                        formData.append("file", fs.createReadStream(id + '.' + ext));
+                        response = await fetch(`https://localhost:${taskArgs.toPort}/_storage/`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        fs.unlinkSync(id + '.' + ext);
+                    }else{
+                        response = await fetch(`https://localhost:${taskArgs.fromPort}/v1/api/storage/getString/${id}`);
+                        if(response.ok){
+                            let json = await response.json() as DataRequest;
+                            const str = json.data;
+                            
+                            response = await fetch(`https://localhost:${taskArgs.toPort}/v1/api/storage/putString`, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    data: str
+                                })
+                            });
+                        }else{
+                            console.log(`could not retrieve the id = ${id} from getString`);
+                            return '0x0000000000000000000000000000000000000000000000000000000000000000';
+                        }
+                    }
+                    
+                    if (response.ok) {
+                        console.log('ok')
+                        let json = await response.json() as DataRequest;
+                        const newId = json.data;
+                        console.log('new id = ' + newId)
+                        return '0x' + newId.toString();
+                    }else{
+                        console.log("response not ok");
+                        console.log(response);
+                        throw new Error("Failed to upload file to arlocal. id = " + id);
+                    }
+                }else{
+                    return id;
+                }
+            }catch(e){
+                console.log('Error in importString, skipping to import ' + id);
+                console.log(e);
+                return '0x0000000000000000000000000000000000000000000000000000000000000000';
+            }
+        }
+
         const lockFilePath = '../resources/migrations/pointsocial-lock.json';
 
         if(taskArgs.migrationFile === undefined) {
@@ -129,12 +216,15 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
                 lastProcessedPost++;
                 if(lastProcessedPost > processPostsFrom || processPostsFrom == 0){
                    console.log(`${lastProcessedPost} Migrating: PointSocial post from ${post.from} contents ${post.contents}`);
+                    
+                    const importedContents = await importString(post.contents, 'post-content');
+                    const importedImage = await importString(post.image, 'image');
 
                     await pointSocial.add(
                         post.id,
                         post.from,
-                        post.contents,
-                        post.image,
+                        importedContents,
+                        importedImage,
                         post.likesCount,
                         post.createdAt
                     );
@@ -154,11 +244,13 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
 
                         console.log(`${lastProcessedComment} Migrating comment of post ${postId} from ${from}`);
 
+                        const importedContents = await importString(contents, 'comment');
+
                         await pointSocial.addComment(
                             id,
                             postId,
                             from,
-                            contents,
+                            importedContents,
                             createdAt
                         );
                     } else {
@@ -178,6 +270,7 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
             lockFileStructure.lastProcessedComment = lastProcessedComment;
             fs.writeFileSync(lockFilePath, JSON.stringify(lockFileStructure, null, 4));
             console.log(`Error on PointSocial import restart the process to pick-up from last processed item.`);
+            console.log(error);
             return false;
         }
     }
