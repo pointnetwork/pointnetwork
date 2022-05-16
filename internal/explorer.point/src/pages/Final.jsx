@@ -101,7 +101,7 @@ const Final = () => {
                     setError(DEFAULT_ERROR_MESSAGE);
                 }
             })
-        }, 500);
+        }, 700);
     } 
 
     const onChangeUrlHandler = (event) => {
