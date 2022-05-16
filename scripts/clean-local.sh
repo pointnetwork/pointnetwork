@@ -2,7 +2,7 @@
 
 #stopping all processes
 echo "Sending SIGKILL to all node processes"
-killall node -v
+killall node -v -s KILL
 echo "Finished"
 
 #removing data files
@@ -50,4 +50,3 @@ echo "cp resources/blockchain-test-key2.json ~/workspace/pn/visitlocal/keystore/
 cp resources/blockchain-test-key2.json ~/workspace/pn/visitlocal/keystore/key.json
 echo "cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arweave.json"
 cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arweave.json
-

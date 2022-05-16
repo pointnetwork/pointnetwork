@@ -6,7 +6,7 @@ isNpmPackageInstalled() {
 
 echo "installing global packages"
 #ganache and arlocal installation
-for package in ganache-cli arlocal@1.1.21
+for package in ganache-cli arlocal@1.1.30
 do
   if isNpmPackageInstalled $package
   then
@@ -56,15 +56,14 @@ npm i
 echo "npm run build"
 npm run build
 
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    echo "Linux detected, replacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
-    sed -i 's|~|'$HOME'|g' config/devlocal.yaml
-    sed -i 's|~|'$HOME'|g' config/visitlocal.yaml
-fi
+echo "coping and replacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
+echo "cp resources/config/devlocal_template.yaml config/devlocal.yaml"
+cp resources/config/devlocal_template.yaml config/devlocal.yaml
+echo "cp resources/config/visitlocal_template.yaml config/visitlocal.yaml"
+cp resources/config/visitlocal_template.yaml config/visitlocal.yaml
+
+echo "Rreplacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
+perl -i -pe"s|~|$HOME|" config/devlocal.yaml
+perl -i -pe"s|~|$HOME|" config/visitlocal.yaml
 
 echo "Installation of local env ended"
-
-
-
-
-

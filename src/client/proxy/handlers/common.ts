@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
 import {promises as fs} from 'fs';
 import {parse} from 'query-string';
@@ -22,23 +23,26 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
         const queryParams = parse(urlData.query ?? '');
         let urlPath = urlData.path!;
         const fileName = urlPath.split('/')[urlPath.split('/').length - 1];
-        const ext = fileName.split('.').length > 1
-            ? fileName.split('.')[fileName.split('.').length - 1]
-            : null;
+        const ext =
+            fileName.split('.').length > 1
+                ? fileName.split('.')[fileName.split('.').length - 1]
+                : null;
 
         if (host === 'point') {
             // Process internal point webpage
-            const publicPath = path.resolve(__dirname, '../../../../internal/explorer.point/public');
+            const publicPath = path.resolve(
+                __dirname,
+                '../../../../internal/explorer.point/public'
+            );
             const routesJsonPath = path.resolve(publicPath, '../routes.json');
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
-            const {
-                routeParams,
-                templateFilename, 
-                rewritedPath
-            } = getParamsAndTemplate(routes, urlPath);
+            const {routeParams, templateFilename, rewritedPath} = getParamsAndTemplate(
+                routes,
+                urlPath
+            );
 
-            if (rewritedPath){
+            if (rewritedPath) {
                 urlPath = rewritedPath;
             }
 
@@ -54,15 +58,10 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
-                return renderer.render(
-                    templateFilename,
-                    templateFileContents,
-                    host,
-                    {
-                        ...routeParams,
-                        ...queryParams
-                    }
-                );
+                return renderer.render(templateFilename, templateFileContents, host, {
+                    ...routeParams,
+                    ...queryParams
+                });
             } else {
                 // This is a static asset
                 const filePath = path.join(publicPath, urlPath);
@@ -73,9 +72,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 }
 
                 const file = await fs.readFile(filePath);
-                const contentType = ext
-                    ? getContentTypeFromExt(ext)
-                    : detectContentType(file);
+                const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
 
                 res.header('content-type', contentType);
                 return file;
@@ -86,7 +83,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
         } else if (config.get('mode') === 'zappdev' && host.endsWith('.point')) {
             // when MODE=zappdev is set this site will be loaded directly from the local system - useful for Zapp developers :)
             // Side effect: versionig of zapps will not work for Zapp files in this env since files are loaded from local file system.
-            const version = queryParams.__point_version as string ?? 'latest';
+            const version = (queryParams.__point_version as string) ?? 'latest';
 
             // First try route file (and check if this domain even exists)
             const zrouteId = await blockchain.getZRecord(host, version);
@@ -99,8 +96,8 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             const zappsDir: string = config.get('zappsdir');
             let zappDir: string;
-            if (zappsDir !== undefined && zappsDir !== ''){
-                if (zappsDir.startsWith('/') || zappsDir.startsWith('~')){
+            if (zappsDir !== undefined && zappsDir !== '') {
+                if (zappsDir.startsWith('/') || zappsDir.startsWith('~')) {
                     zappDir = path.resolve(zappsDir, zappName);
                 } else {
                     zappDir = path.resolve(__dirname, `../../../../${zappsDir}/${zappName}`);
@@ -112,7 +109,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             const deployJsonPath = path.resolve(zappDir, 'point.deploy.json');
             const deployConfig = JSON.parse(await fs.readFile(deployJsonPath, 'utf8'));
             let rootDir = 'public';
-            if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== ''){
+            if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== '') {
                 rootDir = deployConfig.rootDir;
             }
 
@@ -120,13 +117,12 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             const routesJsonPath = path.resolve(zappDir, 'routes.json');
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
-            const {
-                routeParams,
-                templateFilename, 
-                rewritedPath
-            } = getParamsAndTemplate(routes, urlPath);
+            const {routeParams, templateFilename, rewritedPath} = getParamsAndTemplate(
+                routes,
+                urlPath
+            );
 
-            if (rewritedPath){
+            if (rewritedPath) {
                 urlPath = rewritedPath;
             }
 
@@ -142,16 +138,11 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
-                return renderer.render(
-                    templateFilename,
-                    templateFileContents,
-                    host,
-                    {
-                        ...routeParams,
-                        ...queryParams,
-                        ...(req.body as Record<string, unknown> ?? {})
-                    }
-                );
+                return renderer.render(templateFilename, templateFileContents, host, {
+                    ...routeParams,
+                    ...queryParams,
+                    ...((req.body as Record<string, unknown>) ?? {})
+                });
             } else {
                 // This is a static asset
                 const filePath = path.join(publicPath, urlPath);
@@ -162,15 +153,13 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 }
 
                 const file = await fs.readFile(filePath);
-                const contentType = ext
-                    ? getContentTypeFromExt(ext)
-                    : detectContentType(file);
+                const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
                 res.header('content-type', contentType);
                 return file;
             }
         } else if (host.endsWith('.point')) {
             // process other domains
-            const version = queryParams.__point_version as string ?? 'latest';
+            const version = (queryParams.__point_version as string) ?? 'latest';
 
             // First try route file (and check if this domain even exists)
             const zrouteId = await blockchain.getZRecord(host, version);
@@ -183,9 +172,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             const routes = await getJSON(zrouteId); // todo: check result
             if (!routes) {
-                res.status(404).send(
-                    `Cannot parse json of zrouteId ${zrouteId}`
-                );
+                res.status(404).send(`Cannot parse json of zrouteId ${zrouteId}`);
             }
 
             // Download info about root dir
@@ -195,21 +182,17 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 throw new Error(`Root dir id not found for host ${host}`);
             }
 
-            const {
-                routeParams,
-                templateFilename, 
-                rewritedPath
-            } = getParamsAndTemplate(routes, urlPath);
+            const {routeParams, templateFilename, rewritedPath} = getParamsAndTemplate(
+                routes,
+                urlPath
+            );
 
-            if (rewritedPath){
+            if (rewritedPath) {
                 urlPath = rewritedPath;
             }
 
             if (templateFilename) {
-                const templateFileId = await getFileIdByPath(
-                    rootDirId,
-                    templateFilename
-                );
+                const templateFileId = await getFileIdByPath(rootDirId, templateFilename);
 
                 const templateFileContents = await getFile(templateFileId);
 
@@ -217,16 +200,11 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
-                return renderer.render(
-                    templateFileId,
-                    templateFileContents,
-                    host,
-                    {
-                        ...routeParams,
-                        ...queryParams,
-                        ...(req.body as Record<string, unknown> ?? {})
-                    }
-                );
+                return renderer.render(templateFileId, templateFileContents, host, {
+                    ...routeParams,
+                    ...queryParams,
+                    ...((req.body as Record<string, unknown>) ?? {})
+                });
             } else {
                 // This is a static asset
                 let renderedId;
@@ -239,10 +217,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     if (Object.keys(routes).length === 1) {
                         const {templateFilename: indexTemplate} = getParamsAndTemplate(routes, '/');
 
-                        const templateFileId = await getFileIdByPath(
-                            rootDirId,
-                            indexTemplate
-                        );
+                        const templateFileId = await getFileIdByPath(rootDirId, indexTemplate);
 
                         const templateFileContents = await getFile(templateFileId);
 
@@ -250,16 +225,11 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
                         res.header('Content-Type', 'text/html');
                         // TODO: sanitize
-                        return renderer.render(
-                            templateFileId,
-                            templateFileContents,
-                            host,
-                            {
-                                ...routeParams,
-                                ...queryParams,
-                                ...(req.body as Record<string, unknown> ?? {})
-                            }
-                        );
+                        return renderer.render(templateFileId, templateFileContents, host, {
+                            ...routeParams,
+                            ...queryParams,
+                            ...((req.body as Record<string, unknown>) ?? {})
+                        });
                     }
                 }
                 if (!renderedId) {
@@ -267,9 +237,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 }
                 const file = await getFile(renderedId, null);
 
-                const contentType = ext
-                    ? getContentTypeFromExt(ext)
-                    : detectContentType(file);
+                const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
                 res.header('content-type', contentType);
                 return file;
             }
@@ -286,11 +254,28 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 // TODO: ctx is needed for Renderer, remove it later
 const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
     const handler = getHttpRequestHandler(ctx);
-    const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) => (
-        void new ZProxySocketController(ctx, socket, server.websocketServer, hostname)
-    );
+    const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) =>
+        void new ZProxySocketController(ctx, socket, server.websocketServer, hostname);
 
-    server.route({method: 'GET', url: '*', handler, wsHandler});
+    // Handle websocket requests.
+    server.route({
+        method: 'GET',
+        url: '/ws',
+        preValidation: async (
+            req: FastifyRequest<{Querystring: Record<string, string>}>,
+            reply
+        ) => {
+            if (req.query.token !== config.get('api.sdk_auth_key')) {
+                log.error('Invalid Client KEY for websocket connection.');
+                await reply.status(401).send('not authenticated');
+            }
+        },
+        handler: async () => undefined, // to avoid 'handler not defined' error.
+        wsHandler
+    });
+
+    // Handle REST API requests.
+    server.route({method: 'GET', url: '*', handler});
     server.route({method: 'POST', url: '*', handler});
 };
 

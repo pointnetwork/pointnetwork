@@ -1,10 +1,11 @@
 datadir: ~/.point
 mode: ""
-identity_contract_id: 31715318ded2445b406367d86cc8da43b0c25ce668a97ac1b3abdeb5249ccfac
+identity_contract_id: 3b64f955b3c7cffc096d98c51b3e5318786396281560b32227e14e6b5fb748ed
 api:
   address: 127.0.0.1
   port: 2468
   csrf_enabled: false
+  sdk_auth_key: "POINTSDK_TOKEN"
 db:
   define:
     underscored: true
@@ -33,8 +34,8 @@ storage:
   download_cache_path: client_storage_download_cache
   concurrent_upload_limit: 10
   concurrent_validation_limit: 10
-  upload_loop_interval: 500
-  request_timeout: 15000
+  upload_loop_interval: 2000
+  request_timeout: 30000
   upload_expire: 60000
   upload_retry_limit: 3
   files_path: files
@@ -65,9 +66,13 @@ wallet:
   passcode: BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9 # TODO: remove
 network:
   contracts_path: contracts
-  web3: "http://ynet.point.space:44444"
+  web3:
+    ynet: "http://ynet.point.space:44444"
+    rinkeby: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa"
   web3_call_retry_limit: 4
-  identity_contract_address: "0xA84AAaC12FffbCaFe49339466803c64E4a4A72a5"
+  identity_contract_address: "0x444Ff35AA7D149Bf7A405e45eA3e1ABF74319FEa"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
 payments:
   token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
+rpc:
+  send_transaction_timeout_secs: 120

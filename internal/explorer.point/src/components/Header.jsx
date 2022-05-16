@@ -25,6 +25,12 @@ const Header = ({isRegistered}) => {
                             <Link to='/identities'>
                                 <Nav.Link href="/identities">Identities</Nav.Link>
                             </Link>
+                            <Link to='/zapps'>
+                                <Nav.Link href="/zapps">Apps</Nav.Link>
+                            </Link>
+                            <Link to='/myidentities'>
+                                <Nav.Link href="/myidentities">My Identities</Nav.Link>
+                            </Link>
                         </>
                     : ''}
                     </Nav>
