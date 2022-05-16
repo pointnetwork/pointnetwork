@@ -98,7 +98,7 @@ const config: HardhatUserConfig = {
             url: 'http://ynet.point.space:44444',
             accounts:
                 [
-                    'ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'
+                    privateKey,
                 ],
         },
     },
