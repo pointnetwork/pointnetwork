@@ -11,6 +11,7 @@ import "./tasks/importer/identity";
 import "./tasks/importer/blog";
 import "./tasks/importer/pointSocial";
 import "./tasks/importer/sms";
+import "./tasks/importer/identity-clone";
 import "./tasks/identity/identity-update-contract";
 import './tasks/identity/identity-add-deployer.ts';
 import './tasks/identity/identity-remove-deployer.ts';
@@ -54,14 +55,33 @@ const config: HardhatUserConfig = {
         compilers: [
             {
                 version: "0.8.0",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 1000
+                    }
+                }
             },
             {
                 version: "0.8.4",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 1000
+                    }
+                }
             },
             {
                 version: "0.8.7",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 1000
+                    }
+                }
             }
         ],
+        
     },
     paths: {
         artifacts:build_path
@@ -78,7 +98,7 @@ const config: HardhatUserConfig = {
             url: 'http://ynet.point.space:44444',
             accounts:
                 [
-                    'ea2a5e73b526b8a5f60c7f19719b6abe71f054721a8a367fff0a9e2cb07e1080'
+                    privateKey,
                 ],
         },
     },

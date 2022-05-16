@@ -1,6 +1,6 @@
 datadir: ~/.point
 mode: ""
-identity_contract_id: 31715318ded2445b406367d86cc8da43b0c25ce668a97ac1b3abdeb5249ccfac
+identity_contract_id: 8fa1117be7c111bbdd7552a1f90f9c4bf27ca732cce4a2e35dedcc596fb95f2a
 api:
   address: 127.0.0.1
   port: 2468
@@ -77,7 +77,7 @@ network:
       type: "solana"
       address: "https://api.devnet.solana.com"
   web3_call_retry_limit: 4
-  identity_contract_address: "0xA84AAaC12FffbCaFe49339466803c64E4a4A72a5"
+  identity_contract_address: "0x1574E97F7a60c4eE518f6d7c0Fa701eff8Ab58b3"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
 payments:
   token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"

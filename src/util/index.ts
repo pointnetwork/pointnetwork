@@ -9,3 +9,4 @@ export * from './resolveHome';
 export * from './merkle';
 export * from './hashFn';
 export * from './escapeString';
+export * from './getReferralCode';
