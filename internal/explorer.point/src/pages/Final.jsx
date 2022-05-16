@@ -62,7 +62,13 @@ const Final = () => {
 
     const cleanForm = () => {
         setActivationCode('');
+
+        setTweetContent('');
+        setTweetContentError('');
+        
         setTweetUrl('');
+        setTweetUrlError('');
+
         setIdentity('');
         setEligibility('');
     }
@@ -284,8 +290,8 @@ const Final = () => {
                 </div>
             ) : ''}
 
-            {identity && identityAvailable && !error && (!activationCode || tweetUrl) ? (<div style={{display: 'flex', alignItems: 'center'}}>
-                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>Register</button>
+            {identity && identityAvailable && !error && (!activationCode || (tweetUrl && !tweetUrlError)) ? (<div style={{display: 'flex', alignItems: 'center'}}>
+                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>{activationCode ? 'Check Tweet' : 'Register'}</button>
                 {registering ? <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> : ''}
             </div>) : ''}
         </Container>
