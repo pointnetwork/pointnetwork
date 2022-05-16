@@ -1,6 +1,6 @@
 datadir: ~/.point
 mode: ""
-identity_contract_id: 3b64f955b3c7cffc096d98c51b3e5318786396281560b32227e14e6b5fb748ed
+identity_contract_id: 8fa1117be7c111bbdd7552a1f90f9c4bf27ca732cce4a2e35dedcc596fb95f2a
 api:
   address: 127.0.0.1
   port: 2468
@@ -70,7 +70,7 @@ network:
     ynet: "http://ynet.point.space:44444"
     rinkeby: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa"
   web3_call_retry_limit: 4
-  identity_contract_address: "0x444Ff35AA7D149Bf7A405e45eA3e1ABF74319FEa"
+  identity_contract_address: "0x1574E97F7a60c4eE518f6d7c0Fa701eff8Ab58b3"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
 payments:
   token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
