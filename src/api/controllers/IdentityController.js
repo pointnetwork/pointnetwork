@@ -42,7 +42,7 @@ const TwitterOracle = {
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        const oracleUrl = `${twitterOracleDomain}/api/activate_tweet?handle=${identity}&address=${address}&url=${url}`;
+        const oracleUrl = `${twitterOracleDomain}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(url)}`;
         log.info(`calling to ${oracleUrl}`);
         const {data} = await axios.post(oracleUrl);
         return data;
@@ -74,7 +74,7 @@ class IdentityController extends PointSDKController {
         super(ctx, req);
         this.req = req;
         this.rep = rep;
-        
+
     }
 
     async isIdentityRegistered() {
