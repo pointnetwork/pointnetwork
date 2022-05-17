@@ -1,6 +1,6 @@
 {
   "version": 0.1,
-  "target": "simple.point",
+  "target": "ynet_simple.point",
   "keyvalue": {},
   "contracts": []
 }

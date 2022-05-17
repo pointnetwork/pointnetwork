@@ -34,7 +34,11 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
     }
 
-    const hdWalletProvider = new HDWalletProvider(privateKey, provider);
+    const hdWalletProvider = new HDWalletProvider({
+        privateKeys: [privateKey],
+        providerOrUrl: provider,
+        pollingInterval: 30000
+    });
     const nonceTracker = new NonceTrackerSubprovider();
 
     hdWalletProvider.engine._providers.unshift(nonceTracker);
@@ -55,17 +59,25 @@ const abisByContractName = {};
 const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
 
 const networks = config.get('network.web3');
-const providers = Object.keys(networks)
-    .filter(key => networks[key].type === 'eth')
-    .reduce((acc, cur) => ({
-        ...acc,
-        [cur]: createWeb3Instance({
-            blockchainUrl: networks[cur].address,
-            privateKey: '0x' + getNetworkPrivateKey()
-        })
-    }), {});
+const providers = {
+    ynet: createWeb3Instance({
+        blockchainUrl: networks.ynet.address,
+        privateKey: '0x' + getNetworkPrivateKey()
+    })
+};
 
-const getWeb3 = (chain = 'ynet') => providers[chain];
+const getWeb3 = (chain = 'ynet') => {
+    if (!Object.keys(networks).filter(key => networks[key].type === 'eth').includes(chain)) {
+        throw new Error(`No Eth provider for network ${chain}`);
+    }
+    if (!providers[chain]) {
+        providers[chain] = createWeb3Instance({
+            blockchainUrl: networks[chain].address,
+            privateKey: '0x' + getNetworkPrivateKey()
+        });
+    }
+    return providers[chain];
+};
 
 // Client that consolidates all blockchain-related functionality
 const ethereum = {};
