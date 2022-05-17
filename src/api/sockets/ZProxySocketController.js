@@ -91,13 +91,9 @@ class ZProxySocketController {
         });
     }
 
-    pushToClients(msg) {
-        if (this.wss) {
-            this.wss.clients.forEach(client => {
-                if (client.readyState === 1) {
-                    client.send(JSON.stringify(msg));
-                }
-            });
+    pushToClient(msg) {
+        if (this.ws && (this.ws.readyState === 1)) {
+            this.ws.send(JSON.stringify(msg));
         }
     }
 
@@ -115,7 +111,7 @@ class ZProxySocketController {
     pushSubscriptionEvent({type, subscriptionId, request, data}) {
         log.info({type, subscriptionId, request, data}, 'Pushing subscription event');
 
-        return this.pushToClients({type, subscriptionId, request, data});
+        return this.pushToClient({type, subscriptionId, request, data});
     }
 }
 

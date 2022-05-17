@@ -62,14 +62,23 @@ const Final = () => {
 
     const cleanForm = () => {
         setActivationCode('');
+
+        setTweetContent('');
+        setTweetContentError('');
+        
         setTweetUrl('');
+        setTweetUrlError('');
+
         setIdentity('');
         setEligibility('');
     }
 
-    const source = useRef(axios.CancelToken.source());
+    const cancelRef = useRef();
     let debounced = useRef(null);
     const onChangeHandler = (event) => {
+        if (cancelRef.current) {
+            cancelRef.current();
+        }
         clearTimeout(debounced.current);
         const identity = event.target.value;
         cleanForm();
@@ -81,7 +90,9 @@ const Final = () => {
             setError('');
             setLoading(true);
             axios.get(`/v1/api/identity/isIdentityEligible/${identity}`, {
-                cancelToken: source.current.token
+                cancelToken: new axios.CancelToken((c) => {
+                    cancelRef.current = c;
+                }),
             }).then(({ data }) => {
                 setLoading(false);
                 const { eligibility, reason, code } = data.data;
@@ -101,7 +112,7 @@ const Final = () => {
                     setError(DEFAULT_ERROR_MESSAGE);
                 }
             })
-        }, 500);
+        }, 700);
     } 
 
     const onChangeUrlHandler = (event) => {
@@ -284,8 +295,8 @@ const Final = () => {
                 </div>
             ) : ''}
 
-            {identity && identityAvailable && !error && (!activationCode || tweetUrl) ? (<div style={{display: 'flex', alignItems: 'center'}}>
-                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>Register</button>
+            {identity && identityAvailable && !error && (!activationCode || (tweetUrl && !tweetUrlError)) ? (<div style={{display: 'flex', alignItems: 'center'}}>
+                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>{activationCode ? 'Check Tweet >>' : 'Register'}</button>
                 {registering ? <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> : ''}
             </div>) : ''}
         </Container>
