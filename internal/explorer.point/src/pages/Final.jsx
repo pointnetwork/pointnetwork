@@ -100,6 +100,11 @@ const Final = () => {
                 if (reason) {
                     setError(reason);
                 } 
+
+                if (eligibility === 'unavailable' && !reason) {
+                    setError('The identity is not available.');
+                }
+
                 if (code) {
                     setActivationCode(code);
                     resetTweetContent(code, identity)
