@@ -23,7 +23,7 @@ class StorageController extends PointSDKController {
 
         const contents = (await getFile(cid, encoding)).toString(encoding);
         const contentType = detectContentType(Buffer.from(contents));
-        return this._response(contents, {"content-type": contentType});
+        return this._response(contents, {'content-type': contentType});
     }
 
     async putString() {
