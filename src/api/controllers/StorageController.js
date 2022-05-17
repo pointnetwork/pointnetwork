@@ -5,7 +5,7 @@ const DEFAULT_ENCODING = 'utf-8';
 const {getFile, uploadFile} = require('../../client/storage');
 const config = require('config');
 const {FILE_DOWNLOAD_STATUS} = require('../../db/models/file');
-const detectContentType = require('detect-content-type')
+const detectContentType = require('detect-content-type');
 
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
