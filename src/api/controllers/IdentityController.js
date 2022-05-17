@@ -52,6 +52,10 @@ let TwitterOracle = {
 if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.env.USE_ORACLE === 'true')) {
     TwitterOracle = {
         async isIdentityEligible(identity) {
+            log.info(
+                {identity},
+                'isIdentityEligible mock called'
+            );
             if (/^tweet/g.test(identity)) {
                 return {eligibility: 'tweet'};
             }
@@ -65,13 +69,21 @@ if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.
         },
 
         async regiterFreeIdentity(identity, address) {
+            log.info(
+                {identity, address},
+                'regiterFreeIdentity mock called'
+            );
             return {success: true, v: 'v', r: 'r', s: 's'};
         },
 
         async confirmTwitterValidation(identity, address, url) {
+            log.info(
+                {identity, address, url},
+                'confirmTwitterValidation mock called'
+            );
             return {success: true, v: 'v', r: 'r', s: 's'};
         }
-    }
+    };
 }
 
 function getIdentityActivationCode(owner) {
@@ -99,10 +111,6 @@ class IdentityController extends PointSDKController {
         super(ctx, req);
         this.req = req;
         this.rep = rep;
-        this.bypassOracle = false;
-        if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.env.USE_ORACLE === 'true')) {
-            this.bypassOracle = false;
-        }
     }
 
     async isIdentityRegistered() {
@@ -175,9 +183,9 @@ class IdentityController extends PointSDKController {
                 await blockchain.registerIdentity(
                     identity,
                     owner,
-                    Buffer.from(publicKey, 'hex'),
+                    Buffer.from(publicKey, 'hex')
                 );
-            }else{
+            } else {
                 const hashedMessage = getHashedMessage(identity, owner, type);
                 
                 await blockchain.registerVerified(
@@ -189,7 +197,6 @@ class IdentityController extends PointSDKController {
                 );
             }
 
-
             //log.info(v, r, s);
 
             log.info(
@@ -200,7 +207,7 @@ class IdentityController extends PointSDKController {
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
 
             try {
-                if (!this.bypassOracle) {
+                if (!(process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') || (process.env.USE_ORACLE === 'true')) {
                     await registerBountyReferral(owner, type);
                 }
             } catch (error) {
