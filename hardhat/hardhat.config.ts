@@ -38,6 +38,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 });
 
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
+const ynetPrivateKey = process.env.DEPLOYER_ACCOUNT || 'YOU MUST SET THIS USING THE LOCAL ENVIRONMENT VARIABLE';
 const host = process.env.BLOCKCHAIN_HOST || 'blockchain_node';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
@@ -97,9 +98,9 @@ const config: HardhatUserConfig = {
         ynet: {
             url: 'http://ynet.point.space:44444',
             accounts:
-                [
-                    privateKey,
-                ],
+            [
+                ynetPrivateKey,
+            ]
         },
     },
     
