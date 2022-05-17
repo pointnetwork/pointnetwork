@@ -26,7 +26,7 @@ async function registerBountyReferral(address, type) {
 
 const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 
-const TwitterOracle = {
+let TwitterOracle = {
     async isIdentityEligible(identity) {
         const url = `${twitterOracleDomain}/api/eligible?handle=${identity}`;
         log.info(`calling to ${url}`);
@@ -48,6 +48,31 @@ const TwitterOracle = {
         return data;
     }
 };
+
+if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.env.USE_ORACLE === 'true')) {
+    TwitterOracle = {
+        async isIdentityEligible(identity) {
+            if (/^tweet/g.test(identity)) {
+                return {eligibility: 'tweet'};
+            }
+            if (/^taken/g.test(identity)) {
+                return {eligibility: 'taken', reason: 'taken reason'};
+            }
+            if (/^unavailable/g.test(identity)) {
+                return {eligibility: 'unavailable', reason: 'unavailable reason'};
+            }
+            return {eligibility: 'free'};
+        },
+
+        async regiterFreeIdentity(identity, address) {
+            return {success: true, v: 'v', r: 'r', s: 's'};
+        },
+
+        async confirmTwitterValidation(identity, address, url) {
+            return {success: true, v: 'v', r: 'r', s: 's'};
+        }
+    }
+}
 
 function getIdentityActivationCode(owner) {
     const lowerCaseOwner = owner.toLowerCase();
@@ -74,7 +99,10 @@ class IdentityController extends PointSDKController {
         super(ctx, req);
         this.req = req;
         this.rep = rep;
-
+        this.bypassOracle = false;
+        if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.env.USE_ORACLE === 'true')) {
+            this.bypassOracle = false;
+        }
     }
 
     async isIdentityRegistered() {
@@ -142,16 +170,25 @@ class IdentityController extends PointSDKController {
                 },
                 'Registering a new identity'
             );
+            
+            if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.env.USE_ORACLE === 'true')) {
+                await blockchain.registerIdentity(
+                    identity,
+                    owner,
+                    Buffer.from(publicKey, 'hex'),
+                );
+            }else{
+                const hashedMessage = getHashedMessage(identity, owner, type);
+                
+                await blockchain.registerVerified(
+                    identity,
+                    owner,
+                    Buffer.from(publicKey, 'hex'),
+                    hashedMessage,
+                    signData
+                );
+            }
 
-            const hashedMessage = getHashedMessage(identity, owner, type);
-
-            await blockchain.registerVerified(
-                identity,
-                owner,
-                Buffer.from(publicKey, 'hex'),
-                hashedMessage,
-                signData
-            );
 
             //log.info(v, r, s);
 
@@ -163,7 +200,9 @@ class IdentityController extends PointSDKController {
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
 
             try {
-                await registerBountyReferral(owner, type);
+                if (!this.bypassOracle) {
+                    await registerBountyReferral(owner, type);
+                }
             } catch (error) {
                 log.error(error);
             }
