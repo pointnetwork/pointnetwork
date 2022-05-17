@@ -102,7 +102,7 @@ const Final = () => {
                 } 
 
                 if (eligibility === 'unavailable' && !reason) {
-                    setError('The identity is not available.');
+                    setError('Handle is not available.');
                 }
 
                 if (code) {
