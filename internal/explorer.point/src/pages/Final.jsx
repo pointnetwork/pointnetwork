@@ -73,9 +73,12 @@ const Final = () => {
         setEligibility('');
     }
 
-    const source = useRef(axios.CancelToken.source());
+    const cancelRef = useRef();
     let debounced = useRef(null);
     const onChangeHandler = (event) => {
+        if (cancelRef.current) {
+            cancelRef.current();
+        }
         clearTimeout(debounced.current);
         const identity = event.target.value;
         cleanForm();
@@ -87,7 +90,9 @@ const Final = () => {
             setError('');
             setLoading(true);
             axios.get(`/v1/api/identity/isIdentityEligible/${identity}`, {
-                cancelToken: source.current.token
+                cancelToken: new axios.CancelToken((c) => {
+                    cancelRef.current = c;
+                }),
             }).then(({ data }) => {
                 setLoading(false);
                 const { eligibility, reason, code } = data.data;
