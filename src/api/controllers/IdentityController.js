@@ -14,7 +14,7 @@ async function registerBountyReferral(address, type) {
     const referralCode = await getReferralCode();
 
     let event = 'free_reg';
-    if (type === 'tweet') {
+    if (type === 'tweet' || type === 'taken') {
         event = 'twitter_reg';
     }
 
