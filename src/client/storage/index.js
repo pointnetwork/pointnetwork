@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import axios from 'axios';
 import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
 import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
@@ -146,9 +147,18 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     throw new Error('Chunk not found');
 };
 
-const uploadChunk = async data => {
+const uploadChunk = async (data, isTimerEnabled = false) => {
+    const start = Date.now();
     const chunkId = hashFn(data).toString('hex');
     const chunk = await Chunk.findByIdOrCreate(chunkId);
+
+    if (isTimerEnabled) {
+        console.log({
+            step: 'uploadChunk',
+            msg: 'uploading chunk',
+            chunkId
+        });
+    }
 
     if (chunk.id !== chunkId) {
         throw new Error(`Unexpected chunk ids mismatch: ${chunkId}, ${chunk.id}`);
@@ -189,15 +199,33 @@ const uploadChunk = async data => {
         await delay(UPLOAD_LOOP_INTERVAL);
     }
 
+    if (isTimerEnabled) {
+        const end = Date.now();
+        const totalTime = Math.round((end - start) / 1000);
+        console.log({
+            step: 'uploadChunk',
+            timeInSecs: totalTime,
+            chunkId
+        });
+    }
+
     return chunkId;
 };
 
-const uploadFile = async data => {
+const uploadFile = async (data, isTimerEnabled = false) => {
+    const start = Date.now();
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
     const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
 
     if (totalChunks === 1) {
         const fileId = hashFn(buf).toString('hex');
+        if (isTimerEnabled) {
+            console.log({
+                step: 'uploadFile',
+                msg: 'File consists of a single chunk',
+                fileId
+            });
+        }
         log.debug({fileId}, 'File to be uploaded and consists only from 1 chunk');
 
         const filePath = path.join(filesDir, `file_${fileId}`);
@@ -209,7 +237,7 @@ const uploadFile = async data => {
         if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
             log.debug({fileId}, 'File  upload already in progress, waiting');
             await delay(CONCURRENT_DOWNLOAD_DELAY);
-            return uploadFile(data);
+            return uploadFile(data, isTimerEnabled);
         }
 
         log.debug({fileId}, 'Starting file upload');
@@ -217,7 +245,7 @@ const uploadFile = async data => {
             file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
             await file.save();
 
-            const chunkId = await uploadChunk(buf);
+            const chunkId = await uploadChunk(buf, isTimerEnabled);
             if (chunkId !== fileId) {
                 throw new Error(
                     `Unexpected different ids for file and it's only chunk: ${fileId}, ${chunkId}`
@@ -264,6 +292,14 @@ const uploadFile = async data => {
     // File id always matches it's index chunk id
     const fileId = hashFn(chunkInfoBuffer).toString('hex');
 
+    if (isTimerEnabled) {
+        console.log({
+            step: 'uploadFile',
+            msg: `File consists of ${totalChunks} chunks`,
+            fileId
+        });
+    }
+
     log.debug({fileId}, 'Successfully chunkified file');
     const filePath = path.join(filesDir, `file_${fileId}`);
 
@@ -283,13 +319,13 @@ const uploadFile = async data => {
         file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
         await file.save();
 
-        const indexChunkId = await uploadChunk(chunkInfoBuffer);
+        const indexChunkId = await uploadChunk(chunkInfoBuffer, isTimerEnabled);
         if (indexChunkId !== fileId) {
             throw new Error(
                 `Unexpected different ids for file and it's index chunk: ${fileId}, ${indexChunkId}`
             );
         }
-        const chunkIds = await Promise.all(chunks.map(chunk => uploadChunk(chunk)));
+        const chunkIds = await Promise.all(chunks.map(chunk => uploadChunk(chunk, isTimerEnabled)));
         chunkIds.forEach((chunkId, index) => {
             if (chunkId !== chunkHashes[index]) {
                 throw new Error(
@@ -313,10 +349,21 @@ const uploadFile = async data => {
         file.ul_status = FILE_UPLOAD_STATUS.FAILED;
         await file.save();
         throw e;
+    } finally {
+        if (isTimerEnabled) {
+            const end = Date.now();
+            const totalTime = Math.round((end - start) / 1000);
+            console.log({step: 'uploadFile', timeInSecs: totalTime, fileId});
+        }
     }
 };
 
-const uploadDir = async dirPath => {
+const uploadDir = async (dirPath, isTimerEnabled = false) => {
+    const start = Date.now();
+    if (isTimerEnabled) {
+        console.log(`Starting uploadDir for path ${dirPath}`);
+    }
+
     try {
         const stat = await statAsync(dirPath);
         const isDir = stat.isDirectory();
@@ -344,7 +391,7 @@ const uploadDir = async dirPath => {
             const stat = await statAsync(filePath);
 
             if (stat.isDirectory()) {
-                const dirId = await uploadDir(filePath);
+                const dirId = await uploadDir(filePath, isTimerEnabled);
                 dirInfo.files.push({
                     type: FILE_TYPE.dirptr,
                     name: fileName,
@@ -354,7 +401,7 @@ const uploadDir = async dirPath => {
                 });
             } else {
                 const file = await fs.readFile(filePath);
-                const fileId = await uploadFile(file);
+                const fileId = await uploadFile(file, isTimerEnabled);
                 dirInfo.files.push({
                     type: FILE_TYPE.fileptr,
                     name: fileName,
@@ -366,10 +413,15 @@ const uploadDir = async dirPath => {
         })
     );
 
-    const id = await uploadFile(JSON.stringify(dirInfo));
+    const id = await uploadFile(JSON.stringify(dirInfo), isTimerEnabled);
 
     log.debug({dirPath: escapeString(dirPath)}, 'Successfully uploaded directory');
 
+    if (isTimerEnabled) {
+        const end = Date.now();
+        const totalTime = Math.round((end - start) / 1000);
+        console.log({step: 'uploadDir', timeInSecs: totalTime});
+    }
     return id;
 };
 
