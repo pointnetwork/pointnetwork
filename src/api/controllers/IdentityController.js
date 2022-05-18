@@ -1,5 +1,5 @@
 const PointSDKController = require('./PointSDKController');
-const blockchain = require('../../network/blockchain');
+const blockchain = require('../../network/providers/ethereum');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
 const {getReferralCode} = require('../../util');
+const open = require('open');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
@@ -142,8 +143,27 @@ class IdentityController extends PointSDKController {
         return this._response({timestamp});
     }
 
+    async openLink() {
+        const {url, _csrf} = this.req.body;
+        if (_csrf !== this.ctx.csrf_tokens.point) {
+            return this.rep.status(403).send('CSRF token invalid');
+        }
+        await open(url);
+        return this._response();
+    }
+
     async isIdentityEligible() {
         const {identity} = this.req.params;
+
+        const publicKey = await blockchain.ownerByIdentity(identity);
+
+        if (publicKey !== ethers.constants.AddressZero) {
+            return this._response({
+                eligibility: 'unavailable',
+                reason: 'Identity is already registered on web3'
+            });
+        }
+
         const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
         let code;
         if (eligibility === 'tweet') {

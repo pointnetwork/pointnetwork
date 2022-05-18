@@ -29256,13 +29256,13 @@ function Home() {
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 81,
+                    lineNumber: 82,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 82,
+                    lineNumber: 83,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h1", {
@@ -29275,51 +29275,51 @@ function Home() {
                                 !walletIdentity ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                                 }, void 0, false, {
                                     fileName: "src/pages/Home.jsx",
-                                    lineNumber: 83,
+                                    lineNumber: 84,
                                     columnNumber: 80
                                 }, this) : walletIdentity
                             ]
                         }, void 0, true, {
                             fileName: "src/pages/Home.jsx",
-                            lineNumber: 83,
+                            lineNumber: 84,
                             columnNumber: 52
                         }, this),
                         "!"
                     ]
                 }, void 0, true, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 83,
+                    lineNumber: 84,
                     columnNumber: 9
                 }, this),
                 isLoadingMD ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 85,
+                    lineNumber: 86,
                     columnNumber: 24
                 }, this) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_markdownToJsxDefault.default, {
                     children: markdown
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 85,
+                    lineNumber: 86,
                     columnNumber: 38
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h5", {
                     children: "Explore featured Apps"
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 87,
+                    lineNumber: 88,
                     columnNumber: 9
                 }, this),
                 isLoading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 88,
+                    lineNumber: 89,
                     columnNumber: 22
                 }, this) : zappsList
             ]
         }, void 0, true, {
             fileName: "src/pages/Home.jsx",
-            lineNumber: 80,
+            lineNumber: 81,
             columnNumber: 7
         }, this)
     }, void 0, false));
@@ -29349,13 +29349,18 @@ try {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _jsxDevRuntime = require("react/jsx-dev-runtime");
-const Loading = ()=>{
+var _react = require("react");
+var _reactDefault = parcelHelpers.interopDefault(_react);
+const Loading = (props)=>{
+    const { className , style ={
+    }  } = props;
     return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
-        className: "spinner-border",
+        className: `spinner-border ${className}`,
+        style: style,
         role: "status"
     }, void 0, false, {
         fileName: "src/components/Loading.jsx",
-        lineNumber: 4,
+        lineNumber: 7,
         columnNumber: 9
     }, undefined));
 };
@@ -29369,7 +29374,7 @@ $RefreshReg$(_c, "Loading");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"izcvs":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"gij1U","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","react":"6jKMz"}],"izcvs":[function(require,module,exports) {
 module.exports = require('./helpers/bundle-url').getBundleURL('ePakp') + "pointlogo.42769126.png" + "?" + Date.now();
 
 },{"./helpers/bundle-url":"lDs4c"}],"ebvoQ":[function(require,module,exports) {
@@ -33780,9 +33785,71 @@ var _sweetalert2 = require("sweetalert2");
 var _sweetalert2Default = parcelHelpers.interopDefault(_sweetalert2);
 var _axios = require("axios");
 var _axiosDefault = parcelHelpers.interopDefault(_axios);
+var _loading = require("../components/Loading");
+var _loadingDefault = parcelHelpers.interopDefault(_loading);
 var _s = $RefreshSig$();
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong.';
 const MAX_TWEET_SIZE = 280;
+const TwitterIcon = (props)=>{
+    const { className , style  } = props;
+    return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("svg", {
+        className: className,
+        style: style,
+        stroke: "currentColor",
+        fill: "currentColor",
+        "stroke-width": "0",
+        viewBox: "0 0 16 16",
+        height: "1em",
+        width: "1em",
+        xmlns: "http://www.w3.org/2000/svg",
+        children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("path", {
+            d: "M15 3.784a5.63 5.63 0 0 1-.65.803 6.058 6.058 0 0 1-.786.68 5.442 5.442 0 0 1 .014.377c0 .574-.061 1.141-.184 1.702a8.467 8.467 0 0 1-.534 1.627 8.444 8.444 0 0 1-1.264 2.04 7.768 7.768 0 0 1-1.72 1.521 7.835 7.835 0 0 1-2.095.95 8.524 8.524 0 0 1-2.379.329 8.178 8.178 0 0 1-2.293-.325A7.921 7.921 0 0 1 1 12.52a5.762 5.762 0 0 0 4.252-1.19 2.842 2.842 0 0 1-2.273-1.19 2.878 2.878 0 0 1-.407-.8c.091.014.181.026.27.035a2.797 2.797 0 0 0 1.022-.089 2.808 2.808 0 0 1-.926-.362 2.942 2.942 0 0 1-.728-.633 2.839 2.839 0 0 1-.65-1.822v-.033c.402.227.837.348 1.306.362a2.943 2.943 0 0 1-.936-1.04 2.955 2.955 0 0 1-.253-.649 2.945 2.945 0 0 1 .007-1.453c.063-.243.161-.474.294-.693.364.451.77.856 1.216 1.213a8.215 8.215 0 0 0 3.008 1.525 7.965 7.965 0 0 0 1.695.263 2.15 2.15 0 0 1-.058-.325 3.265 3.265 0 0 1-.017-.331c0-.397.075-.77.226-1.118a2.892 2.892 0 0 1 1.528-1.528 2.79 2.79 0 0 1 1.117-.225 2.846 2.846 0 0 1 2.099.909 5.7 5.7 0 0 0 1.818-.698 2.815 2.815 0 0 1-1.258 1.586A5.704 5.704 0 0 0 15 3.785z"
+        }, void 0, false, {
+            fileName: "src/pages/Final.jsx",
+            lineNumber: 12,
+            columnNumber: 192
+        }, undefined)
+    }, void 0, false, {
+        fileName: "src/pages/Final.jsx",
+        lineNumber: 12,
+        columnNumber: 12
+    }, undefined));
+};
+_c = TwitterIcon;
+const CopyIcon = (props)=>{
+    const { className , style  } = props;
+    return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("svg", {
+        className: className,
+        style: style,
+        xmlns: "http://www.w3.org/2000/svg",
+        width: "16",
+        height: "16",
+        fill: "currentColor",
+        class: "bi bi-clipboard",
+        viewBox: "0 0 16 16",
+        children: [
+            /*#__PURE__*/ _jsxDevRuntime.jsxDEV("path", {
+                d: "M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"
+            }, void 0, false, {
+                fileName: "src/pages/Final.jsx",
+                lineNumber: 19,
+                columnNumber: 13
+            }, undefined),
+            /*#__PURE__*/ _jsxDevRuntime.jsxDEV("path", {
+                d: "M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"
+            }, void 0, false, {
+                fileName: "src/pages/Final.jsx",
+                lineNumber: 20,
+                columnNumber: 13
+            }, undefined)
+        ]
+    }, void 0, true, {
+        fileName: "src/pages/Final.jsx",
+        lineNumber: 18,
+        columnNumber: 10
+    }, undefined));
+};
+_c1 = CopyIcon;
 const Final = ()=>{
     _s();
     const [identity1, setIdentity] = _react.useState('');
@@ -33795,6 +33862,7 @@ const Final = ()=>{
     const [tweetUrlError, setTweetUrlError] = _react.useState('');
     const [tweetContent, setTweetContent] = _react.useState('');
     const [tweetContentError, setTweetContentError] = _react.useState('');
+    const [openingTwitter, setOpeningTwitter] = _react.useState(false);
     function validateIdentity(identity) {
         if (identity === '') {
             setError('Empty identity');
@@ -33878,15 +33946,15 @@ const Final = ()=>{
             setTweetContentError('Tweet content cannot be empty');
             return false;
         }
-        if (!/#pointnetwork/g.test(content)) {
+        if (!/( |^)#pointnetwork( |$)/g.test(content)) {
             setTweetContentError('Tweet content must have #pointnetwork');
             return false;
         }
-        if (!/#activation/g.test(content)) {
+        if (!/( |^)#activation( |$)/g.test(content)) {
             setTweetContentError('Tweet content must have #activation');
             return false;
         }
-        if (!/@pointnetwork/g.test(content)) {
+        if (!/( |^)@pointnetwork( |$)/g.test(content)) {
             setTweetContentError('Tweet content must have @pointnetwork');
             return false;
         }
@@ -33957,8 +34025,27 @@ const Final = ()=>{
             });
         }
     };
+    async function openTwitterWithMessage() {
+        setOpeningTwitter(true);
+        const csrf_token = window.localStorage.getItem('csrf_token');
+        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetContent)}`;
+        try {
+            await _axiosDefault.default({
+                url: '/v1/api/identity/open',
+                method: 'POST',
+                data: {
+                    url,
+                    _csrf: csrf_token
+                }
+            });
+            setOpeningTwitter(false);
+        } catch (error) {
+            setOpeningTwitter(false);
+        }
+    }
     const identityAvailable = eligibility1 === 'free' || eligibility1 === 'tweet';
     const tweetSize = tweetContent.length;
+    const tweetTooBig = tweetSize > MAX_TWEET_SIZE;
     return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV(_containerDefault.default, {
         className: "p-3 text-dark",
         style: {
@@ -33968,14 +34055,14 @@ const Final = ()=>{
             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
             }, void 0, false, {
                 fileName: "src/pages/Final.jsx",
-                lineNumber: 242,
+                lineNumber: 281,
                 columnNumber: 13
             }, undefined),
             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h1", {
                 children: "Final step"
             }, void 0, false, {
                 fileName: "src/pages/Final.jsx",
-                lineNumber: 243,
+                lineNumber: 282,
                 columnNumber: 13
             }, undefined),
             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
@@ -33983,7 +34070,7 @@ const Final = ()=>{
                 children: "Introduce yourself to the world by registering an identity, which will be your public web3 handle:"
             }, void 0, false, {
                 fileName: "src/pages/Final.jsx",
-                lineNumber: 244,
+                lineNumber: 283,
                 columnNumber: 13
             }, undefined),
             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34003,12 +34090,11 @@ const Final = ()=>{
                                 disabled: !!registering
                             }, void 0, false, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 248,
+                                lineNumber: 287,
                                 columnNumber: 21
                             }, undefined),
-                            loading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
+                            loading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                                 className: "spinner-border text-secondary",
-                                role: "status",
                                 style: {
                                     width: '20px',
                                     height: '20px',
@@ -34016,13 +34102,13 @@ const Final = ()=>{
                                 }
                             }, void 0, false, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 249,
+                                lineNumber: 288,
                                 columnNumber: 32
                             }, undefined) : ''
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 247,
+                        lineNumber: 286,
                         columnNumber: 17
                     }, undefined),
                     !identityAvailable ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("ul", {
@@ -34037,7 +34123,7 @@ const Final = ()=>{
                                         children: "for the first 6 months after the launch"
                                     }, void 0, false, {
                                         fileName: "src/pages/Final.jsx",
-                                        lineNumber: 253,
+                                        lineNumber: 292,
                                         columnNumber: 70
                                     }, undefined),
                                     " (including now) you have a chance to claim your Twitter handle on web3 by ",
@@ -34046,14 +34132,14 @@ const Final = ()=>{
                                         children: "posting an activation tweet"
                                     }, void 0, false, {
                                         fileName: "src/pages/Final.jsx",
-                                        lineNumber: 253,
+                                        lineNumber: 292,
                                         columnNumber: 214
                                     }, undefined),
                                     ", before it can be grabbed by cybersquatters"
                                 ]
                             }, void 0, true, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 253,
+                                lineNumber: 292,
                                 columnNumber: 21
                             }, undefined),
                             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("li", {
@@ -34061,19 +34147,19 @@ const Final = ()=>{
                                 children: "If you don’t have Twitter or has been banned there: you can enter any handle that is not on Twitter"
                             }, void 0, false, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 254,
+                                lineNumber: 293,
                                 columnNumber: 21
                             }, undefined)
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 252,
+                        lineNumber: 291,
                         columnNumber: 40
                     }, undefined) : ''
                 ]
             }, void 0, true, {
                 fileName: "src/pages/Final.jsx",
-                lineNumber: 246,
+                lineNumber: 285,
                 columnNumber: 13
             }, undefined),
             activationCode ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34084,14 +34170,14 @@ const Final = ()=>{
                         children: "Twitter validation"
                     }, void 0, false, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 259,
+                        lineNumber: 298,
                         columnNumber: 17
                     }, undefined),
                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
                         children: "Looks like this handle is registered on Twitter."
                     }, void 0, false, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 260,
+                        lineNumber: 299,
                         columnNumber: 17
                     }, undefined),
                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
@@ -34106,7 +34192,7 @@ const Final = ()=>{
                                 ]
                             }, void 0, true, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 261,
+                                lineNumber: 300,
                                 columnNumber: 47
                             }, undefined),
                             " on Twitter is you and you want it on web3, we’re saving it from cybersquatters ",
@@ -34115,14 +34201,14 @@ const Final = ()=>{
                                 children: "for the first 6 months from the launch"
                             }, void 0, false, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 261,
+                                lineNumber: 300,
                                 columnNumber: 175
                             }, undefined),
                             ", so you can claim it by posting the activation tweet below (feel free to change the starting text if you want)"
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 261,
+                        lineNumber: 300,
                         columnNumber: 17
                     }, undefined),
                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
@@ -34137,7 +34223,7 @@ const Final = ()=>{
                                 ]
                             }, void 0, true, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 262,
+                                lineNumber: 301,
                                 columnNumber: 47
                             }, undefined),
                             " on Twitter is not you, just select another handle that is not on Twitter (if ",
@@ -34149,14 +34235,14 @@ const Final = ()=>{
                                 ]
                             }, void 0, true, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 262,
+                                lineNumber: 301,
                                 columnNumber: 173
                             }, undefined),
                             " doesn’t claim it in 6 months, you will be able to take it from the automatic auction later)"
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 262,
+                        lineNumber: 301,
                         columnNumber: 17
                     }, undefined),
                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34177,7 +34263,7 @@ const Final = ()=>{
                                         }
                                     }, void 0, false, {
                                         fileName: "src/pages/Final.jsx",
-                                        lineNumber: 265,
+                                        lineNumber: 304,
                                         columnNumber: 25
                                     }, undefined),
                                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34200,58 +34286,51 @@ const Final = ()=>{
                                                 children: "Reset Tweet Content"
                                             }, void 0, false, {
                                                 fileName: "src/pages/Final.jsx",
-                                                lineNumber: 274,
+                                                lineNumber: 313,
                                                 columnNumber: 29
                                             }, undefined),
                                             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("button", {
-                                                className: "btn btn-link btn-sm bold",
+                                                className: "btn btn-primary btn-sm",
+                                                style: {
+                                                    display: 'flex',
+                                                    alignItems: 'center'
+                                                },
                                                 type: "button",
                                                 title: "Copy Tweet content",
                                                 onClick: ()=>navigator.clipboard.writeText(tweetContent)
                                                 ,
-                                                children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("svg", {
-                                                    xmlns: "http://www.w3.org/2000/svg",
-                                                    width: "16",
-                                                    height: "16",
-                                                    fill: "currentColor",
-                                                    class: "bi bi-clipboard",
-                                                    viewBox: "0 0 16 16",
-                                                    children: [
-                                                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV("path", {
-                                                            d: "M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"
-                                                        }, void 0, false, {
-                                                            fileName: "src/pages/Final.jsx",
-                                                            lineNumber: 277,
-                                                            columnNumber: 37
-                                                        }, undefined),
-                                                        /*#__PURE__*/ _jsxDevRuntime.jsxDEV("path", {
-                                                            d: "M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"
-                                                        }, void 0, false, {
-                                                            fileName: "src/pages/Final.jsx",
-                                                            lineNumber: 278,
-                                                            columnNumber: 37
-                                                        }, undefined)
-                                                    ]
-                                                }, void 0, true, {
-                                                    fileName: "src/pages/Final.jsx",
-                                                    lineNumber: 276,
-                                                    columnNumber: 33
-                                                }, undefined)
-                                            }, void 0, false, {
+                                                disabled: tweetTooBig,
+                                                children: [
+                                                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV(CopyIcon, {
+                                                    }, void 0, false, {
+                                                        fileName: "src/pages/Final.jsx",
+                                                        lineNumber: 315,
+                                                        columnNumber: 33
+                                                    }, undefined),
+                                                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV("span", {
+                                                        className: "mx-2",
+                                                        children: "Copy"
+                                                    }, void 0, false, {
+                                                        fileName: "src/pages/Final.jsx",
+                                                        lineNumber: 316,
+                                                        columnNumber: 33
+                                                    }, undefined)
+                                                ]
+                                            }, void 0, true, {
                                                 fileName: "src/pages/Final.jsx",
-                                                lineNumber: 275,
+                                                lineNumber: 314,
                                                 columnNumber: 29
                                             }, undefined)
                                         ]
                                     }, void 0, true, {
                                         fileName: "src/pages/Final.jsx",
-                                        lineNumber: 273,
+                                        lineNumber: 312,
                                         columnNumber: 25
                                     }, undefined)
                                 ]
                             }, void 0, true, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 264,
+                                lineNumber: 303,
                                 columnNumber: 21
                             }, undefined),
                             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34272,33 +34351,87 @@ const Final = ()=>{
                                         children: tweetContentError
                                     }, void 0, false, {
                                         fileName: "src/pages/Final.jsx",
-                                        lineNumber: 284,
+                                        lineNumber: 321,
                                         columnNumber: 25
                                     }, undefined),
                                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
-                                        className: tweetSize > MAX_TWEET_SIZE ? 'red bold text-medium' : 'text-medium',
                                         style: {
-                                            flexShrink: 0
+                                            display: 'flex',
+                                            alignItems: 'center'
                                         },
                                         children: [
-                                            tweetSize,
-                                            " characters"
+                                            /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
+                                                className: tweetSize > MAX_TWEET_SIZE ? 'red bold text-medium' : 'text-medium',
+                                                style: {
+                                                    flexShrink: 0
+                                                },
+                                                children: [
+                                                    tweetSize,
+                                                    " characters"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "src/pages/Final.jsx",
+                                                lineNumber: 323,
+                                                columnNumber: 29
+                                            }, undefined),
+                                            /*#__PURE__*/ _jsxDevRuntime.jsxDEV("button", {
+                                                className: "btn btn-primary btn-sm py-2 mx-2",
+                                                onClick: openTwitterWithMessage,
+                                                style: {
+                                                    display: 'flex',
+                                                    alignItems: 'center'
+                                                },
+                                                disabled: tweetTooBig || openingTwitter,
+                                                children: [
+                                                    openingTwitter ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
+                                                        style: {
+                                                            width: '10px',
+                                                            height: '10px',
+                                                            marginRight: '5px'
+                                                        }
+                                                    }, void 0, false, {
+                                                        fileName: "src/pages/Final.jsx",
+                                                        lineNumber: 325,
+                                                        columnNumber: 51
+                                                    }, undefined) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(TwitterIcon, {
+                                                        className: "text-large",
+                                                        style: {
+                                                            marginRight: '5px'
+                                                        }
+                                                    }, void 0, false, {
+                                                        fileName: "src/pages/Final.jsx",
+                                                        lineNumber: 325,
+                                                        columnNumber: 127
+                                                    }, undefined),
+                                                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV("span", {
+                                                        children: "Send the Tweet"
+                                                    }, void 0, false, {
+                                                        fileName: "src/pages/Final.jsx",
+                                                        lineNumber: 326,
+                                                        columnNumber: 33
+                                                    }, undefined)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "src/pages/Final.jsx",
+                                                lineNumber: 324,
+                                                columnNumber: 29
+                                            }, undefined)
                                         ]
                                     }, void 0, true, {
                                         fileName: "src/pages/Final.jsx",
-                                        lineNumber: 285,
+                                        lineNumber: 322,
                                         columnNumber: 25
                                     }, undefined)
                                 ]
                             }, void 0, true, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 283,
+                                lineNumber: 320,
                                 columnNumber: 21
                             }, undefined)
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 263,
+                        lineNumber: 302,
                         columnNumber: 17
                     }, undefined),
                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34313,7 +34446,7 @@ const Final = ()=>{
                                 className: "my-2 p-1 text-medium"
                             }, void 0, false, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 289,
+                                lineNumber: 332,
                                 columnNumber: 21
                             }, undefined),
                             tweetUrlError ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
@@ -34321,19 +34454,19 @@ const Final = ()=>{
                                 children: tweetUrlError
                             }, void 0, false, {
                                 fileName: "src/pages/Final.jsx",
-                                lineNumber: 290,
+                                lineNumber: 333,
                                 columnNumber: 39
                             }, undefined) : ''
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 288,
+                        lineNumber: 331,
                         columnNumber: 17
                     }, undefined)
                 ]
             }, void 0, true, {
                 fileName: "src/pages/Final.jsx",
-                lineNumber: 258,
+                lineNumber: 297,
                 columnNumber: 32
             }, undefined) : '',
             error1 ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34341,14 +34474,14 @@ const Final = ()=>{
                 children: error1
             }, void 0, false, {
                 fileName: "src/pages/Final.jsx",
-                lineNumber: 295,
+                lineNumber: 338,
                 columnNumber: 17
             }, undefined) : eligibility1 === 'free' ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
                 className: "py-2 green text-medium",
                 children: "Great, this handle doesn’t seem to belong to a Twitter user! You can claim it right now."
             }, void 0, false, {
                 fileName: "src/pages/Final.jsx",
-                lineNumber: 298,
+                lineNumber: 341,
                 columnNumber: 17
             }, undefined) : '',
             identity1 && identityAvailable && !error1 && (!activationCode || tweetUrl && !tweetUrlError) ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34364,7 +34497,7 @@ const Final = ()=>{
                         children: activationCode ? 'Check Tweet >>' : 'Register'
                     }, void 0, false, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 304,
+                        lineNumber: 347,
                         columnNumber: 17
                     }, undefined),
                     registering ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -34377,34 +34510,36 @@ const Final = ()=>{
                         }
                     }, void 0, false, {
                         fileName: "src/pages/Final.jsx",
-                        lineNumber: 305,
+                        lineNumber: 348,
                         columnNumber: 32
                     }, undefined) : ''
                 ]
             }, void 0, true, {
                 fileName: "src/pages/Final.jsx",
-                lineNumber: 303,
+                lineNumber: 346,
                 columnNumber: 110
             }, undefined) : ''
         ]
     }, void 0, true, {
         fileName: "src/pages/Final.jsx",
-        lineNumber: 241,
+        lineNumber: 280,
         columnNumber: 9
     }, undefined));
 };
-_s(Final, "tIo9lRraBFYaOwJx52FtIhDZaPA=");
-_c = Final;
+_s(Final, "Q4Nvz4z0AuCepdnH0PmJhoc9/uc=");
+_c2 = Final;
 exports.default = Final;
-var _c;
-$RefreshReg$(_c, "Final");
+var _c, _c1, _c2;
+$RefreshReg$(_c, "TwitterIcon");
+$RefreshReg$(_c1, "CopyIcon");
+$RefreshReg$(_c2, "Final");
 
   $parcel$ReactRefreshHelpers$50f9.postlude(module);
 } finally {
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","react-bootstrap/Container":"f1oyf","sweetalert2":"c6WIC","axios":"94VaQ","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"94VaQ":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","react-bootstrap/Container":"f1oyf","sweetalert2":"c6WIC","axios":"94VaQ","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","../components/Loading":"9ptwk"}],"94VaQ":[function(require,module,exports) {
 module.exports = require('./lib/axios');
 
 },{"./lib/axios":"bVEAI"}],"bVEAI":[function(require,module,exports) {

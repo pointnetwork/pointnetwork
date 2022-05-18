@@ -74,6 +74,7 @@ export default function Home() {
   if(zapps.length > 0){
     zappsList = <div className="zapps">{zapps.map((k) => renderZappEntry(k))}</div>;
   }
+  
 
   return (
     <>
