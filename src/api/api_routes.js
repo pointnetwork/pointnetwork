@@ -13,6 +13,7 @@ module.exports = [
     ],
     ['GET', '/v1/api/identity/isIdentityRegistered/', 'IdentityController@isIdentityRegistered'],
     ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'],
+    ['POST', '/v1/api/identity/open', 'IdentityController@openLink'],
     ['POST', '/v1/api/identity/register', 'IdentityController@registerIdentity'],
     ['GET', '/v1/api/status/ping', 'PingController@ping'],
     ['GET', '/v1/api/status/meta', 'StatusController@meta'],
