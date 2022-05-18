@@ -8,7 +8,7 @@ import ZProxySocketController from '../../../api/sockets/ZProxySocketController'
 import {SocketStream} from 'fastify-websocket';
 import Renderer from '../../zweb/renderer';
 import logger from '../../../core/log';
-import blockchain from '../../../network/blockchain';
+import blockchain from '../../../network/providers/ethereum';
 import {getContentTypeFromExt, getParamsAndTemplate} from '../proxyUtils';
 // @ts-expect-error no types for package
 import {detectContentType} from 'detect-content-type';

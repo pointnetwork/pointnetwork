@@ -36,6 +36,12 @@ function setup() {
 
   const getTxReceiptBtn = document.querySelector('#getReceipt');
   getTxReceiptBtn.addEventListener('click', () => handleRequest('getReceipt'));
+
+  const rpcReqBtn = document.querySelector('#rpc_req_btn');
+  rpcReqBtn.addEventListener('click', () => handleRequest('sendRpc'));
+
+  const solSendBtn = document.querySelector('#sol_send_btn');
+  solSendBtn.addEventListener('click', () => handleRequest('solanaSignAndSend'));
 }
 
 function setProvider() {
@@ -71,6 +77,10 @@ function getOutEl(method) {
       return document.querySelector('#txHash');
     case 'getReceipt':
       return document.querySelector('#txReceipt');
+    case 'sendRpc':
+      return document.querySelector('#rpc_result')
+    case 'solanaSignAndSend':
+      return document.querySelector('#sol_result')
     default:
       return null;
   }
@@ -166,6 +176,33 @@ const handlerFuncs = {
       delete resp.logsBloom;
       return resp;
   },
+  sendRpc: async function() {
+    const {method, params} = JSON.parse(document.getElementById("rpc_request").value)
+    if (!method) {
+        throw new Error('Method id required')
+    }
+    return window.ethereum.request({method, params})
+  },
+  solanaSignAndSend: async function() {
+    const to = document.querySelector('#sol_to').value;
+    const lamports = Number(document.querySelector('#sol_lamports').value);
+
+    const {publicKey} = await window.solana.connect()
+
+    const toPubkey = new solanaWeb3.PublicKey(to)
+    const fromPubkey = new solanaWeb3.PublicKey(publicKey)
+
+    const transaction = new solanaWeb3.Transaction()
+    transaction.add(
+      solanaWeb3.SystemProgram.transfer({
+          fromPubkey,
+          toPubkey,
+          lamports
+      })
+    )
+
+    return window.solana.signAndSendTransaction(transaction)
+  }
 };
 
 async function handleRequest(method) {

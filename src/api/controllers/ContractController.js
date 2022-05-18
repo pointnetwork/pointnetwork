@@ -1,6 +1,6 @@
 const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
-const blockchain = require('../../network/blockchain');
+const blockchain = require('../../network/providers/ethereum');
 
 class ContractController extends PointSDKController {
     constructor(ctx, req, reply) {

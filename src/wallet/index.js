@@ -5,7 +5,7 @@ const config = require('config');
 const logger = require('../core/log');
 const log = logger.child({module: 'Wallet'});
 const {getNetworkAddress, getSecretPhrase} = require('./keystore');
-const blockchain = require('../network/blockchain');
+const blockchain = require('../network/providers/ethereum');
 
 class Wallet {
     static get TRANSACTION_EVENT() {

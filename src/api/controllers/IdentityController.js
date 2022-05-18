@@ -1,5 +1,5 @@
 const PointSDKController = require('./PointSDKController');
-const blockchain = require('../../network/blockchain');
+const blockchain = require('../../network/providers/ethereum');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});

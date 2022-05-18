@@ -17,7 +17,8 @@ storage:
   upload_expire: 120000
 network:
   web3:
-    ynet: http://blockchain_node:7545
+    ynet:
+      address: "http://blockchain_node:7545"
 api:
   address: 0.0.0.0
 zproxy:
