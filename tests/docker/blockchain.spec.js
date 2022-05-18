@@ -99,7 +99,7 @@ describe('Register identity and deploy site', () => {
             const totalTime = Math.round((end - start) / 1000);
             console.log(`Total time to "deploy sample site": ${totalTime}secs`);
         },
-        TIMEOUTS.XL
+        TIMEOUTS.XXL
     );
 
     it(

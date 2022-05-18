@@ -8,5 +8,7 @@ export const TIMEOUTS = {
     /** 1 min */
     LG: 60_000,
     /** 2 min */
-    XL: 120_000
+    XL: 120_000,
+    /** 5 min */
+    XXL: 300_000
 } as const;
