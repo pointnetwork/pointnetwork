@@ -26,7 +26,15 @@ function isRetryableError({message}) {
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function createWeb3Instance({blockchainUrl, privateKey}) {
-    const hdWalletProvider = new HDWalletProvider(privateKey, blockchainUrl);
+    
+    const provider = (blockchainUrl.startsWith('ws://')) ?
+        new Web3.providers.WebsocketProvider(blockchainUrl) : blockchainUrl;
+
+    if (blockchainUrl.startsWith('ws://')) {
+        HDWalletProvider.prototype.on = provider.on.bind(provider);
+    }
+
+    const hdWalletProvider = new HDWalletProvider(privateKey, provider);
     const nonceTracker = new NonceTrackerSubprovider();
 
     hdWalletProvider.engine._providers.unshift(nonceTracker);
