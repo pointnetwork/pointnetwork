@@ -14,8 +14,6 @@ bin/
 dist
 .vscode
 
-# Ignore everything in deployspace folder
-deployspace/*
 
 key.json
 arweave.json
