@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import path from 'path';
 import {readFile} from 'fs/promises';
 import {get, post} from 'axios';
@@ -81,23 +80,11 @@ describe('Register identity and deploy site', () => {
         'Should deploy the sample site to arweave',
         async () => {
             expect.assertions(1);
-            const start = Date.now();
             const publicDir = path.join(__dirname, '..', 'resources', 'ynet_sample_site', 'public');
-            const uploadDirStart = Date.now();
-            publicDirStorageId = await storage.uploadDir(publicDir, true);
-            const uploadDirEnd = Date.now();
-            console.log(
-                `uploadDir took: ${Math.round((uploadDirEnd - uploadDirStart) / 1000)}secs`
-            );
+            publicDirStorageId = await storage.uploadDir(publicDir);
             const {target, version} = testData.deployConfig;
-            const putKVStart = Date.now();
             await blockchain.putKeyValue(target, '::rootDir', publicDirStorageId, version);
-            const putKVEnd = Date.now();
-            console.log(`putKeyValue took: ${Math.round((putKVEnd - putKVStart) / 1000)}secs`);
             expect(publicDirStorageId).toMatch(hexRegExp);
-            const end = Date.now();
-            const totalTime = Math.round((end - start) / 1000);
-            console.log(`Total time to "deploy sample site": ${totalTime}secs`);
         },
         TIMEOUTS.XXL
     );
