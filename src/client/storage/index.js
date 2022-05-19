@@ -75,20 +75,14 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     // chunks from the bundler's backup (S3).
     try {
         log.debug({chunkId}, 'Downloading chunk from bundler backup');
-        const {data} = await axios.get(`${BUNDLER_DOWNLOAD_URL}/${chunkId}`);
+        const {data: buf} = await axios.request({
+            method: 'GET',
+            url: `${BUNDLER_DOWNLOAD_URL}/${chunkId}`,
+            responseType: 'arraybuffer'
+        });
         log.debug({chunkId}, 'Successfully downloaded chunk from Bundler backup');
-        const buf =
-            typeof data === 'object' ? Buffer.from(JSON.stringify(data)) : Buffer.from(data);
         await fs.writeFile(chunkPath, buf);
         chunk.size = buf.length;
-
-        const hash = hashFn(buf).toString('hex');
-        if (hash !== chunk.id) {
-            const errMsg = 'Chunk id and data do not match';
-            log.warn({chunkId: chunk.id, hash}, errMsg);
-            throw new Error(errMsg);
-        }
-
         chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
         await chunk.save();
         return buf;
@@ -113,10 +107,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const buf = Buffer.from(data);
             const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
-                log.warn(
-                    {chunkId, hash, query, buf: buf.toString()},
-                    'Chunk id and data do not match'
-                );
+                log.warn({chunkId, hash}, 'Chunk id and data do not match');
                 continue;
             }
             await fs.writeFile(chunkPath, buf);
@@ -135,10 +126,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const buf = Buffer.from(data);
             const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
-                log.warn(
-                    {chunkId, hash, query, buf: buf.toString()},
-                    'Chunk id and data do not match'
-                );
+                log.warn({chunkId, hash}, 'Chunk id and data do not match');
                 continue;
             }
 
