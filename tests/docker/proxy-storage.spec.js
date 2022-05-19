@@ -93,7 +93,7 @@ describe('Storage requests through proxy', () => {
             dirId = await uploadDir(path.join(__dirname, '../resources/sample_folder'));
             expect(dirId).toBeTruthy();
         },
-        TIMEOUTS.XL
+        TIMEOUTS.XXL
     );
 
     it(
