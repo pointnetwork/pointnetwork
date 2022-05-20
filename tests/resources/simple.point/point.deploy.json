@@ -2,6 +2,6 @@
   "version": 0.1,
   "target": "ynet_simple.point",
   "keyvalue": {},
-  "contracts": []
+  "contracts": ["Why"]
 }
 

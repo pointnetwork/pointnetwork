@@ -18,7 +18,7 @@
 
   <p>Choose how to send RPC requests:</p>
   <div>
-    <input type="radio" id="nolib" name="lib" value="nolib" />
+    <input type="radio" id="nolib" name="lib" value="nolib" checked />
     <label for="nolib">No libraries (`request`)</label>
   </div>
   <div>
@@ -66,6 +66,23 @@
      <textarea id="rpc_request" placeholder="JSON RPC" rows="10"></textarea>
      <button id="rpc_req_btn">Send</button>
      <code><pre id="rpc_result"></pre></code>
+  </section>
+  <section>
+    <p>Contract call/send (Point SDK)</p>
+    <input type="text" id="call_contract" placeholder="Contract"/>
+    <input type="text" id="call_method" placeholder="Method"/>
+    <input type="text" id="call_value" placeholder="Value"/>
+    <textarea id="call_params" placeholder="Params array"></textarea>
+    <div>
+      <input type="radio" id="call_call" name="call_type" value="call" checked />
+      <label for="call_call">Call</label>
+    </div>
+    <div>
+      <input type="radio" id="call_send" name="call_type" value="send" />
+      <label for="call_send">Send</label>
+    </div>
+    <button id="call_send_btn">Submit</button>
+    <code><pre id="call_result"></pre></code>
   </section>
 </body>
 </html>

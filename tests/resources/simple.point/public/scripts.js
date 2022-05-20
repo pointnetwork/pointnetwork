@@ -42,6 +42,9 @@ function setup() {
 
   const solSendBtn = document.querySelector('#sol_send_btn');
   solSendBtn.addEventListener('click', () => handleRequest('solanaSignAndSend'));
+
+  const callSendBtn = document.querySelector('#call_send_btn');
+    callSendBtn.addEventListener('click', () => handleRequest('contractCall'));
 }
 
 function setProvider() {
@@ -81,6 +84,8 @@ function getOutEl(method) {
       return document.querySelector('#rpc_result')
     case 'solanaSignAndSend':
       return document.querySelector('#sol_result')
+    case 'contractCall':
+      return document.querySelector('#call_result')
     default:
       return null;
   }
@@ -202,6 +207,28 @@ const handlerFuncs = {
     )
 
     return window.solana.signAndSendTransaction(transaction)
+  },
+  contractCall: async function () {
+    const contract = document.querySelector('#call_contract').value;
+    const method = document.querySelector('#call_method').value;
+    const params = document.querySelector('#call_params').value;
+    const value = document.querySelector('#call_value').value;
+
+    const callRadio = document.getElementById("call_call")
+    if (callRadio.checked) {
+        return window.point.contract.call({
+            contract,
+            method,
+            params: JSON.parse(params)
+        })
+    } else {
+        return window.point.contract.send({
+            contract,
+            method,
+            value,
+            params: JSON.parse(params)
+        })
+    }
   }
 };
 
