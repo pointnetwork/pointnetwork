@@ -29158,7 +29158,6 @@ function Home() {
             });
             setMarkdown(markdownData.data);
         } catch (e) {
-            console.log(e);
             setMarkdown('');
         }
         setIsLoadingMD(false);
@@ -29181,6 +29180,18 @@ function Home() {
         setZapps(zappsDeployed);
         setIsLoading(false);
     };
+    const openWeb2Url = (url)=>{
+        fetch('/v1/api/web2/open', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                urlToOpen: url
+            })
+        });
+    };
     const renderZappEntry = (k)=>{
         return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("a", {
             href: 'https://' + k,
@@ -29199,12 +29210,12 @@ function Home() {
                             }
                         }, void 0, false, {
                             fileName: "src/pages/Home.jsx",
-                            lineNumber: 61,
+                            lineNumber: 71,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "src/pages/Home.jsx",
-                        lineNumber: 60,
+                        lineNumber: 70,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -29213,23 +29224,23 @@ function Home() {
                             children: featuredZapps[k]
                         }, void 0, false, {
                             fileName: "src/pages/Home.jsx",
-                            lineNumber: 66,
+                            lineNumber: 76,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "src/pages/Home.jsx",
-                        lineNumber: 65,
+                        lineNumber: 75,
                         columnNumber: 11
                     }, this)
                 ]
             }, k, true, {
                 fileName: "src/pages/Home.jsx",
-                lineNumber: 59,
+                lineNumber: 69,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "src/pages/Home.jsx",
-            lineNumber: 58,
+            lineNumber: 68,
             columnNumber: 7
         }, this));
     };
@@ -29237,7 +29248,7 @@ function Home() {
         children: "No Apps deployed yet."
     }, void 0, false, {
         fileName: "src/pages/Home.jsx",
-        lineNumber: 73,
+        lineNumber: 83,
         columnNumber: 19
     }, this);
     if (zapps.length > 0) zappsList = /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -29246,7 +29257,7 @@ function Home() {
         )
     }, void 0, false, {
         fileName: "src/pages/Home.jsx",
-        lineNumber: 75,
+        lineNumber: 85,
         columnNumber: 17
     }, this);
     return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV(_jsxDevRuntime.Fragment, {
@@ -29256,13 +29267,13 @@ function Home() {
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 82,
+                    lineNumber: 92,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 83,
+                    lineNumber: 93,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h1", {
@@ -29275,51 +29286,73 @@ function Home() {
                                 !walletIdentity ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                                 }, void 0, false, {
                                     fileName: "src/pages/Home.jsx",
-                                    lineNumber: 84,
+                                    lineNumber: 94,
                                     columnNumber: 80
                                 }, this) : walletIdentity
                             ]
                         }, void 0, true, {
                             fileName: "src/pages/Home.jsx",
-                            lineNumber: 84,
+                            lineNumber: 94,
                             columnNumber: 52
                         }, this),
                         "!"
                     ]
                 }, void 0, true, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 84,
+                    lineNumber: 94,
                     columnNumber: 9
                 }, this),
                 isLoadingMD ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 86,
+                    lineNumber: 96,
                     columnNumber: 24
                 }, this) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_markdownToJsxDefault.default, {
                     children: markdown
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 86,
+                    lineNumber: 96,
                     columnNumber: 38
+                }, this),
+                /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
+                    children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("a", {
+                        onClick: ()=>openWeb2Url('https://bounty.pointnetwork.io/')
+                        ,
+                        href: "#",
+                        children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("img", {
+                            src: "banner.jpg"
+                        }, void 0, false, {
+                            fileName: "src/pages/Home.jsx",
+                            lineNumber: 98,
+                            columnNumber: 88
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "src/pages/Home.jsx",
+                        lineNumber: 98,
+                        columnNumber: 12
+                    }, this)
+                }, void 0, false, {
+                    fileName: "src/pages/Home.jsx",
+                    lineNumber: 98,
+                    columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h5", {
                     children: "Explore featured Apps"
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 88,
+                    lineNumber: 100,
                     columnNumber: 9
                 }, this),
                 isLoading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 89,
+                    lineNumber: 101,
                     columnNumber: 22
                 }, this) : zappsList
             ]
         }, void 0, true, {
             fileName: "src/pages/Home.jsx",
-            lineNumber: 81,
+            lineNumber: 91,
             columnNumber: 7
         }, this)
     }, void 0, false));
@@ -29374,7 +29407,7 @@ $RefreshReg$(_c, "Loading");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","react":"6jKMz"}],"izcvs":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"izcvs":[function(require,module,exports) {
 module.exports = require('./helpers/bundle-url').getBundleURL('ePakp') + "pointlogo.42769126.png" + "?" + Date.now();
 
 },{"./helpers/bundle-url":"lDs4c"}],"ebvoQ":[function(require,module,exports) {
@@ -34539,7 +34572,7 @@ $RefreshReg$(_c2, "Final");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","react-bootstrap/Container":"f1oyf","sweetalert2":"c6WIC","axios":"94VaQ","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","../components/Loading":"9ptwk"}],"94VaQ":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"gij1U","react":"6jKMz","react-bootstrap/Container":"f1oyf","sweetalert2":"c6WIC","axios":"94VaQ","../components/Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"94VaQ":[function(require,module,exports) {
 module.exports = require('./lib/axios');
 
 },{"./lib/axios":"bVEAI"}],"bVEAI":[function(require,module,exports) {
