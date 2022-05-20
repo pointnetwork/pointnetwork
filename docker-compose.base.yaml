@@ -8,7 +8,6 @@ services:
       - point_contracts:/app/hardhat/build
       - point_node_data:/data
       - $POINT_KEYSTORE:/data/keystore
-      - $POINT_DEPLOYSPACE:/app/deployspace:ro
     environment:
       NODE_CONFIG_ENV: dockerdev
 
