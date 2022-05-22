@@ -258,7 +258,6 @@ ethereum.callContract = async (target, contractName, method, params, version = '
                 throw Error('Method ' + method + ' does not exist on contract ' + contractName); // todo: sanitize
             }
 
-            console.log(contract.methods[method](...params).encodeABI());
             const result = await contract.methods[method](...params).call();
 
             return result;
