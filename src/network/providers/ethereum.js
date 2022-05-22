@@ -141,7 +141,7 @@ ethereum.loadIdentityContract = async () => {
 ethereum.loadWebsiteContract = async (target, contractName, version = 'latest') => {
     // todo: make it nicer, extend to all potential contracts, and add to docs
     // @ means internal contract for Point Network (truffle/contracts)
-    if (target === '@' && contractName === 'Identity') {
+    if ((target === '@' || target === 'point') && contractName === 'Identity') {
         return ethereum.loadIdentityContract();
     }
 
@@ -258,6 +258,7 @@ ethereum.callContract = async (target, contractName, method, params, version = '
                 throw Error('Method ' + method + ' does not exist on contract ' + contractName); // todo: sanitize
             }
 
+            console.log(contract.methods[method](...params).encodeABI());
             const result = await contract.methods[method](...params).call();
 
             return result;
