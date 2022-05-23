@@ -16,6 +16,7 @@ import "./tasks/identity/identity-update-contract";
 import './tasks/identity/identity-add-deployer.ts';
 import './tasks/identity/identity-remove-deployer.ts';
 import './tasks/identity/identity-list-deployers.ts';
+import './tasks/explorer/explorer-set-index-md';
 
 const ethers = require('ethers');
 const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};

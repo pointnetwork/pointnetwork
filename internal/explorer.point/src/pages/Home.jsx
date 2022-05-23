@@ -4,11 +4,16 @@ import { useState,useEffect } from "react";
 import { useAppContext } from '../context/AppContext';
 import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png'
+import bountyLogo from '../assets/pointcoin.png';
+import Markdown from 'markdown-to-jsx';
+import ArrowForward from '@material-ui/icons/ArrowForward';
 
 export default function Home() {
   const { walletIdentity } = useAppContext();
   const [zapps, setZapps] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMD, setIsLoadingMD] = useState(true)
+  const [markdown, setMarkdown] = useState('')
 
   const featuredZapps = {
     'blog.point': "Blog",
@@ -18,7 +23,21 @@ export default function Home() {
 
   useEffect(()=>{
     fetchZappsDeployed();
+    fetchMarkdown();
   },[])
+
+  const fetchMarkdown = async () => {
+    setIsLoadingMD(true);
+    try{
+      let id = await window.point.contract.call({host: '@', contract: 'Identity', 
+        method: 'ikvGet',  params: ['explorer','markdown/index']});
+      let markdownData = await window.point.storage.getString({ id: id.data, encoding: 'utf-8' });
+      setMarkdown(markdownData.data);
+    }catch(e){
+      setMarkdown('');
+    }
+    setIsLoadingMD(false);
+  }
 
   const fetchZappsDeployed = async () => {
     setIsLoading(true);
@@ -33,6 +52,17 @@ export default function Home() {
     }
     setZapps(zappsDeployed);
     setIsLoading(false);
+  }
+
+  const openWeb2Url = (url) => {
+    fetch('/v1/api/web2/open', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({urlToOpen: url})
+    });
   }
 
   const renderZappEntry = (k) => {
@@ -56,6 +86,7 @@ export default function Home() {
   if(zapps.length > 0){
     zappsList = <div className="zapps">{zapps.map((k) => renderZappEntry(k))}</div>;
   }
+  
 
   return (
     <>
@@ -63,8 +94,18 @@ export default function Home() {
         <br/>
         <br/>
         <h1 className="header">Welcome to Web 3.0, <strong>@{!walletIdentity ? <Loading /> : walletIdentity}</strong>!</h1>
-        <p>If you can see this page, this means you've successfully installed the alpha! You're amazing! Please send the screenshot to the group.</p>
-        <p>There's not much content in here, but we will be filling it up from now on</p>
+
+        {isLoadingMD ? <Loading /> : <Markdown>{markdown}</Markdown>} 
+
+        <div className="bounty-banner" onClick={() => openWeb2Url('https://bounty.pointnetwork.io/')}>
+          <div className="bounty-banner-inner">
+            <div className="bounty-banner-header">
+              <img src={bountyLogo} />
+              <h2>Point <span>Bounty Program</span></h2>
+            </div>
+            <ArrowForward fontSize="medium" />
+          </div>
+        </div>
 
         <h5>Explore featured Apps</h5>
         {isLoading ? <Loading /> : zappsList}

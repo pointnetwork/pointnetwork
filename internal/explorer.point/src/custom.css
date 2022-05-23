@@ -1,3 +1,13 @@
+@font-face {
+    font-family: 'Karla';
+    src: url('Karla.eot');
+    src: url('Karla-Bold.eot?#iefix') format('embedded-opentype'),
+        url('Karla-Bold.woff') format('woff'),
+        url('Karla-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
 .navbar {
     padding: 0;
 }
@@ -81,4 +91,62 @@ a.nav-link.active {
 
 .border-red {
     border-color: red;
+}
+
+.bounty-banner {
+    background: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 30px 0;
+    padding: 3px;
+}
+
+.bounty-banner:hover {
+    background: linear-gradient(90deg, #fee563 0%, #fec455 80%, #86692e 100%);
+}
+
+.bounty-banner-inner {
+    align-items: center;
+    background-color: #fff;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    padding: 25px;
+}
+
+.bounty-banner-header {
+    align-items: center;
+    display: flex;
+}
+
+.bounty-banner-header img {
+    height: 50px;
+}
+
+.bounty-banner-header h2 {
+    font-family: 'Karla', sans-serif;
+    margin: 0 0 0 20px;
+}
+
+.bounty-banner-header h2 span {
+    background-image: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);;
+    color: #333;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+@media (max-width: 767px) {
+    .bounty-banner-inner {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .bounty-banner-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .bounty-banner-header h2 {
+        margin: 10px 0;
+    }
 }

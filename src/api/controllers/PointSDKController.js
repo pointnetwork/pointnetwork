@@ -31,10 +31,11 @@ class PointSDKController {
         return this;
     }
 
-    _response(payload) {
+    _response(payload, headers = {}) {
         return {
             status: this.status,
-            data: payload
+            data: payload,
+            headers: headers
         };
     }
 }

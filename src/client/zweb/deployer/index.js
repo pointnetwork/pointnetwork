@@ -4,7 +4,7 @@ const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
 const {compileContract, getImportsFactory} = require('../../../util');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
-const blockchain = require('../../../network/blockchain');
+const blockchain = require('../../../network/providers/ethereum');
 const hre = require('hardhat');
 const BN = require('bn.js');
 

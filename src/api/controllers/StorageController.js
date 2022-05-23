@@ -5,6 +5,8 @@ const DEFAULT_ENCODING = 'utf-8';
 const {getFile, uploadFile} = require('../../client/storage');
 const config = require('config');
 const {FILE_DOWNLOAD_STATUS} = require('../../db/models/file');
+const detectContentType = require('detect-content-type');
+
 class StorageController extends PointSDKController {
     constructor(ctx, req) {
         super(ctx, req);
@@ -20,7 +22,8 @@ class StorageController extends PointSDKController {
         const encoding = this.req.query.encoding ?? DEFAULT_ENCODING;
 
         const contents = (await getFile(cid, encoding)).toString(encoding);
-        return this._response(contents);
+        const contentType = detectContentType(Buffer.from(contents));
+        return this._response(contents, {'content-type': contentType});
     }
 
     async putString() {

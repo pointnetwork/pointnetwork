@@ -37,7 +37,7 @@ export class PendingTxs {
      * Adds a transaction to the pool of pending requests
      * for future processing.
      */
-    add(params: unknown[], network?: string) {
+    add(params: unknown[], network = 'ynet') {
         const reqId = this.generateId();
         const expiresAt = this.calculateExpiration();
         this.pendingTransactions[reqId] = {params, expiresAt, network};
