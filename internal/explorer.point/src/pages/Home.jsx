@@ -29,7 +29,7 @@ export default function Home() {
   const fetchMarkdown = async () => {
     setIsLoadingMD(true);
     try{
-      let id = await window.point.contract.call({host: '@', contract: 'Identity', 
+      let id = await window.point.contract.call({contract: 'Identity',
         method: 'ikvGet',  params: ['explorer','markdown/index']});
       let markdownData = await window.point.storage.getString({ id: id.data, encoding: 'utf-8' });
       setMarkdown(markdownData.data);
@@ -44,7 +44,7 @@ export default function Home() {
     let zappsDeployed = [];
     for (let k in featuredZapps){
 
-      let zappRoutes = await window.point.contract.call({host: '@', contract: 'Identity', 
+      let zappRoutes = await window.point.contract.call({contract: 'Identity',
       method: 'ikvGet',  params: [k.replace('.point', ''),'zdns/routes']});
       if(zappRoutes.data !== ''){
         zappsDeployed.push(k);
