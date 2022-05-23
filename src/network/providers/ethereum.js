@@ -26,9 +26,9 @@ function isRetryableError({message}) {
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function createWeb3Instance({blockchainUrl, privateKey}) {
-    
-    const provider = (blockchainUrl.startsWith('ws://')) ?
-        new Web3.providers.WebsocketProvider(blockchainUrl) : blockchainUrl;
+    const provider = blockchainUrl.startsWith('ws://')
+        ? new Web3.providers.WebsocketProvider(blockchainUrl)
+        : blockchainUrl;
 
     if (blockchainUrl.startsWith('ws://')) {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
@@ -67,7 +67,11 @@ const providers = {
 };
 
 const getWeb3 = (chain = 'ynet') => {
-    if (!Object.keys(networks).filter(key => networks[key].type === 'eth').includes(chain)) {
+    if (
+        !Object.keys(networks)
+            .filter(key => networks[key].type === 'eth')
+            .includes(chain)
+    ) {
         throw new Error(`No Eth provider for network ${chain}`);
     }
     if (!providers[chain]) {
@@ -497,8 +501,7 @@ ethereum.getLastVersionOrBefore = (version, events) => {
     );
     if (filteredEvents.length > 0) {
         const maxObj = filteredEvents.reduce((prev, current) =>
-            ethereum.compareVersions(prev.returnValues.version, current.returnValues.version) ===
-            1
+            ethereum.compareVersions(prev.returnValues.version, current.returnValues.version) === 1
                 ? prev
                 : current
         );
@@ -573,13 +576,7 @@ ethereum.putKeyValue = async (identity, key, value, version) => {
     }
 };
 
-ethereum.registerVerified = async (
-    identity,
-    address,
-    commPublicKey,
-    hashedMessage,
-    {s, r, v}
-) => {
+ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessage, {s, r, v}) => {
     try {
         if (!Buffer.isBuffer(commPublicKey))
             throw Error('registerIdentity: commPublicKey must be a buffer');
@@ -805,5 +802,12 @@ ethereum.send = ({method, params = [], id, network}) =>
             }
         );
     });
+
+ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
+    const web3 = getWeb3(network);
+    const owner = await web3.eth.ens.getAddress(domainName);
+    const content = await web3.eth.ens.getContenthash(domainName);
+    return {owner, content};
+};
 
 module.exports = ethereum;
