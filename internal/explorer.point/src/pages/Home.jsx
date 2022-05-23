@@ -4,7 +4,9 @@ import { useState,useEffect } from "react";
 import { useAppContext } from '../context/AppContext';
 import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png'
+import bountyLogo from '../assets/pointcoin.png';
 import Markdown from 'markdown-to-jsx';
+import ArrowForward from '@material-ui/icons/ArrowForward';
 
 export default function Home() {
   const { walletIdentity } = useAppContext();
@@ -95,7 +97,15 @@ export default function Home() {
 
         {isLoadingMD ? <Loading /> : <Markdown>{markdown}</Markdown>} 
 
-        <p><a onClick={() => openWeb2Url('https://bounty.pointnetwork.io/')} href="#" ><img src="banner.jpg"></img></a></p>
+        <div className="bounty-banner" onClick={() => openWeb2Url('https://bounty.pointnetwork.io/')}>
+          <div className="bounty-banner-inner">
+            <div className="bounty-banner-header">
+              <img src={bountyLogo} />
+              <h2>Point <span>Bounty Program</span></h2>
+            </div>
+            <ArrowForward fontSize="medium" />
+          </div>
+        </div>
 
         <h5>Explore featured Apps</h5>
         {isLoading ? <Loading /> : zappsList}
