@@ -63,7 +63,7 @@
     "sequelize": "^6.6.5",
     "sequelize-auto-migrations": "github:scimonster/sequelize-auto-migrations#a063aa6535a3f580623581bf866cef2d609531ba",
     "solc0_8": "npm:solc@0.8.3",
-    "sqlite3": "5.0.2",
+    "sqlite3": "^5.0.8",
     "twig": "^1.15.4",
     "umzug": "^3.0.0",
     "web3": "^1.7.3",
