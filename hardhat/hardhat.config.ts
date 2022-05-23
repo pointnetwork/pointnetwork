@@ -18,14 +18,23 @@ import './tasks/identity/identity-remove-deployer.ts';
 import './tasks/identity/identity-list-deployers.ts';
 import './tasks/explorer/explorer-set-index-md';
 
-const ethers = require('ethers');
-const keystore = {"phrase":"observe valid excite index skill drink argue envelope domain second ten hybrid"};
+dotenv.config();
 
-if (typeof keystore !== 'object') {
-    throw new Error('Please provide a valid kstore');
+let ynetPrivateKey = process.env.DEPLOYER_ACCOUNT;
+if (ynetPrivateKey == undefined){
+    const homedir = require('os').homedir();
+    require('path').resolve(homedir, '.point', 'keystore', 'key.json');
+    const wallet = require('ethereumjs-wallet').hdkey.fromMasterSeed(
+        require('bip39').mnemonicToSeedSync(require(
+            require('path').resolve(homedir, '.point', 'keystore', 'key.json')).phrase
+        )
+    ).getWallet();
+    ynetPrivateKey = wallet.getPrivateKey().toString('hex');
 }
 
-dotenv.config();
+if (ynetPrivateKey == undefined){
+    throw new Error("ynetPrivateKey is not set.");
+}
 
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -39,7 +48,6 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 });
 
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
-const ynetPrivateKey = process.env.DEPLOYER_ACCOUNT || 'YOU MUST SET THIS USING THE LOCAL ENVIRONMENT VARIABLE';
 const host = process.env.BLOCKCHAIN_HOST || 'blockchain_node';
 const port = process.env.BLOCKCHAIN_PORT || 7545;
 const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
@@ -47,7 +55,7 @@ const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
 const devaddress = 'http://' + host + ':' + port
 console.log(devaddress)
 
-const wallet = ethers.Wallet.fromMnemonic(keystore.phrase);
+
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
