@@ -696,10 +696,8 @@ ethereum.sendTransaction = async ({from, to, value, gas}) => {
     return receipt;
 };
 
-ethereum.getBalance = async (address, blockIdentifier = 'latest') => {
-    const balance = await getWeb3().eth.getBalance(address, blockIdentifier);
-    return balance;
-};
+ethereum.getBalance = async ({address, blockIdentifier = 'latest', network}) =>
+    getWeb3(network).eth.getBalance(address, blockIdentifier);
 
 ethereum.getWallet = () => getWeb3().eth.accounts.wallet[0];
 
@@ -717,7 +715,12 @@ ethereum.decryptWallet = (keystore, passcode) => {
 };
 
 // from: https://ethereum.stackexchange.com/questions/2531/common-useful-javascript-snippets-for-geth/3478#3478
-ethereum.getTransactionsByAccount = async (account, startBlockNumber, endBlockNumber) => {
+ethereum.getTransactionsByAccount = async ({
+    account,
+    startBlockNumber = null,
+    endBlockNumber = null,
+    network
+}) => {
     if (endBlockNumber == null) {
         endBlockNumber = await getWeb3().eth.getBlockNumber();
         log.debug({endBlockNumber}, 'Using endBlockNumber');
@@ -726,40 +729,31 @@ ethereum.getTransactionsByAccount = async (account, startBlockNumber, endBlockNu
         startBlockNumber = Math.max(0, endBlockNumber - 1000000);
         log.debug({startBlockNumber}, 'Using startBlockNumber');
     }
+
+    const provider = getWeb3(network);
+
     log.debug(
-        {account, startBlockNumber, endBlockNumber, ethblocknumber: getWeb3().eth.blockNumber},
+        {account, startBlockNumber, endBlockNumber, ethBlockNumber: provider.eth.blockNumber},
         'Searching for transactions'
     );
 
     const txs = [];
 
-    for (var i = startBlockNumber; i <= endBlockNumber; i++) {
+    for (let i = startBlockNumber; i <= endBlockNumber; i++) {
         if (i % 1000 === 0) {
             log.debug('Searching block ' + i);
         }
 
-        var block = getWeb3().eth.getBlock(i, true);
+        const block = provider.eth.getBlock(i, true);
         if (block != null && block.transactions != null) {
             block.transactions.forEach(function(e) {
                 if (account === '*' || account === e.from || account === e.to) {
                     txs.push(e);
-                    // log.debug('   tx hash         : ' + e.hash + '\n'
-                    //         + '   nonce           : ' + e.nonce + '\n'
-                    //         + '   blockHash       : ' + e.blockHash + '\n'
-                    //         + '   blockNumber     : ' + e.blockNumber + '\n'
-                    //         + '   transactionIndex: ' + e.transactionIndex + '\n'
-                    //         + '   from            : ' + e.from + '\n'
-                    //         + '   to              : ' + e.to + '\n'
-                    //         + '   value           : ' + e.value + '\n'
-                    //         + '   time            : ' + block.timestamp + ' ' + new Date(block.timestamp * 1000).toGMTString() + '\n'
-                    //         + '   gasPrice        : ' + e.gasPrice + '\n'
-                    //         + '   gas             : ' + e.gas + '\n'
-                    //         + '   input           : ' + e.input);
                 }
             });
         }
 
-        log.debug({txs}, 'Accound transactions');
+        log.debug({txs}, 'Account transactions');
     }
 
     return txs;
@@ -793,7 +787,7 @@ ethereum.deployContract = async (contract, artifacts, contractName) => {
 
 ethereum.toHex = n => getWeb3().utils.toHex(n);
 
-ethereum.send = (method, params = [], id, network) =>
+ethereum.send = ({method, params = [], id, network}) =>
     new Promise((resolve, reject) => {
         getWeb3(network).currentProvider.send(
             {

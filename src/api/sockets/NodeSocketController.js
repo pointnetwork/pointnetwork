@@ -1,5 +1,4 @@
 const WebSocket = require('ws');
-const Wallet = require('../../wallet/index');
 const DeployerProgress = require('../../client/zweb/deployer/progress');
 const Console = require('../../console');
 const logger = require('../../core/log');
@@ -25,19 +24,20 @@ class NodeSocketController {
                 case 'api':
                     this.publishToClients(await this.apiResponseFor(cmd));
                     break;
-                case 'walletSubscription':
-                    // subscribe to the wallets TRANSACTION_EVENT via the wallet transactionEventEmitter
-                    this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, data => {
-                        this.publishToClients(this._formatResponse(cmd, data));
-                    });
-                    this.publishToClients(
-                        this._formatResponse(
-                            cmd,
-                            {message: 'Subscribed to Wallet.TRANSACTION_EVENT'},
-                            'SUBSCRIBED_EVENT'
-                        )
-                    );
-                    break;
+                // TODO: restore and reimplement if needed
+                // case 'walletSubscription':
+                //     // subscribe to the wallets TRANSACTION_EVENT via the wallet transactionEventEmitter
+                //     this.ctx.wallet.transactionEventEmitter.on(Wallet.TRANSACTION_EVENT, data => {
+                //         this.publishToClients(this._formatResponse(cmd, data));
+                //     });
+                //     this.publishToClients(
+                //         this._formatResponse(
+                //             cmd,
+                //             {message: 'Subscribed to Wallet.TRANSACTION_EVENT'},
+                //             'SUBSCRIBED_EVENT'
+                //         )
+                //     );
+                //     break;
                 case 'deployerSubscription':
                     // subscribe to the deployerProgress PROGRESS_UPDATED via the wallet progressEventEmitter
                     this.ctx.client.deployerProgress.progressEventEmitter.on(

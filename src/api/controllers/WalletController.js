@@ -7,6 +7,7 @@ const {
     decryptData,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
+const {sendTransaction, getBalance} = require('../../wallet');
 
 class WalletController extends PointSDKController {
     constructor(ctx, req, reply) {
@@ -18,11 +19,10 @@ class WalletController extends PointSDKController {
     }
 
     async tx() {
-        const from = this.defaultWallet.address;
         const to = this.payload.to;
         const value = this.payload.value;
 
-        const receipt = await this.ctx.wallet.sendTransaction(from, to, value);
+        const receipt = await sendTransaction({to, value});
         const transactionHash = receipt.transactionHash;
 
         return this._response({transactionHash});
@@ -41,7 +41,9 @@ class WalletController extends PointSDKController {
     }
 
     async balance() {
-        const balance = (await blockchain.getBalance(this.defaultWallet.address)).toString();
+        const balance = (
+            await blockchain.getBalance({address: this.defaultWallet.address})
+        ).toString();
 
         // return the wallet balance
         return this._response({balance});
@@ -64,7 +66,7 @@ class WalletController extends PointSDKController {
             currency_name: 'Point',
             currency_code: 'POINT',
             address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
-            balance: await this.ctx.wallet.getNetworkAccountBalanceInEth()
+            balance: (await getBalance()) / 1e18
         });
         return this._response({wallets});
     }

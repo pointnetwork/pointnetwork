@@ -148,6 +148,60 @@ const solana = {
             );
         }
         return res.data;
+    },
+    sendFunds: async ({to, lamports, network}: {
+        to: string;
+        lamports: number;
+        network: string;
+    }) => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network ${network}`);
+        }
+        const {connection, wallet} = provider;
+
+        const toPubkey = new web3.PublicKey(to);
+
+        const transaction = new web3.Transaction();
+        transaction.add(
+            web3.SystemProgram.transfer({
+                fromPubkey: wallet.publicKey,
+                toPubkey,
+                lamports
+            })
+        );
+
+        return web3.sendAndConfirmTransaction(
+            connection,
+            transaction,
+            [wallet]
+        );
+    },
+    getBalance: async (network: string) => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network ${network}`);
+        }
+        const {connection, wallet} = provider;
+
+        return connection.getBalance(wallet.publicKey);
+    },
+    getSignaturesForAddress: async ({
+        address,
+        network
+    }: {
+        address: string;
+        network: string;
+    }) => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network ${network}`);
+        }
+        const {connection} = provider;
+
+        const pubKey = new web3.PublicKey(address);
+
+        return connection.getSignaturesForAddress(pubKey);
     }
 };
 
