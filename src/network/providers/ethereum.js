@@ -588,7 +588,7 @@ ethereum.registerVerified = async (
         // todo: validate identity and address
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
-        const contract = await blockchain.loadIdentityContract();
+        const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
 
         const method = contract.methods.registerVerified(
@@ -603,7 +603,7 @@ ethereum.registerVerified = async (
         );
 
         log.debug({identity, address}, 'Registering identity');
-        const result = await blockchain.web3send(method);
+        const result = await ethereum.web3send(method);
         log.info(result, 'Identity registration result');
         log.sendMetric({
             identityRegistration: {
