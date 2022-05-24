@@ -1,9 +1,8 @@
 import config from 'config';
 import ethereum from '../network/providers/ethereum';
-import {getNetworkAddress, getSecretPhrase} from './keystore';
+import {getNetworkAddress, getSolanaKeyPair} from './keystore';
 import solana from '../network/providers/solana';
-import {Keypair, LAMPORTS_PER_SOL} from '@solana/web3.js';
-import {mnemonicToSeedSync} from 'bip39';
+import {LAMPORTS_PER_SOL} from '@solana/web3.js';
 
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
 
@@ -76,11 +75,7 @@ export const getTransactions = async ({network = 'ynet'}) => {
                 network
             });
         case 'solana':
-
-            // TODO: avoid using secret phrase here
-            const seed = mnemonicToSeedSync(getSecretPhrase());
-            const keypair = Keypair
-                .fromSeed(Uint8Array.from(seed.toJSON().data.slice(0, 32)));
+            const keypair = getSolanaKeyPair();
 
             return solana.getSignaturesForAddress({
                 address: keypair.publicKey.toString(),

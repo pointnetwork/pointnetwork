@@ -1,6 +1,5 @@
 import * as web3 from '@solana/web3.js';
-import {mnemonicToSeedSync} from 'bip39';
-import {getSecretPhrase} from '../../wallet/keystore';
+import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
 const logger = require('../../core/log');
@@ -40,11 +39,6 @@ const createSolanaConnection = (blockchainUrl: string) => {
     return connection;
 };
 
-const createSolanaWallet = () => {
-    const seed = mnemonicToSeedSync(getSecretPhrase());
-    return web3.Keypair.fromSeed(Uint8Array.from(seed.toJSON().data.slice(0, 32)));
-};
-
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
 const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypair}> =
     Object.keys(networks)
@@ -54,7 +48,7 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
                 ...acc,
                 [cur]: {
                     connection: createSolanaConnection(networks[cur].address),
-                    wallet: createSolanaWallet()
+                    wallet: getSolanaKeyPair()
                 }
             }),
             {}
@@ -188,10 +182,16 @@ const solana = {
     },
     getSignaturesForAddress: async ({
         address,
-        network
+        network,
+        before,
+        until,
+        limit = 1
     }: {
         address: string;
         network: string;
+        before?: string;
+        until?: string;
+        limit?: number;
     }) => {
         const provider = providers[network];
         if (!provider) {
@@ -201,7 +201,7 @@ const solana = {
 
         const pubKey = new web3.PublicKey(address);
 
-        return connection.getSignaturesForAddress(pubKey);
+        return connection.getSignaturesForAddress(pubKey, {before, until, limit});
     }
 };
 

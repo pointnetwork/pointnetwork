@@ -5,6 +5,8 @@ import path from 'path';
 import config from 'config';
 import Wallet, {hdkey} from 'ethereumjs-wallet';
 import * as bip39 from 'bip39';
+import {mnemonicToSeedSync} from 'bip39';
+import {Keypair} from '@solana/web3.js';
 
 const keystorePath: string = resolveHome(config.get('wallet.keystore_path'));
 
@@ -38,6 +40,11 @@ export function getNetworkPrivateKey() {
 export function getSecretPhrase() {
     return getWallet().secretPhrase;
 }
+
+export const getSolanaKeyPair = () => {
+    const seed = mnemonicToSeedSync(getSecretPhrase());
+    return Keypair.fromSeed(Uint8Array.from(seed.toJSON().data.slice(0, 32)));
+};
 
 // TODO: restore if needed
 // function getArweaveKeyFactory() {

@@ -38,7 +38,7 @@ describe('Wallet', () => {
         expect(txs).toEqual(expect.any(Array));
     });
 
-    // TODO: this is endless
+    // TODO: this is not working
     // it('Get solana transactions', async () => {
     //     expect.assertions(1);
     //     const txs = await getTransactions({network: 'solana_devnet'});
