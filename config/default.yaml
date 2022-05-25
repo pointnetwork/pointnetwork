@@ -58,12 +58,6 @@ zproxy:
   redirect_to_https: true
 wallet:
   keystore_path: ~/.point/keystore
-  solana_main_endpoint: https://still-billowing-smoke.solana-mainnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
-  solana_dev_endpoint:  https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
-  solana_dev_standard_endpoint:  https://api.devnet.solana.com/
-  solana_test_endpoint: https://still-billowing-smoke.solana-testnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
-  id: 58225300-cf00-494a-be15-8a15e42d3758 # TODO: remove
-  passcode: BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9 # TODO: remove
 network:
   contracts_path: contracts
   web3:
@@ -73,9 +67,9 @@ network:
     rinkeby:
       type: "eth"
       address: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa" # TODO: project ID
-#    solana_devnet:
-#      type: "solana"
-#      address: "https://api.devnet.solana.com"
+    solana_devnet:
+      type: "solana"
+      address: "https://api.devnet.solana.com"
   web3_call_retry_limit: 4
   identity_contract_address: "0x1574E97F7a60c4eE518f6d7c0Fa701eff8Ab58b3"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"

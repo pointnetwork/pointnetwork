@@ -1,6 +1,5 @@
 import * as web3 from '@solana/web3.js';
-import {mnemonicToSeedSync} from 'bip39';
-import {getSecretPhrase} from '../../wallet/keystore';
+import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
 const logger = require('../../core/log');
@@ -40,11 +39,6 @@ const createSolanaConnection = (blockchainUrl: string) => {
     return connection;
 };
 
-const createSolanaWallet = () => {
-    const seed = mnemonicToSeedSync(getSecretPhrase());
-    return web3.Keypair.fromSeed(Uint8Array.from(seed.toJSON().data.slice(0, 32)));
-};
-
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
 const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypair}> =
     Object.keys(networks)
@@ -54,7 +48,7 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
                 ...acc,
                 [cur]: {
                     connection: createSolanaConnection(networks[cur].address),
-                    wallet: createSolanaWallet()
+                    wallet: getSolanaKeyPair()
                 }
             }),
             {}
@@ -148,6 +142,66 @@ const solana = {
             );
         }
         return res.data;
+    },
+    sendFunds: async ({to, lamports, network}: {
+        to: string;
+        lamports: number;
+        network: string;
+    }) => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network ${network}`);
+        }
+        const {connection, wallet} = provider;
+
+        const toPubkey = new web3.PublicKey(to);
+
+        const transaction = new web3.Transaction();
+        transaction.add(
+            web3.SystemProgram.transfer({
+                fromPubkey: wallet.publicKey,
+                toPubkey,
+                lamports
+            })
+        );
+
+        return web3.sendAndConfirmTransaction(
+            connection,
+            transaction,
+            [wallet]
+        );
+    },
+    getBalance: async (network: string) => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network ${network}`);
+        }
+        const {connection, wallet} = provider;
+
+        return connection.getBalance(wallet.publicKey);
+    },
+    getSignaturesForAddress: async ({
+        address,
+        network,
+        before,
+        until,
+        limit = 1
+    }: {
+        address: string;
+        network: string;
+        before?: string;
+        until?: string;
+        limit?: number;
+    }) => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network ${network}`);
+        }
+        const {connection} = provider;
+
+        const pubKey = new web3.PublicKey(address);
+
+        return connection.getSignaturesForAddress(pubKey, {before, until, limit});
     }
 };
 

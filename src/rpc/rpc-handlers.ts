@@ -65,7 +65,12 @@ const confirmTransaction: HandlerFunc = async data => {
 
         switch (networks[network].type) {
             case 'eth':
-                result = await ethereum.send('eth_sendTransaction', tx.params, id, network);
+                result = await ethereum.send({
+                    method: 'eth_sendTransaction',
+                    params: tx.params,
+                    id,
+                    network
+                });
                 break;
             case 'solana':
                 result = await solana.signAndSendTransaction(
@@ -98,7 +103,7 @@ const specialHandlers: Record<string, HandlerFunc> = {
     eth_requestAccounts: async data => {
         const {params, id, network} = data;
         try {
-            const result = await ethereum.send('eth_accounts', params, id, network);
+            const result = await ethereum.send({method: 'eth_accounts', params, id, network});
             return {status: 200, result};
         } catch (err) {
             const statusCode = err.code === -32603 ? 500 : 400;
@@ -206,7 +211,7 @@ const handleRPC: HandlerFunc = async data => {
         let result;
         switch (networks[network].type) {
             case 'eth':
-                result = await ethereum.send(method, params, id, network);
+                result = await ethereum.send({method, params, id, network});
                 break;
             case 'solana':
                 result = await solana.send({method, params, id, network});
