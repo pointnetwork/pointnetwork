@@ -56,8 +56,9 @@ const config = {
         },
         ynet: {
             url: 'http://ynet.point.space:44444',
-            accounts:
-                ynetPrivateKey
+            gasPrice: 10000,
+            gas: 100000,            
+            accounts:[ynetPrivateKey]
         }
     },
     defaultNetwork: defaultNetwork
