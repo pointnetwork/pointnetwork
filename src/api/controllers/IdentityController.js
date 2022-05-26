@@ -287,17 +287,8 @@ class IdentityController extends PointSDKController {
     }
 
     async resolveDomain() {
-        const SUPPORTED_NAME_SERVICES = ['sns', 'ens'];
         const SUPPORTED_TLD = ['.sol', '.eth'];
-
-        const {service, domain} = this.req.params;
-
-        if (!SUPPORTED_NAME_SERVICES.includes(service)) {
-            const status = 400;
-            const errorMsg = `Unsupported name service "${service}".`;
-            this.rep.status(status);
-            return this._status(status)._response({errorMsg});
-        }
+        const {domain} = this.req.params;
 
         const tld = SUPPORTED_TLD.find(tld => domain.endsWith(tld));
         if (!tld) {
@@ -309,15 +300,15 @@ class IdentityController extends PointSDKController {
 
         try {
             let registry;
-            switch (service) {
-                case 'sns':
+            switch (tld) {
+                case '.sol':
                     registry = await solana.resolveDomain(domain);
                     break;
-                case 'ens':
+                case '.eth':
                     registry = await blockchain.resolveDomain(domain);
                     break;
                 default:
-                    throw new Error(`Did not find a blockchain client for service "${service}"`);
+                    throw new Error(`Did not find a blockchain client for "${tld}" domains.`);
             }
             return this._response(registry);
         } catch (err) {

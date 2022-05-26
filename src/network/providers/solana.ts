@@ -7,7 +7,7 @@ const logger = require('../../core/log');
 const log = logger.child({module: 'SolanaProvider'});
 
 // Address of the `.sol` TLD
-const SOL_TLD_AUTHORITY = new web3.PublicKey('58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx');
+const SOL_TLD_AUTHORITY = new web3.PublicKey(config.get('name_services.sol_tld_authority'));
 
 // These interfaces are copied from @solana/web3
 // However, they are not exported in index file, and trying to import them leads to
