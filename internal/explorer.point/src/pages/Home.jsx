@@ -7,7 +7,6 @@ import appLogo from '../assets/pointlogo.png'
 import bountyLogo from '../assets/pointcoin.png';
 import Markdown from 'markdown-to-jsx';
 import ArrowForward from '@material-ui/icons/ArrowForward';
-import Swal from 'sweetalert2';
 
 export default function Home() {
   const { walletIdentity } = useAppContext();
@@ -55,32 +54,6 @@ export default function Home() {
     setIsLoading(false);
   }
 
-  const openWeb2Url = async (url) => {
-    const result = await Swal.fire({  
-      title: `Do you want to follow this link to web2?`,  
-      html: `${url}`,
-      showCancelButton: true,
-      confirmButtonText: 'Follow the link!',
-    });
-
-    if (result.isConfirmed) {    
-      const csrf_token = window.localStorage.getItem('csrf_token');
-      const response = await fetch('/v1/api/web2/open', {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({urlToOpen: url, csrfToken: csrf_token})
-      });
-      if(!response.ok){
-        Swal.fire({title: "Error", html: "Invalid request or CSRF token, try to refresh the page and after that click on the link again."});
-        return;
-      }
-    } 
-    
-  }
-
   const renderZappEntry = (k) => {
     return (
       <a href={ 'https://' + k } target="_blank">
@@ -113,15 +86,15 @@ export default function Home() {
 
         {isLoadingMD ? <Loading /> : <Markdown>{markdown}</Markdown>} 
 
-        <div className="bounty-banner" onClick={() => openWeb2Url('https://bounty.pointnetwork.io/')}>
-          <div className="bounty-banner-inner">
-            <div className="bounty-banner-header">
-              <img src={bountyLogo} />
-              <h2>Point <span>Bounty Program</span></h2>
+          <div className="bounty-banner" onClick={() => window.open('https://bounty.pointnetwork.io/','_blank')}>
+            <div className="bounty-banner-inner">
+              <div className="bounty-banner-header">
+                <img src={bountyLogo} />
+                <h2>Point <span>Bounty Program</span></h2>
+              </div>
+              <ArrowForward fontSize="medium" />
             </div>
-            <ArrowForward fontSize="medium" />
           </div>
-        </div>
 
         <h5>Explore featured Apps</h5>
         {isLoading ? <Loading /> : zappsList}

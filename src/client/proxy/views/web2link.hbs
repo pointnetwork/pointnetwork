@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <style>
+             /* unvisited link */
+            a:link {
+            color: #e8e8e8;
+            }
+
+            /* visited link */
+            a:visited {
+            color: #e8e8e8;
+            }
+
+            /* mouse over link */
+            a:hover {
+            color: #e8e8e8;
+            }
+
+            /* selected link */
+            a:active {
+            color: #e8e8e8;
+            } 
+        </style>
+    </head>
+
+<body style='background-color: #222233;'>
+  <div style='text-align:center; margin-top: 20%;'>
+    <h1 style='font-size: 30px; color: #ccc; margin: 0; padding: 0;'>
+      Are you sure you want to follow the link to web2? <br/>
+    </h1>
+    <div style='font-size: 20px;padding: 0 20%; color: #e8e8e8; margin-top: 10px; font-family: sans-serif;'>
+        Click the link bellow to go to web2.<br/>
+        <strong>URL: </strong>
+        <a href="#" onclick="javascript:openWeb2Url('http://{{url}}')">{{ url }}</a>
+    </div>
+  </div>
+  <script>
+      function openWeb2Url(url){
+        fetch('/v1/api/web2/open', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({urlToOpen: url})
+        });
+    }
+  </script>
+</body>
+
+</html>
