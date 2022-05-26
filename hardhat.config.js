@@ -34,6 +34,15 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     defaultNetwork = 'ynet';
 }
 
+const ynetConfig = {
+    url: 'http://ynet.point.space:44444',
+    gasPrice: 10000,
+    gas: 100000,            
+}
+if (ynetPrivateKey){
+    ynetConfig.accounts = [ynetPrivateKey];
+}
+
 const config = {
     solidity: {
         compilers: [
@@ -54,12 +63,7 @@ const config = {
             accounts:
             [privateKey]
         },
-        ynet: {
-            url: 'http://ynet.point.space:44444',
-            gasPrice: 10000,
-            gas: 100000,            
-            accounts:[ynetPrivateKey]
-        }
+        ynet: ynetConfig
     },
     defaultNetwork: defaultNetwork
 };
