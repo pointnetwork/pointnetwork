@@ -243,7 +243,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 return file;
             }
         } else {
-            if(host){
+            if (host){
                 res.header('content-type', 'text/html');
                 return templateManager.render(Template.WEB2LINK, {url: host});
             }
