@@ -1,5 +1,6 @@
 const PointSDKController = require('./PointSDKController');
 const blockchain = require('../../network/providers/ethereum');
+const solana = require('../../network/providers/solana');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
@@ -43,20 +44,22 @@ let TwitterOracle = {
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        const oracleUrl = `${twitterOracleDomain}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(url)}`;
+        const oracleUrl = `${twitterOracleDomain}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(
+            url
+        )}`;
         log.info(`calling to ${oracleUrl}`);
         const {data} = await axios.post(oracleUrl);
         return data;
     }
 };
 
-if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.env.USE_ORACLE === 'true')) {
+if (
+    (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') &&
+    !(process.env.USE_ORACLE === 'true')
+) {
     TwitterOracle = {
         async isIdentityEligible(identity) {
-            log.info(
-                {identity},
-                'isIdentityEligible mock called'
-            );
+            log.info({identity}, 'isIdentityEligible mock called');
             if (/^tweet/g.test(identity)) {
                 return {eligibility: 'tweet'};
             }
@@ -70,18 +73,12 @@ if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.
         },
 
         async regiterFreeIdentity(identity, address) {
-            log.info(
-                {identity, address},
-                'regiterFreeIdentity mock called'
-            );
+            log.info({identity, address}, 'regiterFreeIdentity mock called');
             return {success: true, v: 'v', r: 'r', s: 's'};
         },
 
         async confirmTwitterValidation(identity, address, url) {
-            log.info(
-                {identity, address, url},
-                'confirmTwitterValidation mock called'
-            );
+            log.info({identity, address, url}, 'confirmTwitterValidation mock called');
             return {success: true, v: 'v', r: 'r', s: 's'};
         }
     };
@@ -103,7 +100,9 @@ function getIdentityActivationCode(owner) {
 function getHashedMessage(identity, owner, type) {
     const lowerCaseOwner = owner.toLowerCase();
     const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
-    const hashedMessage = ethers.utils.id(`${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`);
+    const hashedMessage = ethers.utils.id(
+        `${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`
+    );
     return hashedMessage;
 }
 
@@ -198,16 +197,15 @@ class IdentityController extends PointSDKController {
                 },
                 'Registering a new identity'
             );
-            
-            if ((process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') && !(process.env.USE_ORACLE === 'true')) {
-                await blockchain.registerIdentity(
-                    identity,
-                    owner,
-                    Buffer.from(publicKey, 'hex')
-                );
+
+            if (
+                (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') &&
+                !(process.env.USE_ORACLE === 'true')
+            ) {
+                await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
             } else {
                 const hashedMessage = getHashedMessage(identity, owner, type);
-                
+
                 await blockchain.registerVerified(
                     identity,
                     owner,
@@ -227,7 +225,10 @@ class IdentityController extends PointSDKController {
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
 
             try {
-                if (!(process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') || (process.env.USE_ORACLE === 'true')) {
+                if (
+                    !(process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') ||
+                    process.env.USE_ORACLE === 'true'
+                ) {
                     await registerBountyReferral(owner, type);
                 }
             } catch (error) {
@@ -283,6 +284,44 @@ class IdentityController extends PointSDKController {
         }
 
         return this._response({eligibility, reason});
+    }
+
+    async resolveDomain() {
+        const SUPPORTED_TLD = ['.sol', '.eth'];
+        const {domain} = this.req.params;
+
+        const tld = SUPPORTED_TLD.find(tld => domain.endsWith(tld));
+        if (!tld) {
+            const status = 400;
+            const errorMsg = `Unsupported TLD in "${domain}".`;
+            this.rep.status(status);
+            return this._status(status)._response({errorMsg});
+        }
+
+        try {
+            let registry;
+            switch (tld) {
+                case '.sol':
+                    registry = await solana.resolveDomain(domain);
+                    break;
+                case '.eth':
+                    registry = await blockchain.resolveDomain(domain);
+                    break;
+                default:
+                    throw new Error(`Did not find a blockchain client for "${tld}" domains.`);
+            }
+            return this._response(registry);
+        } catch (err) {
+            if (err.message === 'Invalid name account provided') {
+                const status = 400;
+                const errorMsg = `No address found for domain name "${domain}".`;
+                this.rep.status(status);
+                return this._status(status)._response({errorMsg});
+            }
+            const status = 500;
+            this.rep.status(status);
+            return this._status(status)._response({errorMsg: err.message});
+        }
     }
 }
 
