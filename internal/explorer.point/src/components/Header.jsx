@@ -19,14 +19,14 @@ const Header = ({isRegistered}) => {
                     <Nav className="me-auto">
                     {isRegistered ?
                         <>
-                            <Link to='/wallet'>
+                            {/*<Link to='/wallet'>
                                 <Nav.Link href="/wallet">Wallet</Nav.Link>
+                            </Link>*/}
+                            <Link to='/zapps'>
+                                <Nav.Link href="/zapps">Apps</Nav.Link>
                             </Link>
                             <Link to='/identities'>
                                 <Nav.Link href="/identities">Identities</Nav.Link>
-                            </Link>
-                            <Link to='/zapps'>
-                                <Nav.Link href="/zapps">Apps</Nav.Link>
                             </Link>
                             <Link to='/myidentities'>
                                 <Nav.Link href="/myidentities">My Identities</Nav.Link>
