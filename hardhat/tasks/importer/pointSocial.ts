@@ -34,7 +34,7 @@ task("pointsocial-importer", "Will download and upload data to point  pointSocia
     }
 
     if(taskArgs.action == "download") {
-        const zappHandle = 'pointsocial';
+        const zappHandle = 'social';
 
         const fileStructure = {
             posts: []
