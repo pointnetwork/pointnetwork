@@ -15,6 +15,8 @@ import {detectContentType} from 'detect-content-type';
 import config from 'config';
 import {Template, templateManager} from '../templateManager';
 
+import {getMirrorWeb2Page} from './mirror';
+
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');
 const log = logger.child({module: 'ZProxy'});
 const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: FastifyReply) => {
@@ -243,7 +245,18 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 return file;
             }
         } else {
-            if (host){
+            if (host) {
+                let urlMirrorUrl;
+
+                try {
+                    urlMirrorUrl = await getMirrorWeb2Page(req);
+                } catch (error) {}
+
+                if (urlMirrorUrl) {
+                    res.redirect(urlMirrorUrl);
+                    return;
+                }
+
                 res.header('content-type', 'text/html');
                 return templateManager.render(Template.WEB2LINK, {url: host});
             }
