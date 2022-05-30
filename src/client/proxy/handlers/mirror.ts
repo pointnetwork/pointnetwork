@@ -1,9 +1,11 @@
 import {parse} from 'query-string';
 import {FastifyRequest} from 'fastify';
 import blockchain from '../../../network/providers/ethereum';
+import config from 'config';
 const {getJSON, getFileIdByPath} = require('../../storage');
 
-const CACHE_EXPIRATION = 1000 * 60 * 5; // FIVE MINUTES
+const CACHE_EXPIRATION =
+    parseInt(config.get('storage.mirror_cache_expiration'), 10) || 1000 * 60 * 5;
 
 type MirrorEntry = {
     id: string;
