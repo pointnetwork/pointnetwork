@@ -29148,7 +29148,6 @@ function Home() {
         setIsLoadingMD(true);
         try {
             let id = await window.point.contract.call({
-                host: '@',
                 contract: 'Identity',
                 method: 'ikvGet',
                 params: [
@@ -29171,7 +29170,6 @@ function Home() {
         let zappsDeployed = [];
         for(let k in featuredZapps){
             let zappRoutes = await window.point.contract.call({
-                host: '@',
                 contract: 'Identity',
                 method: 'ikvGet',
                 params: [
@@ -29183,18 +29181,6 @@ function Home() {
         }
         setZapps(zappsDeployed);
         setIsLoading(false);
-    };
-    const openWeb2Url = (url)=>{
-        fetch('/v1/api/web2/open', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                urlToOpen: url
-            })
-        });
     };
     const renderZappEntry = (k)=>{
         return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("a", {
@@ -29214,12 +29200,12 @@ function Home() {
                             }
                         }, void 0, false, {
                             fileName: "src/pages/Home.jsx",
-                            lineNumber: 73,
+                            lineNumber: 62,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "src/pages/Home.jsx",
-                        lineNumber: 72,
+                        lineNumber: 61,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -29228,23 +29214,23 @@ function Home() {
                             children: featuredZapps[k]
                         }, void 0, false, {
                             fileName: "src/pages/Home.jsx",
-                            lineNumber: 78,
+                            lineNumber: 67,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "src/pages/Home.jsx",
-                        lineNumber: 77,
+                        lineNumber: 66,
                         columnNumber: 11
                     }, this)
                 ]
             }, k, true, {
                 fileName: "src/pages/Home.jsx",
-                lineNumber: 71,
+                lineNumber: 60,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "src/pages/Home.jsx",
-            lineNumber: 70,
+            lineNumber: 59,
             columnNumber: 7
         }, this));
     };
@@ -29252,7 +29238,7 @@ function Home() {
         children: "No Apps deployed yet."
     }, void 0, false, {
         fileName: "src/pages/Home.jsx",
-        lineNumber: 85,
+        lineNumber: 74,
         columnNumber: 19
     }, this);
     if (zapps.length > 0) zappsList = /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
@@ -29261,7 +29247,7 @@ function Home() {
         )
     }, void 0, false, {
         fileName: "src/pages/Home.jsx",
-        lineNumber: 87,
+        lineNumber: 76,
         columnNumber: 17
     }, this);
     return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV(_jsxDevRuntime.Fragment, {
@@ -29271,13 +29257,13 @@ function Home() {
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 94,
+                    lineNumber: 83,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("br", {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 95,
+                    lineNumber: 84,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h1", {
@@ -29290,37 +29276,37 @@ function Home() {
                                 !walletIdentity ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                                 }, void 0, false, {
                                     fileName: "src/pages/Home.jsx",
-                                    lineNumber: 96,
+                                    lineNumber: 85,
                                     columnNumber: 80
                                 }, this) : walletIdentity
                             ]
                         }, void 0, true, {
                             fileName: "src/pages/Home.jsx",
-                            lineNumber: 96,
+                            lineNumber: 85,
                             columnNumber: 52
                         }, this),
                         "!"
                     ]
                 }, void 0, true, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 96,
+                    lineNumber: 85,
                     columnNumber: 9
                 }, this),
                 isLoadingMD ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 98,
+                    lineNumber: 87,
                     columnNumber: 24
                 }, this) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_markdownToJsxDefault.default, {
                     children: markdown
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 98,
+                    lineNumber: 87,
                     columnNumber: 38
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
                     className: "bounty-banner",
-                    onClick: ()=>openWeb2Url('https://bounty.pointnetwork.io/')
+                    onClick: ()=>window.open('https://bounty.pointnetwork.io/', '_blank')
                     ,
                     children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
                         className: "bounty-banner-inner",
@@ -29332,8 +29318,8 @@ function Home() {
                                         src: _pointcoinPngDefault.default
                                     }, void 0, false, {
                                         fileName: "src/pages/Home.jsx",
-                                        lineNumber: 103,
-                                        columnNumber: 15
+                                        lineNumber: 92,
+                                        columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h2", {
                                         children: [
@@ -29342,56 +29328,56 @@ function Home() {
                                                 children: "Bounty Program"
                                             }, void 0, false, {
                                                 fileName: "src/pages/Home.jsx",
-                                                lineNumber: 104,
-                                                columnNumber: 25
+                                                lineNumber: 93,
+                                                columnNumber: 27
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "src/pages/Home.jsx",
-                                        lineNumber: 104,
-                                        columnNumber: 15
+                                        lineNumber: 93,
+                                        columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "src/pages/Home.jsx",
-                                lineNumber: 102,
-                                columnNumber: 13
+                                lineNumber: 91,
+                                columnNumber: 15
                             }, this),
                             /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_arrowForwardDefault.default, {
                                 fontSize: "medium"
                             }, void 0, false, {
                                 fileName: "src/pages/Home.jsx",
-                                lineNumber: 106,
-                                columnNumber: 13
+                                lineNumber: 95,
+                                columnNumber: 15
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "src/pages/Home.jsx",
-                        lineNumber: 101,
-                        columnNumber: 11
+                        lineNumber: 90,
+                        columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 100,
-                    columnNumber: 9
+                    lineNumber: 89,
+                    columnNumber: 11
                 }, this),
                 /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h5", {
                     children: "Explore featured Apps"
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 110,
+                    lineNumber: 99,
                     columnNumber: 9
                 }, this),
                 isLoading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
                 }, void 0, false, {
                     fileName: "src/pages/Home.jsx",
-                    lineNumber: 111,
+                    lineNumber: 100,
                     columnNumber: 22
                 }, this) : zappsList
             ]
         }, void 0, true, {
             fileName: "src/pages/Home.jsx",
-            lineNumber: 93,
+            lineNumber: 82,
             columnNumber: 7
         }, this)
     }, void 0, false));
@@ -52426,7 +52412,7 @@ $RefreshReg$(_c, "Zapps");
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 const reportWebVitals = (onPerfEntry)=>{
-    if (onPerfEntry && onPerfEntry instanceof Function) require("d89c16724fdabea4").then(({ getCLS , getFID , getFCP , getLCP , getTTFB  })=>{
+    if (onPerfEntry && onPerfEntry instanceof Function) require("68509a75770ad537").then(({ getCLS , getFID , getFCP , getLCP , getTTFB  })=>{
         getCLS(onPerfEntry);
         getFID(onPerfEntry);
         getFCP(onPerfEntry);
@@ -52436,7 +52422,7 @@ const reportWebVitals = (onPerfEntry)=>{
 };
 exports.default = reportWebVitals;
 
-},{"d89c16724fdabea4":"flqhl","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV"}],"flqhl":[function(require,module,exports) {
+},{"68509a75770ad537":"flqhl","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV"}],"flqhl":[function(require,module,exports) {
 module.exports = require("./helpers/browser/js-loader")(require('./helpers/bundle-url').getBundleURL('ePakp') + "web-vitals.180b7c56.js" + "?" + Date.now()).catch((err)=>{
     delete module.bundle.cache[module.id];
     throw err;

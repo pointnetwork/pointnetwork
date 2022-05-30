@@ -13,6 +13,7 @@ import {getContentTypeFromExt, getParamsAndTemplate} from '../proxyUtils';
 // @ts-expect-error no types for package
 import {detectContentType} from 'detect-content-type';
 import config from 'config';
+import {Template, templateManager} from '../templateManager';
 
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');
 const log = logger.child({module: 'ZProxy'});
@@ -242,6 +243,10 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 return file;
             }
         } else {
+            if (host){
+                res.header('content-type', 'text/html');
+                return templateManager.render(Template.WEB2LINK, {url: host});
+            }
             res.status(404).send('Not Found');
         }
     } catch (e) {
