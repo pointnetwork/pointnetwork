@@ -41,5 +41,5 @@ export async function getMirrorWeb2Page(req: FastifyRequest) {
     if (!urlMirror) {
         return;
     }
-    return `https://mirror.point/data/${urlMirror.id}${urlData ? `?${urlData.query}` : ''}`;
+    return `https://mirror.point/data/${urlMirror.id}${urlData.query ? `?${urlData.query}` : ''}`;
 }
