@@ -41,12 +41,8 @@ class WalletController extends PointSDKController {
     }
 
     async balance() {
-        const balance = (
-            await blockchain.getBalance({address: this.defaultWallet.address})
-        ).toString();
-
         // return the wallet balance
-        return this._response({balance});
+        return this._response({balance: await getBalance({network: this.req.query.network})});
     }
 
     hash() {
@@ -66,7 +62,7 @@ class WalletController extends PointSDKController {
             currency_name: 'Point',
             currency_code: 'POINT',
             address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
-            balance: (await getBalance()) / 1e18
+            balance: (await getBalance({})) / 1e18
         });
         return this._response({wallets});
     }
