@@ -3,7 +3,7 @@ const open = require('open');
 
 class Web2Controller extends PointSDKController {
     constructor(ctx, req, reply) {
-        super(ctx, req);
+        super(ctx, req, true);
         this.req = req;
         this.host = this.req.headers.host;
 

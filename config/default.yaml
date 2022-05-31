@@ -36,6 +36,7 @@ storage:
   concurrent_validation_limit: 10
   upload_loop_interval: 2000
   request_timeout: 30000
+  mirror_cache_expiration: 300000
   upload_expire: 60000
   upload_retry_limit: 3
   files_path: files
