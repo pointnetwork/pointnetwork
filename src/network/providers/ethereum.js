@@ -13,6 +13,7 @@ const logger = require('../../core/log');
 const log = logger.child({module: 'EthereumProvider'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore');
 const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util');
+const {createCache} = require('../../util/cache');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -453,11 +454,14 @@ ethereum.isIdentityDeployer = async (identity, address) => {
     }
 };
 
+const zRecordCache = createCache();
+
 ethereum.getZRecord = async (domain, version = 'latest') => {
     domain = domain.replace('.point', ''); // todo: rtrim instead
-    let result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
-    if (result != null && result.substr(0, 2) === '0x') result = result.substr(2);
-    return result;
+    return zRecordCache.get(`${domain}-${ZDNS_ROUTES_KEY}-${version}`, async () => {
+        const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
+        return result?.substr(0, 2) === '0x' ? result.substr(2) : result;
+    });
 };
 
 ethereum.putZRecord = async (domain, routesFile, version) => {
@@ -511,6 +515,8 @@ ethereum.getLastVersionOrBefore = (version, events) => {
     }
 };
 
+const keyValueCache = createCache();
+
 ethereum.getKeyValue = async (
     identity,
     key,
@@ -525,33 +531,34 @@ ethereum.getKeyValue = async (
             throw Error('blockchain.getKeyValue(): version must be a string');
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
-
+        const baseKey = `${identity}-${key}`;
         if (version === 'latest') {
-            const contract = await ethereum.loadIdentityContract();
-            const result = await contract.methods.ikvGet(identity, key).call();
-            return result;
+            return keyValueCache.get(baseKey, async() => {
+                const contract = await ethereum.loadIdentityContract();
+                return contract.methods.ikvGet(identity, key).call();
+            });
         } else {
+            const cacheKey = `${baseKey}-${version}`;
             if (versionSearchStrategy === 'exact') {
-                const filter = {identity: identity, key: key, version: version};
-                const events = await ethereum.getPastEvents('@', 'Identity', 'IKVSet', {
-                    filter,
-                    fromBlock: 0,
-                    toBlock: 'latest'
+                return cache.get(cacheKey, async () => {
+                    const filter = {identity: identity, key: key, version: version};
+                    const events = await ethereum.getPastEvents('@', 'Identity', 'IKVSet', {
+                        filter,
+                        fromBlock: 0,
+                        toBlock: 'latest'
+                    });
+                    return events.length > 0 ? events[0].returnValues.value : null;
                 });
-                if (events.length > 0) {
-                    return events[0].returnValues.value;
-                } else {
-                    return null;
-                }
             } else if (versionSearchStrategy === 'equalOrBefore') {
-                const filter = {identity: identity, key: key};
-                const events = await ethereum.getPastEvents('@', 'Identity', 'IKVSet', {
-                    filter,
-                    fromBlock: 0,
-                    toBlock: 'latest'
+                return cache.get(cacheKey, async () => {
+                    const filter = {identity: identity, key: key};
+                    const events = await ethereum.getPastEvents('@', 'Identity', 'IKVSet', {
+                        filter,
+                        fromBlock: 0,
+                        toBlock: 'latest'
+                    });
+                    return ethereum.getLastVersionOrBefore(version, events);
                 });
-                const value = ethereum.getLastVersionOrBefore(version, events);
-                return value;
             } else {
                 return null;
             }
@@ -570,6 +577,7 @@ ethereum.putKeyValue = async (identity, key, value, version) => {
         const method = contract.methods.ikvPut(identity, key, value, version);
         log.debug({identity, key, value, version}, 'Ready to put key value');
         await ethereum.web3send(method);
+        cache.delStartWith(`${identity}-${key}`);
     } catch (e) {
         log.error({error: e, stack: e.stack, identity, key, value, version}, 'putKeyValue error');
         throw e;

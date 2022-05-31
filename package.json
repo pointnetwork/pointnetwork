@@ -50,6 +50,7 @@
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.32",
+    "node-cache": "^5.1.2",
     "node-forge": "^1.3.0",
     "node-match-path": "^0.6.3",
     "open": "^8.4.0",
