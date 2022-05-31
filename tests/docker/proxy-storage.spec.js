@@ -107,8 +107,8 @@ describe('Storage requests through proxy', () => {
             expect(res.status).toEqual(200);
             expect(res.data).toMatch(/^<html>/);
             expect(res.data).toMatch(`<h1>Index of ${dirId}</h1>`);
-            expect(res.data).toMatch('sample-image-2.jpg;');
-            expect(res.data).toMatch('sample-image-3.jpg;');
+            expect(res.data).toMatch('sample-image-2.jpg');
+            expect(res.data).toMatch('sample-image-3.jpg');
         },
         TIMEOUTS.MD
     );
