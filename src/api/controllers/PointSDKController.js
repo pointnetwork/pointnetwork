@@ -1,14 +1,14 @@
 import config from 'config';
 
 class PointSDKController {
-    constructor(ctx, req) {
+    constructor(ctx, req, web2 = false) {
         this.ctx = ctx;
         this.status = 200;
 
         const host = req.headers.host;
         const method = req.method.toUpperCase();
 
-        if (method === 'POST' && config.get('api.csrf_enabled')) {
+        if (method === 'POST' && config.get('api.csrf_enabled') && !web2) {
             const csrfToken = req.body.csrfToken;
             this.csrfTokenGuard(host, csrfToken);
         }
