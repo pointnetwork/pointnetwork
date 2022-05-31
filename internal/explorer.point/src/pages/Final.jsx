@@ -375,6 +375,11 @@ const Final = () => {
                     Great, this handle doesn’t seem to belong to a Twitter user! You can claim it right now.
                 </div>
             ) : ''}
+
+            {identity && identityAvailable && !error && (!activationCode && (!tweetUrl && !tweetUrlError)) ? (<div style={{display: 'flex', alignItems: 'center'}}>
+                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>Register</button>
+                {registering ? <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> : ''}
+            </div>) : ''}
         </Container>
     )
 }
