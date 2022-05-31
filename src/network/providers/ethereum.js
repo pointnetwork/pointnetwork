@@ -1,5 +1,6 @@
 const path = require('path');
 const Web3 = require('web3');
+const {ethers} = require('ethers');
 const ethereumjs = require('ethereumjs-util');
 const {promises: fs} = require('fs');
 const _ = require('lodash');
@@ -60,6 +61,8 @@ const abisByContractName = {};
 const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
 
 const networks = config.get('network.web3');
+
+// web3.js providers
 const providers = {
     ynet: createWeb3Instance({
         blockchainUrl: networks.ynet.address,
@@ -82,6 +85,22 @@ const getWeb3 = (chain = 'ynet') => {
         });
     }
     return providers[chain];
+};
+
+// ethers providers
+const ethersProviders = {};
+
+const getEthers = chain => {
+    if (!networks[chain] || !networks[chain].address) {
+        throw new Error(`No connection details for chain "${chain}".`);
+    }
+
+    if (!ethersProviders[chain]) {
+        const url = networks[chain].address;
+        ethersProviders[chain] = new ethers.providers.JsonRpcProvider(url);
+    }
+
+    return ethersProviders[chain];
 };
 
 // Client that consolidates all blockchain-related functionality
@@ -812,9 +831,14 @@ ethereum.send = ({method, params = [], id, network}) =>
     });
 
 ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
-    const web3 = getWeb3(network);
-    const owner = await web3.eth.ens.getAddress(domainName);
-    const content = await web3.eth.ens.getContenthash(domainName);
+    const provider = getEthers(network);
+    const resolver = await provider.getResolver(domainName);
+
+    const [owner, content] = await Promise.all([
+        provider.resolveName(domainName),
+        resolver.getText('point')
+    ]);
+
     return {owner, content};
 };
 
