@@ -69,7 +69,7 @@ const Final = () => {
         const regex = new RegExp(`^https://twitter.com/${identity}/status/[0-9]+`, 'i');
 
         if (!regex.test(url)) {
-            setTweetUrlError('The Tweet Url must be a valid tweet status of the same identity name being registered');
+            setTweetUrlError('Cannot recognize the URL. It must be a URL of a tweet, and coming from the same identity handle.');
             return;
         }
 
@@ -335,7 +335,7 @@ const Final = () => {
                     </div>
                 </div>
                 <div>
-                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} className="my-2 p-1 text-medium" />
+                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste the URL of the tweet here when it’s posted" style={{ width: '100%' }} className="my-2 p-1 text-medium" />
                     {tweetUrlError ? (<p className="red text-medium">{tweetUrlError}</p>) : ''}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center'}}>
