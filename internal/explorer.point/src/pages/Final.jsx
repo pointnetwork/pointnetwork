@@ -69,7 +69,7 @@ const Final = () => {
         const regex = new RegExp(`^https://twitter.com/${identity}/status/[0-9]+`, 'i');
 
         if (!regex.test(url)) {
-            setTweetUrlError('The Tweet Url must be a valid tweet status of the same identity name being registered');
+            setTweetUrlError('Cannot recognize the URL. It must be a URL of a tweet, and coming from the same identity handle.');
             return;
         }
 
@@ -335,7 +335,7 @@ const Final = () => {
                     </div>
                 </div>
                 <div class="input-group" style={{ width: '100%' }}>
-                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here"  className="text-medium form-control" />
+                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste the URL of the tweet here when it’s posted"  className="text-medium form-control" />
                     <div class="input-group-append" style={{display: 'flex', alignItems: 'center'}}>
                     {
                         identity && identityAvailable && !error && (!activationCode || (tweetUrl && !tweetUrlError)) 
@@ -356,8 +356,6 @@ const Final = () => {
                         ''
                     }
                     </div>
-                </div>
-                <div>
                     {tweetUrlError ? (<p className="red text-medium">{tweetUrlError}</p>) : ''}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center'}}>

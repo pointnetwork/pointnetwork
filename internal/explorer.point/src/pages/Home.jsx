@@ -54,6 +54,17 @@ export default function Home() {
     setIsLoading(false);
   }
 
+  const openWeb2Url = (url) => {
+    fetch('/v1/api/web2/open', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({urlToOpen: url})
+    });
+  }
+
   const renderZappEntry = (k) => {
     return (
       <a href={ 'https://' + k } target="_blank" rel="noreferrer">
