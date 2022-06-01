@@ -42,6 +42,45 @@ function generateCertificate(servername) {
     ];
     cert.setSubject(attrs);
     cert.setIssuer(caCert.subject.attributes);
+    cert.setExtensions(
+        [
+            {
+                name: 'basicConstraints',
+                critical: true,
+                cA: false
+            },
+            // {
+            //   name: 'keyUsage',
+            //   critical: true,
+            //   digitalSignature: true,
+            //   contentCommitment: true,
+            //   keyEncipherment: true,
+            //   dataEncipherment: true,
+            //   keyAgreement: true,
+            //   keyCertSign: true,
+            //   cRLSign: true,
+            //   encipherOnly: true,
+            //   decipherOnly: true
+            // },
+            {
+                name: 'subjectAltName',
+                altNames: [{
+                    type: 2,
+                    value: servername
+                }]
+            },
+            {name: 'subjectKeyIdentifier'},
+            {
+                name: 'extKeyUsage',
+                serverAuth: true,
+                clientAuth: true,
+                codeSigning: true,
+                emailProtection: true,
+                timeStamping: true
+            },
+            {name: 'authorityKeyIdentifier'}
+        ]
+    );
     // cert.sign(keys.privateKey);
     cert.sign(privateCAKey);
 

@@ -257,7 +257,8 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     return;
                 }
 
-                res.header('content-type', 'text/html');
+                res.status(404).header('content-type', 'text/html');
+
                 return templateManager.render(Template.WEB2LINK, {url: host});
             }
             res.status(404).send('Not Found');

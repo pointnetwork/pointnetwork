@@ -334,8 +334,28 @@ const Final = () => {
                         </div>
                     </div>
                 </div>
-                <div>
-                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste the URL of the tweet here when it’s posted" style={{ width: '100%' }} className="my-2 p-1 text-medium" />
+                <div class="input-group" style={{ width: '100%' }}>
+                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste the URL of the tweet here when it’s posted"  className="text-medium form-control" />
+                    <div class="input-group-append" style={{display: 'flex', alignItems: 'center'}}>
+                    {
+                        identity && identityAvailable && !error && (!activationCode || (tweetUrl && !tweetUrlError)) 
+                        ? 
+                            (
+                                <div style={{display: 'flex', alignItems: 'center'}}>
+                                    <button className="btn btn-info" onClick={registerHandler} disabled={!!registering}>{activationCode ? 'Check Tweet >>' : 'Register'}</button>
+                                    {
+                                        registering 
+                                    ? 
+                                        <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> 
+                                    : 
+                                        ''
+                                    }
+                                </div>
+                            ) 
+                        : 
+                        ''
+                    }
+                    </div>
                     {tweetUrlError ? (<p className="red text-medium">{tweetUrlError}</p>) : ''}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center'}}>
@@ -354,8 +374,8 @@ const Final = () => {
                 </div>
             ) : ''}
 
-            {identity && identityAvailable && !error && (!activationCode || (tweetUrl && !tweetUrlError)) ? (<div style={{display: 'flex', alignItems: 'center'}}>
-                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>{activationCode ? 'Check Tweet >>' : 'Register'}</button>
+            {identity && identityAvailable && !error && (!activationCode && (!tweetUrl && !tweetUrlError)) ? (<div style={{display: 'flex', alignItems: 'center'}}>
+                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>Register</button>
                 {registering ? <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> : ''}
             </div>) : ''}
         </Container>
