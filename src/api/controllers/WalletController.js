@@ -66,7 +66,7 @@ class WalletController extends PointSDKController {
             currency_name: 'Point',
             currency_code: 'POINT',
             address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
-            balance: (await getBalance()) / 1e18
+            balance: (await getBalance({})) / 1e18
         });
         return this._response({wallets});
     }
