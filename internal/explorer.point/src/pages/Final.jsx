@@ -69,7 +69,7 @@ const Final = () => {
         const regex = new RegExp(`^https://twitter.com/${identity}/status/[0-9]+`, 'i');
 
         if (!regex.test(url)) {
-            setTweetUrlError('The Tweet Url must be a valid tweet status of the same identity name being registered');
+            setTweetUrlError('Cannot recognize the URL. It must be a URL of a tweet, and coming from the same identity handle.');
             return;
         }
 
@@ -279,7 +279,7 @@ const Final = () => {
     return (
         <Container className="p-3 text-dark" style={{color: '#353535'}}>
             <br/>
-            <h1>Final step</h1>
+            <h1>🎉 Final step</h1>
             <p className="text-medium">Introduce yourself to the world by registering an identity, which will be your public web3 handle:</p>
 
             <div>
@@ -289,7 +289,7 @@ const Final = () => {
                 </div>
 
                 {!identityAvailable ? (<ul className="text-medium">
-                    <li className="italic my-1">If you have Twitter: <span className="bold">for the first 6 months after the launch</span> (including now) you have a chance to claim your Twitter handle on web3 by <span className="bold">posting an activation tweet</span>, before it can be grabbed by cybersquatters</li>
+                    <li className="italic my-1">If you have Twitter: <span className="bold">for the first 6 months after the launch</span> (including now) you have a chance to claim your Twitter handle on web3 by <span className="bold">posting an activation tweet</span>, before it can be grabbed by cybersquatters. In that case, enter your Twitter handle.</li>
                     <li className="italic my-1">If you don’t have Twitter or has been banned there: you can enter any handle that is not on Twitter</li>
                 </ul>) : ''}
             </div>
@@ -320,6 +320,12 @@ const Final = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center'}} className="py-2">
                         <div className="red text-medium" style={{ paddingRight: '10px', flex: 1, lineBreak: 'anywhere' }}>{tweetContentError}</div>
                         <div style={{ display: 'flex', alignItems: 'center'}}>
+                            <div className="mr-5 green text-small">
+                                <span className="mr-10" style={{ fontStyle: 'italic'}}>
+                                    When you click <strong>Send the Tweet</strong> (or it doesn’t work and you click <strong>Copy</strong> and send it manually), paste the tweet URL below ↓
+                                </span>
+                            </div>
+                            <div style={{ minWidth: '10px' }}></div>
                             <div className={tweetSize > MAX_TWEET_SIZE ? 'red bold text-medium' : 'text-medium'} style={{ flexShrink: 0 }}>{tweetSize} characters</div>
                             <button className="btn btn-primary btn-sm py-2 mx-2" onClick={openTwitterWithMessage} style={{ display: 'flex', alignItems: 'center' }} disabled={tweetTooBig || openingTwitter}>
                                 {openingTwitter ? <Loading style={{ width: '10px', height: '10px', marginRight: '5px' }} /> : <TwitterIcon className="text-large" style={{ marginRight: '5px' }} />}
@@ -328,9 +334,34 @@ const Final = () => {
                         </div>
                     </div>
                 </div>
-                <div>
-                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste your Tweet url here" style={{ width: '100%' }} className="my-2 p-1 text-medium" />
+                <div class="input-group" style={{ width: '100%' }}>
+                    <input type="text" onChange={onChangeUrlHandler} placeholder="Paste the URL of the tweet here when it’s posted"  className="text-medium form-control" />
+                    <div class="input-group-append" style={{display: 'flex', alignItems: 'center'}}>
+                    {
+                        identity && identityAvailable && !error && (!activationCode || (tweetUrl && !tweetUrlError)) 
+                        ? 
+                            (
+                                <div style={{display: 'flex', alignItems: 'center'}}>
+                                    <button className="btn btn-info" onClick={registerHandler} disabled={!!registering}>{activationCode ? 'Check Tweet >>' : 'Register'}</button>
+                                    {
+                                        registering 
+                                    ? 
+                                        <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> 
+                                    : 
+                                        ''
+                                    }
+                                </div>
+                            ) 
+                        : 
+                        ''
+                    }
+                    </div>
                     {tweetUrlError ? (<p className="red text-medium">{tweetUrlError}</p>) : ''}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center'}}>
+                    <span className="text-small">
+                    Do not delete the tweet for at least 24 hours, to prove it was not accidental.
+                    </span>
                 </div>
             </div>) : ''}
 
@@ -343,8 +374,8 @@ const Final = () => {
                 </div>
             ) : ''}
 
-            {identity && identityAvailable && !error && (!activationCode || (tweetUrl && !tweetUrlError)) ? (<div style={{display: 'flex', alignItems: 'center'}}>
-                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>{activationCode ? 'Check Tweet >>' : 'Register'}</button>
+            {identity && identityAvailable && !error && (!activationCode && (!tweetUrl && !tweetUrlError)) ? (<div style={{display: 'flex', alignItems: 'center'}}>
+                <button className="btn btn-info mt-2" onClick={registerHandler} disabled={!!registering}>Register</button>
                 {registering ? <div className="spinner-border text-secondary" role="status" style={{ width: '20px', height: '20px', marginLeft: '5px' }}></div> : ''}
             </div>) : ''}
         </Container>

@@ -9,7 +9,7 @@ const Header = ({isRegistered}) => {
         <>
             <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
                 <Container>
-                <img src={logo} className="imgLogo" /> 
+                <img src={logo} className="imgLogo" alt='Point Network' /> 
                 <Link to='/'>
                     <Navbar.Brand href="/point">Point Network</Navbar.Brand>
                 </Link>
@@ -22,11 +22,11 @@ const Header = ({isRegistered}) => {
                             <Link to='/wallet'>
                                 <Nav.Link href="/wallet">Wallet</Nav.Link>
                             </Link>
-                            <Link to='/identities'>
-                                <Nav.Link href="/identities">Identities</Nav.Link>
-                            </Link>
                             <Link to='/zapps'>
                                 <Nav.Link href="/zapps">Apps</Nav.Link>
+                            </Link>
+                            <Link to='/identities'>
+                                <Nav.Link href="/identities">Identities</Nav.Link>
                             </Link>
                             <Link to='/myidentities'>
                                 <Nav.Link href="/myidentities">My Identities</Nav.Link>

@@ -4,6 +4,17 @@ import $ from 'jquery';
 import Swal from 'sweetalert2';
 import Loading from '../components/Loading';
 
+window.openTelegram = () => {
+    fetch('/v1/api/web2/open', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({urlToOpen: 'https://t.me/pointnetwork'})
+    });
+}
+
 export default function Wallet() {
 
     const [wallets, setWallets] = useState([])
@@ -26,8 +37,7 @@ export default function Wallet() {
         Swal.fire({
             icon: 'info',
             title: 'POINT token doesn\'t exist yet!',
-            text: 'Feel free to join our Telegram group to stay updated about the launch details in the future',
-            // footer: '<a href="">Why do I have this issue?</a>'
+            html: 'Feel free to join <a href="javascript:window.openTelegram()">our Telegram group</a> to stay updated about the launch details in the future',
         })
     }
 
