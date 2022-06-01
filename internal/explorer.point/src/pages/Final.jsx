@@ -119,7 +119,8 @@ const Final = () => {
                     setError(reason);
                 } 
 
-                if (eligibility === 'unavailable' && !reason) {
+                // show an error if the handle is not available
+                if (!['free', 'tweet'].includes(eligibility) && !reason) {
                     setError('Handle is not available.');
                 }
 
