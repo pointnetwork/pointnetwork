@@ -54,20 +54,9 @@ export default function Home() {
     setIsLoading(false);
   }
 
-  const openWeb2Url = (url) => {
-    fetch('/v1/api/web2/open', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({urlToOpen: url})
-    });
-  }
-
   const renderZappEntry = (k) => {
     return (
-      <a href={ 'https://' + k } target="_blank">
+      <a href={ 'https://' + k } target="_blank" rel="noreferrer">
         <div className="zapp" key={k}>
           <div className="zapp-icon-container">
             <img alt={k} className="zapp-icon" src={`https://${k}/favicon.ico`}
@@ -77,17 +66,36 @@ export default function Home() {
           <div className="zapp-title-container">
             <span>{ featuredZapps[k] }</span>
           </div>
+          <div className="zapp-title-container">
+            <span className="text-muted text-smallest">https://{k}</span>
+          </div>
         </div>
       </a>
     )
   }
 
-  let zappsList = <p>No Apps deployed yet.</p>;
+  const renderWalletEntry = 
+  <a href={ 'https://point/wallet'} target="_blank" rel="noreferrer">
+    <div className="zapp">
+      <div className="zapp-icon-container">
+        <img alt="wallet" className="zapp-icon" src={`https://point/wallet.ico`}
+          onError={({ currentTarget }) => { currentTarget.src = appLogo; }}
+        />
+      </div>
+      <div className="zapp-title-container">
+        <span>Wallet</span>
+      </div>
+      <div className="zapp-title-container">
+        <span className="text-muted text-smallest">https://point/wallet</span>
+      </div>
+    </div>
+  </a>
+  
+  let zappsList =  <div className="zapps">{renderWalletEntry}</div>;
   if(zapps.length > 0){
-    zappsList = <div className="zapps">{zapps.map((k) => renderZappEntry(k))}</div>;
+    zappsList = <div className="zapps">{[renderWalletEntry,zapps.map((k) => renderZappEntry(k))]}</div>;
   }
   
-
   return (
     <>
       <Container className="p-3">
@@ -97,19 +105,17 @@ export default function Home() {
 
         {isLoadingMD ? <Loading /> : <Markdown>{markdown}</Markdown>} 
 
-        <div className="bounty-banner" onClick={() => openWeb2Url('https://bounty.pointnetwork.io/')}>
-          <div className="bounty-banner-inner">
-            <div className="bounty-banner-header">
-              <img src={bountyLogo} />
-              <h2>Point <span>Bounty Program</span></h2>
-            </div>
-            <ArrowForward fontSize="medium" />
-          </div>
-        </div>
-
         <h5>Explore featured Apps</h5>
         {isLoading ? <Loading /> : zappsList}
 
+        <div className="bounty-banner" onClick={() => window.open('https://bounty.pointnetwork.io/')}>
+          <div className="bounty-banner-inner">
+            <div className="bounty-banner-header">
+              <img alt="bounty" src={bountyLogo} />
+              <h2>Point <span>Bounty Program</span></h2>
+            </div>
+          </div>
+        </div>
 
       </Container>
     </>

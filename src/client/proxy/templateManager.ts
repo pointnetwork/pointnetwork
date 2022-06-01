@@ -8,7 +8,8 @@ const log = logger.child({module: 'templateManager'});
 export enum Template {
   REDIRECT = 'redirect',
   ERROR = 'error',
-  DIRECTORY = 'directory'
+  DIRECTORY = 'directory',
+  WEB2LINK = 'web2link'
 }
 
 class TemplateManager {

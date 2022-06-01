@@ -11,7 +11,7 @@ import * as https from 'https'
 task("explorer-set-index-md", "Will update MD file from index of explorer")
   .addPositionalParam("identity","Identity where the ikv will be set")
   .addPositionalParam("address","Identity contract source address")
-  .addPositionalParam("file","Identity contract source address")
+  .addPositionalParam("file","The markdown content file to upload")
   .addPositionalParam("host","Host of point node to connect")
   .addPositionalParam("port","Port of point node to connect")
   .setAction(async (taskArgs, hre) => {

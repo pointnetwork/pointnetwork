@@ -2,6 +2,7 @@ import Container from 'react-bootstrap/Container';
 import Loading from '../components/Loading';
 import { useState,useEffect } from "react";
 import { Link } from "wouter";
+import orderBy from "lodash/orderBy";
 
 export default function Identities({owner}) {
   
@@ -27,8 +28,12 @@ export default function Identities({owner}) {
         ;
 
     if (identitiesFetched.data != ''){
-        setIdentities(identitiesFetched.data);
+        const handleOrder = (identity) => identity.data.handle.toLowerCase();
+        const blockOrder = 'blockNumber'
+        const sortedIdentities = orderBy(identitiesFetched.data, [handleOrder, blockOrder], ['desc', 'desc']);
+        setIdentities(sortedIdentities);
     } 
+
 
     let ikvsetFetched = await window.point.contract.events(
             {host: '@', contract: 'Identity', event: 'IKVSet'})

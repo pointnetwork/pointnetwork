@@ -1,9 +1,13 @@
 import * as web3 from '@solana/web3.js';
+import {getHashedName, getNameAccountKey, NameRegistryState} from '@solana/spl-name-service';
 import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
 const logger = require('../../core/log');
 const log = logger.child({module: 'SolanaProvider'});
+
+// Address of the `.sol` TLD
+const SOL_TLD_AUTHORITY = new web3.PublicKey(config.get('name_services.sol_tld_authority'));
 
 // These interfaces are copied from @solana/web3
 // However, they are not exported in index file, and trying to import them leads to
@@ -29,37 +33,62 @@ interface TransactionInstructionJSON {
     data: number[];
 }
 
-const createSolanaConnection = (blockchainUrl: string) => {
-    const connection = new web3.Connection(
-        blockchainUrl,
-        'confirmed'
-    );
+enum Protocol {
+    IPFS = 'ipfs',
+    ARWV = 'arwv'
+}
 
+type DomainContent = {
+    protocolType: Protocol | null;
+    decoded: string | null;
+    error?: Error;
+};
+
+type DomainRegistry = {
+    owner: string;
+    content: DomainContent;
+};
+
+function parseContent(content: string | undefined): DomainContent {
+    if (!content) {
+        return {protocolType: null, decoded: null};
+    }
+
+    const supportedProtocols = Object.values(Protocol);
+    const protocol = supportedProtocols.find(p => content.startsWith(`${p}=`));
+    if (!protocol) {
+        return {protocolType: null, decoded: content};
+    }
+
+    // Get rid of the protocol (including the `=` sign)
+    const decoded = content.substring(protocol.length + 1);
+    return {protocolType: protocol, decoded};
+}
+
+const createSolanaConnection = (blockchainUrl: string) => {
+    const connection = new web3.Connection(blockchainUrl, 'confirmed');
     log.debug({blockchainUrl}, 'Created solana instance');
     return connection;
 };
 
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
-const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypair}> =
-    Object.keys(networks)
-        .filter(key => networks[key].type === 'solana')
-        .reduce(
-            (acc, cur) => ({
-                ...acc,
-                [cur]: {
-                    connection: createSolanaConnection(networks[cur].address),
-                    wallet: getSolanaKeyPair()
-                }
-            }),
-            {}
-        );
+const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypair}> = Object.keys(
+    networks
+)
+    .filter(key => networks[key].type === 'solana')
+    .reduce(
+        (acc, cur) => ({
+            ...acc,
+            [cur]: {
+                connection: createSolanaConnection(networks[cur].address),
+                wallet: getSolanaKeyPair()
+            }
+        }),
+        {}
+    );
 
 const instructionFromJson = (json: TransactionInstructionJSON): web3.TransactionInstruction => ({
-    keys: json.keys.map(({
-        pubkey,
-        isSigner,
-        isWritable
-    }) => ({
+    keys: json.keys.map(({pubkey, isSigner, isWritable}) => ({
         pubkey: new web3.PublicKey(pubkey),
         isSigner,
         isWritable
@@ -106,11 +135,7 @@ const solana = {
             publicKey: new web3.PublicKey(s)
         }));
 
-        const hash = await web3.sendAndConfirmTransaction(
-            connection,
-            transaction,
-            [wallet]
-        );
+        const hash = await web3.sendAndConfirmTransaction(connection, transaction, [wallet]);
 
         return {
             jsonrpc: '2.0',
@@ -118,11 +143,16 @@ const solana = {
             id
         };
     },
-    send: async ({method, params = [], id = new Date().getTime(), network}: {
-        method: string,
-        params?: unknown[],
-        id?: number,
-        network: string
+    send: async ({
+        method,
+        params = [],
+        id = new Date().getTime(),
+        network
+    }: {
+        method: string;
+        params?: unknown[];
+        id?: number;
+        network: string;
     }) => {
         const blockchainUrl = networks[network];
         if (!blockchainUrl) {
@@ -143,11 +173,7 @@ const solana = {
         }
         return res.data;
     },
-    sendFunds: async ({to, lamports, network}: {
-        to: string;
-        lamports: number;
-        network: string;
-    }) => {
+    sendFunds: async ({to, lamports, network}: {to: string; lamports: number; network: string}) => {
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network ${network}`);
@@ -165,11 +191,7 @@ const solana = {
             })
         );
 
-        return web3.sendAndConfirmTransaction(
-            connection,
-            transaction,
-            [wallet]
-        );
+        return web3.sendAndConfirmTransaction(connection, transaction, [wallet]);
     },
     getBalance: async (network: string) => {
         const provider = providers[network];
@@ -202,7 +224,28 @@ const solana = {
         const pubKey = new web3.PublicKey(address);
 
         return connection.getSignaturesForAddress(pubKey, {before, until, limit});
+    },
+    resolveDomain: async (domainName: string, network = 'solana'): Promise<DomainRegistry> => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network "${network}".`);
+        }
+
+        // Domain without the `.sol`
+        const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
+        const hashed = await getHashedName(domain);
+        const key = await getNameAccountKey(hashed, undefined, SOL_TLD_AUTHORITY);
+        const registry = await NameRegistryState.retrieve(provider.connection, key);
+        const content = registry.data?.toString().replace(/\x00/g, '');
+
+        return {
+            owner: registry.owner.toBase58(),
+            content: parseContent(content)
+        };
     }
 };
 
 export default solana;
+
+// To avoid error importing in JS files
+module.exports = solana;

@@ -36,6 +36,7 @@ storage:
   concurrent_validation_limit: 10
   upload_loop_interval: 2000
   request_timeout: 30000
+  mirror_cache_expiration: 300000
   upload_expire: 60000
   upload_retry_limit: 3
   files_path: files
@@ -70,9 +71,14 @@ network:
     solana_devnet:
       type: "solana"
       address: "https://api.devnet.solana.com"
+    # solana:
+    #   type: "solana"
+    #   address: "https://api.mainnet-beta.solana.com"
   web3_call_retry_limit: 4
   identity_contract_address: "0x1574E97F7a60c4eE518f6d7c0Fa701eff8Ab58b3"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
+name_services:
+  sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
 payments:
   token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
 rpc:
