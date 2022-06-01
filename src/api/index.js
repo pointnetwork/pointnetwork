@@ -1,6 +1,7 @@
 const fastify = require('fastify');
 const fastifyWs = require('fastify-websocket');
 const config = require('config');
+const {transformErrorResp} = require('../errors');
 const logger = require('../core/log');
 const log = logger.child({module: 'ApiServer'});
 
@@ -46,6 +47,8 @@ class ApiServer {
             });
 
             this.server.setNotFoundHandler(this.server.notFound);
+
+            this.server.addHook('onSend', transformErrorResp);
 
             await this.server.listen(parseInt(this.config.port), this.config.address, async err => {
                 if (err) {

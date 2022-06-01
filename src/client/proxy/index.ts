@@ -11,29 +11,33 @@ import fastifyUrlData from '@fastify/url-data';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from 'fastify-websocket';
+import {transformErrorResp} from '../../errors';
 
 const log = logger.child({module: 'Proxy'});
 const PROXY_PORT = Number(config.get('zproxy.port'));
 const httpsServer = Fastify({
     serverFactory(handler) {
-        const server = https.createServer({
-            SNICallback: (servername, cb) => {
-                const certData = certificates.getCertificate(servername);
-                const ctx = tls.createSecureContext(certData);
+        const server = https.createServer(
+            {
+                SNICallback: (servername, cb) => {
+                    const certData = certificates.getCertificate(servername);
+                    const ctx = tls.createSecureContext(certData);
 
-                if (!ctx) {
-                    log.debug({servername}, `Not found SSL certificate for host`);
-                } else {
-                    log.debug({servername}, `SSL certificate has been found and assigned`);
+                    if (!ctx) {
+                        log.debug({servername}, `Not found SSL certificate for host`);
+                    } else {
+                        log.debug({servername}, `SSL certificate has been found and assigned`);
+                    }
+
+                    if (typeof cb !== 'function') {
+                        return ctx;
+                    }
+
+                    cb(null, ctx);
                 }
-
-                if (typeof cb !== 'function') {
-                    return ctx;
-                }
-
-                cb(null, ctx);
-            }
-        }, handler);
+            },
+            handler
+        );
 
         server.on('error', e => log.error(e, 'HTTPS server error:'));
 
@@ -47,6 +51,8 @@ httpsServer.register(fastifyMultipart);
 httpsServer.register(fastifyFormBody);
 httpsServer.register(fastifyWs);
 
+httpsServer.addHook('onSend', transformErrorResp);
+
 // Redirects http to https to the same host
 const redirectToHttpsHandler: RequestListener = function(request, response) {
     // Redirect to https
@@ -57,13 +63,13 @@ const redirectToHttpsHandler: RequestListener = function(request, response) {
 };
 
 const redirectToHttpsServer = http.createServer(redirectToHttpsHandler);
-redirectToHttpsServer.on('error', (err) => log.error(err, 'redirectToHttpsServer Error:'));
+redirectToHttpsServer.on('error', err => log.error(err, 'redirectToHttpsServer Error:'));
 redirectToHttpsServer.on('connect', (req, cltSocket, head) => {
     // connect to an origin server
     const srvSocket = net.connect(PROXY_PORT, 'localhost', () => {
-        cltSocket.write('HTTP/1.1 200 Connection Established\r\n' +
-            'Proxy-agent: Node.js-Proxy\r\n' +
-            '\r\n');
+        cltSocket.write(
+            'HTTP/1.1 200 Connection Established\r\n' + 'Proxy-agent: Node.js-Proxy\r\n' + '\r\n'
+        );
         srvSocket.write(head);
         srvSocket.pipe(cltSocket);
         cltSocket.pipe(srvSocket);
