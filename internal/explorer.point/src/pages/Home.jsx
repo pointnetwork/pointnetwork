@@ -54,17 +54,6 @@ export default function Home() {
     setIsLoading(false);
   }
 
-  const openWeb2Url = (url) => {
-    fetch('/v1/api/web2/open', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({urlToOpen: url})
-    });
-  }
-
   const renderZappEntry = (k) => {
     return (
       <a href={ 'https://' + k } target="_blank" rel="noreferrer">
@@ -119,7 +108,7 @@ export default function Home() {
         <h5>Explore featured Apps</h5>
         {isLoading ? <Loading /> : zappsList}
 
-        <div className="bounty-banner" onClick={() => openWeb2Url('https://bounty.pointnetwork.io/')}>
+        <div className="bounty-banner" onClick={() => window.open('https://bounty.pointnetwork.io/')}>
           <div className="bounty-banner-inner">
             <div className="bounty-banner-header">
               <img alt="bounty" src={bountyLogo} />
