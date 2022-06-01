@@ -26,12 +26,11 @@
 <body style='background-color: #222233;'>
   <div style='text-align:center; margin-top: 20%;'>
     <h1 style='font-size: 30px; color: #ccc; margin: 0; padding: 0;'>
-      Are you sure you want to follow the link to web2? <br/>
+      This seems like a web2 link. Do you want to open it?<br/>
     </h1>
     <div style='font-size: 20px;padding: 0 20%; color: #e8e8e8; margin-top: 10px; font-family: sans-serif;'>
-        Click the link bellow to open the content in your default web2 browser.<br/><br/>
-        <strong>URL: </strong>
-        <a href="#" onclick="javascript:openWeb2Url('http://{{url}}')">{{ url }}</a>
+        Click the link below to open it in your default web2 browser:<br/><br/><br/>
+        <a href="#" onclick="javascript:openWeb2Url('{{url}}')">{{ url }}</a>
     </div>
   </div>
   <script>

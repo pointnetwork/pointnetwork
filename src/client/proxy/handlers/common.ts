@@ -257,9 +257,11 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     return;
                 }
 
+                const url = 'https://' + host + req.url;
+
                 res.status(404).header('content-type', 'text/html');
 
-                return templateManager.render(Template.WEB2LINK, {url: host});
+                return templateManager.render(Template.WEB2LINK, {url});
             }
             res.status(404).send('Not Found');
         }
