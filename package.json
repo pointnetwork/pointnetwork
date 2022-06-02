@@ -140,7 +140,8 @@
       "#(.*)": "<rootDir>/core/$1"
     },
     "modulePathIgnorePatterns": [
-      "docker"
+      "docker",
+      "dist"
     ],
     "testEnvironment": "node",
     "testRunner": "jest-circus/runner",

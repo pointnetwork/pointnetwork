@@ -10,3 +10,4 @@ export * from './merkle';
 export * from './hashFn';
 export * from './escapeString';
 export * from './getReferralCode';
+export * from './parseCookieString';

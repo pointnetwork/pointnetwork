@@ -3,6 +3,7 @@ import {getHashedName, getNameAccountKey, NameRegistryState} from '@solana/spl-n
 import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
+import {DomainRegistry} from '../../name_service/types';
 const logger = require('../../core/log');
 const log = logger.child({module: 'SolanaProvider'});
 
@@ -31,38 +32,6 @@ interface TransactionInstructionJSON {
     }[];
     programId: string;
     data: number[];
-}
-
-enum Protocol {
-    IPFS = 'ipfs',
-    ARWV = 'arwv'
-}
-
-type DomainContent = {
-    protocolType: Protocol | null;
-    decoded: string | null;
-    error?: Error;
-};
-
-type DomainRegistry = {
-    owner: string;
-    content: DomainContent;
-};
-
-function parseContent(content: string | undefined): DomainContent {
-    if (!content) {
-        return {protocolType: null, decoded: null};
-    }
-
-    const supportedProtocols = Object.values(Protocol);
-    const protocol = supportedProtocols.find(p => content.startsWith(`${p}=`));
-    if (!protocol) {
-        return {protocolType: null, decoded: content};
-    }
-
-    // Get rid of the protocol (including the `=` sign)
-    const decoded = content.substring(protocol.length + 1);
-    return {protocolType: protocol, decoded};
 }
 
 const createSolanaConnection = (blockchainUrl: string) => {
@@ -240,7 +209,7 @@ const solana = {
 
         return {
             owner: registry.owner.toBase58(),
-            content: parseContent(content)
+            content: {decoded: content || null, error: null}
         };
     }
 };
