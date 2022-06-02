@@ -26,7 +26,7 @@ class PointSDKController {
 
     _status(statusCode) {
         if (!Number.isNaN(Number(statusCode))) {
-            this.status = statusCode;
+            this.status = statusCode >= 500 ? 400 : statusCode;
         }
         return this;
     }
