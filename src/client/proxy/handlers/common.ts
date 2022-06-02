@@ -289,7 +289,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 log.debug({host, identity}, '.sol domain is an alias');
                 const version = (queryParams.__point_version as string) ?? 'latest';
 
-                routesId = await blockchain.getZRecord(identity, version);
+                routesId = await blockchain.getZRecord(identity, version) as string;
                 if (!routesId) {
                     return res
                         .status(404)
