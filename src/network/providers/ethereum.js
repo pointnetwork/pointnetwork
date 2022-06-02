@@ -540,7 +540,7 @@ ethereum.getKeyValue = async (
         } else {
             const cacheKey = `${baseKey}-${version}`;
             if (versionSearchStrategy === 'exact') {
-                return cache.get(cacheKey, async () => {
+                return keyValueCache.get(cacheKey, async () => {
                     const filter = {identity: identity, key: key, version: version};
                     const events = await ethereum.getPastEvents('@', 'Identity', 'IKVSet', {
                         filter,
@@ -550,7 +550,7 @@ ethereum.getKeyValue = async (
                     return events.length > 0 ? events[0].returnValues.value : null;
                 });
             } else if (versionSearchStrategy === 'equalOrBefore') {
-                return cache.get(cacheKey, async () => {
+                return keyValueCache.get(cacheKey, async () => {
                     const filter = {identity: identity, key: key};
                     const events = await ethereum.getPastEvents('@', 'Identity', 'IKVSet', {
                         filter,
@@ -577,7 +577,7 @@ ethereum.putKeyValue = async (identity, key, value, version) => {
         const method = contract.methods.ikvPut(identity, key, value, version);
         log.debug({identity, key, value, version}, 'Ready to put key value');
         await ethereum.web3send(method);
-        cache.delStartWith(`${identity}-${key}`);
+        keyValueCache.delStartWith(`${identity}-${key}`);
     } catch (e) {
         log.error({error: e, stack: e.stack, identity, key, value, version}, 'putKeyValue error');
         throw e;
