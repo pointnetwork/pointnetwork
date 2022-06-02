@@ -166,13 +166,11 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             // First try route file (and check if this domain even exists)
             const zrouteId = await blockchain.getZRecord(host, version);
-
             if (!zrouteId) {
                 res.status(404).send('Domain not found (Route file not specified for this domain)');
             }
 
             log.debug({host, zrouteId}, 'Requesting ZRoute id for domain');
-
             const routes = await getJSON(zrouteId); // todo: check result
             if (!routes) {
                 res.status(404).send(`Cannot parse json of zrouteId ${zrouteId}`);
@@ -198,7 +196,6 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 const templateFileId = await getFileIdByPath(rootDirId, templateFilename);
 
                 const templateFileContents = await getFile(templateFileId);
-
                 const renderer = new Renderer(ctx, {rootDirId} as any);
 
                 res.header('Content-Type', 'text/html');
