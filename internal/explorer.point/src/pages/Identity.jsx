@@ -80,7 +80,7 @@ export default function Identity({params: {handle}}) {
                 <td>
                     {
                         isHash(lastEntry.data.value) 
-                        ? <a href={"/_storage/" + lastEntry.data.value} target="_blank">{lastEntry.data.value}</a>
+                        ? <a href={"/_storage/" + lastEntry.data.value} target="_blank" rel="noreferrer">{lastEntry.data.value}</a>
                         : lastEntry.data.value
                     }
                 </td>
@@ -210,7 +210,7 @@ export default function Identity({params: {handle}}) {
                 </tr>
                 <tr>
                     <th>Domain Space:</th>
-                    <td><a href={"https://" + handle + ".point/"} target="_blank">{handle}.point</a></td>
+                    <td><a href={"https://" + handle + ".point/"} target="_blank" rel="noreferrer">{handle}.point</a></td>
                 </tr>
                 <tr>
                     <th>Communication Public Key:</th>

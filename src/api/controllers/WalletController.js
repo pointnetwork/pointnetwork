@@ -7,7 +7,10 @@ const {
     decryptData,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
-const {sendTransaction, getBalance} = require('../../wallet');
+const {sendTransaction, getBalance, getWalletAddress} = require('../../wallet');
+const config = require('config');
+
+const networks = config.get('network.web3');
 
 class WalletController extends PointSDKController {
     constructor(ctx, req, reply) {
@@ -54,16 +57,15 @@ class WalletController extends PointSDKController {
     }
     
     async getWalletInfo() {
-        //TODO: Check how to do that.
-        //this.renderer.#ensurePrivilegedAccess();
+        const identity = await blockchain.getCurrentIdentity();
+        const ynetAddress = identity ? `${identity}.point` : 'N/A';
+        const wallets = await Promise.all(Object.keys(networks).map(async network => ({
+            currency_name: networks[network].currency_name,
+            currency_code: networks[network].currency_code,
+            address: network === 'ynet' ? ynetAddress : getWalletAddress(({network})),
+            balance: await getBalance({network, majorUnits: true})
+        })));
 
-        const wallets = [];
-        wallets.push({
-            currency_name: 'Point',
-            currency_code: 'POINT',
-            address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
-            balance: (await getBalance({})) / 1e18
-        });
         return this._response({wallets});
     }
     async encryptData() {

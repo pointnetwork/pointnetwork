@@ -51,7 +51,7 @@ export default function Identities({owner}) {
         <tr key={id.handle}>
             <td><Link to={"/identities/" + id.handle} target="_blank">@{id.handle}</Link></td>
             <td className="mono">{id.identityOwner}</td>
-            <td className="mono"><b>{domainExists ? <a href={'https://' +  id.handle + '.point' } target="_blank">{id.handle + '.point'}</a>: ''}</b></td>
+            <td className="mono"><b>{domainExists ? <a href={'https://' +  id.handle + '.point' } target="_blank" rel="noreferrer">{id.handle + '.point'}</a>: ''}</b></td>
         </tr>
     )
   }

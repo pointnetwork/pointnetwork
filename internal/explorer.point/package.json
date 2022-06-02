@@ -12,7 +12,6 @@
     "@testing-library/user-event": "^12.1.10",
     "axios": "^0.27.2",
     "bootstrap": "^5.1.2",
-    "jquery": "^3.6.0",
     "lodash": "^4.17.21",
     "markdown-to-jsx": "^7.1.7",
     "react": "^17.0.2",
@@ -29,9 +28,11 @@
     "clear": "mkdir -p ./public && rm -rf ./public/* .cache .parcel-cache",
     "start": "react-scripts start",
     "watch:docker": "./watch.docker.js",
-    "build": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && parcel build src/index.js --dist-dir ./public --no-source-maps",
-    "watch": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && parcel watch src/index.js --dist-dir ./public/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && cp -R src/fonts public/fonts && cp src/favicon.ico public && parcel build src/index.js --dist-dir ./public --no-source-maps",
+    "watch": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && cp -R src/fonts public/fonts && cp src/favicon.ico public && parcel watch src/index.js --dist-dir ./public/",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --ext .js --ext .jsx src/",
+    "fix": "eslint --ext .js --ext .jsx --fix src/"
   },
   "eslintConfig": {
     "extends": [

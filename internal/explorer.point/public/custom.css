@@ -1,11 +1,13 @@
 @font-face {
     font-family: 'Karla';
-    src: url('Karla.eot');
-    src: url('Karla-Bold.eot?#iefix') format('embedded-opentype'),
-        url('Karla-Bold.woff') format('woff'),
-        url('Karla-Bold.ttf') format('truetype');
     font-weight: bold;
-    font-style: normal;
+    src: url('/fonts/Karla-Bold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Karla';
+    font-weight: normal;
+    src: url('/fonts/Karla-Regular.ttf') format('truetype');
 }
 
 .navbar {

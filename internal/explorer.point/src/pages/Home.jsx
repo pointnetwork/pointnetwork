@@ -6,7 +6,6 @@ import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png'
 import bountyLogo from '../assets/pointcoin.png';
 import Markdown from 'markdown-to-jsx';
-import ArrowForward from '@material-ui/icons/ArrowForward';
 
 export default function Home() {
   const { walletIdentity } = useAppContext();

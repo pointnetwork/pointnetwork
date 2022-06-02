@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import Loading from '../components/Loading';
 
 const OwnerToIdentity = ({owner}) => {

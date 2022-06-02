@@ -1,6 +1,5 @@
 import Container from 'react-bootstrap/Container';
 import { useEffect, useState } from "react";
-import $ from 'jquery';
 import Swal from 'sweetalert2';
 import Loading from '../components/Loading';
 

@@ -69,4 +69,6 @@ const Main = () => {
     )
 }
 
-export default App = () => <ProvideAppContext><Main/></ProvideAppContext>
+const App = () => <ProvideAppContext><Main/></ProvideAppContext>
+
+export default App

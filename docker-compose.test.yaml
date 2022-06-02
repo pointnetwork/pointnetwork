@@ -26,11 +26,15 @@ services:
       start_period: 8s
     volumes:
       - point_node_data_test:/data
-      - shared_contracts_test:/app/hardhat/build:ro
+      - shared_contracts_test:/app/hardhat/build:rw
       - ./resources/blockchain-test-key.json:/data/keystore/key.json:ro
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json:ro
       - ./resources/certs/ca.crt:/app/pointnetwork/resources/certs/ca.crt:ro
       - hardhat_resources_test:/app/hardhat/resources:ro
+      - ./dist:/app/dist:ro
+      - ../zapps/blog.point:/app/example/blog
+      - ../email.point:/app/example/email
+      - ../social.point:/app/example/social
     ports:
       - '8666:8666'
       - '2468:2468'
@@ -38,25 +42,25 @@ services:
       NODE_CONFIG_ENV: dockertest
       MODE: e2e
 
-  test:
-    image: point_node
-    container_name: test
-    command: run test:docker
-    depends_on:
-      point_node:
-        condition: service_healthy
-    volumes:
-      - test_data_test:/data
-      - shared_contracts_test:/app/hardhat/build:ro
-      - ./resources/blockchain-test-key.json:/data/keystore/key.json:ro
-      - ./resources/arweave-test-key.json:/data/keystore/arweave.json:ro
-      - ./tests:/app/tests:ro
-      - hardhat_resources_test:/app/hardhat/resources:ro
-    environment:
-      LOG_LEVEL: info
-      MODE: e2e
-      NODE_CONFIG_ENV: dockertest
-      NODE_TLS_REJECT_UNAUTHORIZED: 0
+#  test:
+#    image: point_node
+#    container_name: test
+#    command: run test:docker
+#    depends_on:
+#      point_node:
+#        condition: service_healthy
+#    volumes:
+#      - test_data_test:/data
+#      - shared_contracts_test:/app/hardhat/build:ro
+#      - ./resources/blockchain-test-key.json:/data/keystore/key.json:ro
+#      - ./resources/arweave-test-key.json:/data/keystore/arweave.json:ro
+#      - ./tests:/app/tests:ro
+#      - hardhat_resources_test:/app/hardhat/resources:ro
+#    environment:
+#      LOG_LEVEL: info
+#      MODE: e2e
+#      NODE_CONFIG_ENV: dockertest
+#      NODE_TLS_REJECT_UNAUTHORIZED: 0
 
   blockchain_node:
     extends:
