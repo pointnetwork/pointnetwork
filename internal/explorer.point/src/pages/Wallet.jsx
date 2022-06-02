@@ -30,7 +30,6 @@ export default function Wallet() {
         const walletInfo = await response.json();
         setWallets(walletInfo.data.wallets);
         setIsLoading(false);
-        
     }
 
     function pointMessage() {
