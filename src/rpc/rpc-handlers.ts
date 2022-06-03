@@ -2,7 +2,7 @@ import pendingTxs from '../permissions/PendingTxs';
 // import permissionStore from '../permissions/PermissionStore';
 import ethereum from '../network/providers/ethereum';
 import config from 'config';
-import solana, {TransactionJSON} from '../network/providers/solana';
+import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
@@ -73,11 +73,18 @@ const confirmTransaction: HandlerFunc = async data => {
                 });
                 break;
             case 'solana':
-                result = await solana.signAndSendTransaction(
-                    id,
-                    tx.params[0] as TransactionJSON,
-                    network
-                );
+                if ((tx.params[0] as SolanaSendFundsParams).to) {
+                    result = await solana.sendFunds({
+                        ...tx.params[0] as SolanaSendFundsParams,
+                        network
+                    });
+                } else {
+                    result = await solana.signAndSendTransaction(
+                        id,
+                        tx.params[0] as TransactionJSON,
+                        network
+                    );
+                }
                 break;
             default:
                 return {

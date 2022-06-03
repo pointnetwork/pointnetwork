@@ -5,10 +5,9 @@ const ReceiveModal = ({ currency, address, onClose }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(address)
-            .then(() => {
-                setCopied(true);
-            });
+        navigator.clipboard.writeText(address).then(() => {
+            setCopied(true);
+        });
     };
 
     return (
@@ -67,7 +66,7 @@ const ReceiveModal = ({ currency, address, onClose }) => {
                                             marginLeft: "20px",
                                             display: "flex",
                                             alignItems: "center",
-                                            justifyContent: "center"
+                                            justifyContent: "center",
                                         }}
                                     >
                                         {copied && (
@@ -77,7 +76,7 @@ const ReceiveModal = ({ currency, address, onClose }) => {
                                                     color: "#69e069",
                                                     width: "14px",
                                                     textAlign: "center",
-                                                    marginRight: "5px"
+                                                    marginRight: "5px",
                                                 }}
                                             >
                                                 &#10003;

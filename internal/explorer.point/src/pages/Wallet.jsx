@@ -2,6 +2,7 @@ import Container from "react-bootstrap/Container";
 import { useEffect, useState } from "react";
 import Loading from "../components/Loading";
 import ReceiveModal from "../components/wallet/ReceiveModal";
+import SendModal from "../components/wallet/SendModal";
 
 window.openTelegram = () => {
     fetch("/v1/api/web2/open", {
@@ -18,6 +19,7 @@ export default function Wallet() {
     const [wallets, setWallets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [receiveModalData, setReceiveModalData] = useState(null);
+    const [sendModalData, setSendModalData] = useState(null);
 
     useEffect(() => {
         void fetchWallets();
@@ -31,9 +33,13 @@ export default function Wallet() {
         setIsLoading(false);
     };
 
-    function walletSend(code) {
-        alert("TODO");
-    }
+    const openSendModal = ({ network, type }) => {
+        setSendModalData({ network, type });
+    };
+
+    const closeSendModal = () => {
+        setSendModalData(null);
+    };
 
     const openReceiveModal = (currency, address) => {
         setReceiveModalData({ currency, address });
@@ -43,7 +49,7 @@ export default function Wallet() {
         setReceiveModalData(null);
     };
 
-    function walletHistory(code) {
+    function walletHistory() {
         alert("TODO");
     }
 
@@ -62,7 +68,12 @@ export default function Wallet() {
                     <a
                         href="#"
                         className="btn btn-sm btn-warning"
-                        onClick={() => walletSend(wallet.currency_code)}
+                        onClick={() =>
+                            openSendModal({
+                                network: wallet.network,
+                                type: wallet.type,
+                            })
+                        }
                     >
                         Send
                     </a>
@@ -101,19 +112,26 @@ export default function Wallet() {
                     onClose={closeReceiveModal}
                 />
             )}
+            {sendModalData && (
+                <SendModal
+                    onClose={closeSendModal}
+                    network={sendModalData.network}
+                    type={sendModalData.type}
+                />
+            )}
             <br />
             <h1>Wallet</h1>
             <table className="table table-bordered table-striped table-hover table-responsive table-primary">
                 <tbody>
-                <tr>
-                    <th>Currency</th>
-                    <th>Address</th>
-                    <th style={{ textAlign: "right" }}>Balance</th>
-                    <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-                {isLoading
-                    ? null
-                    : wallets.map((wallet) => renderWallet(wallet))}
+                    <tr>
+                        <th>Currency</th>
+                        <th>Address</th>
+                        <th style={{ textAlign: "right" }}>Balance</th>
+                        <th style={{ textAlign: "right" }}>Actions</th>
+                    </tr>
+                    {isLoading
+                        ? null
+                        : wallets.map((wallet) => renderWallet(wallet))}
                 </tbody>
             </table>
             {isLoading ? <Loading /> : null}

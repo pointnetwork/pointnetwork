@@ -7,7 +7,7 @@ const {
     decryptData,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
-const {sendTransaction, getBalance, getWalletAddress} = require('../../wallet');
+const {getBalance, getWalletAddress} = require('../../wallet');
 const config = require('config');
 
 const networks = config.get('network.web3');
@@ -19,16 +19,6 @@ class WalletController extends PointSDKController {
         this.payload = req.body;
         this.reply = reply;
         this.defaultWallet = blockchain.getWallet();
-    }
-
-    async tx() {
-        const to = this.payload.to;
-        const value = this.payload.value;
-
-        const receipt = await sendTransaction({to, value});
-        const transactionHash = receipt.transactionHash;
-
-        return this._response({transactionHash});
     }
 
     publicKey() {
@@ -60,6 +50,8 @@ class WalletController extends PointSDKController {
         const identity = await blockchain.getCurrentIdentity();
         const ynetAddress = identity ? `${identity}.point` : 'N/A';
         const wallets = await Promise.all(Object.keys(networks).map(async network => ({
+            network,
+            type: networks[network].type,
             currency_name: networks[network].currency_name,
             currency_code: networks[network].currency_code,
             address: network === 'ynet' ? ynetAddress : getWalletAddress(({network})),
@@ -68,6 +60,7 @@ class WalletController extends PointSDKController {
 
         return this._response({wallets});
     }
+
     async encryptData() {
         const {publicKey, data} = this.payload;
         const {host} = this.req.headers;
