@@ -102,10 +102,11 @@ a.nav-link.active {
     background: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);
     border-radius: 6px;
     cursor: pointer;
-    margin: 30px 10px 10px 10px;
     padding: 3px;
     width: 80vw;
-    bottom: 0;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .bounty-banner:hover {
