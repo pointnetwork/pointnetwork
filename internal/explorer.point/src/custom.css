@@ -114,7 +114,7 @@ a.nav-link.active {
 
 .bounty-banner-inner {
     align-items: center;
-    background-color: #ddd;
+    background: linear-gradient(90deg, #fffdf5 0%, #fffbf5 50%, #fcfbf7 100%);
     border-radius: 4px;
     display: flex;
     justify-content: space-between;
