@@ -1,13 +1,3 @@
-@font-face {
-    font-family: 'Karla';
-    src: url('Karla.eot');
-    src: url('Karla-Bold.eot?#iefix') format('embedded-opentype'),
-        url('Karla-Bold.woff') format('woff'),
-        url('Karla-Bold.ttf') format('truetype');
-    font-weight: bold;
-    font-style: normal;
-}
-
 .navbar {
     padding: 0;
 }
@@ -133,6 +123,7 @@ a.nav-link.active {
 
 .bounty-banner-header h2 {
     font-family: 'Karla', sans-serif;
+    font-weight: 600;
     margin: 0 0 0 20px;
 }
 
