@@ -4,6 +4,7 @@
   "author": "Point Network",
   "description": "Template example zapp - use as a scaffold to create more Zapps!",
   "dependencies": {
+    "@fontsource/karla": "^4.5.8",
     "@material-ui/core": "^4.12.4",
     "@material-ui/icons": "^4.11.2",
     "@openzeppelin/contracts": "^4.4.2",

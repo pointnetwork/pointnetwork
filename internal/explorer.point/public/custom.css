@@ -1,13 +1,3 @@
-@font-face {
-    font-family: 'Karla';
-    src: url('Karla.eot');
-    src: url('Karla-Bold.eot?#iefix') format('embedded-opentype'),
-        url('Karla-Bold.woff') format('woff'),
-        url('Karla-Bold.ttf') format('truetype');
-    font-weight: bold;
-    font-style: normal;
-}
-
 .navbar {
     padding: 0;
 }
@@ -102,10 +92,11 @@ a.nav-link.active {
     background: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);
     border-radius: 6px;
     cursor: pointer;
-    margin: 30px 10px 10px 10px;
     padding: 3px;
     width: 80vw;
-    bottom: 0;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .bounty-banner:hover {
@@ -114,7 +105,7 @@ a.nav-link.active {
 
 .bounty-banner-inner {
     align-items: center;
-    background-color: #ddd;
+    background: linear-gradient(90deg, #fffdf5 0%, #fffbf5 50%, #fcfbf7 100%);
     border-radius: 4px;
     display: flex;
     justify-content: space-between;
@@ -132,6 +123,7 @@ a.nav-link.active {
 
 .bounty-banner-header h2 {
     font-family: 'Karla', sans-serif;
+    font-weight: 600;
     margin: 0 0 0 20px;
 }
 

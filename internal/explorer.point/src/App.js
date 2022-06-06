@@ -1,3 +1,4 @@
+import "@fontsource/karla/600.css";
 import { useEffect, useState } from "react";
 import { ProvideAppContext } from './context/AppContext'
 import { Route, Switch } from 'wouter'
