@@ -1,4 +1,5 @@
 const {createWriteStream} = require('fs');
+const os = require('os');
 const path = require('path');
 const pino = require('pino');
 const UdpTransport = require('pino-udp');
@@ -73,3 +74,6 @@ module.exports = Object.assign(logger, {
     close,
     sendMetric
 });
+
+logger.info(`platform: ${os.platform()}, version: ${os.version()} arch: ${os.arch()}, release: ${os.release()},
+  totalMem: ${os.totalmem()}, freeMem: ${os.freemem()}`);
