@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Loading from '../components/Loading';
 import ReceiveModal from '../components/wallet/ReceiveModal';
 import SendModal from '../components/wallet/SendModal';
+import Swal from 'sweetalert2';
 
 window.openTelegram = () => {
     fetch('/v1/api/web2/open', {
@@ -33,7 +34,23 @@ export default function Wallet() {
         setIsLoading(false);
     };
 
+    // TODO: remove this once we add real point network
+    const openPlaceholderWindow = () => {
+        void Swal.fire({
+            icon: 'info',
+            title: 'POINT token doesn\'t exist yet!',
+            html: `Feel free to join <a 
+                style="color: #0a58ca; cursor: pointer;" 
+                onclick="window.openTelegram()">
+                our Telegram group</a> to stay updated about the launch details in the future`,
+        });
+    };
+
     const openSendModal = ({ network, type }) => {
+        if (network === 'pointnet') {
+            openPlaceholderWindow();
+            return;
+        }
         setSendModalData({ network, type });
     };
 
@@ -42,6 +59,10 @@ export default function Wallet() {
     };
 
     const openReceiveModal = (currency, address) => {
+        if (currency === 'POINT') {
+            openPlaceholderWindow();
+            return;
+        }
         setReceiveModalData({ currency, address });
     };
 

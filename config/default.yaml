@@ -66,17 +66,17 @@ network:
       type: "eth"
       address: "http://ynet.point.space:44444"
       currency_name: "yPoint"
-      currency_code: "POINT"
+      currency_code: "yPOINT"
     rinkeby:
       type: "eth"
       address: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa" # TODO: project ID
       currency_name: "rinkebyEth"
-      currency_code: "ETH"
+      currency_code: "rinkebyETH"
     solana_devnet:
       type: "solana"
       address: "https://api.devnet.solana.com"
       currency_name: "devSol"
-      currency_code: "SOL"
+      currency_code: "devSOL"
     # solana:
     #   type: "solana"
     #   address: "https://api.mainnet-beta.solana.com"
