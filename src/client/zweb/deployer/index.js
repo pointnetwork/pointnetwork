@@ -289,15 +289,13 @@ class Deployer {
                             } else {
                                 log.debug('upgradeProxy call');
                                 //restore from blockchain upgradable contracts and proxy metadata if does not exist.
-                                if (!fs.existsSync(proxyMetadataFilePath)) {
-                                    if (!fs.existsSync('./.openzeppelin')) {
-                                        fs.mkdirSync('./.openzeppelin');
-                                    }
-                                    fs.writeFileSync(
-                                        proxyMetadataFilePath,
-                                        await storage.getFile(proxyDescriptionFileId)
-                                    );
+                                if (!fs.existsSync('./.openzeppelin')) {
+                                    fs.mkdirSync('./.openzeppelin');
                                 }
+                                fs.writeFileSync(
+                                    proxyMetadataFilePath,
+                                    await storage.getFile(proxyDescriptionFileId)
+                                );
 
                                 proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
                             }
