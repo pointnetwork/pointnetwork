@@ -1,10 +1,10 @@
-import React, { useRef, useState } from "react";
-import Container from "react-bootstrap/Container";
-import Swal from "sweetalert2";
-import axios from "axios";
-import Loading from "../components/Loading";
+import React, { useRef, useState } from 'react';
+import Container from 'react-bootstrap/Container';
+import Swal from 'sweetalert2';
+import axios from 'axios';
+import Loading from '../components/Loading';
 
-const DEFAULT_ERROR_MESSAGE = "Something went wrong.";
+const DEFAULT_ERROR_MESSAGE = 'Something went wrong.';
 const MAX_TWEET_SIZE = 280;
 
 const TwitterIcon = (props) => {
@@ -46,42 +46,42 @@ const CopyIcon = (props) => {
 };
 
 const Final = () => {
-    const [identity, setIdentity] = useState("");
-    const [error, setError] = useState("");
+    const [identity, setIdentity] = useState('');
+    const [error, setError] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [registering, setRegistering] = useState(false);
 
-    const [eligibility, setEligibility] = useState("");
+    const [eligibility, setEligibility] = useState('');
 
-    const [activationCode, setActivationCode] = useState("");
+    const [activationCode, setActivationCode] = useState('');
 
-    const [tweetUrl, setTweetUrl] = useState("");
-    const [tweetUrlError, setTweetUrlError] = useState("");
+    const [tweetUrl, setTweetUrl] = useState('');
+    const [tweetUrlError, setTweetUrlError] = useState('');
 
-    const [tweetContent, setTweetContent] = useState("");
-    const [tweetContentError, setTweetContentError] = useState("");
+    const [tweetContent, setTweetContent] = useState('');
+    const [tweetContentError, setTweetContentError] = useState('');
 
     const [openingTwitter, setOpeningTwitter] = useState(false);
 
     function validateIdentity(identity) {
-        if (identity === "") {
-            setError("Empty identity");
+        if (identity === '') {
+            setError('Empty identity');
             return;
         }
 
         if (!/^[a-zA-Z0-9_]+?$/.test(identity)) {
-            setError("Special characters are not allowed");
+            setError('Special characters are not allowed');
             return;
         }
 
         if (identity.length < 2) {
-            setError("Handle is too short");
+            setError('Handle is too short');
             return;
         }
 
         if (identity.length > 16) {
-            setError("Handle is too long");
+            setError('Handle is too long');
             return;
         }
 
@@ -91,32 +91,32 @@ const Final = () => {
     function validateTweetUrl(url) {
         const regex = new RegExp(
             `^https://twitter.com/${identity}/status/[0-9]+`,
-            "i",
+            'i',
         );
 
         if (!regex.test(url)) {
             setTweetUrlError(
-                "Cannot recognize the URL. It must be a URL of a tweet, and coming from the same identity handle.",
+                'Cannot recognize the URL. It must be a URL of a tweet, and coming from the same identity handle.',
             );
             return;
         }
 
-        setTweetUrlError("");
+        setTweetUrlError('');
 
         return true;
     }
 
     const cleanForm = () => {
-        setActivationCode("");
+        setActivationCode('');
 
-        setTweetContent("");
-        setTweetContentError("");
+        setTweetContent('');
+        setTweetContentError('');
 
-        setTweetUrl("");
-        setTweetUrlError("");
+        setTweetUrl('');
+        setTweetUrlError('');
 
-        setIdentity("");
-        setEligibility("");
+        setIdentity('');
+        setEligibility('');
     };
 
     const cancelRef = useRef();
@@ -133,7 +133,7 @@ const Final = () => {
         }
         setIdentity(identity);
         debounced.current = setTimeout(() => {
-            setError("");
+            setError('');
             setLoading(true);
             axios
                 .get(`/v1/api/identity/isIdentityEligible/${identity}`, {
@@ -150,8 +150,8 @@ const Final = () => {
                     }
 
                     // show an error if the handle is not available
-                    if (!["free", "tweet"].includes(eligibility) && !reason) {
-                        setError("Handle is not available.");
+                    if (!['free', 'tweet'].includes(eligibility) && !reason) {
+                        setError('Handle is not available.');
                     }
 
                     if (code) {
@@ -180,34 +180,34 @@ const Final = () => {
     };
 
     const validateTweetContent = (content) => {
-        if (content === "") {
-            setTweetContentError("Tweet content cannot be empty");
+        if (content === '') {
+            setTweetContentError('Tweet content cannot be empty');
             return false;
         }
 
         if (!/( |^)#pointnetwork( |$)/g.test(content)) {
-            setTweetContentError("Tweet content must have #pointnetwork");
+            setTweetContentError('Tweet content must have #pointnetwork');
             return false;
         }
 
         if (!/( |^)#activation( |$)/g.test(content)) {
-            setTweetContentError("Tweet content must have #activation");
+            setTweetContentError('Tweet content must have #activation');
             return false;
         }
 
         if (!/( |^)@pointnetwork( |$)/g.test(content)) {
-            setTweetContentError("Tweet content must have @pointnetwork");
+            setTweetContentError('Tweet content must have @pointnetwork');
             return false;
         }
 
         if (content.length > MAX_TWEET_SIZE) {
-            setTweetContentError("Tweet content is too long");
+            setTweetContentError('Tweet content is too long');
             return false;
         }
 
         const regex = new RegExp(
             `https://pointnetwork.io/activation\\?i=0x${activationCode}&handle=${identity}`,
-            "g",
+            'g',
         );
 
         if (!regex.test(content)) {
@@ -217,7 +217,7 @@ const Final = () => {
             return false;
         }
 
-        setTweetContentError("");
+        setTweetContentError('');
         return true;
     };
 
@@ -232,15 +232,15 @@ const Final = () => {
     const resetTweetContent = (code, identity) => {
         const defaultTweetContent = `Activating my Point Network handle! @pointnetwork https://pointnetwork.io/activation?i=0x${code}&handle=${identity} #pointnetwork #activation`;
         setTweetContent(defaultTweetContent);
-        setTweetContentError("");
+        setTweetContentError('');
     };
 
     const registerHandler = async () => {
         try {
             const { isConfirmed } = await Swal.fire({
-                title: "Are you sure you want to be known as " + identity + "?",
+                title: 'Are you sure you want to be known as ' + identity + '?',
                 showCancelButton: true,
-                confirmButtonText: "Sure!",
+                confirmButtonText: 'Sure!',
             });
 
             if (!isConfirmed) {
@@ -248,15 +248,15 @@ const Final = () => {
             }
 
             setRegistering(true);
-            setError("");
+            setError('');
 
-            const csrf_token = window.localStorage.getItem("csrf_token");
+            const csrf_token = window.localStorage.getItem('csrf_token');
 
             const { data } = await axios({
-                url: "/v1/api/identity/register",
-                method: "POST",
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
+                url: '/v1/api/identity/register',
+                method: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
                 data: {
                     identity,
                     _csrf: csrf_token,
@@ -279,7 +279,7 @@ const Final = () => {
                 Swal.fire({ title: reason || DEFAULT_ERROR_MESSAGE });
                 return;
             }
-            window.location = "/";
+            window.location = '/';
         } catch (error) {
             setRegistering(false);
             console.error(error);
@@ -289,14 +289,14 @@ const Final = () => {
 
     async function openTwitterWithMessage() {
         setOpeningTwitter(true);
-        const csrf_token = window.localStorage.getItem("csrf_token");
+        const csrf_token = window.localStorage.getItem('csrf_token');
         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
             tweetContent,
         )}`;
         try {
             await axios({
-                url: "/v1/api/identity/open",
-                method: "POST",
+                url: '/v1/api/identity/open',
+                method: 'POST',
                 data: {
                     url,
                     _csrf: csrf_token,
@@ -308,14 +308,14 @@ const Final = () => {
         }
     }
 
-    const identityAvailable = eligibility === "free" || eligibility === "tweet";
+    const identityAvailable = eligibility === 'free' || eligibility === 'tweet';
 
     const tweetSize = tweetContent.length;
 
     const tweetTooBig = tweetSize > MAX_TWEET_SIZE;
 
     return (
-        <Container className="p-3 text-dark" style={{ color: "#353535" }}>
+        <Container className="p-3 text-dark" style={{ color: '#353535' }}>
             <br />
             <h1>🎉 Final step</h1>
             <p className="text-medium">
@@ -324,7 +324,7 @@ const Final = () => {
             </p>
 
             <div>
-                <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                     <input
                         type="text"
                         name="handle"
@@ -337,25 +337,25 @@ const Final = () => {
                         <Loading
                             className="spinner-border text-secondary"
                             style={{
-                                width: "20px",
-                                height: "20px",
-                                marginLeft: "5px",
+                                width: '20px',
+                                height: '20px',
+                                marginLeft: '5px',
                             }}
                         />
                     ) : (
-                        ""
+                        ''
                     )}
                 </div>
 
                 {!identityAvailable ? (
                     <ul className="text-medium">
                         <li className="italic my-1">
-                            If you have Twitter:{" "}
+                            If you have Twitter:{' '}
                             <span className="bold">
                                 for the first 6 months after the launch
-                            </span>{" "}
+                            </span>{' '}
                             (including now) you have a chance to claim your
-                            Twitter handle on web3 by{" "}
+                            Twitter handle on web3 by{' '}
                             <span className="bold">
                                 posting an activation tweet
                             </span>
@@ -368,7 +368,7 @@ const Final = () => {
                         </li>
                     </ul>
                 ) : (
-                    ""
+                    ''
                 )}
             </div>
 
@@ -379,7 +379,7 @@ const Final = () => {
                     <p className="text-medium">
                         If <span className="italic bold">@{identity}</span> on
                         Twitter is you and you want it on web3, we’re saving it
-                        from cybersquatters{" "}
+                        from cybersquatters{' '}
                         <span className="italic">
                             for the first 6 months from the launch
                         </span>
@@ -390,30 +390,30 @@ const Final = () => {
                     <p className="text-medium">
                         If <span className="italic bold">@{identity}</span> on
                         Twitter is not you, just select another handle that is
-                        not on Twitter (if{" "}
+                        not on Twitter (if{' '}
                         <span className="italic bold">@{identity}</span> doesn’t
                         claim it in 6 months, you will be able to take it from
                         the automatic auction later)
                     </p>
                     <div>
-                        <div style={{ position: "relative" }}>
+                        <div style={{ position: 'relative' }}>
                             <textarea
                                 className="my-2 p-2 text-medium"
                                 rows="8"
                                 cols="50"
                                 value={tweetContent}
                                 onChange={onChangeTweetContentHandler}
-                                style={{ width: "100%" }}
+                                style={{ width: '100%' }}
                             />
                             <div
                                 style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    position: "absolute",
-                                    left: "0px",
-                                    bottom: "5px",
-                                    width: "96%",
-                                    margin: "0px 2%",
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    position: 'absolute',
+                                    left: '0px',
+                                    bottom: '5px',
+                                    width: '96%',
+                                    margin: '0px 2%',
                                 }}
                                 className="my-2 py-2"
                             >
@@ -432,8 +432,8 @@ const Final = () => {
                                 <button
                                     className="btn btn-primary btn-sm"
                                     style={{
-                                        display: "flex",
-                                        alignItems: "center",
+                                        display: 'flex',
+                                        alignItems: 'center',
                                     }}
                                     type="button"
                                     title="Copy Tweet content"
@@ -451,46 +451,46 @@ const Final = () => {
                         </div>
                         <div
                             style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
                             }}
                             className="py-2"
                         >
                             <div
                                 className="red text-medium"
                                 style={{
-                                    paddingRight: "10px",
+                                    paddingRight: '10px',
                                     flex: 1,
-                                    lineBreak: "anywhere",
+                                    lineBreak: 'anywhere',
                                 }}
                             >
                                 {tweetContentError}
                             </div>
                             <div
                                 style={{
-                                    display: "flex",
-                                    alignItems: "center",
+                                    display: 'flex',
+                                    alignItems: 'center',
                                 }}
                             >
                                 <div className="mr-5 green text-small">
                                     <span
                                         className="mr-10"
-                                        style={{ fontStyle: "italic" }}
+                                        style={{ fontStyle: 'italic' }}
                                     >
-                                        When you click{" "}
+                                        When you click{' '}
                                         <strong>Send the Tweet</strong> (or it
-                                        doesn’t work and you click{" "}
+                                        doesn’t work and you click{' '}
                                         <strong>Copy</strong> and send it
                                         manually), paste the tweet URL below ↓
                                     </span>
                                 </div>
-                                <div style={{ minWidth: "10px" }}></div>
+                                <div style={{ minWidth: '10px' }}></div>
                                 <div
                                     className={
                                         tweetSize > MAX_TWEET_SIZE
-                                            ? "red bold text-medium"
-                                            : "text-medium"
+                                            ? 'red bold text-medium'
+                                            : 'text-medium'
                                     }
                                     style={{ flexShrink: 0 }}
                                 >
@@ -500,23 +500,23 @@ const Final = () => {
                                     className="btn btn-primary btn-sm py-2 mx-2"
                                     onClick={openTwitterWithMessage}
                                     style={{
-                                        display: "flex",
-                                        alignItems: "center",
+                                        display: 'flex',
+                                        alignItems: 'center',
                                     }}
                                     disabled={tweetTooBig || openingTwitter}
                                 >
                                     {openingTwitter ? (
                                         <Loading
                                             style={{
-                                                width: "10px",
-                                                height: "10px",
-                                                marginRight: "5px",
+                                                width: '10px',
+                                                height: '10px',
+                                                marginRight: '5px',
                                             }}
                                         />
                                     ) : (
                                         <TwitterIcon
                                             className="text-large"
-                                            style={{ marginRight: "5px" }}
+                                            style={{ marginRight: '5px' }}
                                         />
                                     )}
                                     <span>Send the Tweet</span>
@@ -524,7 +524,7 @@ const Final = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="input-group" style={{ width: "100%" }}>
+                    <div className="input-group" style={{ width: '100%' }}>
                         <input
                             type="text"
                             onChange={onChangeUrlHandler}
@@ -533,7 +533,7 @@ const Final = () => {
                         />
                         <div
                             className="input-group-append"
-                            style={{ display: "flex", alignItems: "center" }}
+                            style={{ display: 'flex', alignItems: 'center' }}
                         >
                             {identity &&
                             identityAvailable &&
@@ -542,8 +542,8 @@ const Final = () => {
                                 (tweetUrl && !tweetUrlError)) ? (
                                 <div
                                     style={{
-                                        display: "flex",
-                                        alignItems: "center",
+                                        display: 'flex',
+                                        alignItems: 'center',
                                     }}
                                 >
                                     <button
@@ -552,34 +552,34 @@ const Final = () => {
                                         disabled={Boolean(registering)}
                                     >
                                         {activationCode
-                                            ? "Check Tweet >>"
-                                            : "Register"}
+                                            ? 'Check Tweet >>'
+                                            : 'Register'}
                                     </button>
                                     {registering ? (
                                         <div
                                             className="spinner-border text-secondary"
                                             role="status"
                                             style={{
-                                                width: "20px",
-                                                height: "20px",
-                                                marginLeft: "5px",
+                                                width: '20px',
+                                                height: '20px',
+                                                marginLeft: '5px',
                                             }}
                                         ></div>
                                     ) : (
-                                        ""
+                                        ''
                                     )}
                                 </div>
                             ) : (
-                                ""
+                                ''
                             )}
                         </div>
                         {tweetUrlError ? (
                             <p className="red text-medium">{tweetUrlError}</p>
                         ) : (
-                            ""
+                            ''
                         )}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center" }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
                         <span className="text-small">
                             Do not delete the tweet for at least 24 hours, to
                             prove it was not accidental.
@@ -587,18 +587,18 @@ const Final = () => {
                     </div>
                 </div>
             ) : (
-                ""
+                ''
             )}
 
             {error ? (
                 <div className="py-2 red text-medium">{error}</div>
-            ) : eligibility === "free" ? (
+            ) : eligibility === 'free' ? (
                 <div className="py-2 green text-medium">
                     Great, this handle doesn’t seem to belong to a Twitter user!
                     You can claim it right now.
                 </div>
             ) : (
-                ""
+                ''
             )}
 
             {identity &&
@@ -607,7 +607,7 @@ const Final = () => {
             !activationCode &&
             !tweetUrl &&
             !tweetUrlError ? (
-                <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                     <button
                         className="btn btn-info mt-2"
                         onClick={registerHandler}
@@ -620,17 +620,17 @@ const Final = () => {
                             className="spinner-border text-secondary"
                             role="status"
                             style={{
-                                width: "20px",
-                                height: "20px",
-                                marginLeft: "5px",
+                                width: '20px',
+                                height: '20px',
+                                marginLeft: '5px',
                             }}
                         ></div>
                     ) : (
-                        ""
+                        ''
                     )}
                 </div>
             ) : (
-                ""
+                ''
             )}
         </Container>
     );

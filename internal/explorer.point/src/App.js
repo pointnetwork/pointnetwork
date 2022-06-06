@@ -1,15 +1,15 @@
-import "@fontsource/karla/600.css";
-import { useEffect, useState } from "react";
-import { ProvideAppContext } from "./context/AppContext";
-import { Route, Switch } from "wouter";
-import Header from "./components/Header";
-import Home from "./pages/Home";
-import Identities from "./pages/Identities";
-import Identity from "./pages/Identity";
-import Final from "./pages/Final";
-import Wallet from "./pages/Wallet";
-import Zapps from "./pages/Zapps";
-import Loading from "./components/Loading";
+import '@fontsource/karla/600.css';
+import { useEffect, useState } from 'react';
+import { ProvideAppContext } from './context/AppContext';
+import { Route, Switch } from 'wouter';
+import Header from './components/Header';
+import Home from './pages/Home';
+import Identities from './pages/Identities';
+import Identity from './pages/Identity';
+import Final from './pages/Final';
+import Wallet from './pages/Wallet';
+import Zapps from './pages/Zapps';
+import Loading from './components/Loading';
 
 const Main = () => {
     const [isRegistered, setIsRegistered] = useState(false);
@@ -22,7 +22,7 @@ const Main = () => {
 
     const fetchIdentityRegistred = async () => {
         setIsLoading(true);
-        const response = await fetch("/v1/api/identity/isIdentityRegistered/");
+        const response = await fetch('/v1/api/identity/isIdentityRegistered/');
         const registred = await response.json();
         setIsRegistered(registred.data.identityRegistred);
         if (registred.data.identityRegistred) {

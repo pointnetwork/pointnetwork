@@ -1,23 +1,23 @@
-import Container from "react-bootstrap/Container";
+import Container from 'react-bootstrap/Container';
 
-import { useState, useEffect } from "react";
-import { useAppContext } from "../context/AppContext";
-import Loading from "../components/Loading";
-import appLogo from "../assets/pointlogo.png";
-import bountyLogo from "../assets/pointcoin.png";
-import Markdown from "markdown-to-jsx";
+import { useState, useEffect } from 'react';
+import { useAppContext } from '../context/AppContext';
+import Loading from '../components/Loading';
+import appLogo from '../assets/pointlogo.png';
+import bountyLogo from '../assets/pointcoin.png';
+import Markdown from 'markdown-to-jsx';
 
 export default function Home() {
     const { walletIdentity } = useAppContext();
     const [zapps, setZapps] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingMD, setIsLoadingMD] = useState(true);
-    const [markdown, setMarkdown] = useState("");
+    const [markdown, setMarkdown] = useState('');
 
     const featuredZapps = {
-        "blog.point": "Blog",
-        "social.point": "Point Social",
-        "email.point": "Email",
+        'blog.point': 'Blog',
+        'social.point': 'Point Social',
+        'email.point': 'Email',
     };
 
     useEffect(() => {
@@ -29,17 +29,17 @@ export default function Home() {
         setIsLoadingMD(true);
         try {
             const id = await window.point.contract.call({
-                contract: "Identity",
-                method: "ikvGet",
-                params: ["explorer", "markdown/index"],
+                contract: 'Identity',
+                method: 'ikvGet',
+                params: ['explorer', 'markdown/index'],
             });
             const markdownData = await window.point.storage.getString({
                 id: id.data,
-                encoding: "utf-8",
+                encoding: 'utf-8',
             });
             setMarkdown(markdownData.data);
         } catch (e) {
-            setMarkdown("");
+            setMarkdown('');
         }
         setIsLoadingMD(false);
     };
@@ -49,11 +49,11 @@ export default function Home() {
         const zappsDeployed = [];
         for (const k in featuredZapps) {
             const zappRoutes = await window.point.contract.call({
-                contract: "Identity",
-                method: "ikvGet",
-                params: [k.replace(".point", ""), "zdns/routes"],
+                contract: 'Identity',
+                method: 'ikvGet',
+                params: [k.replace('.point', ''), 'zdns/routes'],
             });
-            if (zappRoutes.data !== "") {
+            if (zappRoutes.data !== '') {
                 zappsDeployed.push(k);
             }
         }
@@ -63,7 +63,7 @@ export default function Home() {
 
     const renderZappEntry = (k) => {
         return (
-            <a href={"https://" + k} target="_blank" rel="noreferrer">
+            <a href={'https://' + k} target="_blank" rel="noreferrer">
                 <div className="zapp" key={k}>
                     <div className="zapp-icon-container">
                         <img
@@ -89,13 +89,13 @@ export default function Home() {
     };
 
     const renderWalletEntry = (
-        <a href={"https://point/wallet"} target="_blank" rel="noreferrer">
+        <a href={'https://point/wallet'} target="_blank" rel="noreferrer">
             <div className="zapp">
                 <div className="zapp-icon-container">
                     <img
                         alt="wallet"
                         className="zapp-icon"
-                        src={"https://point/wallet.ico"}
+                        src={'https://point/wallet.ico'}
                         onError={({ currentTarget }) => {
                             currentTarget.src = appLogo;
                         }}
@@ -128,7 +128,7 @@ export default function Home() {
                 <br />
                 <br />
                 <h1 className="header">
-                    Welcome to Web 3.0,{" "}
+                    Welcome to Web 3.0,{' '}
                     <strong>
                         @{!walletIdentity ? <Loading /> : walletIdentity}
                     </strong>
@@ -143,7 +143,7 @@ export default function Home() {
                 <div
                     className="bounty-banner"
                     onClick={() =>
-                        window.open("https://bounty.pointnetwork.io/")
+                        window.open('https://bounty.pointnetwork.io/')
                     }
                 >
                     <div className="bounty-banner-inner">

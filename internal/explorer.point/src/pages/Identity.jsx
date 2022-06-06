@@ -1,21 +1,21 @@
-import Container from "react-bootstrap/Container";
-import BlockTime from "../components/BlockTime";
-import { useState, useEffect } from "react";
-import Loading from "../components/Loading";
-import OwnerToIdentity from "../components/OwnerToIdenity";
-import Swal from "sweetalert2";
+import Container from 'react-bootstrap/Container';
+import BlockTime from '../components/BlockTime';
+import { useState, useEffect } from 'react';
+import Loading from '../components/Loading';
+import OwnerToIdentity from '../components/OwnerToIdenity';
+import Swal from 'sweetalert2';
 
 export default function Identity({ params: { handle } }) {
     const [ikvset, setIkvset] = useState([]);
     const [owner, setOwner] = useState();
-    const [publicKey, setPublicKey] = useState("");
+    const [publicKey, setPublicKey] = useState('');
     const [deployers, setDeployers] = useState([]);
     const [isLoadingOwner, setIsLoadingOwner] = useState(true);
     const [isLoadingPublicKey, setIsLoadingPublicKey] = useState(true);
     const [isLoadingIkv, setIsLoadingIkv] = useState(true);
     const [isLoadingDeployers, setIsLoadingDeployers] = useState(true);
     const [isOwner, setIsOwner] = useState(false);
-    const [addAddress, setAddAddress] = useState("");
+    const [addAddress, setAddAddress] = useState('');
 
     useEffect(() => {
         fetchOwner();
@@ -47,12 +47,12 @@ export default function Identity({ params: { handle } }) {
     const fetchIkv = async () => {
         setIsLoadingIkv(true);
         const ikvsetFetched = await window.point.contract.events({
-            host: "@",
-            contract: "Identity",
-            event: "IKVSet",
+            host: '@',
+            contract: 'Identity',
+            event: 'IKVSet',
             filter: { identity: handle },
         });
-        if (ikvsetFetched.data != "") {
+        if (ikvsetFetched.data != '') {
             setIkvset(ikvsetFetched.data);
         }
         setIsLoadingIkv(false);
@@ -61,21 +61,21 @@ export default function Identity({ params: { handle } }) {
     const fetchDeployers = async () => {
         setIsLoadingDeployers(true);
         const deployersFetched = await window.point.contract.events({
-            host: "@",
-            contract: "Identity",
-            event: "IdentityDeployerChanged",
+            host: '@',
+            contract: 'Identity',
+            event: 'IdentityDeployerChanged',
             filter: { identity: handle },
         });
-        if (deployersFetched.data != "") {
+        if (deployersFetched.data != '') {
             setDeployers(deployersFetched.data);
         }
         setIsLoadingDeployers(false);
     };
 
     const isHash = (str) => {
-        const s = str.startsWith("0x") ? str.substr(2) : str;
+        const s = str.startsWith('0x') ? str.substr(2) : str;
         if (s.length !== 64) return false;
-        return new RegExp("^[0-9a-fA-F]+$").test(s);
+        return new RegExp('^[0-9a-fA-F]+$').test(s);
     };
 
     const renderIkvEntry = (key) => {
@@ -90,7 +90,7 @@ export default function Identity({ params: { handle } }) {
                 <td>
                     {isHash(lastEntry.data.value) ? (
                         <a
-                            href={"/_storage/" + lastEntry.data.value}
+                            href={'/_storage/' + lastEntry.data.value}
                             target="_blank"
                             rel="noreferrer"
                         >
@@ -121,7 +121,7 @@ export default function Identity({ params: { handle } }) {
                 </th>
                 <td>{deployer}</td>
                 <td>
-                    {lastEntry.data.allowed === true ? "Allowed" : "Revoked"}
+                    {lastEntry.data.allowed === true ? 'Allowed' : 'Revoked'}
                 </td>
                 <td>
                     <BlockTime blockNumber={lastEntry.blockNumber} />
@@ -156,7 +156,7 @@ export default function Identity({ params: { handle } }) {
                 <em>No records found</em>
             </div>
         ) : (
-            ""
+            ''
         );
 
     const handleChange = (e) => {
@@ -166,7 +166,7 @@ export default function Identity({ params: { handle } }) {
     const addDeployer = async () => {
         const result = await activateDeployer(addAddress);
         if (result) {
-            setAddAddress("");
+            setAddAddress('');
         }
     };
 
@@ -174,21 +174,21 @@ export default function Identity({ params: { handle } }) {
         try {
             setIsLoadingDeployers(true);
             await window.point.contract.send({
-                host: "@",
-                contract: "Identity",
-                method: "removeIdentityDeployer",
+                host: '@',
+                contract: 'Identity',
+                method: 'removeIdentityDeployer',
                 params: [handle, deployer],
             });
             Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: "Deployer removed with success!",
+                icon: 'success',
+                title: 'Success',
+                text: 'Deployer removed with success!',
             });
             fetchDeployers();
         } catch (e) {
             Swal.fire({
-                icon: "error",
-                title: "Request Failed",
+                icon: 'error',
+                title: 'Request Failed',
                 text: e,
             });
             setIsLoadingDeployers(false);
@@ -199,22 +199,22 @@ export default function Identity({ params: { handle } }) {
         try {
             setIsLoadingDeployers(true);
             await window.point.contract.send({
-                host: "@",
-                contract: "Identity",
-                method: "addIdentityDeployer",
+                host: '@',
+                contract: 'Identity',
+                method: 'addIdentityDeployer',
                 params: [handle, deployer],
             });
             Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: "Deployer added with success!",
+                icon: 'success',
+                title: 'Success',
+                text: 'Deployer added with success!',
             });
             fetchDeployers();
             return true;
         } catch (e) {
             Swal.fire({
-                icon: "error",
-                title: "Request Failed",
+                icon: 'error',
+                title: 'Request Failed',
                 text: e,
             });
             setIsLoadingDeployers(false);
@@ -241,7 +241,7 @@ export default function Identity({ params: { handle } }) {
                         <th>Domain Space:</th>
                         <td>
                             <a
-                                href={"https://" + handle + ".point/"}
+                                href={'https://' + handle + '.point/'}
                                 target="_blank"
                                 rel="noreferrer"
                             >
@@ -256,9 +256,9 @@ export default function Identity({ params: { handle } }) {
                                 <Loading />
                             ) : (
                                 publicKey
-                                    .replace("0x", "")
+                                    .replace('0x', '')
                                     .match(/.{1,8}/g)
-                                    ?.map((part) => part + " ")
+                                    ?.map((part) => part + ' ')
                             )}
                         </td>
                     </tr>

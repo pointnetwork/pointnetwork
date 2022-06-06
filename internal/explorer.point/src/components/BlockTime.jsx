@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import Loading from "../components/Loading";
+import { useState, useEffect } from 'react';
+import Loading from '../components/Loading';
 
 const BlockTime = ({ blockNumber }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -11,11 +11,11 @@ const BlockTime = ({ blockNumber }) => {
 
     const fetchBlockTime = async () => {
         setIsLoading(true);
-        const response = await fetch("/v1/api/identity/blockTimestamp", {
-            method: "POST",
+        const response = await fetch('/v1/api/identity/blockTimestamp', {
+            method: 'POST',
             headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({ blockNumber: blockNumber }),
         });

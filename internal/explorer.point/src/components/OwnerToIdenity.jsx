@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import Loading from "../components/Loading";
+import { useState, useEffect } from 'react';
+import Loading from '../components/Loading';
 
 const OwnerToIdentity = ({ owner }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +18,7 @@ const OwnerToIdentity = ({ owner }) => {
         setIsLoading(false);
     };
 
-    return isLoading ? <Loading /> : "@" + identity;
+    return isLoading ? <Loading /> : '@' + identity;
 };
 
 export default OwnerToIdentity;

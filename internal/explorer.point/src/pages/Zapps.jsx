@@ -1,7 +1,7 @@
-import Container from "react-bootstrap/Container";
-import Loading from "../components/Loading";
-import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import Container from 'react-bootstrap/Container';
+import Loading from '../components/Loading';
+import { useState, useEffect } from 'react';
+import { Link } from 'wouter';
 
 export default function Zapps() {
     const [zapps, setZapps] = useState([]);
@@ -15,23 +15,23 @@ export default function Zapps() {
         setIsLoading(true);
         const zappsFetched = [];
         const identitiesFetched = await window.point.contract.events({
-            host: "@",
-            contract: "Identity",
-            event: "IdentityRegistered",
+            host: '@',
+            contract: 'Identity',
+            event: 'IdentityRegistered',
         });
 
         const ikvsetFetched = await window.point.contract.events({
-            host: "@",
-            contract: "Identity",
-            event: "IKVSet",
+            host: '@',
+            contract: 'Identity',
+            event: 'IKVSet',
         });
-        if (ikvsetFetched.data != "") {
+        if (ikvsetFetched.data != '') {
             for (const id of identitiesFetched.data) {
                 const domainExists =
                     ikvsetFetched.data.filter(
                         (ikve) =>
                             ikve.data.identity == id.data.handle &&
-                            ikve.data.key == "zdns/routes",
+                            ikve.data.key == 'zdns/routes',
                     ).length > 0;
                 if (domainExists) {
                     zappsFetched.push(id.data);
@@ -46,7 +46,7 @@ export default function Zapps() {
         return (
             <tr key={id.handle}>
                 <td>
-                    <Link to={"/identities/" + id.handle} target="_blank">
+                    <Link to={'/identities/' + id.handle} target="_blank">
                         @{id.handle}
                     </Link>
                 </td>
@@ -54,11 +54,11 @@ export default function Zapps() {
                 <td className="mono">
                     <b>
                         <a
-                            href={"https://" + id.handle + ".point"}
+                            href={'https://' + id.handle + '.point'}
                             target="_blank"
                             rel="noreferrer"
                         >
-                            {id.handle + ".point"}
+                            {id.handle + '.point'}
                         </a>
                     </b>
                 </td>
@@ -72,7 +72,7 @@ export default function Zapps() {
                 <em>No records found</em>
             </div>
         ) : (
-            ""
+            ''
         );
 
     return (

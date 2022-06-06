@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { isAddress } from "@ethersproject/address";
-import { parseEther } from "ethers/lib/utils";
-import Swal from "sweetalert2";
+import { useState } from 'react';
+import { isAddress } from '@ethersproject/address';
+import { parseEther } from 'ethers/lib/utils';
+import Swal from 'sweetalert2';
 
 const SendModal = ({ network, type, onClose }) => {
-    const [address, setAddress] = useState("");
+    const [address, setAddress] = useState('');
     const [addressValidation, setAddressValidation] = useState(false);
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState('');
     const [valueValidation, setValueValidation] = useState(false);
     const [processing, setProcessing] = useState(false);
 
@@ -22,20 +22,20 @@ const SendModal = ({ network, type, onClose }) => {
 
     const handleSubmit = async () => {
         const _addressValidation = address
-            ? type === "eth"
+            ? type === 'eth'
                 ? isAddress(address)
                     ? null
-                    : "Not a valid address"
+                    : 'Not a valid address'
                 : null // TODO: solana address validation
-            : "Address is required";
+            : 'Address is required';
 
         const _valueValidation = value
             ? isNaN(Number(value))
-                ? "Please, enter a valid number"
+                ? 'Please, enter a valid number'
                 : Number(value) > 0
                 ? null
-                : "Value should be positive"
-            : "Value is required";
+                : 'Value should be positive'
+            : 'Value is required';
 
         setAddressValidation(_addressValidation);
         setValueValidation(_valueValidation);
@@ -47,21 +47,21 @@ const SendModal = ({ network, type, onClose }) => {
                 network,
                 to: address,
                 value:
-                    type === "eth"
+                    type === 'eth'
                         ? parseEther(value).toHexString() // eth
                         : value * 1000000000, // solana
             });
             Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: "Funds successfully sent!",
+                icon: 'success',
+                title: 'Success',
+                text: 'Funds successfully sent!',
             });
             onClose();
         } catch (e) {
             Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Something went wrong",
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong',
             });
         }
         setProcessing(false);
@@ -70,7 +70,7 @@ const SendModal = ({ network, type, onClose }) => {
     return (
         <div
             className="modal fade show"
-            style={{ display: "block" }}
+            style={{ display: 'block' }}
             tabIndex="-1"
         >
             <div className="modal-dialog">
@@ -92,11 +92,11 @@ const SendModal = ({ network, type, onClose }) => {
                             placeholder="Recipient's address"
                             style={
                                 addressValidation
-                                    ? { borderColor: "indianred" }
+                                    ? { borderColor: 'indianred' }
                                     : {}
                             }
                         />
-                        <span style={{ color: "indianred", display: "block" }}>
+                        <span style={{ color: 'indianred', display: 'block' }}>
                             {addressValidation}
                         </span>
                         <input
@@ -106,13 +106,13 @@ const SendModal = ({ network, type, onClose }) => {
                             className="form-control number amount"
                             placeholder="Amount"
                             style={{
-                                marginTop: "20px",
+                                marginTop: '20px',
                                 ...(valueValidation
-                                    ? { borderColor: "indianred" }
+                                    ? { borderColor: 'indianred' }
                                     : {}),
                             }}
                         />
-                        <span style={{ color: "indianred", display: "block" }}>
+                        <span style={{ color: 'indianred', display: 'block' }}>
                             {valueValidation}
                         </span>
                     </div>

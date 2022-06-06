@@ -1,17 +1,17 @@
-import Container from "react-bootstrap/Container";
-import { useEffect, useState } from "react";
-import Loading from "../components/Loading";
-import ReceiveModal from "../components/wallet/ReceiveModal";
-import SendModal from "../components/wallet/SendModal";
+import Container from 'react-bootstrap/Container';
+import { useEffect, useState } from 'react';
+import Loading from '../components/Loading';
+import ReceiveModal from '../components/wallet/ReceiveModal';
+import SendModal from '../components/wallet/SendModal';
 
 window.openTelegram = () => {
-    fetch("/v1/api/web2/open", {
-        method: "POST",
+    fetch('/v1/api/web2/open', {
+        method: 'POST',
         headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ urlToOpen: "https://t.me/pointnetwork" }),
+        body: JSON.stringify({ urlToOpen: 'https://t.me/pointnetwork' }),
     });
 };
 
@@ -27,7 +27,7 @@ export default function Wallet() {
 
     const fetchWallets = async () => {
         setIsLoading(true);
-        const response = await fetch("/v1/api/wallet/getWalletInfo");
+        const response = await fetch('/v1/api/wallet/getWalletInfo');
         const walletInfo = await response.json();
         setWallets(walletInfo.data.wallets);
         setIsLoading(false);
@@ -50,7 +50,7 @@ export default function Wallet() {
     };
 
     function walletHistory() {
-        alert("TODO");
+        alert('TODO');
     }
 
     const renderWallet = (wallet) => {
@@ -61,10 +61,10 @@ export default function Wallet() {
                     {wallet.currency_code})
                 </td>
                 <td className="mono">{wallet.address}</td>
-                <td style={{ textAlign: "right" }}>
+                <td style={{ textAlign: 'right' }}>
                     {wallet.balance.toFixed(8)} {wallet.currency_code}
                 </td>
-                <td style={{ textAlign: "right" }}>
+                <td style={{ textAlign: 'right' }}>
                     <a
                         href="#"
                         className="btn btn-sm btn-warning"
@@ -126,8 +126,8 @@ export default function Wallet() {
                     <tr>
                         <th>Currency</th>
                         <th>Address</th>
-                        <th style={{ textAlign: "right" }}>Balance</th>
-                        <th style={{ textAlign: "right" }}>Actions</th>
+                        <th style={{ textAlign: 'right' }}>Balance</th>
+                        <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                     {isLoading
                         ? null

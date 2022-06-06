@@ -4,8 +4,8 @@ import React, {
     useState,
     useEffect,
     useCallback,
-} from "react";
-import { useLocation } from "wouter";
+} from 'react';
+import { useLocation } from 'wouter';
 
 const defaultContext = {
     walletAddress: undefined,
@@ -42,7 +42,7 @@ export const ProvideAppContext = ({ children }) => {
     }, []);
 
     const goHome = useCallback(async () => {
-        setLocation("/");
+        setLocation('/');
     }, []);
 
     const context = {

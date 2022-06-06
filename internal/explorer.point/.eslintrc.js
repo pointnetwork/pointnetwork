@@ -36,7 +36,7 @@ module.exports = {
         'no-undef': 0,
         'no-undefined': 0,
         'comma-dangle': [0, 'never'],
-        'quotes': [2, 'double'],
+        'quotes': [2, 'single'],
         'semi': 1,
         'guard-for-in': 0, // allow iterating with for..in without checking for Object.hasOwnProperty
         'no-eval': 2,

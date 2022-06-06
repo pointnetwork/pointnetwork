@@ -1,8 +1,8 @@
-import Container from "react-bootstrap/Container";
-import Loading from "../components/Loading";
-import { useState, useEffect } from "react";
-import { Link } from "wouter";
-import orderBy from "lodash/orderBy";
+import Container from 'react-bootstrap/Container';
+import Loading from '../components/Loading';
+import { useState, useEffect } from 'react';
+import { Link } from 'wouter';
+import orderBy from 'lodash/orderBy';
 
 export default function Identities({ owner }) {
     const [identities, setIdentities] = useState([]);
@@ -18,36 +18,36 @@ export default function Identities({ owner }) {
         const identitiesFetched =
             owner !== undefined
                 ? await window.point.contract.events({
-                      host: "@",
-                      contract: "Identity",
-                      event: "IdentityRegistered",
+                      host: '@',
+                      contract: 'Identity',
+                      event: 'IdentityRegistered',
                       filter: {
                           identityOwner: owner,
                       },
                   })
                 : await window.point.contract.events({
-                      host: "@",
-                      contract: "Identity",
-                      event: "IdentityRegistered",
+                      host: '@',
+                      contract: 'Identity',
+                      event: 'IdentityRegistered',
                   });
-        if (identitiesFetched.data != "") {
+        if (identitiesFetched.data != '') {
             const handleOrder = (identity) =>
                 identity.data.handle.toLowerCase();
-            const blockOrder = "blockNumber";
+            const blockOrder = 'blockNumber';
             const sortedIdentities = orderBy(
                 identitiesFetched.data,
                 [handleOrder, blockOrder],
-                ["desc", "desc"],
+                ['desc', 'desc'],
             );
             setIdentities(sortedIdentities);
         }
 
         const ikvsetFetched = await window.point.contract.events({
-            host: "@",
-            contract: "Identity",
-            event: "IKVSet",
+            host: '@',
+            contract: 'Identity',
+            event: 'IKVSet',
         });
-        if (ikvsetFetched.data != "") {
+        if (ikvsetFetched.data != '') {
             setIkvset(ikvsetFetched.data);
         }
         setIsLoading(false);
@@ -58,13 +58,13 @@ export default function Identities({ owner }) {
             ikvset.filter(
                 (ikve) =>
                     ikve.data.identity == id.handle &&
-                    ikve.data.key == "zdns/routes",
+                    ikve.data.key == 'zdns/routes',
             ).length > 0;
 
         return (
             <tr key={id.handle}>
                 <td>
-                    <Link to={"/identities/" + id.handle} target="_blank">
+                    <Link to={'/identities/' + id.handle} target="_blank">
                         @{id.handle}
                     </Link>
                 </td>
@@ -73,14 +73,14 @@ export default function Identities({ owner }) {
                     <b>
                         {domainExists ? (
                             <a
-                                href={"https://" + id.handle + ".point"}
+                                href={'https://' + id.handle + '.point'}
                                 target="_blank"
                                 rel="noreferrer"
                             >
-                                {id.handle + ".point"}
+                                {id.handle + '.point'}
                             </a>
                         ) : (
-                            ""
+                            ''
                         )}
                     </b>
                 </td>
@@ -92,7 +92,7 @@ export default function Identities({ owner }) {
         <>
             <Container className="p-3">
                 <br />
-                <h1>{owner !== undefined ? "My " : ""}Identities</h1>
+                <h1>{owner !== undefined ? 'My ' : ''}Identities</h1>
                 Total: {identities.length}
                 <hr />
                 <table className="table table-bordered table-striped table-hover table-responsive table-primary">

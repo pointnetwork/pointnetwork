@@ -1,8 +1,8 @@
-import Container from "react-bootstrap/Container";
-import Navbar from "react-bootstrap/Navbar";
-import Nav from "react-bootstrap/Nav";
-import logo from "../assets/pointlogowhite.png";
-import { Link } from "wouter";
+import Container from 'react-bootstrap/Container';
+import Navbar from 'react-bootstrap/Navbar';
+import Nav from 'react-bootstrap/Nav';
+import logo from '../assets/pointlogowhite.png';
+import { Link } from 'wouter';
 
 const Header = ({ isRegistered }) => {
     return (
@@ -39,7 +39,7 @@ const Header = ({ isRegistered }) => {
                                     </Link>
                                 </>
                             ) : (
-                                ""
+                                ''
                             )}
                         </Nav>
                     </Navbar.Collapse>
