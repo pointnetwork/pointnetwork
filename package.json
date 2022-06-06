@@ -22,10 +22,10 @@
     "@truffle/hdwallet-provider": "^1.5.0",
     "@typechain/ethers-v5": "^10.0.0",
     "@typechain/hardhat": "^6.0.0",
-    "arweave": "^1.10.17",
+    "arweave": "^1.11.4",
     "arweave-mnemonic-keys": "^0.0.9",
     "async": "^3.2.3",
-    "axios": "^0.21.2",
+    "axios": "^0.27.2",
     "bip32": "^2.0.6",
     "bip39": "^3.0.4",
     "bn.js": "^5.2.0",
@@ -105,7 +105,7 @@
     "solhint": "^3.3.7",
     "ts-node": "^10.5.0",
     "typechain": "^8.0.0",
-    "typescript": "^4.6.2"
+    "typescript": "^4.7.3"
   },
   "scripts": {
     "test": "jest",
