@@ -6,6 +6,7 @@
   "dependencies": {
     "@ethersproject/address": "^5.6.1",
     "@ethersproject/bignumber": "^5.6.2",
+    "@fontsource/karla": "^4.5.8",
     "@material-ui/core": "^4.12.4",
     "@material-ui/icons": "^4.11.2",
     "@openzeppelin/contracts": "^4.4.2",
@@ -28,8 +29,8 @@
     "clear": "mkdir -p ./public && rm -rf ./public/* .cache .parcel-cache",
     "start": "react-scripts start",
     "watch:docker": "./watch.docker.js",
-    "build": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && cp -R src/fonts public/fonts && cp src/favicon.ico public && parcel build src/index.js --dist-dir ./public --no-source-maps",
-    "watch": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && cp -R src/fonts public/fonts && cp src/favicon.ico public && parcel watch src/index.js --dist-dir ./public/",
+    "build": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && cp src/favicon.ico public && parcel build src/index.js --dist-dir ./public --no-source-maps",
+    "watch": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && cp src/favicon.ico public && parcel watch src/index.js --dist-dir ./public/",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --ext .js --ext .jsx src/",
     "fix": "eslint --ext .js --ext .jsx --fix src/"
