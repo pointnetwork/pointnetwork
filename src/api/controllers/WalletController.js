@@ -7,7 +7,10 @@ const {
     decryptData,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
-const {sendTransaction, getBalance} = require('../../wallet');
+const {getBalance, getWalletAddress} = require('../../wallet');
+const config = require('config');
+
+const networks = config.get('network.web3');
 
 class WalletController extends PointSDKController {
     constructor(ctx, req, reply) {
@@ -16,16 +19,6 @@ class WalletController extends PointSDKController {
         this.payload = req.body;
         this.reply = reply;
         this.defaultWallet = blockchain.getWallet();
-    }
-
-    async tx() {
-        const to = this.payload.to;
-        const value = this.payload.value;
-
-        const receipt = await sendTransaction({to, value});
-        const transactionHash = receipt.transactionHash;
-
-        return this._response({transactionHash});
     }
 
     publicKey() {
@@ -54,18 +47,31 @@ class WalletController extends PointSDKController {
     }
     
     async getWalletInfo() {
-        //TODO: Check how to do that.
-        //this.renderer.#ensurePrivilegedAccess();
+        const identity = await blockchain.getCurrentIdentity();
+        const ynetAddress = identity ? `${identity}.point` : 'N/A';
+        const wallets = [
+            // TODO: remove this placeholder once we add a real point network
+            {
+                network: 'pointnet',
+                type: 'eth',
+                currency_name: 'Point',
+                currency_code: 'POINT',
+                address: ynetAddress,
+                balance: 0
+            },
+            ...await Promise.all(Object.keys(networks).map(async network => ({
+                network,
+                type: networks[network].type,
+                currency_name: networks[network].currency_name,
+                currency_code: networks[network].currency_code,
+                address: network === 'ynet' ? ynetAddress : getWalletAddress(({network})),
+                balance: await getBalance({network, majorUnits: true})
+            })))
+        ];
 
-        const wallets = [];
-        wallets.push({
-            currency_name: 'Point',
-            currency_code: 'POINT',
-            address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
-            balance: (await getBalance({})) / 1e18
-        });
         return this._response({wallets});
     }
+
     async encryptData() {
         const {publicKey, data} = this.payload;
         const {host} = this.req.headers;

@@ -10,6 +10,8 @@ const log = logger.child({module: 'SolanaProvider'});
 // Address of the `.sol` TLD
 const SOL_TLD_AUTHORITY = new web3.PublicKey(config.get('name_services.sol_tld_authority'));
 
+export type SolanaSendFundsParams = {to: string; lamports: number; network: string}
+
 // These interfaces are copied from @solana/web3
 // However, they are not exported in index file, and trying to import them leads to
 // a bunch of ts errors in other library files
@@ -142,7 +144,7 @@ const solana = {
         }
         return res.data;
     },
-    sendFunds: async ({to, lamports, network}: {to: string; lamports: number; network: string}) => {
+    sendFunds: async ({to, lamports, network}: SolanaSendFundsParams) => {
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network ${network}`);

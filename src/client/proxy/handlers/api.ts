@@ -1,5 +1,5 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-import axios from 'axios';
+import axios, {AxiosRequestHeaders} from 'axios';
 import config from 'config';
 
 const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
@@ -14,7 +14,7 @@ const attachApiHandler = (server: FastifyInstance) => {
             `${API_URL}/v1/api/${req.params['*']}${query ? `?${query}` : ''}`,
             {
                 validateStatus: () => true,
-                headers: req.headers
+                headers: req.headers as AxiosRequestHeaders
             }
         );
 
@@ -36,7 +36,7 @@ const attachApiHandler = (server: FastifyInstance) => {
                 req.body,
                 {
                     validateStatus: () => true,
-                    headers: req.headers
+                    headers: req.headers as AxiosRequestHeaders
                 }
             );
 

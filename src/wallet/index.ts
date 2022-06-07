@@ -87,3 +87,16 @@ export const getTransactions = async ({network = 'ynet'}) => {
             );
     }
 };
+
+export const getWalletAddress = ({network = 'ynet'}) => {
+    switch (networks[network].type) {
+        case 'eth':
+            return getNetworkAddress();
+        case 'solana':
+            return getSolanaKeyPair().publicKey;
+        default:
+            throw new Error(
+                `Bad config: unexpected network ${network} type ${networks[network].type}`
+            );
+    }
+};

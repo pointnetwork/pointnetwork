@@ -1,28 +1,30 @@
 import Container from 'react-bootstrap/Container';
-import { useEffect, useState } from "react";
-import $ from 'jquery';
-import Swal from 'sweetalert2';
+import { useEffect, useState } from 'react';
 import Loading from '../components/Loading';
+import ReceiveModal from '../components/wallet/ReceiveModal';
+import SendModal from '../components/wallet/SendModal';
+import Swal from 'sweetalert2';
 
 window.openTelegram = () => {
     fetch('/v1/api/web2/open', {
         method: 'POST',
         headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
         },
-        body: JSON.stringify({urlToOpen: 'https://t.me/pointnetwork'})
+        body: JSON.stringify({ urlToOpen: 'https://t.me/pointnetwork' }),
     });
-}
+};
 
 export default function Wallet() {
+    const [wallets, setWallets] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [receiveModalData, setReceiveModalData] = useState(null);
+    const [sendModalData, setSendModalData] = useState(null);
 
-    const [wallets, setWallets] = useState([])
-    const [isLoading, setIsLoading] = useState(true)
-
-    useEffect(()=>{
-        fetchWallets();
-    },[])
+    useEffect(() => {
+        void fetchWallets();
+    }, []);
 
     const fetchWallets = async () => {
         setIsLoading(true);
@@ -30,62 +32,130 @@ export default function Wallet() {
         const walletInfo = await response.json();
         setWallets(walletInfo.data.wallets);
         setIsLoading(false);
-    }
+    };
 
-    function pointMessage() {
-        Swal.fire({
+    // TODO: remove this once we add real point network
+    const openPlaceholderWindow = () => {
+        void Swal.fire({
             icon: 'info',
             title: 'POINT token doesn\'t exist yet!',
-            html: 'Feel free to join <a href="javascript:window.openTelegram()">our Telegram group</a> to stay updated about the launch details in the future',
-        })
-    }
+            html: `Feel free to join <a 
+                style="color: #0a58ca; cursor: pointer;" 
+                onclick="window.openTelegram()">
+                our Telegram group</a> to stay updated about the launch details in the future`,
+        });
+    };
 
-    function walletSend(code) {
-        if (code === 'POINT') return pointMessage();
-    }
+    const openSendModal = ({ network, type }) => {
+        if (network === 'pointnet') {
+            openPlaceholderWindow();
+            return;
+        }
+        setSendModalData({ network, type });
+    };
 
-    function walletReceive(code, address) {
-        if (code === 'POINT') return pointMessage();
-    }
+    const closeSendModal = () => {
+        setSendModalData(null);
+    };
 
-    function walletHistory(code) {
-        if (code === 'POINT') return pointMessage();
-        // location.href = '/wallet/history/' + code;
+    const openReceiveModal = (currency, address) => {
+        if (currency === 'POINT') {
+            openPlaceholderWindow();
+            return;
+        }
+        setReceiveModalData({ currency, address });
+    };
+
+    const closeReceiveModal = () => {
+        setReceiveModalData(null);
+    };
+
+    function walletHistory() {
+        alert('TODO');
     }
 
     const renderWallet = (wallet) => {
-        return(
+        return (
             <tr key={wallet.currency_code}>
-                <td><strong>{wallet.currency_name}</strong> ({wallet.currency_code })</td>
+                <td>
+                    <strong>{wallet.currency_name}</strong> (
+                    {wallet.currency_code})
+                </td>
                 <td className="mono">{wallet.address}</td>
-                <td style={{textAlign: 'right'}}>{ wallet.balance.toFixed(8) } { wallet.currency_code }</td>
-                <td style={{textAlign: 'right'}}>
-                    <a href="#" className="btn btn-sm btn-warning" onClick={() => walletSend( wallet.currency_code )}>Send</a>&nbsp;
-                    <a href="#" className="btn btn-sm btn-success" onClick={() => walletReceive( wallet.currency_code, wallet.address )}>Receive</a>&nbsp;
-                    <a href="#" className="btn btn-sm btn-info" onClick={() => walletHistory( wallet.currency_code )}>History</a>
+                <td style={{ textAlign: 'right' }}>
+                    {wallet.balance.toFixed(8)} {wallet.currency_code}
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                    <a
+                        href="#"
+                        className="btn btn-sm btn-warning"
+                        onClick={() =>
+                            openSendModal({
+                                network: wallet.network,
+                                type: wallet.type,
+                            })
+                        }
+                    >
+                        Send
+                    </a>
+                    &nbsp;
+                    <a
+                        href="#"
+                        className="btn btn-sm btn-success"
+                        onClick={() =>
+                            openReceiveModal(
+                                wallet.currency_code,
+                                wallet.address,
+                            )
+                        }
+                    >
+                        Receive
+                    </a>
+                    &nbsp;
+                    <a
+                        href="#"
+                        className="btn btn-sm btn-info"
+                        onClick={() => walletHistory(wallet.currency_code)}
+                    >
+                        History
+                    </a>
                 </td>
             </tr>
-        )
-    }
+        );
+    };
 
-    return(
+    return (
         <Container className="p-3">
-            <br/>
+            {receiveModalData && (
+                <ReceiveModal
+                    currency={receiveModalData.currency}
+                    address={receiveModalData.address}
+                    onClose={closeReceiveModal}
+                />
+            )}
+            {sendModalData && (
+                <SendModal
+                    onClose={closeSendModal}
+                    network={sendModalData.network}
+                    type={sendModalData.type}
+                />
+            )}
+            <br />
             <h1>Wallet</h1>
             <table className="table table-bordered table-striped table-hover table-responsive table-primary">
                 <tbody>
                     <tr>
                         <th>Currency</th>
                         <th>Address</th>
-                        <th style={{textAlign: 'right'}}>Balance</th>
-                        <th style={{textAlign: 'right'}}>Actions</th>
+                        <th style={{ textAlign: 'right' }}>Balance</th>
+                        <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
-                    {isLoading ? null : wallets.map((wallet) => renderWallet(wallet))}
+                    {isLoading
+                        ? null
+                        : wallets.map((wallet) => renderWallet(wallet))}
                 </tbody>
             </table>
-            {isLoading ? <Loading/> : null}
+            {isLoading ? <Loading /> : null}
         </Container>
-    )
-
-
+    );
 }
