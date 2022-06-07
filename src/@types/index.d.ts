@@ -27,7 +27,8 @@ declare global {
         deploy?: string,
         deploy_contracts?: boolean,
         dev?: boolean,
-        upload?: string
+        upload?: string,
+        force_deploy_proxy?: boolean
     };
 
     type CtxType = Record<string, unknown> & {

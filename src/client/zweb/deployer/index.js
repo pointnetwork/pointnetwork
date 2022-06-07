@@ -96,7 +96,7 @@ class Deployer {
         return path.join('.', manifestDir, `${name}.json`);
     }
 
-    async deploy(deployPath, deployContracts = false, dev = false) {
+    async deploy(deployPath, deployContracts = false, dev = false, force_deploy_proxy = false) {
         // todo: error handling, as usual
         const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
@@ -282,7 +282,7 @@ class Deployer {
 
                             let proxy;
                             const contractF = await hre.ethers.getContractFactory(contractName);
-                            if (proxyAddress == null || proxyDescriptionFileId == null) {
+                            if (proxyAddress == null || proxyDescriptionFileId == null || force_deploy_proxy) {
                                 log.debug('deployProxy call');
                                 const cfg = {kind: 'uups'};
                                 proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
