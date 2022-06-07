@@ -6,7 +6,7 @@ import {parseCookieString} from '../util';
  * Point related information associated to said domain.
  */
 export function parseDomainRegistry(registry: DomainRegistry): PointDomainData {
-    const values = parseCookieString(registry.content.decoded ?? '');
+    const values = parseCookieString(registry.content ?? '');
 
     // If the registry has a `pn_alias`, it means we need to redirect
     // all requests to the `.sol` domain to the `.point` alias.

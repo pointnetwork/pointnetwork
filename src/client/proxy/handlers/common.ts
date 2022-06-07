@@ -245,8 +245,9 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 res.header('content-type', contentType);
                 return file;
             }
-        } else if (host.endsWith('.sol')) {
-            // For Solana domains, we store Point data in the domain registry.
+        } else if (host.endsWith('.sol') || host.endsWith('.eth')) {
+            // For Solana/Ethereum domains, we store Point data in the domain registry.
+            const service = host.endsWith('.sol') ? 'SNS' : 'ENS';
             let identity = '';
             let routesId: string | undefined;
             let rootDirId: string | undefined;
@@ -254,7 +255,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
             try {
                 const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
-                if (!resp.data.data?.content.decoded?.trim()) {
+                if (!resp.data.data?.content?.trim()) {
                     const msg = `No data found in the "content" field of the domain registry for "${host}".`;
                     log.debug({host}, msg);
                     return res.status(404).send(msg);
@@ -265,10 +266,14 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 identity = pointData.identity ? `${pointData.identity}.point` : '';
                 routesId = pointData.routesId;
                 rootDirId = pointData.rootDirId;
-                log.debug({host, identity, routesId, rootDirId, isAlias}, 'Resolved .sol domain');
+                log.debug(
+                    {host, identity, routesId, rootDirId, isAlias},
+                    `Resolved ${service} domain`
+                );
             } catch (err) {
                 const statusCode = err.response?.data?.status || 500;
-                const msg = err.response?.data?.data?.errorMsg || 'Error resolving ".sol" domain';
+                const msg =
+                    err.response?.data?.data?.errorMsg || `Error resolving "${service}" domain`;
                 log.error(err, msg);
                 return res.status(statusCode).send(msg);
             }
@@ -286,7 +291,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 // .sol domain is an alias to a .point one, so we fetch the routes
                 // and root directory from our Identity contract, as with any other
                 // .point domain
-                log.debug({host, identity}, '.sol domain is an alias');
+                log.debug({host, identity}, `${service} domain is an alias`);
                 const version = (queryParams.__point_version as string) ?? 'latest';
 
                 routesId = await blockchain.getZRecord(identity, version) as string;

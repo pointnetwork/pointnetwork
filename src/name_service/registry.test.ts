@@ -7,25 +7,21 @@ const owner = 'blockchain_address-not_important_for_these_tests';
 
 const testCases: TestCase[] = [
     [
-        {owner, content: {decoded: 'ipfs=cid', error: null}},
+        {owner, content: 'ipfs=cid'},
         {identity: '', isAlias: false, rootDirId: '', routesId: ''}
     ],
     [
-        {owner, content: {decoded: 'ipfs=cid;pn_alias=ynet_blog', error: null}},
+        {owner, content: 'ipfs=cid;pn_alias=ynet_blog'},
         {identity: 'ynet_blog', isAlias: true}
     ],
     [
-        {owner, content: {decoded: 'pn_alias=ynet_blog;arwv=chunkId', error: null}},
+        {owner, content: 'pn_alias=ynet_blog;arwv=chunkId'},
         {identity: 'ynet_blog', isAlias: true}
     ],
     [
         {
             owner,
-            content: {
-                decoded:
-                    'email=a@b.c;pn_id=ynet_blog;pn_root=root-chunk-id;pn_routes=routes-chunk-id',
-                error: null
-            }
+            content: 'email=a@b.c;pn_id=ynet_blog;pn_root=root-chunk-id;pn_routes=routes-chunk-id'
         },
         {
             identity: 'ynet_blog',
@@ -37,11 +33,8 @@ const testCases: TestCase[] = [
     [
         {
             owner,
-            content: {
-                decoded:
-                    'ipfs=QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn;pn_id=ynet_bareminimum;pn_routes=0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d;pn_root=d7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd',
-                error: null
-            }
+            content:
+                'ipfs=QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn;pn_id=ynet_bareminimum;pn_routes=0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d;pn_root=d7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd'
         },
         {
             identity: 'ynet_bareminimum',

@@ -211,7 +211,7 @@ const solana = {
 
         return {
             owner: registry.owner.toBase58(),
-            content: {decoded: content || null, error: null}
+            content: content || null
         };
     }
 };
