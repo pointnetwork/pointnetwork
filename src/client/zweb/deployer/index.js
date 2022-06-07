@@ -510,7 +510,7 @@ class Deployer {
         const target = host.replace('.point', '');
 
         const uncommittedChanges = this.execCommand(`cd ${deployPath} && git status --porcelain`);
-        if(uncommittedChanges){
+        if (uncommittedChanges){
             log.warn({target, uncommittedChanges}, 'Uncommitted changes detected, the commit SHA could not correspond the version of DApp deployed');
         }
 
@@ -518,7 +518,7 @@ class Deployer {
         if (lastCommitSha){
             log.info({target, lastCommitSha}, 'Updating Commit SHA');
             await blockchain.putKeyValue(target, COMMIT_SHA_KEY, lastCommitSha, version);
-        }else{
+        } else {
             log.info({target}, 'Commit SHA not found');
         }
     }
