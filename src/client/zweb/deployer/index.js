@@ -7,10 +7,12 @@ const {getNetworkPublicKey} = require('../../../wallet/keystore');
 const blockchain = require('../../../network/providers/ethereum');
 const hre = require('hardhat');
 const BN = require('bn.js');
+const {execSync} = require('child_process');
 
 // TODO: direct import cause fails in some docker scripts
 let storage;
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
+const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
 
 class Deployer {
     constructor(ctx) {
@@ -94,6 +96,14 @@ class Deployer {
         const chainId = await this.getChainId();
         const name = networkNames[chainId] ?? `unknown-${chainId}`;
         return path.join('.', manifestDir, `${name}.json`);
+    }
+
+    execCommand(command) {
+        try {
+            return execSync(command).toString();
+        } catch (e) {
+            return false;
+        }
     }
 
     async deploy(deployPath, deployContracts = false, dev = false, force_deploy_proxy = false) {
@@ -405,6 +415,8 @@ class Deployer {
             version
         );
 
+        await this.updateCommitSha(target, deployPath, version);
+
         log.info('Deploy finished');
     }
 
@@ -492,6 +504,23 @@ class Deployer {
         const target = host.replace('.point', '');
         log.info({target, id}, 'Updating Proxy Metatada');
         await blockchain.putKeyValue(target, PROXY_METADATA_KEY, id, version);
+    }
+
+    async updateCommitSha(host, deployPath, version) {
+        const target = host.replace('.point', '');
+
+        const uncommittedChanges = this.execCommand(`cd ${deployPath} && git status --porcelain`);
+        if(uncommittedChanges){
+            log.warn({target, uncommittedChanges}, 'Uncommitted changes detected, the commit SHA could not correspond the version of DApp deployed');
+        }
+
+        const lastCommitSha = this.execCommand(`cd ${deployPath} && git rev-parse HEAD`);
+        if (lastCommitSha){
+            log.info({target, lastCommitSha}, 'Updating Commit SHA');
+            await blockchain.putKeyValue(target, COMMIT_SHA_KEY, lastCommitSha, version);
+        }else{
+            log.info({target}, 'Commit SHA not found');
+        }
     }
 
     async updateKeyValue(target, values = {}, deployPath, deployContracts = false, version) {
