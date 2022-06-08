@@ -111,6 +111,24 @@ class Deployer {
         const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
         const deployConfig = JSON.parse(deployConfigFile);
+
+        if(!deployConfig.hasOwnProperty('version') ||
+           !deployConfig.hasOwnProperty('target') ||
+           !deployConfig.hasOwnProperty('keyvalue') ||
+           !deployConfig.hasOwnProperty('contracts')){
+            log.error(
+                {
+                    deployConfigFilePath: deployConfigFilePath
+                },
+                'Missing entry in point.deploy.json file. The following properties must be present in the file:' + 
+                ' version, target, keyvalue and contracts. Fill them with empty values if needed.'
+            );
+            throw new Error(
+                'Missing entry in point.deploy.json file. The following properties must be present in the file:' +
+                ' version, target, keyvalue and contracts. Fill them with empty values if needed.'
+            );
+        }
+
         let baseVersion;
         if (
             typeof deployConfig.version === 'number' &&
