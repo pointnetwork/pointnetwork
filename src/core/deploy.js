@@ -4,8 +4,7 @@ const logger = require('./log');
 const log = logger.child({module: 'Deploy'});
 
 class Deploy {
-    async deploy(deploy_path, deploy_contracts = false, dev = false) {
-
+    async deploy(deploy_path, deploy_contracts = false, dev = false, force_deploy_proxy = false) {
         const deploy_path_absolute = path.resolve(deploy_path);
         if (!deploy_path_absolute) {
             throw new Error('invalid path');
@@ -15,7 +14,8 @@ class Deploy {
             'deploy',
             'deploy_path=' + deploy_path_absolute,
             'deploy_contracts=' + (deploy_contracts ? 'true' : 'false'),
-            'dev=' + (dev ? 'true' : 'false')
+            'dev=' + (dev ? 'true' : 'false'),
+            'force_deploy_proxy=' + (force_deploy_proxy ? 'true' : 'false')
         );
         if (result.error) {
             log.error(result, 'Deploy error');

@@ -71,9 +71,11 @@ program
         program.deploy = path;
         program.deploy_contracts = Boolean(cmd.contracts);
         program.dev = Boolean(cmd.dev);
+        program.force_deploy_proxy = Boolean(cmd.forceDeployProxy);
     })
     .option('--contracts', '(re)deploy contracts too', false)
-    .option('--dev', 'deploy zapp to dev too', false);
+    .option('--dev', 'deploy zapp to dev too', false)
+    .option('--force-deploy-proxy', 'Force the replacement of the proxy on upgradable contracts', false);
 program
     .command('upload <path>')
     .description('uploads a file or directory')
@@ -84,7 +86,6 @@ program
 // program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
 // program.option('--daemon', 'sends the daemon to the background'); // todo
 // program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
-
 program.parse(process.argv);
 
 // ------------------ Patch Config ------------ //
@@ -136,7 +137,7 @@ if (program.deploy) {
     const Deploy = require('./core/deploy');
     const deploy = new Deploy();
     deploy
-        .deploy(program.deploy, program.deploy_contracts, program.dev)
+        .deploy(program.deploy, program.deploy_contracts, program.dev, program.force_deploy_proxy)
         .then(ctx.exit)
         .catch(ctx.die);
     // @ts-ignore
