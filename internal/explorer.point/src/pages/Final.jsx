@@ -574,13 +574,16 @@ const Final = () => {
                             )}
                         </div>
                         {tweetUrlError ? (
-                            <p className="red text-medium">{tweetUrlError}</p>
+                            <span className="red text-medium" style={{
+                                height: '35px',
+                                padding: '7px',
+                            }}>{tweetUrlError}</span>
                         ) : (
                             ''
                         )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <span className="text-small">
+                        <span className="text-small red">
                             Do not delete the tweet for at least 24 hours, to
                             prove it was not accidental.
                         </span>
