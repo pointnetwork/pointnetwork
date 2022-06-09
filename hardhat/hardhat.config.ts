@@ -21,20 +21,23 @@ import './tasks/explorer/explorer-set-index-md';
 dotenv.config();
 
 let ynetPrivateKey = process.env.DEPLOYER_ACCOUNT;
-if (ynetPrivateKey == undefined){
-    const homedir = require('os').homedir();
-    require('path').resolve(homedir, '.point', 'keystore', 'key.json');
-    const wallet = require('ethereumjs-wallet').hdkey.fromMasterSeed(
-        require('bip39').mnemonicToSeedSync(require(
-            require('path').resolve(homedir, '.point', 'keystore', 'key.json')).phrase
-        )
-    ).getWallet();
-    ynetPrivateKey = wallet.getPrivateKey().toString('hex');
+try{
+    if (ynetPrivateKey == undefined){
+        const homedir = require('os').homedir();
+        require('path').resolve(homedir, '.point', 'keystore', 'key.json');
+        const wallet = require('ethereumjs-wallet').hdkey.fromMasterSeed(
+            require('bip39').mnemonicToSeedSync(require(
+                require('path').resolve(homedir, '.point', 'keystore', 'key.json')).phrase
+            )
+        ).getWallet();
+        ynetPrivateKey = wallet.getPrivateKey().toString('hex');
+    }
+}catch(e){
+    if(!ynetPrivateKey){
+        console.log('Warn: YNet account not found. Will not be possible to deploy to YNet.')
+    }
 }
 
-if (ynetPrivateKey == undefined){
-    throw new Error("ynetPrivateKey is not set.");
-}
 
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -55,7 +58,13 @@ const build_path = process.env.DEPLOYER_BUILD_PATH || './build';
 const devaddress = 'http://' + host + ':' + port
 console.log(devaddress)
 
+let ynetConfig: any = {
+    url: 'http://ynet.point.space:44444'
+}
 
+if (ynetPrivateKey){
+    ynetConfig.accounts = [ynetPrivateKey];
+}
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -104,13 +113,7 @@ const config: HardhatUserConfig = {
                 privateKey
             ]
         },
-        ynet: {
-            url: 'http://ynet.point.space:44444',
-            accounts:
-            [
-                ynetPrivateKey,
-            ]
-        },
+        ynet: ynetConfig,
     },
     
 };
