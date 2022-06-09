@@ -36,7 +36,6 @@ const CopyIcon = (props) => {
             width="16"
             height="16"
             fill="currentColor"
-            className="bi bi-clipboard"
             viewBox="0 0 16 16"
         >
             <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z" />
@@ -162,7 +161,6 @@ const Final = () => {
                 .catch((thrown) => {
                     setLoading(false);
                     if (!axios.isCancel(thrown)) {
-                        console.error(thrown);
                         setError(DEFAULT_ERROR_MESSAGE);
                     }
                 });
@@ -282,7 +280,6 @@ const Final = () => {
             window.location = '/';
         } catch (error) {
             setRegistering(false);
-            console.error(error);
             Swal.fire({ title: DEFAULT_ERROR_MESSAGE });
         }
     };
@@ -573,16 +570,27 @@ const Final = () => {
                                 ''
                             )}
                         </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
                         {tweetUrlError ? (
-                            <p className="red text-medium">{tweetUrlError}</p>
+                            <span
+                                className="red text-medium"
+                                style={{
+                                    height: '35px',
+                                    padding: '7px',
+                                }}
+                            >
+                                {tweetUrlError}
+                            </span>
                         ) : (
                             ''
                         )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <span className="text-small">
+                        <span className="text-small red">
                             Do not delete the tweet for at least 24 hours, to
-                            prove it was not accidental.
+                            prove it was not someone briefly compromising the
+                            twitter account
                         </span>
                     </div>
                 </div>
