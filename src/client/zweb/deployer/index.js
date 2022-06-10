@@ -13,6 +13,8 @@ const {execSync} = require('child_process');
 let storage;
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
+const POINT_SDK_VERSION = 'zweb/point/sdk/version';
+const POINT_NODE_VERSION = 'zweb/point/node/version';
 
 class Deployer {
     constructor(ctx) {
@@ -433,6 +435,14 @@ class Deployer {
 
         await this.updateCommitSha(target, deployPath, version);
 
+        if(deployConfig.hasOwnProperty('pointSDKVersion')){
+            await this.updatePointVersionTag(target, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version);
+        }
+
+        if(deployConfig.hasOwnProperty('pointNodeVersion')){
+            await this.updatePointVersionTag(target, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version);
+        }
+
         log.info('Deploy finished');
     }
 
@@ -537,6 +547,12 @@ class Deployer {
         } else {
             log.info({target}, 'Commit SHA not found');
         }
+    }
+
+    async updatePointVersionTag(host, key, value, version) {
+        const target = host.replace('.point', '');
+        log.info({target, key}, 'Updating Point Version Tag');
+        await blockchain.putKeyValue(target, key, value, version);
     }
 
     async updateKeyValue(target, values = {}, deployPath, deployContracts = false, version) {
