@@ -435,11 +435,11 @@ class Deployer {
 
         await this.updateCommitSha(target, deployPath, version);
 
-        if(deployConfig.hasOwnProperty('pointSDKVersion')){
+        if (deployConfig.hasOwnProperty('pointSDKVersion')){
             await this.updatePointVersionTag(target, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version);
         }
 
-        if(deployConfig.hasOwnProperty('pointNodeVersion')){
+        if (deployConfig.hasOwnProperty('pointNodeVersion')){
             await this.updatePointVersionTag(target, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version);
         }
 
