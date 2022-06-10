@@ -1,11 +1,8 @@
 const path = require('path');
-const Web3 = require('web3');
 const {ethers} = require('ethers');
 const ethereumjs = require('ethereumjs-util');
 const {promises: fs} = require('fs');
 const _ = require('lodash');
-const HDWalletProvider = require('@truffle/hdwallet-provider');
-const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
 const {getFile, getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
@@ -27,33 +24,24 @@ function isRetryableError({message}) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+function getContractInstance(address, abi) {
+    const {provider, wallet} = getWeb3();
+    const contract = new ethers.Contract(address, abi, provider).connect(wallet);
+    return contract;
+}
+
 function createWeb3Instance({blockchainUrl, privateKey}) {
     const provider = blockchainUrl.startsWith('ws://')
-        ? new Web3.providers.WebsocketProvider(blockchainUrl)
-        : blockchainUrl;
+        ? new ethers.providers.WebSocketProvider(blockchainUrl)
+        : new ethers.providers.JsonRpcProvider(blockchainUrl);
 
-    if (blockchainUrl.startsWith('ws://')) {
-        HDWalletProvider.prototype.on = provider.on.bind(provider);
-    }
+    // provider.pollingInterval = 30000;
 
-    const hdWalletProvider = new HDWalletProvider({
-        privateKeys: [privateKey],
-        providerOrUrl: provider,
-        pollingInterval: 30000
-    });
-    const nonceTracker = new NonceTrackerSubprovider();
+    const wallet = new ethers.Wallet(privateKey, provider);
 
-    hdWalletProvider.engine._providers.unshift(nonceTracker);
-    nonceTracker.setEngine(hdWalletProvider.engine);
+    log.debug({blockchainUrl}, 'Created ethers instance');
 
-    const web3 = new Web3(hdWalletProvider);
-    const account = web3.eth.accounts.privateKeyToAccount(privateKey);
-
-    web3.eth.accounts.wallet.add(account);
-    web3.eth.defaultAccount = account.address;
-
-    log.debug({blockchainUrl}, 'Created web3 instance');
-    return web3;
+    return {wallet, provider};
 }
 
 const abisByContractName = {};
@@ -62,7 +50,6 @@ const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
 
 const networks = config.get('network.web3');
 
-// web3.js providers
 const providers = {
     ynet: createWeb3Instance({
         blockchainUrl: networks.ynet.address,
@@ -78,29 +65,15 @@ const getWeb3 = (chain = 'ynet') => {
     ) {
         throw new Error(`No Eth provider for network ${chain}`);
     }
+
     if (!providers[chain]) {
         providers[chain] = createWeb3Instance({
             blockchainUrl: networks[chain].address,
             privateKey: '0x' + getNetworkPrivateKey()
         });
     }
+
     return providers[chain];
-};
-
-// ethers providers
-const ethersProviders = {};
-
-const getEthers = chain => {
-    if (!networks[chain] || !networks[chain].address) {
-        throw new Error(`No connection details for chain "${chain}".`);
-    }
-
-    if (!ethersProviders[chain]) {
-        const url = networks[chain].address;
-        ethersProviders[chain] = new ethers.providers.JsonRpcProvider(url);
-    }
-
-    return ethersProviders[chain];
 };
 
 // Client that consolidates all blockchain-related functionality
@@ -134,7 +107,8 @@ ethereum.loadPointContract = async (
                     log.debug('Successfully fetched identity contract from storage');
 
                     abisByContractName[contractName] = JSON.parse(abiFile).abi;
-                    return new getWeb3().eth.Contract(abisByContractName[contractName], at);
+                    const contract = getContractInstance(at, abisByContractName[contractName]);
+                    return contract;
                 } catch (e) {
                     log.error('Failed to fetch Identity contract from storage: ' + e.message);
                 }
@@ -152,8 +126,7 @@ ethereum.loadPointContract = async (
         abisByContractName[contractName] = abiFile.abi;
     }
 
-    const web3 = getWeb3();
-    return new web3.eth.Contract(abisByContractName[contractName], at);
+    return getContractInstance(at, abisByContractName[contractName]);
 };
 
 ethereum.loadIdentityContract = async () => {
@@ -187,8 +160,7 @@ ethereum.loadWebsiteContract = async (target, contractName, version = 'latest') 
         abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
         // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
 
-        const web3 = getWeb3();
-        return new web3.eth.Contract(abi.abi, at);
+        return getContractInstance(at, abi.abi);
     } catch (e) {
         throw Error(
             'Could not read abi of the contract ' +
@@ -200,47 +172,41 @@ ethereum.loadWebsiteContract = async (target, contractName, version = 'latest') 
     }
 };
 
-ethereum.web3send = async (method, optons = {}) => {
+ethereum.web3send = async (contract, method, params, options = {}) => {
     let account, gasPrice;
-    let {gasLimit, amountInWei} = optons;
+    let {gasLimit, amountInWei} = options;
     let attempt = 0;
     let requestStart;
 
     while (true) {
         try {
-            account = getWeb3().eth.defaultAccount;
-            gasPrice = await getWeb3().eth.getGasPrice();
+            const {provider, wallet} = getWeb3();
+            account = wallet.address;
+            gasPrice = await provider.getGasPrice();
             log.debug(
-                {gasLimit, gasPrice, account, method: method._method.name},
+                {gasLimit, gasPrice, account, method},
                 'Prepared to send tx to contract method'
             );
             // if (!gasLimit) {
-            gasLimit = await method.estimateGas({from: account, value: amountInWei});
+            gasLimit = await contract.estimateGas[method](...params, {value: amountInWei});
             log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
             // }
             requestStart = Date.now();
-            return await method
-                .send({
-                    from: account,
-                    gasPrice,
-                    gas: gasLimit,
-                    value: amountInWei
-                })
-                .on('error', (error, receipt) => {
-                    const {transactionHash, blockNumber, status} = receipt;
-                    log.debug(
-                        {error, transactionHash, blockNumber, status, method: method._method.name},
-                        'error sending tx to contract method'
-                    );
-                });
+            const tx = await contract[method](...params, {
+                gasPrice,
+                gasLimit,
+                value: amountInWei
+            });
+            const receipt = await tx.wait();
+            return receipt;
         } catch (error) {
             log.error(
                 {
-                    method: method._method.name,
+                    method,
                     account,
                     gasPrice,
                     gasLimit,
-                    optons,
+                    options,
                     error,
                     stack: error.stack,
                     timePassedSinceRequestStart: Date.now() - requestStart
@@ -255,16 +221,6 @@ ethereum.web3send = async (method, optons = {}) => {
             throw error;
         }
     }
-    /*
-        .on('transactionHash', function(hash){
-            ...
-        })
-        .on('confirmation', function(confirmationNumber, receipt){
-            ...
-        })
-        .on('receipt', function(receipt){
-        https://web3js.readthedocs.io/en/v1.2.11/web3-eth-contract.html#id37
-         */
 };
 
 ethereum.callContract = async (target, contractName, method, params, version = 'latest') => {
@@ -282,7 +238,7 @@ ethereum.callContract = async (target, contractName, method, params, version = '
                 throw Error('Method ' + method + ' does not exist on contract ' + contractName); // todo: sanitize
             }
 
-            const result = await contract.methods[method](...params).call();
+            const result = await contract.callStatic[method](...params);
 
             return result;
         } catch (error) {
@@ -312,26 +268,33 @@ ethereum.getPastEvents = async (
     target,
     contractName,
     event,
-    options = {fromBlock: 0, toBlock: 'latest'}
+    options = {fromBlock: 0, toBlock: 'latest', filter: {}}
 ) => {
+    const {fromBlock, toBlock, filter} = options;
     const contract = await ethereum.loadWebsiteContract(target, contractName);
-    let events = await contract.getPastEvents(event, options);
+    const bloomFilter = contract.filters[event]();
+
+    let events = await contract.queryFilter(bloomFilter, fromBlock, toBlock);
+
     //filter non-indexed properties from return value for convenience
-    if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
-        for (const k in options.filter) {
-            events = events.filter(e => e.returnValues[k] === options.filter[k]);
+    if (Object.keys(filter).length > 0) {
+        for (const k in filter) {
+            events = events.filter(e => e.args[k] === filter[k]);
         }
     }
+
     return events;
 };
 
 ethereum.getBlockNumber = async () => {
-    const n = await getWeb3().eth.getBlockNumber();
+    const {provider} = getWeb3();
+    const n = await provider.getBlockNumber();
     return n;
 };
 
 ethereum.getBlockTimestamp = async blockNumber => {
-    const block = await getWeb3().eth.getBlock(blockNumber);
+    const {provider} = getWeb3();
+    const block = await provider.getBlock(blockNumber);
     return block.timestamp;
 };
 
@@ -339,13 +302,22 @@ ethereum.subscribeContractEvent = async (
     target,
     contractName,
     event,
-    onEvent,
-    onStart,
-    options = {}
+    onEvent
+    // onStart
+    // options = {}
 ) => {
+    const key = `${target}-${contract}-${event}`;
+    if (!eventsSubscriptions[key]) {
+        eventsSubscriptions[key] = [];
+    }
+
     const contract = await ethereum.loadWebsiteContract(target, contractName);
 
-    let subscriptionId;
+    const subscriptionId = contract.listenerCount(event)++;
+
+    return contract.on(event, data => onEvent({subscriptionId, data}));
+
+    /*
     return contract.events[event](options)
         .on('data', data => onEvent({subscriptionId, data}))
         .on('connected', id => {
@@ -355,10 +327,12 @@ ethereum.subscribeContractEvent = async (
                 data: {message}
             });
         });
+    */
 };
 
 ethereum.removeSubscriptionById = async (subscriptionId, onRemove) => {
-    await getWeb3().eth.removeSubscriptionById(subscriptionId);
+    // TODO: FIX
+    // await getWeb3().eth.removeSubscriptionById(subscriptionId);
     return onRemove({
         subscriptionId,
         data: {message: `Unsubscribed from subscription id: ${subscriptionId}`}
@@ -424,15 +398,13 @@ ethereum.sendToContract = async (
     }
 
     // Now call the method
-    const method = contract.methods[methodName](...params);
-    return ethereum.web3send(method, options);
+    return ethereum.web3send(contract, methodName, params, options);
 };
 
 ethereum.identityByOwner = async owner => {
     try {
         const identityContract = await ethereum.loadIdentityContract();
-        const method = identityContract.methods.getIdentityByOwner(owner);
-        return await method.call();
+        return await identityContract.getIdentityByOwner(owner);
     } catch (e) {
         log.error({owner}, 'Error: identityByOwner');
         throw e;
@@ -442,8 +414,7 @@ ethereum.identityByOwner = async owner => {
 ethereum.ownerByIdentity = async identity => {
     try {
         const identityContract = await ethereum.loadIdentityContract();
-        const method = identityContract.methods.getOwnerByIdentity(identity);
-        return await method.call();
+        return await identityContract.getOwnerByIdentity(identity);
     } catch (e) {
         log.error({identity}, 'Error: ownerByIdentity');
         throw e;
@@ -453,8 +424,7 @@ ethereum.ownerByIdentity = async identity => {
 ethereum.commPublicKeyByIdentity = async identity => {
     try {
         const identityContract = await ethereum.loadIdentityContract();
-        const method = identityContract.methods.getCommPublicKeyByIdentity(identity);
-        const parts = await method.call();
+        const parts = await identityContract.getCommPublicKeyByIdentity(identity);
         return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
         // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
     } catch (e) {
@@ -465,8 +435,7 @@ ethereum.commPublicKeyByIdentity = async identity => {
 ethereum.isIdentityDeployer = async (identity, address) => {
     try {
         const identityContract = await ethereum.loadIdentityContract();
-        const method = identityContract.methods.isIdentityDeployer(identity, address);
-        return await method.call();
+        return await identityContract.isIdentityDeployer(identity, address);
     } catch (e) {
         log.error({address}, 'Error: isIdentityDeployer');
         throw e;
@@ -552,9 +521,9 @@ ethereum.getKeyValue = async (
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const baseKey = `${identity}-${key}`;
         if (version === 'latest') {
-            return keyValueCache.get(baseKey, async() => {
+            return keyValueCache.get(baseKey, async () => {
                 const contract = await ethereum.loadIdentityContract();
-                return contract.methods.ikvGet(identity, key).call();
+                return contract.ikvGet(identity, key);
             });
         } else {
             const cacheKey = `${baseKey}-${version}`;
@@ -593,9 +562,8 @@ ethereum.putKeyValue = async (identity, key, value, version) => {
         // todo: only send transaction if it's different. if it's already the same value, no need
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const contract = await ethereum.loadIdentityContract();
-        const method = contract.methods.ikvPut(identity, key, value, version);
         log.debug({identity, key, value, version}, 'Ready to put key value');
-        await ethereum.web3send(method);
+        await ethereum.web3send(contract, 'ikvPut', [identity, key, value, version]);
         keyValueCache.delStartWith(`${identity}-${key}`);
     } catch (e) {
         log.error({error: e, stack: e.stack, identity, key, value, version}, 'putKeyValue error');
@@ -615,7 +583,8 @@ ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessa
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
 
-        const method = contract.methods.registerVerified(
+        log.debug({identity, address}, 'Registering identity');
+        const result = await ethereum.web3send(contract, 'registerVerified', [
             identity,
             address,
             `0x${commPublicKey.slice(0, 32).toString('hex')}`,
@@ -624,16 +593,13 @@ ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessa
             v,
             r,
             s
-        );
-
-        log.debug({identity, address}, 'Registering identity');
-        const result = await ethereum.web3send(method);
+        ]);
         log.info(result, 'Identity registration result');
         log.sendMetric({
             identityRegistration: {
                 identity,
                 address,
-                commPublicKey
+                commPublicKeyz
             }
         });
 
@@ -658,17 +624,15 @@ ethereum.registerIdentity = async (identity, address, commPublicKey) => {
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const contract = await ethereum.loadIdentityContract();
-        log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
+        log.debug({address: contract.address}, 'Loaded "identity contract" successfully');
 
-        const method = contract.methods.register(
+        log.debug({identity, address}, 'Registering identity');
+        const result = await ethereum.web3send(contract, 'register', [
             identity,
             address,
             `0x${commPublicKey.slice(0, 32).toString('hex')}`,
             `0x${commPublicKey.slice(32).toString('hex')}`
-        );
-
-        log.debug({identity, address}, 'Registering identity');
-        const result = await ethereum.web3send(method);
+        ]);
         log.info(result, 'Identity registration result');
         log.sendMetric({
             identityRegistration: {
@@ -706,11 +670,13 @@ ethereum.getCurrentIdentity = async () => {
 };
 
 ethereum.toChecksumAddress = async address => {
-    const checksumAddress = getWeb3().utils.toChecksumAddress(address);
+    // const checksumAddress = getWeb3().utils.toChecksumAddress(address);
+    const checksumAddress = ethers.utils.getAddress(address);
     return checksumAddress;
 };
 
-ethereum.sendTransaction = async ({from, to, value, gas}) => {
+ethereum.sendContractTransaction = async ({from, to, value, gas}) => {
+    // TODO: GET NONCE, SIGN AND SEND TRANSACTION
     const receipt = await getWeb3().eth.sendTransaction({
         from,
         to,
@@ -721,18 +687,22 @@ ethereum.sendTransaction = async ({from, to, value, gas}) => {
 };
 
 ethereum.getBalance = async ({address, blockIdentifier = 'latest', network}) =>
-    getWeb3(network).eth.getBalance(address, blockIdentifier);
+    getWeb3(network).provider.getBalance(address, blockIdentifier);
 
-ethereum.getWallet = () => getWeb3().eth.accounts.wallet[0];
+// ethereum.getWallet = () => getWeb3().eth.accounts.wallet[0];
+ethereum.getWallet = () => getWeb3().wallet;
 
 ethereum.createAccountAndAddToWallet = () => {
-    const account = getWeb3().eth.accounts.create(getWeb3().utils.randomHex(32));
-    const wallet = getWeb3().eth.accounts.wallet.add(account);
+    const wallet = new ethers.Wallet.createRandom();
+    // TODO: add to accounts
+    // const account = getWeb3().eth.accounts.create(getWeb3().utils.randomHex(32));
+    // const wallet = getWeb3().eth.accounts.wallet.add(account);
     return wallet;
 };
 
 /** Returns the wallet using the address in the loaded keystore */
 ethereum.decryptWallet = (keystore, passcode) => {
+    // TODO: Fix
     const decryptedWallets = getWeb3().eth.accounts.wallet.decrypt([keystore], passcode);
     const address = ethereumjs.addHexPrefix(keystore.address);
     return decryptedWallets[address];
@@ -745,8 +715,10 @@ ethereum.getTransactionsByAccount = async ({
     endBlockNumber = null,
     network
 }) => {
+    const {provider} = getWeb3(network);
+    const ethBlockNumber = await provider.getBlockNumber();
     if (endBlockNumber == null) {
-        endBlockNumber = await getWeb3().eth.getBlockNumber();
+        endBlockNumber = ethBlockNumber;
         log.debug({endBlockNumber}, 'Using endBlockNumber');
     }
     if (startBlockNumber == null) {
@@ -754,10 +726,8 @@ ethereum.getTransactionsByAccount = async ({
         log.debug({startBlockNumber}, 'Using startBlockNumber');
     }
 
-    const provider = getWeb3(network);
-
     log.debug(
-        {account, startBlockNumber, endBlockNumber, ethBlockNumber: provider.eth.blockNumber},
+        {account, startBlockNumber, endBlockNumber, ethBlockNumber},
         'Searching for transactions'
     );
 
@@ -768,7 +738,7 @@ ethereum.getTransactionsByAccount = async ({
             log.debug('Searching block ' + i);
         }
 
-        const block = provider.eth.getBlock(i, true);
+        const block = await provider.getBlock(i);
         if (block != null && block.transactions != null) {
             block.transactions.forEach(function(e) {
                 if (account === '*' || account === e.from || account === e.to) {
@@ -783,18 +753,20 @@ ethereum.getTransactionsByAccount = async ({
     return txs;
 };
 
-ethereum.getOwner = () => getWeb3().utils.toChecksumAddress(getNetworkAddress());
+ethereum.getOwner = () => ethers.utils.getAddress(getNetworkAddress());
 
 ethereum.getGasPrice = async () => {
-    const gasPrice = await getWeb3().eth.getGasPrice();
+    const gasPrice = await getWeb3().provider.getGasPrice();
     return gasPrice;
 };
 
 ethereum.getContractFromAbi = abi => {
-    const web3 = getWeb3();
-    return new web3.eth.Contract(abi);
+    // TODO: Verify that this works without an address (new ethers.Contract(address, abi))
+    const contract = new ethers.Contract(abi);
+    return contract;
 };
 
+// TODO: Verify that this is still working
 ethereum.deployContract = async (contract, artifacts, contractName) => {
     const deploy = contract.deploy({data: artifacts.evm.bytecode.object});
     const gasPrice = await ethereum.getGasPrice();
@@ -813,7 +785,7 @@ ethereum.toHex = n => getWeb3().utils.toHex(n);
 
 ethereum.send = ({method, params = [], id, network}) =>
     new Promise((resolve, reject) => {
-        getWeb3(network).currentProvider.send(
+        getWeb3(network).provider.send(
             {
                 id,
                 method,
@@ -831,7 +803,7 @@ ethereum.send = ({method, params = [], id, network}) =>
     });
 
 ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
-    const provider = getEthers(network);
+    const {provider} = getWeb3(network);
     const resolver = await provider.getResolver(domainName);
 
     const [owner, content] = await Promise.all([
