@@ -33,7 +33,7 @@ class ContractController extends PointSDKController {
     async load() {
         const contractName = this.req.params.contract;
 
-        const contract = await blockchain.loadWebsiteContract(this.host, contractName);
+        const contract = await blockchain.loadWebsiteContract(this.req.identity, contractName);
 
         const data = {
             address: contract._address,
