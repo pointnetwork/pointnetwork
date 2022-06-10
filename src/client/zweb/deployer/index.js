@@ -617,6 +617,20 @@ class Deployer {
                 deployContracts,
                 version
             );
+
+            await this.updateCommitSha(pointIdentity, deployPath, version);
+
+            if (deployConfig.hasOwnProperty('pointSDKVersion')){
+                await this.updatePointVersionTag(
+                    pointIdentity, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version
+                );
+            }
+
+            if (deployConfig.hasOwnProperty('pointNodeVersion')){
+                await this.updatePointVersionTag(
+                    pointIdentity, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version
+                );
+            }
         }
 
         if (!isPointTarget) {
@@ -629,20 +643,6 @@ class Deployer {
 
             await this.editDomainRegistry(target, domainRegistryData, preExistingDomainContent);
             log.info({target, ...domainRegistryData}, 'Wrote Point data to domain registry');
-        }
-
-        await this.updateCommitSha(pointIdentity, deployPath, version);
-
-        if (deployConfig.hasOwnProperty('pointSDKVersion')){
-            await this.updatePointVersionTag(
-                target, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version
-            );
-        }
-
-        if (deployConfig.hasOwnProperty('pointNodeVersion')){
-            await this.updatePointVersionTag(
-                target, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version
-            );
         }
 
         log.info('Deploy finished');
