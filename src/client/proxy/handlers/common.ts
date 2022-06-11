@@ -36,15 +36,18 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 : null;
 
         if (host === 'point') {
-            if(req.url.startsWith('/web2redirect')){
+            if (req.url.startsWith('/web2redirect')){
                 res.header('content-type', 'text/html');
-                let refererHost = req.headers.referer || "";
-                let matches = refererHost.match(/^https:\/\/(.*)\//);
-                if(matches){
+                let refererHost = req.headers.referer || '';
+                const matches = refererHost.match(/^https:\/\/(.*)\//);
+                if (matches){
                     refererHost = matches[1];
                 }
-                return templateManager.render(Template.WEB2LINK, {url: queryParams?.url, 
-                    csrfToken: queryParams?.csrfToken, host: refererHost});
+                return templateManager.render(Template.WEB2LINK, {
+                    url: queryParams?.url, 
+                    csrfToken: queryParams?.csrfToken, 
+                    host: refererHost
+                });
             }
 
             // Process internal point webpage
@@ -176,8 +179,6 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 return file;
             }
         } else if (host.endsWith('.point')) {
-            
-
             // process other domains
             const version = (queryParams.__point_version as string) ?? 'latest';
 

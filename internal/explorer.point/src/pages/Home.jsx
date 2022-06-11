@@ -143,8 +143,12 @@ export default function Home() {
                 <div
                     className="bounty-banner"
                     onClick={() =>
-                        window.open('https://point/web2redirect?url=' + encodeURI('https://bounty.pointnetwork.io/')
-                        + '&csrfToken=' + window.localStorage.getItem("csrf_token"))
+                        window.open(
+                            'https://point/web2redirect?url=' +
+                                encodeURI('https://bounty.pointnetwork.io/') +
+                                +'&csrfToken=' +
+                                window.localStorage.getItem('csrf_token'),
+                        )
                     }
                 >
                     <div className="bounty-banner-inner">
