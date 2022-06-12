@@ -2,7 +2,7 @@ const {generateMnemonic, mnemonicToSeed} = require('bip39');
 const {hdkey} = require('ethereumjs-wallet');
 const {get} = require('axios');
 
-const faucetUrl = process.env.FAUCET_URL || 'https://point-faucet.herokuapp.com';
+const faucetUrl = process.env.FAUCET_URL || 'https://faucet.point.space';
 
 const generateAddress = async () => {
     const phrase = generateMnemonic();
