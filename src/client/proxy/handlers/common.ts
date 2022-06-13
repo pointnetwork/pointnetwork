@@ -395,6 +395,11 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     res.redirect(urlMirrorUrl);
                     return;
                 }
+
+                if (host.startsWith('www.google.com') || host.startsWith('google.com')){
+                    res.redirect('https://search.point/search?q=' + queryParams?.q);
+                    return;
+                }
             }
             res.status(404).send('Not Found');
         }
