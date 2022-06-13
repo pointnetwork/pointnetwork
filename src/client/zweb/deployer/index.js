@@ -292,7 +292,11 @@ class Deployer {
 
                             let proxy;
                             const contractF = await hre.ethers.getContractFactory(contractName);
-                            if (proxyAddress == null || proxyDescriptionFileId == null || force_deploy_proxy) {
+                            if (
+                                proxyAddress == null ||
+                                proxyDescriptionFileId == null ||
+                                force_deploy_proxy
+                            ) {
                                 log.debug('deployProxy call');
                                 const cfg = {kind: 'uups'};
                                 proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
@@ -314,7 +318,11 @@ class Deployer {
 
                             artifactsDeployed = await hre.artifacts.readArtifact(contractName);
                         } else {
-                            const {contract, artifacts} = await this.compileContract(
+                            const contractFactory = await hre.ethers.getContractFactory(
+                                contractName
+                            );
+                            // const {contract, artifacts} = await this.compileContract(
+                            const artifacts = await this.compileContract(
                                 contractName,
                                 fileName,
                                 deployPath
@@ -323,8 +331,8 @@ class Deployer {
                             artifactsDeployed = artifacts;
 
                             address = await blockchain.deployContract(
-                                contract,
-                                artifacts,
+                                contractFactory,
+                                // artifacts,
                                 contractName
                             );
                         }
@@ -466,8 +474,9 @@ class Deployer {
             }
         }
 
-        const contract = blockchain.getContractFromAbi(artifacts.abi);
-        return {contract, artifacts};
+        return artifacts;
+        // const contract = blockchain.getContractFromAbi(artifacts.abi);
+        // return {contract, artifacts};
     }
 
     async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
@@ -510,12 +519,15 @@ class Deployer {
         const target = host.replace('.point', '');
 
         const uncommittedChanges = this.execCommand(`cd ${deployPath} && git status --porcelain`);
-        if (uncommittedChanges){
-            log.warn({target, uncommittedChanges}, 'Uncommitted changes detected, the commit SHA could not correspond the version of DApp deployed');
+        if (uncommittedChanges) {
+            log.warn(
+                {target, uncommittedChanges},
+                'Uncommitted changes detected, the commit SHA could not correspond the version of DApp deployed'
+            );
         }
 
         const lastCommitSha = this.execCommand(`cd ${deployPath} && git rev-parse HEAD`);
-        if (lastCommitSha){
+        if (lastCommitSha) {
             log.info({target, lastCommitSha}, 'Updating Commit SHA');
             await blockchain.putKeyValue(target, COMMIT_SHA_KEY, lastCommitSha, version);
         } else {
