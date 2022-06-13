@@ -20,6 +20,7 @@ import {
 } from '@ethersproject/providers';
 import {
     Address,
+    ChainName,
     ContractMethodName,
     ContractName,
     ContractVersion,
@@ -814,7 +815,7 @@ export async function getTransactionsByAccount({
     return txs;
 }
 
-export async function getOwner() {
+export function getOwner() {
     return ethers.utils.getAddress(getNetworkAddress());
 }
 
@@ -849,4 +850,16 @@ export async function resolveDomain(domainName: string, network = 'rinkeby') {
     ]);
 
     return {owner, content};
+}
+
+type SendInput = {
+    method: ContractMethodName;
+    params?: Array<any>;
+    network: ChainName;
+};
+
+export async function send({method, params = [], network}: SendInput) {
+    const {provider} = getWeb3(network);
+    const response = await provider.send(method, params);
+    return response;
 }

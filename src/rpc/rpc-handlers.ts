@@ -1,6 +1,6 @@
 import pendingTxs from '../permissions/PendingTxs';
 // import permissionStore from '../permissions/PermissionStore';
-import ethereum from '../network/providers/ethereum';
+import * as ethereum from '../network/providers/ethereum';
 import config from 'config';
 import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
 import logger from '../core/log';
@@ -11,7 +11,7 @@ export type RPCRequest = {
     method: string;
     params?: unknown[];
     origin?: string;
-    network: string
+    network: string;
 };
 
 type HandlerFunc = (
@@ -30,10 +30,8 @@ const storeTransaction: HandlerFunc = async data => {
     }
     if (networks[network].type === 'solana' && params.length !== 1) {
         return {
-            status: 400, result: {
-                message: 
-                    'Wrong number or params for solana transaction, expected 1'
-            }
+            status: 400,
+            result: {message: 'Wrong number or params for solana transaction, expected 1'}
         };
     }
 
@@ -68,14 +66,13 @@ const confirmTransaction: HandlerFunc = async data => {
                 result = await ethereum.send({
                     method: 'eth_sendTransaction',
                     params: tx.params,
-                    id,
                     network
                 });
                 break;
             case 'solana':
                 if ((tx.params[0] as SolanaSendFundsParams).to) {
                     result = await solana.sendFunds({
-                        ...tx.params[0] as SolanaSendFundsParams,
+                        ...(tx.params[0] as SolanaSendFundsParams),
                         network
                     });
                 } else {
@@ -88,7 +85,8 @@ const confirmTransaction: HandlerFunc = async data => {
                 break;
             default:
                 return {
-                    status: 400, result: {
+                    status: 400,
+                    result: {
                         message: `Unsupported type ${networks[network].type} for network ${network}`,
                         id,
                         network
@@ -108,9 +106,9 @@ const confirmTransaction: HandlerFunc = async data => {
 const specialHandlers: Record<string, HandlerFunc> = {
     // Ethereum
     eth_requestAccounts: async data => {
-        const {params, id, network} = data;
+        const {params, network} = data;
         try {
-            const result = await ethereum.send({method: 'eth_accounts', params, id, network});
+            const result = await ethereum.send({method: 'eth_accounts', params, network});
             return {status: 200, result};
         } catch (err) {
             const statusCode = err.code === -32603 ? 500 : 400;
@@ -218,14 +216,15 @@ const handleRPC: HandlerFunc = async data => {
         let result;
         switch (networks[network].type) {
             case 'eth':
-                result = await ethereum.send({method, params, id, network});
+                result = await ethereum.send({method, params, network});
                 break;
             case 'solana':
                 result = await solana.send({method, params, id, network});
                 break;
             default:
                 return {
-                    status: 400, result: {
+                    status: 400,
+                    result: {
                         message: `Unsupported type ${networks[network].type} for network ${network}`,
                         id,
                         network

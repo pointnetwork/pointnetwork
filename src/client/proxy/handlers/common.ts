@@ -9,7 +9,7 @@ import ZProxySocketController from '../../../api/sockets/ZProxySocketController'
 import {SocketStream} from 'fastify-websocket';
 import Renderer from '../../zweb/renderer';
 import logger from '../../../core/log';
-import blockchain from '../../../network/providers/ethereum';
+import * as blockchain from '../../../network/providers/ethereum';
 import {getContentTypeFromExt, getParamsAndTemplate} from '../proxyUtils';
 // @ts-expect-error no types for package
 import {detectContentType} from 'detect-content-type';
@@ -294,7 +294,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 log.debug({host, identity}, `${service} domain is an alias`);
                 const version = (queryParams.__point_version as string) ?? 'latest';
 
-                routesId = await blockchain.getZRecord(identity, version) as string;
+                routesId = (await blockchain.getZRecord(identity, version)) as string;
                 if (!routesId) {
                     return res
                         .status(404)

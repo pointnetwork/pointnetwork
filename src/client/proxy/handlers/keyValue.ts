@@ -1,6 +1,6 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
 import {getNetworkAddress} from '../../../wallet/keystore';
-import blockchain from '../../../network/providers/ethereum';
+import * as blockchain from '../../../network/providers/ethereum';
 import keyValue from '../../../network/keyvalue';
 import {Template, templateManager} from '../templateManager';
 const {uploadFile} = require('../../storage');
@@ -8,10 +8,13 @@ const {uploadFile} = require('../../storage');
 const attachKeyValueHanlders = (server: FastifyInstance) => {
     server.post(
         '/_keyvalue_append/:key',
-        async (req: FastifyRequest<{
-            Params: {key: string};
-            Body: Record<string, unknown>
-        }>, res) => {
+        async (
+            req: FastifyRequest<{
+                Params: {key: string};
+                Body: Record<string, unknown>;
+            }>,
+            res
+        ) => {
             if (req.headers['content-type'] !== 'application/x-www-form-urlencoded') {
                 return res.status(415).send('Only application/x-www-form-urlencoded is supported');
             }
@@ -36,27 +39,32 @@ const attachKeyValueHanlders = (server: FastifyInstance) => {
                 }
             }
 
-            const version = await blockchain
-                // TODO: is it correct?
-                .getKeyLastVersion(identity, '::rootDir') ?? 'latest';
+            const version =
+                (await blockchain
+                    // TODO: is it correct?
+                    .getKeyLastVersion(identity, '::rootDir')) ?? 'latest';
 
-            await keyValue.propagate(identity, newKey, JSON.stringify({
-                ...entries,
-                __from: getNetworkAddress(),
-                __time: Math.floor(Date.now() / 1000)
-            }), version);
+            await keyValue.propagate(
+                identity,
+                newKey,
+                JSON.stringify({
+                    ...entries,
+                    __from: getNetworkAddress(),
+                    __time: Math.floor(Date.now() / 1000)
+                }),
+                version
+            );
 
             if (redirectUrl) {
                 res.header('content-type', 'text/html');
                 return templateManager.render(Template.REDIRECT, {redirectUrl});
             }
             res.status(200).send('Success');
-        });
+        }
+    );
 
-    server.get(
-        '/_keyvalue_get/:key',
-        async (req: FastifyRequest<{Params: {key: string}}>) =>
-            keyValue.get(req.headers.host!.replace('.point', ''), req.params.key)
+    server.get('/_keyvalue_get/:key', async (req: FastifyRequest<{Params: {key: string}}>) =>
+        keyValue.get(req.headers.host!.replace('.point', ''), req.params.key)
     );
 };
 

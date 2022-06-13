@@ -1,5 +1,5 @@
 import config from 'config';
-import ethereum from '../network/providers/ethereum';
+import * as ethereum from '../network/providers/ethereum';
 import {getNetworkAddress, getSolanaKeyPair} from './keystore';
 import solana from '../network/providers/solana';
 import {LAMPORTS_PER_SOL} from '@solana/web3.js';
@@ -24,12 +24,13 @@ export const sendTransaction = async ({
         case 'eth':
             return ethereum.send({
                 method: 'eth_sendTransaction',
-                params: [{
-                    from: ethereum.getOwner(),
-                    to,
-                    value
-                }],
-                id: new Date().getTime(),
+                params: [
+                    {
+                        from: ethereum.getOwner(),
+                        to,
+                        value
+                    }
+                ],
                 network
             });
         case 'solana':
@@ -52,7 +53,7 @@ export const getBalance = async ({network = 'ynet', majorUnits = false}) => {
                 address: getNetworkAddress(),
                 network
             });
-            return majorUnits ? balanceInWei / 1e18 : balanceInWei;
+            return majorUnits ? balanceInWei.div(1e18) : balanceInWei;
         case 'solana':
             const balanceInLamports = await solana.getBalance(network);
             return majorUnits ? balanceInLamports / LAMPORTS_PER_SOL : balanceInLamports;
