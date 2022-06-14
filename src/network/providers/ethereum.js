@@ -27,12 +27,16 @@ function isRetryableError({message}) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-function createWeb3Instance({blockchainUrl, privateKey}) {
-    const provider = blockchainUrl.startsWith('ws://')
-        ? new Web3.providers.WebsocketProvider(blockchainUrl)
-        : blockchainUrl;
+function createWeb3Instance({protocol, blockchainUrl, privateKey}) {
+    const isWs = protocol === 'ws' || protocol === 'wss';
+    // FIXME: the below port replacement is a temporary hack, it needs to be fixed on the blockchain node side
+    // by hiding it behind Nginx or something, so that we would not bother with ports
+    // otherwise we need to reconsider config structure to support different urls for
+    // http and ws connection
+    const url = `${protocol}://${isWs ? blockchainUrl.replace('44444', '55555') : blockchainUrl}`;
+    const provider = isWs ? new Web3.providers.WebsocketProvider(url) : url;
 
-    if (blockchainUrl.startsWith('ws://')) {
+    if (isWs) {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
     }
 
@@ -52,7 +56,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
     web3.eth.accounts.wallet.add(account);
     web3.eth.defaultAccount = account.address;
 
-    log.debug({blockchainUrl}, 'Created web3 instance');
+    log.debug({url}, 'Created web3 instance');
     return web3;
 }
 
@@ -64,13 +68,16 @@ const networks = config.get('network.web3');
 
 // web3.js providers
 const providers = {
-    ynet: createWeb3Instance({
-        blockchainUrl: networks.ynet.address,
-        privateKey: '0x' + getNetworkPrivateKey()
-    })
+    ynet: {
+        http: createWeb3Instance({
+            protocol: 'http',
+            blockchainUrl: networks.ynet.address,
+            privateKey: '0x' + getNetworkPrivateKey()
+        })
+    }
 };
 
-const getWeb3 = (chain = 'ynet') => {
+const getWeb3 = ({chain = 'ynet', protocol = 'http'} = {}) => {
     if (
         !Object.keys(networks)
             .filter(key => networks[key].type === 'eth')
@@ -79,12 +86,16 @@ const getWeb3 = (chain = 'ynet') => {
         throw new Error(`No Eth provider for network ${chain}`);
     }
     if (!providers[chain]) {
-        providers[chain] = createWeb3Instance({
+        providers[chain] = {};
+    }
+    if (!providers[chain][protocol]) {
+        providers[chain][protocol] = createWeb3Instance({
+            protocol,
             blockchainUrl: networks[chain].address,
             privateKey: '0x' + getNetworkPrivateKey()
         });
     }
-    return providers[chain];
+    return providers[chain][protocol];
 };
 
 // ethers providers
@@ -162,7 +173,7 @@ ethereum.loadIdentityContract = async () => {
     return await ethereum.loadPointContract('Identity', at);
 };
 
-ethereum.loadWebsiteContract = async (target, contractName, version = 'latest') => {
+ethereum.loadWebsiteContract = async (target, contractName, version = 'latest', protocol = 'http') => {
     // todo: make it nicer, extend to all potential contracts, and add to docs
     // @ means internal contract for Point Network (truffle/contracts)
     if ((target === '@' || target === 'point') && contractName === 'Identity') {
@@ -186,8 +197,7 @@ ethereum.loadWebsiteContract = async (target, contractName, version = 'latest') 
     try {
         abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
         // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
-
-        const web3 = getWeb3();
+        const web3 = getWeb3({protocol});
         return new web3.eth.Contract(abi.abi, at);
     } catch (e) {
         throw Error(
@@ -326,8 +336,12 @@ ethereum.getPastEvents = async (
 };
 
 ethereum.getBlockNumber = async () => {
-    const n = await getWeb3().eth.getBlockNumber();
-    return n;
+    try {
+        const n = await getWeb3().eth.getBlockNumber();
+        return n;
+    } catch (e) {
+        console.error('failed to fetch block number', e);
+    }
 };
 
 ethereum.getBlockTimestamp = async blockNumber => {
@@ -343,18 +357,21 @@ ethereum.subscribeContractEvent = async (
     onStart,
     options = {}
 ) => {
-    const contract = await ethereum.loadWebsiteContract(target, contractName);
+    const contract = await ethereum.loadWebsiteContract(target, contractName, undefined, 'ws');
 
     let subscriptionId;
+
     return contract.events[event](options)
-        .on('data', data => onEvent({subscriptionId, data}))
+        .on('data', data => (log.debug({data}, 'Contract event received'), onEvent({subscriptionId, data})))
         .on('connected', id => {
             const message = `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`;
+            log.debug({contractName, event, subscriptionId: id}, 'Contract event subscription started');
             onStart({
                 subscriptionId: (subscriptionId = id),
                 data: {message}
             });
-        });
+        })
+        .on('error', e => log.error(e, 'Contract event subscription error'));
 };
 
 ethereum.removeSubscriptionById = async (subscriptionId, onRemove) => {
@@ -721,7 +738,7 @@ ethereum.sendTransaction = async ({from, to, value, gas}) => {
 };
 
 ethereum.getBalance = async ({address, blockIdentifier = 'latest', network}) =>
-    getWeb3(network).eth.getBalance(address, blockIdentifier);
+    getWeb3({chain: network}).eth.getBalance(address, blockIdentifier);
 
 ethereum.getWallet = () => getWeb3().eth.accounts.wallet[0];
 
@@ -754,7 +771,7 @@ ethereum.getTransactionsByAccount = async ({
         log.debug({startBlockNumber}, 'Using startBlockNumber');
     }
 
-    const provider = getWeb3(network);
+    const provider = getWeb3({chain: network});
 
     log.debug(
         {account, startBlockNumber, endBlockNumber, ethBlockNumber: provider.eth.blockNumber},
@@ -813,7 +830,7 @@ ethereum.toHex = n => getWeb3().utils.toHex(n);
 
 ethereum.send = ({method, params = [], id, network}) =>
     new Promise((resolve, reject) => {
-        getWeb3(network).currentProvider.send(
+        getWeb3({chain: network}).currentProvider.send(
             {
                 id,
                 method,
