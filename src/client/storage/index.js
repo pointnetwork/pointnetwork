@@ -10,7 +10,8 @@ import {
     resolveHome,
     statAsync,
     escapeString,
-    hashFn
+    hashFn,
+    isChineseTimezone
 } from '../../util';
 import {storage} from './storage';
 import {promises as fs} from 'fs';
@@ -35,6 +36,10 @@ const GATEWAY_URL = config.get('storage.arweave_gateway_url');
 const MODE = config.get('mode');
 const BUNDLER_DOWNLOAD_URL = `${config.get('storage.arweave_bundler_url')}/download`;
 const BUNDLER_DOWNLOAD_URL_FALLBACK = `${config.get('storage.arweave_bundler_url_fallback')}/download`;
+
+const bundlerDownloadUrl = isChineseTimezone()
+    ? BUNDLER_DOWNLOAD_URL_FALLBACK
+    : BUNDLER_DOWNLOAD_URL;
 
 const uploadCacheDir = path.join(
     resolveHome(config.get('datadir')),
@@ -86,7 +91,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     // chunks from the bundler's backup (S3).
     try {
         log.debug({chunkId}, 'Downloading chunk from bundler backup');
-        const buf = await downloadChunkFromBundler(BUNDLER_DOWNLOAD_URL, chunkId);
+        const buf = await downloadChunkFromBundler(bundlerDownloadUrl, chunkId);
         await fs.writeFile(chunkPath, buf);
         chunk.size = buf.length;
         chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
@@ -97,21 +102,6 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             {chunkId, message: err.message, stack: err.stack},
             'Chunk not found in bundler backup'
         );
-        try {
-            log.debug({chunkId}, 'Downloading chunk from bundler backup fallback');
-            const buf = await downloadChunkFromBundler(BUNDLER_DOWNLOAD_URL_FALLBACK, chunkId);
-            await fs.writeFile(chunkPath, buf);
-            chunk.size = buf.length;
-            chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
-            await chunk.save();
-            return buf;
-        } catch (err){
-            log.warn(
-                {chunkId, message: err.message, stack: err.stack},
-                'Chunk not found in bundler backup fallback'
-            );
-        }
-
     }
     const query = getDownloadQuery(chunkId);
     const queryResult = await request(GATEWAY_URL, query);

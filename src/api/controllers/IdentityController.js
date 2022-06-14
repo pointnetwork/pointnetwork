@@ -7,7 +7,7 @@ const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
-const {getReferralCode} = require('../../util');
+const {getReferralCode, isChineseTimezone} = require('../../util');
 const open = require('open');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
@@ -28,56 +28,31 @@ async function registerBountyReferral(address, type) {
 
 const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 const twitterOracleDomainFallback = 'https://twitter-oracle.point.space';
+const twitterOracleUrl = isChineseTimezone() ? twitterOracleDomainFallback : twitterOracleDomain;
 
 let TwitterOracle = {
     async isIdentityEligible(identity) {
-        const url = `${twitterOracleDomain}/api/eligible?handle=${identity}`;
-        const urlFallback = `${twitterOracleDomainFallback}/api/eligible?handle=${identity}`;
-        try {
-            log.info(`calling to ${url}`);
-            const {data} = await axios.get(url);
-            return data;
-        } catch (e){
-            log.warn(`calling to ${url} failed`);
-            log.info(`calling to fallback ${urlFallback}`);
-            const {data} = await axios.get(urlFallback);
-            return data;
-        }
-        
+        const url = `${twitterOracleUrl}/api/eligible?handle=${identity}`;
+        log.info(`calling to ${url}`);
+        const {data} = await axios.get(url);
+        return data;
     },
 
     async regiterFreeIdentity(identity, address) {
-        const url = `${twitterOracleDomain}/api/activate_free?handle=${identity}&address=${address}`;
-        const urlFallback = `${twitterOracleDomainFallback}/api/activate_free?handle=${identity}&address=${address}`;
-        try {
-            log.info(`calling to ${url}`);
-            const {data} = await axios.post(url);
-            return data;
-        } catch (e){
-            log.warn(`calling to ${url} failed`);
-            log.info(`calling to fallback ${urlFallback}`);
-            const {data} = await axios.post(urlFallback);
-            return data;
-        }
+        const url = `${twitterOracleUrl}/api/activate_free?handle=${identity}&address=${address}`;
+        log.info(`calling to ${url}`);
+        const {data} = await axios.post(url);
+        return data;
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        const oracleUrl = `${twitterOracleDomain}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(
-            url
-        )}`;
-        const oracleUrlFallback = `${twitterOracleDomainFallback}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(
-            url
-        )}`;
-        try {
-            log.info(`calling to ${oracleUrl}`);
-            const {data} = await axios.post(oracleUrl);
-            return data;
-        } catch (e){
-            log.warn(`calling to ${url} failed`);
-            log.info(`calling to fallback ${oracleUrlFallback}`);
-            const {data} = await axios.post(oracleUrlFallback);
-            return data;
-        }
+        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${
+            encodeURIComponent(url)
+        }`;
+
+        log.info(`calling to ${oracleUrl}`);
+        const {data} = await axios.post(oracleUrl);
+        return data;
     }
 };
 

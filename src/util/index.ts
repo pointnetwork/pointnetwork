@@ -4,6 +4,7 @@ export * from './readFileByPath';
 export * from './makeSurePathExists';
 export * from './statAsync';
 export * from './delay';
+export * from './time';
 export * from './areScalarArraysEqual';
 export * from './resolveHome';
 export * from './merkle';
