@@ -60,7 +60,7 @@ const downloadChunkFromBundler = async (url, chunkId) =>{
     });
     log.debug({chunkId}, 'Successfully downloaded chunk from Bundler backup');
     return buf;
-}
+};
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
 const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
@@ -97,7 +97,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             {chunkId, message: err.message, stack: err.stack},
             'Chunk not found in bundler backup'
         );
-        try{
+        try {
             log.debug({chunkId}, 'Downloading chunk from bundler backup fallback');
             const buf = await downloadChunkFromBundler(BUNDLER_DOWNLOAD_URL_FALLBACK, chunkId);
             await fs.writeFile(chunkPath, buf);
@@ -105,7 +105,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
             await chunk.save();
             return buf;
-        }catch (err){
+        } catch (err){
             log.warn(
                 {chunkId, message: err.message, stack: err.stack},
                 'Chunk not found in bundler backup fallback'

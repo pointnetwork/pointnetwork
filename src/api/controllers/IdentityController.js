@@ -33,11 +33,11 @@ let TwitterOracle = {
     async isIdentityEligible(identity) {
         const url = `${twitterOracleDomain}/api/eligible?handle=${identity}`;
         const urlFallback = `${twitterOracleDomainFallback}/api/eligible?handle=${identity}`;
-        try{
+        try {
             log.info(`calling to ${url}`);
             const {data} = await axios.get(url);
             return data;
-        }catch(e){
+        } catch (e){
             log.warn(`calling to ${url} failed`);
             log.info(`calling to fallback ${urlFallback}`);
             const {data} = await axios.get(urlFallback);
@@ -49,7 +49,7 @@ let TwitterOracle = {
     async regiterFreeIdentity(identity, address) {
         const url = `${twitterOracleDomain}/api/activate_free?handle=${identity}&address=${address}`;
         const urlFallback = `${twitterOracleDomainFallback}/api/activate_free?handle=${identity}&address=${address}`;
-        try{
+        try {
             log.info(`calling to ${url}`);
             const {data} = await axios.post(url);
             return data;
@@ -68,11 +68,11 @@ let TwitterOracle = {
         const oracleUrlFallback = `${twitterOracleDomainFallback}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(
             url
         )}`;
-        try{
+        try {
             log.info(`calling to ${oracleUrl}`);
             const {data} = await axios.post(oracleUrl);
             return data;
-        }catch (e){
+        } catch (e){
             log.warn(`calling to ${url} failed`);
             log.info(`calling to fallback ${oracleUrlFallback}`);
             const {data} = await axios.post(oracleUrlFallback);
