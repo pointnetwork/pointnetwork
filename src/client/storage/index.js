@@ -10,7 +10,8 @@ import {
     resolveHome,
     statAsync,
     escapeString,
-    hashFn
+    hashFn,
+    isChineseTimezone
 } from '../../util';
 import {storage} from './storage';
 import {promises as fs} from 'fs';
@@ -34,6 +35,11 @@ const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
 const GATEWAY_URL = config.get('storage.arweave_gateway_url');
 const MODE = config.get('mode');
 const BUNDLER_DOWNLOAD_URL = `${config.get('storage.arweave_bundler_url')}/download`;
+const BUNDLER_DOWNLOAD_URL_FALLBACK = `${config.get('storage.arweave_bundler_url_fallback')}/download`;
+
+const bundlerDownloadUrl = isChineseTimezone()
+    ? BUNDLER_DOWNLOAD_URL_FALLBACK
+    : BUNDLER_DOWNLOAD_URL;
 
 const uploadCacheDir = path.join(
     resolveHome(config.get('datadir')),
@@ -49,6 +55,16 @@ const init = () => {
     uploadLoop();
     // TODO: re-enable this validation!
     // chunkValidatorLoop();
+};
+
+const downloadChunkFromBundler = async (url, chunkId) =>{
+    const {data: buf} = await axios.request({
+        method: 'GET',
+        url: `${url}/${chunkId}`,
+        responseType: 'arraybuffer'
+    });
+    log.debug({chunkId}, 'Successfully downloaded chunk from Bundler backup');
+    return buf;
 };
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
@@ -75,12 +91,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     // chunks from the bundler's backup (S3).
     try {
         log.debug({chunkId}, 'Downloading chunk from bundler backup');
-        const {data: buf} = await axios.request({
-            method: 'GET',
-            url: `${BUNDLER_DOWNLOAD_URL}/${chunkId}`,
-            responseType: 'arraybuffer'
-        });
-        log.debug({chunkId}, 'Successfully downloaded chunk from Bundler backup');
+        const buf = await downloadChunkFromBundler(bundlerDownloadUrl, chunkId);
         await fs.writeFile(chunkPath, buf);
         chunk.size = buf.length;
         chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
