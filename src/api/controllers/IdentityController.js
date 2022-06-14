@@ -26,7 +26,7 @@ async function registerBountyReferral(address, type) {
     return await axios.get(url);
 }
 
-const twitterOracleDomain = 'https://twitter-oracle.point.space';
+const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 
 let TwitterOracle = {
     async isIdentityEligible(identity) {
