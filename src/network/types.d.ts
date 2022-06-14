@@ -6,6 +6,7 @@ type RecoveryObject = {
     s: Bytes;
 };
 
+type DomainName = string;
 type ChainName = string;
 type ContractName = string;
 type ContractMethodName = string;

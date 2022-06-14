@@ -25,6 +25,7 @@ import {
     ContractName,
     ContractVersion,
     Domain,
+    DomainName,
     EventName,
     Identity,
     NetworkConfigs,
@@ -34,6 +35,7 @@ import {
     Target,
     Version
 } from '../types';
+import sleep from '../../util/sleep';
 
 const {getFile, getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
@@ -53,8 +55,6 @@ function isRetryableError({message}: {message: string}) {
     }
     return false;
 }
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 function getContractInstance(address: string, abi: ContractInterface) {
     const {provider, wallet} = getWeb3();
@@ -840,7 +840,7 @@ export function toHex(n: number) {
     return ethers.utils.hexlify(n);
 }
 
-export async function resolveDomain(domainName: string, network = 'rinkeby') {
+export async function resolveDomain(domainName: DomainName, network: ChainName = 'rinkeby') {
     const {provider} = getWeb3(network);
     const resolver = await provider.getResolver(domainName);
 
