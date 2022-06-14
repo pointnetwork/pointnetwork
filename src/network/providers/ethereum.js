@@ -340,7 +340,7 @@ ethereum.getBlockNumber = async () => {
         const n = await getWeb3().eth.getBlockNumber();
         return n;
     } catch (e) {
-        console.error('failed to fetch block number', e);
+        log.error(e, 'failed to fetch block number');
     }
 };
 
