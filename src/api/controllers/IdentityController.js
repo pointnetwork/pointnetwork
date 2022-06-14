@@ -26,7 +26,7 @@ async function registerBountyReferral(address, type) {
     return await axios.get(url);
 }
 
-const twitterOracleDomain = 'https://twitter-oracle.herokuapp.comError';
+const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 const twitterOracleDomainFallback = 'https://twitter-oracle.point.space';
 
 let TwitterOracle = {
