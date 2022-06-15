@@ -8,9 +8,15 @@ class PointSDKController {
         const host = req.headers.host;
         const method = req.method.toUpperCase();
 
-        if (method === 'POST' && config.get('api.csrf_enabled') && !web2) {
+        if (method === 'POST' && config.get('api.csrf_enabled')) {
             const csrfToken = req.body.csrfToken;
-            this.csrfTokenGuard(host, csrfToken);
+            if (web2){
+                this.csrfTokenGuard(req.body.host, csrfToken);
+                
+            } else {
+                this.csrfTokenGuard(host, csrfToken);
+            }
+            
         }
     }
 
