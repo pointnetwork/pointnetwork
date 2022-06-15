@@ -478,7 +478,7 @@ const zRecordCache = createCache();
 ethereum.getZRecord = async (domain, version = 'latest') => {
     domain = domain.replace('.point', ''); // todo: rtrim instead
     return zRecordCache.get(`${domain}-${ZDNS_ROUTES_KEY}-${version}`, async () => {
-        const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
+        const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version, 'exact', true);
         return result?.substr(0, 2) === '0x' ? result.substr(2) : result;
     });
 };
@@ -540,8 +540,32 @@ ethereum.getKeyValue = async (
     identity,
     key,
     version = 'latest',
-    versionSearchStrategy = 'exact'
+    versionSearchStrategy = 'exact',
+    followCopyFromIkv = false
 ) => {
+    // Process @@copy_from_ikv instruction if followCopyFromIkv is set to true
+    if (followCopyFromIkv) {
+        // self invoke to get the value first but without redirection
+        const value = await ethereum.getKeyValue(identity, key, version, versionSearchStrategy, false);
+
+        const copyFromIkv_prolog = '@@copy_from_ikv=';
+        if (! value.startsWith(copyFromIkv_prolog)) {
+            return value; // no redirection
+        } else {
+            // the format is:
+            // @@copy_from_ikv=<identity>:<key_in_ikv>
+            const withoutPrefix = value.substring(copyFromIkv_prolog.length);
+
+            const copy_identity = withoutPrefix.split(':')[0];
+            const copy_key = withoutPrefix.split(':').slice(1).join(':');
+
+            const value = await ethereum.getKeyValue(copy_identity, copy_key, 'latest', 'exact', true);
+            if (!value) throw new Error(`Failed to obtain ikv value following ${copyFromIkv_prolog} instruction`);
+            return value;
+        }
+    }
+
+    // Get the value
     try {
         if (typeof identity !== 'string')
             throw Error('blockchain.getKeyValue(): identity must be a string');
