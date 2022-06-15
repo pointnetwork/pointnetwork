@@ -546,7 +546,7 @@ ethereum.getKeyValue = async (
     // Process @@copy_from_ikv instruction if followCopyFromIkv is set to true
     if (followCopyFromIkv) {
         // self invoke to get the value first but without redirection
-        const value = ethereum.getKeyValue(identity, key, version, versionSearchStrategy, false);
+        const value = await ethereum.getKeyValue(identity, key, version, versionSearchStrategy, false);
 
         const copyFromIkv_prolog = '@@copy_from_ikv=';
         if (! value.startsWith(copyFromIkv_prolog)) {
