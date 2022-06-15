@@ -88,23 +88,26 @@ export const startChunkUpload = async (chunkId: string) => {
             },
             timeout: REQUEST_TIMEOUT
         });
-
-        if (response.data.status !== 'ok' || !response.data.txid) {
+        
+        // NB: bundler no longer does return the txid
+        // if (response.data.status !== 'ok' || !response.data.txid) {
+        if (response.data.status !== 'ok') {
             throw new Error(
-                `Chunk ${chunkId} uploading failed: arweave endpoint error: ${JSON.stringify(
-                    response.data,
-                    null,
-                    2
-                )}`
+                `Chunk ${chunkId} uploading failed: arweave endpoint error: ${
+                    JSON.stringify(response.data, null, 2)
+                }`
             );
         }
 
         const txid = response.data.txid;
 
+        if (txid) {
+            chunk.txid = txid;
+        }
+
         // TODO: do not skip the VALIDATING status!
         // chunk.ul_status = CHUNK_UPLOAD_STATUS.VALIDATING;
         chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
-        chunk.txid = txid;
         chunk.size = data.length;
         await chunk.save();
 
