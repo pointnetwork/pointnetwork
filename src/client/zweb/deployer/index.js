@@ -294,12 +294,15 @@ class Deployer {
                             deployConfig.hasOwnProperty('upgradable') &&
                             deployConfig.upgradable === true
                         ) {
+                            log.debug({target, contractName, version}, 'Getting the proxy address ...');
+
                             const proxyAddress = await blockchain.getKeyValue(
                                 target,
                                 'zweb/contracts/address/' + contractName,
                                 version,
                                 'equalOrBefore'
                             );
+                            log.debug({proxyAddress}, 'Proxy address ');
 
                             const proxyDescriptionFileId = await blockchain.getKeyValue(
                                 target,
@@ -309,7 +312,7 @@ class Deployer {
                             );
 
                             let proxy;
-                            const contractF = await hre.ethers.getContractFactory(contractName);
+                            let contractF = await hre.ethers.getContractFactory(contractName);
                             if (proxyAddress == null || proxyDescriptionFileId == null || force_deploy_proxy) {
                                 log.debug('deployProxy call');
                                 const cfg = {kind: 'uups'};
@@ -324,8 +327,19 @@ class Deployer {
                                     proxyMetadataFilePath,
                                     await storage.getFile(proxyDescriptionFileId)
                                 );
-
-                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                                try{
+                                    proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);    
+                                }catch(e){
+                                    log.debug('upgradeProxy call failed');
+                                    log.debug('deleting proxy metadata file');
+                                    fs.unlinkSync(proxyMetadataFilePath);
+                                    log.debug('calling forceImport');
+                                    await hre.upgrades.forceImport(proxyAddress, contractF, {kind: 'uups'});
+                                    contractF = await hre.ethers.getContractFactory(contractName);
+                                    log.debug({proxyAddress},'upgradeProxy call after forceImport');
+                                    proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                                }   
+                                
                             }
                             await proxy.deployed();
                             address = proxy.address;
