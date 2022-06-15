@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {resolveHome} from '../../util';
 import Chunk, {CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
 import FormData from 'form-data';
 import axios from 'axios';
@@ -9,8 +8,8 @@ import config from 'config';
 import logger from '../../core/log';
 import {storage} from './storage';
 import {eachLimit} from 'async';
-import getDownloadQuery from './query';
-import {request} from 'graphql-request';
+import {resolveHome, isChineseTimezone} from '../../util';
+import {downloadChunk} from './bundler';
 
 const log = logger.child({module: 'StorageUploader'});
 
@@ -25,8 +24,11 @@ const REQUEST_TIMEOUT = Number(config.get('storage.request_timeout'));
 const UPLOAD_EXPIRE = Number(config.get('storage.upload_expire'));
 const VERSION_MAJOR = config.get('storage.arweave_experiment_version_major');
 const VERSION_MINOR = config.get('storage.arweave_experiment_version_minor');
-const BUNDLER_URL = config.get('storage.arweave_bundler_url');
-const GATEWAY_URL: string = config.get('storage.arweave_gateway_url');
+const BUNDLER_URL = isChineseTimezone()
+    ? config.get('storage.arweave_bundler_url_fallback')
+    : config.get('storage.arweave_bundler_url');
+
+const BUNDLER_DOWNLOAD_URL = `${BUNDLER_URL}/download`;
 
 const chunksBeingUploaded: Record<string, boolean> = {};
 
@@ -47,25 +49,13 @@ export const startChunkUpload = async (chunkId: string) => {
 
         // check if chunk already exists in arweave
         try {
-            const query = getDownloadQuery(chunkId);
-            const queryResult = await request(GATEWAY_URL, query);
-
-            for (const edge of queryResult.transactions.edges) {
-                try {
-                    const txid = edge.node.id;
-                    await storage.getDataByTxId(txid);
-
-                    log.debug({chunkId}, 'Chunk already uploaded to Arweave, cancelling upload');
-                    chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
-                    chunk.txid = txid;
-                    chunk.size = data.length;
-                    await chunk.save();
-                    delete chunksBeingUploaded[chunkId];
-                    return;
-                } catch (e) {
-                    // do nothing
-                }
-            }
+            const buf = await downloadChunk(BUNDLER_DOWNLOAD_URL, chunkId);
+            log.debug({chunkId}, 'The chunk is already in the Bundler cache, skipping');
+            chunk.size = buf.length;
+            chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
+            await chunk.save();
+            delete chunksBeingUploaded[chunkId];
+            return;
         } catch (e) {
             // do nothing
         }
