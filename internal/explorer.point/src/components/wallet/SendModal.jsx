@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { isAddress } from '@ethersproject/address';
-import { parseEther } from 'ethers/lib/utils';
+import { parseUnits } from 'ethers/lib/utils';
 import Swal from 'sweetalert2';
 
-const SendModal = ({ network, type, onClose }) => {
+const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
     const [address, setAddress] = useState('');
     const [addressValidation, setAddressValidation] = useState(false);
     const [value, setValue] = useState('');
@@ -22,7 +22,7 @@ const SendModal = ({ network, type, onClose }) => {
 
     const handleSubmit = async () => {
         const _addressValidation = address
-            ? type === 'eth'
+            ? networkType === 'eth'
                 ? isAddress(address)
                     ? null
                     : 'Not a valid address'
@@ -43,12 +43,11 @@ const SendModal = ({ network, type, onClose }) => {
 
         setProcessing(true);
         try {
-            await window.point.wallet.send({
-                network,
+            await onSubmit({
                 to: address,
                 value:
-                    type === 'eth'
-                        ? parseEther(value).toHexString() // eth
+                    networkType === 'eth'
+                        ? parseUnits(value, decimals).toHexString() // eth
                         : value * 1000000000, // solana
             });
             Swal.fire({

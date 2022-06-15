@@ -3,6 +3,7 @@ import ethereum from '../network/providers/ethereum';
 import {getNetworkAddress, getSolanaKeyPair} from './keystore';
 import solana from '../network/providers/solana';
 import {LAMPORTS_PER_SOL} from '@solana/web3.js';
+import {utils} from 'ethers';
 
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
 
@@ -11,7 +12,6 @@ export const sendTransaction = async ({
     network = 'ynet',
     value
 }: {
-    from: string;
     to: string;
     network?: string;
     value: string;
@@ -27,7 +27,7 @@ export const sendTransaction = async ({
                 params: [{
                     from: ethereum.getOwner(),
                     to,
-                    value
+                    value: utils.hexValue(value)
                 }],
                 id: new Date().getTime(),
                 network
