@@ -1,6 +1,6 @@
 const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
-const blockchain = require('../../network/providers/ethereum');
+const ethereum = require('../../network/providers/ethereum');
 const {getNetworkPublicKey} = require('../../wallet/keystore');
 const {
     encryptData,
@@ -9,6 +9,9 @@ const {
 } = require('../../client/encryptIdentityUtils');
 const {getBalance, getWalletAddress} = require('../../wallet');
 const config = require('config');
+const Web3 = require('web3');
+const ERC20 = require('../../abi/ERC20.json');
+const {utils} = require('ethers');
 
 const networks = config.get('network.web3');
 
@@ -18,7 +21,7 @@ class WalletController extends PointSDKController {
         this.req = req;
         this.payload = req.body;
         this.reply = reply;
-        this.defaultWallet = blockchain.getWallet();
+        this.defaultWallet = ethereum.getWallet();
     }
 
     publicKey() {
@@ -47,7 +50,7 @@ class WalletController extends PointSDKController {
     }
     
     async getWalletInfo() {
-        const identity = await blockchain.getCurrentIdentity();
+        const identity = await ethereum.getCurrentIdentity();
         const ynetAddress = identity ? `${identity}.point` : 'N/A';
         const wallets = [
             // TODO: remove this placeholder once we add a real point network
@@ -70,6 +73,58 @@ class WalletController extends PointSDKController {
         ];
 
         return this._response({wallets});
+    }
+
+    async getTokenBalances() {
+        const tokens = Object.keys(networks)
+            .filter(key => networks[key].type === 'eth')
+            .reduce((acc, cur) => ({...acc, [cur]: networks[cur].tokens}), {});
+
+        const web3 = new Web3();
+        const decimalsCallData = web3.eth.abi.encodeFunctionCall(
+            ERC20.find(func => func.name === 'decimals'), []
+        );
+        const balanceOfCallData = web3.eth.abi.encodeFunctionCall(
+            ERC20.find(func => func.name === 'balanceOf'),
+            [getWalletAddress({})]
+        );
+
+        await Promise.all(Object.keys(tokens).map(async network => {
+            const balances = await Promise.all(tokens[network].map(async token => {
+                const [balance, decimals] = await Promise.all([
+                    ethereum.send({
+                        method: 'eth_call',
+                        params: [{
+                            from: getWalletAddress({}),
+                            to: token.address,
+                            data: balanceOfCallData
+                        }, 'latest'],
+                        id: new Date().getTime(),
+                        network
+                    }),
+                    ethereum.send({
+                        method: 'eth_call',
+                        params: [{
+                            from: getWalletAddress({}),
+                            to: token.address,
+                            data: decimalsCallData
+                        }, 'latest'],
+                        id: new Date().getTime() + Math.round(Math.random() * 100000),
+                        network
+                    })
+                ]);
+
+                return utils.formatUnits(
+                    balance.result.toString(),
+                    decimals.result.toString()
+                );
+            }));
+            
+            tokens[network] = tokens[network]
+                .map((token, index) => ({...token, balance: balances[index]}));
+        }));
+
+        return this._response(tokens);
     }
 
     async encryptData() {
