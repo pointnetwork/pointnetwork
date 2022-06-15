@@ -554,7 +554,7 @@ ethereum.getKeyValue = async (
         } else {
             // the format is:
             // @@copy_from_ikv=<identity>:<key_in_ikv>
-            const withoutPrefix = rootDirId.substring(copyFromIkv_prolog.length);
+            const withoutPrefix = value.substring(copyFromIkv_prolog.length);
 
             const copy_identity = withoutPrefix.split(':')[0];
             const copy_key = withoutPrefix.split(':').slice(1).join(':');
