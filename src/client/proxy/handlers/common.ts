@@ -36,6 +36,20 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 : null;
 
         if (host === 'point') {
+            if (req.url.startsWith('/web2redirect')){
+                res.header('content-type', 'text/html');
+                let refererHost = req.headers.referer || '';
+                const matches = refererHost.match(/^https:\/\/(.*)\//);
+                if (matches){
+                    refererHost = matches[1];
+                }
+                return templateManager.render(Template.WEB2LINK, {
+                    url: queryParams?.url, 
+                    csrfToken: queryParams?.csrfToken, 
+                    host: refererHost
+                });
+            }
+
             // Process internal point webpage
             const publicPath = path.resolve(
                 __dirname,
@@ -181,7 +195,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             }
 
             // Download info about root dir
-            const rootDirId = await blockchain.getKeyValue(host, '::rootDir', version);
+            const rootDirId = await blockchain.getKeyValue(host, '::rootDir', version, 'exact', true);
             if (!rootDirId) {
                 // TODO: or 404 here?
                 throw new Error(`Root dir id not found for host ${host}`);
@@ -382,11 +396,10 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     return;
                 }
 
-                const url = 'https://' + host + req.url;
-
-                res.status(404).header('content-type', 'text/html');
-
-                return templateManager.render(Template.WEB2LINK, {url});
+                if (host.startsWith('www.google.com') || host.startsWith('google.com')){
+                    res.redirect('https://search.point/search?q=' + queryParams?.q);
+                    return;
+                }
             }
             res.status(404).send('Not Found');
         }

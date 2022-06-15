@@ -310,7 +310,11 @@ class Deployer {
 
                             let proxy;
                             const contractF = await hre.ethers.getContractFactory(contractName);
-                            if (proxyAddress == null || proxyDescriptionFileId == null || force_deploy_proxy) {
+                            if (
+                                proxyAddress == null
+                                || proxyDescriptionFileId == null
+                                || force_deploy_proxy
+                            ) {
                                 log.debug('deployProxy call');
                                 const cfg = {kind: 'uups'};
                                 proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
@@ -436,11 +440,15 @@ class Deployer {
         await this.updateCommitSha(target, deployPath, version);
 
         if (deployConfig.hasOwnProperty('pointSDKVersion')){
-            await this.updatePointVersionTag(target, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version);
+            await this.updatePointVersionTag(
+                target, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version
+            );
         }
 
         if (deployConfig.hasOwnProperty('pointNodeVersion')){
-            await this.updatePointVersionTag(target, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version);
+            await this.updatePointVersionTag(
+                target, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version
+            );
         }
 
         log.info('Deploy finished');

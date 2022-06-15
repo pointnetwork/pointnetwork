@@ -1,4 +1,3 @@
-import axios from 'axios';
 import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
 import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
 import getDownloadQuery from './query';
@@ -19,6 +18,7 @@ import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
 import {uploadLoop} from './uploader';
+import {downloadChunk as downloadChunkFromBundler} from './bundler';
 
 const log = logger.child({module: 'Storage'});
 
@@ -55,16 +55,6 @@ const init = () => {
     uploadLoop();
     // TODO: re-enable this validation!
     // chunkValidatorLoop();
-};
-
-const downloadChunkFromBundler = async (url, chunkId) =>{
-    const {data: buf} = await axios.request({
-        method: 'GET',
-        url: `${url}/${chunkId}`,
-        responseType: 'arraybuffer'
-    });
-    log.debug({chunkId}, 'Successfully downloaded chunk from Bundler backup');
-    return buf;
 };
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
