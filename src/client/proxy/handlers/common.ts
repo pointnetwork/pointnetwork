@@ -401,7 +401,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
     const handler = getHttpRequestHandler(ctx);
     const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) =>
-        void new ZProxySocketController(ctx, socket, server.websocketServer, hostname).init();
+        void new ZProxySocketController(ctx, socket, server.websocketServer, hostname);
 
     // Handle websocket requests.
     server.route({
