@@ -15,6 +15,7 @@ const log = logger.child({module: 'EthereumProvider'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore');
 const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util');
 const {createCache} = require('../../util/cache');
+const {copy} = require("fs-extra");
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
