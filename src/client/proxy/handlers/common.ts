@@ -195,7 +195,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             }
 
             // Download info about root dir
-            const rootDirId = await blockchain.getKeyValue(host, '::rootDir', version);
+            const rootDirId = await blockchain.getKeyValue(host, '::rootDir', version, 'exact', true);
             if (!rootDirId) {
                 // TODO: or 404 here?
                 throw new Error(`Root dir id not found for host ${host}`);
