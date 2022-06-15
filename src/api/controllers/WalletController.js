@@ -7,7 +7,7 @@ const {
     decryptData,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
-const {getBalance, getWalletAddress} = require('../../wallet');
+const {getBalance, getWalletAddress, sendTransaction} = require('../../wallet');
 const config = require('config');
 const Web3 = require('web3');
 const ERC20 = require('../../abi/ERC20.json');
@@ -31,9 +31,7 @@ class WalletController extends PointSDKController {
     }
 
     address() {
-        const address = this.defaultWallet.address;
-
-        return this._response({address});
+        return this._response({address: getWalletAddress({network: this.req.query.network})});
     }
 
     async balance() {
@@ -114,17 +112,48 @@ class WalletController extends PointSDKController {
                     })
                 ]);
 
-                return utils.formatUnits(
-                    balance.result.toString(),
-                    decimals.result.toString()
-                );
+                return {
+                    balance:
+                        utils.formatUnits(
+                            balance.result.toString(),
+                            decimals.result.toString()
+                        ),
+                    decimals: Number(decimals.result.toString())
+                };
             }));
             
-            tokens[network] = tokens[network]
-                .map((token, index) => ({...token, balance: balances[index]}));
+            tokens[network] = tokens[network].map((token, index) => ({
+                ...token,
+                balance: balances[index].balance,
+                decimals: balances[index].decimals
+            }));
         }));
 
         return this._response(tokens);
+    }
+
+    async send() {
+        const {to, network, value} = this.payload;
+        return sendTransaction({to, network, value});
+    }
+
+    async sendToken() {
+        const {tokenAddress, to, network, value} = this.payload;
+
+        const web3 = new Web3();
+        const data = web3.eth.abi.encodeFunctionCall(
+            ERC20.find(func => func.name === 'transfer'), [to, utils.hexValue(value)]
+        );
+
+        return ethereum.send({
+            method: 'eth_sendTransaction',
+            params: [{
+                from: getWalletAddress({network}),
+                to: tokenAddress,
+                data
+            }],
+            network
+        });
     }
 
     async encryptData() {

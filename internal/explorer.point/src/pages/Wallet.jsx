@@ -64,12 +64,53 @@ export default function Wallet() {
         });
     };
 
-    const openSendModal = ({ network, type }) => {
+    const send = async ({ to, value }) => {
+        if (!sendModalData) return;
+        if (sendModalData.tokenAddress) {
+            const res = await fetch('/v1/api/wallet/sendToken', {
+                method: 'POST',
+                body: JSON.stringify({
+                    to,
+                    network: sendModalData.network,
+                    tokenAddress: sendModalData.tokenAddress,
+                    value,
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (res.status !== 200) {
+                throw new Error('Failed to send currency');
+            }
+        } else {
+            const res = await fetch('/v1/api/wallet/send', {
+                method: 'POST',
+                body: JSON.stringify({
+                    to,
+                    network: sendModalData.network,
+                    value,
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (res.status !== 200) {
+                throw new Error('Failed to send token');
+            }
+        }
+    };
+
+    const openSendModal = ({
+        networkType,
+        network,
+        tokenAddress,
+        decimals,
+    }) => {
         if (network === 'pointnet') {
             openPlaceholderWindow();
             return;
         }
-        setSendModalData({ network, type });
+        setSendModalData({ networkType, network, tokenAddress, decimals });
     };
 
     const closeSendModal = () => {
@@ -109,8 +150,8 @@ export default function Wallet() {
                         className="btn btn-sm btn-warning"
                         onClick={() =>
                             openSendModal({
+                                networkType: wallet.type,
                                 network: wallet.network,
-                                type: wallet.type,
                             })
                         }
                     >
@@ -142,7 +183,7 @@ export default function Wallet() {
         );
     };
 
-    const renderToken = (token) => {
+    const renderToken = (token, network) => {
         return (
             <tr key={token.address}>
                 <td>
@@ -154,7 +195,14 @@ export default function Wallet() {
                     <a
                         href="#"
                         className="btn btn-sm btn-warning"
-                        onClick={() => alert('TODO')}
+                        onClick={() =>
+                            openSendModal({
+                                networkType: 'eth',
+                                tokenAddress: token.address,
+                                network,
+                                decimals: token.decimals,
+                            })
+                        }
                     >
                         Send
                     </a>
@@ -181,8 +229,9 @@ export default function Wallet() {
                     {sendModalData && (
                         <SendModal
                             onClose={closeSendModal}
-                            network={sendModalData.network}
-                            type={sendModalData.type}
+                            networkType={sendModalData.networkType}
+                            onSubmit={send}
+                            decimals={sendModalData.decimals}
                         />
                     )}
                     <br />
@@ -208,8 +257,8 @@ export default function Wallet() {
                                     {tokens[network]?.length > 0 ? (
                                         <>
                                             <tr>
-                                                <th>Currency</th>
-                                                <th>Address</th>
+                                                <th>Token Name</th>
+                                                <th>Token Address</th>
                                                 <th
                                                     style={{
                                                         textAlign: 'right',
@@ -226,7 +275,7 @@ export default function Wallet() {
                                                 </th>
                                             </tr>
                                             {tokens[network]?.map((token) =>
-                                                renderToken(token),
+                                                renderToken(token, network),
                                             )}
                                         </>
                                     ) : (
