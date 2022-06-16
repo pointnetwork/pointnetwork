@@ -6,6 +6,7 @@ const {promises: fs} = require('fs');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
+const namehash = require('@ensdomains/eth-ens-namehash');
 const {getFile, getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
@@ -15,6 +16,8 @@ const log = logger.child({module: 'EthereumProvider'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore');
 const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util');
 const {createCache} = require('../../util/cache');
+const {ETH_RESOLVER_ABI} = require('../../name_service/abis/resolver');
+const {POINT_ENS_TEXT_RECORD_KEY} = require('../../name_service/constants');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -576,7 +579,7 @@ ethereum.getKeyValue = async (
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const baseKey = `${identity}-${key}`;
         if (version === 'latest') {
-            return keyValueCache.get(baseKey, async() => {
+            return keyValueCache.get(baseKey, async () => {
                 const contract = await ethereum.loadIdentityContract();
                 return contract.methods.ikvGet(identity, key).call();
             });
@@ -858,12 +861,32 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
     const provider = getEthers(network);
     const resolver = await provider.getResolver(domainName);
 
+    if (!resolver) {
+        throw new Error(`Domain ${domainName} not found in Ethereum's ${network}.`);
+    }
+
     const [owner, content] = await Promise.all([
         provider.resolveName(domainName),
-        resolver.getText('point')
+        resolver.getText(POINT_ENS_TEXT_RECORD_KEY)
     ]);
 
     return {owner, content};
+};
+
+ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
+    if (!networks[network] || !networks[network].eth_tld_resolver) {
+        throw new Error(`Missing TLD public resolver contract address for network "${network}"`);
+    }
+
+    const provider = getEthers(network);
+    const tldAddress = networks[network].eth_tld_resolver;
+    const ensContract = new ethers.Contract(tldAddress, ETH_RESOLVER_ABI, provider);
+    const hash = namehash.hash(domainName);
+    const pk = getNetworkPrivateKey();
+    const wallet = new ethers.Wallet(pk, provider);
+    const ensWithSigner = ensContract.connect(wallet);
+    const tx = await ensWithSigner.setText(hash, POINT_ENS_TEXT_RECORD_KEY, data);
+    return tx;
 };
 
 module.exports = ethereum;

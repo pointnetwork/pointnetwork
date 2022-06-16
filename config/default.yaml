@@ -73,6 +73,7 @@ network:
       address: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa" # TODO: project ID
       currency_name: "rinkebyEth"
       currency_code: "rinkebyETH"
+      eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
     solana_devnet:
       type: "solana"
       address: "https://api.devnet.solana.com"
