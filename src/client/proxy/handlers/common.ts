@@ -270,7 +270,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             try {
                 const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
                 if (!resp.data.data?.content?.trim()) {
-                    const msg = `No data found in the "content" field of the domain registry for "${host}".`;
+                    const msg = `No Point data found in the domain registry for "${host}".`;
                     log.debug({host}, msg);
                     return res.status(404).send(msg);
                 }
