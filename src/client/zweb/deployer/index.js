@@ -2,9 +2,10 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
-const {compileContract, getImportsFactory} = require('../../../util');
+const {compileContract, getImportsFactory, encodeCookieString, merge} = require('../../../util');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 const blockchain = require('../../../network/providers/ethereum');
+const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
 const {execSync} = require('child_process');
@@ -30,6 +31,30 @@ class Deployer {
     getCacheDir() {
         const cache_dir = path.join(config.get('datadir'), config.get('deployer.cache_path'));
         return cache_dir;
+    }
+
+    getBaseVersion(version) {
+        let baseVersion;
+        if (typeof version === 'number' && version.toString().indexOf('.') === -1) {
+            baseVersion = version.toString() + '.0';
+        } else {
+            baseVersion = version.toString();
+        }
+
+        if (!this.isVersionFormated(baseVersion)) {
+            log.error(
+                {
+                    deployConfigFilePath: deployConfigFilePath,
+                    version: baseVersion
+                },
+                'Incorrect format of Version number. Should be MAJOR.MINOR.'
+            );
+            throw new Error(
+                `Incorrect format of Version number ${baseVersion}. Should be MAJOR.MINOR.`
+            );
+        }
+
+        return baseVersion;
     }
 
     isVersionFormated(baseVersion) {
@@ -78,6 +103,309 @@ class Deployer {
         }
     }
 
+    async getVersion(cfgVersion, identity, isPointTarget, isAlias) {
+        if (!isPointTarget && !isAlias) return null;
+
+        const baseVersion = this.getBaseVersion(cfgVersion);
+        const lastVersion = await blockchain.getKeyLastVersion(identity, '::rootDir');
+
+        if (this.isNewBaseVersionValid(lastVersion, baseVersion)) {
+            return this.getNewPatchedVersion(lastVersion, baseVersion);
+        } else {
+            log.error(
+                {baseVersion, lastVersion},
+                'Base version should be greater or equal to MAJOR.MINOR of lastVersion.'
+            );
+            throw new Error(
+                `'Base version ${baseVersion} should be greater or equal to MAJOR.MINOR of lastVersion ${lastVersion}.'`
+            );
+        }
+    }
+
+    getNameService(domain) {
+        return domain.endsWith('.sol') ? 'SNS' : 'ENS';
+    }
+
+    getTargetAndIdentity(config, contracts, dev) {
+        let identity;
+        let target;
+        let isPointTarget;
+        let isAlias;
+
+        // Handle the case when the target is not a .point domain (ie: .sol or .eth).
+        if (config.target.endsWith('.sol') || config.target.endsWith('.eth')) {
+            // For now, we don't support SNS nor ENS in devnets.
+            if (dev) {
+                const errMsg = `"dev" deployments are only supported for .point domains at the moment (trying to deploy ${config.target})`;
+                log.error({target: config.target, dev}, errMsg);
+                throw new Error(errMsg);
+            }
+
+            // Deployment of sites with contracts is only supported for .point domains as we need to store
+            // several things in the Identity contract.
+            // If the target is not .point and it includes contracts, it has to be an alias to a .point domain.
+            if (!config.alias && contracts) {
+                const errMsg = `Contracts is an advanced Point functionality only supported by .point domains at the moment. You need to specify a Point identity in the "alias" key in your deployment config`;
+                log.error({target: config.target, alias: config.alias, contracts}, errMsg);
+                throw new Error(errMsg);
+            }
+
+            // If the config does not include an `alias`, then it must include an `identity` key
+            // with the Point identity.
+            if (!config.alias && !config.identity) {
+                const errMsg = `Must include a Point identity in deployment config (in the "identity" key) for target other than .point (trying to deploy ${config.target}).`;
+                log.error({target: config.target}, errMsg);
+                throw new Error(errMsg);
+            }
+
+            target = config.target;
+            isPointTarget = false;
+            isAlias = Boolean(config.alias);
+            identity = isAlias
+                ? config.alias.replace(/\.point$/, '')
+                : config.identity.replace(/\.point$/, '');
+        } else {
+            // target is a .point domain
+            target = dev ? `${config.target.replace('.point', 'dev')}.point` : config.target;
+            isPointTarget = true;
+            isAlias = false;
+            identity = target.replace(/\.point$/, '');
+        }
+
+        return {target, isPointTarget, identity, isAlias};
+    }
+
+    async ensureIsDeployer(identity, owner) {
+        const isDeployer = await blockchain.isIdentityDeployer(identity, owner);
+        if (!isDeployer) {
+            log.error({identity, owner}, 'The address is not allowed to deploy this identity');
+            throw new Error(
+                `The address ${owner} is not allowed to deploy on ${identity} identity`
+            );
+        }
+    }
+
+    async registerNewIdentity(identity, owner) {
+        const publicKey = getNetworkPublicKey();
+        log.info(
+            {
+                identity,
+                owner,
+                publicKey,
+                len: Buffer.byteLength(publicKey, 'utf-8'),
+                parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
+            },
+            'Registering new identity'
+        );
+
+        await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
+        log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+        log.info(
+            {identity, owner, publicKey: publicKey.toString('hex')},
+            'Successfully registered new identity'
+        );
+    }
+
+    async deployContracts(config, deployPath, version, target, force_deploy_proxy) {
+        let proxyMetadataFilePath = '';
+        let contractNames = config.contracts;
+        if (!contractNames) contractNames = [];
+
+        if (config.hasOwnProperty('upgradable') && config.upgradable) {
+            proxyMetadataFilePath = await this.getProxyMetadataFilePath();
+            for (const contractName of contractNames) {
+                const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                fs.copyFileSync(
+                    fileName,
+                    path.resolve(
+                        __dirname,
+                        '..',
+                        '..',
+                        '..',
+                        '..',
+                        'hardhat',
+                        'contracts',
+                        contractName + '.sol'
+                    )
+                );
+            }
+            await hre.run('compile');
+            for (const contractName of contractNames) {
+                fs.unlinkSync(
+                    path.resolve(
+                        __dirname,
+                        '..',
+                        '..',
+                        '..',
+                        '..',
+                        'hardhat',
+                        'contracts',
+                        contractName + '.sol'
+                    )
+                );
+            }
+        }
+        for (const contractName of contractNames) {
+            const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+
+            try {
+                let address;
+                let artifactsDeployed;
+                if (config.hasOwnProperty('useIDE')) {
+                    let abiPath = '';
+                    if (config.useIDE.name === 'truffle') {
+                        abiPath = path.join(
+                            deployPath,
+                            config.useIDE.projectDir,
+                            'build',
+                            'contracts',
+                            contractName + '.json'
+                        );
+                    } else if (config.useIDE.name === 'hardhat') {
+                        abiPath = path.join(
+                            deployPath,
+                            config.useIDE.projectDir,
+                            'build',
+                            'contracts',
+                            contractName + '.sol',
+                            contractName + '.json'
+                        );
+                    }
+
+                    if (abiPath !== '' && fs.existsSync(abiPath)) {
+                        const abiFile = fs.readFileSync(abiPath, 'utf-8');
+                        artifactsDeployed = JSON.parse(abiFile);
+                    }
+
+                    address = config.useIDE.addresses[contractName];
+                } else {
+                    if (config.hasOwnProperty('upgradable') && config.upgradable === true) {
+                        const proxyAddress = await blockchain.getKeyValue(
+                            target,
+                            'zweb/contracts/address/' + contractName,
+                            version,
+                            'equalOrBefore'
+                        );
+
+                        const proxyDescriptionFileId = await blockchain.getKeyValue(
+                            target,
+                            PROXY_METADATA_KEY,
+                            version,
+                            'equalOrBefore'
+                        );
+
+                        let proxy;
+                        const contractF = await hre.ethers.getContractFactory(contractName);
+                        if (
+                            proxyAddress == null ||
+                            proxyDescriptionFileId == null ||
+                            force_deploy_proxy
+                        ) {
+                            log.debug('deployProxy call');
+                            const cfg = {kind: 'uups'};
+                            proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
+                        } else {
+                            log.debug('upgradeProxy call');
+                            //restore from blockchain upgradable contracts and proxy metadata if does not exist.
+                            if (!fs.existsSync('./.openzeppelin')) {
+                                fs.mkdirSync('./.openzeppelin');
+                            }
+                            fs.writeFileSync(
+                                proxyMetadataFilePath,
+                                await storage.getFile(proxyDescriptionFileId)
+                            );
+
+                            proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                        }
+                        await proxy.deployed();
+                        address = proxy.address;
+
+                        artifactsDeployed = await hre.artifacts.readArtifact(contractName);
+                    } else {
+                        const {contract, artifacts} = await this.compileContract(
+                            contractName,
+                            fileName,
+                            deployPath
+                        );
+
+                        artifactsDeployed = artifacts;
+
+                        address = await blockchain.deployContract(
+                            contract,
+                            artifacts,
+                            contractName
+                        );
+                    }
+                }
+                this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
+
+                const artifactsStorageId = await this.storeContractArtifacts(
+                    artifactsDeployed,
+                    fileName,
+                    contractName,
+                    version,
+                    address,
+                    target
+                );
+
+                log.debug(
+                    `Contract ${contractName} with Artifacts Storage ID ${artifactsStorageId} is deployed to ${address}`
+                );
+            } catch (e) {
+                log.error(e, 'Zapp contract deployment error');
+                throw e;
+            }
+        }
+
+        if (config.hasOwnProperty('upgradable') && config.upgradable === true) {
+            try {
+                // Upload proxy metadata
+
+                const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
+                const proxyMetadata = JSON.parse(proxyMetadataFile);
+
+                log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
+                this.ctx.client.deployerProgress.update(proxyMetadataFilePath, 0, 'uploading');
+                const proxyMetadataFileUploadedId = await storage.uploadFile(
+                    JSON.stringify(proxyMetadata)
+                );
+                this.ctx.client.deployerProgress.update(
+                    proxyMetadataFilePath,
+                    100,
+                    `uploaded::${proxyMetadataFileUploadedId}`
+                );
+                await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
+                log.debug('Proxy metadata updated');
+            } catch (e) {
+                log.error(e, 'Zapp contract deployment error');
+                throw e;
+            }
+        }
+    }
+
+    async uploadRootDir(deployPath, rootDir = 'public') {
+        log.debug('Uploading root directory...');
+        const publicDirId = await storage.uploadDir(path.join(deployPath, rootDir));
+        return publicDirId;
+    }
+
+    async uploadRoutes(deployPath) {
+        const routesFilePath = path.join(deployPath, 'routes.json');
+        const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
+        const routes = JSON.parse(routesFile);
+
+        log.debug({routes}, 'Uploading route file...');
+        this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
+        const routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
+        this.ctx.client.deployerProgress.update(
+            routesFilePath,
+            100,
+            `uploaded::${routeFileUploadedId}`
+        );
+
+        return routeFileUploadedId;
+    }
+
     async getChainId() {
         const id = await hre.ethers.provider.send('eth_chainId', []);
         return new BN(id.replace(/^0x/, ''), 'hex').toNumber();
@@ -108,6 +436,72 @@ class Deployer {
         }
     }
 
+    async ensureIsDomainOwner(target) {
+        const service = this.getNameService(target);
+
+        if (service === 'SNS') {
+            const network = 'solana';
+            const id = Date.now();
+            const {result} = await solana.requestAccount(id, network);
+            const solanaAddress = result.publicKey;
+            const {owner: domainOwner} = await solana.resolveDomain(target, network);
+
+            if (solanaAddress !== domainOwner) {
+                const errMsg = `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${solanaAddress}). Also, please make sure you have some SOL in your Point Wallet to cover transaction fees.`;
+                log.error({solanaAddress, target, domainOwner}, errMsg);
+                throw new Error(errMsg);
+            }
+
+            return {domainOwner, content};
+        }
+
+        if (service === 'ENS') {
+            const network = 'rinkeby';
+            const id = Date.now();
+            const {result} = await blockchain.send({
+                method: 'eth_accounts',
+                params: [],
+                id,
+                network
+            });
+
+            const ethereumAddress = Array.isArray(result) && result.length > 0 && result[0];
+            if (!ethereumAddress) {
+                throw new Error('Could not find any ethereum addresses.');
+            }
+
+            const {owner, content} = await blockchain.resolveDomain(target, network);
+            const domainOwner = typeof owner === 'string' && owner.toLowerCase();
+
+            if (ethereumAddress !== domainOwner) {
+                const errMsg = `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${ethereumAddress}). Also, please make sure you have some ETH in your Point Wallet to cover transaction fees.`;
+                log.error({ethereumAddress, target, domainOwner}, errMsg);
+                throw new Error(errMsg);
+            }
+
+            return {domainOwner, content};
+        }
+    }
+
+    async editDomainRegistry(domain, data, preExistingData) {
+        const service = this.getNameService(domain);
+        log.info({domain, data, service}, 'Saving data to domain registry.');
+
+        if (service === 'SNS') {
+            const dataStr = encodeCookieString(merge(preExistingData, data));
+            await solana.setDomainContent(domain, dataStr);
+        } else if (service === 'ENS') {
+            // we don't have to care about preExistingData in ENS as we save the data
+            // to a custom "text record", it's safe to override.
+            const dataStr = encodeCookieString(data);
+            await blockchain.setDomainContent(domain, dataStr);
+        } else {
+            throw new Error(`Unsupported Name Service ${service}`);
+        }
+
+        log.info({domain, data, service}, 'Successfully updated domain registry.');
+    }
+
     async deploy(deployPath, deployContracts = false, dev = false, force_deploy_proxy = false) {
         // todo: error handling, as usual
         const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
@@ -117,338 +511,138 @@ class Deployer {
         if (!deployConfig.hasOwnProperty('version') ||
            !deployConfig.hasOwnProperty('target') ||
            !deployConfig.hasOwnProperty('keyvalue') ||
-           !deployConfig.hasOwnProperty('contracts')){
-            log.error(
-                {deployConfigFilePath: deployConfigFilePath},
-                'Missing entry in point.deploy.json file. The following properties must be present in the file:' + 
-                ' version, target, keyvalue and contracts. Fill them with empty values if needed.'
-            );
-            throw new Error(
-                'Missing entry in point.deploy.json file. The following properties must be present in the file:' +
-                ' version, target, keyvalue and contracts. Fill them with empty values if needed.'
-            );
-        }
-
-        let baseVersion;
-        if (
-            typeof deployConfig.version === 'number' &&
-            deployConfig.version.toString().indexOf('.') === -1
+           !deployConfig.hasOwnProperty('contracts')
         ) {
-            baseVersion = deployConfig.version.toString() + '.0';
-        } else {
-            baseVersion = deployConfig.version.toString();
+            const errMsg = 'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.';
+            log.error({deployConfigFilePath: deployConfigFilePath}, errMsg);
+            throw new Error(errMsg);
         }
 
-        if (!this.isVersionFormated(baseVersion)) {
-            log.error(
-                {
-                    deployConfigFilePath: deployConfigFilePath,
-                    version: baseVersion
-                },
-                'Incorrect format of Version number. Should be MAJOR.MINOR.'
-            );
-            throw new Error(
-                `Incorrect format of Version number ${baseVersion}. Should be MAJOR.MINOR.`
-            );
+        // TODO: implement `src/network/providers/solana.ts > setDomainContent` and remove this.
+        if (deployConfig.target.endsWith('.sol')) {
+            throw new Error(`SNS deployments are not supported yet, but coming soon, stay tuned.`);
         }
 
-        const target = dev
-            ? `${deployConfig.target.replace('.point', 'dev')}.point`
-            : deployConfig.target;
-        const identity = target.replace(/\.point$/, '');
+        const {target, isPointTarget, identity, isAlias} = this.getTargetAndIdentity(
+            deployConfig,
+            deployContracts,
+            dev
+        );
 
-        //get the last version.
-        const lastVersion = await blockchain.getKeyLastVersion(identity, '::rootDir');
-
-        //get the new version with patch.
-        let version;
-        if (this.isNewBaseVersionValid(lastVersion, baseVersion)) {
-            version = this.getNewPatchedVersion(lastVersion, baseVersion);
-        } else {
-            log.error(
-                {
-                    deployConfigFilePath: deployConfigFilePath,
-                    baseVersion: baseVersion,
-                    lastVersion: lastVersion
-                },
-                'Base version should be greater or equal to MAJOR.MINOR of lastVersion.'
-            );
-            throw new Error(
-                `'Base version ${baseVersion} should be greater or equal to MAJOR.MINOR of lastVersion ${lastVersion}.'`
-            );
-        }
+        const version = await this.getVersion(
+            deployConfig.version,
+            identity,
+            isPointTarget,
+            isAlias
+        );
 
         const owner = blockchain.getOwner();
-
         const registeredOwner = await blockchain.ownerByIdentity(identity);
         const identityIsRegistered =
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
+        log.info({target, identity, owner, registeredOwner}, 'Owner information');
+
+        // We will preserve any pre-existing content that may exist in the domain registry.
+        let preExistingDomainContent;
 
         if (identityIsRegistered) {
-            const isDeployer = await blockchain.isIdentityDeployer(identity, owner);
-            if (!isDeployer) {
-                log.error({identity, owner}, 'The address is not allowed to deploy this identity');
+            await this.ensureIsDeployer(identity, owner);
+            if (!isPointTarget) {
+                // If the target domain is not owned by the Point address of the user, we can't
+                // move forward as we need to make transactions to store some data
+                // in the domain registry (write to Solana or Ethereum blockchain).
+                const {content} = await this.ensureIsDomainOwner(target);
+                if (content && typeof content === 'string' && content.trim()) {
+                    preExistingDomainContent = content;
+                }
+            }
+        } else {
+            this.registerNewIdentity(identity, owner);
+            if (!isPointTarget) {
+                // This means we will need to write some data to a domain registry,
+                // which implies writing to the blockchain, hence, transaction fees.
+                // To be able to make such transaction on behalf of the user, their
+                // Point Wallet needs to own the domain, and it needs to have some
+                // SOL or ETH (depending on the domain service) to cover the fees.
+                // We've just created this account, so we know it doesn't have any funds
+                // and it doesn't own the domain.
+                log.error(
+                    {target, identity, isAlias},
+                    `Tried to deploy "${target}" with a Point identity we just created (doesn't own the domain, doesn't have funds)`
+                );
                 throw new Error(
-                    `The address ${owner} is not allowed to deploy on ${identity} identity`
+                    `We have created your Point identity: "${identity}". Please transfer your domain "${target}" to your Point identity (go to https://point/wallet to find your blockchain addresses) and make sure you have enough funds to cover the transaction fee.`
                 );
             }
         }
 
-        if (!identityIsRegistered) {
-            const publicKey = getNetworkPublicKey();
-
-            log.info(
-                {
-                    identity,
-                    owner,
-                    publicKey,
-                    len: Buffer.byteLength(publicKey, 'utf-8'),
-                    parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
-                },
-                'Registering new identity'
-            );
-
-            await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
-            log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
-            log.info(
-                {identity, owner, publicKey: publicKey.toString('hex')},
-                'Successfully registered new identity'
-            );
-        }
-
-        // Deploy contracts
+        const pointIdentity = isAlias ? identity : target;
         if (deployContracts) {
-            let proxyMetadataFilePath = '';
-            let contractNames = deployConfig.contracts;
-            if (!contractNames) contractNames = [];
-
-            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true) {
-                proxyMetadataFilePath = await this.getProxyMetadataFilePath();
-                for (const contractName of contractNames) {
-                    const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
-                    fs.copyFileSync(
-                        fileName,
-                        path.resolve(
-                            __dirname,
-                            '..',
-                            '..',
-                            '..',
-                            '..',
-                            'hardhat',
-                            'contracts',
-                            contractName + '.sol'
-                        )
-                    );
-                }
-                await hre.run('compile');
-                for (const contractName of contractNames) {
-                    fs.unlinkSync(
-                        path.resolve(
-                            __dirname,
-                            '..',
-                            '..',
-                            '..',
-                            '..',
-                            'hardhat',
-                            'contracts',
-                            contractName + '.sol'
-                        )
-                    );
-                }
-            }
-            for (const contractName of contractNames) {
-                const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
-
-                try {
-                    let address;
-                    let artifactsDeployed;
-                    if (deployConfig.hasOwnProperty('useIDE')) {
-                        let abiPath = '';
-                        if (deployConfig.useIDE.name === 'truffle') {
-                            abiPath = path.join(
-                                deployPath,
-                                deployConfig.useIDE.projectDir,
-                                'build',
-                                'contracts',
-                                contractName + '.json'
-                            );
-                        } else if (deployConfig.useIDE.name === 'hardhat') {
-                            abiPath = path.join(
-                                deployPath,
-                                deployConfig.useIDE.projectDir,
-                                'build',
-                                'contracts',
-                                contractName + '.sol',
-                                contractName + '.json'
-                            );
-                        }
-
-                        if (abiPath !== '' && fs.existsSync(abiPath)) {
-                            const abiFile = fs.readFileSync(abiPath, 'utf-8');
-                            artifactsDeployed = JSON.parse(abiFile);
-                        }
-
-                        address = deployConfig.useIDE.addresses[contractName];
-                    } else {
-                        if (
-                            deployConfig.hasOwnProperty('upgradable') &&
-                            deployConfig.upgradable === true
-                        ) {
-                            const proxyAddress = await blockchain.getKeyValue(
-                                target,
-                                'zweb/contracts/address/' + contractName,
-                                version,
-                                'equalOrBefore'
-                            );
-
-                            const proxyDescriptionFileId = await blockchain.getKeyValue(
-                                target,
-                                PROXY_METADATA_KEY,
-                                version,
-                                'equalOrBefore'
-                            );
-
-                            let proxy;
-                            const contractF = await hre.ethers.getContractFactory(contractName);
-                            if (
-                                proxyAddress == null
-                                || proxyDescriptionFileId == null
-                                || force_deploy_proxy
-                            ) {
-                                log.debug('deployProxy call');
-                                const cfg = {kind: 'uups'};
-                                proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
-                            } else {
-                                log.debug('upgradeProxy call');
-                                //restore from blockchain upgradable contracts and proxy metadata if does not exist.
-                                if (!fs.existsSync('./.openzeppelin')) {
-                                    fs.mkdirSync('./.openzeppelin');
-                                }
-                                fs.writeFileSync(
-                                    proxyMetadataFilePath,
-                                    await storage.getFile(proxyDescriptionFileId)
-                                );
-
-                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-                            }
-                            await proxy.deployed();
-                            address = proxy.address;
-
-                            artifactsDeployed = await hre.artifacts.readArtifact(contractName);
-                        } else {
-                            const {contract, artifacts} = await this.compileContract(
-                                contractName,
-                                fileName,
-                                deployPath
-                            );
-
-                            artifactsDeployed = artifacts;
-
-                            address = await blockchain.deployContract(
-                                contract,
-                                artifacts,
-                                contractName
-                            );
-                        }
-                    }
-                    this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
-
-                    const artifactsStorageId = await this.storeContractArtifacts(
-                        artifactsDeployed,
-                        fileName,
-                        contractName,
-                        version,
-                        address,
-                        target
-                    );
-
-                    log.debug(
-                        `Contract ${contractName} with Artifacts Storage ID ${artifactsStorageId} is deployed to ${address}`
-                    );
-                } catch (e) {
-                    log.error(e, 'Zapp contract deployment error');
-                    throw e;
-                }
-            }
-
-            if (deployConfig.hasOwnProperty('upgradable') && deployConfig.upgradable === true) {
-                try {
-                    // Upload proxy metadata
-
-                    const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
-                    const proxyMetadata = JSON.parse(proxyMetadataFile);
-
-                    log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
-                    this.ctx.client.deployerProgress.update(proxyMetadataFilePath, 0, 'uploading');
-                    const proxyMetadataFileUploadedId = await storage.uploadFile(
-                        JSON.stringify(proxyMetadata)
-                    );
-                    this.ctx.client.deployerProgress.update(
-                        proxyMetadataFilePath,
-                        100,
-                        `uploaded::${proxyMetadataFileUploadedId}`
-                    );
-                    await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
-                    log.debug('Proxy metadata updated');
-                } catch (e) {
-                    log.error(e, 'Zapp contract deployment error');
-                    throw e;
-                }
-            }
-        }
-
-        // Upload public - root dir
-        log.debug('Uploading root directory...');
-        let rootDirFolder = 'public';
-        if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== '') {
-            rootDirFolder = deployConfig.rootDir;
-        }
-
-        const publicDirId = await storage.uploadDir(path.join(deployPath, rootDirFolder));
-        await this.updateKeyValue(
-            target,
-            {'::rootDir': publicDirId},
-            deployPath,
-            deployContracts,
-            version
-        );
-
-        // Upload routes
-        const routesFilePath = path.join(deployPath, 'routes.json');
-        const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
-        const routes = JSON.parse(routesFile);
-
-        log.debug({routes}, 'Uploading route file...');
-        this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
-        const routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
-        this.ctx.client.deployerProgress.update(
-            routesFilePath,
-            100,
-            `uploaded::${routeFileUploadedId}`
-        );
-
-        await this.updateZDNS(target, routeFileUploadedId, version);
-
-        await this.updateKeyValue(
-            target,
-            deployConfig.keyvalue,
-            deployPath,
-            deployContracts,
-            version
-        );
-
-        await this.updateCommitSha(target, deployPath, version);
-
-        if (deployConfig.hasOwnProperty('pointSDKVersion')){
-            await this.updatePointVersionTag(
-                target, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version
+            await this.deployContracts(
+                deployConfig,
+                deployPath,
+                version,
+                pointIdentity,
+                force_deploy_proxy
             );
         }
 
-        if (deployConfig.hasOwnProperty('pointNodeVersion')){
-            await this.updatePointVersionTag(
-                target, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version
+        const [publicDirId, routeFileUploadedId] = await Promise.all([
+            this.uploadRootDir(deployPath, deployConfig.rootDir),
+            this.uploadRoutes(deployPath)
+        ]);
+
+        // Check if we need to store the routes and root dir IDs in Point's Identity contract
+        // or if they are going to be stored in the domain registry (Solana or Ethereum).
+        if (isPointTarget || isAlias) {
+            log.info(
+                {publicDirId, routeFileUploadedId, target, identity},
+                'Saving routes and root dir IDs to Point Identity contract...'
             );
+
+            await this.updateKeyValue(
+                pointIdentity,
+                {'::rootDir': publicDirId},
+                deployPath,
+                deployContracts,
+                version
+            );
+
+            await this.updateZDNS(pointIdentity, routeFileUploadedId, version);
+
+            await this.updateKeyValue(
+                pointIdentity,
+                deployConfig.keyvalue,
+                deployPath,
+                deployContracts,
+                version
+            );
+
+            await this.updateCommitSha(pointIdentity, deployPath, version);
+
+            if (deployConfig.hasOwnProperty('pointSDKVersion')){
+                await this.updatePointVersionTag(
+                    pointIdentity, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version
+                );
+            }
+
+            if (deployConfig.hasOwnProperty('pointNodeVersion')){
+                await this.updatePointVersionTag(
+                    pointIdentity, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version
+                );
+            }
+        }
+
+        if (!isPointTarget) {
+            // Write Point data to domain registry.
+            const domainRegistryData = isAlias ? {pn_alias: identity} : {
+                pn_id: identity,
+                pn_routes: routeFileUploadedId,
+                pn_root: publicDirId
+            };
+
+            await this.editDomainRegistry(target, domainRegistryData, preExistingDomainContent);
+            log.info({target, ...domainRegistryData}, 'Wrote Point data to domain registry');
         }
 
         log.info('Deploy finished');

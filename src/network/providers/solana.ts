@@ -213,6 +213,10 @@ const solana = {
             owner: registry.owner.toBase58(),
             content: content || null
         };
+    },
+    setDomainContent: async(domainName: string, data: string, network = 'solana') => {
+        log.error({domainName, data, network}, 'Writing to Solana domain registry is not supported yet.');
+        throw new Error('Solana > setDomainContent has not been implemented yet');
     }
 };
 
