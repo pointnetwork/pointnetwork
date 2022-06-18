@@ -34,42 +34,33 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     defaultNetwork = 'ynet';
 }
 
-const ynetConfig = {
-    url: 'http://ynet.point.space:44444'        
-}
+const ynetConfig = {url: 'http://ynet.point.space:44444'};
+
 if (ynetPrivateKey){
     ynetConfig.accounts = [ynetPrivateKey];
 }
+
+const optimizerConfig = {
+    optimizer: {
+        enabled: true,
+        runs: 1000
+    }
+};
 
 const config = {
     solidity: {
         compilers: [
             {
-                version: "0.8.0",
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 1000
-                    }
-                }
+                version: '0.8.0',
+                settings: {...optimizerConfig}
             },
             {
-                version: "0.8.4",
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 1000
-                    }
-                }
+                version: '0.8.4',
+                settings: {...optimizerConfig}
             },
             {
-                version: "0.8.7",
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 1000
-                    }
-                }
+                version: '0.8.7',
+                settings: {...optimizerConfig}
             }
         ],
     },
@@ -82,8 +73,7 @@ const config = {
     networks: {
         development: {
             url: devaddress,
-            accounts:
-            [privateKey]
+            accounts: [privateKey]
         },
         ynet: ynetConfig
     },
