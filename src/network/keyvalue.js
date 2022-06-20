@@ -1,4 +1,4 @@
-import blockchain from './blockchain';
+import blockchain from './providers/ethereum';
 import logger from '../core/log';
 const log = logger.child({module: 'KeyValue'});
 

@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.1.66",
+  "version": "0.1.83",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@elastic/ecs-pino-format": "^1.3.0",
+    "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@fastify/formbody": "^6.0.0",
     "@fastify/multipart": "^6.0.0",
     "@fastify/url-data": "^4.0.0",
@@ -17,14 +18,15 @@
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@openzeppelin/hardhat-upgrades": "^1.16.1",
-    "@solana/web3.js": "^1.29.2",
+    "@solana/spl-name-service": "^0.1.3",
+    "@solana/web3.js": "^1.41.3",
     "@truffle/hdwallet-provider": "^1.5.0",
     "@typechain/ethers-v5": "^10.0.0",
     "@typechain/hardhat": "^6.0.0",
-    "arweave": "^1.10.17",
+    "arweave": "^1.11.4",
     "arweave-mnemonic-keys": "^0.0.9",
     "async": "^3.2.3",
-    "axios": "^0.21.2",
+    "axios": "^0.27.2",
     "bip32": "^2.0.6",
     "bip39": "^3.0.4",
     "bn.js": "^5.2.0",
@@ -49,8 +51,10 @@
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.32",
+    "node-cache": "^5.1.2",
     "node-forge": "^1.3.0",
     "node-match-path": "^0.6.3",
+    "open": "^8.4.0",
     "pino": "^6.13.1",
     "pino-multi-stream": "6.0.0",
     "pino-pretty": "^7.5.1",
@@ -61,11 +65,11 @@
     "readline": "^1.3.0",
     "sequelize": "^6.6.5",
     "sequelize-auto-migrations": "github:scimonster/sequelize-auto-migrations#a063aa6535a3f580623581bf866cef2d609531ba",
-    "solc0_8": "npm:solc@^0.8.6",
-    "sqlite3": "5.0.2",
+    "solc0_8": "npm:solc@0.8.3",
+    "sqlite3": "^5.0.8",
     "twig": "^1.15.4",
     "umzug": "^3.0.0",
-    "web3": "^1.7.0",
+    "web3": "^1.7.3",
     "web3-provider-engine": "16.0.3",
     "web3-providers-http": "1.6.0"
   },
@@ -100,9 +104,9 @@
     "sequelize-cli": "^6.2.0",
     "sequelize-mig": "^3.1.3",
     "solhint": "^3.3.7",
-    "ts-node": "^10.5.0",
+    "ts-node": "^10.8.1",
     "typechain": "^8.0.0",
-    "typescript": "^4.6.2"
+    "typescript": "^4.7.3"
   },
   "scripts": {
     "test": "jest",
@@ -137,7 +141,8 @@
       "#(.*)": "<rootDir>/core/$1"
     },
     "modulePathIgnorePatterns": [
-      "docker"
+      "docker",
+      "dist"
     ],
     "testEnvironment": "node",
     "testRunner": "jest-circus/runner",

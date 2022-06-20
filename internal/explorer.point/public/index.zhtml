@@ -4,10 +4,6 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#000000" />
-        <meta
-          name="Point Explorer"
-          content="Template App was created using create-react-app"
-        />
         <title>Point Explorer</title>
         <script defer src="index.js"></script>
         <link rel="stylesheet" href="index.css">

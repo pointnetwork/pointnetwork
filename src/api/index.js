@@ -1,6 +1,8 @@
 const fastify = require('fastify');
 const fastifyWs = require('fastify-websocket');
 const config = require('config');
+const {transformErrorResp} = require('../errors');
+const identityMdw = require('./middleware/identity');
 const logger = require('../core/log');
 const log = logger.child({module: 'ApiServer'});
 
@@ -47,6 +49,8 @@ class ApiServer {
 
             this.server.setNotFoundHandler(this.server.notFound);
 
+            this.server.addHook('onSend', transformErrorResp);
+
             await this.server.listen(parseInt(this.config.port), this.config.address, async err => {
                 if (err) {
                     log.error(err, 'Error from API server');
@@ -69,6 +73,7 @@ class ApiServer {
             this.server.route({
                 method: apiRoute[0],
                 url: apiRoute[1],
+                preHandler: identityMdw,
                 handler: async (request, reply) => {
                     const controller = new (require('./controllers/' + controllerName))(
                         this.ctx,

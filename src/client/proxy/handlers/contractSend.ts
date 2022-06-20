@@ -1,6 +1,6 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
 import {parse} from 'query-string';
-import blockchain from '../../../network/blockchain';
+import blockchain from '../../../network/providers/ethereum';
 import {Template, templateManager} from '../templateManager';
 import {escapeString} from '../../../util';
 const {uploadFile} = require('../../storage');

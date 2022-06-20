@@ -1,14 +1,12 @@
-// TODO: for some reason, just ../util doesn't work
 import fs from 'fs';
+// TODO: for some reason, just ../util doesn't work
 import {resolveHome} from '../util/resolveHome';
 import path from 'path';
 import config from 'config';
 import Wallet, {hdkey} from 'ethereumjs-wallet';
-import Arweave from 'arweave';
 import * as bip39 from 'bip39';
-import {JWKInterface} from 'arweave/node/lib/wallet';
-
-const arweave = Arweave.init({});
+import {mnemonicToSeedSync} from 'bip39';
+import {Keypair} from '@solana/web3.js';
 
 const keystorePath: string = resolveHome(config.get('wallet.keystore_path'));
 
@@ -25,22 +23,7 @@ function getWalletFactory() {
     };
 }
 
-function getArweaveKeyFactory() {
-    let arweaveKey: string | undefined;
-    return (): JWKInterface | undefined => {
-        if (!arweaveKey) {
-            try {
-                arweaveKey = require(path.join(keystorePath, 'arweave.json'));
-            } catch (e){
-                arweaveKey = undefined;
-            }
-        }
-        return arweaveKey as JWKInterface | undefined;
-    };
-}
-
 const getWallet = getWalletFactory();
-const getArweaveKey = getArweaveKeyFactory();
 
 export function getNetworkAddress() {
     return `0x${getWallet().wallet.getAddress().toString('hex')}`;
@@ -54,14 +37,36 @@ export function getNetworkPrivateKey() {
     return getWallet().wallet.getPrivateKey().toString('hex');
 }
 
-export function getStroragePrivateKey() {
-    return getArweaveKey();
-}
-
-export function getStorageAddress() {
-    return arweave.wallets.jwkToAddress(getArweaveKey());
-}
-
 export function getSecretPhrase() {
     return getWallet().secretPhrase;
 }
+
+export const getSolanaKeyPair = () => {
+    const seed = mnemonicToSeedSync(getSecretPhrase());
+    return Keypair.fromSeed(Uint8Array.from(seed.toJSON().data.slice(0, 32)));
+};
+
+// TODO: restore if needed
+// function getArweaveKeyFactory() {
+//     let arweaveKey: string | undefined;
+//     return (): JWKInterface | undefined => {
+//         if (!arweaveKey) {
+//             try {
+//                 arweaveKey = require(path.join(keystorePath, 'arweave.json'));
+//             } catch (e){
+//                 arweaveKey = undefined;
+//             }
+//         }
+//         return arweaveKey as JWKInterface | undefined;
+//     };
+// }
+
+// const getArweaveKey = getArweaveKeyFactory();
+
+// export function getStoragePrivateKey() {
+//     return getArweaveKey();
+// }
+//
+// export function getStorageAddress() {
+//     return arweave.wallets.jwkToAddress(getArweaveKey());
+// }

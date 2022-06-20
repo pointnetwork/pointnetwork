@@ -9,7 +9,7 @@ const {
     getNetworkAddress
 } = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
-const blockchain = require('../../../network/blockchain');
+const blockchain = require('../../../network/providers/ethereum');
 const {readFileByPath} = require('../../../util');
 const keyValue = require('../../../network/keyvalue');
 
@@ -250,34 +250,35 @@ class Renderer {
                     throw new Error('Invalid csrf token submitted');
                 }
                 return '';
-            },
+            }
 
             // Privileged access functions (only scoped to https://point domain)
 
-            get_wallet_info: async function() {
-                this.renderer.#ensurePrivilegedAccess();
-
-                const wallets = [];
-                wallets.push({
-                    currency_name: 'Point',
-                    currency_code: 'POINT',
-                    address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
-                    balance: await this.renderer.ctx.wallet.getNetworkAccountBalanceInEth()
-                });
-                return wallets;
-            },
-            get_wallet_history: async function(code) {
-                this.renderer.#ensurePrivilegedAccess();
-                return await this.renderer.ctx.wallet.getHistoryForCurrency(code);
-            },
-            wallet_request_dev_sol: async function() {
-                this.renderer.#ensurePrivilegedAccess();
-                await this.renderer.ctx.wallet.initiateSolanaDevAirdrop();
-            },
-            wallet_send: async function(code, recipient, amount) {
-                this.renderer.#ensurePrivilegedAccess();
-                await this.renderer.ctx.wallet.send(code, recipient, amount);
-            }
+            // TODO: restore and reimplement
+            // get_wallet_info: async function() {
+            //     this.renderer.#ensurePrivilegedAccess();
+            //
+            //     const wallets = [];
+            //     wallets.push({
+            //         currency_name: 'Point',
+            //         currency_code: 'POINT',
+            //         address: (await blockchain.getCurrentIdentity()) + '.point' || 'N/A',
+            //         balance: await this.renderer.ctx.wallet.getNetworkAccountBalanceInEth()
+            //     });
+            //     return wallets;
+            // }
+            // get_wallet_history: async function(code) {
+            //     this.renderer.#ensurePrivilegedAccess();
+            //     return await this.renderer.ctx.wallet.getHistoryForCurrency(code);
+            // },
+            // wallet_request_dev_sol: async function() {
+            //     this.renderer.#ensurePrivilegedAccess();
+            //     await this.renderer.ctx.wallet.initiateSolanaDevAirdrop();
+            // }
+            // wallet_send: async function(code, recipient, amount) {
+            //     this.renderer.#ensurePrivilegedAccess();
+            //     await this.renderer.ctx.wallet.send(code, recipient, amount);
+            // }
         };
     }
 

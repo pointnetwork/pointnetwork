@@ -1,4 +1,3 @@
-import axios from 'axios';
 import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
 import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
 import getDownloadQuery from './query';
@@ -10,7 +9,8 @@ import {
     resolveHome,
     statAsync,
     escapeString,
-    hashFn
+    hashFn,
+    isChineseTimezone
 } from '../../util';
 import {storage} from './storage';
 import {promises as fs} from 'fs';
@@ -18,6 +18,7 @@ import path from 'path';
 import config from 'config';
 import logger from '../../core/log';
 import {uploadLoop} from './uploader';
+import {downloadChunk as downloadChunkFromBundler} from './bundler';
 
 const log = logger.child({module: 'Storage'});
 
@@ -34,6 +35,11 @@ const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
 const GATEWAY_URL = config.get('storage.arweave_gateway_url');
 const MODE = config.get('mode');
 const BUNDLER_DOWNLOAD_URL = `${config.get('storage.arweave_bundler_url')}/download`;
+const BUNDLER_DOWNLOAD_URL_FALLBACK = `${config.get('storage.arweave_bundler_url_fallback')}/download`;
+
+const bundlerDownloadUrl = isChineseTimezone()
+    ? BUNDLER_DOWNLOAD_URL_FALLBACK
+    : BUNDLER_DOWNLOAD_URL;
 
 const uploadCacheDir = path.join(
     resolveHome(config.get('datadir')),
@@ -75,20 +81,9 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     // chunks from the bundler's backup (S3).
     try {
         log.debug({chunkId}, 'Downloading chunk from bundler backup');
-        const {data} = await axios.get(`${BUNDLER_DOWNLOAD_URL}/${chunkId}`);
-        log.debug({chunkId}, 'Successfully downloaded chunk from Bundler backup');
-        const buf =
-            typeof data === 'object' ? Buffer.from(JSON.stringify(data)) : Buffer.from(data);
+        const buf = await downloadChunkFromBundler(bundlerDownloadUrl, chunkId);
         await fs.writeFile(chunkPath, buf);
         chunk.size = buf.length;
-
-        const hash = hashFn(buf).toString('hex');
-        if (hash !== chunk.id) {
-            const errMsg = 'Chunk id and data do not match';
-            log.warn({chunkId: chunk.id, hash}, errMsg);
-            throw new Error(errMsg);
-        }
-
         chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
         await chunk.save();
         return buf;
@@ -113,10 +108,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const buf = Buffer.from(data);
             const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
-                log.warn(
-                    {chunkId, hash, query, buf: buf.toString()},
-                    'Chunk id and data do not match'
-                );
+                log.warn({chunkId, hash}, 'Chunk id and data do not match');
                 continue;
             }
             await fs.writeFile(chunkPath, buf);
@@ -135,10 +127,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
             const buf = Buffer.from(data);
             const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
-                log.warn(
-                    {chunkId, hash, query, buf: buf.toString()},
-                    'Chunk id and data do not match'
-                );
+                log.warn({chunkId, hash}, 'Chunk id and data do not match');
                 continue;
             }
 

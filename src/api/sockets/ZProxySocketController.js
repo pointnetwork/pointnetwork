@@ -4,7 +4,7 @@ See client/proxy/index.js for usage details of ZProxy and setup of the WebSocket
 */
 const logger = require('../../core/log');
 const log = logger.child({module: 'ZProxySocketController'});
-const blockchain = require('../../network/blockchain');
+const blockchain = require('../../network/providers/ethereum');
 const handleRPC = require('../../rpc/rpc-handlers').default;
 
 const SUBSCRIPTION_EVENT_TYPES = {
@@ -65,12 +65,13 @@ class ZProxySocketController {
 
                 case SUBSCRIPTION_REQUEST_TYPES.RPC: {
                     const {method, params, id, network} = request;
-                    const {result} = await handleRPC({method, params, id, network});
+                    const {status, result} = await handleRPC({method, params, id, network});
                     return this.pushRPCMessage({
                         request,
                         subscriptionId: null,
                         type: SUBSCRIPTION_EVENT_TYPES.RPC,
-                        data: result
+                        data: result,
+                        status
                     });
                 }
 
@@ -90,13 +91,9 @@ class ZProxySocketController {
         });
     }
 
-    pushToClients(msg) {
-        if (this.wss) {
-            this.wss.clients.forEach(client => {
-                if (client.readyState === 1) {
-                    client.send(JSON.stringify(msg));
-                }
-            });
+    pushToClient(msg) {
+        if (this.ws && (this.ws.readyState === 1)) {
+            this.ws.send(JSON.stringify(msg));
         }
     }
 
@@ -114,7 +111,7 @@ class ZProxySocketController {
     pushSubscriptionEvent({type, subscriptionId, request, data}) {
         log.info({type, subscriptionId, request, data}, 'Pushing subscription event');
 
-        return this.pushToClients({type, subscriptionId, request, data});
+        return this.pushToClient({type, subscriptionId, request, data});
     }
 }
 

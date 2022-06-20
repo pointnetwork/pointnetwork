@@ -1,7 +1,7 @@
 import config from 'config';
 
 class PointSDKController {
-    constructor(ctx, req) {
+    constructor(ctx, req, web2 = false) {
         this.ctx = ctx;
         this.status = 200;
 
@@ -10,7 +10,13 @@ class PointSDKController {
 
         if (method === 'POST' && config.get('api.csrf_enabled')) {
             const csrfToken = req.body.csrfToken;
-            this.csrfTokenGuard(host, csrfToken);
+            if (web2){
+                this.csrfTokenGuard(req.body.host, csrfToken);
+                
+            } else {
+                this.csrfTokenGuard(host, csrfToken);
+            }
+            
         }
     }
 
@@ -31,10 +37,11 @@ class PointSDKController {
         return this;
     }
 
-    _response(payload) {
+    _response(payload, headers = {}) {
         return {
             status: this.status,
-            data: payload
+            data: payload,
+            headers: headers
         };
     }
 }

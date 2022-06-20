@@ -13,11 +13,12 @@ storage:
   arweave_host: arweave-node
   arweave_protocol: http
   arweave_port: 1984
-  request_timeout: 120000
-  upload_expire: 120000
+  request_timeout: 300000
+  upload_expire: 300000
 network:
   web3:
-    ynet: http://blockchain_node:7545
+    ynet:
+      address: "http://blockchain_node:7545"
 api:
   address: 0.0.0.0
 zproxy:

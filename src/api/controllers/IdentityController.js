@@ -1,12 +1,14 @@
 const PointSDKController = require('./PointSDKController');
-const blockchain = require('../../network/blockchain');
+const blockchain = require('../../network/providers/ethereum');
+const solana = require('../../network/providers/solana');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
-const {getReferralCode} = require('../../util');
+const {getReferralCode, isChineseTimezone} = require('../../util');
+const open = require('open');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
@@ -14,7 +16,7 @@ async function registerBountyReferral(address, type) {
     const referralCode = await getReferralCode();
 
     let event = 'free_reg';
-    if (type === 'tweet') {
+    if (type === 'tweet' || type === 'taken') {
         event = 'twitter_reg';
     }
 
@@ -25,29 +27,65 @@ async function registerBountyReferral(address, type) {
 }
 
 const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
+const twitterOracleDomainFallback = 'https://twitter-oracle.point.space';
+const twitterOracleUrl = isChineseTimezone() ? twitterOracleDomainFallback : twitterOracleDomain;
 
-const TwitterOracle = {
+let TwitterOracle = {
     async isIdentityEligible(identity) {
-        const url = `${twitterOracleDomain}/api/eligible?handle=${identity}`;
+        const url = `${twitterOracleUrl}/api/eligible?handle=${identity}`;
         log.info(`calling to ${url}`);
         const {data} = await axios.get(url);
         return data;
     },
 
     async regiterFreeIdentity(identity, address) {
-        const url = `${twitterOracleDomain}/api/activate_free?handle=${identity}&address=${address}`;
+        const url = `${twitterOracleUrl}/api/activate_free?handle=${identity}&address=${address}`;
         log.info(`calling to ${url}`);
         const {data} = await axios.post(url);
         return data;
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        const oracleUrl = `${twitterOracleDomain}/api/activate_tweet?handle=${identity}&address=${address}&url=${url}`;
+        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${
+            encodeURIComponent(url)
+        }`;
+
         log.info(`calling to ${oracleUrl}`);
         const {data} = await axios.post(oracleUrl);
         return data;
     }
 };
+
+if (
+    (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') &&
+    !(process.env.USE_ORACLE === 'true')
+) {
+    TwitterOracle = {
+        async isIdentityEligible(identity) {
+            log.info({identity}, 'isIdentityEligible mock called');
+            if (/^tweet/g.test(identity)) {
+                return {eligibility: 'tweet'};
+            }
+            if (/^taken/g.test(identity)) {
+                return {eligibility: 'taken', reason: 'taken reason'};
+            }
+            if (/^unavailable/g.test(identity)) {
+                return {eligibility: 'unavailable', reason: 'unavailable reason'};
+            }
+            return {eligibility: 'free'};
+        },
+
+        async regiterFreeIdentity(identity, address) {
+            log.info({identity, address}, 'regiterFreeIdentity mock called');
+            return {success: true, v: 'v', r: 'r', s: 's'};
+        },
+
+        async confirmTwitterValidation(identity, address, url) {
+            log.info({identity, address, url}, 'confirmTwitterValidation mock called');
+            return {success: true, v: 'v', r: 'r', s: 's'};
+        }
+    };
+}
 
 function getIdentityActivationCode(owner) {
     const lowerCaseOwner = owner.toLowerCase();
@@ -65,7 +103,9 @@ function getIdentityActivationCode(owner) {
 function getHashedMessage(identity, owner, type) {
     const lowerCaseOwner = owner.toLowerCase();
     const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
-    const hashedMessage = ethers.utils.id(`${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`);
+    const hashedMessage = ethers.utils.id(
+        `${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`
+    );
     return hashedMessage;
 }
 
@@ -74,7 +114,6 @@ class IdentityController extends PointSDKController {
         super(ctx, req);
         this.req = req;
         this.rep = rep;
-        
     }
 
     async isIdentityRegistered() {
@@ -106,8 +145,27 @@ class IdentityController extends PointSDKController {
         return this._response({timestamp});
     }
 
+    async openLink() {
+        const {url, _csrf} = this.req.body;
+        if (_csrf !== this.ctx.csrf_tokens.point) {
+            return this.rep.status(403).send('CSRF token invalid');
+        }
+        await open(url);
+        return this._response();
+    }
+
     async isIdentityEligible() {
         const {identity} = this.req.params;
+
+        const publicKey = await blockchain.ownerByIdentity(identity);
+
+        if (publicKey !== ethers.constants.AddressZero) {
+            return this._response({
+                eligibility: 'unavailable',
+                reason: 'Identity is already registered on web3'
+            });
+        }
+
         const {eligibility, reason} = await TwitterOracle.isIdentityEligible(identity);
         let code;
         if (eligibility === 'tweet') {
@@ -143,15 +201,22 @@ class IdentityController extends PointSDKController {
                 'Registering a new identity'
             );
 
-            const hashedMessage = getHashedMessage(identity, owner, type);
+            if (
+                (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') &&
+                !(process.env.USE_ORACLE === 'true')
+            ) {
+                await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
+            } else {
+                const hashedMessage = getHashedMessage(identity, owner, type);
 
-            await blockchain.registerVerified(
-                identity,
-                owner,
-                Buffer.from(publicKey, 'hex'),
-                hashedMessage,
-                signData
-            );
+                await blockchain.registerVerified(
+                    identity,
+                    owner,
+                    Buffer.from(publicKey, 'hex'),
+                    hashedMessage,
+                    signData
+                );
+            }
 
             //log.info(v, r, s);
 
@@ -163,7 +228,12 @@ class IdentityController extends PointSDKController {
             log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
 
             try {
-                await registerBountyReferral(owner, type);
+                if (
+                    !(process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') ||
+                    process.env.USE_ORACLE === 'true'
+                ) {
+                    await registerBountyReferral(owner, type);
+                }
             } catch (error) {
                 log.error(error);
             }
@@ -217,6 +287,44 @@ class IdentityController extends PointSDKController {
         }
 
         return this._response({eligibility, reason});
+    }
+
+    async resolveDomain() {
+        const SUPPORTED_TLD = ['.sol', '.eth'];
+        const {domain} = this.req.params;
+
+        const tld = SUPPORTED_TLD.find(tld => domain.endsWith(tld));
+        if (!tld) {
+            const status = 400;
+            const errorMsg = `Unsupported TLD in "${domain}".`;
+            this.rep.status(status);
+            return this._status(status)._response({errorMsg});
+        }
+
+        try {
+            let registry;
+            switch (tld) {
+                case '.sol':
+                    registry = await solana.resolveDomain(domain);
+                    break;
+                case '.eth':
+                    registry = await blockchain.resolveDomain(domain);
+                    break;
+                default:
+                    throw new Error(`Did not find a blockchain client for "${tld}" domains.`);
+            }
+            return this._response(registry);
+        } catch (err) {
+            if (err.message === 'Invalid name account provided') {
+                const status = 400;
+                const errorMsg = `No address found for domain name "${domain}".`;
+                this.rep.status(status);
+                return this._status(status)._response({errorMsg});
+            }
+            const status = 500;
+            this.rep.status(status);
+            return this._status(status)._response({errorMsg: err.message});
+        }
     }
 }
 

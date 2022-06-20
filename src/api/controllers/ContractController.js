@@ -1,6 +1,7 @@
+const Web3 = require('web3');
 const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
-const blockchain = require('../../network/blockchain');
+const blockchain = require('../../network/providers/ethereum');
 
 class ContractController extends PointSDKController {
     constructor(ctx, req, reply) {
@@ -32,7 +33,7 @@ class ContractController extends PointSDKController {
     async load() {
         const contractName = this.req.params.contract;
 
-        const contract = await blockchain.loadWebsiteContract(this.host, contractName);
+        const contract = await blockchain.loadWebsiteContract(this.req.identity, contractName);
 
         const data = {
             address: contract._address,
@@ -101,6 +102,20 @@ class ContractController extends PointSDKController {
         }
 
         return this._response(eventData);
+    }
+
+    async encodeFunctionCall() {
+        const {jsonInterface, params} = this.payload;
+
+        const web3 = new Web3();
+        return this._response(web3.eth.abi.encodeFunctionCall(jsonInterface, params));
+    }
+
+    async decodeParameters() {
+        const {typesArray, hexString} = this.payload;
+
+        const web3 = new Web3();
+        return this._response(web3.eth.abi.decodeParameters(typesArray, hexString));
     }
 }
 

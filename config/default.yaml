@@ -36,12 +36,14 @@ storage:
   concurrent_validation_limit: 10
   upload_loop_interval: 2000
   request_timeout: 30000
+  mirror_cache_expiration: 300000
   upload_expire: 60000
   upload_retry_limit: 3
   files_path: files
   arweave_experiment_version_major: 1
   arweave_experiment_version_minor: 8
   arweave_bundler_url: https://test-arweave-bundler.herokuapp.com
+  arweave_bundler_url_fallback: https://arweave-bundler.point.space
   arweave_gateway_url: https://arweave.net/graphql
   concurrent_download_delay: 100
   redkey_encryption_bits: 1024 # TODO: not used
@@ -58,20 +60,33 @@ zproxy:
   redirect_to_https: true
 wallet:
   keystore_path: ~/.point/keystore
-  solana_main_endpoint: https://still-billowing-smoke.solana-mainnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
-  solana_dev_endpoint:  https://still-billowing-smoke.solana-devnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
-  solana_dev_standard_endpoint:  https://api.devnet.solana.com/
-  solana_test_endpoint: https://still-billowing-smoke.solana-testnet.quiknode.pro/ab288f366b2dff1428a27a6cf6e7a4bc98957cb2/
-  id: 58225300-cf00-494a-be15-8a15e42d3758 # TODO: remove
-  passcode: BWVdmGdn8MeCWJxtcfM77eTMMxUELYL9 # TODO: remove
 network:
   contracts_path: contracts
   web3:
-    ynet: "http://ynet.point.space:44444"
-    rinkeby: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa"
+    ynet:
+      type: "eth"
+      address: "http://ynet.point.space:44444"
+      currency_name: "yPoint"
+      currency_code: "yPOINT"
+    rinkeby:
+      type: "eth"
+      address: "https://rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa" # TODO: project ID
+      currency_name: "rinkebyEth"
+      currency_code: "rinkebyETH"
+      eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
+    solana_devnet:
+      type: "solana"
+      address: "https://api.devnet.solana.com"
+      currency_name: "devSol"
+      currency_code: "devSOL"
+    # solana:
+    #   type: "solana"
+    #   address: "https://api.mainnet-beta.solana.com"
   web3_call_retry_limit: 4
   identity_contract_address: "0x1574E97F7a60c4eE518f6d7c0Fa701eff8Ab58b3"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
+name_services:
+  sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
 payments:
   token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
 rpc:

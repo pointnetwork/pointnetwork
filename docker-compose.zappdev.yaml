@@ -30,6 +30,8 @@ services:
     extends:
           file: docker-compose.e2e.yaml
           service: contract_deployer
+    environment:
+      MODE: zappdev
     volumes:
       - shared_contracts_zappdev:/build:rw
 
@@ -43,7 +45,7 @@ services:
     command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
-      - ../zapps:/app/example:ro
+      - ../zapps_old:/app/example:ro
       - ./internal:/app/internal:ro
       - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro

@@ -1,0 +1,50 @@
+<html>
+    <head>
+        <style>
+             /* unvisited link */
+            a:link {
+            color: #e8e8e8;
+            }
+
+            /* visited link */
+            a:visited {
+            color: #e8e8e8;
+            }
+
+            /* mouse over link */
+            a:hover {
+            color: #e8e8e8;
+            }
+
+            /* selected link */
+            a:active {
+            color: #e8e8e8;
+            } 
+        </style>
+    </head>
+
+<body style='background-color: #222233;'>
+  <div style='text-align:center; margin-top: 20%;'>
+    <h1 style='font-size: 30px; color: #ccc; margin: 0; padding: 0;'>
+      This seems like a web2 link. Do you want to open it?<br/>
+    </h1>
+    <div style='font-size: 20px;padding: 0 20%; color: #e8e8e8; margin-top: 10px; font-family: sans-serif;'>
+        Click the link below to open it in your default web2 browser:<br/><br/><br/>
+        <a href="#" onclick="javascript:openWeb2Url('{{url}}')">{{ url }}</a>
+    </div>
+  </div>
+  <script>
+      function openWeb2Url(url){
+        fetch('/v1/api/web2/open', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({urlToOpen: url, csrfToken: '{{csrfToken}}', host: '{{host}}'})
+        });
+    }
+  </script>
+</body>
+
+</html>

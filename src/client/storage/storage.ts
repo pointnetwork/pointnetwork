@@ -17,6 +17,6 @@ export const storage: {
         return arweave.transactions.getData(txId, {decode: true});
     },
     getTxFromCache(txId: string) {
-        return arweave.api.get(`/${txId}`, {responseType: 'arraybuffer'});
+        return arweave.api.get<Uint8Array>(`/${txId}`, {responseType: 'arraybuffer'});
     }
 };

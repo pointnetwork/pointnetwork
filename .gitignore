@@ -14,8 +14,6 @@ bin/
 dist
 .vscode
 
-# Ignore everything in deployspace folder
-deployspace/*
 
 key.json
 arweave.json
@@ -35,6 +33,7 @@ hardhat/contracts
 hardhat/cache
 hardhat/tests
 hardhat/resources
+hardhat/typechain
 resources/liveprofile/
 .openzeppelin
 typechain-types

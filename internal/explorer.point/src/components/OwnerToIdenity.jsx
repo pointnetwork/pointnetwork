@@ -1,25 +1,24 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
 
-const OwnerToIdentity = ({owner}) => {
-
+const OwnerToIdentity = ({ owner }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [identity, setIdentity] = useState();
 
-    useEffect(()=>{
+    useEffect(() => {
         fetchOwner();
-    },[]);
+    }, []);
 
     const fetchOwner = async () => {
         setIsLoading(true);
-        const result = await window.point.identity.ownerToIdentity({owner: owner});
+        const result = await window.point.identity.ownerToIdentity({
+            owner: owner,
+        });
         setIdentity(result.data.identity);
         setIsLoading(false);
-    }
+    };
 
-    return(
-        isLoading ? <Loading/> : '@' + identity
-    );
-}
+    return isLoading ? <Loading /> : '@' + identity;
+};
 
 export default OwnerToIdentity;
