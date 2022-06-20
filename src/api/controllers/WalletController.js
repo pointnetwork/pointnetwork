@@ -1,7 +1,7 @@
 const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
 const ethereum = require('../../network/providers/ethereum');
-const {getNetworkPublicKey} = require('../../wallet/keystore');
+const {getNetworkPublicKey, getNetworkPrivateKey} = require('../../wallet/keystore');
 const {
     encryptData,
     decryptData,
@@ -21,7 +21,6 @@ class WalletController extends PointSDKController {
         this.req = req;
         this.payload = req.body;
         this.reply = reply;
-        this.defaultWallet = ethereum.getWallet();
     }
 
     publicKey() {
@@ -40,7 +39,7 @@ class WalletController extends PointSDKController {
     }
 
     hash() {
-        const partialPK = this.defaultWallet.privateKey.substr(0, 33);
+        const partialPK = getNetworkPrivateKey().slice(0, 33);
         const hashBuffer = ethereumjs.sha256(Buffer.from(partialPK));
         const hash = ethereumjs.bufferToHex(hashBuffer);
 
@@ -152,7 +151,7 @@ class WalletController extends PointSDKController {
 
     async decryptData() {
         const {host} = this.req.headers;
-        const privateKey = this.defaultWallet.privateKey;
+        const privateKey = getNetworkPrivateKey();
 
         const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
             JSON.parse(this.payload.encryptedSymmetricObj)
