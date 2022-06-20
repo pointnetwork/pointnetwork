@@ -210,6 +210,7 @@ class Deployer {
         let proxyMetadataFilePath = '';
         let contractNames = config.contracts;
         if (!contractNames) contractNames = [];
+        const identity = target.replace('.point', '');
 
         if (config.hasOwnProperty('upgradable') && config.upgradable) {
             proxyMetadataFilePath = await this.getProxyMetadataFilePath();
@@ -303,7 +304,17 @@ class Deployer {
                         ) {
                             log.debug('deployProxy call');
                             const cfg = {kind: 'uups'};
-                            proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
+                            const idContract = await blockchain.loadIdentityContract();
+                            log.debug({address: idContract.options.address}, 'Identity contract address');
+                            try {
+                                
+                                log.debug({IdContractAddress: idContract.options.address, identity}, 'deploying proxy binded with identity contract and identity');
+                                proxy = await hre.upgrades.deployProxy(contractF, [idContract.options.address, identity], cfg);
+                            } catch (e){
+                                log.warn('Deploying proxy binded with id contract and identity failed.');
+                                log.debug({IdContractAddress: idContract.options.address, identity}, 'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.');
+                                proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
+                            }
                         } else {
                             log.debug('upgradeProxy call');
                             //restore from blockchain upgradable contracts and proxy metadata if does not exist.
@@ -314,8 +325,18 @@ class Deployer {
                                 proxyMetadataFilePath,
                                 await storage.getFile(proxyDescriptionFileId)
                             );
-
-                            proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                            
+                            try {
+                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);    
+                            } catch (e){
+                                log.debug('upgradeProxy call failed');
+                                log.debug('deleting proxy metadata file');
+                                fs.unlinkSync(proxyMetadataFilePath);
+                                log.debug('calling forceImport');
+                                await hre.upgrades.forceImport(proxyAddress, contractF, {kind: 'uups'});
+                                log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
+                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                            }
                         }
                         await proxy.deployed();
                         address = proxy.address;
@@ -537,6 +558,14 @@ class Deployer {
         );
 
         const owner = blockchain.getOwner();
+        
+        const sigAddr = (await hre.ethers.getSigner()).address;
+        if (owner !== sigAddr){
+            throw new Error(
+                `Invalid config, aborting. The wallet address ${owner} is different than ethers default signer ${sigAddr}.`
+            );
+        }
+
         const registeredOwner = await blockchain.ownerByIdentity(identity);
         const identityIsRegistered =
             registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
