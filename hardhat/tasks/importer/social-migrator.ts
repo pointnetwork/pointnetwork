@@ -20,11 +20,17 @@ var mimeDb = require("mime-db");
  *    This will create a pointsocial-XXXX-XX-XX.json, along with a folder named pointsocial-data-XXXX-XX-XX in the resources/migrations folder
  *  
  *    To upload the data to dev environment, use the folowing command:
- * 
+ *          
+ *          export BLOCKCHAIN_HOST=localhost
  *          export POINT_NODE=localhost
  *          export POINT_NODE_PORT=65501
  *          npx hardhat social-migrator upload 0xD61e5eFcB183418E1f6e53D0605eed8167F90D4d --migration-file ../resources/migrations/pointsocial-DATE.json --network development
  * 
+ *    To upload the data to dev environment, use the folowing command:
+ * 
+ *          export POINT_NODE=localhost
+ *          export POINT_NODE_PORT=8666
+ *          npx hardhat social-migrator upload $(cat ../config/default.yaml | grep "identity_contract_address" | awk '{ print $2 }' | sed -e 's/"//g') --migration-file ../resources/migrations/pointsocial-DATE.json --network ynet
  */
  
 const EMPTY = '0x0000000000000000000000000000000000000000000000000000000000000000';
@@ -208,6 +214,34 @@ const getContract = async (ethers:any, identityAddress:string, appHandle:string)
     return { instance, contractAddress};
 }
 
+const getAllIdentities = async (ethers:any, identityAddress:string) : Promise<any> => {
+    const contract = await ethers.getContractAt("Identity", identityAddress);
+    const identitiesFilter = contract.filters.IdentityRegistered()
+    const identityCreatedEvents = await contract.queryFilter(identitiesFilter);
+    const ikvSetFilter = contract.filters.IKVSet()
+    const ikvSetEvents = await contract.queryFilter(ikvSetFilter);
+
+    if(identityCreatedEvents.length == 0) {
+        console.log('No identities found.');
+        return [];
+    }
+
+    console.log(`Found ${identityCreatedEvents.length} identities`);
+
+    let identityData = [];
+    for (const e of identityCreatedEvents) {
+        if(e.args) {
+            const {handle, identityOwner, commPublicKey} = e.args;
+            identityData.push(identityOwner);
+        }
+    }
+
+    return identityData;
+
+}
+
+
+
 task("social-migrator", "Will download and upload data to pointSocial contract")
   .addPositionalParam("action", 'Use with "download" and "upload options"')
   .addPositionalParam("contract","Identity contract source address")
@@ -217,7 +251,7 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
   .addOptionalParam("toPort", "Port of point node to upload data")
   .setAction(async (taskArgs, hre) => {
     const ethers = hre.ethers;
-    const zappHandle = 'social';
+    const zappHandle = 'socialdev';
     if(!ethers.utils.isAddress(taskArgs.contract)) {
         console.log('Contract address not valid.');
         return false;
@@ -232,11 +266,13 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
     if(taskArgs.action == "download") {
 
         const fileStructure = {
-            posts: []
+            posts: [],
+            profiles: []
         } as any;
 
         const { instance: pointSocial, contractAddress } = await getContract(ethers, taskArgs.contract, zappHandle);
 
+        const identities = (await getAllIdentities(ethers, taskArgs.contract));        
         const data = await pointSocial.getAllPosts();
         const posts  = [];
 
@@ -245,7 +281,7 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
             return false;
         }
 
-        console.log(`Found ${data.length} articles`);
+        console.log(`Found ${data.length} posts`);
 
         for (const item of data) {
             const {id, from, contents, image, likesCount, createdAt} = item;
@@ -268,7 +304,22 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
             posts.push(post);
         }
 
+
+        console.log(`Downloading user profiles`);
+
+        const profiles = 
+        (   await Promise.all(
+                identities.map((i:string) => pointSocial.getProfile(i))
+            )
+        )
+        .map((v:any, i:number, a:any) => ({ id: identities[i], data: v }))
+        .filter((i:any) =>
+            i.data.reduce((p:string, c:string) => (p || (c !== EMPTY)), false)
+        );
+
+
         fileStructure.posts = posts;
+        fileStructure.profiles = profiles;
 
         const timestamp = new Date().toISOString().split("T")[0];
         const filename =  `pointsocial-${timestamp}.json`;
@@ -302,6 +353,37 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
             }
         }
 
+        for (const profile of profiles) {
+            console.log(`Downloading content for profile ${profile.id}`);
+
+
+            if (profile.data[0] !== EMPTY) {
+                console.log("Text:");
+                const result = await download(profile.data[0], 'content', directory);                
+                console.log((result)?"OK":"NO");                
+            }
+            if (profile.data[1] !== EMPTY) {
+                console.log("Text:");
+                const result = await download(profile.data[1], 'content', directory);                
+                console.log((result)?"OK":"NO");                                
+            }
+            if (profile.data[2] !== EMPTY) {
+                console.log("Text:");
+                const result = await download(profile.data[2], 'content', directory);                                
+                console.log((result)?"OK":"NO");                                
+            }
+            if (profile.data[3] !== EMPTY) {
+                console.log("Media:");
+                const result = await download(profile.data[3], 'media', directory);                
+                console.log((result)?"OK":"NO");                                
+            }
+            if (profile.data[4] !== EMPTY) {
+                console.log("Media:");
+                const result = await download(profile.data[4], 'media', directory);                
+                console.log((result)?"OK":"NO");                                
+            }
+        }
+
         console.log('Download complete!');
     }
     if(taskArgs.action == "upload") {
@@ -329,8 +411,10 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
 
         let processCommentsFrom = 0;
         let processPostsFrom = 0;
+        let processProfilesFrom = 0;
         let lastProcessedPost = 0;
         let lastProcessedComment = 0;
+        let lastProcessedProfile = 0;
         let foundLockFile = false;
 
         const { instance: pointSocial, contractAddress } = await getContract(ethers, taskArgs.contract, zappHandle);
@@ -341,10 +425,11 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
             contract:contractAddress.toString(),
             migrationFilePath:taskArgs.migrationFile.toString(),
             lastProcessedPost:0,
-            lastProcessedComment:0
+            lastProcessedComment:0,
+            lastProcessedProfile: 0
         } as any;
 
-        try{
+        try {
             console.log('Trying to add migrator');
             await pointSocial.addMigrator(owner.address);
         } catch(error) {
@@ -353,7 +438,7 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
 
         if (!fs.existsSync(lockFilePath)) {
             console.log(`Lockfile not found, adding migrator ${owner.address}`);
-        }else{
+        } else {
             const lockFile = JSON.parse(fs.readFileSync(lockFilePath).toString());
             if (lockFile.migrationFilePath == taskArgs.migrationFile.toString() &&
                 lockFile.contract == contractAddress) {
@@ -361,12 +446,15 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
                 foundLockFile = true;
                 processPostsFrom = lockFile.lastProcessedPost;
                 processCommentsFrom = lockFile.lastProcessedComment;
+                processProfilesFrom = lockFile.lastProcessedProfile;
             }
         }
 
         try {
             console.log(`found ${data.posts.length}`);
             const postComments = [];
+
+            console.log("****************** MIGRATING POSTS ******************");
 
             for (const post of data.posts) {
                 postComments[post.id] = post.comments;
@@ -413,6 +501,39 @@ task("social-migrator", "Will download and upload data to pointSocial contract")
                     } else {
                         console.log(`Skipping migrated comment from ${postId}`);
                     }
+                }
+            }
+
+            console.log("****************** MIGRATING PROFILES ******************");
+
+            for (const profile of data.profiles) {
+                lastProcessedProfile++;
+                if(lastProcessedProfile > processProfilesFrom || processProfilesFrom == 0) {
+                    console.log(`${lastProcessedPost} Migrating: PointSocial profile from ${profile.id}`);
+                    const name = await upload(profile.data[0], 'content', directory);
+                    const location = await upload(profile.data[1], 'content', directory);
+                    const about = await upload(profile.data[2], 'content', directory);
+                    const avatar = await upload(profile.data[3], 'media', directory);
+                    const banner = await upload(profile.data[4], 'media', directory);
+
+                    console.log({
+                        name,
+                        location,
+                        about,
+                        avatar,
+                        banner,                        
+                    });
+
+                    await pointSocial.addProfile(
+                        profile.id,
+                        name,
+                        location,
+                        about,
+                        avatar,
+                        banner,
+                    );
+                } else {
+                    console.log(`Skipping migrated profile from ${profile.id}`);
                 }
             }
 
