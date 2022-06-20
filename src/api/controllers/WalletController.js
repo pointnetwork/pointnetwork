@@ -7,7 +7,7 @@ const {
     decryptData,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
-const {getBalance, getWalletAddress, sendTransaction} = require('../../wallet');
+const {getBalance, getWalletAddress, sendTransaction, sendToken} = require('../../wallet');
 const config = require('config');
 const Web3 = require('web3');
 const ERC20 = require('../../abi/ERC20.json');
@@ -133,27 +133,14 @@ class WalletController extends PointSDKController {
     }
 
     async send() {
-        const {to, network, value} = this.payload;
-        return sendTransaction({to, network, value});
+        const {to, network, value, messageId} = this.payload;
+        return sendTransaction({to, network, value, messageId});
     }
 
     async sendToken() {
-        const {tokenAddress, to, network, value} = this.payload;
+        const {tokenAddress, to, network, value, messageId} = this.payload;
 
-        const web3 = new Web3();
-        const data = web3.eth.abi.encodeFunctionCall(
-            ERC20.find(func => func.name === 'transfer'), [to, utils.hexValue(value)]
-        );
-
-        return ethereum.send({
-            method: 'eth_sendTransaction',
-            params: [{
-                from: getWalletAddress({network}),
-                to: tokenAddress,
-                data
-            }],
-            network
-        });
+        return sendToken({tokenAddress, to, network, value, messageId});
     }
 
     async encryptData() {

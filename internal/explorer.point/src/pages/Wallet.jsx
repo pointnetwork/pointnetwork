@@ -67,36 +67,18 @@ export default function Wallet() {
     const send = async ({ to, value }) => {
         if (!sendModalData) return;
         if (sendModalData.tokenAddress) {
-            const res = await fetch('/v1/api/wallet/sendToken', {
-                method: 'POST',
-                body: JSON.stringify({
-                    to,
-                    network: sendModalData.network,
-                    tokenAddress: sendModalData.tokenAddress,
-                    value,
-                }),
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            await window.point.point.wallet_send_token({
+                to,
+                network: sendModalData.network,
+                tokenAddress: sendModalData.tokenAddress,
+                value,
             });
-            if (res.status !== 200) {
-                throw new Error('Failed to send currency');
-            }
         } else {
-            const res = await fetch('/v1/api/wallet/send', {
-                method: 'POST',
-                body: JSON.stringify({
-                    to,
-                    network: sendModalData.network,
-                    value,
-                }),
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+            await window.point.point.wallet_send({
+                to,
+                network: sendModalData.network,
+                value,
             });
-            if (res.status !== 200) {
-                throw new Error('Failed to send token');
-            }
         }
     };
 
