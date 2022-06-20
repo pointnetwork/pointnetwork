@@ -410,11 +410,19 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
     }
 };
 
+export const wsConnections: Record<string, ZProxySocketController> = {};
+
 // TODO: ctx is needed for Renderer, remove it later
 const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
     const handler = getHttpRequestHandler(ctx);
-    const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) =>
-        void new ZProxySocketController(ctx, socket, server.websocketServer, hostname);
+    const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) => {
+        wsConnections[Math.random()] = new ZProxySocketController(
+            ctx,
+            socket,
+            server.websocketServer,
+            hostname
+        );
+    };
 
     // Handle websocket requests.
     server.route({
