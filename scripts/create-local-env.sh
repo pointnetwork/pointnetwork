@@ -21,7 +21,7 @@ done
 #install identity contract
 echo "installing identity contract project"
 source .bash_alias
-cd hardhat
+cd ../point-contracts
 rm -rf cache
 rm -rf typechain
 rm -rf build
@@ -29,7 +29,7 @@ echo "npm i"
 npm i
 echo "npx hardhat compile"
 npx hardhat compile
-cd ..
+cd ../pointnetwork
 
 #creating local directories
 echo "creating local directories"

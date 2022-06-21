@@ -14,7 +14,7 @@ rm -rf ~/workspace/pn/visitlocal/
 
 #cleaning hardhat cache.
 echo "cleaning hardhat cache and temp files"
-cd hardhat
+cd ../point-contracts
 echo "rm -rf cache"
 rm -rf cache
 echo "rm -rf typechain"
@@ -24,10 +24,10 @@ rm -rf build
 echo "rm -rf .openzeppelin"
 rm -rf .openzeppelin
 echo "rm resources/Identity-address.json"
-rm resources/Identity-address.json
+rm -f resources/Identity-address.json
 echo "rm resources/unknown-1337.json"
-rm resources/unknown-1337.json
-cd ..
+rm -f resources/unknown-1337.json
+cd ../pointnetwork
 
 #removing log files
 echo "rm *.log"

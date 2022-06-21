@@ -29,7 +29,11 @@ config/*local*
 
 hardhat/resources
 hardhat/build
-!hardhat/resources/unknown-10700.json
+hardhat/contracts
+hardhat/cache
+hardhat/tests
+hardhat/resources
+hardhat/typechain
 resources/liveprofile/
 .openzeppelin
 typechain-types
