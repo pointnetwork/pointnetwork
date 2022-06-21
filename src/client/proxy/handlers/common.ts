@@ -392,6 +392,12 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 } catch (error) {}
 
                 if (urlMirrorUrl) {
+                    // Set CORS headers
+                    const allowedOrigin = req.headers.referer?.replace(/\/$/, '');
+                    res.header('Vary', 'Origin');
+                    res.header('Access-Control-Allow-Origin', allowedOrigin);
+
+                    // Redirect to mirror URL
                     res.redirect(urlMirrorUrl);
                     return;
                 }
