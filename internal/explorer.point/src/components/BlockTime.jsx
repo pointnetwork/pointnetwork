@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
+import * as dayjs from 'dayjs';
 
 const BlockTime = ({ blockNumber }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +25,11 @@ const BlockTime = ({ blockNumber }) => {
         setIsLoading(false);
     };
 
-    return isLoading ? <Loading /> : new Date(timestamp * 1000).toUTCString();
+    return isLoading ? (
+        <Loading />
+    ) : (
+        dayjs(timestamp * 1000).format('YYYY-MM-DD H:m:s')
+    );
 };
 
 export default BlockTime;
