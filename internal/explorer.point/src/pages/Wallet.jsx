@@ -16,6 +16,85 @@ window.openTelegram = () => {
     });
 };
 
+const WalletRow = ({
+    wallet,
+    openReceiveModal,
+    openSendModal,
+    walletHistory,
+}) => {
+    return (
+        <tr key={wallet.currency_code}>
+            <td>
+                <strong>{wallet.currency_name}</strong> ({wallet.currency_code})
+            </td>
+            <td className="mono">{wallet.address}</td>
+            <td style={{ textAlign: 'right' }}>
+                {wallet.balance.toFixed(8)} {wallet.currency_code}
+            </td>
+            <td style={{ textAlign: 'right' }}>
+                <a
+                    href="#"
+                    className="btn btn-sm btn-warning"
+                    onClick={() =>
+                        openSendModal({
+                            networkType: wallet.type,
+                            network: wallet.network,
+                        })
+                    }
+                >
+                    Send
+                </a>
+                &nbsp;
+                <a
+                    href="#"
+                    className="btn btn-sm btn-success"
+                    onClick={() =>
+                        openReceiveModal(wallet.currency_code, wallet.address)
+                    }
+                >
+                    Receive
+                </a>
+                &nbsp;
+                <a
+                    href="#"
+                    className="btn btn-sm btn-info"
+                    onClick={() => walletHistory(wallet.currency_code)}
+                >
+                    History
+                </a>
+            </td>
+        </tr>
+    );
+};
+
+const TokenRow = ({ token, network, openSendModal }) => {
+    return (
+        <tr key={token.address}>
+            <td>
+                <strong>{token.name}</strong>
+            </td>
+            <td className="mono">{token.address}</td>
+            <td style={{ textAlign: 'right' }}>{token.balance}</td>
+            <td style={{ textAlign: 'right' }}>
+                <a
+                    href="#"
+                    className="btn btn-sm btn-warning"
+                    onClick={() =>
+                        openSendModal({
+                            networkType: 'eth',
+                            tokenAddress: token.address,
+                            network,
+                            decimals: token.decimals,
+                        })
+                    }
+                >
+                    Send
+                </a>
+            </td>
+        </tr>
+    );
+};
+
 export default function Wallet() {
     const [wallets, setWallets] = useState([]);
     const [tokens, setTokens] = useState({});
@@ -56,7 +135,7 @@ export default function Wallet() {
     const openPlaceholderWindow = () => {
         void Swal.fire({
             icon: 'info',
-            title: 'POINT token doesn\'t exist yet!',
+            title: "POINT token doesn't exist yet!",
             html: `Feel free to join <a 
                 style="color: #0a58ca; cursor: pointer;" 
                 onclick="window.openTelegram()">
@@ -115,84 +194,6 @@ export default function Wallet() {
         alert('TODO');
     }
 
-    const renderWallet = (wallet) => {
-        return (
-            <tr key={wallet.currency_code}>
-                <td>
-                    <strong>{wallet.currency_name}</strong> (
-                    {wallet.currency_code})
-                </td>
-                <td className="mono">{wallet.address}</td>
-                <td style={{ textAlign: 'right' }}>
-                    {wallet.balance.toFixed(8)} {wallet.currency_code}
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                    <a
-                        href="#"
-                        className="btn btn-sm btn-warning"
-                        onClick={() =>
-                            openSendModal({
-                                networkType: wallet.type,
-                                network: wallet.network,
-                            })
-                        }
-                    >
-                        Send
-                    </a>
-                    &nbsp;
-                    <a
-                        href="#"
-                        className="btn btn-sm btn-success"
-                        onClick={() =>
-                            openReceiveModal(
-                                wallet.currency_code,
-                                wallet.address,
-                            )
-                        }
-                    >
-                        Receive
-                    </a>
-                    &nbsp;
-                    <a
-                        href="#"
-                        className="btn btn-sm btn-info"
-                        onClick={() => walletHistory(wallet.currency_code)}
-                    >
-                        History
-                    </a>
-                </td>
-            </tr>
-        );
-    };
-
-    const renderToken = (token, network) => {
-        return (
-            <tr key={token.address}>
-                <td>
-                    <strong>{token.name}</strong>
-                </td>
-                <td className="mono">{token.address}</td>
-                <td style={{ textAlign: 'right' }}>{token.balance}</td>
-                <td style={{ textAlign: 'right' }}>
-                    <a
-                        href="#"
-                        className="btn btn-sm btn-warning"
-                        onClick={() =>
-                            openSendModal({
-                                networkType: 'eth',
-                                tokenAddress: token.address,
-                                network,
-                                decimals: token.decimals,
-                            })
-                        }
-                    >
-                        Send
-                    </a>
-                </td>
-            </tr>
-        );
-    };
-
     return (
         <Container className="p-3">
             {isLoading ? (
@@ -226,7 +227,15 @@ export default function Wallet() {
                                 <th style={{ textAlign: 'right' }}>Balance</th>
                                 <th style={{ textAlign: 'right' }}>Actions</th>
                             </tr>
-                            {wallets.map((wallet) => renderWallet(wallet))}
+                            {wallets.map((wallet, index) => (
+                                <WalletRow
+                                    key={index}
+                                    wallet={wallet}
+                                    openReceiveModal={openReceiveModal}
+                                    openSendModal={openSendModal}
+                                    walletHistory={walletHistory}
+                                />
+                            ))}
                         </tbody>
                     </table>
                     <br />
@@ -256,8 +265,17 @@ export default function Wallet() {
                                                     Actions
                                                 </th>
                                             </tr>
-                                            {tokens[network]?.map((token) =>
-                                                renderToken(token, network),
+                                            {tokens[network]?.map(
+                                                (token, index) => (
+                                                    <TokenRow
+                                                        token={token}
+                                                        key={index}
+                                                        openSendModal={
+                                                            openSendModal
+                                                        }
+                                                        network={network}
+                                                    />
+                                                ),
                                             )}
                                         </>
                                     ) : (
