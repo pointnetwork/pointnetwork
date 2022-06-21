@@ -32,8 +32,6 @@ module.exports = [
     ['GET', '/v1/api/wallet/address', 'WalletController@address'],
     ['GET', '/v1/api/wallet/getWalletInfo', 'WalletController@getWalletInfo'],
     ['GET', '/v1/api/wallet/getTokenBalances', 'WalletController@getTokenBalances'],
-    ['POST', '/v1/api/wallet/send', 'WalletController@send'],
-    ['POST', '/v1/api/wallet/sendToken', 'WalletController@sendToken'],
     ['POST', '/v1/api/wallet/encryptData', 'WalletController@encryptData'],
     ['POST', '/v1/api/wallet/decryptData', 'WalletController@decryptData'],
     ['POST', '/v1/api/contract/call', 'ContractController@call'],
