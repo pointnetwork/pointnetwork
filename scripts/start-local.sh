@@ -22,6 +22,7 @@ export MODE=zappdev
 npm start
 cp resources/Identity-address.json ../pointnetwork/hardhat/resources/ 
 cp contracts/Identity.sol ../pointnetwork/hardhat/contracts/ 
+cp build/contracts/Identity.sol ../pointnetwork/hardhat/build/contracts/Identity.sol -rf
 cd ../pointnetwork
 
 
