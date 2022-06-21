@@ -1,6 +1,7 @@
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
 require('@openzeppelin/hardhat-upgrades');
+require('./hardhat/tasks/explorer/explorer-set-index-md');
 
 let ynetPrivateKey = process.env.DEPLOYER_ACCOUNT;
 if (ynetPrivateKey === undefined && process.env.MODE !== 'e2e' && process.env.MODE !== 'zappdev'){

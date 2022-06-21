@@ -465,7 +465,7 @@ class Deployer {
             const id = Date.now();
             const {result} = await solana.requestAccount(id, network);
             const solanaAddress = result.publicKey;
-            const {owner: domainOwner} = await solana.resolveDomain(target, network);
+            const {owner: domainOwner, content} = await solana.resolveDomain(target, network);
 
             if (solanaAddress !== domainOwner) {
                 const errMsg = `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${solanaAddress}). Also, please make sure you have some SOL in your Point Wallet to cover transaction fees.`;
@@ -513,7 +513,7 @@ class Deployer {
             await solana.setDomainContent(domain, dataStr);
         } else if (service === 'ENS') {
             // we don't have to care about preExistingData in ENS as we save the data
-            // to a custom "text record", it's safe to override.
+            // to a custom "text record", it's safe to overwrite it.
             const dataStr = encodeCookieString(data);
             await blockchain.setDomainContent(domain, dataStr);
         } else {
@@ -537,11 +537,6 @@ class Deployer {
             const errMsg = 'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.';
             log.error({deployConfigFilePath: deployConfigFilePath}, errMsg);
             throw new Error(errMsg);
-        }
-
-        // TODO: implement `src/network/providers/solana.ts > setDomainContent` and remove this.
-        if (deployConfig.target.endsWith('.sol')) {
-            throw new Error(`SNS deployments are not supported yet, but coming soon, stay tuned.`);
         }
 
         const {target, isPointTarget, identity, isAlias} = this.getTargetAndIdentity(

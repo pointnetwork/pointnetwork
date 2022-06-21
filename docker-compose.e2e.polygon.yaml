@@ -45,7 +45,7 @@ services:
       - shared_contracts_e2e:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
-      - ./hardhat/resources:/app/hardhat/resources:rw
+      - ../point-contracts/resources:/app/hardhat/resources:rw
     environment:
       NODE_CONFIG_ENV: e2e
       MODE: e2e
