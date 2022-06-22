@@ -1,6 +1,6 @@
 import Container from 'react-bootstrap/Container';
 import BlockTime from '../components/BlockTime';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
 import OwnerToIdentity from '../components/OwnerToIdenity';
 import Swal from 'sweetalert2';
@@ -155,34 +155,6 @@ export default function Identity(props) {
         setIsLoadingPublicKey(false);
     };
 
-    const filteredIkvset = Object.values(
-        (ikvset || []).reduce((collected, newItem) => {
-            const {
-                data: { key, value, version },
-                blockNumber,
-            } = newItem;
-            const old = collected[key];
-            if (!old) {
-                collected[key] = {
-                    key,
-                    value,
-                    version,
-                    blockNumber,
-                };
-                return collected;
-            }
-            if (old.blockNumber < blockNumber) {
-                collected[key] = {
-                    key,
-                    value,
-                    version,
-                    blockNumber,
-                };
-            }
-            return collected;
-        }, {}),
-    );
-
     const fetchIkv = async () => {
         setIsLoadingIkv(true);
         const ikvsetFetched = await window.point.contract.events({
@@ -191,7 +163,7 @@ export default function Identity(props) {
             event: 'IKVSet',
             filter: { identity: handle },
         });
-        if (ikvsetFetched.data !== '') {
+        if (ikvsetFetched.data != '') {
             setIkvset(ikvsetFetched.data);
         }
         setIsLoadingIkv(false);
@@ -205,10 +177,46 @@ export default function Identity(props) {
             event: 'IdentityDeployerChanged',
             filter: { identity: handle },
         });
-        if (deployersFetched.data !== '') {
+        if (deployersFetched.data != '') {
             setDeployers(deployersFetched.data);
         }
         setIsLoadingDeployers(false);
+    };
+
+    const isHash = (str) => {
+        const s = str.startsWith('0x') ? str.substr(2) : str;
+        if (s.length !== 64) return false;
+        return new RegExp('^[0-9a-fA-F]+$').test(s);
+    };
+
+    const renderIkvEntry = (key) => {
+        const lastEntry = ikvset
+            .filter((e) => e.data.key === key)
+            .reduce((prev, current) =>
+                prev.blockNumber > current.blockNumber ? prev : current,
+            );
+        return (
+            <tr key={key}>
+                <th>{key}</th>
+                <td>
+                    {isHash(lastEntry.data.value) ? (
+                        <a
+                            href={'/_storage/' + lastEntry.data.value}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            {lastEntry.data.value}
+                        </a>
+                    ) : (
+                        lastEntry.data.value
+                    )}
+                </td>
+                <td>
+                    <BlockTime blockNumber={lastEntry.blockNumber} />
+                </td>
+                <td>{lastEntry.data.version}</td>
+            </tr>
+        );
     };
 
     const renderDeployerEntry = (deployer) => {
