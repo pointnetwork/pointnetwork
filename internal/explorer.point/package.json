@@ -12,6 +12,7 @@
     "@openzeppelin/contracts": "^4.4.2",
     "axios": "^0.27.2",
     "bootstrap": "^5.1.2",
+    "dayjs": "^1.11.3",
     "lodash": "^4.17.21",
     "markdown-to-jsx": "^7.1.7",
     "qrcode.react": "^3.0.2",
