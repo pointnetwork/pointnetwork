@@ -113,7 +113,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 res.status(404).send('Domain not found (Route file not specified for this domain)');
             }
 
-            const zappName = host.includes('dev') ? `${host.split('dev')[0]}.point` : host;
+            const zappName = host.endsWith('dev') ? `${host.split('dev')[0]}.point` : host;
 
             const zappsDir: string = config.get('zappsdir');
             let zappDir: string;
