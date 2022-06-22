@@ -2,6 +2,7 @@ const fastify = require('fastify');
 const fastifyWs = require('fastify-websocket');
 const config = require('config');
 const {transformErrorResp} = require('../errors');
+const identityMdw = require('./middleware/identity');
 const logger = require('../core/log');
 const log = logger.child({module: 'ApiServer'});
 
@@ -72,6 +73,7 @@ class ApiServer {
             this.server.route({
                 method: apiRoute[0],
                 url: apiRoute[1],
+                preHandler: identityMdw,
                 handler: async (request, reply) => {
                     const controller = new (require('./controllers/' + controllerName))(
                         this.ctx,

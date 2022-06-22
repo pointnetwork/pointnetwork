@@ -30,6 +30,8 @@ services:
     extends:
           file: docker-compose.e2e.yaml
           service: contract_deployer
+    environment:
+      MODE: zappdev
     volumes:
       - shared_contracts_zappdev:/build:rw
 
@@ -43,7 +45,7 @@ services:
     command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
-      - ../zapps:/app/example:ro
+      - ../zapps_old:/app/example:ro
       - ./internal:/app/internal:ro
       - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro
@@ -57,7 +59,7 @@ services:
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
       - ./hardhat.config.js:/app/hardhat.config.js
-      - ./hardhat/resources:/app/hardhat/resources:rw
+      - ../point-contracts/resources:/app/hardhat/resources:rw
     ports:
       - '12346:9685'
       - '65501:8666'
@@ -90,7 +92,7 @@ services:
       - ./resources/blockchain-test-key2.json:/data/keystore/key.json
       - ./resources/arweave-test-key2.json:/data/keystore/arweave.json
       - ./hardhat.config.js:/app/hardhat.config.js
-      - ./hardhat/resources:/app/hardhat/resources:rw
+      - ../point-contracts/resources:/app/hardhat/resources:rw
     ports:
       - '12347:9685'
       - '65502:8666'

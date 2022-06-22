@@ -6,6 +6,7 @@ const {promises: fs} = require('fs');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
+const namehash = require('@ensdomains/eth-ens-namehash');
 const {getFile, getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
@@ -15,6 +16,8 @@ const log = logger.child({module: 'EthereumProvider'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore');
 const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util');
 const {createCache} = require('../../util/cache');
+const {ETH_RESOLVER_ABI} = require('../../name_service/abis/resolver');
+const {POINT_ENS_TEXT_RECORD_KEY} = require('../../name_service/constants');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -495,7 +498,7 @@ const zRecordCache = createCache();
 ethereum.getZRecord = async (domain, version = 'latest') => {
     domain = domain.replace('.point', ''); // todo: rtrim instead
     return zRecordCache.get(`${domain}-${ZDNS_ROUTES_KEY}-${version}`, async () => {
-        const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
+        const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version, 'exact', true);
         return result?.substr(0, 2) === '0x' ? result.substr(2) : result;
     });
 };
@@ -557,8 +560,32 @@ ethereum.getKeyValue = async (
     identity,
     key,
     version = 'latest',
-    versionSearchStrategy = 'exact'
+    versionSearchStrategy = 'exact',
+    followCopyFromIkv = false
 ) => {
+    // Process @@copy_from_ikv instruction if followCopyFromIkv is set to true
+    if (followCopyFromIkv) {
+        // self invoke to get the value first but without redirection
+        const value = await ethereum.getKeyValue(identity, key, version, versionSearchStrategy, false);
+
+        const copyFromIkv_prolog = '@@copy_from_ikv=';
+        if (! value.startsWith(copyFromIkv_prolog)) {
+            return value; // no redirection
+        } else {
+            // the format is:
+            // @@copy_from_ikv=<identity>:<key_in_ikv>
+            const withoutPrefix = value.substring(copyFromIkv_prolog.length);
+
+            const copy_identity = withoutPrefix.split(':')[0];
+            const copy_key = withoutPrefix.split(':').slice(1).join(':');
+
+            const value = await ethereum.getKeyValue(copy_identity, copy_key, 'latest', 'exact', true);
+            if (!value) throw new Error(`Failed to obtain ikv value following ${copyFromIkv_prolog} instruction`);
+            return value;
+        }
+    }
+
+    // Get the value
     try {
         if (typeof identity !== 'string')
             throw Error('blockchain.getKeyValue(): identity must be a string');
@@ -569,7 +596,7 @@ ethereum.getKeyValue = async (
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const baseKey = `${identity}-${key}`;
         if (version === 'latest') {
-            return keyValueCache.get(baseKey, async() => {
+            return keyValueCache.get(baseKey, async () => {
                 const contract = await ethereum.loadIdentityContract();
                 return contract.methods.ikvGet(identity, key).call();
             });
@@ -851,12 +878,32 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
     const provider = getEthers(network);
     const resolver = await provider.getResolver(domainName);
 
+    if (!resolver) {
+        throw new Error(`Domain ${domainName} not found in Ethereum's ${network}.`);
+    }
+
     const [owner, content] = await Promise.all([
         provider.resolveName(domainName),
-        resolver.getText('point')
+        resolver.getText(POINT_ENS_TEXT_RECORD_KEY)
     ]);
 
     return {owner, content};
+};
+
+ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
+    if (!networks[network] || !networks[network].eth_tld_resolver) {
+        throw new Error(`Missing TLD public resolver contract address for network "${network}"`);
+    }
+
+    const provider = getEthers(network);
+    const tldAddress = networks[network].eth_tld_resolver;
+    const ensContract = new ethers.Contract(tldAddress, ETH_RESOLVER_ABI, provider);
+    const hash = namehash.hash(domainName);
+    const pk = getNetworkPrivateKey();
+    const wallet = new ethers.Wallet(pk, provider);
+    const ensWithSigner = ensContract.connect(wallet);
+    const tx = await ensWithSigner.setText(hash, POINT_ENS_TEXT_RECORD_KEY, data);
+    return tx;
 };
 
 module.exports = ethereum;

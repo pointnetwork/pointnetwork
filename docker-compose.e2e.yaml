@@ -36,12 +36,12 @@ services:
         condition: 'no'
     volumes:
       - shared_contracts_e2e:/build:rw
-      - ./hardhat/contracts:/hardhat/contracts:ro
-      - ./hardhat/scripts:/hardhat/scripts:ro
-      - ./hardhat/tasks:/hardhat/tasks:ro
-      - ./hardhat/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
-      - ./hardhat/utils.ts:/hardhat/utils.ts:ro
-      - ./hardhat/resources:/hardhat/resources:rw
+      - ../point-contracts/contracts:/hardhat/contracts:ro
+      - ../point-contracts/scripts:/hardhat/scripts:ro
+      - ../point-contracts/tasks:/hardhat/tasks:ro
+      - ../point-contracts/hardhat.config.ts:/hardhat/hardhat.config.ts:ro
+      - ../point-contracts/utils.ts:/hardhat/utils.ts:ro
+      - ../point-contracts/resources:/hardhat/resources:rw
     environment:
       BLOCKCHAIN_HOST: blockchain_node
       BLOCKCHAIN_PORT: 7545
@@ -65,7 +65,7 @@ services:
       - shared_contracts_e2e:/app/hardhat/build
       - ./resources/blockchain-test-key.json:/data/keystore/key.json
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
-      - ./hardhat/resources:/app/hardhat/resources:rw
+      - ../point-contracts/resources:/app/hardhat/resources:rw
     environment:
       NODE_CONFIG_ENV: e2e
       MODE: e2e
