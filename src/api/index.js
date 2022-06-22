@@ -32,7 +32,7 @@ class ApiServer {
                 reply
                     .code(statusCode)
                     .type('text/plain')
-                    .send(statusCode >= 500 ? 'Internal server error' : error.message);
+                    .send(statusCode >= 500 ? 'Internal engine error' : error.message);
             });
 
             this.server.addHook('preValidation', (request, reply, next) => {
