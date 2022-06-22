@@ -406,7 +406,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
     } catch (e) {
         log.error('Proxy internal server error');
         log.error(e);
-        res.status(500).send('Internal server error');
+        res.status(500).send('Internal engine error');
     }
 };
 

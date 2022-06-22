@@ -6,7 +6,7 @@ import {onSendHookHandler} from 'fastify';
  */
 export const transformErrorResp: onSendHookHandler<unknown> = (_req, res, payload, done) => {
     if (res.statusCode >= 500 && typeof payload === 'string') {
-        const updatedPayload = payload.replace(/server/gi, 'core');
+        const updatedPayload = payload.replace(/server/gi, 'engine');
         done(null, updatedPayload);
     } else {
         done();
