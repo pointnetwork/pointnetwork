@@ -36,8 +36,9 @@ interface TransactionInstructionJSON {
     data: number[];
 }
 
-const createSolanaConnection = (blockchainUrl: string) => {
-    const connection = new web3.Connection(blockchainUrl, 'confirmed');
+const createSolanaConnection = (blockchainUrl: string, protocol = 'https') => {
+    const url = `${protocol}://${blockchainUrl}`;
+    const connection = new web3.Connection(url, 'confirmed');
     log.debug({blockchainUrl}, 'Created solana instance');
     return connection;
 };

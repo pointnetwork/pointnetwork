@@ -17,10 +17,10 @@ network:
   web3:
     ynet:
       type: "eth"
-      address: "ws://localhost:7545"
+      address: "localhost:7545"
     rinkeby:
       type: "eth"
-      address: "ws://localhost:7545"
+      address: "localhost:7545"
 api:
   address: 127.0.0.1
   port: 24681
