@@ -27,6 +27,7 @@ services:
     volumes:
       - point_node_data_test:/data
       - shared_contracts_test:/app/hardhat/build:ro
+      - ../point-contracts/contracts:/app/hardhat/contracts:ro
       - ./resources/blockchain-test-key.json:/data/keystore/key.json:ro
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json:ro
       - ./resources/certs/ca.crt:/app/pointnetwork/resources/certs/ca.crt:ro
