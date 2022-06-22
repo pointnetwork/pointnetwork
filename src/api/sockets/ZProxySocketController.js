@@ -94,15 +94,9 @@ class ZProxySocketController {
         }
     }
 
-    pushToSender(msg) {
-        if (this.ws) {
-            this.ws.send(JSON.stringify(msg));
-        }
-    }
-
     pushRPCMessage(msg) {
         log.info(msg, 'Pushing RPC message');
-        return this.pushToSender(msg);
+        return this.pushToClient(msg);
     }
 
     pushSubscriptionEvent({type, subscriptionId, request, data}) {

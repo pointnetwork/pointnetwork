@@ -12,7 +12,7 @@ const isHash = (str) => {
 };
 
 const IkvEntry = (props) => {
-    const { handle, item, onUpdated } = props;
+    const { handle, item, onUpdated, showEdit } = props;
     const [loading, setLoading] = useState(false);
     const [editionAllowed, setAllowEdition] = useState(false);
     const [newValue, setNewValue] = useState(item.value);
@@ -97,20 +97,26 @@ const IkvEntry = (props) => {
                             Cancel
                         </button>
                     </>
-                ) : (
+                ) : showEdit ? (
                     <button
                         className="btn btn-sm btn-secondary"
                         onClick={allowEdition}
                     >
                         Edit
                     </button>
+                ) : (
+                    ''
                 )}
             </td>
         </tr>
     );
 };
 
-export default function Identity({ params: { handle } }) {
+export default function Identity(props) {
+    const {
+        walletAddr,
+        params: { handle },
+    } = props;
     const [ikvset, setIkvset] = useState([]);
     const [owner, setOwner] = useState();
     const [publicKey, setPublicKey] = useState('');
@@ -357,6 +363,8 @@ export default function Identity({ params: { handle } }) {
         Boolean(ikvNewEntryValue) &&
         Boolean(ikvNewEntryVersion);
 
+    const showIkvEditForm = walletAddr === owner;
+
     return (
         <Container className="p-3">
             <br />
@@ -422,6 +430,7 @@ export default function Identity({ params: { handle } }) {
                                             handle={handle}
                                             item={item}
                                             onUpdated={fetchIkv}
+                                            showEdit={showIkvEditForm}
                                         />
                                     ))}
                                 </tbody>
@@ -431,56 +440,64 @@ export default function Identity({ params: { handle } }) {
                                 <EmptyMsg />
                             </div>
                         )}
-                        <div className="row g-3 mt-3">
-                            <h5>Add new entry</h5>
-                            <div className="col-xs-12 col-sm-3">
-                                <input
-                                    type="text"
-                                    name="ikvEntryKey"
-                                    value={ikvNewEntryKey}
-                                    onChange={(event) =>
-                                        setIkvNewEntryKey(event.target.value)
-                                    }
-                                    className="form-control"
-                                    placeholder="Key"
-                                />
+                        {showIkvEditForm ? (
+                            <div className="row g-3 mt-3">
+                                <h5>Add new entry</h5>
+                                <div className="col-xs-12 col-sm-3">
+                                    <input
+                                        type="text"
+                                        name="ikvEntryKey"
+                                        value={ikvNewEntryKey}
+                                        onChange={(event) =>
+                                            setIkvNewEntryKey(
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="form-control"
+                                        placeholder="Key"
+                                    />
+                                </div>
+                                <div className="col-xs-12 col-sm-3">
+                                    <input
+                                        type="text"
+                                        name="ikvEntryValueRef"
+                                        value={ikvNewEntryValue}
+                                        onChange={(event) =>
+                                            setIkvNewEntryValue(
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="form-control"
+                                        placeholder="Value"
+                                    />
+                                </div>
+                                <div className="col-xs-12 col-sm-2">
+                                    <input
+                                        type="text"
+                                        name="ikvEntryVersion"
+                                        value={ikvNewEntryVersion}
+                                        onChange={(event) =>
+                                            setIkvNewEntryVersion(
+                                                event.target.value,
+                                            )
+                                        }
+                                        className="form-control"
+                                        placeholder="Version"
+                                    />
+                                </div>
+                                <div className="col-xs-12 col-sm-4">
+                                    <button
+                                        className="btn btn-primary mb-4 w-full"
+                                        onClick={addIkvEntry}
+                                        disabled={!addEntryButtonEnabled}
+                                    >
+                                        Add
+                                    </button>
+                                </div>
                             </div>
-                            <div className="col-xs-12 col-sm-3">
-                                <input
-                                    type="text"
-                                    name="ikvEntryValueRef"
-                                    value={ikvNewEntryValue}
-                                    onChange={(event) =>
-                                        setIkvNewEntryValue(event.target.value)
-                                    }
-                                    className="form-control"
-                                    placeholder="Value"
-                                />
-                            </div>
-                            <div className="col-xs-12 col-sm-2">
-                                <input
-                                    type="text"
-                                    name="ikvEntryVersion"
-                                    value={ikvNewEntryVersion}
-                                    onChange={(event) =>
-                                        setIkvNewEntryVersion(
-                                            event.target.value,
-                                        )
-                                    }
-                                    className="form-control"
-                                    placeholder="Version"
-                                />
-                            </div>
-                            <div className="col-xs-12 col-sm-4">
-                                <button
-                                    className="btn btn-primary mb-4 w-full"
-                                    onClick={addIkvEntry}
-                                    disabled={!addEntryButtonEnabled}
-                                >
-                                    Add
-                                </button>
-                            </div>
-                        </div>
+                        ) : (
+                            ''
+                        )}
                     </>
                 )}
             </div>
