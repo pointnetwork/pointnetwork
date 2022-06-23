@@ -68,12 +68,20 @@ network:
       address: "ynet.point.space:44444"
       currency_name: "yPoint"
       currency_code: "yPOINT"
+      tokens: []
     rinkeby:
       type: "eth"
       address: "rinkeby.infura.io/v3/400b1ad4183b442dbd9b0b5744b327aa" # TODO: project ID
       currency_name: "rinkebyEth"
       currency_code: "rinkebyETH"
       eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
+      tokens:
+        - name: "USDC"
+          address: "0x87284d4150b0FADe12255A7d208AD46526C519ee"
+        - name: "USDT"
+          address: "0xd92e713d051c37ebb2561803a3b5fbabc4962431"
+        - name: "DAI"
+          address: "0x95b58a6Bff3D14B7DB2f5cb5F0Ad413DC2940658"
     solana_devnet:
       type: "solana"
       address: "api.devnet.solana.com"
