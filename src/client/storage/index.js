@@ -10,7 +10,8 @@ import {
     statAsync,
     escapeString,
     hashFn,
-    isChineseTimezone
+    isChineseTimezone,
+    calculateDirSize
 } from '../../util';
 import {storage} from './storage';
 import {promises as fs} from 'fs';
@@ -346,11 +347,12 @@ const uploadDir = async dirPath => {
 
             if (stat.isDirectory()) {
                 const dirId = await uploadDir(filePath);
+                const size = await calculateDirSize(filePath);
                 dirInfo.files.push({
                     type: FILE_TYPE.dirptr,
                     name: fileName,
                     original_path: filePath,
-                    size: stat.size,
+                    size,
                     id: dirId
                 });
             } else {
