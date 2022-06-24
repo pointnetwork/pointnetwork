@@ -174,7 +174,7 @@ class WalletController extends PointSDKController {
             host,
             Buffer.from(this.payload.encryptedData, 'hex'),
             encryptedSymmetricObj,
-            privateKey.slice(2)
+            privateKey
         );
         return this._response({decryptedData: decryptedData.plaintext.toString()});
     }
