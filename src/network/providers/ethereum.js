@@ -19,6 +19,9 @@ const {createCache} = require('../../util/cache');
 const {ETH_RESOLVER_ABI} = require('../../name_service/abis/resolver');
 const {POINT_ENS_TEXT_RECORD_KEY} = require('../../name_service/constants');
 
+// Bump gas values by this multiplier (gas *= INCENTIVE_MULTIPLIER)
+const INCENTIVE_MULTIPLIER = config.has('gas_incentive') ? config.get('gas_incentive') : 1;
+
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
         if (RegExp(code).test(message)) {
@@ -231,6 +234,11 @@ ethereum.web3send = async (method, optons = {}) => {
             gasLimit = await method.estimateGas({from: account, value: amountInWei});
             log.debug({gasLimit, gasPrice}, 'Web3 Send gas estimate');
             // }
+
+            // Increment gas values to ensure tx is mined successfully.
+            gasPrice = parseInt(gasPrice * INCENTIVE_MULTIPLIER, 10);
+            gasLimit = parseInt(gasLimit * INCENTIVE_MULTIPLIER, 10);
+
             requestStart = Date.now();
             return await method
                 .send({
