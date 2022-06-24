@@ -68,6 +68,7 @@ network:
       address: "ynet.point.space:44444"
       currency_name: "yPoint"
       currency_code: "yPOINT"
+      tls: false
       tokens: []
     rinkeby:
       type: "eth"
@@ -75,6 +76,7 @@ network:
       currency_name: "rinkebyEth"
       currency_code: "rinkebyETH"
       eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
+      tls: true
       tokens:
         - name: "USDC"
           address: "0x87284d4150b0FADe12255A7d208AD46526C519ee"
@@ -87,11 +89,13 @@ network:
       address: "api.devnet.solana.com"
       currency_name: "devSol"
       currency_code: "devSOL"
+      tls: true
     # solana:
     #   type: "solana"
     #   address: "https://api.mainnet-beta.solana.com"
     #   currency_name: "Sol"
     #   currency_code: "SOL"
+    #   tls: true
   web3_call_retry_limit: 4
   identity_contract_address: "0x1574E97F7a60c4eE518f6d7c0Fa701eff8Ab58b3"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
