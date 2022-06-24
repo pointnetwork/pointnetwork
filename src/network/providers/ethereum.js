@@ -80,7 +80,7 @@ const providers = {
     }
 };
 
-const getWeb3 = ({chain = 'ynet', protocol = 'http'} = {}) => {
+const getWeb3 = ({chain = 'ynet', protocol} = {}) => {
     if (
         !Object.keys(networks)
             .filter(key => networks[key].type === 'eth')
@@ -90,6 +90,9 @@ const getWeb3 = ({chain = 'ynet', protocol = 'http'} = {}) => {
     }
     if (!providers[chain]) {
         providers[chain] = {};
+    }
+    if (!protocol) {
+        protocol = networks[chain].tls ? 'https' : 'http';
     }
     if (!providers[chain][protocol]) {
         providers[chain][protocol] = createWeb3Instance({
