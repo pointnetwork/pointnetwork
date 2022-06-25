@@ -303,7 +303,7 @@ const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
         if (!existsSync(lockfilePath)) {
             await fs.writeFile(lockfilePath, 'point');
         }
-        await lockfile.lock(lockfilePath);
+        await lockfile.lock(lockfilePath, {stale: 5000});
     } catch (err) {
         log.fatal(err, 'Failed to create lockfile, is point already running?');
         ctx.exit(1);
