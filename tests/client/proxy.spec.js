@@ -1,6 +1,10 @@
 import attachHandlers from '../../src/client/proxy/handlers';
 import httpsServer from '../../src/client/proxy/httpsServer';
 import ethereum from '../../src/network/providers/ethereum';
+import axios from 'axios';
+import config from 'config';
+
+const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
 jest.mock('../../src/network/providers/ethereum', () => ({
     __esModule: true,
@@ -16,6 +20,22 @@ jest.mock('../../src/network/providers/ethereum', () => ({
         }),
         putKeyValue: jest.fn(async () => {}),
         getKeyLastVersion: jest.fn(async () => '1.0')
+    }
+}));
+
+jest.mock('axios', () => ({
+    __esModule: true,
+    default: {
+        get: jest.fn(async () => ({
+            headers: {},
+            status: 200,
+            data: 'api_mocked_get_response'
+        })),
+        post: jest.fn(async () => ({
+            headers: {},
+            status: 200,
+            data: 'api_mocked_post_response'
+        }))
     }
 }));
 
@@ -97,6 +117,50 @@ describe('Proxy', () => {
             'test_key1',
             expect.stringMatching(/^\{"value1":"foo","value2":"bar",/),
             '1.0'
+        );
+    });
+
+    it('Should redirect API GET requests', async () => {
+        expect.assertions(3);
+
+        const res = await httpsServer.inject({
+            method: 'GET',
+            url: 'https://api_domain_get.point/v1/api/api_route_get',
+            headers: {host: 'api_domain_get.point'}
+        });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.payload).toEqual('api_mocked_get_response');
+        expect(axios.get).toHaveBeenCalledWith(
+            `${API_URL}/v1/api/api_route_get`,
+            expect.objectContaining({headers: expect.objectContaining({host: 'api_domain_get.point'})})
+        );
+    });
+
+    it('Should redirect API POST requests', async () => {
+        expect.assertions(3);
+
+        const res = await httpsServer.inject({
+            method: 'POST',
+            url: 'https://api_domain_post.point/v1/api/api_route_post',
+            headers: {
+                'host': 'api_domain_post.point',
+                'Content-Type': 'application/json'
+            },
+            body: {some_key: 'some_value'}
+        });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.payload).toEqual('api_mocked_post_response');
+        expect(axios.post).toHaveBeenCalledWith(
+            `${API_URL}/v1/api/api_route_post`,
+            {some_key: 'some_value'},
+            expect.objectContaining({
+                headers: expect.objectContaining({
+                    'host': 'api_domain_post.point',
+                    'content-type': 'application/json'
+                })
+            })
         );
     });
 });
