@@ -110,8 +110,8 @@
   },
   "scripts": {
     "test": "jest",
-    "test:ci": "jest --forceExit --reporters=default --reporters=jest-junit",
-    "test:docker": "TESTING_IN_DOCKER=true jest tests/docker/*.spec.js --forceExit --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
+    "test:ci": "cp ./resources/blockchain-test-key.json ./tests/resources/key.json && POINT_KEYSTORE=./tests/resources jest --forceExit --reporters=default --reporters=jest-junit",
+    "test:docker": "jest tests/docker/*.spec.js --forceExit --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
     "start": "node dist/index.js",
     "start:zappdev": "MODE=zappdev npm run watch",
     "start:dev": "NODE_ENV=development npm run watch",
