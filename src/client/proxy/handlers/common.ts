@@ -26,7 +26,6 @@ const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: FastifyReply) => {
     try {
         const host = req.headers.host!;
-        console.log(1, host);
         const urlData = req.urlData();
         const queryParams = parse(urlData.query ?? '');
         let urlPath = urlData.path!;
