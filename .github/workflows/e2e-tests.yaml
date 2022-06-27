@@ -1,9 +1,23 @@
-#name: Point-Network-e2e-Tests
-#on:
-#  pull_request:
-#    branches: [ develop ]
-#
-#jobs:
+name: Point-Network-e2e-Tests
+on:
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Use Node.js 17
+      uses: actions/setup-node@v2
+      with:
+        node-version: 17.x
+
+    - run: npm install
+    - run: npm run test
+
 #  e2e-tests:
 #    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 #    timeout-minutes: 30
