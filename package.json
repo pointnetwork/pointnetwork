@@ -109,7 +109,7 @@
     "typescript": "^4.7.3"
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest --forceExit",
     "test:ci": "cp ./resources/blockchain-test-key.json ./tests/resources/key.json && POINT_KEYSTORE=./tests/resources jest --forceExit --reporters=default --reporters=jest-junit",
     "test:docker": "TESTING_IN_DOCKER=true jest tests/docker/*.spec.js --forceExit --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
     "start": "node dist/index.js",

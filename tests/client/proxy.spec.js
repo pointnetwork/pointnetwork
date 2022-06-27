@@ -13,23 +13,40 @@ beforeAll(() => {
 });
 
 describe('Proxy', () => {
-    it('Contract send', async () => {
+    it('Should perform contract_send request', async () => {
         expect.assertions(3);
 
         const res = await httpsServer.inject({
             method: 'POST',
             url: 'https://somedomain.point/_contract_send/ContractName.funcName(value1, value2)',
             payload: 'value1=foo&value2=bar',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'host': 'somedomain.point'
+            }
         });
 
         expect(res.statusCode).toEqual(200);
         expect(res.statusMessage).toEqual('OK');
         expect(ethereum.sendToContract).toHaveBeenCalledWith(
-            'somedomain:443',
+            'somedomain',
             'ContractName',
             'funcName',
             ['foo', 'bar']
         );
+    });
+
+    it('Should load explorer index page', async () => {
+        expect.assertions(3);
+
+        const res = await httpsServer.inject({
+            method: 'GET',
+            url: 'https://point',
+            headers: {host: 'point'}
+        });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.payload).toMatch(/^<!DOCTYPE html>/);
+        expect(res.payload).toMatch('<title>Point Explorer</title>');
     });
 });
