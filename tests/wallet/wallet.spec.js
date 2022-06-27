@@ -19,7 +19,7 @@ describe('Wallet', () => {
             to: '0x314dF55775e0b6F2B0c6d07C7Ec83a3e1cdC165e',
             value: '0x5'
         });
-        expect(tx.result).toMatch(/^0x/);
+        expect(tx.result.reqId).toEqual(expect.any(String));
     });
 
     it('Send solana transaction', async () => {
@@ -29,7 +29,7 @@ describe('Wallet', () => {
             to: 'vines1vzrYbzLMRdu58ou5XTby4qAqVRLmqo36NKPTg',
             value: '0x5'
         });
-        expect(tx).toEqual(expect.any(String));
+        expect(tx.result.reqId).toEqual(expect.any(String));
     });
 
     it('Get eth transactions', async () => {
