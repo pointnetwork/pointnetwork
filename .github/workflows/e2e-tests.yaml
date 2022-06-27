@@ -1,9 +1,30 @@
-#name: Point-Network-e2e-Tests
-#on:
-#  pull_request:
-#    branches: [ develop ]
-#
-#jobs:
+name: Point-Network-e2e-Tests
+on:
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Use Node.js 16
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+
+    - run: npm install
+    - run: npm run build
+    - run: npm run test:ci
+
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: "./junit.xml"
+
 #  e2e-tests:
 #    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 #    timeout-minutes: 30
