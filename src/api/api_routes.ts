@@ -1,4 +1,4 @@
-module.exports = [
+const routes = [
     ['GET', '/v1/api/identity/identityToOwner/:identity', 'IdentityController@identityToOwner'],
     [
         'GET',
@@ -42,4 +42,6 @@ module.exports = [
     ['POST', '/v1/api/blockchain', 'BlockchainController@request'],
     ['POST', '/v1/api/contract/encodeFunctionCall', 'ContractController@encodeFunctionCall'],
     ['POST', '/v1/api/contract/decodeParameters', 'ContractController@decodeParameters']
-];
+] as const;
+
+export default routes;
