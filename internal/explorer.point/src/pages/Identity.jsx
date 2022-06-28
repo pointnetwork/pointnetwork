@@ -27,7 +27,7 @@ const IkvEntry = (props) => {
     const saveChanges = async () => {
         setLoading(true);
         try {
-            await window.point.contract.send({
+            await window.point.contract.call({
                 contract: 'Identity',
                 method: 'ikvPut',
                 params: [handle, item.key, newValue, newVersion],
@@ -143,7 +143,7 @@ export default function Identity(props) {
         setOwner(result.data.owner);
         setIsLoadingOwner(false);
         const resultAddr = await window.point.wallet.address();
-        setIsOwner(result.data.owner === resultAddr.data.address);
+        setIsOwner(result.data.owner.toLowerCase() === resultAddr.data.address.toLowerCase());
     };
 
     const fetchPublicKey = async () => {
@@ -276,8 +276,7 @@ export default function Identity(props) {
     const revokeDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
-            await window.point.contract.send({
-                host: '@',
+            await window.point.contract.call({
                 contract: 'Identity',
                 method: 'removeIdentityDeployer',
                 params: [handle, deployer],
@@ -292,7 +291,7 @@ export default function Identity(props) {
             Swal.fire({
                 icon: 'error',
                 title: 'Request Failed',
-                text: e,
+                text: e.message,
             });
             setIsLoadingDeployers(false);
         }
@@ -301,8 +300,7 @@ export default function Identity(props) {
     const activateDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
-            await window.point.contract.send({
-                host: '@',
+            await window.point.contract.call({
                 contract: 'Identity',
                 method: 'addIdentityDeployer',
                 params: [handle, deployer],
@@ -318,7 +316,7 @@ export default function Identity(props) {
             Swal.fire({
                 icon: 'error',
                 title: 'Request Failed',
-                text: e,
+                text: e.message,
             });
             setIsLoadingDeployers(false);
             return false;
@@ -340,7 +338,7 @@ export default function Identity(props) {
     const addIkvEntry = async () => {
         setAddingNewIkv(true);
         try {
-            await window.point.contract.send({
+            await window.point.contract.call({
                 contract: 'Identity',
                 method: 'ikvPut',
                 params: [
@@ -365,7 +363,7 @@ export default function Identity(props) {
         Boolean(ikvNewEntryValue) &&
         Boolean(ikvNewEntryVersion);
 
-    const showIkvEditForm = walletAddr === owner;
+    const showIkvEditForm = walletAddr.toLowerCase() === owner?.toLowerCase();
 
     return (
         <Container className="p-3">
