@@ -16,8 +16,8 @@ const {utils} = require('ethers');
 const networks = config.get('network.web3');
 
 class WalletController extends PointSDKController {
-    constructor(ctx, req, reply) {
-        super(ctx, req);
+    constructor(req, reply) {
+        super(req);
         this.req = req;
         this.payload = req.body;
         this.reply = reply;

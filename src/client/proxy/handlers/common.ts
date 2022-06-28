@@ -23,7 +23,7 @@ const log = logger.child({module: 'ZProxy'});
 
 const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
-const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: FastifyReply) => {
+const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyReply) => {
     try {
         const host = req.headers.host!;
         const urlData = req.urlData();
@@ -75,7 +75,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     'utf-8'
                 );
 
-                const renderer = new Renderer(ctx, {localDir: publicPath} as any);
+                const renderer = new Renderer({localDir: publicPath} as any);
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
@@ -155,7 +155,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     'utf-8'
                 );
 
-                const renderer = new Renderer(ctx, {localDir: publicPath} as any);
+                const renderer = new Renderer({localDir: publicPath} as any);
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
@@ -214,7 +214,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 const templateFileId = await getFileIdByPath(rootDirId, templateFilename);
 
                 const templateFileContents = await getFile(templateFileId);
-                const renderer = new Renderer(ctx, {rootDirId} as any);
+                const renderer = new Renderer({rootDirId} as any);
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
@@ -239,7 +239,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
                         const templateFileContents = await getFile(templateFileId);
 
-                        const renderer = new Renderer(ctx, {rootDirId} as any);
+                        const renderer = new Renderer({rootDirId} as any);
 
                         res.header('Content-Type', 'text/html');
                         // TODO: sanitize
@@ -340,7 +340,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             if (templateFilename) {
                 const templateFileId = await getFileIdByPath(rootDirId, templateFilename);
                 const templateFileContents = await getFile(templateFileId);
-                const renderer = new Renderer(ctx, {rootDirId} as any);
+                const renderer = new Renderer({rootDirId} as any);
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
@@ -362,7 +362,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                         const {templateFilename: indexTemplate} = getParamsAndTemplate(routes, '/');
                         const templateFileId = await getFileIdByPath(rootDirId, indexTemplate);
                         const templateFileContents = await getFile(templateFileId);
-                        const renderer = new Renderer(ctx, {rootDirId} as any);
+                        const renderer = new Renderer({rootDirId} as any);
 
                         res.header('Content-Type', 'text/html');
                         // TODO: sanitize
@@ -412,12 +412,10 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
 export const wsConnections: Record<string, ZProxySocketController> = {};
 
-// TODO: ctx is needed for Renderer, remove it later
-const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
-    const handler = getHttpRequestHandler(ctx);
+const attachCommonHandler = (server: FastifyInstance) => {
+    const handler = getHttpRequestHandler();
     const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) => {
         wsConnections[Math.random()] = new ZProxySocketController(
-            ctx,
             socket,
             server.websocketServer,
             hostname

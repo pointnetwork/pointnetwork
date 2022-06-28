@@ -7,8 +7,8 @@ class BlockchainController extends PointSDKController {
     private req: FastifyRequest;
     private reply: FastifyReply;
 
-    constructor(ctx: unknown, req: FastifyRequest, reply: FastifyReply) {
-        super(ctx, req);
+    constructor(req: FastifyRequest, reply: FastifyReply) {
+        super(req);
         this.req = req;
         this.reply = reply;
     }

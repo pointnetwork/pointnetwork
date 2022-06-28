@@ -77,14 +77,9 @@ proxyServer.on('error', error => {
     log.error({error}, 'Proxy server error');
 });
 
-// TODO: ctx is needed for Renderer, remove it later
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const startProxy = async (ctx: any) => {
-    // Main logic is here
+attachHandlers(httpsServer);
 
-    // TODO: move it to the root once we get rid of ctx
-    attachHandlers(httpsServer, ctx);
-
+const startProxy = async () => {
     await httpsServer.listen(0);
     await proxyServer.listen(PROXY_PORT);
 

@@ -1,26 +1,13 @@
-const ApiServer = require('../api');
-const Client = require('../client');
+import startApiServer from '../api';
+import startProxy from '../client/proxy';
+import {init as initStorage} from '../client/storage';
 
-class Core {
-    constructor(ctx) {
-        this.ctx = ctx;
-    }
+const startPoint = async () => {
+    await Promise.all([
+        startApiServer(),
+        startProxy(),
+        initStorage()
+    ]);
+};
 
-    async start() {
-        await this.initApiServer();
-        await this.initClient();
-    }
-
-    async initApiServer() {
-        const api_server = new ApiServer(this.ctx);
-        this.ctx.api_server = api_server;
-        await api_server.start();
-    }
-
-    async initClient() {
-        this.ctx.client = new Client(this.ctx);
-        await this.ctx.client.start();
-    }
-}
-
-module.exports = Core;
+export default startPoint;
