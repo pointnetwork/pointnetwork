@@ -32,9 +32,9 @@ const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
 const CONCURRENT_DOWNLOAD_DELAY = Number(config.get('storage.concurrent_download_delay'));
 const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
 const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
-const CHUNK_SIZE = config.get('storage.chunk_size_bytes');
-const GATEWAY_URL = config.get('storage.arweave_gateway_url');
-const MODE = config.get('mode');
+const CHUNK_SIZE = Number(config.get('storage.chunk_size_bytes'));
+const GATEWAY_URL: string = config.get('storage.arweave_gateway_url');
+const MODE: string = config.get('mode');
 const BUNDLER_DOWNLOAD_URL = `${config.get('storage.arweave_bundler_url')}/download`;
 const BUNDLER_DOWNLOAD_URL_FALLBACK = `${config.get('storage.arweave_bundler_url_fallback')}/download`;
 
@@ -59,7 +59,11 @@ const init = () => {
 };
 
 // TODO: add better error handling with custom errors and keeping error messages in DB
-const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
+const getChunk = async (
+    chunkId: string,
+    encoding: BufferEncoding = 'utf8',
+    useCache = true
+): Promise<Buffer | string> => {
     log.debug({chunkId}, 'Getting chunk');
     const chunk = await Chunk.findByIdOrCreate(chunkId);
     const chunkPath = path.join(downloadCacheDir, `chunk_${chunkId}`);
@@ -148,7 +152,7 @@ const getChunk = async (chunkId, encoding = 'utf8', useCache = true) => {
     throw new Error('Chunk not found');
 };
 
-const uploadChunk = async data => {
+const uploadChunk = async (data: Buffer) => {
     const chunkId = hashFn(data).toString('hex');
     const chunk = await Chunk.findByIdOrCreate(chunkId);
 
@@ -166,7 +170,8 @@ const uploadChunk = async data => {
     let uploaded = false;
 
     const check = async () => {
-        const updatedChunk = await Chunk.find(chunkId);
+        // TODO: any
+        const updatedChunk: any = await Chunk.find(chunkId);
         if (!updatedChunk) {
             throw new Error(`Unexpected upload result: chunk ${chunkId} does not exist`);
         }
@@ -194,7 +199,7 @@ const uploadChunk = async data => {
     return chunkId;
 };
 
-const uploadFile = async data => {
+const uploadFile = async (data: Buffer | string): Promise<string> => {
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
     const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
 
@@ -295,8 +300,8 @@ const uploadFile = async data => {
         chunkIds.forEach((chunkId, index) => {
             if (chunkId !== chunkHashes[index]) {
                 throw new Error(
-                    `Unexpected different chunks ids, should be same: ${(chunkId,
-                    chunkHashes[index])}`
+                    `Unexpected different chunks ids, should be same: ${chunkId},
+                    ${chunkHashes[index]}`
                 );
             }
         });
@@ -318,7 +323,7 @@ const uploadFile = async data => {
     }
 };
 
-const uploadDir = async dirPath => {
+const uploadDir = async (dirPath: string) => {
     try {
         const stat = await statAsync(dirPath);
         const isDir = stat.isDirectory();
@@ -337,7 +342,7 @@ const uploadDir = async dirPath => {
     const files = await fs.readdir(dirPath);
     const dirInfo = {
         type: 'dir',
-        files: []
+        files: [] as any[] // TODO: any
     };
 
     await Promise.all(
@@ -376,7 +381,11 @@ const uploadDir = async dirPath => {
     return id;
 };
 
-const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
+const getFile = async (
+    rawId: string,
+    encoding: BufferEncoding = 'utf8',
+    useCache = true
+): Promise<string | Buffer> => {
     log.debug({fileId: rawId}, 'Getting file');
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
 
@@ -425,7 +434,7 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
             throw new Error('Bad hash type');
         }
         const merkleReassembled = merkle(
-            chunks.map(x => Buffer.from(x, 'hex')),
+            chunks.map((x: string) => Buffer.from(x, 'hex')),
             hashFn
         ).map(x => x.toString('hex'));
         if (!areScalarArraysEqual(merkleReassembled, merkleHash)) {
@@ -435,7 +444,9 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
         log.debug({fileId: file.id}, 'Chunk info for file processed, getting chunks');
 
         // TODO: retry logic
-        const chunkBuffers = await Promise.all(chunks.map(chunkId => getChunk(chunkId, encoding)));
+        const chunkBuffers = await Promise.all(
+            chunks.map((chunkId: string) => getChunk(chunkId, encoding))
+        );
         const fileBuffer = Buffer.concat([
             ...chunkBuffers.slice(0, -1),
             // We should trim the trailing zeros from the last chunk
@@ -462,16 +473,16 @@ const getFile = async (rawId, encoding = 'utf8', useCache = true) => {
     }
 };
 
-const getJSON = async (id, useCache = true) => {
+const getJSON = async (id: string, useCache = true) => {
     log.debug({id}, 'Getting JSON');
     const file = await getFile(id, 'utf8', useCache);
     return JSON.parse(file.toString('utf-8'));
 };
 
-const getFileIdByPath = async (dirId, filePath) => {
+const getFileIdByPath = async (dirId: string, filePath: string): Promise<string> => {
     const directory = await getJSON(dirId);
     const segments = filePath.split(/[/\\]/).filter(s => s !== '');
-    const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
+    const nextFileOrDir = directory.files.find((f: any) => f.name === segments[0]); // TODO: any
     if (!nextFileOrDir) {
         throw new Error(`Failed to find file ${filePath} in directory ${dirId}: not found`);
     }
@@ -487,14 +498,20 @@ const getFileIdByPath = async (dirId, filePath) => {
     }
 };
 
-const defaultExports = {
-    FILE_TYPE,
-    init,
-    getFile,
-    getJSON,
-    uploadFile,
-    uploadDir,
-    getFileIdByPath
-};
+// TODO: get rid of this
+const _init = MODE === 'ZAPPDEV' ? require('./index-arlocal').init : init;
+const _getFile = MODE === 'ZAPPDEV' ? require('./index-arlocal').getFile : getFile;
+const _getJSON = MODE === 'ZAPPDEV' ? require('./index-arlocal').getJSON : getJSON;
+const _uploadFile = MODE === 'ZAPPDEV' ? require('./index-arlocal').uploadFile : uploadFile;
+const _uploadDir = MODE === 'ZAPPDEV' ? require('./index-arlocal').uploadDir : uploadDir;
+const _getFileIdByPath = MODE === 'ZAPPDEV' ? require('./index-arlocal').getFileIdByPath : getFileIdByPath;
 
-module.exports = MODE === 'zappdev' ? require('./index-arlocal') : defaultExports;
+export {
+    FILE_TYPE,
+    _init as init,
+    _getFile as getFile,
+    _getJSON as getJSON,
+    _uploadFile as uploadFile,
+    _uploadDir as uploadDir,
+    _getFileIdByPath as getFileIdByPath
+};

@@ -307,11 +307,19 @@ class Deployer {
                             log.debug({address: idContract.options.address}, 'Identity contract address');
                             try {
                                 
-                                log.debug({IdContractAddress: idContract.options.address, identity}, 'deploying proxy binded with identity contract and identity');
-                                proxy = await hre.upgrades.deployProxy(contractF, [idContract.options.address, identity], cfg);
+                                log.debug(
+                                    {IdContractAddress: idContract.options.address, identity},
+                                    'deploying proxy binded with identity contract and identity'
+                                );
+                                proxy = await hre.upgrades.deployProxy(
+                                    contractF, [idContract.options.address, identity], cfg
+                                );
                             } catch (e){
                                 log.warn('Deploying proxy binded with id contract and identity failed.');
-                                log.debug({IdContractAddress: idContract.options.address, identity}, 'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.');
+                                log.debug(
+                                    {IdContractAddress: idContract.options.address, identity},
+                                    'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.'
+                                );
                                 proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
                             }
                         } else {
@@ -326,7 +334,10 @@ class Deployer {
                             );
                             
                             try {
-                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);    
+                                proxy = await hre.upgrades.upgradeProxy(
+                                    proxyAddress,
+                                    contractF
+                                );
                             } catch (e) {
                                 log.debug('upgradeProxy call failed');
                                 log.debug('deleting proxy metadata file');
