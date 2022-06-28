@@ -1,6 +1,6 @@
 import https from 'https';
 import Fastify from 'fastify';
-import certificates from './certificates';
+import {getCertificate} from './certificates';
 import tls from 'tls';
 import logger from '../../core/log';
 import fastifyUrlData from '@fastify/url-data';
@@ -15,7 +15,7 @@ const httpsServer = Fastify({
         const server = https.createServer(
             {
                 SNICallback: (servername, cb) => {
-                    const certData = certificates.getCertificate(servername);
+                    const certData = getCertificate(servername);
                     const secureContext = tls.createSecureContext(certData);
 
                     if (!secureContext) {
