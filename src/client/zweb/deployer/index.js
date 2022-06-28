@@ -18,8 +18,7 @@ const POINT_SDK_VERSION = 'zweb/point/sdk/version';
 const POINT_NODE_VERSION = 'zweb/point/node/version';
 
 class Deployer {
-    constructor(ctx) {
-        this.ctx = ctx;
+    constructor() {
         this.cache_uploaded = {}; // todo: unused? either remove or use
         storage = require('../../storage/index.js');
     }
@@ -328,7 +327,7 @@ class Deployer {
                             
                             try {
                                 proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);    
-                            } catch (e){
+                            } catch (e) {
                                 log.debug('upgradeProxy call failed');
                                 log.debug('deleting proxy metadata file');
                                 fs.unlinkSync(proxyMetadataFilePath);
@@ -358,7 +357,6 @@ class Deployer {
                         );
                     }
                 }
-                this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
                 const artifactsStorageId = await this.storeContractArtifacts(
                     artifactsDeployed,
@@ -386,14 +384,8 @@ class Deployer {
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
 
                 log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
-                this.ctx.client.deployerProgress.update(proxyMetadataFilePath, 0, 'uploading');
                 const proxyMetadataFileUploadedId = await storage.uploadFile(
                     JSON.stringify(proxyMetadata)
-                );
-                this.ctx.client.deployerProgress.update(
-                    proxyMetadataFilePath,
-                    100,
-                    `uploaded::${proxyMetadataFileUploadedId}`
                 );
                 await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
                 log.debug('Proxy metadata updated');
@@ -416,15 +408,7 @@ class Deployer {
         const routes = JSON.parse(routesFile);
 
         log.debug({routes}, 'Uploading route file...');
-        this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
-        const routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
-        this.ctx.client.deployerProgress.update(
-            routesFilePath,
-            100,
-            `uploaded::${routeFileUploadedId}`
-        );
-
-        return routeFileUploadedId;
+        return storage.uploadFile(JSON.stringify(routes));
     }
 
     async getChainId() {
@@ -673,7 +657,6 @@ class Deployer {
     }
 
     async compileContract(contractName, fileName, deployPath) {
-        this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
         const contractPath = path.join(deployPath, 'contracts');
         const nodeModulesPath = path.join(deployPath, 'node_modules');
         const originalPath = path.join(deployPath, 'contracts');
@@ -703,8 +686,6 @@ class Deployer {
             if (found) throw new Error(msg);
         }
 
-        this.ctx.client.deployerProgress.update(fileName, 20, 'compiled');
-
         let artifacts;
         for (const contractFileName in compiledSources.contracts) {
             const fileName = contractFileName
@@ -725,10 +706,8 @@ class Deployer {
     async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
         const artifactsJSON = JSON.stringify(artifacts);
 
-        this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts');
         const artifactsStorageId = await storage.uploadFile(artifactsJSON);
 
-        this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
         await blockchain.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
@@ -742,7 +721,6 @@ class Deployer {
             version
         );
 
-        this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifactsStorageId}`);
         return artifactsStorageId;
     }
 

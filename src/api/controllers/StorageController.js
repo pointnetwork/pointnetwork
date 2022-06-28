@@ -8,8 +8,8 @@ const {FILE_DOWNLOAD_STATUS} = require('../../db/models/file');
 const detectContentType = require('detect-content-type');
 
 class StorageController extends PointSDKController {
-    constructor(ctx, req) {
-        super(ctx, req);
+    constructor(req) {
+        super(req);
 
         this.req = req;
         this.config = config.get('zproxy');

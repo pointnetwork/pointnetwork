@@ -2,8 +2,7 @@ const logger = require('../../core/log');
 const log = logger.child({module: 'DeployController'});
 
 class DeployController {
-    constructor(ctx, request) {
-        this.ctx = ctx;
+    constructor(request) {
         this.request = request;
     }
 
@@ -18,7 +17,7 @@ class DeployController {
         
         try {
             const Deployer = require('../../client/zweb/deployer');
-            this.deployer = new Deployer(this.ctx);
+            this.deployer = new Deployer();
             await this.deployer.deploy(deploy_path, deploy_contracts, dev, force_deploy_proxy);
             return {status: 'success'};
         } catch (e) {

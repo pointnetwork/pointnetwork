@@ -16,19 +16,19 @@ const httpsServer = Fastify({
             {
                 SNICallback: (servername, cb) => {
                     const certData = certificates.getCertificate(servername);
-                    const ctx = tls.createSecureContext(certData);
+                    const secureContext = tls.createSecureContext(certData);
 
-                    if (!ctx) {
+                    if (!secureContext) {
                         log.debug({servername}, `Not found SSL certificate for host`);
                     } else {
                         log.debug({servername}, `SSL certificate has been found and assigned`);
                     }
 
                     if (typeof cb !== 'function') {
-                        return ctx;
+                        return secureContext;
                     }
 
-                    cb(null, ctx);
+                    cb(null, secureContext);
                 }
             },
             handler

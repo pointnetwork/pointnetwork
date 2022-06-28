@@ -6,15 +6,13 @@ import attachContractSendHandler from './contractSend';
 import attachApiHandler from './api';
 import attachPointApiHandler from './pointApi';
 
-// TODO: ctx is needed for Renderer, remove it later
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const attachHandlers = (server: FastifyInstance, ctx: any) => {
+const attachHandlers = (server: FastifyInstance) => {
     attachStorageHandlers(server);
     attachPointApiHandler(server);
     attachApiHandler(server);
     attachContractSendHandler(server);
     attachKeyValueHandlers(server);
-    attachCommonHandler(server, ctx);
+    attachCommonHandler(server);
 };
 
 export default attachHandlers;
