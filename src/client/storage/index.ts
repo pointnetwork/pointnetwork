@@ -173,7 +173,7 @@ export const uploadDir = async (dirPath: string) => {
     const files = await fs.readdir(dirPath);
     const dirInfo: DirInfo = {
         type: 'dir',
-        files: []
+        files: [] as any[] // TODO: any
     };
 
     await Promise.all(
@@ -312,7 +312,7 @@ export const getJSON = async <T = any>(id: string, useCache = true): Promise<T> 
 export const getFileIdByPath = async (dirId: string, filePath: string): Promise<string> => {
     const directory = await getJSON<DirInfo>(dirId);
     const segments = filePath.split(/[/\\]/).filter(s => s !== '');
-    const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
+    const nextFileOrDir = directory.files.find((f: any) => f.name === segments[0]); // TODO: any
     if (!nextFileOrDir) {
         throw new Error(`Failed to find file ${filePath} in directory ${dirId}: not found`);
     }
