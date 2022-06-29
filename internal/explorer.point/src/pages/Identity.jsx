@@ -363,7 +363,7 @@ export default function Identity(props) {
         Boolean(ikvNewEntryValue) &&
         Boolean(ikvNewEntryVersion);
 
-    const showIkvEditForm = walletAddr === owner;
+    const showIkvEditForm = walletAddr.toLowerCase() === owner?.toLowerCase();
 
     return (
         <Container className="p-3">
