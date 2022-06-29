@@ -28,7 +28,7 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
         log.debug({fileId}, 'File to be uploaded and consists only from 1 chunk');
 
         const filePath = path.join(FILES_DIR, `file_${fileId}`);
-        const file = await File.findByIdOrCreate(fileId, {original_path: filePath});
+        const file = await File.findByIdOrCreate(fileId, {original_path: ''});
         if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
             log.debug({fileId}, 'File already exists, cancelling upload');
             return fileId;
@@ -94,7 +94,7 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
     log.debug({fileId}, 'Successfully chunkified file');
     const filePath = path.join(FILES_DIR, `file_${fileId}`);
 
-    const file = await File.findByIdOrCreate(fileId, {original_path: filePath});
+    const file = await File.findByIdOrCreate(fileId, {original_path: ''});
     if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
         log.debug({fileId}, 'File already exists, cancelling upload');
         return fileId;
@@ -176,7 +176,6 @@ export const uploadDir = async (dirPath: string) => {
                 dirInfo.files.push({
                     type: FILE_TYPE.dirptr,
                     name: fileName,
-                    original_path: filePath,
                     size,
                     id: dirId
                 });
@@ -186,7 +185,6 @@ export const uploadDir = async (dirPath: string) => {
                 dirInfo.files.push({
                     type: FILE_TYPE.fileptr,
                     name: fileName,
-                    original_path: filePath,
                     size: stat.size,
                     id: fileId
                 });
@@ -210,7 +208,7 @@ export const getFile = async (
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
 
     const filePath = path.join(FILES_DIR, `file_${id}`);
-    const file = await File.findByIdOrCreate(id, {original_path: filePath});
+    const file = await File.findByIdOrCreate(id, {original_path: ''});
     if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {
         log.debug({fileId: file.id}, 'Returning file from cache');
         return await fs.readFile(filePath, {encoding});
