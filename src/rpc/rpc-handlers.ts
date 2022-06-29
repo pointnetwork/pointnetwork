@@ -1,17 +1,15 @@
 import pendingTxs from '../permissions/PendingTxs';
-// import permissionStore from '../permissions/PermissionStore';
-import ethereum from '../network/providers/ethereum';
 import config from 'config';
-import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
+import {blockchain, isChainId} from '../network/providers/provider';
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
 export type RPCRequest = {
-    id: number;
+    id?: number;
     method: string;
     params?: unknown[];
     origin?: string;
-    network: string
+    network?: string
 };
 
 type HandlerFunc = (
@@ -21,10 +19,11 @@ type HandlerFunc = (
     result: unknown;
 }>;
 
-const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
+const networks: Record<string, {[k: string]: string|number|boolean}> = config.get('network.web3');
 
 const storeTransaction: HandlerFunc = async data => {
-    const {params, network} = data;
+    const {params} = data;
+    const network = data.network ?? 'ynet';
     if (!params) {
         return {status: 400, result: {message: 'Missing `params` in request body.'}};
     }
@@ -44,7 +43,8 @@ const storeTransaction: HandlerFunc = async data => {
 };
 
 const confirmTransaction: HandlerFunc = async data => {
-    const {params, id} = data;
+    const id = data.id ?? new Date().getTime();
+    const {params} = data;
     if (!params || !Array.isArray(params) || params.length !== 1 || !params[0].reqId) {
         return {status: 400, result: {message: 'Missing `params[0].reqId` in request body.'}};
     }
@@ -58,44 +58,15 @@ const confirmTransaction: HandlerFunc = async data => {
         };
     }
     const network = tx.network ?? 'ynet';
+    
+    const chainId = networks[network].chain_id;
+    if (!isChainId(chainId)) {
+        return {status: 400, result: {code: 400, message: 'Missing or invalid chain_id'}};
+    }
 
     try {
         pendingTxs.rm(reqId);
-        let result;
-
-        switch (networks[network].type) {
-            case 'eth':
-                result = await ethereum.send({
-                    method: 'eth_sendTransaction',
-                    params: tx.params,
-                    id,
-                    network
-                });
-                break;
-            case 'solana':
-                if ((tx.params[0] as SolanaSendFundsParams).to) {
-                    result = await solana.sendFunds({
-                        ...tx.params[0] as SolanaSendFundsParams,
-                        network
-                    });
-                } else {
-                    result = await solana.signAndSendTransaction(
-                        id,
-                        tx.params[0] as TransactionJSON,
-                        network
-                    );
-                }
-                break;
-            default:
-                return {
-                    status: 400, result: {
-                        message: `Unsupported type ${networks[network].type} for network ${network}`,
-                        id,
-                        network
-                    }
-                };
-        }
-
+        const result = await blockchain.sendTransaction(chainId, id, tx.params);
         return {status: 200, result};
     } catch (err) {
         log.error({message: err.message, stack: err.stack, tx}, 'Failed to confirm transaction');
@@ -104,88 +75,32 @@ const confirmTransaction: HandlerFunc = async data => {
     }
 };
 
-// Handlers for non-standard methods, or methods with custom logic.
-const specialHandlers: Record<string, HandlerFunc> = {
-    // Ethereum
-    eth_requestAccounts: async data => {
-        const {params, id, network} = data;
-        try {
-            const result = await ethereum.send({method: 'eth_accounts', params, id, network});
-            return {status: 200, result};
-        } catch (err) {
-            const statusCode = err.code === -32603 ? 500 : 400;
-            return {status: statusCode, result: {code: statusCode, message: err.message}};
-        }
-    },
-    eth_sendTransaction: storeTransaction,
-    eth_confirmTransaction: confirmTransaction,
-    // Solana
-    solana_sendTransaction: storeTransaction,
-    solana_confirmTransaction: confirmTransaction,
-    solana_requestAccount: async ({id}) => {
-        try {
-            const result = await solana.requestAccount(id, 'solana_devnet');
-            return {status: 200, result};
-        } catch (err) {
-            const statusCode = err.code === -32603 ? 500 : 400;
-            return {status: statusCode, result: {code: statusCode, message: err.message}};
-        }
+const requestAccounts: HandlerFunc = async data => {
+    const id = data.id ?? new Date().getTime();
+    const chainId = networks[data.network || 'ynet'].chain_id;
+    if (!isChainId(chainId)) {
+        return {status: 400, result: {code: 400, message: 'Missing or invalid chain_id'}};
+    }
+
+    try {
+        const result = await blockchain.requestAccounts(chainId, id);
+        return {status: 200, result, newOne: true};
+    } catch (err) {
+        const statusCode = err.code === -32603 ? 500 : 400;
+        return {status: statusCode, result: {code: statusCode, message: err.message}};
     }
 };
 
-// Handlers for methods related to permissions.
-const permissionHandlers: Record<string, HandlerFunc> = {
-    wallet_requestPermissions: async data => {
-        const statusCode = 4200; // As per EIP-1193
-        const message = 'Unsupported Method `wallet_requestPermissions`.';
-        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
-        /*
-        try {
-            const {params, origin} = data;
-            if (!origin) {
-                return {status: 400, result: {message: '`Origin` header is required.'}};
-            }
-
-            const address = ethereum.getOwner();
-
-            // If params is not provided or it's an empty array, revoke all permissions.
-            if (!params || !Array.isArray(params) || params.length === 0) {
-                const id = await permissionStore.revoke(origin, address);
-                return {
-                    status: 200,
-                    result: {permissionsId: id, message: 'Revoked all permissions.'}
-                };
-            }
-
-            const allowedMethods = params ? Object.keys(params[0] as Record<string, object>) : [];
-            const id = await permissionStore.upsert(origin, address, allowedMethods);
-            return {
-                status: 200,
-                result: {
-                    permissionsId: id,
-                    message: `Permission granted for ${allowedMethods.join(', ')}`
-                }
-            };
-        } catch (err) {
-            return {status: 400, result: err};
-        }
-        */
-    },
-    wallet_getPermissions: async data => {
-        const statusCode = 4200; // As per EIP-1193
-        const message = 'Unsupported Method `wallet_getPermissions`.';
-        return {status: 400, result: {statusCode, message, id: data.id, network: data.network}};
-        /*
-        const {origin} = data;
-        if (!origin) {
-            return {status: 400, result: {message: '`Origin` header is required.'}};
-        }
-
-        const address = ethereum.getOwner();
-        const permissions = await permissionStore.get(origin, address);
-        return {status: 200, result: permissions || null};
-        */
-    }
+// Handlers for non-standard methods, or methods with custom logic.
+const specialHandlers: Record<string, HandlerFunc> = {
+    // Ethereum
+    eth_requestAccounts: requestAccounts,
+    eth_sendTransaction: storeTransaction,
+    eth_confirmTransaction: confirmTransaction,
+    // Solana
+    solana_requestAccount: requestAccounts,
+    solana_sendTransaction: storeTransaction,
+    solana_confirmTransaction: confirmTransaction
 };
 
 /**
@@ -196,13 +111,6 @@ const handleRPC: HandlerFunc = async data => {
         const network = data.network ?? 'ynet';
         const id = data.id ?? new Date().getTime();
         const {method, params, origin} = data;
-
-        // Check for methods related to permissions.
-        const permissionHandler = permissionHandlers[method];
-        if (permissionHandler) {
-            const res = await permissionHandler({id, method, params, origin, network});
-            return res;
-        }
 
         // Check for special/custom methods.
         const specialHandler = specialHandlers[method];
@@ -215,24 +123,14 @@ const handleRPC: HandlerFunc = async data => {
         if (!networks[network]) {
             return {status: 400, result: {message: `Unknown network ${network}`, id, network}};
         }
-        let result;
-        switch (networks[network].type) {
-            case 'eth':
-                result = await ethereum.send({method, params, id, network});
-                break;
-            case 'solana':
-                result = await solana.send({method, params, id, network});
-                break;
-            default:
-                return {
-                    status: 400, result: {
-                        message: `Unsupported type ${networks[network].type} for network ${network}`,
-                        id,
-                        network
-                    }
-                };
+
+        // Check if we have a valid chain ID.
+        const chainId = networks[network].chain_id;
+        if (!isChainId(chainId)) {
+            throw new Error(`Missing or invalid chain_id in config for network ${network}`);
         }
 
+        const result = await blockchain.send(chainId, {method, params, id, network});
         return {status: 200, result};
     } catch (err) {
         log.error({message: err.message, stack: err.stack}, 'Error handling RPC');

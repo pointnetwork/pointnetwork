@@ -92,6 +92,9 @@ const sendInstructions = async (
 };
 
 const solana = {
+    /**
+     * @deprecated Use blockchain.requestAccount instead (from: src/network/providers/provider.ts)
+     */
     requestAccount: async (id: number, network: string) => {
         const provider = providers[network];
         if (!provider) {
@@ -103,6 +106,9 @@ const solana = {
             id
         };
     },
+    /**
+     * @deprecated Use blockchain.sendTransaction instead (from: src/network/providers/provider.ts)
+     */
     signAndSendTransaction: async (id: number, txProps: TransactionJSON, network: string) => {
         const provider = providers[network];
         if (!provider) {
@@ -137,6 +143,9 @@ const solana = {
             id
         };
     },
+    /**
+     * @deprecated Use blockchain.send instead (from: src/network/providers/provider.ts)
+     */
     send: async ({
         method,
         params = [],
@@ -167,6 +176,9 @@ const solana = {
         }
         return res.data;
     },
+    /**
+     * @deprecated Use blockchain.sendTransaction instead (from: src/network/providers/provider.ts)
+     */
     sendFunds: async ({to, lamports, network}: SolanaSendFundsParams) => {
         const provider = providers[network];
         if (!provider) {
@@ -219,6 +231,9 @@ const solana = {
 
         return connection.getSignaturesForAddress(pubKey, {before, until, limit});
     },
+    /**
+     * @deprecated Use blockchain.resolveDomain instead (from: src/network/providers/provider.ts)
+     */
     resolveDomain: async (domainName: string, network = 'solana'): Promise<DomainRegistry> => {
         const provider = providers[network];
         if (!provider) {
@@ -237,6 +252,9 @@ const solana = {
             content: content || null
         };
     },
+    /**
+     * @deprecated Use blockchain.setDomainContent instead (from: src/network/providers/provider.ts)
+     */
     setDomainContent: async(domainName: string, data: string, network = 'solana') => {
         const provider = providers[network];
         if (!provider) {
