@@ -9,9 +9,8 @@ const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
 const {execSync} = require('child_process');
+const {getFile, uploadDir, uploadFile} = require('../../storage');
 
-// TODO: direct import cause fails in some docker scripts
-let storage;
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
 const POINT_SDK_VERSION = 'zweb/point/sdk/version';
@@ -20,7 +19,6 @@ const POINT_NODE_VERSION = 'zweb/point/node/version';
 class Deployer {
     constructor() {
         this.cache_uploaded = {}; // todo: unused? either remove or use
-        storage = require('../../storage/index.js');
     }
 
     async start() {
@@ -330,7 +328,7 @@ class Deployer {
                             }
                             fs.writeFileSync(
                                 proxyMetadataFilePath,
-                                await storage.getFile(proxyDescriptionFileId)
+                                await getFile(proxyDescriptionFileId)
                             );
                             
                             try {
@@ -395,7 +393,7 @@ class Deployer {
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
 
                 log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
-                const proxyMetadataFileUploadedId = await storage.uploadFile(
+                const proxyMetadataFileUploadedId = await uploadFile(
                     JSON.stringify(proxyMetadata)
                 );
                 await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
@@ -409,7 +407,7 @@ class Deployer {
 
     async uploadRootDir(deployPath, rootDir = 'public') {
         log.debug('Uploading root directory...');
-        const publicDirId = await storage.uploadDir(path.join(deployPath, rootDir));
+        const publicDirId = await uploadDir(path.join(deployPath, rootDir));
         return publicDirId;
     }
 
@@ -419,7 +417,7 @@ class Deployer {
         const routes = JSON.parse(routesFile);
 
         log.debug({routes}, 'Uploading route file...');
-        return storage.uploadFile(JSON.stringify(routes));
+        return uploadFile(JSON.stringify(routes));
     }
 
     async getChainId() {
@@ -717,7 +715,7 @@ class Deployer {
     async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
         const artifactsJSON = JSON.stringify(artifacts);
 
-        const artifactsStorageId = await storage.uploadFile(artifactsJSON);
+        const artifactsStorageId = await uploadFile(artifactsJSON);
 
         await blockchain.putKeyValue(
             target,
@@ -791,7 +789,7 @@ class Deployer {
 
                         const ext = value.file.replace(/.*\.([a-zA-Z0-9]+)$/, '$1');
                         const file = await fs.promises.readFile(filePath);
-                        const cid = await storage.uploadFile(file);
+                        const cid = await uploadFile(file);
 
                         value = '/_storage/' + cid + '.' + ext;
                     } else {
@@ -825,7 +823,7 @@ class Deployer {
                     const paramNames = paramsTogether.split(',');
                     const params = [];
                     if (value.metadata) {
-                        const metadataHash = await storage.uploadFile(
+                        const metadataHash = await uploadFile(
                             JSON.stringify(value.metadata)
                         );
                         value.metadata['metadataHash'] = metadataHash;
