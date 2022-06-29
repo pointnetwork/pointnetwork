@@ -143,7 +143,7 @@ export default function Identity(props) {
         setOwner(result.data.owner);
         setIsLoadingOwner(false);
         const resultAddr = await window.point.wallet.address();
-        setIsOwner(result.data.owner === resultAddr.data.address);
+        setIsOwner(result.data.owner.toLowerCase() === resultAddr.data.address.toLowerCase());
     };
 
     const fetchPublicKey = async () => {
@@ -365,7 +365,7 @@ export default function Identity(props) {
         Boolean(ikvNewEntryValue) &&
         Boolean(ikvNewEntryVersion);
 
-    const showIkvEditForm = walletAddr === owner;
+    const showIkvEditForm = walletAddr.toLowerCase() === owner?.toLowerCase();
 
     return (
         <Container className="p-3">
