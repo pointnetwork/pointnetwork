@@ -3,8 +3,8 @@ import logger from '../core/log';
 import fastifyWs from 'fastify-websocket';
 import {transformErrorResp} from '../errors';
 import identityMdw from './middleware/identity';
-import ws_routes from './ws_routes';
-import api_routes from './api_routes';
+const ws_routes = require('./ws_routes');
+const api_routes = require('./api_routes');
 
 const apiServer = fastify({
     logger: logger.child({module: 'ApiServer.server'}),
