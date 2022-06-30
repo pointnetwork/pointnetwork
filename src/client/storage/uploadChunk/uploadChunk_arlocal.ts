@@ -48,11 +48,11 @@ const uploadChunk = async (data: Buffer): Promise<string> => {
     const chunkId = hashFn(data).toString('hex');
 
     const chunk = await Chunk.findByIdOrCreate(chunkId);
-    if (chunk.dl_status === CHUNK_UPLOAD_STATUS.COMPLETED) {
+    if (chunk.ul_status === CHUNK_UPLOAD_STATUS.COMPLETED) {
         log.debug({chunkId}, 'Chunk already exists, cancelling upload');
         return chunkId;
     }
-    if (chunk.dl_status === CHUNK_UPLOAD_STATUS.IN_PROGRESS) {
+    if (chunk.ul_status === CHUNK_UPLOAD_STATUS.IN_PROGRESS) {
         log.debug({chunkId}, 'Chunk upload already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return uploadChunk(data);
@@ -60,7 +60,7 @@ const uploadChunk = async (data: Buffer): Promise<string> => {
 
     log.debug({chunkId}, 'Starting chunk upload');
     try {
-        chunk.dl_status = CHUNK_UPLOAD_STATUS.IN_PROGRESS;
+        chunk.ul_status = CHUNK_UPLOAD_STATUS.IN_PROGRESS;
         await chunk.save();
 
         const chunkIdVersioned = `__pn_chunk_${VERSION_MAJOR}.${VERSION_MINOR}_id`;
@@ -84,7 +84,7 @@ const uploadChunk = async (data: Buffer): Promise<string> => {
         log.debug({chunkId}, 'Chunk successfully uploaded, saving to disk');
 
         await fs.writeFile(path.join(UPLOAD_CACHE_PATH, `chunk_${chunkId}`), data);
-        chunk.dl_status = CHUNK_UPLOAD_STATUS.COMPLETED;
+        chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
         chunk.size = data.length;
         await chunk.save();
 
@@ -93,7 +93,7 @@ const uploadChunk = async (data: Buffer): Promise<string> => {
         return chunkId;
     } catch (e) {
         log.error({chunkId, message: e.message, stack: e.stack}, 'Chunk upload failed');
-        chunk.dl_status = CHUNK_UPLOAD_STATUS.FAILED;
+        chunk.ul_status = CHUNK_UPLOAD_STATUS.FAILED;
         await chunk.save();
         throw e;
     }
