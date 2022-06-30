@@ -46,7 +46,7 @@ services:
     command: 'run start:zappdev'
     volumes:
       - ./config:/app/config:ro
-      - ../zapps:/app/example:ro
+      - ../zapps_old:/app/example:ro
       - ./internal:/app/internal:ro
       - ./migrations:/app/migrations:ro
       - ./resources:/app/resources:ro
@@ -64,8 +64,8 @@ services:
       - ../point-contracts/contracts:/app/hardhat/contracts:ro
     ports:
       - '12346:9685'
-      - '8666:8666'
-      - '2468:2468'
+      - '65501:8666'
+      - '24681:2468'
     environment:  
       NODE_CONFIG_ENV: zappdev
 
