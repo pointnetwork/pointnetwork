@@ -2,7 +2,6 @@ import http, {RequestListener} from 'http';
 import config from 'config';
 import logger from '../../core/log';
 import net from 'net';
-import attachHandlers from './handlers';
 import httpsServer from './httpsServer';
 
 const log = logger.child({module: 'Proxy'});
@@ -76,8 +75,6 @@ proxyServer.on('connection', socket => {
 proxyServer.on('error', error => {
     log.error({error}, 'Proxy server error');
 });
-
-attachHandlers(httpsServer);
 
 const startProxy = async () => {
     await httpsServer.listen(0);
