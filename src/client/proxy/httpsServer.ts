@@ -9,6 +9,7 @@ import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from 'fastify-websocket';
 import {transformErrorResp} from '../../errors';
 import attachHandlers from './handlers';
+import {cors} from './middleware';
 
 const log = logger.child({module: 'Proxy'});
 const httpsServer = Fastify({
@@ -47,6 +48,7 @@ httpsServer.register(fastifyMultipart);
 httpsServer.register(fastifyFormBody);
 httpsServer.register(fastifyWs);
 
+httpsServer.addHook('preHandler', cors);
 httpsServer.addHook('onSend', transformErrorResp);
 
 attachHandlers(httpsServer);
