@@ -13,10 +13,22 @@ import path from 'path';
 import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, CONCURRENT_DOWNLOAD_DELAY, FILES_DIR, log} from './config';
 import {uploadChunk, getChunk} from './chunk';
 
+type FileInfo = {
+    type: keyof typeof FILE_TYPE
+    name: string
+    size: number
+    id: string
+}
+
+type DirInfo = {
+    type: 'dir',
+    files: FileInfo[]
+}
+
 export const FILE_TYPE = {
     fileptr: 'fileptr', // File
     dirptr: 'dirptr' // Directory
-};
+} as const;
 
 export const uploadFile = async (data: Buffer | string): Promise<string> => {
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
@@ -159,9 +171,9 @@ export const uploadDir = async (dirPath: string) => {
     log.debug({dirPath: escapeString(dirPath)}, 'Uploading directory');
 
     const files = await fs.readdir(dirPath);
-    const dirInfo = {
+    const dirInfo: DirInfo = {
         type: 'dir',
-        files: [] as any[] // TODO: any
+        files: []
     };
 
     await Promise.all(
@@ -290,16 +302,17 @@ export const getFile = async (
     }
 };
 
-export const getJSON = async (id: string, useCache = true) => {
+// @eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getJSON = async <T = any>(id: string, useCache = true): Promise<T> => {
     log.debug({id}, 'Getting JSON');
     const file = await getFile(id, 'utf8', useCache);
     return JSON.parse(file.toString('utf-8'));
 };
 
 export const getFileIdByPath = async (dirId: string, filePath: string): Promise<string> => {
-    const directory = await getJSON(dirId);
+    const directory = await getJSON<DirInfo>(dirId);
     const segments = filePath.split(/[/\\]/).filter(s => s !== '');
-    const nextFileOrDir = directory.files.find((f: any) => f.name === segments[0]); // TODO: any
+    const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
     if (!nextFileOrDir) {
         throw new Error(`Failed to find file ${filePath} in directory ${dirId}: not found`);
     }
