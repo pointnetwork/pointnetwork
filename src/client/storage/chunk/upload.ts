@@ -31,7 +31,11 @@ const uploadChunk = async (data: Buffer) => {
             if (updatedChunk.retry_count >= UPLOAD_RETRY_LIMIT) {
                 throw new Error(`Failed to upload chunk ${chunkId}`);
             }
+<<<<<<< HEAD
             if (updatedChunk.validation_retry_count >= UPLOAD_RETRY_LIMIT) {
+=======
+            if (updatedChunk.validate_retry_count >= UPLOAD_RETRY_LIMIT) {
+>>>>>>> 3de53483 (Change folder names in storage)
                 throw new Error(`Failed to validate chunk ${chunkId}`);
             } else {
                 updatedChunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
