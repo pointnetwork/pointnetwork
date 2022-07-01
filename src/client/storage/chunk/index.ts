@@ -5,4 +5,4 @@ import upload_zappdev from './upload.zappdev';
 import {MODE} from '../config';
 
 export const getChunk = MODE === 'zappdev' ? download_zappdev : download;
-export const uploadChunk = MODE === 'zappdev' ? upload : upload_zappdev;
+export const uploadChunk = MODE === 'zappdev' ? upload_zappdev : upload;
