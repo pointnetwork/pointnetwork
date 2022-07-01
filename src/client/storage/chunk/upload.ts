@@ -31,7 +31,7 @@ const uploadChunk = async (data: Buffer) => {
             if (updatedChunk.retry_count >= UPLOAD_RETRY_LIMIT) {
                 throw new Error(`Failed to upload chunk ${chunkId}`);
             }
-            if (updatedChunk.validate_retry_count >= UPLOAD_RETRY_LIMIT) {
+            if (updatedChunk.validation_retry_count >= UPLOAD_RETRY_LIMIT) {
                 throw new Error(`Failed to validate chunk ${chunkId}`);
             } else {
                 updatedChunk.ul_status = CHUNK_UPLOAD_STATUS.ENQUEUED;
