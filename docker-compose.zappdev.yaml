@@ -36,9 +36,9 @@ services:
       - shared_contracts_zappdev:/build:rw
 
   point_node:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    extends:
+      file: docker-compose.base.yaml
+      service: point_node
     container_name: point_node
     depends_on:
       contract_deployer:
