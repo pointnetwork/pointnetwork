@@ -1,5 +1,4 @@
 const WebSocket = require('ws');
-const DeployerProgress = require('../../client/zweb/deployer/progress');
 const Console = require('../../console');
 const logger = require('../../core/log');
 const log = logger.child({module: 'NodeSocketController'});
@@ -8,15 +7,14 @@ const log = logger.child({module: 'NodeSocketController'});
 The NodeSocketController is for handling internal node websocket connections via the internal node api port and is currently used by the Fastify Websocket connection (see ws_routes.js).
 */
 class NodeSocketController {
-    constructor(_ctx, _ws, _wss) {
-        this.ctx = _ctx;
+    constructor(_ws, _wss) {
         this.ws = _ws;
         this.wss = _wss;
         this.init();
     }
 
     init() {
-        this.console = new Console(this.ctx);
+        this.console = new Console();
         // expect the message to contain an object detailing the
         this.ws.on('message', async msg => {
             const cmd = JSON.parse(msg);
@@ -38,22 +36,6 @@ class NodeSocketController {
                 //         )
                 //     );
                 //     break;
-                case 'deployerSubscription':
-                    // subscribe to the deployerProgress PROGRESS_UPDATED via the wallet progressEventEmitter
-                    this.ctx.client.deployerProgress.progressEventEmitter.on(
-                        DeployerProgress.PROGRESS_UPDATED,
-                        data => {
-                            this.publishToClients(this._formatResponse(cmd, data));
-                        }
-                    );
-                    this.publishToClients(
-                        this._formatResponse(
-                            cmd,
-                            {message: 'Subscribed to DeployerProgress.PROGRESS_UPDATED'},
-                            'SUBSCRIBED_EVENT'
-                        )
-                    );
-                    break;
             }
         });
 

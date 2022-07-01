@@ -1,6 +1,6 @@
 import https from 'https';
 import Fastify from 'fastify';
-import certificates from './certificates';
+import {getCertificate} from './certificates';
 import tls from 'tls';
 import logger from '../../core/log';
 import fastifyUrlData from '@fastify/url-data';
@@ -8,6 +8,7 @@ import fastifyMultipart from '@fastify/multipart';
 import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from 'fastify-websocket';
 import {transformErrorResp} from '../../errors';
+import attachHandlers from './handlers';
 import {cors} from './middleware';
 
 const log = logger.child({module: 'Proxy'});
@@ -16,20 +17,20 @@ const httpsServer = Fastify({
         const server = https.createServer(
             {
                 SNICallback: (servername, cb) => {
-                    const certData = certificates.getCertificate(servername);
-                    const ctx = tls.createSecureContext(certData);
+                    const certData = getCertificate(servername);
+                    const secureContext = tls.createSecureContext(certData);
 
-                    if (!ctx) {
+                    if (!secureContext) {
                         log.debug({servername}, `Not found SSL certificate for host`);
                     } else {
                         log.debug({servername}, `SSL certificate has been found and assigned`);
                     }
 
                     if (typeof cb !== 'function') {
-                        return ctx;
+                        return secureContext;
                     }
 
-                    cb(null, ctx);
+                    cb(null, secureContext);
                 }
             },
             handler
@@ -49,5 +50,7 @@ httpsServer.register(fastifyWs);
 
 httpsServer.addHook('preHandler', cors);
 httpsServer.addHook('onSend', transformErrorResp);
+
+attachHandlers(httpsServer);
 
 export default httpsServer;

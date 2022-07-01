@@ -1,4 +1,3 @@
-import attachHandlers from '../../src/client/proxy/handlers';
 import httpsServer from '../../src/client/proxy/httpsServer';
 import ethereum from '../../src/network/providers/ethereum';
 import axios from 'axios';
@@ -38,10 +37,6 @@ jest.mock('axios', () => ({
         }))
     }
 }));
-
-beforeAll(() => {
-    attachHandlers(httpsServer, {});
-});
 
 describe('Proxy', () => {
     it('Should perform contract_send request', async () => {

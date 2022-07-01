@@ -4,8 +4,8 @@
 
 // returns an array of hashes of length: values.length / 2 + (values.length % 2)
 const derive = (
-    values: Uint8Array[],
-    digestFn: (data: Uint8Array) => Uint8Array,
+    values: Buffer[],
+    digestFn: (data: Buffer) => Buffer,
     initial_iteration: boolean
 ) => {
     const length = values.length;
@@ -25,7 +25,7 @@ const derive = (
 };
 
 // returns the merkle tree
-export const merkle = (values: Uint8Array[], digestFn: (data: Uint8Array) => Uint8Array) => {
+export const merkle = (values: Buffer[], digestFn: (data: Buffer) => Buffer) => {
     if (!Array.isArray(values)) throw TypeError('Expected values Array');
     if (typeof digestFn !== 'function') throw TypeError('Expected digest Function');
 

@@ -39,6 +39,7 @@ services:
     extends:
       file: docker-compose.base.yaml
       service: point_node
+    container_name: point_node
     depends_on:
       contract_deployer:
         condition: service_completed_successfully
@@ -60,6 +61,7 @@ services:
       - ./resources/arweave-test-key.json:/data/keystore/arweave.json
       - ./hardhat.config.js:/app/hardhat.config.js
       - ../point-contracts/resources:/app/hardhat/resources:rw
+      - ../point-contracts/contracts:/app/hardhat/contracts:ro
     ports:
       - '12346:9685'
       - '65501:8666'

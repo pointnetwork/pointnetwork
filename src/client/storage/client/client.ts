@@ -1,12 +1,12 @@
 import Arweave from 'arweave';
-import config from 'config';
 import {AxiosResponse} from 'axios';
+import {HOST, PORT, PROTOCOL, TIMEOUT} from '../config';
 
 const arweave = Arweave.init({
-    port: Number(config.get('storage.arweave_port')),
-    protocol: config.get('storage.arweave_protocol'),
-    host: config.get('storage.arweave_host'),
-    timeout: config.get('storage.request_timeout')
+    port: PORT,
+    protocol: PROTOCOL,
+    host: HOST,
+    timeout: TIMEOUT
 });
 
 export const storage: {

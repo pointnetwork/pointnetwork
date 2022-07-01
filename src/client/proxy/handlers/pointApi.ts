@@ -6,7 +6,7 @@ const attachPointApiHandler = (server: FastifyInstance) => {
         method: ['GET', 'POST'],
         url: '/point_api/wallet/:method',
         handler: async (req: FastifyRequest<{ Params: {'method': string}; }>, res) => {
-            const controller = new WalletController({}, req, res);
+            const controller = new WalletController(req, res);
 
             return controller[req.params.method as 'send']();
         }

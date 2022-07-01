@@ -1,5 +1,5 @@
 const initFolders = require('../dist/initFolders');
-const storage = require('../dist/client/storage');
+const initStorage = require('../dist/client/storage/init');
 const migrate = require('../dist/util/migrate');
 
 module.exports = async () => {
@@ -15,5 +15,5 @@ module.exports = async () => {
 
     await initFolders.default();
     await migrate.default();
-    await storage.init();
+    await initStorage.default();
 };

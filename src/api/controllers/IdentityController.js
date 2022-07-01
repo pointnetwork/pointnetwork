@@ -9,6 +9,7 @@ const axios = require('axios');
 const ethers = require('ethers');
 const {getReferralCode, isChineseTimezone} = require('../../util');
 const open = require('open');
+const csrfTokens = require('../../client/zweb/renderer/csrfTokens');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
@@ -110,8 +111,8 @@ function getHashedMessage(identity, owner, type) {
 }
 
 class IdentityController extends PointSDKController {
-    constructor(ctx, req, rep) {
-        super(ctx, req);
+    constructor(req, rep) {
+        super(req);
         this.req = req;
         this.rep = rep;
     }
@@ -147,7 +148,7 @@ class IdentityController extends PointSDKController {
 
     async openLink() {
         const {url, _csrf} = this.req.body;
-        if (_csrf !== this.ctx.csrf_tokens.point) {
+        if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
         await open(url);
@@ -182,7 +183,7 @@ class IdentityController extends PointSDKController {
         if (host !== 'point') {
             return this.rep.status(403).send('Forbidden');
         }
-        if (_csrf !== this.ctx.csrf_tokens.point) {
+        if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
 

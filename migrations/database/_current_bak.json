@@ -10,6 +10,11 @@
                     "field": "id",
                     "seqType": "Sequelize.STRING"
                 },
+                "original_path": {
+                    "allowNull": false,
+                    "field": "original_path",
+                    "seqType": "Sequelize.TEXT"
+                },
                 "size": {
                     "allowNull": true,
                     "field": "size",
@@ -162,8 +167,8 @@
             }
         }
     },
-    "path": "/home/vmubnt/pointnet/src/pointnetwork/migrations/database/_current.json",
-    "backupPath": "/home/vmubnt/pointnet/src/pointnetwork/migrations/database/_current_bak.json",
+    "path": "/Users/brian/pn/pointnetwork/migrations/database/_current.json",
+    "backupPath": "/Users/brian/pn/pointnetwork/migrations/database/_current_bak.json",
     "exists": true,
-    "revision": 5
+    "revision": 4
 }

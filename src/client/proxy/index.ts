@@ -2,7 +2,6 @@ import http, {RequestListener} from 'http';
 import config from 'config';
 import logger from '../../core/log';
 import net from 'net';
-import attachHandlers from './handlers';
 import httpsServer from './httpsServer';
 
 const log = logger.child({module: 'Proxy'});
@@ -77,14 +76,7 @@ proxyServer.on('error', error => {
     log.error({error}, 'Proxy server error');
 });
 
-// TODO: ctx is needed for Renderer, remove it later
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const startProxy = async (ctx: any) => {
-    // Main logic is here
-
-    // TODO: move it to the root once we get rid of ctx
-    attachHandlers(httpsServer, ctx);
-
+const startProxy = async () => {
     await httpsServer.listen(0);
     await proxyServer.listen(PROXY_PORT);
 

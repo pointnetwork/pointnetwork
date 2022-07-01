@@ -24,7 +24,6 @@ class File extends Model {
 File.init(
     {
         id: {type: Sequelize.DataTypes.STRING, unique: true, primaryKey: true},
-        original_path: {type: Sequelize.DataTypes.TEXT},
         size: {type: Sequelize.DataTypes.INTEGER, allowNull: true},
         dl_status: {
             type: Sequelize.DataTypes.STRING,
