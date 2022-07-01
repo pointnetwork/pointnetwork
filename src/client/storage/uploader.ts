@@ -5,7 +5,7 @@ import axios from 'axios';
 import {promises as fs} from 'fs';
 import path from 'path';
 import logger from '../../core/log';
-import {storage} from './arweave/arweave';
+import {storage} from './client/client';
 import {eachLimit} from 'async';
 import {downloadChunk} from './bundler';
 import {

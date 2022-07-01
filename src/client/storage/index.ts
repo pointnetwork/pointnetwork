@@ -11,8 +11,7 @@ import {
 import {promises as fs} from 'fs';
 import path from 'path';
 import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, CONCURRENT_DOWNLOAD_DELAY, FILES_DIR, log} from './config';
-import uploadChunk from './uploadChunk';
-import getChunk from './getChunk';
+import {uploadChunk, getChunk} from './chunk';
 
 export const FILE_TYPE = {
     fileptr: 'fileptr', // File
