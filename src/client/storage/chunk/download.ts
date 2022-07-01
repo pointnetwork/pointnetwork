@@ -6,7 +6,7 @@ import {delay, hashFn} from '../../../util';
 import {downloadChunk as downloadChunkFromBundler} from '../bundler';
 import getDownloadQuery from '../query';
 import {request} from 'graphql-request';
-import {storage} from '../arweave/arweave';
+import {storage} from '../client/client';
 import {
     BUNDLER_DOWNLOAD_URL,
     CONCURRENT_DOWNLOAD_DELAY,

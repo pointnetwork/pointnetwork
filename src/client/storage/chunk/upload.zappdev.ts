@@ -2,7 +2,7 @@ import {delay, hashFn} from '../../../util';
 import Chunk, {CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk';
 import {promises as fs} from 'fs';
 import path from 'path';
-import arweave, {arweaveKey} from '../arweave/arweave_arlocal';
+import arweave, {arweaveKey} from '../client/client_zappdev';
 import {
     CONCURRENT_DOWNLOAD_DELAY,
     log,
