@@ -58,8 +58,8 @@ let TwitterOracle = {
 };
 
 if (
-    (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') &&
-    !(process.env.USE_ORACLE === 'true')
+    (['e2e', 'zappdev', 'test'].includes(process.env.MODE)) &&
+    process.env.USE_ORACLE !== 'true'
 ) {
     TwitterOracle = {
         async isIdentityEligible(identity) {
@@ -104,10 +104,9 @@ function getIdentityActivationCode(owner) {
 function getHashedMessage(identity, owner, type) {
     const lowerCaseOwner = owner.toLowerCase();
     const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
-    const hashedMessage = ethers.utils.id(
+    return ethers.utils.id(
         `${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`
     );
-    return hashedMessage;
 }
 
 class IdentityController extends PointSDKController {
@@ -119,13 +118,14 @@ class IdentityController extends PointSDKController {
 
     async isIdentityRegistered() {
         const identityRegistred = await blockchain.isCurrentIdentityRegistered();
-        return this._response({identityRegistred: identityRegistred});
+        // TODO: typo. Not fixing as it can break smth
+        return this._response({identityRegistred});
     }
 
     async identityToOwner() {
         const identity = this.req.params.identity;
         const owner = await blockchain.ownerByIdentity(identity);
-        return this._response({owner: owner});
+        return this._response({owner});
     }
 
     async ownerToIdentity() {

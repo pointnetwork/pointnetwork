@@ -12,7 +12,7 @@ module.exports = [
         'IdentityController@isIdentityEligible'
     ],
     ['GET', '/v1/api/identity/isIdentityRegistered/', 'IdentityController@isIdentityRegistered'],
-    ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'],
+    ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'], // TODO: why POST?
     ['POST', '/v1/api/identity/open', 'IdentityController@openLink'],
     ['POST', '/v1/api/identity/register', 'IdentityController@registerIdentity'],
     ['GET', '/v1/api/identity/resolve/:domain', 'IdentityController@resolveDomain'],
