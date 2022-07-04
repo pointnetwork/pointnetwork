@@ -96,7 +96,7 @@ export async function compileAndSaveContract({
     }
 
     const nodeModulesPath = path.join(__dirname, '..', '..', 'node_modules');
-    const originalPath = '';
+    const originalPath = contractPath;
     const getImports = getImportsFactory(nodeModulesPath, originalPath);
 
     const artefact = compileContract({name, contractPath, getImports});
