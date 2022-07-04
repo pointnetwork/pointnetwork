@@ -32,7 +32,7 @@ export default function Identity({ params: { handle } }) {
         setOwner(result.data.owner);
         setIsLoadingOwner(false);
         const resultAddr = await window.point.wallet.address();
-        setIsOwner(result.data.owner === resultAddr.data.address);
+        setIsOwner(result.data.owner.toLowerCase() === resultAddr.data.address.toLowerCase());
     };
 
     const fetchPublicKey = async () => {
@@ -173,8 +173,7 @@ export default function Identity({ params: { handle } }) {
     const revokeDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
-            await window.point.contract.send({
-                host: '@',
+            await window.point.contract.call({
                 contract: 'Identity',
                 method: 'removeIdentityDeployer',
                 params: [handle, deployer],
@@ -189,7 +188,7 @@ export default function Identity({ params: { handle } }) {
             Swal.fire({
                 icon: 'error',
                 title: 'Request Failed',
-                text: e,
+                text: e.message,
             });
             setIsLoadingDeployers(false);
         }
@@ -198,8 +197,7 @@ export default function Identity({ params: { handle } }) {
     const activateDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
-            await window.point.contract.send({
-                host: '@',
+            await window.point.contract.call({
                 contract: 'Identity',
                 method: 'addIdentityDeployer',
                 params: [handle, deployer],
@@ -215,7 +213,7 @@ export default function Identity({ params: { handle } }) {
             Swal.fire({
                 icon: 'error',
                 title: 'Request Failed',
-                text: e,
+                text: e.message,
             });
             setIsLoadingDeployers(false);
             return false;
