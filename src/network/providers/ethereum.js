@@ -151,7 +151,8 @@ ethereum.loadPointContract = async (
                     log.debug('Successfully fetched identity contract from storage');
 
                     abisByContractName[contractName] = JSON.parse(abiFile).abi;
-                    return new getWeb3().eth.Contract(abisByContractName[contractName], at);
+                    const web3 = getWeb3();
+                    return new web3.eth.Contract(abisByContractName[contractName], at);
                 } catch (e) {
                     log.error('Failed to fetch Identity contract from storage: ' + e.message);
                 }
