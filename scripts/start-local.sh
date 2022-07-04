@@ -21,7 +21,7 @@ npx hardhat compile
 export MODE=zappdev
 npm start
 cp resources/Identity-address.json ../pointnetwork/hardhat/resources/ 
-cp contracts/Identity.sol ../pointnetwork/hardhat/contracts/ 
+cp contracts/* ../pointnetwork/hardhat/contracts/ 
 cp -r build/contracts/Identity.sol ../pointnetwork/hardhat/build/contracts/Identity.sol
 cd ../pointnetwork
 
