@@ -1,4 +1,4 @@
-mode: "test"
+mode: test
 log:
   level: error
   sendLogs: false
