@@ -13,6 +13,7 @@
     "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@fastify/formbody": "^6.0.0",
     "@fastify/multipart": "^6.0.0",
+    "point-contract-manager": "github:pointnetwork/point-contracts#v0.1.0",
     "@fastify/url-data": "^4.0.0",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@openzeppelin/contracts": "^4.5.0",
