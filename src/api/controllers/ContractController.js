@@ -4,8 +4,8 @@ const _ = require('lodash');
 const blockchain = require('../../network/providers/ethereum');
 
 class ContractController extends PointSDKController {
-    constructor(ctx, req, reply) {
-        super(ctx, req);
+    constructor(req, reply) {
+        super(req);
         this.req = req;
         this.host = this.req.headers.host;
         // TODO: also verify the domain is registered in the Identity contract

@@ -9,19 +9,16 @@ const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
 const {execSync} = require('child_process');
+const {getFile, uploadDir, uploadFile} = require('../../storage');
 
-// TODO: direct import cause fails in some docker scripts
-let storage;
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
 const POINT_SDK_VERSION = 'zweb/point/sdk/version';
 const POINT_NODE_VERSION = 'zweb/point/node/version';
 
 class Deployer {
-    constructor(ctx) {
-        this.ctx = ctx;
+    constructor() {
         this.cache_uploaded = {}; // todo: unused? either remove or use
-        storage = require('../../storage/index.js');
     }
 
     async start() {
@@ -308,11 +305,19 @@ class Deployer {
                             log.debug({address: idContract.options.address}, 'Identity contract address');
                             try {
                                 
-                                log.debug({IdContractAddress: idContract.options.address, identity}, 'deploying proxy binded with identity contract and identity');
-                                proxy = await hre.upgrades.deployProxy(contractF, [idContract.options.address, identity], cfg);
+                                log.debug(
+                                    {IdContractAddress: idContract.options.address, identity},
+                                    'deploying proxy binded with identity contract and identity'
+                                );
+                                proxy = await hre.upgrades.deployProxy(
+                                    contractF, [idContract.options.address, identity], cfg
+                                );
                             } catch (e){
                                 log.warn('Deploying proxy binded with id contract and identity failed.');
-                                log.debug({IdContractAddress: idContract.options.address, identity}, 'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.');
+                                log.debug(
+                                    {IdContractAddress: idContract.options.address, identity},
+                                    'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.'
+                                );
                                 proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
                             }
                         } else {
@@ -323,12 +328,15 @@ class Deployer {
                             }
                             fs.writeFileSync(
                                 proxyMetadataFilePath,
-                                await storage.getFile(proxyDescriptionFileId)
+                                await getFile(proxyDescriptionFileId)
                             );
                             
                             try {
-                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);    
-                            } catch (e){
+                                proxy = await hre.upgrades.upgradeProxy(
+                                    proxyAddress,
+                                    contractF
+                                );
+                            } catch (e) {
                                 log.debug('upgradeProxy call failed');
                                 log.debug('deleting proxy metadata file');
                                 fs.unlinkSync(proxyMetadataFilePath);
@@ -358,7 +366,6 @@ class Deployer {
                         );
                     }
                 }
-                this.ctx.client.deployerProgress.update(fileName, 40, 'deployed');
 
                 const artifactsStorageId = await this.storeContractArtifacts(
                     artifactsDeployed,
@@ -386,14 +393,8 @@ class Deployer {
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
 
                 log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
-                this.ctx.client.deployerProgress.update(proxyMetadataFilePath, 0, 'uploading');
-                const proxyMetadataFileUploadedId = await storage.uploadFile(
+                const proxyMetadataFileUploadedId = await uploadFile(
                     JSON.stringify(proxyMetadata)
-                );
-                this.ctx.client.deployerProgress.update(
-                    proxyMetadataFilePath,
-                    100,
-                    `uploaded::${proxyMetadataFileUploadedId}`
                 );
                 await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
                 log.debug('Proxy metadata updated');
@@ -406,7 +407,7 @@ class Deployer {
 
     async uploadRootDir(deployPath, rootDir = 'public') {
         log.debug('Uploading root directory...');
-        const publicDirId = await storage.uploadDir(path.join(deployPath, rootDir));
+        const publicDirId = await uploadDir(path.join(deployPath, rootDir));
         return publicDirId;
     }
 
@@ -416,15 +417,7 @@ class Deployer {
         const routes = JSON.parse(routesFile);
 
         log.debug({routes}, 'Uploading route file...');
-        this.ctx.client.deployerProgress.update(routesFilePath, 0, 'uploading');
-        const routeFileUploadedId = await storage.uploadFile(JSON.stringify(routes));
-        this.ctx.client.deployerProgress.update(
-            routesFilePath,
-            100,
-            `uploaded::${routeFileUploadedId}`
-        );
-
-        return routeFileUploadedId;
+        return uploadFile(JSON.stringify(routes));
     }
 
     async getChainId() {
@@ -673,7 +666,6 @@ class Deployer {
     }
 
     async compileContract(contractName, fileName, deployPath) {
-        this.ctx.client.deployerProgress.update(fileName, 0, 'compiling');
         const contractPath = path.join(deployPath, 'contracts');
         const nodeModulesPath = path.join(deployPath, 'node_modules');
         const originalPath = path.join(deployPath, 'contracts');
@@ -703,8 +695,6 @@ class Deployer {
             if (found) throw new Error(msg);
         }
 
-        this.ctx.client.deployerProgress.update(fileName, 20, 'compiled');
-
         let artifacts;
         for (const contractFileName in compiledSources.contracts) {
             const fileName = contractFileName
@@ -725,10 +715,8 @@ class Deployer {
     async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
         const artifactsJSON = JSON.stringify(artifacts);
 
-        this.ctx.client.deployerProgress.update(fileName, 60, 'saving_artifacts');
-        const artifactsStorageId = await storage.uploadFile(artifactsJSON);
+        const artifactsStorageId = await uploadFile(artifactsJSON);
 
-        this.ctx.client.deployerProgress.update(fileName, 80, `updating_zweb_contracts`);
         await blockchain.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
@@ -742,7 +730,6 @@ class Deployer {
             version
         );
 
-        this.ctx.client.deployerProgress.update(fileName, 100, `uploaded::${artifactsStorageId}`);
         return artifactsStorageId;
     }
 
@@ -802,7 +789,7 @@ class Deployer {
 
                         const ext = value.file.replace(/.*\.([a-zA-Z0-9]+)$/, '$1');
                         const file = await fs.promises.readFile(filePath);
-                        const cid = await storage.uploadFile(file);
+                        const cid = await uploadFile(file);
 
                         value = '/_storage/' + cid + '.' + ext;
                     } else {
@@ -836,7 +823,7 @@ class Deployer {
                     const paramNames = paramsTogether.split(',');
                     const params = [];
                     if (value.metadata) {
-                        const metadataHash = await storage.uploadFile(
+                        const metadataHash = await uploadFile(
                             JSON.stringify(value.metadata)
                         );
                         value.metadata['metadataHash'] = metadataHash;

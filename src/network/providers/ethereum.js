@@ -151,7 +151,8 @@ ethereum.loadPointContract = async (
                     log.debug('Successfully fetched identity contract from storage');
 
                     abisByContractName[contractName] = JSON.parse(abiFile).abi;
-                    return new getWeb3().eth.Contract(abisByContractName[contractName], at);
+                    const web3 = getWeb3();
+                    return new web3.eth.Contract(abisByContractName[contractName], at);
                 } catch (e) {
                     log.error('Failed to fetch Identity contract from storage: ' + e.message);
                 }
@@ -569,7 +570,13 @@ ethereum.getKeyValue = async (
     // Process @@copy_from_ikv instruction if followCopyFromIkv is set to true
     if (followCopyFromIkv) {
         // self invoke to get the value first but without redirection
-        const value = await ethereum.getKeyValue(identity, key, version, versionSearchStrategy, false);
+        const value = await ethereum.getKeyValue(
+            identity,
+            key,
+            version,
+            versionSearchStrategy,
+            false
+        );
 
         const copyFromIkv_prolog = '@@copy_from_ikv=';
         if (! value.startsWith(copyFromIkv_prolog)) {

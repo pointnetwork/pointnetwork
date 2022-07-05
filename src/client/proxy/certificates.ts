@@ -1,10 +1,10 @@
-const forge = require('node-forge');
-const fs = require('fs');
-const path = require('path');
+import forge from 'node-forge';
+import fs from 'fs';
+import path from 'path';
 
-const certCache = {};
+const certCache: Record<string, {key: string, cert: string}> = {};
 
-function getCertificate(servername) {
+export function getCertificate(servername: string) {
     // if (!_.endsWith(servername, '.point') && !_.endsWith(servername, '.point')) return null;
 
     if (!certCache[servername]) {
@@ -14,17 +14,17 @@ function getCertificate(servername) {
     return certCache[servername];
 }
 
-function generateCertificate(servername) {
+function generateCertificate(servername: string) {
     const pki = forge.pki;
     const keys = pki.rsa.generateKeyPair(2048);
     const cert = pki.createCertificate();
 
     const certsPath = path.join(__dirname, '../../../resources/certs');
-    const privateCAKey = pki.privateKeyFromPem(fs.readFileSync(`${certsPath}/ca.key`));
-    const caCert = pki.certificateFromPem(fs.readFileSync(`${certsPath}/ca.crt`));
+    const privateCAKey = pki.privateKeyFromPem(fs.readFileSync(`${certsPath}/ca.key`, 'utf8'));
+    const caCert = pki.certificateFromPem(fs.readFileSync(`${certsPath}/ca.crt`, 'utf8'));
 
     cert.publicKey = keys.publicKey;
-    function md5(value) {
+    function md5(value: string) {
         return require('crypto').createHash('md5').update(value).digest('hex');
     }
     cert.serialNumber = md5(servername + Date.now());
@@ -99,5 +99,3 @@ function generateCertificate(servername) {
         // ) : null,
     };
 }
-
-module.exports = {getCertificate};

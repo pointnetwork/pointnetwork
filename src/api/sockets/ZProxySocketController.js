@@ -22,8 +22,7 @@ export const SUBSCRIPTION_REQUEST_TYPES = {
 };
 
 class ZProxySocketController {
-    constructor(_ctx, _ws, _wss, _hostname) {
-        this.ctx = _ctx;
+    constructor(_ws, _wss, _hostname) {
         this.ws = _ws;
         this.wss = _wss;
         this.hostname = _hostname;

@@ -1,14 +1,12 @@
 import {gql} from 'graphql-request';
-import config from 'config';
+import {VERSION_MAJOR, VERSION_MINOR} from './config';
 
 const getDownloadQuery = (chunkId: string): string =>
     gql`{
       transactions(
         tags: [
           {
-            name: "__pn_chunk_${config.get(
-        'storage.arweave_experiment_version_major'
-    )}.${config.get('storage.arweave_experiment_version_minor')}_id",
+            name: "__pn_chunk_${VERSION_MAJOR}.${VERSION_MINOR}_id",
             values: ["${chunkId}"]
           }
         ]

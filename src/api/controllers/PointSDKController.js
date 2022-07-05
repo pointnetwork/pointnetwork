@@ -1,8 +1,8 @@
 import config from 'config';
+import csrfTokens from '../../client/zweb/renderer/csrfTokens';
 
 class PointSDKController {
-    constructor(ctx, req, web2 = false) {
-        this.ctx = ctx;
+    constructor(req, web2 = false) {
         this.status = 200;
 
         const host = req.headers.host;
@@ -10,9 +10,8 @@ class PointSDKController {
 
         if (method === 'POST' && config.get('api.csrf_enabled')) {
             const csrfToken = req.body.csrfToken;
-            if (web2){
+            if (web2) {
                 this.csrfTokenGuard(req.body.host, csrfToken);
-                
             } else {
                 this.csrfTokenGuard(host, csrfToken);
             }
@@ -21,10 +20,8 @@ class PointSDKController {
     }
 
     csrfTokenGuard(host, submittedToken) {
-        if (!this.ctx.csrf_tokens)
-            throw new Error('No csrf token generated for this host (rather, no tokens at all)');
-        if (!this.ctx.csrf_tokens[host]) throw new Error('No csrf token generated for this host');
-        const real_token = this.ctx.csrf_tokens[host];
+        if (!csrfTokens[host]) throw new Error('No csrf token generated for this host');
+        const real_token = csrfTokens[host];
         if (real_token !== submittedToken) {
             throw new Error('Invalid csrf token submitted');
         }
