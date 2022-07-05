@@ -276,8 +276,7 @@ export default function Identity(props) {
     const revokeDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
-            await window.point.contract.send({
-                host: '@',
+            await window.point.contract.call({
                 contract: 'Identity',
                 method: 'removeIdentityDeployer',
                 params: [handle, deployer],
@@ -292,7 +291,7 @@ export default function Identity(props) {
             Swal.fire({
                 icon: 'error',
                 title: 'Request Failed',
-                text: e,
+                text: e.message,
             });
             setIsLoadingDeployers(false);
         }
@@ -301,8 +300,7 @@ export default function Identity(props) {
     const activateDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
-            await window.point.contract.send({
-                host: '@',
+            await window.point.contract.call({
                 contract: 'Identity',
                 method: 'addIdentityDeployer',
                 params: [handle, deployer],
@@ -318,7 +316,7 @@ export default function Identity(props) {
             Swal.fire({
                 icon: 'error',
                 title: 'Request Failed',
-                text: e,
+                text: e.message,
             });
             setIsLoadingDeployers(false);
             return false;
