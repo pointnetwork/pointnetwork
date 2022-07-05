@@ -37,3 +37,5 @@ hardhat/typechain
 resources/liveprofile/
 .openzeppelin
 typechain-types
+
+junit.xml
