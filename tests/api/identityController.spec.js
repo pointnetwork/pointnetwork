@@ -122,11 +122,14 @@ describe('Identity controller', () => {
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
+        expect(JSON.parse(res.payload)).toEqual({
             status: 200,
-            data: {eligibility: 'tweet', code: '6e1f85e108965da3addf7d5866f434d1'},
+            data: {
+                eligibility: 'tweet',
+                code: expect.any(String)
+            },
             headers: {}
-        }));
+        });
         expect(ethereum.ownerByIdentity).toHaveBeenCalledWith('tweet1');
     });
 
