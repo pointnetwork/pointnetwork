@@ -148,7 +148,10 @@
     ],
     "testEnvironment": "node",
     "testRunner": "jest-circus/runner",
-    "globalSetup": "./tests/globalSetup.js"
+    "globalSetup": "./tests/globalSetup.js",
+    "testTimeout": 10000,
+    "maxConcurrency": 3,
+    "maxWorkers": "50%"
   },
   "nodemonConfig": {
     "ignore": [
