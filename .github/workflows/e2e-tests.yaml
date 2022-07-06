@@ -19,11 +19,11 @@ jobs:
     - run: npm run build
     - run: npm run test:ci
 
-#    - name: Publish Unit Test Results
-#      uses: EnricoMi/publish-unit-test-result-action@v1
-#      if: always()
-#      with:
-#        files: "./junit.xml"
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always()
+      with:
+        files: "./junit.xml"
 #  e2e-tests:
 #    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 #    timeout-minutes: 30
