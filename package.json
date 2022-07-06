@@ -48,7 +48,6 @@
     "handlebars": "^4.7.7",
     "hardhat": "^2.9.1",
     "html-entities": "^2.3.2",
-    "jest-junit": "^13.0.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.32",
@@ -99,8 +98,9 @@
     "hardhat": "^2.8.4",
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.0",
-    "jest": "^28.1.2",
-    "jest-circus": "^28.1.2",
+    "jest": "^25.5.4",
+    "jest-circus": "^25.5.4",
+    "jest-junit": "^14.0.0",
     "nodemon": "^2.0.12",
     "pkg": "^5.7.0",
     "sequelize-cli": "^6.2.0",
@@ -112,7 +112,7 @@
   },
   "scripts": {
     "test": "MODE=test jest --forceExit",
-    "test:ci": "cp ./resources/blockchain-test-key.json ./tests/resources/key.json && POINT_KEYSTORE=./tests/resources MODE=test jest --forceExit --reporters=default --reporters=jest-junit",
+    "test:ci": "cp ./resources/blockchain-test-key.json ./tests/resources/key.json && POINT_KEYSTORE=./tests/resources MODE=test jest --forceExit --ci",
     "test:docker": "MODE=test TESTING_IN_DOCKER=true jest tests/docker/*.spec.js --forceExit --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
     "start": "node dist/index.js",
     "start:zappdev": "MODE=zappdev npm run watch",
@@ -152,10 +152,7 @@
     ],
     "testEnvironment": "node",
     "testRunner": "jest-circus/runner",
-    "globalSetup": "./tests/globalSetup.js",
-    "testTimeout": 10000,
-    "maxConcurrency": 3,
-    "maxWorkers": "50%"
+    "globalSetup": "./tests/globalSetup.js"
   },
   "nodemonConfig": {
     "ignore": [
