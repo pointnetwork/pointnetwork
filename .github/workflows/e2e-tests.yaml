@@ -25,6 +25,8 @@ jobs:
       with:
         files: "./junit.xml"
 
+    env:
+      NODE_OPTIONS: '--max_old_space_size=4096'
 #  e2e-tests:
 #    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
 #    timeout-minutes: 30
