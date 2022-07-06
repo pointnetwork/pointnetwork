@@ -1,5 +1,5 @@
 datadir: ~/workspace/pn/devlocal
-zappsdir: ../zapps
+zappsdir: ../
 wallet:
   keystore_path: ~/workspace/pn/devlocal/keystore
 mode: zappdev
