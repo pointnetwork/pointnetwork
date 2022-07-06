@@ -777,7 +777,7 @@ class Deployer {
                     key = key.replace(/.*storage\[([^\]]+)\].*/, '$1');
 
                     if ('blob' in value) {
-                        const uploaded = await storage.uploadFile(String(value.blob));
+                        const uploaded = await uploadFile(String(value.blob));
 
                         value = uploaded;
                     } else if ('file' in value) {
