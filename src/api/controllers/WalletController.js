@@ -49,7 +49,7 @@ class WalletController extends PointSDKController {
     hash() {
         const {host} = this.req.headers;
         if (host !== 'confirmation-window') {
-            return {status: 403};
+            return this._status(403)._response('Forbidden');
         }
 
         const partialPK = getNetworkPrivateKey().slice(0, 33);

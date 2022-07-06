@@ -1,6 +1,7 @@
 import apiServer from '../../src/api/server';
 import ethereum from '../../src/network/providers/ethereum';
 import solana from '../../src/network/providers/solana';
+import httpsServer from '../../src/client/proxy/httpsServer';
 
 jest.mock('../../src/network/providers/ethereum', () => ({getBalance: jest.fn(async () => 1000000000000)}));
 
@@ -93,6 +94,40 @@ describe('Wallet controller', () => {
         expect(JSON.parse(res.payload)).toEqual({
             status: 200,
             data: {balance: 1000000000},
+            headers: {}
+        });
+    });
+
+    it('Hash: should return 403 if host is not point', async () => {
+        expect.assertions(1);
+
+        const res = await httpsServer.inject({
+            method: 'GET',
+            url: 'https://balance.point/point_api/wallet/hash',
+            headers: {host: 'balance.point'}
+        });
+
+        // TODO: we cannot return real 403 status
+        // expect(res.statusCode).toEqual(403);
+        expect(res.payload).toEqual(JSON.stringify({
+            status: 403,
+            data: 'Forbidden',
+            headers: {}
+        }));
+    });
+
+    it('Hash', async () => {
+        expect.assertions(1);
+
+        const res = await httpsServer.inject({
+            method: 'GET',
+            url: 'https://confirmation-window/point_api/wallet/hash',
+            headers: {host: 'confirmation-window'}
+        });
+
+        expect(JSON.parse(res.payload)).toEqual({
+            status: 200,
+            data: {hash: expect.stringMatching(/^0x/)},
             headers: {}
         });
     });
