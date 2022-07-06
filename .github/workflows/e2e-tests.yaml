@@ -15,7 +15,8 @@ jobs:
       with:
         node-version: 14.x
 
-    - run: npm install --no-package-lock
+    - run: rm ./package-lock.json
+    - run: npm install
     - run: npm run build
     - run: npm run test:ci
 
