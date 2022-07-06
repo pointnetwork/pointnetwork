@@ -1,5 +1,5 @@
 import * as web3 from '@solana/web3.js';
-import {getHashedName, getNameAccountKey, NameRegistryState} from '@solana/spl-name-service';
+import {getHashedName, getNameAccountKey, NameRegistryState, updateNameRegistryData} from '@solana/spl-name-service';
 import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
@@ -36,8 +36,9 @@ interface TransactionInstructionJSON {
     data: number[];
 }
 
-const createSolanaConnection = (blockchainUrl: string) => {
-    const connection = new web3.Connection(blockchainUrl, 'confirmed');
+const createSolanaConnection = (blockchainUrl: string, protocol = 'https') => {
+    const url = `${protocol}://${blockchainUrl}`;
+    const connection = new web3.Connection(url, 'confirmed');
     log.debug({blockchainUrl}, 'Created solana instance');
     return connection;
 };
@@ -67,6 +68,28 @@ const instructionFromJson = (json: TransactionInstructionJSON): web3.Transaction
     programId: new web3.PublicKey(json.programId),
     data: Buffer.from(json.data)
 });
+
+/**
+ * Helper function to create a transaction from an array of instructions,
+ * sign it, and send it.
+ *
+ * The first signer in the array of signers is going to be the fee payer.
+ *
+ * Quite similar to the `solana.signAndSendTransaction` method, but more
+ * convenient to use when you already have one or more properly structured
+ * `instruction`s.
+ */
+const sendInstructions = async (
+    connection: web3.Connection,
+    signers: web3.Keypair[],
+    instructions: web3.TransactionInstruction[]
+): Promise<string> => {
+    const tx = new web3.Transaction();
+    tx.feePayer = signers[0].publicKey;
+    tx.add(...instructions);
+    const txId = await connection.sendTransaction(tx, signers, {preflightCommitment: 'single'});
+    return txId;
+};
 
 const solana = {
     requestAccount: async (id: number, network: string) => {
@@ -213,6 +236,30 @@ const solana = {
             owner: registry.owner.toBase58(),
             content: content || null
         };
+    },
+    setDomainContent: async(domainName: string, data: string, network = 'solana') => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network "${network}".`);
+        }
+
+        const {connection, wallet} = provider;
+        const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
+        const offset = 0;
+        const buf = Buffer.from(data);
+        const buffers = [buf, Buffer.alloc(1_000 - buf.length)];
+
+        const instruction = await updateNameRegistryData(
+            provider.connection,
+            domain,
+            offset,
+            Buffer.concat(buffers),
+            undefined,
+            SOL_TLD_AUTHORITY
+        );
+
+        const txId = await sendInstructions(connection, [wallet], [instruction]);
+        return txId;
     }
 };
 

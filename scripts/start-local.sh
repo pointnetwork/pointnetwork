@@ -13,14 +13,17 @@ ganache-cli -v -p 7545 -i 256 --keepAliveTimeout 20000 \
 #install identity contract
 echo "Installing Identity contract"
 source .bash_alias
-cd hardhat
+cd ../point-contracts
 rm -rf cache
 rm -rf typechain
 rm -rf build
 npx hardhat compile
 export MODE=zappdev
 npm start
-cd ..
+cp resources/Identity-address.json ../pointnetwork/hardhat/resources/ 
+cp contracts/* ../pointnetwork/hardhat/contracts/ 
+cp -r build/contracts/Identity.sol ../pointnetwork/hardhat/build/contracts/Identity.sol
+cd ../pointnetwork
 
 
 

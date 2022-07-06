@@ -2,8 +2,8 @@ const PointSDKController = require('./PointSDKController');
 const open = require('open');
 
 class Web2Controller extends PointSDKController {
-    constructor(ctx, req, reply) {
-        super(ctx, req, true);
+    constructor(req, reply) {
+        super(req, true);
         this.req = req;
         this.host = this.req.headers.host;
 

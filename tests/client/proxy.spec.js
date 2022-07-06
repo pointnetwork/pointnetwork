@@ -1,108 +1,161 @@
-const {encryptData, decryptData} = require('../../src/client/encryptIdentityUtils');
-const {setAsAttachment} = require('../../src/client/proxy/proxyUtils');
+import httpsServer from '../../src/client/proxy/httpsServer';
+import ethereum from '../../src/network/providers/ethereum';
+import axios from 'axios';
+import config from 'config';
 
-// TODO: Jest report gracefully exit failure even if I only leave imports and mock all the tests
-// TODO: figure out what is wrong
-describe('Client/ZProxy', () => {
-    // TODO: sanitize HTML is broken
-    // test('it should correctly sanitize the text/html inputs', () => {
-    //     const tests = {
-    //         '<script></script>': '',
-    //         '<script language=\'javascript\'></script>': '',
-    //         '<xml></xml>': '',
-    //         '<invalid-tag></invalid-tag>': '',
-    //         '<a href="https://google.com" invalid-attr="5">Test</a>':
-    //             '<a href="https://google.com">Test</a>'
-    //     };
-    //
-    //     const testsIdentical = [
-    //         '',
-    //         '<html><body></body></html>',
-    //         '<a href="https://google.com">Test</a>'
-    //     ];
-    //
-    //     expect.assertions(Object.keys(tests).length + testsIdentical.length);
-    //
-    //     const zproxy = new ZProxy({});
-    //
-    //     for (const input in tests) {
-    //         const expectedOutput = tests[input];
-    //         expect(zproxy.sanitize(input)).toEqual(expectedOutput);
-    //     }
-    //
-    //     testsIdentical.forEach(input => {
-    //         expect(zproxy.sanitize(input)).toEqual(input);
-    //     });
-    // });
+const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
-    test('encrypts a plain text with a random symmetric key and the key itself with ecies', async () => {
-        try {
-            expect.assertions(1);
+jest.mock('../../src/network/providers/ethereum', () => ({
+    __esModule: true,
+    default: {
+        sendToContract: jest.fn(async () => 'test_send_to_contract_reply'),
+        getKeyValue: jest.fn(async (identity, key) => {
+            // If we return something unconditionally, we'll run into infinite loop
+            // when calling keyValue.list in keyvalue_append
+            if (key.endsWith('0')) {
+                return 'test_value';
+            }
+            return null;
+        }),
+        putKeyValue: jest.fn(async () => {}),
+        getKeyLastVersion: jest.fn(async () => '1.0')
+    }
+}));
 
-            const plaintext = 'Foo';
-            const publicKey =
-                '0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2aeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34';
+jest.mock('axios', () => ({
+    __esModule: true,
+    default: {
+        get: jest.fn(async () => ({
+            headers: {},
+            status: 200,
+            data: 'api_mocked_get_response'
+        })),
+        post: jest.fn(async () => ({
+            headers: {},
+            status: 200,
+            data: 'api_mocked_post_response'
+        }))
+    }
+}));
 
-            const encryptionResult = await encryptData('localhost', plaintext, publicKey);
-            const privateKey = '4e094c21d2b1a068da6ecbb8d0aeea65569741a6c14c592cb29d8b7aadf5ea49';
+describe('Proxy', () => {
+    it('Should perform contract_send request', async () => {
+        expect.assertions(3);
 
-            const encryptedSymmetricObj = encryptionResult.encryptedSymmetricObj;
-
-            const decryptionResult = await decryptData(
-                'localhost',
-                Buffer.from(encryptionResult.encryptedMessage, 'hex'),
-                encryptedSymmetricObj, // encryptionResult.encryptedSymmetricObj,
-                privateKey
-            );
-
-            expect(decryptionResult.plaintext.toString()).toEqual(plaintext);
-        } catch (e) {
-            console.error(e);
-            throw e;
-        }
-    });
-
-    test('should return null values if the host decrypting a message is different from the one that encrypted it', async () => {
-        try {
-            expect.assertions(1);
-
-            const plaintext = 'Foo';
-            const publicKey =
-                '0x1b26e2c556ae71c60dad094aa839162117b28a462fc4c940f9d12675d3ddfff2aeef60444a96a46abf3ca0a420ef31bff9f4a0ddefe1f80b0c133b85674fff34';
-
-            const encryptionResult = await encryptData('email', plaintext, publicKey);
-            const privateKey = '4e094c21d2b1a068da6ecbb8d0aeea65569741a6c14c592cb29d8b7aadf5ea49';
-
-            const encryptedSymmetricObj = encryptionResult.encryptedSymmetricObj;
-
-            await expect(
-                decryptData(
-                    'localhost',
-                    Buffer.from(encryptionResult.encryptedMessage, 'hex'),
-                    encryptedSymmetricObj,
-                    privateKey
-                )
-            ).rejects.toThrow('Host is invalid');
-        } catch (e) {
-            console.error(e);
-            throw e;
-        }
-    });
-
-    describe('setAsAttachment', () => {
-        describe('when requesting directly from storage', () => {
-            const urlPathname = '/_storage/';
-            describe('when acceept headers allow application types or wildcards', () => {
-                const acceptHeaders = 'text/html;application/xml;application/xhtml+xml;*/*';
-                test('when contentType is video or image it should return FALSE', () => {
-                    expect(setAsAttachment(urlPathname, 'video', acceptHeaders)).toBeFalsy();
-                    expect(setAsAttachment(urlPathname, 'image', acceptHeaders)).toBeFalsy();
-                });
-                test('when contentType is not video or image it should return TRUE', () => {
-                    expect(setAsAttachment(urlPathname, 'javascript', acceptHeaders)).toBeTruthy();
-                    expect(setAsAttachment(urlPathname, 'application/xml', acceptHeaders)).toBeTruthy();
-                });
-            });
+        const res = await httpsServer.inject({
+            method: 'POST',
+            url: 'https://contract_send_domain.point/_contract_send/ContractName.funcName(value1, value2)',
+            payload: 'value1=foo&value2=bar',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'host': 'contract_send_domain.point'
+            }
         });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.payload).toEqual('test_send_to_contract_reply');
+        expect(ethereum.sendToContract).toHaveBeenCalledWith(
+            'contract_send_domain',
+            'ContractName',
+            'funcName',
+            ['foo', 'bar']
+        );
+    });
+
+    it('Should load explorer index page', async () => {
+        expect.assertions(3);
+
+        const res = await httpsServer.inject({
+            method: 'GET',
+            url: 'https://point',
+            headers: {host: 'point'}
+        });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.payload).toMatch(/^<!DOCTYPE html>/);
+        expect(res.payload).toMatch('<title>Point Explorer</title>');
+    });
+
+    it('Should perform keyvalue_get request', async () => {
+        expect.assertions(3);
+
+        const res = await httpsServer.inject({
+            method: 'GET',
+            url: 'https://keyvalue_get_domain.point/_keyvalue_get/test_key0',
+            headers: {host: 'keyvalue_get_domain.point'}
+        });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.payload).toEqual('test_value');
+        expect(ethereum.getKeyValue).toHaveBeenCalledWith('keyvalue_get_domain', 'test_key0');
+    });
+
+    it('Should perform keyvalue_append request', async () => {
+        expect.assertions(3);
+
+        const res = await httpsServer.inject({
+            method: 'POST',
+            url: 'https://keyvalue_append_domain.point/_keyvalue_append/test_key',
+            payload: 'value1=foo&value2=bar',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'host': 'keyvalue_append_domain.point'
+            }
+        });
+
+        expect(res.statusCode).toEqual(200);
+        expect(ethereum.getKeyLastVersion).toHaveBeenCalledWith('keyvalue_append_domain', '::rootDir');
+        expect(ethereum.putKeyValue).toHaveBeenCalledWith(
+            'keyvalue_append_domain',
+            // Our mocked getKeyValue will return value for test_key0, so test_key1 should be
+            // the one to be appended
+            'test_key1',
+            expect.stringMatching(/^\{"value1":"foo","value2":"bar",/),
+            '1.0'
+        );
+    });
+
+    it('Should redirect API GET requests', async () => {
+        expect.assertions(3);
+
+        const res = await httpsServer.inject({
+            method: 'GET',
+            url: 'https://api_domain_get.point/v1/api/api_route_get',
+            headers: {host: 'api_domain_get.point'}
+        });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.payload).toEqual('api_mocked_get_response');
+        expect(axios.get).toHaveBeenCalledWith(
+            `${API_URL}/v1/api/api_route_get`,
+            expect.objectContaining({headers: expect.objectContaining({host: 'api_domain_get.point'})})
+        );
+    });
+
+    it('Should redirect API POST requests', async () => {
+        expect.assertions(3);
+
+        const res = await httpsServer.inject({
+            method: 'POST',
+            url: 'https://api_domain_post.point/v1/api/api_route_post',
+            headers: {
+                'host': 'api_domain_post.point',
+                'Content-Type': 'application/json'
+            },
+            body: {some_key: 'some_value'}
+        });
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.payload).toEqual('api_mocked_post_response');
+        expect(axios.post).toHaveBeenCalledWith(
+            `${API_URL}/v1/api/api_route_post`,
+            {some_key: 'some_value'},
+            expect.objectContaining({
+                headers: expect.objectContaining({
+                    'host': 'api_domain_post.point',
+                    'content-type': 'application/json'
+                })
+            })
+        );
     });
 });

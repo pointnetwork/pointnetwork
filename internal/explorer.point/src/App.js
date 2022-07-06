@@ -47,10 +47,14 @@ const Main = () => {
                             <Route path="/wallet">
                                 <Wallet />
                             </Route>
-                            <Route
-                                path="/identities/:handle"
-                                component={Identity}
-                            />
+                            <Route path="/identities/:handle">
+                                {(params) => (
+                                    <Identity
+                                        walletAddr={walletAddr}
+                                        params={params}
+                                    />
+                                )}
+                            </Route>
                             <Route path="/identities">
                                 <Identities />
                             </Route>

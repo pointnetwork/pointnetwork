@@ -15,7 +15,8 @@ storage:
   arweave_gateway_url: http://arlocal:1984/graphql
 network:
   web3:
-    ynet: http://blockchain_node:7545
+    ynet:
+      address: "blockchain_node:7545"
 api:
   address: 0.0.0.0
 zproxy:

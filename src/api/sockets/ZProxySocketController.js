@@ -2,12 +2,12 @@
 The ZProxySocketController is for handling ZApp websocket connections via the ZProxy API port.
 See client/proxy/index.js for usage details of ZProxy and setup of the WebSocketServer instance.
 */
-const logger = require('../../core/log');
+import ethereum from '../../network/providers/ethereum';
+import handleRPC from '../../rpc/rpc-handlers';
+import logger from '../../core/log';
 const log = logger.child({module: 'ZProxySocketController'});
-const blockchain = require('../../network/providers/ethereum');
-const handleRPC = require('../../rpc/rpc-handlers').default;
 
-const SUBSCRIPTION_EVENT_TYPES = {
+export const SUBSCRIPTION_EVENT_TYPES = {
     CONFIRMATION: 'subscription_confirmation',
     CANCELLATION: 'subscription_cancellation',
     EVENT: 'subscription_event',
@@ -15,15 +15,14 @@ const SUBSCRIPTION_EVENT_TYPES = {
     RPC: 'rpc_method_response'
 };
 
-const SUBSCRIPTION_REQUEST_TYPES = {
+export const SUBSCRIPTION_REQUEST_TYPES = {
     SUBSCRIBE: 'subscribeContractEvent',
     UNSUBSCRIBE: 'removeSubscriptionById',
     RPC: 'rpc'
 };
 
 class ZProxySocketController {
-    constructor(_ctx, _ws, _wss, _hostname) {
-        this.ctx = _ctx;
+    constructor(_ws, _wss, _hostname) {
         this.ws = _ws;
         this.wss = _wss;
         this.hostname = _hostname;
@@ -33,17 +32,14 @@ class ZProxySocketController {
     init() {
         this.ws.on('message', async msg => {
             const {hostname} = this;
-            const request = {
-                ...JSON.parse(msg),
-                hostname // add the hostname to the `request` object to be echoed back via the callback closure
-            };
+            const request = JSON.parse(msg);
 
             switch (request.type) {
                 case SUBSCRIPTION_REQUEST_TYPES.SUBSCRIBE: {
                     const {contract, event, ...options} = request.params;
                     const {CONFIRMATION, EVENT} = SUBSCRIPTION_EVENT_TYPES;
 
-                    return blockchain.subscribeContractEvent(
+                    return ethereum.subscribeContractEvent(
                         hostname,
                         contract,
                         event,
@@ -58,7 +54,7 @@ class ZProxySocketController {
                     const {subscriptionId} = request.params;
                     const {CANCELLATION} = SUBSCRIPTION_EVENT_TYPES;
 
-                    return blockchain.removeSubscriptionById(subscriptionId, event =>
+                    return ethereum.removeSubscriptionById(subscriptionId, event =>
                         this.pushSubscriptionEvent({...event, request, type: CANCELLATION})
                     );
                 }
@@ -97,15 +93,9 @@ class ZProxySocketController {
         }
     }
 
-    pushToSender(msg) {
-        if (this.ws) {
-            this.ws.send(JSON.stringify(msg));
-        }
-    }
-
     pushRPCMessage(msg) {
         log.info(msg, 'Pushing RPC message');
-        return this.pushToSender(msg);
+        return this.pushToClient(msg);
     }
 
     pushSubscriptionEvent({type, subscriptionId, request, data}) {
@@ -115,4 +105,4 @@ class ZProxySocketController {
     }
 }
 
-module.exports = ZProxySocketController;
+export default ZProxySocketController;

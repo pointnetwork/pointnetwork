@@ -4,31 +4,24 @@ import FormData from 'form-data';
 import axios from 'axios';
 import {promises as fs} from 'fs';
 import path from 'path';
-import config from 'config';
 import logger from '../../core/log';
-import {storage} from './storage';
+import {storage} from './client/client';
 import {eachLimit} from 'async';
-import {resolveHome, isChineseTimezone} from '../../util';
 import {downloadChunk} from './bundler';
+import {
+    BUNDLER_DOWNLOAD_URL,
+    BUNDLER_URL,
+    CONCURRENT_UPLOAD_LIMIT,
+    CONCURRENT_VALIDATION_LIMIT,
+    REQUEST_TIMEOUT,
+    UPLOAD_CACHE_PATH,
+    UPLOAD_EXPIRE,
+    UPLOAD_LOOP_INTERVAL,
+    VERSION_MAJOR,
+    VERSION_MINOR
+} from './config';
 
 const log = logger.child({module: 'StorageUploader'});
-
-const cacheDir = path.join(
-    resolveHome(config.get('datadir')),
-    config.get('storage.upload_cache_path')
-);
-const CONCURRENT_UPLOAD_LIMIT = Number(config.get('storage.concurrent_upload_limit'));
-const CONCURRENT_VALIDATION_LIMIT = Number(config.get('storage.concurrent_validation_limit'));
-const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
-const REQUEST_TIMEOUT = Number(config.get('storage.request_timeout'));
-const UPLOAD_EXPIRE = Number(config.get('storage.upload_expire'));
-const VERSION_MAJOR = config.get('storage.arweave_experiment_version_major');
-const VERSION_MINOR = config.get('storage.arweave_experiment_version_minor');
-const BUNDLER_URL = isChineseTimezone()
-    ? config.get('storage.arweave_bundler_url_fallback')
-    : config.get('storage.arweave_bundler_url');
-
-const BUNDLER_DOWNLOAD_URL = `${BUNDLER_URL}/download`;
 
 const chunksBeingUploaded: Record<string, boolean> = {};
 
@@ -42,7 +35,7 @@ export const startChunkUpload = async (chunkId: string) => {
     chunk.ul_status = CHUNK_UPLOAD_STATUS.IN_PROGRESS;
     await chunk.save();
 
-    const chunkPath = path.join(cacheDir, `chunk_${chunkId}`);
+    const chunkPath = path.join(UPLOAD_CACHE_PATH, `chunk_${chunkId}`);
     try {
         log.debug({chunkId}, 'Starting chunk upload');
         const data = await fs.readFile(chunkPath);

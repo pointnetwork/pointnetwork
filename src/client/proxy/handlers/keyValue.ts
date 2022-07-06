@@ -5,7 +5,7 @@ import keyValue from '../../../network/keyvalue';
 import {Template, templateManager} from '../templateManager';
 const {uploadFile} = require('../../storage');
 
-const attachKeyValueHanlders = (server: FastifyInstance) => {
+const attachKeyValueHandlers = (server: FastifyInstance) => {
     server.post(
         '/_keyvalue_append/:key',
         async (req: FastifyRequest<{
@@ -60,4 +60,4 @@ const attachKeyValueHanlders = (server: FastifyInstance) => {
     );
 };
 
-export default attachKeyValueHanlders;
+export default attachKeyValueHandlers;

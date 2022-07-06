@@ -23,7 +23,7 @@ const log = logger.child({module: 'ZProxy'});
 
 const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
-const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: FastifyReply) => {
+const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyReply) => {
     try {
         const host = req.headers.host!;
         const urlData = req.urlData();
@@ -75,7 +75,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     'utf-8'
                 );
 
-                const renderer = new Renderer(ctx, {localDir: publicPath} as any);
+                const renderer = new Renderer({localDir: publicPath} as any);
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
@@ -113,7 +113,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 res.status(404).send('Domain not found (Route file not specified for this domain)');
             }
 
-            const zappName = host.includes('dev') ? `${host.split('dev')[0]}.point` : host;
+            const zappName = host.endsWith('dev') ? `${host.split('dev')[0]}.point` : host;
 
             const zappsDir: string = config.get('zappsdir');
             let zappDir: string;
@@ -155,7 +155,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                     'utf-8'
                 );
 
-                const renderer = new Renderer(ctx, {localDir: publicPath} as any);
+                const renderer = new Renderer({localDir: publicPath} as any);
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
@@ -195,7 +195,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             }
 
             // Download info about root dir
-            const rootDirId = await blockchain.getKeyValue(host, '::rootDir', version);
+            const rootDirId = await blockchain.getKeyValue(host, '::rootDir', version, 'exact', true);
             if (!rootDirId) {
                 // TODO: or 404 here?
                 throw new Error(`Root dir id not found for host ${host}`);
@@ -214,7 +214,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 const templateFileId = await getFileIdByPath(rootDirId, templateFilename);
 
                 const templateFileContents = await getFile(templateFileId);
-                const renderer = new Renderer(ctx, {rootDirId} as any);
+                const renderer = new Renderer({rootDirId} as any);
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
@@ -239,7 +239,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
 
                         const templateFileContents = await getFile(templateFileId);
 
-                        const renderer = new Renderer(ctx, {rootDirId} as any);
+                        const renderer = new Renderer({rootDirId} as any);
 
                         res.header('Content-Type', 'text/html');
                         // TODO: sanitize
@@ -270,7 +270,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             try {
                 const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
                 if (!resp.data.data?.content?.trim()) {
-                    const msg = `No data found in the "content" field of the domain registry for "${host}".`;
+                    const msg = `No Point data found in the domain registry for "${host}".`;
                     log.debug({host}, msg);
                     return res.status(404).send(msg);
                 }
@@ -340,7 +340,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
             if (templateFilename) {
                 const templateFileId = await getFileIdByPath(rootDirId, templateFilename);
                 const templateFileContents = await getFile(templateFileId);
-                const renderer = new Renderer(ctx, {rootDirId} as any);
+                const renderer = new Renderer({rootDirId} as any);
 
                 res.header('Content-Type', 'text/html');
                 // TODO: sanitize
@@ -362,7 +362,7 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                         const {templateFilename: indexTemplate} = getParamsAndTemplate(routes, '/');
                         const templateFileId = await getFileIdByPath(rootDirId, indexTemplate);
                         const templateFileContents = await getFile(templateFileId);
-                        const renderer = new Renderer(ctx, {rootDirId} as any);
+                        const renderer = new Renderer({rootDirId} as any);
 
                         res.header('Content-Type', 'text/html');
                         // TODO: sanitize
@@ -392,6 +392,12 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
                 } catch (error) {}
 
                 if (urlMirrorUrl) {
+                    // Set CORS headers
+                    const allowedOrigin = req.headers.referer?.replace(/\/$/, '');
+                    res.header('Vary', 'Origin');
+                    res.header('Access-Control-Allow-Origin', allowedOrigin);
+
+                    // Redirect to mirror URL
                     res.redirect(urlMirrorUrl);
                     return;
                 }
@@ -406,15 +412,21 @@ const getHttpRequestHandler = (ctx: any) => async (req: FastifyRequest, res: Fas
     } catch (e) {
         log.error('Proxy internal server error');
         log.error(e);
-        res.status(500).send('Internal server error');
+        res.status(500).send('Internal engine error');
     }
 };
 
-// TODO: ctx is needed for Renderer, remove it later
-const attachCommonHandler = (server: FastifyInstance, ctx: any) => {
-    const handler = getHttpRequestHandler(ctx);
-    const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) =>
-        void new ZProxySocketController(ctx, socket, server.websocketServer, hostname);
+export const wsConnections: Record<string, ZProxySocketController> = {};
+
+const attachCommonHandler = (server: FastifyInstance) => {
+    const handler = getHttpRequestHandler();
+    const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) => {
+        wsConnections[Math.random()] = new ZProxySocketController(
+            socket,
+            server.websocketServer,
+            hostname
+        );
+    };
 
     // Handle websocket requests.
     server.route({

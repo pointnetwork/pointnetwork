@@ -12,6 +12,7 @@ const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/providers/ethereum');
 const {readFileByPath} = require('../../../util');
 const keyValue = require('../../../network/keyvalue');
+const csrfTokens = require('./csrfTokens');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
@@ -19,8 +20,7 @@ class Renderer {
     #twigs = {};
     #twigs_use_counter = {};
 
-    constructor(ctx, {rootDirId, localDir}) {
-        this.ctx = ctx;
+    constructor({rootDirId, localDir}) {
         this.config = config.get('zproxy');
         this.rootDirId = rootDirId;
         this.localDir = localDir;
@@ -222,30 +222,28 @@ class Renderer {
 
             csrf_value: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
-                if (!this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
-                if (!this.renderer.ctx.csrf_tokens[this.host])
-                    this.renderer.ctx.csrf_tokens[this.host] = require('crypto')
+                if (!csrfTokens[this.host])
+                    csrfTokens[this.host] = require('crypto')
                         .randomBytes(64)
                         .toString('hex');
-                return this.renderer.ctx.csrf_tokens[this.host];
+                return csrfTokens[this.host];
             },
             csrf_field: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
-                if (!this.renderer.ctx.csrf_tokens) this.renderer.ctx.csrf_tokens = {};
-                if (!this.renderer.ctx.csrf_tokens[this.host])
-                    this.renderer.ctx.csrf_tokens[this.host] = require('crypto')
+                if (!csrfTokens[this.host])
+                    csrfTokens[this.host] = require('crypto')
                         .randomBytes(64)
                         .toString('hex');
-                return `<input name="_csrf" value="${this.renderer.ctx.csrf_tokens[this.host]}" />`;
+                return `<input name="_csrf" value="${csrfTokens[this.host]}" />`;
             },
             csrf_guard: async function(submitted_token) {
-                if (!this.renderer.ctx.csrf_tokens)
+                if (!csrfTokens)
                     throw new Error(
                         'No csrf token generated for this host (rather, no tokens at all)'
                     );
-                if (!this.renderer.ctx.csrf_tokens[this.host])
+                if (!csrfTokens[this.host])
                     throw new Error('No csrf token generated for this host');
-                const real_token = this.renderer.ctx.csrf_tokens[this.host];
+                const real_token = csrfTokens[this.host];
                 if (real_token !== submitted_token) {
                     throw new Error('Invalid csrf token submitted');
                 }

@@ -15,5 +15,4 @@ arweave.json
 *.zip
 geth
 
-# todo: remove a temporary fix below
-package-lock.json
+

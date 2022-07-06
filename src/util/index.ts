@@ -11,4 +11,5 @@ export * from './merkle';
 export * from './hashFn';
 export * from './escapeString';
 export * from './getReferralCode';
-export * from './parseCookieString';
+export * from './cookieString';
+export * from './calculateDirSize';

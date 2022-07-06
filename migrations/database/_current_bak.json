@@ -1,0 +1,174 @@
+{
+    "tables": {
+        "files": {
+            "tableName": "files",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "unique": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "original_path": {
+                    "allowNull": false,
+                    "field": "original_path",
+                    "seqType": "Sequelize.TEXT"
+                },
+                "size": {
+                    "allowNull": true,
+                    "field": "size",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "dl_status": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "NOT_STARTED"
+                    },
+                    "field": "dl_status",
+                    "seqType": "Sequelize.STRING"
+                },
+                "ul_status": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "NOT_STARTED"
+                    },
+                    "field": "ul_status",
+                    "seqType": "Sequelize.STRING"
+                },
+                "expires": {
+                    "allowNull": true,
+                    "field": "expires",
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "created_at": {
+                    "allowNull": false,
+                    "field": "created_at",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updated_at": {
+                    "allowNull": false,
+                    "field": "updated_at",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": {
+                "7644c09661ff36b803f9eb12061db24e1481e362": {
+                    "fields": [
+                        "ul_status"
+                    ],
+                    "name": "files_ul_status",
+                    "options": {
+                        "indexName": "files_ul_status",
+                        "name": "files_ul_status"
+                    }
+                },
+                "280150a10e84933225dcc737db51ac2418fe5662": {
+                    "fields": [
+                        "dl_status"
+                    ],
+                    "name": "files_dl_status",
+                    "options": {
+                        "indexName": "files_dl_status",
+                        "name": "files_dl_status"
+                    }
+                }
+            }
+        },
+        "chunks": {
+            "tableName": "chunks",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "unique": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "size": {
+                    "allowNull": true,
+                    "field": "size",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "dl_status": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "NOT_STARTED"
+                    },
+                    "field": "dl_status",
+                    "seqType": "Sequelize.STRING"
+                },
+                "ul_status": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "NOT_STARTED"
+                    },
+                    "field": "ul_status",
+                    "seqType": "Sequelize.STRING"
+                },
+                "retry_count": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": 0
+                    },
+                    "field": "retry_count",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "validation_retry_count": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": 0
+                    },
+                    "field": "validation_retry_count",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "txid": {
+                    "allowNull": true,
+                    "field": "txid",
+                    "seqType": "Sequelize.STRING"
+                },
+                "expires": {
+                    "allowNull": true,
+                    "field": "expires",
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "created_at": {
+                    "allowNull": false,
+                    "field": "created_at",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updated_at": {
+                    "allowNull": false,
+                    "field": "updated_at",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": {
+                "7953ba331aa751efc901b48a68fd6b2a2647276a": {
+                    "fields": [
+                        "ul_status"
+                    ],
+                    "name": "chunks_ul_status",
+                    "options": {
+                        "indexName": "chunks_ul_status",
+                        "name": "chunks_ul_status"
+                    }
+                },
+                "327871a0a3dd5545dbfa35297ae5270b42eb2940": {
+                    "fields": [
+                        "dl_status"
+                    ],
+                    "name": "chunks_dl_status",
+                    "options": {
+                        "indexName": "chunks_dl_status",
+                        "name": "chunks_dl_status"
+                    }
+                }
+            }
+        }
+    },
+    "path": "/Users/brian/pn/pointnetwork/migrations/database/_current.json",
+    "backupPath": "/Users/brian/pn/pointnetwork/migrations/database/_current_bak.json",
+    "exists": true,
+    "revision": 4
+}

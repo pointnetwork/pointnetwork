@@ -106,8 +106,8 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 // Warning: the below imports should take place after the above config patch!
 
 import config from 'config';
-import logger from './core/log.js';
-import Point from './core/index.js';
+import logger from './core/log';
+import startPoint from './core/index';
 import migrate from './util/migrate';
 import initFolders from './initFolders';
 import {statAsync, resolveHome} from './util';
@@ -115,10 +115,13 @@ import {statAsync, resolveHome} from './util';
 // ------------------- Init Logger ----------------- //
 
 const log = logger.child({module: 'point'});
-const ctx: CtxType = {
-    basepath: __dirname,
-    exit: (code: number) => (log.close(), process.exit(code)),
-    die: (err: Error) => (log.fatal(err), ctx.exit(1))
+const exit = (code: number) => {
+    log.close();
+    process.exit(code);
+};
+const die = (err: Error) => {
+    log.fatal(err);
+    exit(1);
 };
 
 // ----------------- Console Mode -------------------- //
@@ -138,8 +141,8 @@ if (program.deploy) {
     const deploy = new Deploy();
     deploy
         .deploy(program.deploy, program.deploy_contracts, program.dev, program.force_deploy_proxy)
-        .then(ctx.exit)
-        .catch(ctx.die);
+        .then(exit)
+        .catch(die);
     // @ts-ignore
     return;
 }
@@ -226,8 +229,8 @@ if (program.compile) {
             )
         )
     )
-        .then(() => ctx.exit(0))
-        .catch(ctx.die);
+        .then(() => exit(0))
+        .catch(die);
 
     // @ts-ignore
     return;
@@ -240,24 +243,7 @@ async function _exit(sig: typeof sigs[number]) {
     if (exiting) return;
     exiting = true;
 
-    const errors = [];
-
     log.info('Received signal ' + sig + ', shutting down...');
-
-    try {
-        if (ctx.db && ctx.db.shutdown) await ctx.db.shutdown();
-    } catch (e) {
-        errors.push('Error while shutting down database: ' + e);
-    }
-
-    if (errors.length) {
-        for (const e of errors) {
-            log.error(e);
-        }
-    } else {
-        log.info('Successfully shut down.');
-    }
-
     process.exit(1);
 
     // todo: shut down everything else
@@ -303,24 +289,23 @@ const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
         if (!existsSync(lockfilePath)) {
             await fs.writeFile(lockfilePath, 'point');
         }
-        await lockfile.lock(lockfilePath);
+        await lockfile.lock(lockfilePath, {stale: 5000});
     } catch (err) {
         log.fatal(err, 'Failed to create lockfile, is point already running?');
-        ctx.exit(1);
+        exit(1);
     }
 
     try {
         await migrate();
     } catch (err) {
         log.fatal(err, 'Failed to run database migrations');
-        ctx.exit(1);
+        exit(1);
     }
     try {
         log.info({env: config.util.getEnv('NODE_ENV')}, 'Starting Point Node');
-        const point = new Point(ctx);
-        await point.start();
+        await startPoint();
     } catch (err) {
         log.fatal(err, 'Failed to start Point Node');
-        ctx.exit(1);
+        exit(1);
     }
 })();

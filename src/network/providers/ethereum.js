@@ -6,6 +6,7 @@ const {promises: fs} = require('fs');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
+const namehash = require('@ensdomains/eth-ens-namehash');
 const {getFile, getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
@@ -15,6 +16,8 @@ const log = logger.child({module: 'EthereumProvider'});
 const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore');
 const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util');
 const {createCache} = require('../../util/cache');
+const {ETH_RESOLVER_ABI} = require('../../name_service/abis/resolver');
+const {POINT_ENS_TEXT_RECORD_KEY} = require('../../name_service/constants');
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -27,12 +30,16 @@ function isRetryableError({message}) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-function createWeb3Instance({blockchainUrl, privateKey}) {
-    const provider = blockchainUrl.startsWith('ws://')
-        ? new Web3.providers.WebsocketProvider(blockchainUrl)
-        : blockchainUrl;
+function createWeb3Instance({protocol, blockchainUrl, privateKey}) {
+    const isWs = protocol === 'ws' || protocol === 'wss';
+    // FIXME: the below port replacement is a temporary hack, it needs to be fixed on the blockchain node side
+    // by hiding it behind Nginx or something, so that we would not bother with ports
+    // otherwise we need to reconsider config structure to support different urls for
+    // http and ws connection
+    const url = `${protocol}://${isWs ? blockchainUrl.replace('44444', '55555') : blockchainUrl}`;
+    const provider = isWs ? new Web3.providers.WebsocketProvider(url) : url;
 
-    if (blockchainUrl.startsWith('ws://')) {
+    if (isWs) {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
     }
 
@@ -52,7 +59,7 @@ function createWeb3Instance({blockchainUrl, privateKey}) {
     web3.eth.accounts.wallet.add(account);
     web3.eth.defaultAccount = account.address;
 
-    log.debug({blockchainUrl}, 'Created web3 instance');
+    log.debug({url}, 'Created web3 instance');
     return web3;
 }
 
@@ -64,13 +71,16 @@ const networks = config.get('network.web3');
 
 // web3.js providers
 const providers = {
-    ynet: createWeb3Instance({
-        blockchainUrl: networks.ynet.address,
-        privateKey: '0x' + getNetworkPrivateKey()
-    })
+    ynet: {
+        http: createWeb3Instance({
+            protocol: 'http',
+            blockchainUrl: networks.ynet.address,
+            privateKey: '0x' + getNetworkPrivateKey()
+        })
+    }
 };
 
-const getWeb3 = (chain = 'ynet') => {
+const getWeb3 = ({chain = 'ynet', protocol} = {}) => {
     if (
         !Object.keys(networks)
             .filter(key => networks[key].type === 'eth')
@@ -79,12 +89,19 @@ const getWeb3 = (chain = 'ynet') => {
         throw new Error(`No Eth provider for network ${chain}`);
     }
     if (!providers[chain]) {
-        providers[chain] = createWeb3Instance({
+        providers[chain] = {};
+    }
+    if (!protocol) {
+        protocol = networks[chain].tls ? 'https' : 'http';
+    }
+    if (!providers[chain][protocol]) {
+        providers[chain][protocol] = createWeb3Instance({
+            protocol,
             blockchainUrl: networks[chain].address,
             privateKey: '0x' + getNetworkPrivateKey()
         });
     }
-    return providers[chain];
+    return providers[chain][protocol];
 };
 
 // ethers providers
@@ -162,7 +179,7 @@ ethereum.loadIdentityContract = async () => {
     return await ethereum.loadPointContract('Identity', at);
 };
 
-ethereum.loadWebsiteContract = async (target, contractName, version = 'latest') => {
+ethereum.loadWebsiteContract = async (target, contractName, version = 'latest', protocol = 'http') => {
     // todo: make it nicer, extend to all potential contracts, and add to docs
     // @ means internal contract for Point Network (truffle/contracts)
     if ((target === '@' || target === 'point') && contractName === 'Identity') {
@@ -186,8 +203,7 @@ ethereum.loadWebsiteContract = async (target, contractName, version = 'latest') 
     try {
         abi = await getJSON(abi_storage_id); // todo: verify result, security, what if fails
         // todo: cache the result, because contract's abi at this specific address won't change (i think? check.)
-
-        const web3 = getWeb3();
+        const web3 = getWeb3({protocol});
         return new web3.eth.Contract(abi.abi, at);
     } catch (e) {
         throw Error(
@@ -326,8 +342,12 @@ ethereum.getPastEvents = async (
 };
 
 ethereum.getBlockNumber = async () => {
-    const n = await getWeb3().eth.getBlockNumber();
-    return n;
+    try {
+        const n = await getWeb3().eth.getBlockNumber();
+        return n;
+    } catch (e) {
+        log.error(e, 'failed to fetch block number');
+    }
 };
 
 ethereum.getBlockTimestamp = async blockNumber => {
@@ -343,18 +363,21 @@ ethereum.subscribeContractEvent = async (
     onStart,
     options = {}
 ) => {
-    const contract = await ethereum.loadWebsiteContract(target, contractName);
+    const contract = await ethereum.loadWebsiteContract(target, contractName, undefined, 'ws');
 
     let subscriptionId;
+
     return contract.events[event](options)
-        .on('data', data => onEvent({subscriptionId, data}))
+        .on('data', data => (log.debug({data}, 'Contract event received'), onEvent({subscriptionId, data})))
         .on('connected', id => {
             const message = `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`;
+            log.debug({contractName, event, subscriptionId: id}, 'Contract event subscription started');
             onStart({
                 subscriptionId: (subscriptionId = id),
                 data: {message}
             });
-        });
+        })
+        .on('error', e => log.error(e, 'Contract event subscription error'));
 };
 
 ethereum.removeSubscriptionById = async (subscriptionId, onRemove) => {
@@ -478,7 +501,7 @@ const zRecordCache = createCache();
 ethereum.getZRecord = async (domain, version = 'latest') => {
     domain = domain.replace('.point', ''); // todo: rtrim instead
     return zRecordCache.get(`${domain}-${ZDNS_ROUTES_KEY}-${version}`, async () => {
-        const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version);
+        const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version, 'exact', true);
         return result?.substr(0, 2) === '0x' ? result.substr(2) : result;
     });
 };
@@ -540,8 +563,38 @@ ethereum.getKeyValue = async (
     identity,
     key,
     version = 'latest',
-    versionSearchStrategy = 'exact'
+    versionSearchStrategy = 'exact',
+    followCopyFromIkv = false
 ) => {
+    // Process @@copy_from_ikv instruction if followCopyFromIkv is set to true
+    if (followCopyFromIkv) {
+        // self invoke to get the value first but without redirection
+        const value = await ethereum.getKeyValue(
+            identity,
+            key,
+            version,
+            versionSearchStrategy,
+            false
+        );
+
+        const copyFromIkv_prolog = '@@copy_from_ikv=';
+        if (! value.startsWith(copyFromIkv_prolog)) {
+            return value; // no redirection
+        } else {
+            // the format is:
+            // @@copy_from_ikv=<identity>:<key_in_ikv>
+            const withoutPrefix = value.substring(copyFromIkv_prolog.length);
+
+            const copy_identity = withoutPrefix.split(':')[0];
+            const copy_key = withoutPrefix.split(':').slice(1).join(':');
+
+            const value = await ethereum.getKeyValue(copy_identity, copy_key, 'latest', 'exact', true);
+            if (!value) throw new Error(`Failed to obtain ikv value following ${copyFromIkv_prolog} instruction`);
+            return value;
+        }
+    }
+
+    // Get the value
     try {
         if (typeof identity !== 'string')
             throw Error('blockchain.getKeyValue(): identity must be a string');
@@ -552,7 +605,7 @@ ethereum.getKeyValue = async (
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const baseKey = `${identity}-${key}`;
         if (version === 'latest') {
-            return keyValueCache.get(baseKey, async() => {
+            return keyValueCache.get(baseKey, async () => {
                 const contract = await ethereum.loadIdentityContract();
                 return contract.methods.ikvGet(identity, key).call();
             });
@@ -721,7 +774,7 @@ ethereum.sendTransaction = async ({from, to, value, gas}) => {
 };
 
 ethereum.getBalance = async ({address, blockIdentifier = 'latest', network}) =>
-    getWeb3(network).eth.getBalance(address, blockIdentifier);
+    getWeb3({chain: network}).eth.getBalance(address, blockIdentifier);
 
 ethereum.getWallet = () => getWeb3().eth.accounts.wallet[0];
 
@@ -754,7 +807,7 @@ ethereum.getTransactionsByAccount = async ({
         log.debug({startBlockNumber}, 'Using startBlockNumber');
     }
 
-    const provider = getWeb3(network);
+    const provider = getWeb3({chain: network});
 
     log.debug(
         {account, startBlockNumber, endBlockNumber, ethBlockNumber: provider.eth.blockNumber},
@@ -813,7 +866,7 @@ ethereum.toHex = n => getWeb3().utils.toHex(n);
 
 ethereum.send = ({method, params = [], id, network}) =>
     new Promise((resolve, reject) => {
-        getWeb3(network).currentProvider.send(
+        getWeb3({chain: network}).currentProvider.send(
             {
                 id,
                 method,
@@ -834,12 +887,32 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
     const provider = getEthers(network);
     const resolver = await provider.getResolver(domainName);
 
+    if (!resolver) {
+        throw new Error(`Domain ${domainName} not found in Ethereum's ${network}.`);
+    }
+
     const [owner, content] = await Promise.all([
         provider.resolveName(domainName),
-        resolver.getText('point')
+        resolver.getText(POINT_ENS_TEXT_RECORD_KEY)
     ]);
 
     return {owner, content};
+};
+
+ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
+    if (!networks[network] || !networks[network].eth_tld_resolver) {
+        throw new Error(`Missing TLD public resolver contract address for network "${network}"`);
+    }
+
+    const provider = getEthers(network);
+    const tldAddress = networks[network].eth_tld_resolver;
+    const ensContract = new ethers.Contract(tldAddress, ETH_RESOLVER_ABI, provider);
+    const hash = namehash.hash(domainName);
+    const pk = getNetworkPrivateKey();
+    const wallet = new ethers.Wallet(pk, provider);
+    const ensWithSigner = ensContract.connect(wallet);
+    const tx = await ensWithSigner.setText(hash, POINT_ENS_TEXT_RECORD_KEY, data);
+    return tx;
 };
 
 module.exports = ethereum;

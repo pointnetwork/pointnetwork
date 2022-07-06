@@ -4,45 +4,66 @@ on:
     branches: [ develop ]
 
 jobs:
-  e2e-tests:
-    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
-    timeout-minutes: 30
+  unit-tests:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Use Node.js 14
+    - name: Use Node.js 16
       uses: actions/setup-node@v2
       with:
-        node-version: 14.x
-    - run: npm install -g npm
-    - run: npm install -no-package-lock --no-save dockerode
+        node-version: 16.x
 
-    - uses: satackey/action-docker-layer-caching@v0.0.11
-      # Ignore the failure of a step and avoid terminating the job.
-      continue-on-error: true
-
-    - name: Build containers
-      run: docker compose -f docker-compose.test.yaml build
-
-    - name: Run containers and tests
-      run: docker compose -f docker-compose.test.yaml up -d
-
-    - name: Check test results
-      run: ./scripts/checkE2Etests.js
-
-    - name: Copy test reports
-      if: always()
-      run: mkdir -p reports && docker cp test:/app/junit.xml ./reports
+    - run: npm install
+    - run: npm run build
+    - run: npm run test:ci
 
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action@v1
       if: always()
       with:
-        files: "./reports/*.xml"
+        files: "./junit.xml"
 
-    - name: Stop containers
-      if: always()
-      run: docker compose -f docker-compose.test.yaml down
+#  e2e-tests:
+#    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
+#    timeout-minutes: 30
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#    - name: Checkout
+#      uses: actions/checkout@v2
+#
+#    - name: Use Node.js 14
+#      uses: actions/setup-node@v2
+#      with:
+#        node-version: 14.x
+#    - run: npm install -g npm
+#    - run: npm install -no-package-lock --no-save dockerode
+#
+#    - uses: satackey/action-docker-layer-caching@v0.0.11
+#      # Ignore the failure of a step and avoid terminating the job.
+#      continue-on-error: true
+#
+#    - name: Build containers
+#      run: docker compose -f docker-compose.test.yaml build
+#
+#    - name: Run containers and tests
+#      run: docker compose -f docker-compose.test.yaml up -d
+#
+#    - name: Check test results
+#      run: ./scripts/checkE2Etests.js
+#
+#    - name: Copy test reports
+#      if: always()
+#      run: mkdir -p reports && docker cp test:/app/junit.xml ./reports
+#
+#    - name: Publish Unit Test Results
+#      uses: EnricoMi/publish-unit-test-result-action@v1
+#      if: always()
+#      with:
+#        files: "./reports/*.xml"
+#
+#    - name: Stop containers
+#      if: always()
+#      run: docker compose -f docker-compose.test.yaml down
