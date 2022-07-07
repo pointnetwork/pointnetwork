@@ -102,7 +102,7 @@
     "jest": "^27.5.1",
     "jest-circus": "^27.5.1",
     "nodemon": "^2.0.12",
-    "pkg": "^5.5.2",
+    "pkg": "^5.7.0",
     "sequelize-cli": "^6.2.0",
     "sequelize-mig": "^3.1.3",
     "solhint": "^3.3.7",
