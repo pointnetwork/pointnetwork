@@ -111,7 +111,7 @@
   },
   "scripts": {
     "test": "MODE=test jest --forceExit",
-    "test:ci": "cp ./resources/blockchain-test-key.json ./tests/resources/key.json && NODE_OPTIONS=--max-old-space-size=2048 POINT_KEYSTORE=./tests/resources MODE=test jest --forceExit --ci",
+    "test:ci": "cp ./resources/blockchain-test-key.json ./tests/resources/key.json && NODE_OPTIONS=--max-old-space-size=6144 POINT_KEYSTORE=./tests/resources MODE=test jest --forceExit --ci",
     "test:docker": "MODE=test TESTING_IN_DOCKER=true jest tests/docker/*.spec.js --forceExit --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
     "start": "node dist/index.js",
     "start:zappdev": "MODE=zappdev npm run watch",
