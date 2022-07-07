@@ -1,6 +1,75 @@
 const crypto = require('crypto');
 const eccrypto = require('eccrypto');
 
+module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
+    //Create response arrays
+    const encryptedMessages = [];
+    const encryptedMessagesSymmetricObjs = [];
+
+    // Secret symmetric key, generated randomly
+    const symmetricKey = crypto.randomBytes(24);
+
+    // Random initialization vector
+    const iv = crypto.randomBytes(16);
+
+    // Hash host name
+    const hostNameHashHex = crypto
+        .createHash('sha256')
+        .update(host)
+        .digest('hex');
+
+    // Encrypt each data passed
+    for(let data of dataArray){
+        // Initialize cipher
+        const cipher = crypto.createCipheriv('aes192', symmetricKey, iv);
+        // Encrypt the message with symmetric key
+        const encryptedMessage = Buffer.concat([cipher.update(data, 'ascii'), cipher.final()]);
+        encryptedMessages.push(encryptedMessage);
+
+        // Prepare the data msg for encryption
+        const messageForPublicKeyEncryption = `|${hostNameHashHex}|${symmetricKey.toString(
+            'hex'
+        )}|${iv.toString('hex')}|`;
+        
+        
+        //for each public key
+        const encryptedSymmetricObjs = []
+        for(let pk of publicKeys){
+            // Prepare public key buffer
+            const publicKeyBuffer = Buffer.concat([
+                Buffer.from('04', 'hex'),
+                Buffer.from(pk.replace('0x', ''), 'hex')
+            ]);
+
+            //Encrypt secret information for the recipient with their public key
+            const encryptedSymmetricObj = await eccrypto.encrypt(
+                publicKeyBuffer,
+                Buffer.from(messageForPublicKeyEncryption)
+            );
+
+            const encryptedSymmetricObjChunks = {};
+            for (const k in encryptedSymmetricObj) {
+                encryptedSymmetricObjChunks[k] = encryptedSymmetricObj[k].toString('hex');
+            }
+
+            encryptedSymmetricObjs.push(
+                {
+                    pk: pk,
+                    encryptedSymmetricObj: encryptedSymmetricObj,
+                    encryptedSymmetricObjJSON: JSON.stringify(encryptedSymmetricObjChunks)
+                }
+            );
+        }
+        encryptedMessagesSymmetricObjs.push(encryptedSymmetricObjs);
+    }
+    const encryptedMessagesStr = encryptedMessages.map((e) => e.toString('hex'))
+    return {
+        encryptedMessages: encryptedMessagesStr,
+        encryptedMessagesSymmetricObjs: encryptedMessagesSymmetricObjs
+    }
+}
+
+
 module.exports.encryptData = async (host, plaintext, publicKey) => {
     // Secret symmetric key, generated randomly
     const symmetricKey = crypto.randomBytes(24);
