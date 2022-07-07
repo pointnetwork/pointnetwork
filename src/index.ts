@@ -28,6 +28,8 @@ const program: ProgramType<typeof Command> = new Command();
 program.storeOptionsAsProperties();
 
 const app = require(path.resolve(__dirname, '..', 'package.json'));
+
+process.env.POINT_ENGINE_VERSION = app.version;
 program.version(app.version || 'No version is specified');
 program.description(`
     Point Network
