@@ -4,6 +4,13 @@ const {uploadFile, getFile, FILE_TYPE} = require('../../storage');
 import detectContentType from 'detect-content-type';
 import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
 import {Template, templateManager} from '../templateManager';
+import blockchain from '../../../network/providers/ethereum';
+import {
+    encryptData,
+    decryptData,
+    getEncryptedSymetricObjFromJSON
+} from '../../../client/encryptIdentityUtils';
+import {getNetworkPrivateKey} from '../../../wallet/keystore';
 
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format
@@ -23,6 +30,92 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             const uploadedId = await uploadFile(fileBuf);
             return {data: uploadedId};
         });
+    });
+
+    
+    ['/_encryptedStorage/', '/_encryptedStorage'].forEach(route => {
+        server.post(route, async (req, res) => {
+            if (!req.headers['content-type']?.match('multipart/form-data')) {
+                return res.status(415).send('Only multipart/form-data is supported');
+            }
+
+            const file = await req.file();
+            if (!file) {
+                return res.status(400).send('No files in the body');
+            }
+            
+            const identities = req.headers['identities']?.toString();
+            if(identities === undefined || identities === ''){
+                return res.status(400).send('No identity passed');
+            }
+            const pks = [];
+            for(const id of identities.split(',')){
+                const publicKey = await blockchain.commPublicKeyByIdentity(id);
+                pks.push(publicKey);
+            }
+
+            const fileBuf = await file.toBuffer();
+            const {host} = req.headers;
+            const encryptedData = await encryptData(host, fileBuf, pks[0]);
+            const dataToUpload = Buffer.from(encryptedData.encryptedMessage, "hex");
+            const uploadedId = await uploadFile(dataToUpload);
+            return {data: uploadedId, encryptedSymmetricObj: encryptedData.encryptedSymmetricObjJSON};
+        });
+    });
+
+    server.get('/_encryptedStorage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {
+        let file;
+        let qs = req.query as {eSymmetricObj: string}
+        try {
+            file = await getFile(req.params.hash, null);
+        } catch (e) {
+            return res.status(404).send('Not found');
+        }
+        const {host} = req.headers;
+        let fileBuffer = Buffer.from(file, 'hex');
+        const privateKey = getNetworkPrivateKey();
+        const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
+            JSON.parse(qs.eSymmetricObj)
+        );
+        const decryptedData = await decryptData(host, fileBuffer, encryptedSymmetricObj, privateKey);
+            
+        const fileString = decryptedData.plaintext.toString();
+        file = decryptedData.plaintext;
+        
+        if (isDirectoryJson(fileString)) {
+            const filesInfo = JSON.parse(fileString).files.map((file: Record<string, string>) => {
+                const ext = file.name.split('.').slice(-1);
+
+                const icons: Record<typeof FILE_TYPE, string> = {
+                    [FILE_TYPE.fileptr]: '&#128196; ',
+                    [FILE_TYPE.dirptr]: '&#128193; '
+                };
+
+                return {
+                    icon: icons[file.type] || '&#10067; ',
+                    fileId: file.id,
+                    link: `/_storage/${file.id}${file.type === FILE_TYPE.fileptr ? '.' + ext : ''}`,
+                    name: file.name,
+                    size: file.size
+                };
+            });
+            res.header('content-type', 'text/html');
+            return templateManager.render(Template.DIRECTORY, {id: req.params.hash, filesInfo});
+        }
+        
+
+        const contentType = detectContentType(file);
+        const acceptHeaders = req.headers.accept === undefined ? '' : req.headers.accept;
+
+        res.header('content-type', contentType);
+
+        // if requesting a file directly from storage and the accept headers are wide open
+        // and the file is not an image or video then return as a file attachment
+        if (setAsAttachment(req.routerPath, contentType, acceptHeaders)) {
+            res.header('Content-Disposition', 'attachment');
+        }
+
+        return file;
     });
 
     server.get('/_storage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {
