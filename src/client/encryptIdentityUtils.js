@@ -6,12 +6,6 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
     const encryptedMessages = [];
     const encryptedMessagesSymmetricObjs = [];
 
-    // Secret symmetric key, generated randomly
-    const symmetricKey = crypto.randomBytes(24);
-
-    // Random initialization vector
-    const iv = crypto.randomBytes(16);
-
     // Hash host name
     const hostNameHashHex = crypto
         .createHash('sha256')
@@ -20,6 +14,12 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
 
     // Encrypt each data passed
     for(let data of dataArray){
+        // Secret symmetric key, generated randomly
+        const symmetricKey = crypto.randomBytes(24);
+
+        // Random initialization vector
+        const iv = crypto.randomBytes(16);
+
         // Initialize cipher
         const cipher = crypto.createCipheriv('aes192', symmetricKey, iv);
         // Encrypt the message with symmetric key
@@ -30,7 +30,6 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
         const messageForPublicKeyEncryption = `|${hostNameHashHex}|${symmetricKey.toString(
             'hex'
         )}|${iv.toString('hex')}|`;
-        
         
         //for each public key
         const encryptedSymmetricObjs = []
@@ -137,6 +136,33 @@ module.exports.decryptData = async (host, cyphertext, encryptedSymmetricObj, pri
 
     return {plaintext, hostNameHash, symmetricKey, iv};
 };
+
+module.exports.decryptMultipleData = async (host, dataArray, encryptedSymmetricObj, privateKey) => {
+    const decryptHostNameHash = crypto.createHash('sha256');
+    decryptHostNameHash.update(host);
+    const symmetricObj = await eccrypto.decrypt(
+        Buffer.from(privateKey, 'hex'),
+        encryptedSymmetricObj
+    );
+    const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|');
+    if (decryptHostNameHash.digest('hex') !== hostNameHash) {
+        throw new Error('Host is invalid');
+    }
+
+    const decryptedDataArray = [];
+    for(let data of dataArray){
+        const decipher = crypto.createDecipheriv(
+            'aes192',
+            Buffer.from(symmetricKey, 'hex'),
+            Buffer.from(iv, 'hex')
+        );
+        const plaintext = Buffer.concat([decipher.update(data), decipher.final()]);
+        decryptedDataArray.push(plaintext);
+    }
+
+    return {decryptedDataArray, hostNameHash, symmetricKey, iv};
+};
+
 
 module.exports.getEncryptedSymetricObjFromJSON = encryptedSymmetricObjJSON => {
     const encryptedSymmetricObj = {};

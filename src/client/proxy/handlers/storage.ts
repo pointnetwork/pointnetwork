@@ -6,7 +6,7 @@ import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
 import {Template, templateManager} from '../templateManager';
 import blockchain from '../../../network/providers/ethereum';
 import {
-    encryptData,
+    encryptMultipleData,
     decryptData,
     getEncryptedSymetricObjFromJSON
 } from '../../../client/encryptIdentityUtils';
@@ -53,13 +53,31 @@ const attachStorageHandlers = (server: FastifyInstance) => {
                 const publicKey = await blockchain.commPublicKeyByIdentity(id);
                 pks.push(publicKey);
             }
-
+            
+            let dataArray: any = [];
             const fileBuf = await file.toBuffer();
+            dataArray.push(fileBuf);
+
+            const metadata = req.headers['metadata']?.toString();
+            console.log('----------- METADATA ------------ ');
+            console.log(metadata);
+            console.log('--------------------------------- ');
+            dataArray = dataArray.concat(metadata?.split(','));
+            console.log('----------- dataArray ------------ ');
+            console.log(dataArray);
+            console.log('--------------------------------- ');
+
             const {host} = req.headers;
-            const encryptedData = await encryptData(host, fileBuf, pks[0]);
-            const dataToUpload = Buffer.from(encryptedData.encryptedMessage, "hex");
+            const encryptedData = await encryptMultipleData(host, dataArray, pks);
+            const dataToUpload = Buffer.from(encryptedData.encryptedMessages[0], "hex");
             const uploadedId = await uploadFile(dataToUpload);
-            return {data: uploadedId, encryptedSymmetricObj: encryptedData.encryptedSymmetricObjJSON};
+            console.log('----------- encryptedData.encryptedMessages ------------ ');
+            console.log(encryptedData.encryptedMessages);
+            console.log('--------------------------------- ');
+            return {
+                data: uploadedId, 
+                metadata: encryptedData.encryptedMessages.slice(1), 
+                encryptedMessagesSymmetricObjs: encryptedData.encryptedMessagesSymmetricObjs};
         });
     });
 
