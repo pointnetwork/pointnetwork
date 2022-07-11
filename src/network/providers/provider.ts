@@ -30,7 +30,7 @@ export interface Provider {
         chainId: ChainId,
         domain: string,
         data: string
-    ): Promise<Record<string, string|number|boolean>>;
+    ): Promise<Record<string, string | number | boolean>>;
     send(chainId: ChainId, data: RPCRequest): Promise<JsonRpcResponse>;
     sendTransaction(chainId: ChainId, reqId: number, txParams: unknown[]): Promise<JsonRpcResponse>;
     requestAccounts(chainId: ChainId, reqId: number): Promise<JsonRpcResponse>;
@@ -51,8 +51,8 @@ export const tldToChain: Record<string, ChainId> = {
 };
 
 // Type guard to determine if a given string|number is a valid ChainId
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isChainId(chainId: any): chainId is ChainId {
+export function isChainId(chainId: string | number | boolean): chainId is ChainId {
+    if (typeof chainId === 'boolean') return false;
     return Object.values(ChainId).includes(chainId);
 }
 
@@ -102,7 +102,7 @@ class BlockchainProvider implements Provider {
         chainId: ChainId,
         domain: string,
         data: string
-    ): Promise<Record<string, string|number|boolean>> {
+    ): Promise<Record<string, string | number | boolean>> {
         const tx = await this.getProvider(chainId).setDomainContent(chainId, domain, data);
         return tx;
     }
