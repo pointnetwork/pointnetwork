@@ -238,39 +238,6 @@ if (program.compile) {
     return;
 }
 
-// ------------------ Gracefully exit ---------------- //
-
-let exiting = false;
-async function _exit(sig: typeof sigs[number]) {
-    if (exiting) return;
-    exiting = true;
-
-    log.info('Received signal ' + sig + ', shutting down...');
-    process.exit(1);
-
-    // todo: shut down everything else
-}
-
-const sigs = [
-    'SIGHUP',
-    'SIGINT',
-    'SIGQUIT',
-    'SIGILL',
-    'SIGTRAP',
-    'SIGABRT',
-    'SIGBUS',
-    'SIGFPE',
-    'SIGUSR1',
-    'SIGSEGV',
-    'SIGUSR2',
-    'SIGTERM'
-] as const;
-sigs.forEach(function(sig) {
-    process.on(sig, function() {
-        _exit(sig);
-    });
-});
-
 process.on('uncaughtException', err => {
     log.error(err, 'Error: uncaught exception');
 });
