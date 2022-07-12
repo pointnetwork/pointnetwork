@@ -65,7 +65,7 @@ jobs:
 
     - name: upload linux artefact
       id: upload_linux
-      uses: brianunlam/upload-release-asset@v1.0.5
+      uses: pointnetwork/upload-release-asset@v2.0.0
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
@@ -76,7 +76,7 @@ jobs:
 
     - name: upload windows artefact
       id: upload_win
-      uses: brianunlam/upload-release-asset@v1.0.5
+      uses: pointnetwork/upload-release-asset@v2.0.0
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
@@ -87,7 +87,7 @@ jobs:
 
     - name: upload macos artefact
       id: upload_mac
-      uses: brianunlam/upload-release-asset@v1.0.5
+      uses: pointnetwork/upload-release-asset@v2.0.0
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
@@ -96,21 +96,21 @@ jobs:
         asset_name: point-macos-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.tar.gz
         asset_content_type: application/gzip
 
-    - name: Generate md5 file
+    - name: Generate sha256 file
       uses: DamianReeves/write-file-action@master
       with:
-        path: ./md5
+        path: ./sha256
         contents: |
-          ${{ steps.upload_linux.outputs.asset_name }}: ${{ steps.upload_linux.outputs.asset_md5 }}
-          ${{ steps.upload_mac.outputs.asset_name }}: ${{ steps.upload_mac.outputs.asset_md5 }}
-          ${{ steps.upload_win.outputs.asset_name }}: ${{ steps.upload_win.outputs.asset_md5 }}
+          ${{ steps.upload_linux.outputs.asset_name }}: ${{ steps.upload_linux.outputs.asset_hash }}
+          ${{ steps.upload_mac.outputs.asset_name }}: ${{ steps.upload_mac.outputs.asset_hash }}
+          ${{ steps.upload_win.outputs.asset_name }}: ${{ steps.upload_win.outputs.asset_hash }}
         write-mode: append
-    - name: Upload m5d file
-      uses: brianunlam/upload-release-asset@v1.0.5
+    - name: Upload sha256 file
+      uses: pointnetwork/upload-release-asset@v2.0.0
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./md5
-        asset_name: md5.txt
+        asset_path: ./sha256
+        asset_name: sha256-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.txt
         asset_content_type: text/plain
