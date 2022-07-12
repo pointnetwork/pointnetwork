@@ -410,8 +410,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             res.status(404).send('Not Found');
         }
     } catch (e) {
-        log.error('Proxy internal server error');
-        log.error(e);
+        log.error({stack: e.stack, errorMessage: e.message}, 'Proxy error');
         res.status(500).send('Internal engine error');
     }
 };

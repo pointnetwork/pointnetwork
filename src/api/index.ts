@@ -8,7 +8,7 @@ const apiConfig = config.get('api') as Record<string, string>;
 const startApiServer = async () => {
     await apiServer.listen(parseInt(apiConfig.port), apiConfig.address, async err => {
         if (err) {
-            log.error(err, 'Error from API server');
+            log.error(err, 'Error from Point API');
         }
     });
 };
