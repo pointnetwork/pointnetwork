@@ -27,7 +27,8 @@ try {
     execSync(`sed -i '' 's/${varName}=.*$/${varName}=v${version}/' ${envPath}`).toString();
 
     if (execSync('git diff --name-only').toString().includes(envFile)) {
-        execSync(`git add ${envPath} && git commit -m 'updated image version'`).toString();
+        execSync(`git add ${envPath}`).toString();
+        execSync(`git commit --amend -C $(git log -1 --pretty=format:"%H")`).toString();
     }
 
     execSync(`git push && git push origin v${version}`).toString();
