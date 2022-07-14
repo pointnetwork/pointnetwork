@@ -13,7 +13,7 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
         .digest('hex');
 
     // Encrypt each data passed
-    for(let data of dataArray){
+    for (const data of dataArray){
         // Secret symmetric key, generated randomly
         const symmetricKey = crypto.randomBytes(24);
 
@@ -32,8 +32,8 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
         )}|${iv.toString('hex')}|`;
         
         //for each public key
-        const encryptedSymmetricObjs = []
-        for(let pk of publicKeys){
+        const encryptedSymmetricObjs = [];
+        for (const pk of publicKeys){
             // Prepare public key buffer
             const publicKeyBuffer = Buffer.concat([
                 Buffer.from('04', 'hex'),
@@ -61,13 +61,12 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
         }
         encryptedMessagesSymmetricObjs.push(encryptedSymmetricObjs);
     }
-    const encryptedMessagesStr = encryptedMessages.map((e) => e.toString('hex'))
+    const encryptedMessagesStr = encryptedMessages.map((e) => e.toString('hex'));
     return {
         encryptedMessages: encryptedMessagesStr,
         encryptedMessagesSymmetricObjs: encryptedMessagesSymmetricObjs
-    }
-}
-
+    };
+};
 
 module.exports.encryptData = async (host, plaintext, publicKey) => {
     // Secret symmetric key, generated randomly
@@ -150,7 +149,7 @@ module.exports.decryptMultipleData = async (host, dataArray, encryptedSymmetricO
     }
 
     const decryptedDataArray = [];
-    for(let data of dataArray){
+    for (const data of dataArray){
         const decipher = crypto.createDecipheriv(
             'aes192',
             Buffer.from(symmetricKey, 'hex'),
@@ -162,7 +161,6 @@ module.exports.decryptMultipleData = async (host, dataArray, encryptedSymmetricO
 
     return {decryptedDataArray, hostNameHash, symmetricKey, iv};
 };
-
 
 module.exports.getEncryptedSymetricObjFromJSON = encryptedSymmetricObjJSON => {
     const encryptedSymmetricObj = {};

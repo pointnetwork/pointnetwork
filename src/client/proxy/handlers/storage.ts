@@ -31,7 +31,6 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             return {data: uploadedId};
         });
     });
-
     
     ['/_encryptedStorage/', '/_encryptedStorage'].forEach(route => {
         server.post(route, async (req, res) => {
@@ -45,11 +44,11 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             }
             
             const identities = req.headers['identities']?.toString();
-            if(identities === undefined || identities === ''){
+            if (identities === undefined || identities === ''){
                 return res.status(400).send('No identity passed');
             }
             const pks = [];
-            for(const id of identities.split(',')){
+            for (const id of identities.split(',')){
                 const publicKey = await blockchain.commPublicKeyByIdentity(id);
                 pks.push(publicKey);
             }
@@ -63,25 +62,26 @@ const attachStorageHandlers = (server: FastifyInstance) => {
 
             const {host} = req.headers;
             const encryptedData = await encryptMultipleData(host, dataArray, pks);
-            const dataToUpload = Buffer.from(encryptedData.encryptedMessages[0], "hex");
+            const dataToUpload = Buffer.from(encryptedData.encryptedMessages[0], 'hex');
             const uploadedId = await uploadFile(dataToUpload);
             return {
                 data: uploadedId, 
                 metadata: encryptedData.encryptedMessages.slice(1), 
-                encryptedMessagesSymmetricObjs: encryptedData.encryptedMessagesSymmetricObjs};
+                encryptedMessagesSymmetricObjs: encryptedData.encryptedMessagesSymmetricObjs
+            };
         });
     });
 
     server.get('/_encryptedStorage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {
         let file;
-        let qs = req.query as {eSymmetricObj: string}
+        const qs = req.query as {eSymmetricObj: string};
         try {
             file = await getFile(req.params.hash, null);
         } catch (e) {
             return res.status(404).send('Not found');
         }
         const {host} = req.headers;
-        let fileBuffer = Buffer.from(file, 'hex');
+        const fileBuffer = Buffer.from(file, 'hex');
         const privateKey = getNetworkPrivateKey();
         const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
             JSON.parse(qs.eSymmetricObj)
@@ -111,7 +111,6 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             res.header('content-type', 'text/html');
             return templateManager.render(Template.DIRECTORY, {id: req.params.hash, filesInfo});
         }
-        
 
         const contentType = detectContentType(file);
         const acceptHeaders = req.headers.accept === undefined ? '' : req.headers.accept;
