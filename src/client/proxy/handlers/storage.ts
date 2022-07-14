@@ -59,21 +59,12 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             dataArray.push(fileBuf);
 
             const metadata = req.headers['metadata']?.toString();
-            console.log('----------- METADATA ------------ ');
-            console.log(metadata);
-            console.log('--------------------------------- ');
             dataArray = dataArray.concat(metadata?.split(','));
-            console.log('----------- dataArray ------------ ');
-            console.log(dataArray);
-            console.log('--------------------------------- ');
 
             const {host} = req.headers;
             const encryptedData = await encryptMultipleData(host, dataArray, pks);
             const dataToUpload = Buffer.from(encryptedData.encryptedMessages[0], "hex");
             const uploadedId = await uploadFile(dataToUpload);
-            console.log('----------- encryptedData.encryptedMessages ------------ ');
-            console.log(encryptedData.encryptedMessages);
-            console.log('--------------------------------- ');
             return {
                 data: uploadedId, 
                 metadata: encryptedData.encryptedMessages.slice(1), 
