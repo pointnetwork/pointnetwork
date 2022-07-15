@@ -6,7 +6,7 @@ isNpmPackageInstalled() {
 
 echo "installing global packages"
 #ganache and arlocal installation
-for package in ganache-cli arlocal@1.1.30
+for package in ganache arlocal@1.1.49
 do
   if isNpmPackageInstalled $package
   then
