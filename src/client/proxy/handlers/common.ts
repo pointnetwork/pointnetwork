@@ -405,7 +405,24 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 if (host.startsWith('www.google.com') || host.startsWith('google.com')){
                     res.redirect('https://search.point/search?q=' + queryParams?.q);
                     return;
+                } 
+
+                var expression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
+                var regex = new RegExp(expression);
+                if(host.match(regex)){
+                    res.header('content-type', 'text/html');
+                    let refererHost = req.headers.referer || '';
+                    const matches = refererHost.match(/^https:\/\/(.*)\//);
+                    if (matches){
+                        refererHost = matches[1];
+                    }
+                    return templateManager.render(Template.WEB2LINK, {
+                        url: 'http://' + host, 
+                        csrfToken: queryParams?.csrfToken, 
+                        host: refererHost
+                    });
                 }
+
             }
             res.status(404).send('Not Found');
         }
