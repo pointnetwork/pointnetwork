@@ -1,4 +1,4 @@
-import {resolveHome, makeSurePathExists} from './util';
+import {resolveHome, makeSurePathExists, makeSureKeyfileHasPhrase} from './util';
 import path from 'path';
 import config from 'config';
 
@@ -8,19 +8,25 @@ const initFolders = async () => {
     try {
         await makeSurePathExists(datadir);
     } catch (e) {
-        throw new Error('Datadir folder does not exist. Did you create it? Please, refer to this guide: https://github.com/pointnetwork/pointnetwork-dashboard/blob/main/ALPHA.md');
+        throw new Error(
+            'Datadir folder does not exist. Did you create it? Please, refer to this guide: https://github.com/pointnetwork/pointnetwork-dashboard/blob/main/ALPHA.md'
+        );
     }
 
     try {
         await makeSurePathExists(keystore);
     } catch (e) {
-        throw new Error('Keystore folder does not exist. Did you create it? Please, refer to this guide: https://github.com/pointnetwork/pointnetwork-dashboard/blob/main/ALPHA.md');
+        throw new Error(
+            'Keystore folder does not exist. Did you create it? Please, refer to this guide: https://github.com/pointnetwork/pointnetwork-dashboard/blob/main/ALPHA.md'
+        );
     }
 
     try {
-        await makeSurePathExists(path.join(keystore, 'key.json'));
+        await makeSureKeyfileHasPhrase(path.join(keystore, 'key.json'));
     } catch (e) {
-        throw new Error('key.json file does not exist. Did you create it? Please, refer to this guide: https://github.com/pointnetwork/pointnetwork-dashboard/blob/main/ALPHA.md');
+        throw new Error(
+            'key.json file does not exist or is invalid. Please, refer to this guide: https://github.com/pointnetwork/pointnetwork-dashboard/blob/main/ALPHA.md'
+        );
     }
 
     const nestedFolders = [

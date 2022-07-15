@@ -4,6 +4,7 @@ import Loading from '../components/Loading';
 import ReceiveModal from '../components/wallet/ReceiveModal';
 import SendModal from '../components/wallet/SendModal';
 import Swal from 'sweetalert2';
+import ErrorBlock from '../components/ErrorBlock';
 
 window.openTelegram = () => {
     fetch('/v1/api/web2/open', {
@@ -99,30 +100,42 @@ export default function Wallet() {
     const [wallets, setWallets] = useState([]);
     const [tokens, setTokens] = useState({});
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState('');
     const [receiveModalData, setReceiveModalData] = useState(null);
     const [sendModalData, setSendModalData] = useState(null);
 
     const fetchWallets = async () => {
         const response = await fetch('/v1/api/wallet/getWalletInfo');
+        if (!response.ok) {
+            throw new Error(
+                `Unable to fetch wallet info. Error code: ${response.status}.`,
+            );
+        }
+
         const walletInfo = await response.json();
         setWallets(walletInfo.data.wallets);
     };
 
     const fetchTokens = async () => {
         const response = await fetch('/v1/api/wallet/getTokenBalances');
+        if (!response.ok) {
+            throw new Error(
+                `Unable to fetch token balances. Error code: ${response.status}.`,
+            );
+        }
+
         const tokensInfo = await response.json();
         setTokens(tokensInfo.data);
     };
 
     const fetchData = async () => {
         setIsLoading(true);
-        setError(false);
+        setError('');
         try {
             await Promise.all([fetchWallets(), fetchTokens()]);
         } catch (e) {
             console.error(e);
-            setError(true);
+            setError(e.message);
         }
         setIsLoading(false);
     };
@@ -199,7 +212,10 @@ export default function Wallet() {
             {isLoading ? (
                 <Loading />
             ) : error ? (
-                <div>Error!</div>
+                <ErrorBlock
+                    title="Sorry, something went wrong fetching the wallet data."
+                    details={error}
+                />
             ) : (
                 <>
                     {receiveModalData && (
@@ -240,7 +256,7 @@ export default function Wallet() {
                     </table>
                     <br />
                     <h1>ERC20 Tokens</h1>
-                    {Object.keys(tokens).map((network) => (
+                    {Object.keys(tokens).map(network => (
                         <>
                             <h2>{network}</h2>
                             <table className="table table-bordered table-striped table-hover table-responsive table-primary">
