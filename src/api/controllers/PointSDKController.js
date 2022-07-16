@@ -11,7 +11,8 @@ class PointSDKController {
         if (method === 'POST' && config.get('api.csrf_enabled')) {
             const csrfToken = req.body.csrfToken;
             if (web2) {
-                this.csrfTokenGuard(req.body.host, csrfToken);
+                if (req.body.host)
+                    this.csrfTokenGuard(req.body.host, csrfToken);
             } else {
                 this.csrfTokenGuard(host, csrfToken);
             }
