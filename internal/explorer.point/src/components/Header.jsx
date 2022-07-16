@@ -32,11 +32,6 @@ const Header = ({ isRegistered }) => {
                                             Identities
                                         </Nav.Link>
                                     </Link>
-                                    <Link to="/myidentities">
-                                        <Nav.Link href="/myidentities">
-                                            My Identities
-                                        </Nav.Link>
-                                    </Link>
                                 </>
                             ) : (
                                 ''
