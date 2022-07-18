@@ -417,7 +417,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                         refererHost = matches[1];
                     }
                     return templateManager.render(Template.WEB2LINK, {
-                        url: 'http://' + host, 
+                        url: 'http://' + host + (req.url ?? ''), 
                         csrfToken: queryParams?.csrfToken, 
                         host: refererHost
                     });
