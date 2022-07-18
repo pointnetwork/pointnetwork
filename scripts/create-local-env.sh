@@ -1,8 +1,15 @@
 #!/bin/bash
 
 isNpmPackageInstalled() {
-  npm list --depth 1 -g $1 > /dev/null 2>&1
+  npm list -g | grep -c $1 > /dev/null 2>&1
 }
+
+echo "removing obsolete packages"
+if isNpmPackageInstalled ganache-cli
+then
+    echo ganache-cli is obsolete, removing installation.
+    npm remove --global ganache-cli
+fi
 
 echo "installing global packages"
 #ganache and arlocal installation
