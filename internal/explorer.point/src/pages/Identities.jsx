@@ -36,7 +36,7 @@ export default function Identities({ owner }) {
             const blockOrder = 'blockNumber';
             const sortedIdentities = orderBy(
                 identitiesFetched.data,
-                [handleOrder, blockOrder],
+                [blockOrder, handleOrder],
                 ['desc', 'desc'],
             );
             setIdentities(sortedIdentities);
