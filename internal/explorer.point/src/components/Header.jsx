@@ -3,8 +3,11 @@ import Navbar from 'react-bootstrap/Navbar';
 import Nav from 'react-bootstrap/Nav';
 import logo from '../assets/pointlogowhite.png';
 import { Link } from 'wouter';
+import { useAppContext } from '../context/AppContext';
 
 const Header = ({ isRegistered }) => {
+    const { walletIdentity } = useAppContext();
+
     return (
         <>
             <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
@@ -30,6 +33,11 @@ const Header = ({ isRegistered }) => {
                                     <Link to="/identities">
                                         <Nav.Link href="/identities">
                                             Identities
+                                        </Nav.Link>
+                                    </Link>
+                                    <Link to={'/identities/' + walletIdentity}>
+                                        <Nav.Link href={'/identities/' + walletIdentity}>
+                                            @{walletIdentity}
                                         </Nav.Link>
                                     </Link>
                                 </>
