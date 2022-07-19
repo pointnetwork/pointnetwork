@@ -1,6 +1,6 @@
-import handleRpc from './rpc-handlers';
+import handleRPC from './rpc-handlers';
 
-describe('handleRpc', () => {
+describe('handleRPC', () => {
     it('should process an RPC request with a standard method', async () => {
         const body = {
             network: 'ynet',
@@ -8,7 +8,7 @@ describe('handleRpc', () => {
             method: 'eth_blockNumber'
         };
 
-        const {status, result} = await handleRpc(body);
+        const {status, result} = await handleRPC(body);
         expect(status).toBe(200);
         expect((result as {result: string}).result).toMatch(/^0x[0-9a-fA-F]+$/);
     });
@@ -20,7 +20,7 @@ describe('handleRpc', () => {
             method: 'eth_requestAccounts'
         };
 
-        const {status, result} = await handleRpc(body);
+        const {status, result} = await handleRPC(body);
         expect(status).toBe(200);
         expect((result as {result: string[]}).result[0]).toMatch(/^0x[0-9a-fA-F]{40}$/);
     });
@@ -31,9 +31,11 @@ describe('handleRpc', () => {
             method: 'solana_requestAccount'
         };
 
-        const {status, result} = await handleRpc(body);
+        const {status, result} = await handleRPC(body);
         expect(status).toBe(200);
-        expect((result as {result: {publicKey: string}}).result.publicKey).toMatch(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
+        expect((result as {result: {publicKey: string}}).result.publicKey).toMatch(
+            /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
+        );
     });
 
     it('should return 400 for request with unkown network', async () => {
@@ -43,7 +45,7 @@ describe('handleRpc', () => {
             method: 'eth_accounts'
         };
 
-        const {status} = await handleRpc(body);
+        const {status} = await handleRPC(body);
         expect(status).toBe(400);
     });
 
@@ -54,7 +56,7 @@ describe('handleRpc', () => {
             method: 'getHealth'
         };
 
-        const {status, result} = await handleRpc(body);
+        const {status, result} = await handleRPC(body);
         expect(status).toBe(200);
         expect((result as {result: string}).result).toMatch('ok');
     });

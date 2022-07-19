@@ -57,8 +57,8 @@ interface TransactionJSON {
 }
 
 interface SolanaConnection {
-  conn: Connection;
-  wallet: Keypair;
+    conn: Connection;
+    wallet: Keypair;
 }
 
 /**
@@ -145,7 +145,7 @@ class SolanaProvider implements Provider {
         chainId: ChainId,
         domainName: string,
         data: string
-    ): Promise<Record<string, string|number|boolean>> {
+    ): Promise<Record<string, string | number | boolean>> {
         const provider = this.getChainProvider(chainId);
         const {conn, wallet} = provider;
         const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
@@ -223,7 +223,7 @@ class SolanaProvider implements Provider {
         reqId: number,
         txParams: unknown[]
     ): Promise<JsonRpcResponse> {
-        if (((txParams[0] as SolanaSendFundsParams).to)) {
+        if ((txParams[0] as SolanaSendFundsParams).to) {
             const {to, lamports} = txParams[0] as SolanaSendFundsParams;
             const resp = await this.sendFunds(chainId, reqId, {to, lamports});
             return resp;
@@ -239,7 +239,7 @@ class SolanaProvider implements Provider {
 
         const {conn, wallet} = this.getChainProvider(chainId);
         const tx = new Transaction();
-        
+
         if (recentBlockhash) {
             tx.recentBlockhash = recentBlockhash;
         }
@@ -252,9 +252,9 @@ class SolanaProvider implements Provider {
                 nonceInstruction: this.instructionFromJson(nonceInfo.nonceInstruction)
             };
         }
-        
+
         tx.instructions = instructions.map(i => this.instructionFromJson(i));
-        
+
         tx.signatures = signers.map(s => ({
             signature: null,
             publicKey: new PublicKey(s)

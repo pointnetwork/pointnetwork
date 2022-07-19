@@ -61,24 +61,23 @@ export function isChainId(chainId: string | number | boolean): chainId is ChainI
  * blockchain functionality and provides a unified solution for working
  * with different chains such as Ethereum and Solana.
  */
-class BlockchainProvider implements Provider {
+export class BlockchainProvider implements Provider {
     private providers: {[key in Blockchain]?: Provider} = {};
+
+    constructor(
+        ethereumProviderClass: {getInstance(): Provider},
+        solanaProviderClass: {getInstance(): Provider}
+    ) {
+        this.providers[Blockchain.ETHEREUM] = ethereumProviderClass.getInstance();
+        this.providers[Blockchain.SOLANA] = solanaProviderClass.getInstance();
+    }
 
     private getProvider(chainId: ChainId): Provider {
         const blockchain = chainToBlockchain[chainId];
         if (!this.providers[blockchain]) {
-            switch (blockchain) {
-                case Blockchain.ETHEREUM:
-                    this.providers[blockchain] = EthereumProvider.getInstance();
-                    break;
-                case Blockchain.SOLANA:
-                    this.providers[blockchain] = SolanaProvider.getInstance();
-                    break;
-                default:
-                    const errMsg = `Unsupported chain ID "${chainId}".`;
-                    log.error({chainId}, errMsg);
-                    throw new Error(errMsg);
-            }
+            const errMsg = `Unsupported chain ID "${chainId}".`;
+            log.error({chainId}, errMsg);
+            throw new Error(errMsg);
         }
         return this.providers[blockchain] as Provider;
     }
@@ -138,4 +137,4 @@ class BlockchainProvider implements Provider {
     }
 }
 
-export const blockchain = new BlockchainProvider();
+export const blockchain = new BlockchainProvider(EthereumProvider, SolanaProvider);

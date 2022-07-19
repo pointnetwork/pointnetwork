@@ -62,7 +62,7 @@ class EthereumProvider implements Provider {
             providerOrUrl: url,
             pollingInterval: 30000
         });
-        
+
         const nonceTracker = new NonceTrackerSubprovider();
         hdWalletProvider.engine._providers.unshift(nonceTracker);
         nonceTracker.setEngine(hdWalletProvider.engine);
@@ -100,17 +100,18 @@ class EthereumProvider implements Provider {
      * Returns a provider for the given chain.
      * If one is not already available, it's created.
      */
-    private getChainProvider(chainId: ChainId, lib: 'web3'): Web3
-    private getChainProvider(chainId: ChainId, lib: 'ethers'): Ethers
+    private getChainProvider(chainId: ChainId, lib: 'web3'): Web3;
+    private getChainProvider(chainId: ChainId, lib: 'ethers'): Ethers;
     private getChainProvider(chainId: ChainId, lib: Libs): Web3 | Ethers {
         if (!this.chains[chainId]) {
             this.chains[chainId] = {ethers: null, web3: null};
         }
 
         if (!this.chains[chainId]![lib]) {
-            const conn = lib === 'ethers'
-                ? this.createEthersConnection(chainId)
-                : this.createWeb3Connection(chainId);
+            const conn =
+                lib === 'ethers'
+                    ? this.createEthersConnection(chainId)
+                    : this.createWeb3Connection(chainId);
 
             this.chains[chainId]![lib] = conn;
         }
@@ -143,7 +144,7 @@ class EthereumProvider implements Provider {
         chainId: ChainId,
         domainName: string,
         data: string
-    ): Promise<Record<string, string|number|boolean>> {
+    ): Promise<Record<string, string | number | boolean>> {
         const network = getNetworkConfig(chainId);
 
         const tldAddress = String(network.eth_tld_resolver);
@@ -181,10 +182,11 @@ class EthereumProvider implements Provider {
                         reject(err);
                     } else {
                         const noResultResp: JsonRpcResponse = {id, jsonrpc: '2.0'};
-                        const resp = result ? result as JsonRpcResponse : noResultResp;
+                        const resp = result ? (result as JsonRpcResponse) : noResultResp;
                         resolve(resp);
                     }
-                });
+                }
+            );
         });
     }
 
@@ -193,7 +195,11 @@ class EthereumProvider implements Provider {
         reqId: number,
         txParams: unknown[]
     ): Promise<JsonRpcResponse> {
-        const resp = await this.send(chainId, {id: reqId, method: 'eth_sendTransaction', params: txParams});
+        const resp = await this.send(chainId, {
+            id: reqId,
+            method: 'eth_sendTransaction',
+            params: txParams
+        });
         return resp;
     }
 
