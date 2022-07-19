@@ -73,7 +73,7 @@ proxyServer.on('connection', socket => {
 });
 
 proxyServer.on('error', error => {
-    log.error({error}, 'Proxy server error');
+    log.error({error}, 'Proxy error');
 });
 
 const startProxy = async () => {

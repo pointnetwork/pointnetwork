@@ -19,6 +19,7 @@ const noop = () => {};
 let sendMetric = noop;
 let identifier;
 let isNewIdentifier;
+let logger;
 
 try {
     [identifier, isNewIdentifier] = getIdentifier();
@@ -30,12 +31,20 @@ try {
 
 const tags = {
     identifier,
-    account
+    account,
+    process: 'point-engine',
+    processVersion: process.env.POINT_ENGINE_VERSION
 };
 
 if (sendLogs && sendLogsTo) {
     const [address, port] = sendLogsTo.split('://').pop().split(':');
     const udpTransport = new UdpTransport({address, port});
+    udpTransport.on('error', e => {
+        logger.warn(
+            {error: e, address, port},
+            `Log stash is unavailable, will continue with local logging`
+        );
+    });
     streams.push(udpTransport);
     sendMetric = function (obj)  {
         let originalChilds;
@@ -51,15 +60,15 @@ if (sendLogs && sendLogsTo) {
     sendMetric({isNewIdentifier});
 }
 
-streams.push(
-    {
-        level: options.level,
-        stream: pino({prettyPrint: {colorize: true}})[pino.symbols.streamSym]
-    },
-    {level: options.level, stream: createWriteStream(path.resolve(path.join(resolveHome(datadir), 'point.log')))}
-);
+streams.push({
+    level: options.level,
+    stream: pino({prettyPrint: {colorize: true}})[pino.symbols.streamSym]
+}, {
+    level: options.level,
+    stream: createWriteStream(path.resolve(path.join(resolveHome(datadir), 'point.log')))
+});
 
-let logger = pino(options, multistream(streams));
+logger = pino(options, multistream(streams));
 logger = logger.child(tags);
 
 const close = () => {

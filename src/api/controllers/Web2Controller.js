@@ -16,12 +16,10 @@ class Web2Controller extends PointSDKController {
         try {
             open(url);
             return this._response(true);
-        } catch (e){
+        } catch (e) {
             return this._response(false);
         }
-        
     }
-
 }
 
 module.exports = Web2Controller;
