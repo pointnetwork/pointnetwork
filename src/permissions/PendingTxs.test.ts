@@ -1,7 +1,7 @@
 import {PendingTxs} from './PendingTxs';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-const EXPIRATION_SECS = 3;
+const EXPIRATION_SECS = 1;
 let pendingTxs = new PendingTxs(EXPIRATION_SECS);
 
 beforeEach(() => {
@@ -9,8 +9,6 @@ beforeEach(() => {
 });
 
 describe('PendingTxs', () => {
-    jest.setTimeout(10 * 1000);
-
     it(`should add request to the pool and return it's ID`, () => {
         const tx = {method: 'eth_sendTransaction', params: [{value: 1}]};
         const reqId = pendingTxs.add(tx.params);
@@ -44,7 +42,7 @@ describe('PendingTxs', () => {
         const id = pendingTxs.add(tx.params);
 
         // Retrieve (after expiration)
-        await sleep((EXPIRATION_SECS + 2) * 1000);
+        await sleep((EXPIRATION_SECS + 0.5) * 1000);
         const got = pendingTxs.find(id);
         expect(got).toBeUndefined();
     });
@@ -55,7 +53,7 @@ describe('PendingTxs', () => {
         const id = pendingTxs.add(tx.params);
 
         // Retrieve (before expiration)
-        await sleep((EXPIRATION_SECS - 2) * 1000);
+        await sleep((EXPIRATION_SECS - 0.5) * 1000);
         const got = pendingTxs.find(id);
         expect(got?.params).toEqual(tx.params);
     });
