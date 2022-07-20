@@ -5,6 +5,8 @@ const {getNetworkPublicKey, getNetworkPrivateKey} = require('../../wallet/keysto
 const {
     encryptData,
     decryptData,
+    decryptSymmetricKey,
+    decryptDataWithDecryptedKey,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
 const {getBalance, getWalletAddress, sendTransaction, sendToken} = require('../../wallet');
@@ -161,6 +163,32 @@ class WalletController extends PointSDKController {
         const {host} = this.req.headers;
         const encryptedData = await encryptData(host, data, publicKey);
         return this._response(encryptedData);
+    }
+
+    async decryptSymmetricKey() {
+        const {host} = this.req.headers;
+        const privateKey = getNetworkPrivateKey();
+
+        const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
+            JSON.parse(this.payload.encryptedSymmetricObj)
+        );
+        const decryptedSymmetricKey = await decryptSymmetricKey(
+            host,
+            encryptedSymmetricObj,
+            privateKey
+        );
+        return this._response({decryptedSymmetricKey});
+    }
+
+    async decryptDataWithDecryptedKey() {
+        const {host} = this.req.headers;
+        
+        const decryptedData = await decryptDataWithDecryptedKey(
+            host,
+            Buffer.from(this.payload.encryptedData, 'hex'),
+            this.payload.symmetricObj
+        );
+        return this._response({decryptedData: decryptedData.plaintext.toString()});
     }
 
     async decryptData() {
