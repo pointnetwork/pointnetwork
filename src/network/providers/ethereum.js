@@ -596,11 +596,9 @@ ethereum.getKeyValue = async (
 
     // Get the value
     try {
-        if (typeof identity !== 'string')
-            throw Error('blockchain.getKeyValue(): identity must be a string');
+        if (typeof identity !== 'string') {throw Error('blockchain.getKeyValue(): identity must be a string');}
         if (typeof key !== 'string') throw Error('blockchain.getKeyValue(): key must be a string');
-        if (typeof version !== 'string')
-            throw Error('blockchain.getKeyValue(): version must be a string');
+        if (typeof version !== 'string') {throw Error('blockchain.getKeyValue(): version must be a string');}
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
         const baseKey = `${identity}-${key}`;
@@ -658,10 +656,8 @@ ethereum.putKeyValue = async (identity, key, value, version) => {
 
 ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessage, {s, r, v}) => {
     try {
-        if (!Buffer.isBuffer(commPublicKey))
-            throw Error('registerIdentity: commPublicKey must be a buffer');
-        if (Buffer.byteLength(commPublicKey) !== 64)
-            throw Error('registerIdentity: commPublicKey must be 64 bytes');
+        if (!Buffer.isBuffer(commPublicKey)) {throw Error('registerIdentity: commPublicKey must be a buffer');}
+        if (Buffer.byteLength(commPublicKey) !== 64) {throw Error('registerIdentity: commPublicKey must be 64 bytes');}
         // todo: validate identity and address
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
@@ -703,10 +699,8 @@ ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessa
 
 ethereum.registerIdentity = async (identity, address, commPublicKey) => {
     try {
-        if (!Buffer.isBuffer(commPublicKey))
-            throw Error('registerIdentity: commPublicKey must be a buffer');
-        if (Buffer.byteLength(commPublicKey) !== 64)
-            throw Error('registerIdentity: commPublicKey must be 64 bytes');
+        if (!Buffer.isBuffer(commPublicKey)) {throw Error('registerIdentity: commPublicKey must be a buffer');}
+        if (Buffer.byteLength(commPublicKey) !== 64) {throw Error('registerIdentity: commPublicKey must be 64 bytes');}
         // todo: validate identity and address
 
         identity = identity.replace('.point', ''); // todo: rtrim instead
@@ -748,8 +742,7 @@ ethereum.isCurrentIdentityRegistered = async () => {
     if (
         !identity ||
         identity.replace('0x', '').toLowerCase() === address.replace('0x', '').toLowerCase()
-    )
-        return false;
+    ) {return false;}
     return true;
 };
 

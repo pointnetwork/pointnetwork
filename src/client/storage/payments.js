@@ -7,8 +7,7 @@ const raidenBaseUrl = 'http://localhost:5001/api/v1';
 const checkExistingChannel = async serviceProviderAddress => {
     const allUnsettledChannels = await axios.get(`${raidenBaseUrl}/channels/${token_address}`);
     return allUnsettledChannels.data.find(_channel => {
-        if (_channel.partner_address === serviceProviderAddress && _channel.state === 'opened')
-            return true;
+        if (_channel.partner_address === serviceProviderAddress && _channel.state === 'opened') {return true;}
     });
 };
 
