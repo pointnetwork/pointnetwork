@@ -11,17 +11,8 @@ export default function SubIdentities({ owner }) {
         filter: { identityOwner: owner },
     });
 
-    const handleNewIdentity = (subidentity, parentIdentity) => {
-        setSubidentities((prev) => [
-            ...prev,
-            {
-                data: {
-                    subhandle: subidentity,
-                    handle: parentIdentity,
-                    identityOwner: owner,
-                },
-            },
-        ]);
+    const handleNewIdentity = (subidentity) => {
+        setSubidentities((prev) => [...prev, { handle: subidentity, owner }]);
     };
 
     return (
