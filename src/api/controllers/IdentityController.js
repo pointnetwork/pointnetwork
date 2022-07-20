@@ -47,9 +47,9 @@ let TwitterOracle = {
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${
-            encodeURIComponent(url)
-        }`;
+        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(
+            url
+        )}`;
 
         log.info(`calling to ${oracleUrl}`);
         const {data} = await axios.post(oracleUrl);
@@ -286,6 +286,26 @@ class IdentityController extends PointSDKController {
         }
 
         return this._response({eligibility, reason});
+    }
+
+    async registerSubIdentity() {
+        const {subidentity, _csrf} = this.req.body;
+        const {host} = this.req.headers;
+
+        if (host !== 'point') {
+            return this.rep.status(403).send('Forbidden');
+        }
+        if (_csrf !== csrfTokens.point) {
+            return this.rep.status(403).send('CSRF token invalid');
+        }
+
+        // TODO: have a real implementation that calls the Identity contract
+        // once we have the method to register sub-identities.
+        if (subidentity.includes('error')) {
+            return this.rep.status(500).send('Error processing sub-identity.');
+        }
+        this.rep.status(201);
+        return this._status(201)._response({message: 'sub-identity registered.'});
     }
 
     async resolveDomain() {
