@@ -8,9 +8,11 @@ import blockchain from '../../../network/providers/ethereum';
 import {
     encryptMultipleData,
     decryptData,
+    decryptDataWithDecryptedKey,
     getEncryptedSymetricObjFromJSON
 } from '../../../client/encryptIdentityUtils';
 import {getNetworkPrivateKey} from '../../../wallet/keystore';
+import { Exception } from 'handlebars';
 
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format
@@ -74,7 +76,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
 
     server.get('/_encryptedStorage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {
         let file;
-        const qs = req.query as {eSymmetricObj: string};
+        const qs = req.query as {eSymmetricObj: string, symmetricObj: string};
         try {
             file = await getFile(req.params.hash, null);
         } catch (e) {
@@ -83,11 +85,20 @@ const attachStorageHandlers = (server: FastifyInstance) => {
         const {host} = req.headers;
         const fileBuffer = Buffer.from(file, 'hex');
         const privateKey = getNetworkPrivateKey();
-        const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
-            JSON.parse(qs.eSymmetricObj)
-        );
-        const decryptedData = await decryptData(host, fileBuffer, encryptedSymmetricObj, privateKey);
-            
+
+        let decryptedData;
+        console.log(qs);
+        if(qs.eSymmetricObj){
+            const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
+                JSON.parse(qs.eSymmetricObj)
+            );
+            decryptedData = await decryptData(host, fileBuffer, encryptedSymmetricObj, privateKey);
+        }else if (qs.symmetricObj){
+            decryptedData = await decryptDataWithDecryptedKey(host, fileBuffer, qs.symmetricObj);
+        }else{
+            throw new Error("No symmetric obj passed");
+        }
+        
         const fileString = decryptedData.plaintext.toString();
         file = decryptedData.plaintext;
         
