@@ -122,12 +122,12 @@ module.exports.decryptSymmetricKey = async (host, encryptedSymmetricObj, private
         Buffer.from(privateKey, 'hex'),
         encryptedSymmetricObj
     );
-    const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|');
+    const [, hostNameHash, ,] = symmetricObj.toString().split('|');
     if (decryptHostNameHash.digest('hex') !== hostNameHash) {
         throw new Error('Host is invalid');
     }
     return symmetricObj.toString();
-}
+};
 
 module.exports.decryptDataWithDecryptedKey = async (host, cyphertext, symmetricObj) => {
     const decryptHostNameHash = crypto.createHash('sha256');
@@ -145,7 +145,6 @@ module.exports.decryptDataWithDecryptedKey = async (host, cyphertext, symmetricO
 
     return {plaintext, hostNameHash, symmetricKey, iv};
 };
-
 
 module.exports.decryptData = async (host, cyphertext, encryptedSymmetricObj, privateKey) => {
     const decryptHostNameHash = crypto.createHash('sha256');
