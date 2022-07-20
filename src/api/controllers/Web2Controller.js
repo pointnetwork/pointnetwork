@@ -11,16 +11,15 @@ class Web2Controller extends PointSDKController {
     }
 
     async open() {
+        if (this.host !== 'point') return this.reply.callNotFound();
         const url = this.payload.urlToOpen;
         try {
             open(url);
             return this._response(true);
-        } catch (e){
+        } catch (e) {
             return this._response(false);
         }
-        
     }
-
 }
 
 module.exports = Web2Controller;
