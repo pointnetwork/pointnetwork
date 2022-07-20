@@ -35,8 +35,17 @@ const Header = ({ isRegistered }) => {
                                             Identities
                                         </Nav.Link>
                                     </Link>
+                                    <Link to="/myidentities">
+                                        <Nav.Link href="/myidentities">
+                                            My Identities
+                                        </Nav.Link>
+                                    </Link>
                                     <Link to={'/identities/' + walletIdentity}>
-                                        <Nav.Link href={'/identities/' + walletIdentity}>
+                                        <Nav.Link
+                                            href={
+                                                '/identities/' + walletIdentity
+                                            }
+                                        >
                                             @{walletIdentity}
                                         </Nav.Link>
                                     </Link>
