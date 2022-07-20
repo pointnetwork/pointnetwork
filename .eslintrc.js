@@ -26,6 +26,7 @@ module.exports = {
         'src/db/migrations'
     ],
     rules: {
+        'curly': ['error', 'multi-line'],
         'no-implicit-coercion': ['error'],
         'indent': ['error', 4, {
             SwitchCase: 1,
