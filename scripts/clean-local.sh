@@ -1,9 +1,8 @@
 #!/bin/bash
 
 #stopping all processes
-echo "Sending SIGKILL to all node processes"
-killall node -v -s KILL
-echo "Finished"
+echo "Calling Stop Local script to kill running processes"
+sh ./scripts/stop-local.sh
 
 #removing data files
 echo "Removing data files"
