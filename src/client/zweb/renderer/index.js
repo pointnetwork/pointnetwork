@@ -244,7 +244,9 @@ class Renderer {
                         'No csrf token generated for this host (rather, no tokens at all)'
                     );
                 }
-                if (!csrfTokens[this.host]) {throw new Error('No csrf token generated for this host');}
+                if (!csrfTokens[this.host]) {
+                    throw new Error('No csrf token generated for this host');
+                }
                 const real_token = csrfTokens[this.host];
                 if (real_token !== submitted_token) {
                     throw new Error('Invalid csrf token submitted');
@@ -283,7 +285,9 @@ class Renderer {
     }
 
     #ensurePrivilegedAccess() {
-        if (this.host !== 'point') {throw new Error('This function requires privileged access, host is not supported');}
+        if (this.host !== 'point') {
+            throw new Error('This function requires privileged access, host is not supported');
+        }
     }
 
     #defineAvailableFilters() {
