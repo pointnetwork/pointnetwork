@@ -15,6 +15,7 @@ module.exports = [
     ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'],
     ['POST', '/v1/api/identity/open', 'IdentityController@openLink'],
     ['POST', '/v1/api/identity/register', 'IdentityController@registerIdentity'],
+    ['POST', '/v1/api/identity/sub/register', 'IdentityController@registerSubIdentity'],
     ['GET', '/v1/api/identity/resolve/:domain', 'IdentityController@resolveDomain'],
     ['GET', '/v1/api/status/ping', 'PingController@ping'],
     ['GET', '/v1/api/status/meta', 'StatusController@meta'],
