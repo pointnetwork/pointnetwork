@@ -12,7 +12,6 @@ import {
     getEncryptedSymetricObjFromJSON
 } from '../../../client/encryptIdentityUtils';
 import {getNetworkPrivateKey} from '../../../wallet/keystore';
-import { Exception } from 'handlebars';
 
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format
@@ -87,16 +86,15 @@ const attachStorageHandlers = (server: FastifyInstance) => {
         const privateKey = getNetworkPrivateKey();
 
         let decryptedData;
-        console.log(qs);
-        if(qs.eSymmetricObj){
+        if (qs.eSymmetricObj){
             const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
                 JSON.parse(qs.eSymmetricObj)
             );
             decryptedData = await decryptData(host, fileBuffer, encryptedSymmetricObj, privateKey);
-        }else if (qs.symmetricObj){
+        } else if (qs.symmetricObj){
             decryptedData = await decryptDataWithDecryptedKey(host, fileBuffer, qs.symmetricObj);
-        }else{
-            throw new Error("No symmetric obj passed");
+        } else {
+            throw new Error('No symmetric obj passed');
         }
         
         const fileString = decryptedData.plaintext.toString();
