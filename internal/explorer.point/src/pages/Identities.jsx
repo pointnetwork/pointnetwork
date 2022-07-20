@@ -2,10 +2,9 @@ import Container from 'react-bootstrap/Container';
 import Loading from '../components/Loading';
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import orderBy from 'lodash/orderBy';
-import InfiniteScroll from "react-infinite-scroll-component";
+import InfiniteScroll from 'react-infinite-scroll-component';
 
-export default function Identities({ owner }) {
+export default function Identities() {
     const [identities, setIdentities] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
@@ -14,38 +13,49 @@ export default function Identities({ owner }) {
 
     const PAGE_SIZE = 100;
 
-    useEffect(async () => {
-        await fetchIdentities();
-    }, [owner]);
+    useEffect(() => {
+        fetchIdentities();
+    }, []);
 
     const fetchIdentities = async () => {
-        console.log('fetchIdentities call ' + cursor);
-        if(identitiesLength == 0)
-            setIsLoading(true); 
+        if (identitiesLength === 0) {
+            setIsLoading(true);
+        }
 
         const identitiesLengthFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getIdentitiesLength',
             params: [],
         });
-        
+
         setIdentitiesLength(identitiesLengthFetched.data);
-        
+
         const ids = await window.point.contract.call({
             contract: 'Identity',
             method: 'getPaginatedIdentities',
             params: [cursor, PAGE_SIZE],
         });
-        console.log(ids.data);
 
         setCursor(cursor + ids.data.length);
-        if(identities.length + ids.data.length >= identitiesLengthFetched.data){ 
+
+        if (
+            identities.length + ids.data.length >=
+            identitiesLengthFetched.data
+        ) {
             setHasMore(false);
         }
-        setIdentities(identities.concat(ids.data.map(e => {return {handle: e[0], owner: e[1], hasDomain: e[2]}})));
 
-        if(identitiesLength == 0)
-            setIsLoading(false); 
+        setIdentities(
+            identities.concat(
+                ids.data.map((e) => {
+                    return { handle: e[0], owner: e[1], hasDomain: e[2] };
+                }),
+            ),
+        );
+
+        if (identitiesLength === 0) {
+            setIsLoading(false);
+        }
     };
 
     const renderIdentityEntry = (id) => {
@@ -82,7 +92,7 @@ export default function Identities({ owner }) {
         <>
             <Container className="p-3">
                 <br />
-                <h1>{owner !== undefined ? 'My ' : ''}Identities</h1>
+                <h1>Identities</h1>
                 Total: {identitiesLength}
                 <hr />
                 <InfiniteScroll
@@ -90,7 +100,7 @@ export default function Identities({ owner }) {
                     next={fetchIdentities}
                     hasMore={hasMore}
                     loader={<Loading />}
-                    >
+                >
                     <table className="table table-bordered table-striped table-hover table-responsive table-primary">
                         <tbody>
                             <tr>
@@ -98,13 +108,10 @@ export default function Identities({ owner }) {
                                 <th>Owner</th>
                                 <th>App</th>
                             </tr>
-                            
+
                             {isLoading
                                 ? null
-                                : identities.map((e) =>
-                                    renderIdentityEntry(e),
-                                )}
-                            
+                                : identities.map((e) => renderIdentityEntry(e))}
                         </tbody>
                     </table>
                 </InfiniteScroll>

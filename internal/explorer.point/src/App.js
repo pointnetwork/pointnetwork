@@ -5,6 +5,7 @@ import { Route, Switch } from 'wouter';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Identities from './pages/Identities';
+import MyIdentities from './pages/MyIdentities';
 import Identity from './pages/Identity';
 import Final from './pages/Final';
 import Wallet from './pages/Wallet';
@@ -62,7 +63,7 @@ const Main = () => {
                                 <Zapps />
                             </Route>
                             <Route path="/myidentities">
-                                <Identities owner={walletAddr} />
+                                <MyIdentities owner={walletAddr} />
                             </Route>
                         </Switch>
                     ) : (
