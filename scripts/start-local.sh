@@ -2,7 +2,7 @@
 
 #arlocal
 echo "Starting arlocal"
-npx arlocal@1.1.49 &
+arlocal &
 
 #ganache
 echo "Starting ganache"
