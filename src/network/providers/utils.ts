@@ -1,12 +1,14 @@
 import config from 'config';
-import {ChainId} from './provider';
+import {ChainId} from './blockchain-provider';
 
 /**
  * Looks for network settings in config file by chain id.
  * It throws if no network is found.
  */
-export function getNetworkConfig(chainId: ChainId): Record<string, string|number|boolean> {
-    const networks: Record<string, {[k: string]: string|number|boolean}> = config.get('network.web3');
+export function getNetworkConfig(chainId: ChainId): Record<string, string | number | boolean> {
+    const networks: Record<string, {[k: string]: string | number | boolean}> = config.get(
+        'network.web3'
+    );
     const network = Object.values(networks).find(n => n.chain_id === chainId);
 
     if (!network) {

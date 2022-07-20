@@ -1,10 +1,9 @@
-import {BlockchainProvider, ChainId} from './provider';
-import MockEthereumProvider from './ethereum-provider-mock';
-import MockSolanaProvider from './solana-provider-mock';
+import {ChainId} from './blockchain-provider';
+import {blockchain} from './provider';
+
+jest.mock('./provider');
 
 describe('BlockchainProvider', () => {
-    const blockchain = new BlockchainProvider(MockEthereumProvider, MockSolanaProvider);
-
     it('should return correct name for EthereumMainnet', () => {
         const chainId = ChainId.EthereumMainnet;
         const name = blockchain.name(chainId);

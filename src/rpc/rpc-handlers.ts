@@ -1,6 +1,6 @@
 import pendingTxs from '../permissions/PendingTxs';
 import config from 'config';
-import {blockchain, isChainId} from '../network/providers/provider';
+import {blockchain, isChainId} from '../network/providers';
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
@@ -9,7 +9,7 @@ export type RPCRequest = {
     method: string;
     params?: unknown[];
     origin?: string;
-    network?: string
+    network?: string;
 };
 
 type HandlerFunc = (
@@ -19,7 +19,9 @@ type HandlerFunc = (
     result: unknown;
 }>;
 
-const networks: Record<string, {[k: string]: string|number|boolean}> = config.get('network.web3');
+const networks: Record<string, {[k: string]: string | number | boolean}> = config.get(
+    'network.web3'
+);
 
 const storeTransaction: HandlerFunc = async data => {
     const {params} = data;
@@ -28,11 +30,10 @@ const storeTransaction: HandlerFunc = async data => {
         return {status: 400, result: {message: 'Missing `params` in request body.'}};
     }
     if (networks[network].type === 'solana' && params.length !== 1) {
+        const message = 'Wrong number or params for solana transaction, expected 1';
         return {
-            status: 400, result: {
-                message: 
-                    'Wrong number or params for solana transaction, expected 1'
-            }
+            status: 400,
+            result: {message}
         };
     }
 
@@ -58,7 +59,7 @@ const confirmTransaction: HandlerFunc = async data => {
         };
     }
     const network = tx.network ?? 'ynet';
-    
+
     const chainId = networks[network].chain_id;
     if (!isChainId(chainId)) {
         return {status: 400, result: {code: 400, message: 'Missing or invalid chain_id'}};

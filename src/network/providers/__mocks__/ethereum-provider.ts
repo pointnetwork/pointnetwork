@@ -1,20 +1,20 @@
 import {JsonRpcResponse} from 'hardhat/types';
-import {Provider, ChainId} from './provider';
-import {DomainRegistry} from '../../name_service/types';
-import {RPCRequest} from '../../rpc/rpc-handlers';
+import {Provider, ChainId} from '../blockchain-provider';
+import {DomainRegistry} from '../../../name_service/types';
+import {RPCRequest} from '../../../rpc/rpc-handlers';
 
-class MockSolanaProvider implements Provider {
-    private static instance: MockSolanaProvider;
+class MockEthereumProvider implements Provider {
+    private static instance: MockEthereumProvider;
 
     public static getInstance() {
-        if (!MockSolanaProvider.instance) {
-            MockSolanaProvider.instance = new MockSolanaProvider();
+        if (!MockEthereumProvider.instance) {
+            MockEthereumProvider.instance = new MockEthereumProvider();
         }
-        return MockSolanaProvider.instance;
+        return MockEthereumProvider.instance;
     }
 
     public name(chainId: ChainId): string {
-        return `SolanaProvider (chain: ${chainId})`;
+        return `EthereumProvider (chain: ${chainId})`;
     }
 
     public async resolveDomain(chainId: ChainId, domainName: string): Promise<DomainRegistry> {
@@ -39,8 +39,19 @@ class MockSolanaProvider implements Provider {
     }
 
     public async send(chainId: ChainId, data: RPCRequest): Promise<JsonRpcResponse> {
-        const defaultResult = {mock: true, chainId, receivedData: data};
-        const result = data.method === 'getBlockHeight' ? 0 : defaultResult;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let result: any;
+        switch (data.method) {
+            case 'eth_accounts':
+                result = ['0xF5277b8B7a620f1E04a4a205A6e552D084BBf76B'];
+                break;
+            case 'eth_blockNumber':
+                result = '0x1';
+                break;
+            default:
+                result = {mock: true, chainId, receivedData: data};
+        }
+
         return {
             jsonrpc: '2.0',
             id: data.id || -1,
@@ -71,10 +82,14 @@ class MockSolanaProvider implements Provider {
             result: {
                 mock: true,
                 chainId,
-                publickKey: ['mocked-account']
+                accounts: ['mocked-account']
             }
         };
     }
+
+    public async getBlockNumber(_: ChainId): Promise<number> {
+        return -1;
+    }
 }
 
-export default MockSolanaProvider;
+export default MockEthereumProvider;

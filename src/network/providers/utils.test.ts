@@ -1,4 +1,4 @@
-import {ChainId} from './provider';
+import {ChainId} from './blockchain-provider';
 import {getNetworkConfig} from './utils';
 
 describe('getNetworkConfig', () => {

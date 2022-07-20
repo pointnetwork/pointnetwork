@@ -1,6 +1,6 @@
 const PointSDKController = require('./PointSDKController');
 const blockchain = require('../../network/providers/ethereum');
-const {blockchain: bp, tldToChain} = require('../../network/providers/provider');
+const {blockchain: bp, tldToChain} = require('../../network/providers');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
@@ -47,9 +47,9 @@ let TwitterOracle = {
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${
-            encodeURIComponent(url)
-        }`;
+        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(
+            url
+        )}`;
 
         log.info(`calling to ${oracleUrl}`);
         const {data} = await axios.post(oracleUrl);
