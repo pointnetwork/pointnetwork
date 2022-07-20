@@ -1,6 +1,6 @@
 import {getBalance, getTransactions, sendTransaction} from '../../src/wallet';
 
-describe('Wallet', () => {
+describe.skip('Wallet', () => {
     it('Get eth balance', async () => {
         expect.assertions(1);
         const balance = await getBalance({majorUnits: true});
@@ -39,9 +39,9 @@ describe('Wallet', () => {
     });
 
     // TODO: this is not working
-    // it('Get solana transactions', async () => {
-    //     expect.assertions(1);
-    //     const txs = await getTransactions({network: 'solana_devnet'});
-    //     expect(txs).toEqual(expect.any(Array));
-    // });
+    it('Get solana transactions', async () => {
+        expect.assertions(1);
+        const txs = await getTransactions({network: 'solana_devnet'});
+        expect(txs).toEqual(expect.any(Array));
+    });
 });
