@@ -85,10 +85,11 @@ class Model extends sequelize_lib.Model {
 
     static async findOneByOrFail(field, value) {
         const one = await this.findOneBy(field, value);
-        if (one === null)
+        if (one === null) {
             throw Error(
                 'Row not found: Model ' + this.constructor.name + ', ' + field + ' #' + value
-            ); // todo: sanitize!
+            );
+        } // todo: sanitize!
         return one;
     }
 
