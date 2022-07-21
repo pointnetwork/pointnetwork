@@ -279,10 +279,10 @@ export const getFile = async (
         const fileBuffer = Buffer.concat([
             ...chunkBuffers.slice(0, -1),
             // We should trim the trailing zeros from the last chunk
-            chunkBuffers[chunkBuffers.length - 1].slice(
+            chunkBuffers.length ? chunkBuffers[chunkBuffers.length - 1].slice(
                 0,
                 filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
-            )
+            ) : Buffer.from([])
         ]);
 
         log.debug({fileId: file.id}, 'Successfully proceeded file chunks');

@@ -28,6 +28,8 @@ const program: ProgramType<typeof Command> = new Command();
 program.storeOptionsAsProperties();
 
 const app = require(path.resolve(__dirname, '..', 'package.json'));
+
+process.env.POINT_ENGINE_VERSION = app.version;
 program.version(app.version || 'No version is specified');
 program.description(`
     Point Network
@@ -75,7 +77,11 @@ program
     })
     .option('--contracts', '(re)deploy contracts too', false)
     .option('--dev', 'deploy zapp to dev too', false)
-    .option('--force-deploy-proxy', 'Force the replacement of the proxy on upgradable contracts', false);
+    .option(
+        '--force-deploy-proxy',
+        'Force the replacement of the proxy on upgradable contracts',
+        false
+    );
 program
     .command('upload <path>')
     .description('uploads a file or directory')
@@ -284,7 +290,13 @@ process.on('unhandledRejection', (err: Error) => {
 const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
 
 (async () => {
-    await initFolders();
+    try {
+        await initFolders();
+    } catch (err) {
+        log.fatal(err);
+        exit(11); // TODO: use `point-errors-code` once available.
+    }
+
     try {
         if (!existsSync(lockfilePath)) {
             await fs.writeFile(lockfilePath, 'point');
@@ -292,15 +304,16 @@ const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
         await lockfile.lock(lockfilePath, {stale: 5000});
     } catch (err) {
         log.fatal(err, 'Failed to create lockfile, is point already running?');
-        exit(1);
+        exit(12); // TODO: use `point-errors-code` once available.
     }
 
     try {
         await migrate();
     } catch (err) {
         log.fatal(err, 'Failed to run database migrations');
-        exit(1);
+        exit(13); // TODO: use `point-errors-code` once available.
     }
+
     try {
         log.info({env: config.util.getEnv('NODE_ENV')}, 'Starting Point Node');
         await startPoint();
