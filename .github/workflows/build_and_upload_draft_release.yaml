@@ -5,56 +5,20 @@ name: Create release
 on:
   push:
     # Sequence of patterns matched against refs/tags
-    # tags:
-    #   - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 
 jobs:
-  build:
-
+  create_release:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16.15.x]
-
+    outputs:
+      release_upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_name: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
     steps:
-    - uses: actions/checkout@v2
-    # - name: Cache node modules
-    #   uses: actions/cache@v2
-    #   env:
-    #     cache-name: cache-node-modules
-    #   with:
-    #     path: ~/.npm
-    #     key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-build-${{ env.cache-name }}-
-    #       ${{ runner.os }}-build-
-    #       ${{ runner.os }}-
-
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm i -g npm
-    - run: npm i -g json
-    - run: npm install
-
-    - name: see node_modules
-      run: ls -Rfal ./node_modules/eccrypto
-
-    - name: Run build
-      run: npm run build
-    - name: Create sqlite binaries
-      run: ./scripts/build-sqlite3-for-all-platforms.sh
-    - name: Create package
-      run: npm run pkg
-    - name: Compress pkg
-      run: ./scripts/package-executables.sh
     - name: Get the Source Tag
       id: get_source_tag
-      run: echo ::set-output name=SOURCE_TAG::test-tag-101
-
+      run: echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -64,56 +28,127 @@ jobs:
         tag_name: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
         release_name: Release ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
         draft: true
-        prerelease: false
+        prerelease: true
 
+  build_on_linux:
+    runs-on: ubuntu-latest
+    needs: create_release
+    outputs:
+      linux_filename: ${{ steps.upload_linux.outputs.asset_name }}
+      linux_hash: ${{ steps.upload_linux.outputs.asset_hash }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@master
+      with:
+        node-version: 16
+    - run: npm i -g npm
+    - run: npm i -g json
+    - run: npm install
+    - name: Run build
+      run: npm run build
+    - name: Create sqlite binaries
+      run: ./scripts/build-sqlite3-for-all-platforms.sh
+    - name: Create package
+      run: npm run pkg:linux
+    - name: Compress pkg
+      run: ./scripts/package-executables.sh
     - name: upload linux artefact
       id: upload_linux
       uses: pointnetwork/upload-release-asset@v2.0.0
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        upload_url: ${{ needs.create_release.outputs.release_upload_url }}
         asset_path: ./bin/point-linux.tar.gz
-        asset_name: point-linux-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.tar.gz
+        asset_name: point-linux-${{ needs.create_release.outputs.release_name }}.tar.gz
         asset_content_type: application/gzip
 
-    - name: upload windows artefact
-      id: upload_win
-      uses: pointnetwork/upload-release-asset@v2.0.0
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+
+  build_on_mac:
+    runs-on: macos-latest
+    needs: create_release
+    outputs:
+      macos_filename: ${{ steps.upload_mac.outputs.asset_name }}
+      macos_hash: ${{ steps.upload_mac.outputs.asset_hash }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@master
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./bin/point-win.tar.gz
-        asset_name: point-win-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.tar.gz
-        asset_content_type: application/gzip
-
+        node-version: 16
+    - run: npm i -g npm
+    - run: npm i -g json
+    - run: npm install
+    - name: Run build
+      run: npm run build
+    - name: Create sqlite binaries
+      run: ./scripts/build-sqlite3-for-all-platforms.sh
+    - name: Create package
+      run: npm run pkg:macos
+    - name: Compress pkg
+      run: ./scripts/package-executables.sh
     - name: upload macos artefact
       id: upload_mac
       uses: pointnetwork/upload-release-asset@v2.0.0
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        upload_url: ${{ needs.create_release.outputs.release_upload_url }}
         asset_path: ./bin/point-macos.tar.gz
-        asset_name: point-macos-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.tar.gz
+        asset_name: point-macos-${{ needs.create_release.outputs.release_name }}.tar.gz
         asset_content_type: application/gzip
 
-    - name: Generate sha256 file
+  build_on_win:
+    runs-on: windows-latest
+    needs: create_release
+    outputs:
+      win_filename: ${{ steps.upload_win.outputs.asset_name }}
+      win_hash: ${{ steps.upload_win.outputs.asset_hash }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@master
+      with:
+        node-version: 16
+    - run: npm i -g npm
+    - run: npm i -g json
+    - run: npm install
+    - name: Run build
+      run: npm run build
+    - name: Create sqlite binaries
+      run: ./scripts/build-sqlite3-for-all-platforms.sh
+    - name: Create package
+      run: npm run pkg:win
+    - name: Compress pkg
+      run: bash ./scripts/package-executables.sh
+    - name: upload windows artefact
+      id: upload_win
+      uses: pointnetwork/upload-release-asset@v2.0.0
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        upload_url: ${{ needs.create_release.outputs.release_upload_url }}
+        asset_path: ./bin/point-win.tar.gz
+        asset_name: point-win-${{ needs.create_release.outputs.release_name }}.tar.gz
+        asset_content_type: application/gzip
+
+  generate_hash_file:
+    runs-on: ubuntu-latest
+    needs: [create_release, build_on_win, build_on_linux, build_on_mac]
+    steps:
+    - name: Generate hash file
       uses: DamianReeves/write-file-action@master
       with:
-        path: ./sha256
+        path: ./hash
         contents: |
-          ${{ steps.upload_linux.outputs.asset_name }}: ${{ steps.upload_linux.outputs.asset_hash }}
-          ${{ steps.upload_mac.outputs.asset_name }}: ${{ steps.upload_mac.outputs.asset_hash }}
-          ${{ steps.upload_win.outputs.asset_name }}: ${{ steps.upload_win.outputs.asset_hash }}
+          ${{ needs.build_on_win.outputs.win_filename }}: ${{ needs.build_on_win.outputs.win_hash }}
+          ${{ needs.build_on_linux.outputs.linux_filename }}: ${{ needs.build_on_linux.outputs.linux_hash }}
+          ${{ needs.build_on_mac.outputs.macos_filename }}: ${{ needs.build_on_mac.outputs.macos_hash }}
         write-mode: append
     - name: Upload sha256 file
       uses: pointnetwork/upload-release-asset@v2.0.0
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./sha256
-        asset_name: sha256-${{ steps.get_source_tag.outputs.SOURCE_TAG }}.txt
+        upload_url: ${{ needs.create_release.outputs.release_upload_url }}
+        asset_path: ./hash
+        asset_name: sha256-${{ needs.create_release.outputs.release_name }}.txt
         asset_content_type: text/plain
