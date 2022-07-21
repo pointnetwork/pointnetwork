@@ -291,7 +291,7 @@ class IdentityController extends PointSDKController {
     }
 
     async registerSubIdentity() {
-        const {subidentity, _csrf} = this.req.body;
+        const {subidentity, parentIdentity, _csrf} = this.req.body;
         const {host} = this.req.headers;
 
         if (host !== 'point') {
@@ -301,13 +301,44 @@ class IdentityController extends PointSDKController {
             return this.rep.status(403).send('CSRF token invalid');
         }
 
-        // TODO: have a real implementation that calls the Identity contract
-        // once we have the method to register sub-identities.
-        if (subidentity.includes('error')) {
-            return this.rep.status(500).send('Error processing sub-identity.');
-        }
-        this.rep.status(201);
-        return this._status(201)._response({message: 'sub-identity registered.'});
+        const publicKey = getNetworkPublicKey();
+        const owner = getNetworkAddress();
+
+        log.info(
+            {
+                subidentity: `${subidentity}.${parentIdentity}`,
+                owner,
+                publicKey,
+                len: Buffer.byteLength(publicKey, 'utf-8'),
+                parts: [`0x${publicKey.slice(0, 32)}`, `0x${publicKey.slice(32)}`]
+            },
+            'Registering a new subidentity'
+        );
+
+        await blockchain.registerSubIdentity(
+            subidentity,
+            parentIdentity,
+            owner,
+            Buffer.from(publicKey, 'hex')
+        );
+
+        log.info(
+            {
+                subidentity: `${subidentity}.${parentIdentity}`,
+                owner,
+                publicKey: publicKey.toString('hex')
+            },
+            'Successfully registered new subidentity'
+        );
+
+        log.sendMetric({
+            subidentity: `${subidentity}.${parentIdentity}`,
+            owner,
+            publicKey: publicKey.toString('hex')
+        });
+
+        this.rep.status(200);
+        return this._status(200)._response({message: 'subidentity registered.'});
     }
 
     async resolveDomain() {
