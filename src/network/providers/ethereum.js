@@ -776,6 +776,58 @@ ethereum.registerIdentity = async (identity, address, commPublicKey) => {
     }
 };
 
+ethereum.registerSubIdentity = async (subidentity, parentIdentity, address, commPublicKey) => {
+    try {
+        if (!Buffer.isBuffer(commPublicKey))
+            throw Error('registerIdentity: commPublicKey must be a buffer');
+        if (Buffer.byteLength(commPublicKey) !== 64)
+            throw Error('registerIdentity: commPublicKey must be 64 bytes');
+
+        parentIdentity = parentIdentity.replace('.point', '');
+
+        const contract = await ethereum.loadIdentityContract();
+        log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
+
+        const method = contract.methods.register(
+            subidentity,
+            parentIdentity,
+            address,
+            `0x${commPublicKey.slice(0, 32).toString('hex')}`,
+            `0x${commPublicKey.slice(32).toString('hex')}`
+        );
+
+        log.debug(
+            {subidentity: `${subidentity}.${parentIdentity}`, address},
+            'Registering subidentity'
+        );
+        const result = await ethereum.web3send(method);
+
+        log.info(result, 'Subidentity registration result');
+        log.sendMetric({
+            subidentityRegistration: {
+                subidentity: `${subidentity}.${parentIdentity}`,
+                address,
+                commPublicKey
+            }
+        });
+
+        return result;
+    } catch (e) {
+        log.error(
+            {
+                error: e,
+                stack: e.stack,
+                subidentity: `${subidentity}.${parentIdentity}`,
+                address,
+                commPublicKey
+            },
+            'Subidentity registration error'
+        );
+
+        throw e;
+    }
+};
+
 ethereum.isCurrentIdentityRegistered = async () => {
     const address = getNetworkAddress();
     const identity = await ethereum.identityByOwner(address);
