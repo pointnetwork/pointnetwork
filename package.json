@@ -176,6 +176,7 @@
       "internal/**/*",
       "resources/certs/*.{crt,key,srl}",
       "node_modules/sqlite3/**/*",
+      "node_modules/eccrypto/**/*",
       "src/client/proxy/views/*"
     ],
     "scripts": [
