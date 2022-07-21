@@ -5,8 +5,8 @@ name: Create release
 on:
   push:
     # Sequence of patterns matched against refs/tags
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+    # tags:
+    #   - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 
 jobs:
@@ -20,17 +20,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Cache node modules
-      uses: actions/cache@v2
-      env:
-        cache-name: cache-node-modules
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
+    # - name: Cache node modules
+    #   uses: actions/cache@v2
+    #   env:
+    #     cache-name: cache-node-modules
+    #   with:
+    #     path: ~/.npm
+    #     key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-build-${{ env.cache-name }}-
+    #       ${{ runner.os }}-build-
+    #       ${{ runner.os }}-
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
@@ -39,6 +39,9 @@ jobs:
     - run: npm i -g npm
     - run: npm i -g json
     - run: npm install
+
+    - name: see node_modules
+      run: ls -Rfal ./node_modules/eccrypto
 
     - name: Run build
       run: npm run build
@@ -50,7 +53,7 @@ jobs:
       run: ./scripts/package-executables.sh
     - name: Get the Source Tag
       id: get_source_tag
-      run: echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+      run: echo ::set-output name=SOURCE_TAG::test-tag-101
 
     - name: Create Release
       id: create_release

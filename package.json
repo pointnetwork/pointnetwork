@@ -120,7 +120,7 @@
     "start:e2e": "MODE=e2e npm run watch",
     "watch": "nodemon",
     "build": "tsc",
-    "pkg": "pkg .",
+    "pkg": "pkg --debug .",
     "compile": "./point compile",
     "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
     "watch:sites": "ls -d example/*/ | xargs -I {} echo \"SITE={} npm run watch:site\" | sed \"s/.*/\\\\'&\\\\'/\" | xargs npx concurrently",
