@@ -179,7 +179,12 @@ ethereum.loadIdentityContract = async () => {
     return await ethereum.loadPointContract('Identity', at);
 };
 
-ethereum.loadWebsiteContract = async (target, contractName, version = 'latest', protocol = 'http') => {
+ethereum.loadWebsiteContract = async (
+    target,
+    contractName,
+    version = 'latest',
+    protocol = 'http'
+) => {
     // todo: make it nicer, extend to all potential contracts, and add to docs
     // @ means internal contract for Point Network (truffle/contracts)
     if ((target === '@' || target === 'point') && contractName === 'Identity') {
@@ -332,12 +337,19 @@ ethereum.getPastEvents = async (
 ) => {
     const contract = await ethereum.loadWebsiteContract(target, contractName);
     let events = await contract.getPastEvents(event, options);
+
+    // If filter contains an address, convert it to checksum.
+    if (options.filter && options.filter.identityOwner) {
+        options.filter.identityOwner = ethereum.toChecksumAddress(options.filter.identityOwner);
+    }
+
     //filter non-indexed properties from return value for convenience
     if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
         for (const k in options.filter) {
             events = events.filter(e => e.returnValues[k] === options.filter[k]);
         }
     }
+
     return events;
 };
 
@@ -368,10 +380,16 @@ ethereum.subscribeContractEvent = async (
     let subscriptionId;
 
     return contract.events[event](options)
-        .on('data', data => (log.debug({data}, 'Contract event received'), onEvent({subscriptionId, data})))
+        .on(
+            'data',
+            data => (log.debug({data}, 'Contract event received'), onEvent({subscriptionId, data}))
+        )
         .on('connected', id => {
             const message = `Subscribed to "${contractName}" contract "${event}" events with subscription id: ${id}`;
-            log.debug({contractName, event, subscriptionId: id}, 'Contract event subscription started');
+            log.debug(
+                {contractName, event, subscriptionId: id},
+                'Contract event subscription started'
+            );
             onStart({
                 subscriptionId: (subscriptionId = id),
                 data: {message}
@@ -578,7 +596,7 @@ ethereum.getKeyValue = async (
         );
 
         const copyFromIkv_prolog = '@@copy_from_ikv=';
-        if (! value.startsWith(copyFromIkv_prolog)) {
+        if (!value.startsWith(copyFromIkv_prolog)) {
             return value; // no redirection
         } else {
             // the format is:
@@ -586,14 +604,25 @@ ethereum.getKeyValue = async (
             const withoutPrefix = value.substring(copyFromIkv_prolog.length);
 
             const copy_identity = withoutPrefix.split(':')[0];
-            const copy_key = withoutPrefix.split(':').slice(1).join(':');
+            const copy_key = withoutPrefix
+                .split(':')
+                .slice(1)
+                .join(':');
 
-            const value = await ethereum.getKeyValue(copy_identity, copy_key, 'latest', 'exact', true);
+            const value = await ethereum.getKeyValue(
+                copy_identity,
+                copy_key,
+                'latest',
+                'exact',
+                true
+            );
+
             if (!value) {
                 throw new Error(
                     `Failed to obtain ikv value following ${copyFromIkv_prolog} instruction`
                 );
             }
+
             return value;
         }
     }
@@ -771,7 +800,7 @@ ethereum.getCurrentIdentity = async () => {
     return await ethereum.identityByOwner(address);
 };
 
-ethereum.toChecksumAddress = async address => {
+ethereum.toChecksumAddress = address => {
     const checksumAddress = getWeb3().utils.toChecksumAddress(address);
     return checksumAddress;
 };
