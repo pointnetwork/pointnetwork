@@ -17,7 +17,7 @@ export default function SubIdentities({ owner }) {
                 const resp = await window.point.contract.events({
                     host: '@',
                     contract: 'Identity',
-                    event: 'IdentityRegistered',
+                    event: 'SubIdentityRegistered',
                     filter: {
                         identityOwner: owner,
                     },
@@ -33,7 +33,10 @@ export default function SubIdentities({ owner }) {
     }, []);
 
     const handleNewIdentity = (subidentity) => {
-        setSubidentities((prev) => [...prev, { handle: subidentity, owner }]);
+        setSubidentities((prev) => [
+            ...prev,
+            { data: { handle: subidentity, identityOwner: owner } },
+        ]);
     };
 
     return (
