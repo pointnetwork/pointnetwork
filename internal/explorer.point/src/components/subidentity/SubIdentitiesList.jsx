@@ -17,13 +17,13 @@ export default function SubIdentitiesList({ subidentities }) {
                     <th>Owner</th>
                 </tr>
                 {subidentities.map((s) => (
-                    <tr key={s.data.handle}>
+                    <tr key={s.data.subhandle}>
                         <td>
                             <Link
-                                to={`/identities/${s.data.handle}`}
+                                to={`/identities/${s.data.subhandle}.${s.data.handle}`}
                                 target="_blank"
                             >
-                                @{s.data.handle}
+                                @{s.data.subhandle}.{s.data.handle}
                             </Link>
                         </td>
                         <td className="mono">
