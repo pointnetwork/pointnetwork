@@ -18,7 +18,7 @@ import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
 import {parseDomainRegistry} from '../../../name_service/registry';
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');
-const sanitizeUrl = require("@braintree/sanitize-url").sanitizeUrl;
+const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
 const log = logger.child({module: 'ZProxy'});
 
