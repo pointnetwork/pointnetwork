@@ -28,7 +28,7 @@ jobs:
         tag_name: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
         release_name: Release ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
         draft: true
-        prerelease: true
+        prerelease: false
 
   build_on_linux:
     runs-on: ubuntu-latest
