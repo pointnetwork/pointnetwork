@@ -9,7 +9,6 @@ export default function SubIdentities({ owner }) {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        // TODO: fetch all sub-identities.
         async function fetchSubidentities() {
             setIsLoading(true);
             setError('');
@@ -17,7 +16,7 @@ export default function SubIdentities({ owner }) {
                 const resp = await window.point.contract.events({
                     host: '@',
                     contract: 'Identity',
-                    event: 'SubIdentityRegistered',
+                    event: 'SubidentityRegistered',
                     filter: {
                         identityOwner: owner,
                     },
@@ -29,13 +28,19 @@ export default function SubIdentities({ owner }) {
                 setIsLoading(false);
             }
         }
-        // fetchSubidentities();
+        fetchSubidentities();
     }, []);
 
-    const handleNewIdentity = (subidentity) => {
+    const handleNewIdentity = (subidentity, parentIdentity) => {
         setSubidentities((prev) => [
             ...prev,
-            { data: { handle: subidentity, identityOwner: owner } },
+            {
+                data: {
+                    subhandle: subidentity,
+                    handle: parentIdentity,
+                    identityOwner: owner,
+                },
+            },
         ]);
     };
 
