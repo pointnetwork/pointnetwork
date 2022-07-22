@@ -105,7 +105,12 @@ export default function Wallet() {
     const [sendModalData, setSendModalData] = useState(null);
 
     const fetchWallets = async () => {
-        const response = await fetch('/v1/api/wallet/getWalletInfo');
+        const controller = new AbortController();
+        // 10 second timeout:
+        setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch('/v1/api/wallet/getWalletInfo', 
+            { signal: controller.signal });
         if (!response.ok) {
             throw new Error(
                 `Unable to fetch wallet info. Error code: ${response.status}.`,
@@ -117,7 +122,12 @@ export default function Wallet() {
     };
 
     const fetchTokens = async () => {
-        const response = await fetch('/v1/api/wallet/getTokenBalances');
+        const controller = new AbortController();
+        // 10 second timeout:
+        setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch('/v1/api/wallet/getTokenBalances', 
+            { signal: controller.signal });
         if (!response.ok) {
             throw new Error(
                 `Unable to fetch token balances. Error code: ${response.status}.`,
