@@ -336,12 +336,13 @@ ethereum.getPastEvents = async (
     options = {fromBlock: 0, toBlock: 'latest'}
 ) => {
     const contract = await ethereum.loadWebsiteContract(target, contractName);
-    let events = await contract.getPastEvents(event, options);
 
     // If filter contains an address, convert it to checksum.
     if (options.filter && options.filter.identityOwner) {
         options.filter.identityOwner = ethereum.toChecksumAddress(options.filter.identityOwner);
     }
+
+    let events = await contract.getPastEvents(event, options);
 
     //filter non-indexed properties from return value for convenience
     if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
@@ -795,7 +796,7 @@ ethereum.registerSubIdentity = async (subidentity, parentIdentity, address, comm
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
 
-        const method = contract.methods.register(
+        const method = contract.methods.registerSubidentity(
             subidentity,
             parentIdentity,
             address,
