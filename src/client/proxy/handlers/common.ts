@@ -18,6 +18,7 @@ import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
 import {parseDomainRegistry} from '../../../name_service/registry';
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');
+const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
 const log = logger.child({module: 'ZProxy'});
 
@@ -417,7 +418,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                         refererHost = matches[1];
                     }
                     return templateManager.render(Template.WEB2LINK, {
-                        url: 'http://' + host + (req.url ?? ''), 
+                        url: sanitizeUrl('http://' + host + (req.url ?? '')), 
                         csrfToken: queryParams?.csrfToken, 
                         host: refererHost
                     });
