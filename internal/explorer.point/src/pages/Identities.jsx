@@ -3,15 +3,31 @@ import Loading from '../components/Loading';
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import orderBy from 'lodash/orderBy';
+import InfiniteScroll from "react-infinite-scroll-component";
 
 export default function Identities({ owner }) {
     const [identities, setIdentities] = useState([]);
     const [ikvset, setIkvset] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [presentedItems, setPresentedItems] = useState([]);
+    const [hasMore, setHasMore] = useState(true);
+
+    const PAGE_SIZE = 1000;
 
     useEffect(() => {
         fetchIdentities();
     }, [owner]);
+
+    fetchMoreData = () => {
+        const initialIndex = presentedItems.length;
+        const finalIndex = presentedItems.length + PAGE_SIZE < identities.length 
+                    ? presentedItems.length + PAGE_SIZE : identities.length;
+        if(finalIndex == identities.length){
+            setHasMore(false);
+        }
+        
+        setPresentedItems(presentedItems.concat(identities.slice(initialIndex, finalIndex)));
+    };
 
     const fetchIdentities = async () => {
         setIsLoading(true);
@@ -50,6 +66,7 @@ export default function Identities({ owner }) {
         if (ikvsetFetched.data != '') {
             setIkvset(ikvsetFetched.data);
         }
+        fetchMoreData();
         setIsLoading(false);
     };
 
@@ -95,6 +112,12 @@ export default function Identities({ owner }) {
                 <h1>{owner !== undefined ? 'My ' : ''}Identities</h1>
                 Total: {identities.length}
                 <hr />
+                <InfiniteScroll
+                    dataLength={presentedItems.length}
+                    next={fetchMoreData}
+                    hasMore={hasMore}
+                    loader={<Loading />}
+                    >
                 <table className="table table-bordered table-striped table-hover table-responsive table-primary">
                     <tbody>
                         <tr>
@@ -102,14 +125,16 @@ export default function Identities({ owner }) {
                             <th>Owner</th>
                             <th>App</th>
                         </tr>
+                        
                         {isLoading
                             ? null
-                            : identities.map((e) =>
+                            : presentedItems.map((e) =>
                                   renderIdentityEntry(e.data),
                               )}
+                        
                     </tbody>
                 </table>
-                {isLoading ? <Loading /> : null}
+                </InfiniteScroll>
             </Container>
         </>
     );
