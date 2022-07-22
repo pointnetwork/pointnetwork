@@ -17,7 +17,7 @@ export default function SubIdentitiesList({ subidentities }) {
                     <th>Owner</th>
                 </tr>
                 {subidentities.map((s) => (
-                    <tr key={s.data.subhandle}>
+                    <tr key={`${s.data.subhandle}.${s.data.handle}`}>
                         <td>
                             <Link
                                 to={`/identities/${s.data.subhandle}.${s.data.handle}`}
