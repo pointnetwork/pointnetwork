@@ -12,6 +12,7 @@ const config = require('config');
 const Web3 = require('web3');
 const ERC20 = require('../../abi/ERC20.json');
 const {utils} = require('ethers');
+const {getIdentity} = require('../../name_service/identity');
 
 const networks = config.get('network.web3');
 const DEFAULT_NETWORK = config.get('network.default_network');
@@ -20,7 +21,7 @@ const timeout = (prom, time, exception) => {
     let timer;
     return Promise.race([
         prom,
-        new Promise((_r, rej) => timer = setTimeout(rej, time, exception))
+        new Promise((_r, rej) => (timer = setTimeout(rej, time, exception)))
     ]).finally(() => clearTimeout(timer));
 };
 
@@ -59,7 +60,7 @@ class WalletController extends PointSDKController {
 
         return this._response({hash});
     }
-    
+
     async getWalletInfo() {
         const identity = await ethereum.getCurrentIdentity();
         const pointIdentity = identity ? `${identity}.point` : 'N/A';
@@ -71,29 +72,50 @@ class WalletController extends PointSDKController {
                 currency_name: 'Point',
                 currency_code: 'POINT',
                 address: pointIdentity,
+                alias: pointIdentity,
                 balance: 0
             },
-            ...await Promise.all(Object.keys(networks).map(async network => {
-                let balance;
-                try {
-                    balance = await timeout(getBalance({network, majorUnits: true}), 5000, 'Timeout');
-                } catch (e){
-                    balance = e;
-                }
+            ...(await Promise.all(
+                Object.keys(networks).map(async network => {
+                    let balance;
+                    try {
+                        balance = await timeout(
+                            getBalance({network, majorUnits: true}),
+                            5000,
+                            'Timeout'
+                        );
+                    } catch (e) {
+                        balance = e;
+                    }
 
-                return ({
-                    network,
-                    type: networks[network].type,
-                    currency_name: networks[network].currency_name,
-                    currency_code: networks[network].currency_code,
-                    // TODO: improve this condition as we will have multiple point networks
-                    address: network === DEFAULT_NETWORK
-                        ? pointIdentity
-                        : getWalletAddress(({network})),
-                    balance: balance
-                });
-            }
-            
+                    let alias = '';
+                    switch (network) {
+                        case 'solana':
+                            const snsData = await getIdentity({targets: ['solana']});
+                            alias = snsData.identity ?? '';
+                            break;
+                        case 'rinkeby':
+                            const ensData = await getIdentity({targets: ['ethereum']});
+                            alias = ensData.identity ?? '';
+                            break;
+                        default:
+                            alias = '';
+                    }
+
+                    return {
+                        network,
+                        type: networks[network].type,
+                        currency_name: networks[network].currency_name,
+                        currency_code: networks[network].currency_code,
+                        // TODO: improve this condition as we will have multiple point networks
+                        address:
+                            network === DEFAULT_NETWORK
+                                ? pointIdentity
+                                : getWalletAddress({network}),
+                        alias,
+                        balance: balance
+                    };
+                })
             ))
         ];
 
@@ -107,66 +129,80 @@ class WalletController extends PointSDKController {
 
         const web3 = new Web3();
         const decimalsCallData = web3.eth.abi.encodeFunctionCall(
-            ERC20.find(func => func.name === 'decimals'), []
+            ERC20.find(func => func.name === 'decimals'),
+            []
         );
         const balanceOfCallData = web3.eth.abi.encodeFunctionCall(
             ERC20.find(func => func.name === 'balanceOf'),
             [getWalletAddress({})]
         );
 
-        await Promise.all(Object.keys(tokens).map(async network => {
-            const balances = await Promise.all(tokens[network].map(async token => {
-                
-                try {
-                    const [balance, decimals] = await Promise.all([
-                        timeout(
-                            ethereum.send({
-                                method: 'eth_call',
-                                params: [{
-                                    from: getWalletAddress({}),
-                                    to: token.address,
-                                    data: balanceOfCallData
-                                }, 'latest'],
-                                id: new Date().getTime(),
-                                network
-                            }), 
-                            5000, 'Timeout'),
-                        timeout(
-                            ethereum.send({
-                                method: 'eth_call',
-                                params: [{
-                                    from: getWalletAddress({}),
-                                    to: token.address,
-                                    data: decimalsCallData
-                                }, 'latest'],
-                                id: new Date().getTime() + Math.round(Math.random() * 100000),
-                                network
-                            }),
-                            5000, 'Timeout')
-                    ]);
-                    return {
-                        balance:
-                            utils.formatUnits(
-                                balance.result.toString(),
-                                decimals.result.toString()
-                            ),
-                        decimals: Number(decimals.result.toString())
-                    };
-                } catch (e){
-                    return {
-                        balance: e,
-                        decimals: ''
-                    };
-                }
-                
-            }));
-            
-            tokens[network] = tokens[network].map((token, index) => ({
-                ...token,
-                balance: balances[index].balance,
-                decimals: balances[index].decimals
-            }));
-        }));
+        await Promise.all(
+            Object.keys(tokens).map(async network => {
+                const balances = await Promise.all(
+                    tokens[network].map(async token => {
+                        try {
+                            const [balance, decimals] = await Promise.all([
+                                timeout(
+                                    ethereum.send({
+                                        method: 'eth_call',
+                                        params: [
+                                            {
+                                                from: getWalletAddress({}),
+                                                to: token.address,
+                                                data: balanceOfCallData
+                                            },
+                                            'latest'
+                                        ],
+                                        id: new Date().getTime(),
+                                        network
+                                    }),
+                                    5000,
+                                    'Timeout'
+                                ),
+                                timeout(
+                                    ethereum.send({
+                                        method: 'eth_call',
+                                        params: [
+                                            {
+                                                from: getWalletAddress({}),
+                                                to: token.address,
+                                                data: decimalsCallData
+                                            },
+                                            'latest'
+                                        ],
+                                        id:
+                                            new Date().getTime() +
+                                            Math.round(Math.random() * 100000),
+                                        network
+                                    }),
+                                    5000,
+                                    'Timeout'
+                                )
+                            ]);
+                            return {
+                                balance: utils.formatUnits(
+                                    balance.result.toString(),
+                                    decimals.result.toString()
+                                ),
+                                decimals: Number(decimals.result.toString())
+                            };
+                        } catch (e) {
+                            return {
+                                balance: e,
+                                decimals: ''
+                            };
+                        }
+                    })
+                );
+
+                tokens[network] = tokens[network].map((token, index) => ({
+                    ...token,
+                    balance: balances[index].balance,
+                    decimals: balances[index].decimals
+                }));
+            })
+        );
 
         return this._response(tokens);
     }

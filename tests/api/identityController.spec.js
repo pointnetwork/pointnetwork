@@ -1,3 +1,4 @@
+/* eslint-disable quote-props */
 import apiServer from '../../src/api/server';
 // TODO: replace with import once we refactor it in src
 const ethereum = require('../../src/network/providers/ethereum');
@@ -5,27 +6,34 @@ const solana = require('../../src/network/providers/solana');
 
 jest.mock('../../src/network/providers/ethereum', () => ({
     isCurrentIdentityRegistered: jest.fn(async () => true),
-    ownerByIdentity: jest.fn(async (identity) => {
+    ownerByIdentity: jest.fn(async identity => {
         if (identity === 'some_identity') {
             return '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D';
         }
         return '0x0000000000000000000000000000000000000000';
     }),
     identityByOwner: jest.fn(async () => 'some_identity'),
-    commPublicKeyByIdentity: jest.fn(async () => '0x5372118ab8a429b6a92e6ec3c0d2239c3910e64d3a55563b39cac350acf05b3a1d9b59102a54d9198af806b378dcd94e11f00f36b2fcfd523ecd4eb3224e5738'),
+    commPublicKeyByIdentity: jest.fn(
+        async () =>
+            '0x5372118ab8a429b6a92e6ec3c0d2239c3910e64d3a55563b39cac350acf05b3a1d9b59102a54d9198af806b378dcd94e11f00f36b2fcfd523ecd4eb3224e5738'
+    ),
     getBlockTimestamp: jest.fn(async () => 1466691328),
     registerVerified: jest.fn(async () => {}),
     resolveDomain: jest.fn(async () => ({
         owner: '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D',
         content: 'some_content'
-    }))
+    })),
+    getDomain: jest.fn(async () => null),
+    isAddress: jest.fn(() => true)
 }));
 
 jest.mock('../../src/network/providers/solana', () => ({
     resolveDomain: jest.fn(async () => ({
         owner: 'vines1vzrYbzLMRdu58ou5XTby4qAqVRLmqo36NKPTg',
         content: 'some_content'
-    }))
+    })),
+    getDomain: jest.fn(async () => null),
+    isAddress: jest.fn(() => false)
 }));
 
 describe('Identity controller', () => {
@@ -39,12 +47,8 @@ describe('Identity controller', () => {
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {identityRegistred: true},
-            headers: {}
-        }));
-        expect(ethereum.isCurrentIdentityRegistered).toHaveBeenCalledWith();
+        expect(JSON.parse(res.payload).data.identityRegistred).toBe(true);
+        expect(ethereum.getDomain).toHaveBeenCalledTimes(0);
     });
 
     it('Identity to owner', async () => {
@@ -57,11 +61,16 @@ describe('Identity controller', () => {
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {owner: '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D'},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {
+                    owner: '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D',
+                    network: 'point'
+                },
+                headers: {}
+            })
+        );
         expect(ethereum.ownerByIdentity).toHaveBeenCalledWith('some_identity');
     });
 
@@ -70,17 +79,22 @@ describe('Identity controller', () => {
 
         const res = await apiServer.inject({
             method: 'GET',
-            url: 'https://owner_to_identity.point/v1/api/identity/ownerToIdentity/0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D',
+            url:
+                'https://owner_to_identity.point/v1/api/identity/ownerToIdentity/0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D',
             headers: {host: 'owner_to_identity.point'}
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {identity: 'some_identity'},
-            headers: {}
-        }));
-        expect(ethereum.identityByOwner).toHaveBeenCalledWith('0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D');
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {identity: 'some_identity'},
+                headers: {}
+            })
+        );
+        expect(ethereum.identityByOwner).toHaveBeenCalledWith(
+            '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D'
+        );
     });
 
     it('Public key by identity', async () => {
@@ -88,16 +102,22 @@ describe('Identity controller', () => {
 
         const res = await apiServer.inject({
             method: 'GET',
-            url: 'https://pk_by_identity.point/v1/api/identity/publicKeyByIdentity/public_key_identity',
+            url:
+                'https://pk_by_identity.point/v1/api/identity/publicKeyByIdentity/public_key_identity',
             headers: {host: 'pk_by_identity.point'}
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {publicKey: '0x5372118ab8a429b6a92e6ec3c0d2239c3910e64d3a55563b39cac350acf05b3a1d9b59102a54d9198af806b378dcd94e11f00f36b2fcfd523ecd4eb3224e5738'},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {
+                    publicKey:
+                        '0x5372118ab8a429b6a92e6ec3c0d2239c3910e64d3a55563b39cac350acf05b3a1d9b59102a54d9198af806b378dcd94e11f00f36b2fcfd523ecd4eb3224e5738'
+                },
+                headers: {}
+            })
+        );
         expect(ethereum.commPublicKeyByIdentity).toHaveBeenCalledWith('public_key_identity');
     });
 
@@ -109,17 +129,19 @@ describe('Identity controller', () => {
             url: 'https://block_timestamp.point/v1/api/identity/blockTimestamp',
             body: JSON.stringify({blockNumber: 1757201}),
             headers: {
-                'host': 'block_timestamp.point',
+                host: 'block_timestamp.point',
                 'Content-Type': 'application/json'
             }
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {timestamp: 1466691328},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {timestamp: 1466691328},
+                headers: {}
+            })
+        );
         expect(ethereum.getBlockTimestamp).toHaveBeenCalledWith(1757201);
     });
 
@@ -151,16 +173,22 @@ describe('Identity controller', () => {
 
         const res = await apiServer.inject({
             method: 'GET',
-            url: 'https://is_identity_eligible.point/v1/api/identity/isIdentityEligible/some_identity',
+            url:
+                'https://is_identity_eligible.point/v1/api/identity/isIdentityEligible/some_identity',
             headers: {host: 'is_identity_eligible.point'}
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {eligibility: 'unavailable', reason: 'Identity is already registered on web3'},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {
+                    eligibility: 'unavailable',
+                    reason: 'Identity is already registered on web3'
+                },
+                headers: {}
+            })
+        );
         expect(ethereum.ownerByIdentity).toHaveBeenCalledWith('some_identity');
     });
 
@@ -174,11 +202,13 @@ describe('Identity controller', () => {
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {eligibility: 'taken', reason: 'taken reason'},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {eligibility: 'taken', reason: 'taken reason'},
+                headers: {}
+            })
+        );
         expect(ethereum.ownerByIdentity).toHaveBeenCalledWith('taken1');
     });
 
@@ -187,16 +217,19 @@ describe('Identity controller', () => {
 
         const res = await apiServer.inject({
             method: 'GET',
-            url: 'https://is_identity_eligible.point/v1/api/identity/isIdentityEligible/unavailable1',
+            url:
+                'https://is_identity_eligible.point/v1/api/identity/isIdentityEligible/unavailable1',
             headers: {host: 'is_identity_eligible.point'}
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {eligibility: 'unavailable', reason: 'unavailable reason'},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {eligibility: 'unavailable', reason: 'unavailable reason'},
+                headers: {}
+            })
+        );
         expect(ethereum.ownerByIdentity).toHaveBeenCalledWith('unavailable1');
     });
 
@@ -208,7 +241,7 @@ describe('Identity controller', () => {
             url: 'https://register.point/v1/api/identity/register',
             body: JSON.stringify({identity: 'free_identity'}),
             headers: {
-                'host': 'register.point',
+                host: 'register.point',
                 'Content-Type': 'application/json'
             }
         });
@@ -226,7 +259,7 @@ describe('Identity controller', () => {
             url: 'https://point/v1/api/identity/register',
             body: JSON.stringify({identity: 'free_identity'}),
             headers: {
-                'host': 'point',
+                host: 'point',
                 'Content-Type': 'application/json'
             }
         });
@@ -239,11 +272,13 @@ describe('Identity controller', () => {
             expect.any(String),
             {v: 'v', r: 'r', s: 's'}
         );
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {success: true},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {success: true},
+                headers: {}
+            })
+        );
     });
 
     it('Should return code for registering tweet-eligible identity', async () => {
@@ -254,7 +289,7 @@ describe('Identity controller', () => {
             url: 'https://point/v1/api/identity/register',
             body: JSON.stringify({identity: 'tweet_identity'}),
             headers: {
-                'host': 'point',
+                host: 'point',
                 'Content-Type': 'application/json'
             }
         });
@@ -275,17 +310,19 @@ describe('Identity controller', () => {
             url: 'https://point/v1/api/identity/register',
             body: JSON.stringify({identity: 'taken_identity'}),
             headers: {
-                'host': 'point',
+                host: 'point',
                 'Content-Type': 'application/json'
             }
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {eligibility: 'taken', reason: 'taken reason'},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {eligibility: 'taken', reason: 'taken reason'},
+                headers: {}
+            })
+        );
     });
 
     it('Should return false for registering unavailable identity', async () => {
@@ -296,17 +333,19 @@ describe('Identity controller', () => {
             url: 'https://point/v1/api/identity/register',
             body: JSON.stringify({identity: 'unavailable_identity'}),
             headers: {
-                'host': 'point',
+                host: 'point',
                 'Content-Type': 'application/json'
             }
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {eligibility: 'unavailable', reason: 'unavailable reason'},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {eligibility: 'unavailable', reason: 'unavailable reason'},
+                headers: {}
+            })
+        );
     });
 
     it('Should register identity with tweet verification', async () => {
@@ -321,7 +360,7 @@ describe('Identity controller', () => {
                 url: 'https://anything.com'
             }),
             headers: {
-                'host': 'point',
+                host: 'point',
                 'Content-Type': 'application/json'
             }
         });
@@ -334,11 +373,13 @@ describe('Identity controller', () => {
             expect.any(String),
             {v: 'v', r: 'r', s: 's'}
         );
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {success: true},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {success: true},
+                headers: {}
+            })
+        );
     });
 
     it('Resolve domain: should return 400 for unknown domain type', async () => {
@@ -351,11 +392,13 @@ describe('Identity controller', () => {
         });
 
         expect(res.statusCode).toEqual(400);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 400,
-            data: {errorMsg: `Unsupported TLD in "example.foo".`},
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 400,
+                data: {errorMsg: `Unsupported TLD in "example.foo".`},
+                headers: {}
+            })
+        );
     });
 
     it('Resolve domain: should resolve eth domain', async () => {
@@ -368,14 +411,16 @@ describe('Identity controller', () => {
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {
-                owner: '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D',
-                content: 'some_content'
-            },
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {
+                    owner: '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D',
+                    content: 'some_content'
+                },
+                headers: {}
+            })
+        );
         expect(ethereum.resolveDomain).toHaveBeenCalledWith('example.eth');
     });
 
@@ -389,14 +434,16 @@ describe('Identity controller', () => {
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 200,
-            data: {
-                owner: 'vines1vzrYbzLMRdu58ou5XTby4qAqVRLmqo36NKPTg',
-                content: 'some_content'
-            },
-            headers: {}
-        }));
+        expect(res.payload).toEqual(
+            JSON.stringify({
+                status: 200,
+                data: {
+                    owner: 'vines1vzrYbzLMRdu58ou5XTby4qAqVRLmqo36NKPTg',
+                    content: 'some_content'
+                },
+                headers: {}
+            })
+        );
         expect(solana.resolveDomain).toHaveBeenCalledWith('example.sol');
     });
 });
