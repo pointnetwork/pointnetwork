@@ -106,7 +106,9 @@ const getEthers = (chain = DEFAULT_NETWORK) => {
     }
 
     if (!ethersProviders[chain]) {
-        const url = networks[chain].http_address;
+        const host = networks[chain].http_address;
+        const protocol = networks[chain].tls ? 'https' : 'http';
+        const url = `${protocol}://${host}`;
         ethersProviders[chain] = new ethers.providers.JsonRpcProvider(url);
     }
 
@@ -993,6 +995,20 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
     return {owner, content};
 };
 
+/**
+ * Retrieve ethereum domain (ENS) owned by `address`.
+ *
+ * An ENS name requries additional configuration to setup a reverse record,
+ * they are not automatically set up.
+ */
+ethereum.getDomain = async (address, network = 'rinkeby') => {
+    const provider = getEthers(network);
+    const domain = await provider.lookupAddress(address);
+    const msg = domain ? 'Domain found.' : 'Domain not found.';
+    log.debug({address, domain}, msg);
+    return domain;
+};
+
 ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
     if (!networks[network] || !networks[network].eth_tld_resolver) {
         throw new Error(`Missing TLD public resolver contract address for network "${network}"`);
@@ -1008,5 +1024,7 @@ ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
     const tx = await ensWithSigner.setText(hash, POINT_ENS_TEXT_RECORD_KEY, data);
     return tx;
 };
+
+ethereum.isAddress = address => ethers.utils.isAddress(address);
 
 module.exports = ethereum;

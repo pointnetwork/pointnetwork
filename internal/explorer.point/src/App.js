@@ -1,6 +1,5 @@
 import '@fontsource/karla/600.css';
-import { useEffect, useState } from 'react';
-import { ProvideAppContext } from './context/AppContext';
+import { ProvideAppContext, useAppContext } from './context/AppContext';
 import { Route, Switch } from 'wouter';
 import Header from './components/Header';
 import Home from './pages/Home';
@@ -13,25 +12,7 @@ import Zapps from './pages/Zapps';
 import Loading from './components/Loading';
 
 const Main = () => {
-    const [isRegistered, setIsRegistered] = useState(false);
-    const [walletAddr, setWalletAddr] = useState();
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        fetchIdentityRegistred();
-    }, []);
-
-    const fetchIdentityRegistred = async () => {
-        setIsLoading(true);
-        const response = await fetch('/v1/api/identity/isIdentityRegistered/');
-        const registred = await response.json();
-        setIsRegistered(registred.data.identityRegistred);
-        if (registred.data.identityRegistred) {
-            const resultAddr = await window.point.wallet.address();
-            setWalletAddr(resultAddr.data.address);
-        }
-        setIsLoading(false);
-    };
+    const { walletIdentity, walletAddr, isLoading } = useAppContext();
 
     return (
         <main>
@@ -39,8 +20,8 @@ const Main = () => {
                 <Loading />
             ) : (
                 <>
-                    <Header isRegistered={isRegistered} />
-                    {isRegistered ? (
+                    <Header isRegistered={Boolean(walletIdentity)} />
+                    {walletIdentity ? (
                         <Switch>
                             <Route path="/">
                                 <Home />
@@ -49,12 +30,7 @@ const Main = () => {
                                 <Wallet />
                             </Route>
                             <Route path="/identities/:handle">
-                                {(params) => (
-                                    <Identity
-                                        walletAddr={walletAddr}
-                                        params={params}
-                                    />
-                                )}
+                                <Identity />
                             </Route>
                             <Route path="/identities">
                                 <Identities />

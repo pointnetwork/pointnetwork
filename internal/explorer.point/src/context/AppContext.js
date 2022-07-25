@@ -18,22 +18,36 @@ const AppContext = createContext(defaultContext);
 export const useAppContext = () => useContext(AppContext);
 
 export const ProvideAppContext = ({ children }) => {
-    const [walletIdentity, setWalletIdentity] = useState();
+    const [isLoading, setIsLoading] = useState(true);
+    const [walletIdentity, setWalletIdentity] = useState('');
+    const [identityNetwork, setIdentityNetwork] = useState('');
+    const [publicKey, setPublicKey] = useState('');
+    const [walletAddr, setWalletAddr] = useState('');
     const [walletError, setWallerError] = useState();
     const [, setLocation] = useLocation();
 
     const fetchData = async () => {
         try {
-            const {
-                data: { address },
-            } = await window.point.wallet.address();
-            const {
-                data: { identity },
-            } = await window.point.identity.ownerToIdentity({ owner: address });
+            let identityData = {};
+            if (window.point.identity.me) {
+                const resp = await window.point.identity.me();
+                identityData = resp.data;
+            } else {
+                const resp = await fetch(
+                    '/v1/api/identity/isIdentityRegistered/',
+                );
+                const data = await resp.json();
+                identityData = data.data;
+            }
 
-            setWalletIdentity(identity);
+            setWalletIdentity(identityData.identity);
+            setWalletAddr(identityData.address);
+            setPublicKey(identityData.publicKey);
+            setIdentityNetwork(identityData.network);
         } catch (e) {
             setWallerError(e);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -46,7 +60,11 @@ export const ProvideAppContext = ({ children }) => {
     }, []);
 
     const context = {
+        isLoading,
         walletIdentity,
+        identityNetwork,
+        publicKey,
+        walletAddr,
         walletError,
         goHome,
     };
