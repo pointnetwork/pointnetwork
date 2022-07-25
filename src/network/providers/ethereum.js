@@ -779,10 +779,12 @@ ethereum.registerIdentity = async (identity, address, commPublicKey) => {
 
 ethereum.registerSubIdentity = async (subidentity, parentIdentity, address, commPublicKey) => {
     try {
-        if (!Buffer.isBuffer(commPublicKey))
+        if (!Buffer.isBuffer(commPublicKey)) {
             throw Error('registerIdentity: commPublicKey must be a buffer');
-        if (Buffer.byteLength(commPublicKey) !== 64)
+        }
+        if (Buffer.byteLength(commPublicKey) !== 64) {
             throw Error('registerIdentity: commPublicKey must be 64 bytes');
+        }
 
         parentIdentity = parentIdentity.replace('.point', '');
 
