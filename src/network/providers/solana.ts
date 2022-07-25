@@ -1,5 +1,13 @@
 import * as web3 from '@solana/web3.js';
-import {getHashedName, getNameAccountKey, NameRegistryState, updateNameRegistryData} from '@solana/spl-name-service';
+import {
+    getHashedName,
+    getNameAccountKey,
+    NameRegistryState,
+    updateNameRegistryData,
+    performReverseLookup,
+    getFavoriteDomain,
+    getAllDomains
+} from '@bonfida/spl-name-service';
 import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
@@ -10,7 +18,7 @@ const log = logger.child({module: 'SolanaProvider'});
 // Address of the `.sol` TLD
 const SOL_TLD_AUTHORITY = new web3.PublicKey(config.get('name_services.sol_tld_authority'));
 
-export type SolanaSendFundsParams = {to: string; lamports: number; network: string}
+export type SolanaSendFundsParams = {to: string; lamports: number; network: string};
 
 // These interfaces are copied from @solana/web3
 // However, they are not exported in index file, and trying to import them leads to
@@ -229,7 +237,7 @@ const solana = {
         const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
         const hashed = await getHashedName(domain);
         const key = await getNameAccountKey(hashed, undefined, SOL_TLD_AUTHORITY);
-        const registry = await NameRegistryState.retrieve(provider.connection, key);
+        const {registry} = await NameRegistryState.retrieve(provider.connection, key);
         const content = registry.data?.toString().replace(/\x00/g, '');
 
         return {
@@ -237,7 +245,41 @@ const solana = {
             content: content || null
         };
     },
-    setDomainContent: async(domainName: string, data: string, network = 'solana') => {
+    /**
+     * Retrieve the `.sol` domain owned by `owner`.
+     *
+     * If a favourite domain exists, it is returned.
+     * Otherwise, all domains owned by `owner` are retrieved and the first one is returned.
+     */
+    getDomain: async (owner: web3.PublicKey, network = 'solana'): Promise<string | null> => {
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network "${network}".`);
+        }
+
+        try {
+            // Check if the owner has a favourite domain.
+            const {reverse} = await getFavoriteDomain(provider.connection, owner);
+            log.debug({owner: owner.toBase58(), domain: reverse}, 'Favourite domain found.');
+            return `${reverse}.sol`;
+        } catch (err) {
+            // There's no favourite domain, retrieve them all and pick the first one.
+            // TODO: if there is more than 1 domain, ask the user to pick one.
+            const domains = await getAllDomains(provider.connection, owner);
+            if (domains.length > 0) {
+                const domainName = await performReverseLookup(provider.connection, domains[0]);
+                log.debug(
+                    {owner: owner.toBase58(), numDomains: domains.length, firstDomain: domainName},
+                    'Domains found.'
+                );
+                return `${domainName}.sol`;
+            }
+
+            log.debug({owner: owner.toBase58()}, 'No domains found.');
+            return null;
+        }
+    },
+    setDomainContent: async (domainName: string, data: string, network = 'solana') => {
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network "${network}".`);
@@ -260,7 +302,15 @@ const solana = {
 
         const txId = await sendInstructions(connection, [wallet], [instruction]);
         return txId;
-    }
+    },
+    isAddress: (address: string) => {
+        try {
+            return web3.PublicKey.isOnCurve(address);
+        } catch {
+            return false;
+        }
+    },
+    toPublicKey: (address: string) => new web3.PublicKey(address)
 };
 
 export default solana;

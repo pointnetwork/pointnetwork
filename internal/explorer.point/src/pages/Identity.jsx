@@ -1,9 +1,11 @@
+import { useRoute } from 'wouter';
 import Container from 'react-bootstrap/Container';
 import BlockTime from '../components/BlockTime';
 import React, { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
 import OwnerToIdentity from '../components/OwnerToIdenity';
 import Swal from 'sweetalert2';
+import { useAppContext } from '../context/AppContext';
 
 const isHash = (str) => {
     const s = str.startsWith('0x') ? str.substr(2) : str;
@@ -112,28 +114,36 @@ const IkvEntry = (props) => {
     );
 };
 
-export default function Identity(props) {
-    const {
-        walletAddr,
-        params: { handle },
-    } = props;
+function parsePublicKey(key) {
+    const matches = key.replace('0x', '').match(/.{1,8}/g);
+    return matches ? matches.join(' ') : key;
+}
+
+export default function Identity() {
+    const [, { handle }] = useRoute('/identities/:handle');
     const [ikvset, setIkvset] = useState([]);
     const [owner, setOwner] = useState();
-    const [publicKey, setPublicKey] = useState('');
     const [deployers, setDeployers] = useState([]);
     const [isLoadingOwner, setIsLoadingOwner] = useState(true);
-    const [isLoadingPublicKey, setIsLoadingPublicKey] = useState(true);
     const [isLoadingIkv, setIsLoadingIkv] = useState(true);
     const [isLoadingDeployers, setIsLoadingDeployers] = useState(true);
     const [isOwner, setIsOwner] = useState(false);
     const [addAddress, setAddAddress] = useState('');
+    const [publicKey, setPublicKey] = useState('');
+    const [isLoadingPublicKey, setIsLoadingPublicKey] = useState(true);
+    const {
+        walletAddr,
+        publicKey: walletPublicKey,
+        identityNetwork,
+    } = useAppContext();
+
+    const isPointIdentity = !['ethereum', 'solana'].includes(identityNetwork);
 
     useEffect(() => {
         fetchOwner();
-        fetchPublicKey();
         fetchIkv();
         fetchDeployers();
-    }, []);
+    }, [handle]);
 
     const fetchOwner = async () => {
         setIsLoadingOwner(true);
@@ -142,18 +152,33 @@ export default function Identity(props) {
         });
         setOwner(result.data.owner);
         setIsLoadingOwner(false);
-        const resultAddr = await window.point.wallet.address();
-        setIsOwner(result.data.owner.toLowerCase() === resultAddr.data.address.toLowerCase());
+        setIsOwner(
+            result.data.owner.toLowerCase() === walletAddr.toLowerCase(),
+        );
     };
 
     const fetchPublicKey = async () => {
+        if (isOwner) {
+            setPublicKey(walletPublicKey);
+            return;
+        }
+
         setIsLoadingPublicKey(true);
-        const result = await window.point.identity.publicKeyByIdentity({
-            identity: handle,
-        });
-        setPublicKey(result.data.publicKey);
-        setIsLoadingPublicKey(false);
+        try {
+            const result = await window.point.identity.publicKeyByIdentity({
+                identity: handle,
+            });
+            setPublicKey(result.data.publicKey);
+        } catch {
+            setPublicKey('n/a');
+        } finally {
+            setIsLoadingPublicKey(false);
+        }
     };
+
+    useEffect(() => {
+        fetchPublicKey();
+    }, [isOwner]);
 
     const filteredIkvset = Object.values(
         (ikvset || []).reduce((collected, newItem) => {
@@ -363,7 +388,8 @@ export default function Identity(props) {
         Boolean(ikvNewEntryValue) &&
         Boolean(ikvNewEntryVersion);
 
-    const showIkvEditForm = walletAddr.toLowerCase() === owner?.toLowerCase();
+    const showIkvEditForm =
+        walletAddr.toLowerCase() === owner?.toLowerCase() && isPointIdentity;
 
     return (
         <Container className="p-3">
@@ -398,10 +424,7 @@ export default function Identity(props) {
                             {isLoadingPublicKey ? (
                                 <Loading />
                             ) : (
-                                publicKey
-                                    .replace('0x', '')
-                                    .match(/.{1,8}/g)
-                                    ?.map((part) => part + ' ')
+                                parsePublicKey(publicKey)
                             )}
                         </td>
                     </tr>
@@ -503,7 +526,7 @@ export default function Identity(props) {
             </div>
 
             <h3>Deployers:</h3>
-            {isOwner ? (
+            {isOwner && isPointIdentity ? (
                 <div className="row g-3">
                     <div className="col-sm-4">
                         <input

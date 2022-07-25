@@ -28,9 +28,12 @@ const WalletRow = ({
             <td>
                 <strong>{wallet.currency_name}</strong> ({wallet.currency_code})
             </td>
-            <td className="mono">{wallet.address}</td>
+            <td className="mono">{wallet.alias || wallet.address}</td>
             <td style={{ textAlign: 'right' }}>
-                {wallet.balance === 'Timeout' ? wallet.balance : wallet.balance.toFixed(8)} {wallet.currency_code}
+                {wallet.balance === 'Timeout'
+                    ? wallet.balance
+                    : wallet.balance.toFixed(8)}{' '}
+                {wallet.currency_code}
             </td>
             <td style={{ textAlign: 'right' }}>
                 <a
@@ -106,11 +109,12 @@ export default function Wallet() {
 
     const fetchWallets = async () => {
         const controller = new AbortController();
-        // 10 second timeout:
-        setTimeout(() => controller.abort(), 10000);
+        // 20 second timeout:
+        setTimeout(() => controller.abort(), 20000);
 
-        const response = await fetch('/v1/api/wallet/getWalletInfo', 
-            { signal: controller.signal });
+        const response = await fetch('/v1/api/wallet/getWalletInfo', {
+            signal: controller.signal,
+        });
         if (!response.ok) {
             throw new Error(
                 `Unable to fetch wallet info. Error code: ${response.status}.`,
@@ -126,8 +130,9 @@ export default function Wallet() {
         // 10 second timeout:
         setTimeout(() => controller.abort(), 10000);
 
-        const response = await fetch('/v1/api/wallet/getTokenBalances', 
-            { signal: controller.signal });
+        const response = await fetch('/v1/api/wallet/getTokenBalances', {
+            signal: controller.signal,
+        });
         if (!response.ok) {
             throw new Error(
                 `Unable to fetch token balances. Error code: ${response.status}.`,
@@ -266,7 +271,7 @@ export default function Wallet() {
                     </table>
                     <br />
                     <h1>ERC20 Tokens</h1>
-                    {Object.keys(tokens).map(network => (
+                    {Object.keys(tokens).map((network) => (
                         <>
                             <h2>{network}</h2>
                             <table className="table table-bordered table-striped table-hover table-responsive table-primary">

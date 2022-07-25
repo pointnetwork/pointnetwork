@@ -10,6 +10,7 @@ const ethers = require('ethers');
 const {getReferralCode, isChineseTimezone} = require('../../util');
 const open = require('open');
 const csrfTokens = require('../../client/zweb/renderer/csrfTokens');
+const {getIdentity} = require('../../name_service/identity');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
@@ -57,10 +58,7 @@ let TwitterOracle = {
     }
 };
 
-if (
-    (['e2e', 'zappdev', 'test'].includes(process.env.MODE)) &&
-    process.env.USE_ORACLE !== 'true'
-) {
+if (['e2e', 'zappdev', 'test'].includes(process.env.MODE) && process.env.USE_ORACLE !== 'true') {
     TwitterOracle = {
         async isIdentityEligible(identity) {
             log.info({identity}, 'isIdentityEligible mock called');
@@ -104,9 +102,7 @@ function getIdentityActivationCode(owner) {
 function getHashedMessage(identity, owner, type) {
     const lowerCaseOwner = owner.toLowerCase();
     const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
-    return ethers.utils.id(
-        `${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`
-    );
+    return ethers.utils.id(`${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`);
 }
 
 class IdentityController extends PointSDKController {
@@ -117,25 +113,61 @@ class IdentityController extends PointSDKController {
     }
 
     async isIdentityRegistered() {
-        const identityRegistred = await ethereum.isCurrentIdentityRegistered();
-        // TODO: typo. Not fixing as it can break smth
-        return this._response({identityRegistred});
+        const identityData = await getIdentity();
+        return this._response({
+            identityRegistred: Boolean(identityData.identity),
+            ...identityData
+        });
     }
 
     async identityToOwner() {
         const identity = this.req.params.identity;
-        const owner = await ethereum.ownerByIdentity(identity);
-        return this._response({owner});
+        let owner = '';
+        let network = '';
+        if (identity.endsWith('.sol')) {
+            const registry = await solana.resolveDomain(identity);
+            owner = registry.owner;
+            network = 'solana';
+        } else if (identity.endsWith('.eth')) {
+            const registry = await ethereum.resolveDomain(identity);
+            owner = registry.owner;
+            network = 'ethereum';
+        } else {
+            owner = await ethereum.ownerByIdentity(identity);
+            network = 'point';
+        }
+
+        return this._response({owner, network});
     }
 
     async ownerToIdentity() {
         const owner = this.req.params.owner;
-        const identity = await ethereum.identityByOwner(owner);
+        let key = '';
+        let targets = [];
+        if (solana.isAddress(owner)) {
+            key = 'solAddress';
+            targets = ['solana'];
+        } else if (ethereum.isAddress(owner)) {
+            key = 'ethAddress';
+            targets = ['point', 'ethereum'];
+        }
+
+        if (!key || targets.length === 0) {
+            this.rep.status(400);
+            return this._status(400)._response('Invalid owner address provided.');
+        }
+
+        const {identity} = await getIdentity({[key]: owner, targets});
         return this._response({identity});
     }
 
     async publicKeyByIdentity() {
         const identity = this.req.params.identity;
+        if (identity.endsWith('.sol') || identity.endsWith('.eth')) {
+            this.rep.status(422);
+            return this._status(422)._response('This endpoint only supports Point identities.');
+        }
+
         const publicKey = await ethereum.commPublicKeyByIdentity(identity);
         return this._response({publicKey});
     }
@@ -228,7 +260,7 @@ class IdentityController extends PointSDKController {
 
             try {
                 if (
-                    !(['e2e', 'zappdev', 'test'].includes(process.env.MODE)) ||
+                    !['e2e', 'zappdev', 'test'].includes(process.env.MODE) ||
                     process.env.USE_ORACLE === 'true'
                 ) {
                     await registerBountyReferral(owner, type);
