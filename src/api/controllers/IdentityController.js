@@ -1,7 +1,7 @@
 const PointSDKController = require('./PointSDKController');
 const blockchain = require('../../network/providers/ethereum');
 const solana = require('../../network/providers/solana');
-const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
+const {getNetworkPublicKey, getNetworkAddress, getSolanaKeyPair} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
@@ -47,9 +47,9 @@ let TwitterOracle = {
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${
-            encodeURIComponent(url)
-        }`;
+        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(
+            url
+        )}`;
 
         log.info(`calling to ${oracleUrl}`);
         const {data} = await axios.post(oracleUrl);
@@ -118,8 +118,21 @@ class IdentityController extends PointSDKController {
     }
 
     async isIdentityRegistered() {
+        // Check for `.sol` identity.
+        const solanaAccount = getSolanaKeyPair().publicKey.toString();
+
+        // Check for `.eth` identity.
+        // const ethereumAddress = getNetworkAddress();
+
+        // Check for `.point` identity.
+
         const identityRegistred = await blockchain.isCurrentIdentityRegistered();
-        return this._response({identityRegistred: identityRegistred});
+
+        return this._response({
+            identityRegistred,
+            solana: solanaAccount
+            // ethereum: ethereumAddress
+        });
     }
 
     async identityToOwner() {
