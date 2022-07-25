@@ -222,27 +222,31 @@ class Renderer {
 
             csrf_value: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
-                if (!csrfTokens[this.host])
+                if (!csrfTokens[this.host]) {
                     csrfTokens[this.host] = require('crypto')
                         .randomBytes(64)
                         .toString('hex');
+                }
                 return csrfTokens[this.host];
             },
             csrf_field: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
-                if (!csrfTokens[this.host])
+                if (!csrfTokens[this.host]) {
                     csrfTokens[this.host] = require('crypto')
                         .randomBytes(64)
                         .toString('hex');
+                }
                 return `<input name="_csrf" value="${csrfTokens[this.host]}" />`;
             },
             csrf_guard: async function(submitted_token) {
-                if (!csrfTokens)
+                if (!csrfTokens) {
                     throw new Error(
                         'No csrf token generated for this host (rather, no tokens at all)'
                     );
-                if (!csrfTokens[this.host])
+                }
+                if (!csrfTokens[this.host]) {
                     throw new Error('No csrf token generated for this host');
+                }
                 const real_token = csrfTokens[this.host];
                 if (real_token !== submitted_token) {
                     throw new Error('Invalid csrf token submitted');
@@ -281,8 +285,9 @@ class Renderer {
     }
 
     #ensurePrivilegedAccess() {
-        if (this.host !== 'point')
+        if (this.host !== 'point') {
             throw new Error('This function requires privileged access, host is not supported');
+        }
     }
 
     #defineAvailableFilters() {
@@ -326,11 +331,13 @@ class Renderer {
             this.#connectExtendsTagToPointStorage(ExtTwig);
             this.#connectIncludeTagToPointStorage(ExtTwig);
 
-            for (const [name, fn] of Object.entries(this.#defineAvailableFunctions()))
+            for (const [name, fn] of Object.entries(this.#defineAvailableFunctions())) {
                 ExtTwig.exports.extendFunction(name, fn.bind(ExtTwig));
+            }
 
-            for (const [name, fn] of Object.entries(this.#defineAvailableFilters()))
+            for (const [name, fn] of Object.entries(this.#defineAvailableFilters())) {
                 ExtTwig.exports.extendFilter(name, fn.bind(ExtTwig));
+            }
 
             this.#registerPointStorageFsLoader(ExtTwig);
         });
