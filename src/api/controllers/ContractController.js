@@ -75,12 +75,15 @@ class ContractController extends PointSDKController {
         const contractName = this.payload.contract;
         const event = this.payload.event;
         const filter = this.payload.filter ?? {};
+        const fromBlock = this.payload.fromBlock ?? 0;
+        const toBlock = this.payload.toBlock ?? 'latest';
+
         let addTimestamp = false;
         if (filter.hasOwnProperty('addTimestamp') && filter.addTimestamp) {
             delete filter['addTimestamp'];
             addTimestamp = true;
         }
-        const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
+        const options = {filter: filter, fromBlock: fromBlock, toBlock: toBlock};
         const events = await blockchain.getPastEvents(
             host.replace('.point', ''),
             contractName,
