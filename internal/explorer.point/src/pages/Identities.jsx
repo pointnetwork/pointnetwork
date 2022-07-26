@@ -17,17 +17,6 @@ export default function Identities() {
         fetchIdentities();
     }, []);
 
-    fetchMoreData = () => {
-        const initialIndex = presentedItems.length;
-        const finalIndex = presentedItems.length + PAGE_SIZE < identities.length 
-                    ? presentedItems.length + PAGE_SIZE : identities.length;
-        if(finalIndex == identities.length){
-            setHasMore(false);
-        }
-        
-        setPresentedItems(presentedItems.concat(identities.slice(initialIndex, finalIndex)));
-    };
-
     const fetchIdentities = async () => {
         if (identitiesLength === 0) {
             setIsLoading(true);
