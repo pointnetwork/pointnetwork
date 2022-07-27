@@ -82,7 +82,7 @@ function generateCertificate(servername: string) {
         ]
     );
     // cert.sign(keys.privateKey);
-    cert.sign(privateCAKey);
+    cert.sign(privateCAKey, forge.md.sha256.create());
 
     // PEM-format keys and cert
     const pem = {
