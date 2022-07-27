@@ -30,7 +30,7 @@ const WalletRow = ({
             </td>
             <td className="mono">{wallet.address}</td>
             <td style={{ textAlign: 'right' }}>
-                {wallet.balance.toFixed(8)} {wallet.currency_code}
+                {wallet.balance === 'Timeout' ? wallet.balance : wallet.balance.toFixed(8)} {wallet.currency_code}
             </td>
             <td style={{ textAlign: 'right' }}>
                 <a
