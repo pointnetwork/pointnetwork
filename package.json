@@ -121,6 +121,9 @@
     "watch": "nodemon",
     "build": "tsc",
     "pkg": "pkg .",
+    "pkg:win": "pkg --targets node16-win-x64 --output bin/pointnetwork-win .",
+    "pkg:linux": "pkg --targets node16-linux-x64 --output bin/pointnetwork-linux .",
+    "pkg:macos": "pkg --targets node16-macos-x64 --output bin/pointnetwork-macos .",
     "compile": "./point compile",
     "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
     "watch:sites": "ls -d example/*/ | xargs -I {} echo \"SITE={} npm run watch:site\" | sed \"s/.*/\\\\'&\\\\'/\" | xargs npx concurrently",
@@ -176,6 +179,8 @@
       "internal/**/*",
       "resources/certs/*.{crt,key,srl}",
       "node_modules/sqlite3/**/*",
+      "node_modules/eccrypto/**/*",
+      "node_modules/bigint-buffer/**/*",
       "src/client/proxy/views/*"
     ],
     "scripts": [
