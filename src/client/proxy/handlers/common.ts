@@ -37,16 +37,16 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 : null;
 
         if (host === 'point') {
-            if (req.url.startsWith('/web2redirect')){
+            if (req.url.startsWith('/web2redirect')) {
                 res.header('content-type', 'text/html');
                 let refererHost = req.headers.referer || '';
                 const matches = refererHost.match(/^https:\/\/(.*)\//);
-                if (matches){
+                if (matches) {
                     refererHost = matches[1];
                 }
                 return templateManager.render(Template.WEB2LINK, {
-                    url: queryParams?.url, 
-                    csrfToken: queryParams?.csrfToken, 
+                    url: queryParams?.url,
+                    csrfToken: queryParams?.csrfToken,
                     host: refererHost
                 });
             }
@@ -196,7 +196,13 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             }
 
             // Download info about root dir
-            const rootDirId = await blockchain.getKeyValue(host, '::rootDir', version, 'exact', true);
+            const rootDirId = await blockchain.getKeyValue(
+                host,
+                '::rootDir',
+                version,
+                'exact',
+                true
+            );
             if (!rootDirId) {
                 // TODO: or 404 here?
                 throw new Error(`Root dir id not found for host ${host}`);
@@ -278,7 +284,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
 
                 const pointData = parseDomainRegistry(resp.data.data);
                 isAlias = pointData.isAlias;
-                identity = pointData.identity ? `${pointData.identity}.point` : '';
+                identity = pointData.identity ? `${pointData.identity}.point` : host;
                 routesId = pointData.routesId;
                 rootDirId = pointData.rootDirId;
                 log.debug(
@@ -294,7 +300,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             }
 
             // Return bad request if missing data in the domain registry.
-            if (!isAlias && (!identity || !routesId || !rootDirId)) {
+            if (!isAlias && (!routesId || !rootDirId)) {
                 // If the .sol domain is not an alias to a .point domain, all these
                 // fields need to be present so that we can fetch the content.
                 const msg = `Missing Point information in "${host}" domain registry.`;
@@ -309,7 +315,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 log.debug({host, identity}, `${service} domain is an alias`);
                 const version = (queryParams.__point_version as string) ?? 'latest';
 
-                routesId = await blockchain.getZRecord(identity, version) as string;
+                routesId = (await blockchain.getZRecord(identity, version)) as string;
                 if (!routesId) {
                     return res
                         .status(404)
@@ -403,27 +409,26 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                     return;
                 }
 
-                if (host.startsWith('www.google.com') || host.startsWith('google.com')){
+                if (host.startsWith('www.google.com') || host.startsWith('google.com')) {
                     res.redirect('https://search.point/search?q=' + queryParams?.q);
                     return;
-                } 
+                }
 
                 const expression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
                 const regex = new RegExp(expression);
-                if (host.match(regex)){
+                if (host.match(regex)) {
                     res.header('content-type', 'text/html');
                     let refererHost = req.headers.referer || '';
                     const matches = refererHost.match(/^https:\/\/(.*)\//);
-                    if (matches){
+                    if (matches) {
                         refererHost = matches[1];
                     }
                     return templateManager.render(Template.WEB2LINK, {
-                        url: sanitizeUrl('http://' + host + (req.url ?? '')), 
-                        csrfToken: queryParams?.csrfToken, 
+                        url: sanitizeUrl('http://' + host + (req.url ?? '')),
+                        csrfToken: queryParams?.csrfToken,
                         host: refererHost
                     });
                 }
-
             }
             res.status(404).send('Not Found');
         }

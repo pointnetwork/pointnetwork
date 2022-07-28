@@ -21,10 +21,10 @@ const testCases: TestCase[] = [
     [
         {
             owner,
-            content: 'email=a@b.c;pn_id=ynet_blog;pn_root=root-chunk-id;pn_routes=routes-chunk-id'
+            content: 'email=a@b.c;pn_root=root-chunk-id;pn_routes=routes-chunk-id'
         },
         {
-            identity: 'ynet_blog',
+            identity: '',
             isAlias: false,
             routesId: 'routes-chunk-id',
             rootDirId: 'root-chunk-id'
@@ -34,10 +34,10 @@ const testCases: TestCase[] = [
         {
             owner,
             content:
-                'ipfs=QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn;pn_id=ynet_bareminimum;pn_routes=0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d;pn_root=d7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd'
+                'ipfs=QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn;pn_routes=0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d;pn_root=d7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd'
         },
         {
-            identity: 'ynet_bareminimum',
+            identity: '',
             isAlias: false,
             routesId: '0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d',
             rootDirId: 'd7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd'

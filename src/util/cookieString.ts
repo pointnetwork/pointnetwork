@@ -40,8 +40,12 @@ export function encodeCookieString(obj: Record<string, string>): string {
  * making sure not to duplicate any keys.
  */
 export function merge(old: string, obj: Record<string, string>): Record<string, string> {
-    return {
-        ...parseCookieString(old),
-        ...obj
-    };
+    const prevData = parseCookieString(old);
+
+    // Delete `point` keys to avoid inconsistencies like having a `pn_alias` together with a `pn_root`,
+    delete prevData.pn_root;
+    delete prevData.pn_routes;
+    delete prevData.pn_alias;
+
+    return {...prevData, ...obj};
 }
