@@ -24,10 +24,10 @@ function generateCertificate(servername: string) {
     const caCert = pki.certificateFromPem(fs.readFileSync(`${certsPath}/ca.crt`, 'utf8'));
 
     cert.publicKey = keys.publicKey;
-    function md5(value: string) {
-        return require('crypto').createHash('md5').update(value).digest('hex');
+    function sha256(value: string) {
+        return require('crypto').createHash('sha256').update(value).digest('hex');
     }
-    cert.serialNumber = md5(servername + Date.now());
+    cert.serialNumber = sha256(servername + Date.now());
     cert.validity.notBefore = new Date();
     cert.validity.notAfter = new Date();
     cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 10);
