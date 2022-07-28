@@ -147,20 +147,11 @@ class Deployer {
                 throw new Error(errMsg);
             }
 
-            // If the config does not include an `alias`, then it must include an `identity` key
-            // with the Point identity.
-            if (!config.alias && !config.identity) {
-                const errMsg = `Must include a Point identity in deployment config (in the "identity" key) for target other than .point (trying to deploy ${config.target}).`;
-                log.error({target: config.target}, errMsg);
-                throw new Error(errMsg);
-            }
-
             target = config.target;
             isPointTarget = false;
             isAlias = Boolean(config.alias);
-            identity = isAlias
-                ? config.alias.replace(/\.point$/, '')
-                : config.identity.replace(/\.point$/, '');
+            // If the config does not include an alias, the `.sol|.eth` domain will be used as identity.
+            identity = isAlias ? config.alias.replace(/\.point$/, '') : config.target;
         } else {
             // target is a .point domain
             target = dev ? `${config.target.replace('.point', 'dev')}.point` : config.target;
@@ -302,18 +293,24 @@ class Deployer {
                             log.debug('deployProxy call');
                             const cfg = {kind: 'uups'};
                             const idContract = await blockchain.loadIdentityContract();
-                            log.debug({address: idContract.options.address}, 'Identity contract address');
+                            log.debug(
+                                {address: idContract.options.address},
+                                'Identity contract address'
+                            );
                             try {
-                                
                                 log.debug(
                                     {IdContractAddress: idContract.options.address, identity},
                                     'deploying proxy binded with identity contract and identity'
                                 );
                                 proxy = await hre.upgrades.deployProxy(
-                                    contractF, [idContract.options.address, identity], cfg
+                                    contractF,
+                                    [idContract.options.address, identity],
+                                    cfg
                                 );
-                            } catch (e){
-                                log.warn('Deploying proxy binded with id contract and identity failed.');
+                            } catch (e) {
+                                log.warn(
+                                    'Deploying proxy binded with id contract and identity failed.'
+                                );
                                 log.debug(
                                     {IdContractAddress: idContract.options.address, identity},
                                     'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.'
@@ -330,18 +327,16 @@ class Deployer {
                                 proxyMetadataFilePath,
                                 await getFile(proxyDescriptionFileId)
                             );
-                            
+
                             try {
-                                proxy = await hre.upgrades.upgradeProxy(
-                                    proxyAddress,
-                                    contractF
-                                );
+                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
                             } catch (e) {
                                 log.debug('upgradeProxy call failed');
                                 log.debug('deleting proxy metadata file');
                                 fs.unlinkSync(proxyMetadataFilePath);
                                 log.debug('calling forceImport');
-                                await hre.upgrades.forceImport(proxyAddress, contractF, {kind: 'uups'});
+                                const kind = 'uups';
+                                await hre.upgrades.forceImport(proxyAddress, contractF, {kind});
                                 log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
                                 proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
                             }
@@ -393,9 +388,7 @@ class Deployer {
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
 
                 log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
-                const proxyMetadataFileUploadedId = await uploadFile(
-                    JSON.stringify(proxyMetadata)
-                );
+                const proxyMetadataFileUploadedId = await uploadFile(JSON.stringify(proxyMetadata));
                 await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
                 log.debug('Proxy metadata updated');
             } catch (e) {
@@ -522,12 +515,14 @@ class Deployer {
         const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
         const deployConfig = JSON.parse(deployConfigFile);
 
-        if (!deployConfig.hasOwnProperty('version') ||
-           !deployConfig.hasOwnProperty('target') ||
-           !deployConfig.hasOwnProperty('keyvalue') ||
-           !deployConfig.hasOwnProperty('contracts')
+        if (
+            !deployConfig.hasOwnProperty('version') ||
+            !deployConfig.hasOwnProperty('target') ||
+            !deployConfig.hasOwnProperty('keyvalue') ||
+            !deployConfig.hasOwnProperty('contracts')
         ) {
-            const errMsg = 'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.';
+            const errMsg =
+                'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.';
             log.error({deployConfigFilePath: deployConfigFilePath}, errMsg);
             throw new Error(errMsg);
         }
@@ -545,63 +540,38 @@ class Deployer {
             isAlias
         );
 
-        const owner = blockchain.getOwner();
-        
-        const sigAddr = (await hre.ethers.getSigner()).address;
-        if (owner !== sigAddr){
-            throw new Error(
-                `Invalid config, aborting. The wallet address ${owner} is different than ethers default signer ${sigAddr}.`
-            );
-        }
+        // Will be used to store any pre-existing content in .sol or .eth domain registry.
+        let preExistingDomainContent = '';
 
-        const registeredOwner = await blockchain.ownerByIdentity(identity);
-        const identityIsRegistered =
-            registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
-        log.info({target, identity, owner, registeredOwner}, 'Owner information');
+        if (isPointTarget) {
+            const owner = blockchain.getOwner();
 
-        // We will preserve any pre-existing content that may exist in the domain registry.
-        let preExistingDomainContent;
+            const sigAddr = (await hre.ethers.getSigner()).address;
+            if (owner !== sigAddr) {
+                throw new Error(
+                    `Invalid config, aborting. The wallet address ${owner} is different than ethers default signer ${sigAddr}.`
+                );
+            }
 
-        if (identityIsRegistered) {
-            await this.ensureIsDeployer(identity, owner);
-            if (!isPointTarget) {
-                // If the target domain is not owned by the Point address of the user, we can't
-                // move forward as we need to make transactions to store some data
-                // in the domain registry (write to Solana or Ethereum blockchain).
-                const {content} = await this.ensureIsDomainOwner(target);
-                if (content && typeof content === 'string' && content.trim()) {
-                    preExistingDomainContent = content;
-                }
+            const registeredOwner = await blockchain.ownerByIdentity(identity);
+            log.info({target, identity, owner, registeredOwner}, 'Owner information');
+
+            const identityIsRegistered =
+                registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
+
+            if (identityIsRegistered) {
+                await this.ensureIsDeployer(identity, owner);
             }
         } else {
-            this.registerNewIdentity(identity, owner);
-            if (!isPointTarget) {
-                // This means we will need to write some data to a domain registry,
-                // which implies writing to the blockchain, hence, transaction fees.
-                // To be able to make such transaction on behalf of the user, their
-                // Point Wallet needs to own the domain, and it needs to have some
-                // SOL or ETH (depending on the domain service) to cover the fees.
-                // We've just created this account, so we know it doesn't have any funds
-                // and it doesn't own the domain.
-                log.error(
-                    {target, identity, isAlias},
-                    `Tried to deploy "${target}" with a Point identity we just created (doesn't own the domain, doesn't have funds)`
-                );
-                throw new Error(
-                    `We have created your Point identity: "${identity}". Please transfer your domain "${target}" to your Point identity (go to https://point/wallet to find your blockchain addresses) and make sure you have enough funds to cover the transaction fee.`
-                );
-            }
-        }
+            // If the target domain is not owned by the Point Wallet of the user, we can't
+            // move forward as we need to make transactions to store some data
+            // in the domain registry (write to Solana or Ethereum blockchain).
+            const {content} = await this.ensureIsDomainOwner(target);
 
-        const pointIdentity = isAlias ? identity : target;
-        if (deployContracts) {
-            await this.deployContracts(
-                deployConfig,
-                deployPath,
-                version,
-                pointIdentity,
-                force_deploy_proxy
-            );
+            // We will preserve any pre-existing content that may exist in the domain registry.
+            if (content && typeof content === 'string' && content.trim()) {
+                preExistingDomainContent = content;
+            }
         }
 
         const [publicDirId, routeFileUploadedId] = await Promise.all([
@@ -609,9 +579,19 @@ class Deployer {
             this.uploadRoutes(deployPath)
         ]);
 
-        // Check if we need to store the routes and root dir IDs in Point's Identity contract
-        // or if they are going to be stored in the domain registry (Solana or Ethereum).
         if (isPointTarget || isAlias) {
+            // Deploy contracts (if required) and store routes and root dir IDs in Point Identity contract.
+            const pointIdentity = isAlias ? identity : target;
+            if (deployContracts) {
+                await this.deployContracts(
+                    deployConfig,
+                    deployPath,
+                    version,
+                    pointIdentity,
+                    force_deploy_proxy
+                );
+            }
+
             log.info(
                 {publicDirId, routeFileUploadedId, target, identity},
                 'Saving routes and root dir IDs to Point Identity contract...'
@@ -637,26 +617,30 @@ class Deployer {
 
             await this.updateCommitSha(pointIdentity, deployPath, version);
 
-            if (deployConfig.hasOwnProperty('pointSDKVersion')){
+            if (deployConfig.hasOwnProperty('pointSDKVersion')) {
                 await this.updatePointVersionTag(
-                    pointIdentity, POINT_SDK_VERSION, deployConfig.pointSDKVersion, version
+                    pointIdentity,
+                    POINT_SDK_VERSION,
+                    deployConfig.pointSDKVersion,
+                    version
                 );
             }
 
-            if (deployConfig.hasOwnProperty('pointNodeVersion')){
+            if (deployConfig.hasOwnProperty('pointNodeVersion')) {
                 await this.updatePointVersionTag(
-                    pointIdentity, POINT_NODE_VERSION, deployConfig.pointNodeVersion, version
+                    pointIdentity,
+                    POINT_NODE_VERSION,
+                    deployConfig.pointNodeVersion,
+                    version
                 );
             }
         }
 
         if (!isPointTarget) {
             // Write Point data to domain registry.
-            const domainRegistryData = isAlias ? {pn_alias: identity} : {
-                pn_id: identity,
-                pn_routes: routeFileUploadedId,
-                pn_root: publicDirId
-            };
+            const domainRegistryData = isAlias
+                ? {pn_alias: identity}
+                : {pn_routes: routeFileUploadedId, pn_root: publicDirId};
 
             await this.editDomainRegistry(target, domainRegistryData, preExistingDomainContent);
             log.info({target, ...domainRegistryData}, 'Wrote Point data to domain registry');
@@ -749,12 +733,15 @@ class Deployer {
         const target = host.replace('.point', '');
 
         const uncommittedChanges = this.execCommand(`cd ${deployPath} && git status --porcelain`);
-        if (uncommittedChanges){
-            log.warn({target, uncommittedChanges}, 'Uncommitted changes detected, the commit SHA could not correspond the version of DApp deployed');
+        if (uncommittedChanges) {
+            log.warn(
+                {target, uncommittedChanges},
+                'Uncommitted changes detected, the commit SHA could not correspond the version of DApp deployed'
+            );
         }
 
         const lastCommitSha = this.execCommand(`cd ${deployPath} && git rev-parse HEAD`);
-        if (lastCommitSha){
+        if (lastCommitSha) {
             log.info({target, lastCommitSha}, 'Updating Commit SHA');
             await blockchain.putKeyValue(target, COMMIT_SHA_KEY, lastCommitSha, version);
         } else {
@@ -823,9 +810,7 @@ class Deployer {
                     const paramNames = paramsTogether.split(',');
                     const params = [];
                     if (value.metadata) {
-                        const metadataHash = await uploadFile(
-                            JSON.stringify(value.metadata)
-                        );
+                        const metadataHash = await uploadFile(JSON.stringify(value.metadata));
                         value.metadata['metadataHash'] = metadataHash;
                         for (const paramName of paramNames) {
                             params.push(value.metadata[paramName]);

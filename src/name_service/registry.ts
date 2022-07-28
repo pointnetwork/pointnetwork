@@ -18,7 +18,7 @@ export function parseDomainRegistry(registry: DomainRegistry): PointDomainData {
     // the content using the routes ID and root directory ID stored in the
     // domain registry.
     return {
-        identity: values['pn_id'] || '',
+        identity: '',
         isAlias: false,
         routesId: values['pn_routes'] || '',
         rootDirId: values['pn_root'] || ''

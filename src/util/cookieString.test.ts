@@ -14,10 +14,9 @@ const parseTestCases: ParseTestCase[] = [
     ['in;valid', {}],
     ['no_equals_sign', {}],
     [
-        'ipfs=QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn;pn_id=ynet_bareminimum;pn_routes=0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d;pn_root=d7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd',
+        'ipfs=QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn;pn_routes=0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d;pn_root=d7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd',
         {
             ipfs: 'QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn',
-            pn_id: 'ynet_bareminimum',
             pn_routes: '0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d',
             pn_root: 'd7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd'
         }
@@ -41,11 +40,10 @@ const encodeTestCases: EncodeTestCase[] = [
     [
         {
             ipfs: 'QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn',
-            pn_id: 'ynet_bareminimum',
             pn_routes: '0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d',
             pn_root: 'd7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd'
         },
-        'ipfs=QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn;pn_id=ynet_bareminimum;pn_routes=0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d;pn_root=d7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd'
+        'ipfs=QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn;pn_routes=0x339b11f3cd1fc986d77356f2be50544a38b01fe64b744262e656813827e6555d;pn_root=d7817fbdda33796626b3f2cebe08b422168ac951378392d29ab239232a0cecdd'
     ]
 ];
 
@@ -63,17 +61,15 @@ const mergeTestCases: MergeTestCase[] = [
         {pn_alias: 'ynet_me'},
         {ipfs: 'QmPnNSjCPPNo4ckjaZ5BD82jSjxYJ7MBc5BVv2cWeYE6dn', pn_alias: 'ynet_me'}
     ],
-    ['pn_id=old-idenitity', {pn_id: 'new-identity'}, {pn_id: 'new-identity'}],
+    ['pn_alias=old-idenitity', {pn_alias: 'new-identity'}, {pn_alias: 'new-identity'}],
+    ['', {pn_routes: 'routes-id'}, {pn_routes: 'routes-id'}],
     [
-        '',
-        {pn_id: 'new-identity', pn_routes: 'routes-id'},
-        {pn_id: 'new-identity', pn_routes: 'routes-id'}
+        'a=b;pn_alias=old',
+        {pn_root: 'root-id', pn_routes: 'routes-id'},
+        {a: 'b', pn_root: 'root-id', pn_routes: 'routes-id'}
     ],
-    [
-        'a=b;pn_id=old',
-        {pn_id: 'new', pn_routes: 'routes-id'},
-        {a: 'b', pn_id: 'new', pn_routes: 'routes-id'}
-    ]
+    ['pn_root=root-id;pn_routes=routes-id', {pn_alias: 'social'}, {pn_alias: 'social'}],
+    ['pn_root=root-id;a=b;pn_routes=routes-id', {pn_alias: 'social'}, {a: 'b', pn_alias: 'social'}]
 ];
 
 describe('merge', () => {

@@ -109,7 +109,8 @@ network:
       tls: true
     solana:
       type: "solana"
-      address: "api.mainnet-beta.solana.com"
+      name: "Solana"
+      http_address: "api.mainnet-beta.solana.com"
       currency_name: "Sol"
       currency_code: "SOL"
       tls: true
