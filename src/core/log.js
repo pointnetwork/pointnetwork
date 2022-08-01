@@ -2,7 +2,6 @@ const {createWriteStream} = require('fs');
 const os = require('os');
 const path = require('path');
 const pino = require('pino');
-const UdpTransport = require('pino-udp');
 const {multistream} = require('pino-multi-stream');
 const ecsFormat = require('@elastic/ecs-pino-format');
 const config = require('config');
@@ -10,6 +9,7 @@ const config = require('config');
 const {resolveHome} = require('../util/resolveHome');
 const {getIdentifier} = require('../util/getIdentifier');
 const {getNetworkAddress} = require('../wallet/keystore');
+const {createUdpStream} = require('../util/createUdpStream');
 const account = getNetworkAddress().toLowerCase();
 const datadir = config.get('datadir');
 const {level, enabled, sendLogs, sendLogsTo} = config.get('log');
@@ -38,13 +38,7 @@ const tags = {
 
 if (sendLogs && sendLogsTo) {
     const [address, port] = sendLogsTo.split('://').pop().split(':');
-    const udpTransport = new UdpTransport({address, port});
-    udpTransport.on('error', e => {
-        logger.warn(
-            {error: e, address, port},
-            `Log stash is unavailable, will continue with local logging`
-        );
-    });
+    const udpTransport = createUdpStream({address, port});
     streams.push(udpTransport);
     sendMetric = function (obj)  {
         let originalChilds;
