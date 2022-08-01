@@ -15,6 +15,14 @@ const {utils} = require('ethers');
 
 const networks = config.get('network.web3');
 
+const timeout = (prom, time, exception) => {
+    let timer;
+    return Promise.race([
+        prom,
+        new Promise((_r, rej) => timer = setTimeout(rej, time, exception))
+    ]).finally(() => clearTimeout(timer));
+};
+
 class WalletController extends PointSDKController {
     constructor(req, reply) {
         super(req);
@@ -64,14 +72,25 @@ class WalletController extends PointSDKController {
                 address: ynetAddress,
                 balance: 0
             },
-            ...await Promise.all(Object.keys(networks).map(async network => ({
-                network,
-                type: networks[network].type,
-                currency_name: networks[network].currency_name,
-                currency_code: networks[network].currency_code,
-                address: network === 'ynet' ? ynetAddress : getWalletAddress(({network})),
-                balance: await getBalance({network, majorUnits: true})
-            })))
+            ...await Promise.all(Object.keys(networks).map(async network => {
+                let balance;
+                try {
+                    balance = await timeout(getBalance({network, majorUnits: true}), 5000, 'Timeout');
+                } catch (e){
+                    balance = e;
+                }
+
+                return ({
+                    network,
+                    type: networks[network].type,
+                    currency_name: networks[network].currency_name,
+                    currency_code: networks[network].currency_code,
+                    address: network === 'ynet' ? ynetAddress : getWalletAddress(({network})),
+                    balance: balance
+                });
+            }
+            
+            ))
         ];
 
         return this._response({wallets});
@@ -93,37 +112,49 @@ class WalletController extends PointSDKController {
 
         await Promise.all(Object.keys(tokens).map(async network => {
             const balances = await Promise.all(tokens[network].map(async token => {
-                const [balance, decimals] = await Promise.all([
-                    ethereum.send({
-                        method: 'eth_call',
-                        params: [{
-                            from: getWalletAddress({}),
-                            to: token.address,
-                            data: balanceOfCallData
-                        }, 'latest'],
-                        id: new Date().getTime(),
-                        network
-                    }),
-                    ethereum.send({
-                        method: 'eth_call',
-                        params: [{
-                            from: getWalletAddress({}),
-                            to: token.address,
-                            data: decimalsCallData
-                        }, 'latest'],
-                        id: new Date().getTime() + Math.round(Math.random() * 100000),
-                        network
-                    })
-                ]);
-
-                return {
-                    balance:
-                        utils.formatUnits(
-                            balance.result.toString(),
-                            decimals.result.toString()
-                        ),
-                    decimals: Number(decimals.result.toString())
-                };
+                
+                try {
+                    const [balance, decimals] = await Promise.all([
+                        timeout(
+                            ethereum.send({
+                                method: 'eth_call',
+                                params: [{
+                                    from: getWalletAddress({}),
+                                    to: token.address,
+                                    data: balanceOfCallData
+                                }, 'latest'],
+                                id: new Date().getTime(),
+                                network
+                            }), 
+                            5000, 'Timeout'),
+                        timeout(
+                            ethereum.send({
+                                method: 'eth_call',
+                                params: [{
+                                    from: getWalletAddress({}),
+                                    to: token.address,
+                                    data: decimalsCallData
+                                }, 'latest'],
+                                id: new Date().getTime() + Math.round(Math.random() * 100000),
+                                network
+                            }),
+                            5000, 'Timeout')
+                    ]);
+                    return {
+                        balance:
+                            utils.formatUnits(
+                                balance.result.toString(),
+                                decimals.result.toString()
+                            ),
+                        decimals: Number(decimals.result.toString())
+                    };
+                } catch (e){
+                    return {
+                        balance: e,
+                        decimals: ''
+                    };
+                }
+                
             }));
             
             tokens[network] = tokens[network].map((token, index) => ({

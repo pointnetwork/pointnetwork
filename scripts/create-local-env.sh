@@ -13,7 +13,7 @@ fi
 
 echo "installing global packages"
 #ganache and arlocal installation
-for package in ganache arlocal@1.1.49
+for package in ganache arlocal@1.1.49 ts-node
 do
   if isNpmPackageInstalled $package
   then
@@ -70,7 +70,15 @@ echo "cp resources/config/visitlocal_template.yaml config/visitlocal.yaml"
 cp resources/config/visitlocal_template.yaml config/visitlocal.yaml
 
 echo "Rreplacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
-perl -i -pe"s|~|$HOME|" config/devlocal.yaml
-perl -i -pe"s|~|$HOME|" config/visitlocal.yaml
+
+if [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
+  WIN_HOME=$(echo $HOME | perl -pe 's!/!\\\\!'g | perl -pe 's!\\\\(\S)!$1:!')
+  echo $WIN_HOME
+  perl -i -pe"s|~|$WIN_HOME|" config/devlocal.yaml
+  perl -i -pe"s|~|$WIN_HOME|" config/visitlocal.yaml        
+else
+  perl -i -pe"s|~|$HOME|" config/devlocal.yaml
+  perl -i -pe"s|~|$HOME|" config/visitlocal.yaml
+fi
 
 echo "Installation of local env ended"
