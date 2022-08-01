@@ -97,7 +97,7 @@ network:
     #   currency_code: "SOL"
     #   tls: true
   web3_call_retry_limit: 4
-  identity_contract_address: "0xb1f2A0079Be733449664011fC3e5019796df188A"
+  identity_contract_address: "0x1574E97F7a60c4eE518f6d7c0Fa701eff8Ab58b3"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
 name_services:
   sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
