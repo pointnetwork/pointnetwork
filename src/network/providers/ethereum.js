@@ -73,7 +73,7 @@ const networks = config.get('network.web3');
 const providers = {
     ynet: {
         http: createWeb3Instance({
-            protocol: 'http',
+            protocol: networks.ynet.tls ? 'https' : 'http',
             blockchainUrl: networks.ynet.address,
             privateKey: '0x' + getNetworkPrivateKey()
         })
