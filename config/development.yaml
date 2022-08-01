@@ -3,3 +3,14 @@ db:
 log:
   sendLogs: false
   level: debug
+identity_contract_id: "85a823ad64f46e2cabf1c006778a7a921a1debc872351f6c6ebb665dcdccb488"
+network:
+  web3:
+    ynet:
+      type: "eth"
+      address: "xnet-pluto-1.point.space/"
+      currency_name: "xPoint"
+      currency_code: "xPOINT"
+      tls: true
+      tokens: []
+  identity_contract_address: "0x8E34Fc67034b8A593E87d5f2644D098A3dBd2Fe7"
