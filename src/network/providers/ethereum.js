@@ -71,16 +71,16 @@ const networks = config.get('network.web3');
 
 // web3.js providers
 const providers = {
-    ynet: {
+    default: {
         http: createWeb3Instance({
-            protocol: networks.ynet.tls ? 'https' : 'http',
-            blockchainUrl: networks.ynet.address,
+            protocol: networks.default.tls ? 'https' : 'http',
+            blockchainUrl: networks.default.address,
             privateKey: '0x' + getNetworkPrivateKey()
         })
     }
 };
 
-const getWeb3 = ({chain = 'ynet', protocol} = {}) => {
+const getWeb3 = ({chain = 'default', protocol} = {}) => {
     if (
         !Object.keys(networks)
             .filter(key => networks[key].type === 'eth')
