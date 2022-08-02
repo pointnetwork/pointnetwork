@@ -36,7 +36,7 @@ function createWeb3Instance({protocol, blockchainUrl, privateKey}) {
     // by hiding it behind Nginx or something, so that we would not bother with ports
     // otherwise we need to reconsider config structure to support different urls for
     // http and ws connection
-    const url = `${protocol}://${isWs ? blockchainUrl.replace('44444', '55555') : blockchainUrl}`;
+    const url = `${protocol}://${isWs ? `${blockchainUrl}/ws` : blockchainUrl}`;
     const provider = isWs ? new Web3.providers.WebsocketProvider(url) : url;
 
     if (isWs) {
@@ -363,7 +363,7 @@ ethereum.subscribeContractEvent = async (
     onStart,
     options = {}
 ) => {
-    const contract = await ethereum.loadWebsiteContract(target, contractName, undefined, 'ws');
+    const contract = await ethereum.loadWebsiteContract(target, contractName, undefined, 'wss');
 
     let subscriptionId;
 
