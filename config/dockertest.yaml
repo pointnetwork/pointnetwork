@@ -17,7 +17,7 @@ storage:
   upload_expire: 300000
 network:
   web3:
-    ynet:
+    default:
       address: "blockchain_node:7545"
 api:
   address: 0.0.0.0

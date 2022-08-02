@@ -6,7 +6,7 @@ log:
 identity_contract_id: "85a823ad64f46e2cabf1c006778a7a921a1debc872351f6c6ebb665dcdccb488"
 network:
   web3:
-    ynet:
+    default:
       type: "eth"
       address: "xnet-pluto-1.point.space/"
       currency_name: "xPoint"
