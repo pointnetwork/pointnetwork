@@ -57,7 +57,7 @@ const confirmTransaction: HandlerFunc = async data => {
             result: {message: `Tx for request id "${reqId}" has not been found.`}
         };
     }
-    const network = tx.network ?? 'ynet';
+    const network = tx.network ?? 'default';
 
     try {
         pendingTxs.rm(reqId);
@@ -193,7 +193,7 @@ const permissionHandlers: Record<string, HandlerFunc> = {
  */
 const handleRPC: HandlerFunc = async data => {
     try {
-        const network = data.network ?? 'ynet';
+        const network = data.network ?? 'default';
         const id = data.id ?? new Date().getTime();
         const {method, params, origin} = data;
 
