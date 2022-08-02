@@ -1,6 +1,6 @@
 import { Link } from 'wouter';
 
-export default function SubIdentitiesList({ subidentities }) {
+export default function SubidentityList({ subidentities }) {
     if (!subidentities || subidentities.length === 0) {
         return (
             <div style={{ marginBottom: 100 }}>

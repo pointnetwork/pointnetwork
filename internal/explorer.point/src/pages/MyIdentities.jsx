@@ -1,7 +1,7 @@
 import Container from 'react-bootstrap/Container';
 import { Link, Redirect } from 'wouter';
 import { useAppContext } from '../context/AppContext';
-import SubIdentities from '../components/subidentity/SubIdentities';
+import Subidentities from '../components/subidentity/Subidentities';
 
 export default function MyIdentities({ owner }) {
     const { walletIdentity } = useAppContext();
@@ -35,7 +35,7 @@ export default function MyIdentities({ owner }) {
                 </tbody>
             </table>
 
-            <SubIdentities owner={owner} />
+            <Subidentities owner={owner} />
         </Container>
     );
 }

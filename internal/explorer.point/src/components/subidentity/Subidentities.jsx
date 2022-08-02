@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import Loading from '../Loading';
-import SubIdentitiesList from './SubIdentitiesList';
-import SubIdentityRegistration from './SubIdentityRegistration';
+import SubidentityList from './SubidentityList';
+import SubidentityRegistration from './SubidentityRegistration';
 
-export default function SubIdentities({ owner }) {
+export default function Subidentities({ owner }) {
     const [subidentities, setSubidentities] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -54,8 +54,8 @@ export default function SubIdentities({ owner }) {
                 <p className="red">Error: {error}</p>
             ) : (
                 <>
-                    <SubIdentitiesList subidentities={subidentities} />
-                    <SubIdentityRegistration
+                    <SubidentityList subidentities={subidentities} />
+                    <SubidentityRegistration
                         onNewIdentity={handleNewIdentity}
                     />
                 </>
