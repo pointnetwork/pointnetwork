@@ -17,34 +17,58 @@ a.nav-link.active {
 }
 
 .zapps {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;   
+    position: absolute;
+    width: 100%;
+    height: 150px;
+    top: 480px;
+}
+
+.zapps-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, 92px);
-    grid-gap: 10px;
-    padding: 10px;
+    grid-template-columns: repeat(auto-fit, 40px);
+    grid-gap: 40px;
+    padding: 30px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    margin-top: 15px;
+    margin-bottom: 45px;
 }
 
 .zapp {
-    min-height: 32px;
-    aspect-ratio: 1/1;
+    height: 60px;
+    width: 80px;
     align-items: center;
     justify-content: center;    
-    border:  1px solid #eee;
-    background-color: #eee;    
-    border-radius: 25%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.0375) 0%, rgba(255, 255, 255, 0.135) 100%);
+    border-radius: 12px;
+}
+
+.zapp-link {
+    text-decoration: none;
 }
 
 .zapp-icon {
-  width: 60%;
+  width: 48px;
+  height: 48px;
   margin: auto;
-  margin-top: 16px;
   display: block;
 }
 
 .zapp-icon-container {
     -webkit-mask-size: 100% 100%;
     height: 100%;
-    margin: auto;
     vertical-align: middle;
+    justify-content: center;
+    align-items: center;
+    display: flex;
 }
 
 .zapp-title-container {
@@ -53,6 +77,15 @@ a.nav-link.active {
     text-overflow: ellipsis;
     white-space: nowrap;
     text-align: center;
+    font-family: 'Barlow';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 18px;
+    text-align: center;
+    color: #FFFFFF;
+    text-decoration: none;
+    margin-top: 8px;
 }
 
 .text-smallest {
@@ -88,13 +121,25 @@ a.nav-link.active {
 }
 
 .bounty-banner {
+
+    box-sizing: border-box;
+
+    /* Auto layout */
+    
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 0px 10px 24px;
+    
+
+    background: linear-gradient(180deg, rgba(116, 86, 246, 0.2) 0%, rgba(76, 50, 186, 0.2) 71.36%);
+    border: 1px solid #F2FE67;
+    border-radius: 4px;
+
     position: fixed;
-    background: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);
-    border-radius: 6px;
     cursor: pointer;
-    padding: 3px;
-    width: 80vw;
-    bottom: 10px;
+    width: 620px;
+    bottom: 5px;
     left: 50%;
     transform: translateX(-50%);
 }
@@ -105,11 +150,8 @@ a.nav-link.active {
 
 .bounty-banner-inner {
     align-items: center;
-    background: linear-gradient(90deg, #fffdf5 0%, #fffbf5 50%, #fcfbf7 100%);
-    border-radius: 4px;
     display: flex;
     justify-content: space-between;
-    padding: 25px;
 }
 
 .bounty-banner-header {
@@ -118,21 +160,41 @@ a.nav-link.active {
 }
 
 .bounty-banner-header img {
-    height: 50px;
+    height: 30px;
 }
 
 .bounty-banner-header h2 {
-    font-family: 'Karla', sans-serif;
-    font-weight: 600;
-    margin: 0 0 0 20px;
+    font-family: 'Barlow';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 38px;
+    margin-left: 40px;    
+    color: #FFFFFF;
 }
 
-.bounty-banner-header h2 span {
-    background-image: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);;
-    color: #333;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.bounty-banner-enter {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 6px 36px;
+    gap: 10px;
+    margin-left: 100px;
+    
+    width: 120px;
+    height: 40px;
+    
+    background: linear-gradient(180deg, #FFDC5B 0%, #FFBA05 100%);
+    border-radius: 2px;
+    
+    /* Inside auto layout */
+    
+    flex: none;
+    order: 2;
+    flex-grow: 0;
 }
+
 
 @media (max-width: 767px) {
     .bounty-banner-inner {
@@ -148,4 +210,63 @@ a.nav-link.active {
     .bounty-banner-header h2 {
         margin: 10px 0;
     }
+}
+
+.home-container {
+    width: 100%;
+    height:100vh; 
+    background: radial-gradient(107.82% 69.81% at 49.85% 6.85%, #000000 0%, #2A1C69 100%) /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */;
+}
+
+.home-header {
+    position: absolute;
+    width: 575px;
+    height: 80px;
+    left: calc(50% - 575px/2 + 0.5px);
+    top: 300px;
+
+    font-family: 'Barlow';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 60px;
+    line-height: 80px;
+    /* identical to box height, or 133% */
+
+    display: flex;
+    align-items: center;
+    text-align: center;
+
+    color: #FFFFFF;
+}
+
+.home-header-2 {
+    position: absolute;
+    width: 670px;
+    height: 40px;
+    left: calc(50% - 670px/2);
+    top: 428px;
+    
+    font-family: 'Barlow';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 40px;
+    /* identical to box height, or 200% */
+    
+    text-align: center;
+    color: #FFFFFF;    
+}
+
+.home-logo {
+    position: absolute;
+    left: 5.49%;
+    right: 86.57%;
+    top: 43.89%;
+    bottom: 43.89%;    
+}
+
+.home-apps-separator {
+    width: 620px;
+    height: 0px;
+    border: 1px solid white;
 }
