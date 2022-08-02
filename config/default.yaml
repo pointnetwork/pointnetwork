@@ -63,7 +63,7 @@ wallet:
 network:
   contracts_path: contracts
   web3:
-    ynet:
+    default:
       type: "eth"
       address: "ynet.point.space:44444"
       currency_name: "yPoint"
