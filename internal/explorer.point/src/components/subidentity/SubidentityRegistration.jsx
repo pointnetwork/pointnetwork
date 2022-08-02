@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAppContext } from '../../context/AppContext';
 import Loading from '../Loading';
 
-export default function SubIdentityRegistration({ onNewIdentity }) {
+export default function SubidentityRegistration({ onNewIdentity }) {
     const { walletIdentity } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
     const [newSubidentity, setNewSubidentity] = useState('');
