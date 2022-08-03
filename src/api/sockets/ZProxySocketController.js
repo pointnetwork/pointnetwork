@@ -60,8 +60,17 @@ class ZProxySocketController {
                 }
 
                 case SUBSCRIPTION_REQUEST_TYPES.RPC: {
-                    const {method, params, id, network} = request;
-                    const {status, result} = await handleRPC({method, params, id, network});
+                    const {method, params, id, network, __hostname, meta} = request;
+
+                    const {status, result} = await handleRPC({
+                        method,
+                        params,
+                        id,
+                        network,
+                        target: __hostname,
+                        contract: meta ? meta.contract : ''
+                    });
+
                     return this.pushRPCMessage({
                         request,
                         subscriptionId: null,
@@ -88,7 +97,7 @@ class ZProxySocketController {
     }
 
     pushToClient(msg) {
-        if (this.ws && (this.ws.readyState === 1)) {
+        if (this.ws && this.ws.readyState === 1) {
             this.ws.send(JSON.stringify(msg));
         }
     }
