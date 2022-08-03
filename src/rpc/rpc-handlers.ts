@@ -3,6 +3,7 @@ import pendingTxs from '../permissions/PendingTxs';
 import ethereum from '../network/providers/ethereum';
 import config from 'config';
 import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
+import {decodeTxInputData} from './decode';
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
@@ -11,7 +12,9 @@ export type RPCRequest = {
     method: string;
     params?: unknown[];
     origin?: string;
-    network: string
+    network: string;
+    target?: string;
+    contract?: string;
 };
 
 type HandlerFunc = (
@@ -24,23 +27,24 @@ type HandlerFunc = (
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
 
 const storeTransaction: HandlerFunc = async data => {
-    const {params, network} = data;
+    const {params, network, target, contract} = data;
     if (!params) {
         return {status: 400, result: {message: 'Missing `params` in request body.'}};
     }
     if (networks[network].type === 'solana' && params.length !== 1) {
+        const message = 'Wrong number or params for solana transaction, expected 1';
         return {
-            status: 400, result: {
-                message: 
-                    'Wrong number or params for solana transaction, expected 1'
-            }
+            status: 400,
+            result: {message}
         };
     }
+
+    const decodedTxData = await decodeTxInputData(target, contract, params);
 
     // Store request for future processing,
     // and send `reqId` to client so it can ask user approval.
     const reqId = pendingTxs.add(params, network);
-    return {status: 200, result: {reqId, params, network}};
+    return {status: 200, result: {reqId, params, network, decodedTxData}};
 };
 
 const confirmTransaction: HandlerFunc = async data => {
@@ -75,7 +79,7 @@ const confirmTransaction: HandlerFunc = async data => {
             case 'solana':
                 if ((tx.params[0] as SolanaSendFundsParams).to) {
                     result = await solana.sendFunds({
-                        ...tx.params[0] as SolanaSendFundsParams,
+                        ...(tx.params[0] as SolanaSendFundsParams),
                         network
                     });
                 } else {
@@ -88,7 +92,8 @@ const confirmTransaction: HandlerFunc = async data => {
                 break;
             default:
                 return {
-                    status: 400, result: {
+                    status: 400,
+                    result: {
                         message: `Unsupported type ${networks[network].type} for network ${network}`,
                         id,
                         network
@@ -195,7 +200,7 @@ const handleRPC: HandlerFunc = async data => {
     try {
         const network = data.network ?? 'ynet';
         const id = data.id ?? new Date().getTime();
-        const {method, params, origin} = data;
+        const {method, params, origin, target, contract} = data;
 
         // Check for methods related to permissions.
         const permissionHandler = permissionHandlers[method];
@@ -207,7 +212,7 @@ const handleRPC: HandlerFunc = async data => {
         // Check for special/custom methods.
         const specialHandler = specialHandlers[method];
         if (specialHandler) {
-            const res = await specialHandler({id, method, params, origin, network});
+            const res = await specialHandler({id, method, params, network, target, contract});
             return res;
         }
 
@@ -225,7 +230,8 @@ const handleRPC: HandlerFunc = async data => {
                 break;
             default:
                 return {
-                    status: 400, result: {
+                    status: 400,
+                    result: {
                         message: `Unsupported type ${networks[network].type} for network ${network}`,
                         id,
                         network
