@@ -1,2 +1,4 @@
+mode: test
 log:
+  level: error
   sendLogs: false

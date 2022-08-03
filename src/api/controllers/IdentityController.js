@@ -1,5 +1,5 @@
 const PointSDKController = require('./PointSDKController');
-const blockchain = require('../../network/providers/ethereum');
+const ethereum = require('../../network/providers/ethereum');
 const solana = require('../../network/providers/solana');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
@@ -58,8 +58,8 @@ let TwitterOracle = {
 };
 
 if (
-    (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') &&
-    !(process.env.USE_ORACLE === 'true')
+    (['e2e', 'zappdev', 'test'].includes(process.env.MODE)) &&
+    process.env.USE_ORACLE !== 'true'
 ) {
     TwitterOracle = {
         async isIdentityEligible(identity) {
@@ -104,10 +104,9 @@ function getIdentityActivationCode(owner) {
 function getHashedMessage(identity, owner, type) {
     const lowerCaseOwner = owner.toLowerCase();
     const prefix = lowerCaseOwner.indexOf('0x') !== 0 ? '0x' : '';
-    const hashedMessage = ethers.utils.id(
+    return ethers.utils.id(
         `${identity.toLowerCase()}|${prefix}${lowerCaseOwner}|${type}`
     );
-    return hashedMessage;
 }
 
 class IdentityController extends PointSDKController {
@@ -118,31 +117,32 @@ class IdentityController extends PointSDKController {
     }
 
     async isIdentityRegistered() {
-        const identityRegistred = await blockchain.isCurrentIdentityRegistered();
-        return this._response({identityRegistred: identityRegistred});
+        const identityRegistred = await ethereum.isCurrentIdentityRegistered();
+        // TODO: typo. Not fixing as it can break smth
+        return this._response({identityRegistred});
     }
 
     async identityToOwner() {
         const identity = this.req.params.identity;
-        const owner = await blockchain.ownerByIdentity(identity);
-        return this._response({owner: owner});
+        const owner = await ethereum.ownerByIdentity(identity);
+        return this._response({owner});
     }
 
     async ownerToIdentity() {
         const owner = this.req.params.owner;
-        const identity = await blockchain.identityByOwner(owner);
+        const identity = await ethereum.identityByOwner(owner);
         return this._response({identity});
     }
 
     async publicKeyByIdentity() {
         const identity = this.req.params.identity;
-        const publicKey = await blockchain.commPublicKeyByIdentity(identity);
+        const publicKey = await ethereum.commPublicKeyByIdentity(identity);
         return this._response({publicKey});
     }
 
     async blockTimestamp() {
         const blockNumber = this.req.body.blockNumber;
-        const timestamp = await blockchain.getBlockTimestamp(blockNumber);
+        const timestamp = await ethereum.getBlockTimestamp(blockNumber);
         return this._response({timestamp});
     }
 
@@ -158,7 +158,7 @@ class IdentityController extends PointSDKController {
     async isIdentityEligible() {
         const {identity} = this.req.params;
 
-        const publicKey = await blockchain.ownerByIdentity(identity);
+        const publicKey = await ethereum.ownerByIdentity(identity);
 
         if (publicKey !== ethers.constants.AddressZero) {
             return this._response({
@@ -206,11 +206,11 @@ class IdentityController extends PointSDKController {
                 (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') &&
                 !(process.env.USE_ORACLE === 'true')
             ) {
-                await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
+                await ethereum.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
             } else {
                 const hashedMessage = getHashedMessage(identity, owner, type);
 
-                await blockchain.registerVerified(
+                await ethereum.registerVerified(
                     identity,
                     owner,
                     Buffer.from(publicKey, 'hex'),
@@ -218,8 +218,6 @@ class IdentityController extends PointSDKController {
                     signData
                 );
             }
-
-            //log.info(v, r, s);
 
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
@@ -230,7 +228,7 @@ class IdentityController extends PointSDKController {
 
             try {
                 if (
-                    !(process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') ||
+                    !(['e2e', 'zappdev', 'test'].includes(process.env.MODE)) ||
                     process.env.USE_ORACLE === 'true'
                 ) {
                     await registerBountyReferral(owner, type);
@@ -309,7 +307,7 @@ class IdentityController extends PointSDKController {
                     registry = await solana.resolveDomain(domain);
                     break;
                 case '.eth':
-                    registry = await blockchain.resolveDomain(domain);
+                    registry = await ethereum.resolveDomain(domain);
                     break;
                 default:
                     throw new Error(`Did not find a blockchain client for "${tld}" domains.`);
