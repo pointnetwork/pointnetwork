@@ -1,6 +1,6 @@
 const PointSDKController = require('./PointSDKController');
 const blockchain = require('../../network/providers/ethereum');
-const solana = require('../../network/providers/solana');
+const {blockchain: bp, tldToChain} = require('../../network/providers');
 const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
 const logger = require('../../core/log');
 const log = logger.child({Module: 'IdentityController'});
@@ -47,9 +47,9 @@ let TwitterOracle = {
     },
 
     async confirmTwitterValidation(identity, address, url) {
-        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${
-            encodeURIComponent(url)
-        }`;
+        const oracleUrl = `${twitterOracleUrl}/api/activate_tweet?handle=${identity}&address=${address}&url=${encodeURIComponent(
+            url
+        )}`;
 
         log.info(`calling to ${oracleUrl}`);
         const {data} = await axios.post(oracleUrl);
@@ -303,17 +303,7 @@ class IdentityController extends PointSDKController {
         }
 
         try {
-            let registry;
-            switch (tld) {
-                case '.sol':
-                    registry = await solana.resolveDomain(domain);
-                    break;
-                case '.eth':
-                    registry = await blockchain.resolveDomain(domain);
-                    break;
-                default:
-                    throw new Error(`Did not find a blockchain client for "${tld}" domains.`);
-            }
+            const registry = await bp.resolveDomain(tldToChain[tld], domain);
             return this._response(registry);
         } catch (err) {
             if (err.message === 'Invalid name account provided') {

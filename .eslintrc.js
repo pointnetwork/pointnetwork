@@ -89,7 +89,7 @@ module.exports = {
         '@typescript-eslint/no-this-alias': 'off', // TODO: fix all and enable
         '@typescript-eslint/no-empty-function': 'off', // TODO: fix all and enable
         'no-shadow': 'off',
-        '@typescript-eslint/no-unused-vars': 'error',
+        '@typescript-eslint/no-unused-vars': ['error', {argsIgnorePattern: '^_'}],
         'no-unused-vars': 'off',
         '@typescript-eslint/keyword-spacing': ['error']
         // 'import/no-extraneous-dependencies': 'error',

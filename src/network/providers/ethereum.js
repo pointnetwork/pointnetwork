@@ -113,8 +113,9 @@ const getEthers = chain => {
     }
 
     if (!ethersProviders[chain]) {
-        const url = networks[chain].address;
-        ethersProviders[chain] = new ethers.providers.JsonRpcProvider(url);
+        const host = networks[chain].address;
+        const protocol = networks[chain].tls ? 'https' : 'http';
+        ethersProviders[chain] = new ethers.providers.JsonRpcProvider(`${protocol}://${host}`);
     }
 
     return ethersProviders[chain];
@@ -341,6 +342,9 @@ ethereum.getPastEvents = async (
     return events;
 };
 
+/**
+ * @deprecated Use blockchain.getBlockNumber instead (from: src/network/providers/provider.ts)
+ */
 ethereum.getBlockNumber = async () => {
     try {
         const n = await getWeb3().eth.getBlockNumber();
@@ -877,6 +881,9 @@ ethereum.deployContract = async (contract, artifacts, contractName) => {
 
 ethereum.toHex = n => getWeb3().utils.toHex(n);
 
+/**
+ * @deprecated Use blockchain.send instead (from: src/network/providers/provider.ts)
+ */
 ethereum.send = ({method, params = [], id, network}) =>
     new Promise((resolve, reject) => {
         getWeb3({chain: network}).currentProvider.send(
@@ -896,6 +903,9 @@ ethereum.send = ({method, params = [], id, network}) =>
         );
     });
 
+/**
+ * @deprecated Use blockchain.resolveDomain instead (from: src/network/providers/provider.ts)
+ */
 ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
     const provider = getEthers(network);
     const resolver = await provider.getResolver(domainName);
@@ -912,6 +922,9 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
     return {owner, content};
 };
 
+/**
+ * @deprecated Use blockchain.setDomainContent instead (from: src/network/providers/provider.ts)
+ */
 ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
     if (!networks[network] || !networks[network].eth_tld_resolver) {
         throw new Error(`Missing TLD public resolver contract address for network "${network}"`);
