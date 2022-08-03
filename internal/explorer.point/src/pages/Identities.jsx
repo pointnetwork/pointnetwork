@@ -3,63 +3,53 @@ import Loading from '../components/Loading';
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import orderBy from 'lodash/orderBy';
+import InfiniteScroll from "react-infinite-scroll-component";
 
 export default function Identities({ owner }) {
     const [identities, setIdentities] = useState([]);
-    const [ikvset, setIkvset] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const [identitiesLength, setIdentitiesLength] = useState(0);
+    const [cursor, setCursor] = useState(0);
 
-    useEffect(() => {
-        fetchIdentities();
+    const PAGE_SIZE = 100;
+
+    useEffect(async () => {
+        await fetchIdentities();
     }, [owner]);
 
     const fetchIdentities = async () => {
-        setIsLoading(true);
-        const identitiesFetched =
-            owner !== undefined
-                ? await window.point.contract.events({
-                      host: '@',
-                      contract: 'Identity',
-                      event: 'IdentityRegistered',
-                      filter: {
-                          identityOwner: owner,
-                      },
-                  })
-                : await window.point.contract.events({
-                      host: '@',
-                      contract: 'Identity',
-                      event: 'IdentityRegistered',
-                  });
-        if (identitiesFetched.data != '') {
-            const handleOrder = (identity) =>
-                identity.data.handle.toLowerCase();
-            const blockOrder = 'blockNumber';
-            const sortedIdentities = orderBy(
-                identitiesFetched.data,
-                [blockOrder, handleOrder],
-                ['desc', 'desc'],
-            );
-            setIdentities(sortedIdentities);
-        }
+        console.log('fetchIdentities call ' + cursor);
+        if(identitiesLength == 0)
+            setIsLoading(true); 
 
-        const ikvsetFetched = await window.point.contract.events({
-            host: '@',
+        const identitiesLengthFetched = await window.point.contract.call({
             contract: 'Identity',
-            event: 'IKVSet',
+            method: 'getIdentitiesLength',
+            params: [],
         });
-        if (ikvsetFetched.data != '') {
-            setIkvset(ikvsetFetched.data);
+        
+        setIdentitiesLength(identitiesLengthFetched.data);
+        
+        const ids = await window.point.contract.call({
+            contract: 'Identity',
+            method: 'getPaginatedIdentities',
+            params: [cursor, PAGE_SIZE],
+        });
+        console.log(ids.data);
+
+        setCursor(cursor + ids.data.length);
+        if(identities.length + ids.data.length >= identitiesLengthFetched.data){ 
+            setHasMore(false);
         }
-        setIsLoading(false);
+        setIdentities(identities.concat(ids.data.map(e => {return {handle: e[0], owner: e[1], hasDomain: e[2]}})));
+
+        if(identitiesLength == 0)
+            setIsLoading(false); 
     };
 
     const renderIdentityEntry = (id) => {
-        const domainExists =
-            ikvset.filter(
-                (ikve) =>
-                    ikve.data.identity == id.handle &&
-                    ikve.data.key == 'zdns/routes',
-            ).length > 0;
+        const domainExists = id.hasDomain;
 
         return (
             <tr key={id.handle}>
@@ -68,7 +58,7 @@ export default function Identities({ owner }) {
                         @{id.handle}
                     </Link>
                 </td>
-                <td className="mono">{id.identityOwner}</td>
+                <td className="mono">{id.owner}</td>
                 <td className="mono">
                     <b>
                         {domainExists ? (
@@ -93,23 +83,31 @@ export default function Identities({ owner }) {
             <Container className="p-3">
                 <br />
                 <h1>{owner !== undefined ? 'My ' : ''}Identities</h1>
-                Total: {identities.length}
+                Total: {identitiesLength}
                 <hr />
-                <table className="table table-bordered table-striped table-hover table-responsive table-primary">
-                    <tbody>
-                        <tr>
-                            <th>Handle</th>
-                            <th>Owner</th>
-                            <th>App</th>
-                        </tr>
-                        {isLoading
-                            ? null
-                            : identities.map((e) =>
-                                  renderIdentityEntry(e.data),
-                              )}
-                    </tbody>
-                </table>
-                {isLoading ? <Loading /> : null}
+                <InfiniteScroll
+                    dataLength={identities.length}
+                    next={fetchIdentities}
+                    hasMore={hasMore}
+                    loader={<Loading />}
+                    >
+                    <table className="table table-bordered table-striped table-hover table-responsive table-primary">
+                        <tbody>
+                            <tr>
+                                <th>Handle</th>
+                                <th>Owner</th>
+                                <th>App</th>
+                            </tr>
+                            
+                            {isLoading
+                                ? null
+                                : identities.map((e) =>
+                                    renderIdentityEntry(e),
+                                )}
+                            
+                        </tbody>
+                    </table>
+                </InfiniteScroll>
             </Container>
         </>
     );
