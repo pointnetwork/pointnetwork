@@ -8,7 +8,8 @@ network:
   web3:
     default:
       type: "eth"
-      address: "xnet-pluto-1.point.space/"
+      http_address: "xnet-pluto-1.point.space"
+      ws_address: "xnet-pluto-1.point.space"
       currency_name: "xPoint"
       currency_code: "xPOINT"
       tls: true
