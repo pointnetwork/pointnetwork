@@ -18,7 +18,8 @@ storage:
 network:
   web3:
     default:
-      address: "blockchain_node:7545"
+      http_address: "blockchain_node:7545"
+      ws_address: "blockchain_node:7545"
 api:
   address: 0.0.0.0
 zproxy:

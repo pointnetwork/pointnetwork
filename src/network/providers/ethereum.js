@@ -30,16 +30,11 @@ function isRetryableError({message}) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-function createWeb3Instance({protocol, blockchainUrl, privateKey}) {
-    const isWs = protocol === 'ws' || protocol === 'wss';
-    // FIXME: the below port replacement is a temporary hack, it needs to be fixed on the blockchain node side
-    // by hiding it behind Nginx or something, so that we would not bother with ports
-    // otherwise we need to reconsider config structure to support different urls for
-    // http and ws connection
-    const url = `${protocol}://${isWs ? blockchainUrl.replace('44444', '55555') : blockchainUrl}`;
-    const provider = isWs ? new Web3.providers.WebsocketProvider(url) : url;
+function createWeb3Instance({protocol, tls, blockchainUrl, privateKey}) {
+    const url = `${protocol}${tls ? 's' : ''}://${blockchainUrl}`;
+    const provider = protocol === 'ws' ? new Web3.providers.WebsocketProvider(url) : url;
 
-    if (isWs) {
+    if (protocol === 'ws') {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
     }
 
@@ -73,14 +68,15 @@ const networks = config.get('network.web3');
 const providers = {
     default: {
         http: createWeb3Instance({
-            protocol: networks.default.tls ? 'https' : 'http',
-            blockchainUrl: networks.default.address,
+            protocol: 'http',
+            tls: networks.default.tls,
+            blockchainUrl: networks.default.http_address,
             privateKey: '0x' + getNetworkPrivateKey()
         })
     }
 };
 
-const getWeb3 = ({chain = 'default', protocol} = {}) => {
+const getWeb3 = ({chain = 'default', protocol = 'http'} = {}) => {
     if (
         !Object.keys(networks)
             .filter(key => networks[key].type === 'eth')
@@ -91,13 +87,11 @@ const getWeb3 = ({chain = 'default', protocol} = {}) => {
     if (!providers[chain]) {
         providers[chain] = {};
     }
-    if (!protocol) {
-        protocol = networks[chain].tls ? 'https' : 'http';
-    }
     if (!providers[chain][protocol]) {
         providers[chain][protocol] = createWeb3Instance({
             protocol,
-            blockchainUrl: networks[chain].address,
+            tls: networks[chain].tls,
+            blockchainUrl: networks[chain][protocol === 'ws' ? 'ws_address' : 'http_address'],
             privateKey: '0x' + getNetworkPrivateKey()
         });
     }
@@ -108,12 +102,12 @@ const getWeb3 = ({chain = 'default', protocol} = {}) => {
 const ethersProviders = {};
 
 const getEthers = chain => {
-    if (!networks[chain] || !networks[chain].address) {
+    if (!networks[chain] || !networks[chain].http_address) {
         throw new Error(`No connection details for chain "${chain}".`);
     }
 
     if (!ethersProviders[chain]) {
-        const url = networks[chain].address;
+        const url = networks[chain].http_address;
         ethersProviders[chain] = new ethers.providers.JsonRpcProvider(url);
     }
 
