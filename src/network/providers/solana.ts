@@ -43,7 +43,7 @@ const createSolanaConnection = (blockchainUrl: string, protocol = 'https') => {
     return connection;
 };
 
-const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
+const networks: Record<string, {type: string; http_address: string}> = config.get('network.web3');
 const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypair}> = Object.keys(
     networks
 )
@@ -52,7 +52,7 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
         (acc, cur) => ({
             ...acc,
             [cur]: {
-                connection: createSolanaConnection(networks[cur].address),
+                connection: createSolanaConnection(networks[cur].http_address),
                 wallet: getSolanaKeyPair()
             }
         }),
@@ -156,7 +156,7 @@ const solana = {
             throw new Error(`Wrong network type for ${network}, solana expected`);
         }
         const res = await axios.post(
-            blockchainUrl.address,
+            blockchainUrl.http_address,
             {method, params, id, jsonrpc: '2.0'},
             {validateStatus: () => true}
         );
