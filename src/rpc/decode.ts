@@ -15,8 +15,48 @@ type DecodedTxInput = {
     params: Param[];
 };
 
-// A map to keep track of which ABIs have been added, to avoid duplicates.
-const addedABIs: Record<string, boolean> = {};
+/**
+ * Keep track of which ABIs have been added, to avoid duplicates, with a TTL.
+ */
+export class ABITracker {
+    private addedABIs: Record<string, number> = {};
+    private ttlMs: number;
+
+    constructor(ttlMs?: number) {
+        this.ttlMs = ttlMs ?? 10 * 60 * 1000; // default: 10 minutes.
+    }
+
+    private key(target: string, contract: string): string {
+        return `${target}:${contract}`;
+    }
+
+    private isExpired(key: string): boolean {
+        if (!this.addedABIs[key]) {
+            return false;
+        }
+        const ttl = this.addedABIs[key];
+        return Date.now() - ttl > this.ttlMs;
+    }
+
+    public has(target: string, contract: string): boolean {
+        const key = this.key(target, contract);
+        if (this.isExpired(key)) {
+            delete this.addedABIs[key];
+        }
+        return Boolean(this.addedABIs[key]);
+    }
+
+    public add(target: string, contract: string): void {
+        const key = this.key(target, contract);
+        this.addedABIs[key] = Date.now();
+    }
+
+    public len(): number {
+        return Object.getOwnPropertyNames(this.addedABIs).length;
+    }
+}
+
+const abiTracker = new ABITracker();
 
 /**
  * Decode Tx and return human-readable input data.
@@ -35,12 +75,12 @@ export async function decodeTxInputData(
         return null;
     }
 
-    if (!addedABIs[`${target}:${contract}`]) {
+    if (!abiTracker.has(target, contract)) {
         try {
             const identity = new URL(target).host.replace(/.point$/, '');
             const {_jsonInterface} = await ethereum.loadWebsiteContract(identity, contract);
             abiDecoder.addABI(_jsonInterface);
-            addedABIs[`${target}:${contract}`] = true;
+            abiTracker.add(target, contract);
         } catch (err) {
             log.error({target, contract}, 'Error fetching contract ABI.');
             return null;
