@@ -1,5 +1,8 @@
 const abiDecoder = require('abi-decoder');
 import ethereum from '../network/providers/ethereum';
+import logger from '../core/log';
+
+const log = logger.child({module: 'RPC'});
 
 type Param = {
     name: string;
@@ -32,15 +35,26 @@ export async function decodeTxInputData(
         return null;
     }
 
-    // TODO: keep a cache to avoid fethcing same ABI multiple times.
-    const identity = new URL(target).host.replace(/.point$/, '');
-    const {_jsonInterface} = await ethereum.loadWebsiteContract(identity, contract);
-
     if (!addedABIs[`${target}:${contract}`]) {
-        abiDecoder.addABI(_jsonInterface);
-        addedABIs[`${target}:${contract}`] = true;
+        try {
+            const identity = new URL(target).host.replace(/.point$/, '');
+            const {_jsonInterface} = await ethereum.loadWebsiteContract(identity, contract);
+            abiDecoder.addABI(_jsonInterface);
+            addedABIs[`${target}:${contract}`] = true;
+        } catch (err) {
+            log.error({target, contract}, 'Error fetching contract ABI.');
+            return null;
+        }
     }
 
     const decoded = abiDecoder.decodeMethod(txInputData);
-    return decoded ? (decoded as DecodedTxInput) : null;
+    if (!decoded) {
+        log.error(
+            {target, contract, txInputData},
+            'Unable to decode Tx input data using abiDecoder.'
+        );
+        return null;
+    }
+
+    return decoded as DecodedTxInput;
 }
