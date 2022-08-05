@@ -6,6 +6,8 @@ import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/provide
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
+const DEFAULT_NETWORK = config.get('network.default_network');
+
 export type RPCRequest = {
     id: number;
     method: string;
@@ -21,7 +23,7 @@ type HandlerFunc = (
     result: unknown;
 }>;
 
-const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
+const networks: Record<string, {type: string; http_address: string}> = config.get('network.web3');
 
 const storeTransaction: HandlerFunc = async data => {
     const {params, network} = data;
@@ -57,7 +59,7 @@ const confirmTransaction: HandlerFunc = async data => {
             result: {message: `Tx for request id "${reqId}" has not been found.`}
         };
     }
-    const network = tx.network ?? 'default';
+    const network = tx.network ?? DEFAULT_NETWORK;
 
     try {
         pendingTxs.rm(reqId);
@@ -193,7 +195,7 @@ const permissionHandlers: Record<string, HandlerFunc> = {
  */
 const handleRPC: HandlerFunc = async data => {
     try {
-        const network = data.network ?? 'default';
+        const network = data.network ?? DEFAULT_NETWORK;
         const id = data.id ?? new Date().getTime();
         const {method, params, origin} = data;
 

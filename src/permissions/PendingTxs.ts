@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import config from 'config';
 import {PendingTx} from './types';
 
+const DEFAULT_NETWORK: string = config.get('network.default_network');
+
 export class PendingTxs {
     private expirationSecs: number;
     private pendingTransactions: Record<string, PendingTx> = {};
@@ -37,7 +39,7 @@ export class PendingTxs {
      * Adds a transaction to the pool of pending requests
      * for future processing.
      */
-    add(params: unknown[], network = 'default') {
+    add(params: unknown[], network = DEFAULT_NETWORK) {
         const reqId = this.generateId();
         const expiresAt = this.calculateExpiration();
         this.pendingTransactions[reqId] = {params, expiresAt, network};

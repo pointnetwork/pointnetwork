@@ -15,7 +15,8 @@ storage:
   arweave_port: 1984
 network:
   web3:
-    default:
+    default_network: "ynet"
+    ynet:
       http_address: "blockchain_node:7545"
       ws_address: "blockchain_node:7545"
 api:
