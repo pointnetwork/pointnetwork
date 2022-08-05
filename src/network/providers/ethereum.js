@@ -932,7 +932,7 @@ ethereum.getOwner = () => getWeb3().utils.toChecksumAddress(getNetworkAddress())
 
 ethereum.getGasPrice = async (network = 'xnet') => {
     if (config.has(`network.web3.${network}.gas_price_wei`)) {
-        return Number(config.has(`network.web3.${network}.gas_price_wei`));
+        return Number(config.get(`network.web3.${network}.gas_price_wei`));
     }
 
     const gasPrice = await getWeb3().eth.getGasPrice();
