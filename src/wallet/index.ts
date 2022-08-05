@@ -15,10 +15,11 @@ const ERC20 = require('../abi/ERC20.json');
 import {AbiItem} from 'web3-utils';
 
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
+const DEFAULT_NETWORK: string = config.get('network.default_network');
 
 export const sendTransaction = async ({
     to,
-    network = 'default',
+    network = DEFAULT_NETWORK,
     value,
     messageId
 }: {
@@ -76,7 +77,7 @@ export const sendTransaction = async ({
     return {status: 200, result: {reqId, params, network}};
 };
 
-export const getBalance = async ({network = 'default', majorUnits = false}) => {
+export const getBalance = async ({network = DEFAULT_NETWORK, majorUnits = false}) => {
     if (!networks[network]) {
         throw new Error(`Unknown network ${network}`);
     }
@@ -98,7 +99,7 @@ export const getBalance = async ({network = 'default', majorUnits = false}) => {
     }
 };
 
-export const getTransactions = async ({network = 'default'}) => {
+export const getTransactions = async ({network = DEFAULT_NETWORK}) => {
     if (!networks[network]) {
         throw new Error(`Unknown network ${network}`);
     }
@@ -123,7 +124,7 @@ export const getTransactions = async ({network = 'default'}) => {
     }
 };
 
-export const getWalletAddress = ({network = 'default'}) => {
+export const getWalletAddress = ({network = DEFAULT_NETWORK}) => {
     switch (networks[network].type) {
         case 'eth':
             return getNetworkAddress();
@@ -136,7 +137,7 @@ export const getWalletAddress = ({network = 'default'}) => {
     }
 };
 
-export const sendToken = async ({tokenAddress, to, network = 'default', value, messageId}: {
+export const sendToken = async ({tokenAddress, to, network = DEFAULT_NETWORK, value, messageId}: {
     tokenAddress: string,
     to: string,
     network?: string,

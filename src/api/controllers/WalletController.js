@@ -14,6 +14,7 @@ const ERC20 = require('../../abi/ERC20.json');
 const {utils} = require('ethers');
 
 const networks = config.get('network.web3');
+const DEFAULT_NETWORK = config.get('network.default_network');
 
 const timeout = (prom, time, exception) => {
     let timer;
@@ -85,7 +86,10 @@ class WalletController extends PointSDKController {
                     type: networks[network].type,
                     currency_name: networks[network].currency_name,
                     currency_code: networks[network].currency_code,
-                    address: network === 'default' ? pointIdentity : getWalletAddress(({network})),
+                    // TODO: improve this condition as we will have multiple point networks
+                    address: network === DEFAULT_NETWORK
+                        ? pointIdentity
+                        : getWalletAddress(({network})),
                     balance: balance
                 });
             }
