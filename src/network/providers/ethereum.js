@@ -30,7 +30,14 @@ function isRetryableError({message}) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-function createWeb3Instance({protocol, tls, blockchainUrl, privateKey}) {
+const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
+const networks = config.get('network.web3');
+const DEFAULT_NETWORK = config.get('network.default_network');
+
+function createWeb3Instance({protocol, network}) {
+    const blockchainUrl = networks[network][protocol === 'ws' ? 'ws_address' : 'http_address'];
+    const tls = networks[network].tls;
+    const privateKey = '0x' + getNetworkPrivateKey();
     const url = `${protocol}${tls ? 's' : ''}://${blockchainUrl}`;
     const provider = protocol === 'ws' ? new Web3.providers.WebsocketProvider(url) : url;
 
@@ -60,23 +67,17 @@ function createWeb3Instance({protocol, tls, blockchainUrl, privateKey}) {
 
 const abisByContractName = {};
 
-const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
-
-const networks = config.get('network.web3');
-
 // web3.js providers
 const providers = {
-    default: {
+    [DEFAULT_NETWORK]: {
         http: createWeb3Instance({
             protocol: 'http',
-            tls: networks.default.tls,
-            blockchainUrl: networks.default.http_address,
-            privateKey: '0x' + getNetworkPrivateKey()
+            network: DEFAULT_NETWORK
         })
     }
 };
 
-const getWeb3 = ({chain = 'default', protocol = 'http'} = {}) => {
+const getWeb3 = ({chain = DEFAULT_NETWORK, protocol = 'http'} = {}) => {
     if (
         !Object.keys(networks)
             .filter(key => networks[key].type === 'eth')
@@ -90,9 +91,7 @@ const getWeb3 = ({chain = 'default', protocol = 'http'} = {}) => {
     if (!providers[chain][protocol]) {
         providers[chain][protocol] = createWeb3Instance({
             protocol,
-            tls: networks[chain].tls,
-            blockchainUrl: networks[chain][protocol === 'ws' ? 'ws_address' : 'http_address'],
-            privateKey: '0x' + getNetworkPrivateKey()
+            network: chain
         });
     }
     return providers[chain][protocol];
@@ -101,7 +100,7 @@ const getWeb3 = ({chain = 'default', protocol = 'http'} = {}) => {
 // ethers providers
 const ethersProviders = {};
 
-const getEthers = chain => {
+const getEthers = (chain = DEFAULT_NETWORK) => {
     if (!networks[chain] || !networks[chain].http_address) {
         throw new Error(`No connection details for chain "${chain}".`);
     }

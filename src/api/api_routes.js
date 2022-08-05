@@ -40,6 +40,7 @@ module.exports = [
     ['POST', '/v1/api/contract/events', 'ContractController@events'],
     ['POST', '/v1/api/web2/open', 'Web2Controller@open'],
     ['POST', '/v1/api/blockchain', 'BlockchainController@request'],
+    ['GET', '/v1/api/blockchain/networks', 'BlockchainController@networks'],
     ['POST', '/v1/api/contract/encodeFunctionCall', 'ContractController@encodeFunctionCall'],
     ['POST', '/v1/api/contract/decodeParameters', 'ContractController@decodeParameters']
 ];

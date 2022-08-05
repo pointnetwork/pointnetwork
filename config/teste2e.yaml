@@ -8,7 +8,8 @@ storage:
   arweave_port: 1984
 network:
   web3:
-    default:
+    default_network: "ynet"
+    ynet:
       address: "127.0.0.1:7545"
 api:
   address: 0.0.0.0
