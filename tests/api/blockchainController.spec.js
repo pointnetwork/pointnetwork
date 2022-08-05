@@ -22,7 +22,7 @@ describe('API blockchain controller', () => {
                 to: '0xa2694005d321212F340c8422FAAcd1dfa5450A56',
                 data: '0x'
             }],
-            network: 'ynet'
+            network: 'xnet'
         };
 
         const res = await apiServer.inject({
@@ -53,7 +53,7 @@ describe('API blockchain controller', () => {
                 to: '0xa2694005d321212F340c8422FAAcd1dfa5450A56',
                 data: '0x'
             }],
-            network: 'ynet'
+            network: 'xnet'
         };
 
         const res = await apiServer.inject({

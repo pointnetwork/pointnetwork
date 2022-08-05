@@ -24,14 +24,6 @@ const timeout = (prom, time, exception) => {
     ]).finally(() => clearTimeout(timer));
 };
 
-const timeout = (prom, time, exception) => {
-    let timer;
-    return Promise.race([
-        prom,
-        new Promise((_r, rej) => timer = setTimeout(rej, time, exception))
-    ]).finally(() => clearTimeout(timer));
-};
-
 class WalletController extends PointSDKController {
     constructor(req, reply) {
         super(req);
