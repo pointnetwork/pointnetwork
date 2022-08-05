@@ -72,6 +72,7 @@ network:
       currency_name: "xPoint"
       currency_code: "xPOINT"
       tls: true
+      gas_price_wei: 1
       tokens: []
     ynet:
       type: "eth"
@@ -81,6 +82,7 @@ network:
       currency_name: "yPoint"
       currency_code: "yPOINT"
       tls: false
+      gas_price_wei: 1
       tokens: []
     rinkeby:
       type: "eth"
