@@ -71,7 +71,7 @@ describe('Wallet controller', () => {
         expect(res.statusCode).toEqual(200);
         expect(ethereum.getBalance).toHaveBeenCalledWith({
             address: expect.stringMatching(/^0x/),
-            network: 'ynet'
+            network: 'xnet'
         });
         expect(JSON.parse(res.payload)).toEqual({
             status: 200,

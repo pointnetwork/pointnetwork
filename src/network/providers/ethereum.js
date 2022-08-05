@@ -223,7 +223,7 @@ ethereum.web3send = async (method, optons = {}) => {
     while (true) {
         try {
             account = getWeb3().eth.defaultAccount;
-            gasPrice = await getWeb3().eth.getGasPrice();
+            gasPrice = await ethereum.getGasPrice();
             log.debug(
                 {gasLimit, gasPrice, account, method: method._method.name},
                 'Prepared to send tx to contract method'
@@ -928,7 +928,11 @@ ethereum.getTransactionsByAccount = async ({
 
 ethereum.getOwner = () => getWeb3().utils.toChecksumAddress(getNetworkAddress());
 
-ethereum.getGasPrice = async () => {
+ethereum.getGasPrice = async (network = 'xnet') => {
+    if (config.has(`network.web3.${network}.gas_price_wei`)) {
+        return Number(config.has(`network.web3.${network}.gas_price_wei`));
+    }
+
     const gasPrice = await getWeb3().eth.getGasPrice();
     return gasPrice;
 };
