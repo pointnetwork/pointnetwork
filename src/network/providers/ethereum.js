@@ -932,7 +932,7 @@ ethereum.getOwner = () => getWeb3().utils.toChecksumAddress(getNetworkAddress())
 
 ethereum.getGasPrice = async (network = 'xnet') => {
     if (config.has(`network.web3.${network}.gas_price_wei`)) {
-        return Number(config.has(`network.web3.${network}.gas_price_wei`));
+        return Number(config.get(`network.web3.${network}.gas_price_wei`));
     }
 
     const gasPrice = await getWeb3().eth.getGasPrice();
@@ -962,6 +962,11 @@ ethereum.toHex = n => getWeb3().utils.toHex(n);
 
 ethereum.send = ({method, params = [], id, network}) =>
     new Promise((resolve, reject) => {
+        if (params.length > 0 && config.has(`network.web3.${network}.gas_price_wei`)) {
+            const decimal = Number(config.get(`network.web3.${network}.gas_price_wei`));
+            params[0].gasPrice = `0x${decimal.toString(16)}`;
+        }
+
         getWeb3({chain: network}).currentProvider.send(
             {
                 id,
