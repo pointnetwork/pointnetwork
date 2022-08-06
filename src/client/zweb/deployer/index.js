@@ -561,6 +561,10 @@ class Deployer {
 
             if (identityIsRegistered) {
                 await this.ensureIsDeployer(identity, owner);
+            } else {
+                if (process.env.MODE === 'zappdev') {
+                    await this.registerNewIdentity(identity, owner);
+                }
             }
         } else {
             // If the target domain is not owned by the Point Wallet of the user, we can't
