@@ -12,18 +12,7 @@ alias point-visit="NODE_CONFIG_ENV=visitlocal MODE=zappdev npm run watch"
 alias point-dev-use-oracle="NODE_CONFIG_ENV=devlocal MODE=zappdev USE_ORACLE=true npm run watch"
 alias point-visit-use-oracle="NODE_CONFIG_ENV=visitlocal MODE=zappdev USE_ORACLE=true npm run watch"
 
-export POINT_PATH=$(realpath .)
-
-point-deploy(){
-    local CURRENT_PATH=$(realpath .)
-    if [[ "$CURRENT_PATH" == "$POINT_PATH" ]]; then
-        NODE_CONFIG_ENV=devlocal MODE=zappdev ./point deploy "$@"
-    else
-        cd $POINT_PATH
-        NODE_CONFIG_ENV=devlocal MODE=zappdev ./point deploy $CURRENT_PATH "$@"
-        cd $CURRENT_PATH
-    fi;
-}
+alias point-deploy="NODE_CONFIG_ENV=devlocal MODE=zappdev ./point deploy "
 
 alias point-dev-install="./scripts/create-local-env.sh"
 alias point-dev-start="./scripts/start-local.sh"
