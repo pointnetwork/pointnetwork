@@ -25,15 +25,15 @@ network:
       tls: false
       gas_price_wei: 610158337
       tokens: []
-    rinkeby:
-      type: "eth"
-      name: "Rinkeby"
-      http_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
-      ws_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
-      currency_name: "rinkebyEth"
-      currency_code: "rinkebyETH"
-      eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
-      tls: true
+    # rinkeby:
+    #   type: "eth"
+    #   name: "Rinkeby"
+    #   http_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
+    #   ws_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
+    #   currency_name: "rinkebyEth"
+    #   currency_code: "rinkebyETH"
+    #   eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
+    #   tls: true
 api:
   address: 127.0.0.1
   port: 24681
