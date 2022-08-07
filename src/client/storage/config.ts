@@ -9,6 +9,7 @@ export const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_inter
 export const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
 export const CHUNK_SIZE = Number(config.get('storage.chunk_size_bytes'));
 export const GATEWAY_URL: string = config.get('storage.arweave_gateway_url');
+export const USE_ARLOCAL = Boolean(config.get('storage.use_arlocal'));
 export const MODE: string = config.get('mode');
 export const HOST: string = config.get('storage.arweave_host');
 export const PORT = Number(config.get('storage.arweave_port'));
