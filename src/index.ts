@@ -143,10 +143,13 @@ if (program.attach) {
 // -------------------- Deployer --------------------- //
 
 if (program.deploy) {
-    const Deploy = require('./core/deploy');
-    const deploy = new Deploy();
-    deploy
-        .deploy(program.deploy, program.deploy_contracts, program.dev, program.force_deploy_proxy)
+    const deploy = require('./core/deploy');
+    deploy({
+        deploy_path: program.deploy,
+        deploy_contracts: program.deploy_contracts,
+        dev: program.dev,
+        force_deploy_proxy: program.force_deploy_proxy
+    })
         .then(exit)
         .catch(die);
     // @ts-ignore
