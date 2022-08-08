@@ -1,27 +1,35 @@
-const Console = require('../console');
 const path = require('path');
+const axios = require('axios');
+const config = require('config');
 const logger = require('./log');
 const log = logger.child({module: 'Deploy'});
 
-class Deploy {
-    async deploy(deploy_path, deploy_contracts = false, dev = false, force_deploy_proxy = false) {
-        const deploy_path_absolute = path.resolve(deploy_path);
-        if (!deploy_path_absolute) {
-            throw new Error('invalid path');
-        }
-        const start = Date.now();
-        const result = await new Console().cmd_api(
-            'deploy',
-            'deploy_path=' + deploy_path_absolute,
-            'deploy_contracts=' + (deploy_contracts ? 'true' : 'false'),
-            'dev=' + (dev ? 'true' : 'false'),
-            'force_deploy_proxy=' + (force_deploy_proxy ? 'true' : 'false')
-        );
-        if (result.error) {
-            log.error(result, 'Deploy error');
-        }
-        log.info(`Deploy time: ${Date.now() - start} ms`);
-    }
-}
+const PORT = Number(config.get('api.port'));
 
-module.exports = Deploy;
+const deploy = async ({
+    deploy_path,
+    deploy_contracts = false,
+    dev = false,
+    force_deploy_proxy = false
+}) => {
+    const deploy_path_absolute = path.resolve(deploy_path);
+    if (!deploy_path_absolute) {
+        throw new Error('invalid path');
+    }
+    const start = Date.now();
+    const result = await axios.post(
+        `http://localhost:${PORT}/v1/api/deploy`,
+        {
+            deploy_path,
+            deploy_contracts,
+            dev,
+            force_deploy_proxy
+        }
+    );
+    if (result.status !== 200) {
+        log.error(result, 'Deploy error');
+    }
+    log.info(`Deploy time: ${Date.now() - start} ms`);
+};
+
+module.exports = deploy;

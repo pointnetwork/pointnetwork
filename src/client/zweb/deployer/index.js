@@ -509,11 +509,20 @@ class Deployer {
         log.info({domain, data, service}, 'Successfully updated domain registry.');
     }
 
-    async deploy(deployPath, deployContracts = false, dev = false, force_deploy_proxy = false) {
-        // todo: error handling, as usual
-        const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
-        const deployConfigFile = fs.readFileSync(deployConfigFilePath, 'utf-8');
-        const deployConfig = JSON.parse(deployConfigFile);
+    async deploy({
+        deployPath,
+        deployContracts = false,
+        dev = false,
+        forceDeployProxy = false,
+        config
+    }) {
+        let deployConfig = config;
+        if (!deployConfig) {
+            // todo: error handling, as usual
+            const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
+            const deployConfigFile = await fs.promises.readFile(deployConfigFilePath, 'utf-8');
+            deployConfig = JSON.parse(deployConfigFile);
+        }
 
         if (
             !deployConfig.hasOwnProperty('version') ||
@@ -592,7 +601,7 @@ class Deployer {
                     deployPath,
                     version,
                     pointIdentity,
-                    force_deploy_proxy
+                    forceDeployProxy
                 );
             }
 
