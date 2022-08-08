@@ -46,7 +46,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
                 return {
                     icon: icons[file.type] || '&#10067; ',
                     fileId: file.id,
-                    link: `/_storage/${file.id}${file.type === FILE_TYPE.fileptr ? '.' + ext : ''}`,
+                    link: `/_storage/${file.id}`,
                     name: file.name,
                     size: file.size
                 };
