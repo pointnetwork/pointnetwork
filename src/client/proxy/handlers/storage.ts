@@ -36,8 +36,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
 
         if (isDirectoryJson(fileString)) {
             const filesInfo = JSON.parse(fileString).files.map((file: Record<string, string>) => {
-                const ext = file.name.split('.').slice(-1);
-
+                
                 const icons: Record<typeof FILE_TYPE, string> = {
                     [FILE_TYPE.fileptr]: '&#128196; ',
                     [FILE_TYPE.dirptr]: '&#128193; '
