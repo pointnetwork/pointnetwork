@@ -100,6 +100,7 @@ export default function Identities() {
                     next={fetchIdentities}
                     hasMore={hasMore}
                     loader={<Loading />}
+                    style={{height: 'inherit', overflow: 'inherit'}}
                 >
                     <table className="table table-bordered table-striped table-hover table-responsive table-primary">
                         <tbody>
