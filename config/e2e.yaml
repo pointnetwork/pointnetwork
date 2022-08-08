@@ -14,11 +14,12 @@ storage:
   arweave_protocol: http
   arweave_port: 1984
 network:
+  default_network: "ynet"
   web3:
-    default_network: "ynet"
     ynet:
       http_address: "blockchain_node:7545"
       ws_address: "blockchain_node:7545"
+      gas_price_wei: 1000000
 api:
   address: 0.0.0.0
 zproxy:
