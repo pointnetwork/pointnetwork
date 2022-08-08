@@ -237,7 +237,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                     renderedId = await getFileIdByPath(rootDirId, urlPath);
                 } catch (e) {
                     // Handling the case with SPA reloaded on non-index page:
-                    // we have to return index file, but without changin the URL
+                    // we have to return index file, but without changing the URL
                     // to make client-side routing work
                     if (Object.keys(routes).length === 1) {
                         const {templateFilename: indexTemplate} = getParamsAndTemplate(routes, '/');
@@ -255,6 +255,8 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                             ...queryParams,
                             ...((req.body as Record<string, unknown>) ?? {})
                         });
+                    } else {
+                        // NOTE: silently move on since Object.keys(routes).length !==1 
                     }
                 }
                 if (!renderedId) {
@@ -363,7 +365,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                     renderedId = await getFileIdByPath(rootDirId, urlPath);
                 } catch (e) {
                     // Handling the case with SPA reloaded on non-index page:
-                    // we have to return index file, but without changin the URL
+                    // we have to return index file, but without changing the URL
                     // to make client-side routing work
                     if (Object.keys(routes).length === 1) {
                         const {templateFilename: indexTemplate} = getParamsAndTemplate(routes, '/');
@@ -378,6 +380,8 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                             ...queryParams,
                             ...((req.body as Record<string, unknown>) ?? {})
                         });
+                    } else {
+                        // NOTE: silently move on since Object.keys(routes).length !==1 
                     }
                 }
 
