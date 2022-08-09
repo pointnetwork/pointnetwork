@@ -78,29 +78,47 @@ class WalletController extends PointSDKController {
             ...(await Promise.all(
                 Object.keys(networks).map(async network => {
                     let balance;
-                    try {
-                        balance = await timeout(
-                            getBalance({network, majorUnits: true}),
-                            5000,
-                            'Timeout'
-                        );
-                    } catch (e) {
-                        balance = e;
-                    }
-
                     let alias = '';
-                    switch (network) {
-                        case 'solana':
-                            const snsData = await getIdentity({targets: ['solana']});
-                            alias = snsData.identity ?? '';
-                            break;
-                        case 'rinkeby':
-                            const ensData = await getIdentity({targets: ['ethereum']});
-                            alias = ensData.identity ?? '';
-                            break;
-                        default:
-                            alias = '';
-                    }
+
+                    await Promise.all([
+                        (async () => {
+                            try {
+                                balance = await timeout(
+                                    getBalance({network, majorUnits: true}),
+                                    5000,
+                                    'Timeout'
+                                );
+                            } catch (e) {
+                                balance = 'Error';
+                            }
+                        })(),
+                        (async () => {
+                            try {
+                                switch (network) {
+                                    case 'solana':
+                                        const snsData = await timeout(
+                                            getIdentity({targets: ['solana']}),
+                                            5000,
+                                            'Timeout'
+                                        );
+                                        alias = snsData.identity ?? '';
+                                        break;
+                                    case 'rinkeby':
+                                        const ensData = await timeout(
+                                            getIdentity({targets: ['ethereum']}),
+                                            5000,
+                                            'Timeout'
+                                        );
+                                        alias = ensData.identity ?? '';
+                                        break;
+                                    default:
+                                        alias = '';
+                                }
+                            } catch (e) {
+                                alias = 'Error';
+                            }
+                        })()
+                    ]);
 
                     return {
                         network,
