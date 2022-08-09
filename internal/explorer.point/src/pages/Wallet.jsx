@@ -13,7 +13,10 @@ window.openTelegram = () => {
             Accept: 'application/json',
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ urlToOpen: 'https://t.me/pointnetwork' }),
+        body: JSON.stringify({
+            urlToOpen: 'https://t.me/pointnetwork',
+            _csrf: localStorage.getItem('csrf_token'),
+        }),
     });
 };
 
