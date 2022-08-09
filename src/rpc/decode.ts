@@ -72,6 +72,10 @@ export async function decodeTxInputData(
             : null;
 
     if (!target || !contract || !txInputData) {
+        log.error(
+            {target, contract, txInputDataLen: txInputData ? txInputData.length : 0},
+            'Missing information to decode tx input data'
+        );
         return null;
     }
 
