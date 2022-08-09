@@ -18,7 +18,10 @@ const BlockTime = ({ blockNumber }) => {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ blockNumber: blockNumber }),
+            body: JSON.stringify({
+                blockNumber: blockNumber,
+                _csrf: window.localStorage.getItem('csrf_token'),
+            }),
         });
         const responseJson = await response.json();
         setTimestamp(responseJson.data.timestamp);

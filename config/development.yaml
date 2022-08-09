@@ -3,6 +3,8 @@ db:
 log:
   sendLogs: false
   level: debug
+api:
+  csrf_enabled: true
 identity_contract_id: "85a823ad64f46e2cabf1c006778a7a921a1debc872351f6c6ebb665dcdccb488"
 network:
   default_network: "xnet"
