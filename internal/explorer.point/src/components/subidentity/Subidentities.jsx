@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Loading from '../Loading';
-import SubIdentitiesList from './SubIdentitiesList';
-import SubIdentityRegistration from './SubIdentityRegistration';
+import SubidentityList from './SubidentityList';
+import SubidentityRegistration from './SubidentityRegistration';
 
 export default function SubIdentities({ owner }) {
     const [subidentities, setSubidentities] = useState([]);
@@ -9,7 +9,6 @@ export default function SubIdentities({ owner }) {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        // TODO: fetch all sub-identities.
         async function fetchSubidentities() {
             setIsLoading(true);
             setError('');
@@ -17,7 +16,7 @@ export default function SubIdentities({ owner }) {
                 const resp = await window.point.contract.events({
                     host: '@',
                     contract: 'Identity',
-                    event: 'IdentityRegistered',
+                    event: 'SubidentityRegistered',
                     filter: {
                         identityOwner: owner,
                     },
@@ -29,11 +28,20 @@ export default function SubIdentities({ owner }) {
                 setIsLoading(false);
             }
         }
-        // fetchSubidentities();
+        fetchSubidentities();
     }, []);
 
-    const handleNewIdentity = (subidentity) => {
-        setSubidentities((prev) => [...prev, { handle: subidentity, owner }]);
+    const handleNewIdentity = (subidentity, parentIdentity) => {
+        setSubidentities((prev) => [
+            ...prev,
+            {
+                data: {
+                    subhandle: subidentity,
+                    handle: parentIdentity,
+                    identityOwner: owner,
+                },
+            },
+        ]);
     };
 
     return (
@@ -46,8 +54,8 @@ export default function SubIdentities({ owner }) {
                 <p className="red">Error: {error}</p>
             ) : (
                 <>
-                    <SubIdentitiesList subidentities={subidentities} />
-                    <SubIdentityRegistration
+                    <SubidentityList subidentities={subidentities} />
+                    <SubidentityRegistration
                         onNewIdentity={handleNewIdentity}
                     />
                 </>
