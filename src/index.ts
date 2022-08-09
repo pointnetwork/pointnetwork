@@ -159,10 +159,11 @@ if (program.deploy) {
 // -------------------- Uploader --------------------- //
 
 if (program.upload) {
-    const {init, uploadFile, uploadDir} = require('./client/storage');
+    const {uploadFile, uploadDir} = require('./client/storage');
+    const init = require('./client/storage/init');
 
     const main = async () => {
-        await init();
+        await init.default();
 
         const filePath = path.isAbsolute(program.upload!)
             ? program.upload!

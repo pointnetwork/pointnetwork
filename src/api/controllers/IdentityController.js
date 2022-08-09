@@ -345,7 +345,7 @@ class IdentityController extends PointSDKController {
             'Registering a new subidentity'
         );
 
-        await blockchain.registerSubIdentity(
+        await ethereum.registerSubIdentity(
             subidentity,
             parentIdentity,
             owner,
@@ -406,6 +406,23 @@ class IdentityController extends PointSDKController {
             const status = 500;
             this.rep.status(status);
             return this._status(status)._response({errorMsg: err.message});
+        }
+    }
+
+    async ikvPut() {
+        const {
+            identity,
+            key,
+            value,
+            version = 'latest'
+        } = this.req.body;
+
+        try {
+            await ethereum.putKeyValue(identity, key, value, version);
+            this.rep.status(200).send('Success');
+        } catch (e) {
+            log.error('IKV Put error', e);
+            this.rep.status(500).send('Internal server error');
         }
     }
 }
