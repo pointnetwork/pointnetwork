@@ -112,8 +112,8 @@ export default function Wallet() {
 
     const fetchWallets = async () => {
         const controller = new AbortController();
-        // 20 second timeout:
-        setTimeout(() => controller.abort(), 20000);
+        // 30 second timeout:
+        setTimeout(() => controller.abort(), 30_000);
 
         const response = await fetch('/v1/api/wallet/getWalletInfo', {
             signal: controller.signal,
