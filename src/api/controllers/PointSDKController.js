@@ -2,29 +2,26 @@ import config from 'config';
 import csrfTokens from '../../client/zweb/renderer/csrfTokens';
 
 class PointSDKController {
-    constructor(req, web2 = false) {
+    constructor(req) {
         this.status = 200;
 
         const host = req.headers.host;
         const method = req.method.toUpperCase();
 
         if (method === 'POST' && config.get('api.csrf_enabled')) {
-            const csrfToken = req.body.csrfToken;
-            if (web2) {
-                if (req.body.host) {
-                    this.csrfTokenGuard(req.body.host, csrfToken);
-                }
-            } else {
-                this.csrfTokenGuard(host, csrfToken);
-            }
-            
+            const csrfToken = req.body._csrf;
+            this.csrfTokenGuard(host, csrfToken);
         }
     }
 
     csrfTokenGuard(host, submittedToken) {
-        if (!csrfTokens[host]) throw new Error('No csrf token generated for this host');
+        // TODO: we are not generating CSRF token for any other host. Are we going to?
+        if (host === 'point' && !csrfTokens[host]) {
+            throw new Error('No csrf token generated for this host');
+        }
         const real_token = csrfTokens[host];
         if (real_token !== submittedToken) {
+            // TODO: it returns 500 instead of 403
             throw new Error('Invalid csrf token submitted');
         }
     }
