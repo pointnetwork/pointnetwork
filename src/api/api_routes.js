@@ -17,6 +17,7 @@ module.exports = [
     ['POST', '/v1/api/identity/register', 'IdentityController@registerIdentity'],
     ['POST', '/v1/api/identity/sub/register', 'IdentityController@registerSubIdentity'],
     ['GET', '/v1/api/identity/resolve/:domain', 'IdentityController@resolveDomain'],
+    ['POST', '/v1/api/identity/ikvPut', 'IdentityController@ikvPut'],
     ['GET', '/v1/api/status/ping', 'PingController@ping'],
     ['GET', '/v1/api/status/meta', 'StatusController@meta'],
     ['POST', '/v1/api/deploy', 'DeployController@deploy'],
