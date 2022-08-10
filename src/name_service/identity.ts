@@ -1,21 +1,8 @@
 import {getNetworkPublicKey, getNetworkAddress, getSolanaKeyPair} from '../wallet/keystore';
 import solana from '../network/providers/solana';
 import ethereum from '../network/providers/ethereum';
-
-type IdentityData = {
-    identity: string | null;
-    address: string;
-    publicKey: string;
-    network: 'point' | 'solana' | 'ethereum';
-};
-
-type IdentityParams = {
-    solAddress?: string;
-    ethAddress?: string;
-    targets?: string[];
-    solNetwork?: string;
-    ethNetwork?: string;
-};
+import {IdentityData, IdentityParams} from './types';
+import {identityCache} from './identity-cache';
 
 const defaultParams: IdentityParams = {
     solAddress: '',
@@ -53,6 +40,14 @@ export async function getIdentity({
         // Check for `.point` identity.
         const pointPublicKey = getNetworkPublicKey();
         const pointAddress = ethAddress || getNetworkAddress();
+
+        // Look in cache.
+        const cacheKey = `point:${pointAddress}`;
+        const identity = identityCache.get(cacheKey);
+        if (identity) {
+            return identity;
+        }
+
         try {
             const pointIdentity = await ethereum.identityByOwner(pointAddress);
             if (
@@ -60,12 +55,15 @@ export async function getIdentity({
                 pointIdentity.replace('0x', '').toLowerCase() !==
                     pointAddress.replace('0x', '').toLowerCase()
             ) {
-                return {
+                const identity: IdentityData = {
                     identity: pointIdentity,
                     address: pointAddress,
                     publicKey: pointPublicKey,
                     network: 'point'
                 };
+
+                identityCache.add(cacheKey, identity);
+                return identity;
             }
         } catch {
             return {
@@ -83,14 +81,31 @@ export async function getIdentity({
             ? solana.toPublicKey(solAddress)
             : getSolanaKeyPair().publicKey;
 
+        // Look in cache.
+        const cacheKey = `sol:${solanaPublicKey.toString()}`;
+        const identity = identityCache.get(cacheKey);
+        if (identity) {
+            return identity;
+        }
+
         const solDomain = await solana.getDomain(solanaPublicKey, solNetwork);
         if (solDomain) {
-            return {
+            const identity: IdentityData = {
                 identity: solDomain,
                 address: solanaPublicKey.toString(),
                 publicKey: solanaPublicKey.toString(),
                 network: 'solana'
             };
+
+            identityCache.add(cacheKey, identity);
+            return identity;
+        } else {
+            identityCache.add(cacheKey, {
+                identity: null,
+                address: solanaPublicKey.toString(),
+                publicKey: solanaPublicKey.toString(),
+                network: 'solana'
+            });
         }
     }
 
@@ -98,14 +113,32 @@ export async function getIdentity({
         // Check for `.eth` identity.
         const ethereumPublicKey = getNetworkPublicKey();
         const ethereumAddress = ethAddress || getNetworkAddress();
+
+        // Look in cache.
+        const cacheKey = `eth:${ethereumAddress}`;
+        const identity = identityCache.get(cacheKey);
+        if (identity) {
+            return identity;
+        }
+
         const ethDomain = await ethereum.getDomain(ethereumAddress, ethNetwork);
         if (ethDomain) {
-            return {
+            const identity: IdentityData = {
                 identity: ethDomain,
                 address: ethereumAddress,
                 publicKey: ethereumPublicKey,
                 network: 'ethereum'
             };
+
+            identityCache.add(cacheKey, identity);
+            return identity;
+        } else {
+            identityCache.add(cacheKey, {
+                identity: null,
+                address: ethereumAddress,
+                publicKey: ethereumPublicKey,
+                network: 'ethereum'
+            });
         }
     }
 
