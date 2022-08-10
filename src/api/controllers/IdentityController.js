@@ -9,7 +9,7 @@ const axios = require('axios');
 const ethers = require('ethers');
 const {getReferralCode, isChineseTimezone} = require('../../util');
 const open = require('open');
-const csrfTokens = require('../../client/zweb/renderer/csrfTokens');
+const {default: csrfTokens} = require('../../client/zweb/renderer/csrfTokens');
 const {getIdentity} = require('../../name_service/identity');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
