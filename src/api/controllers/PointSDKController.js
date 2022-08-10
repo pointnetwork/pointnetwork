@@ -16,13 +16,15 @@ class PointSDKController {
 
     csrfTokenGuard(host, submittedToken) {
         // TODO: we are not generating CSRF token for any other host. Are we going to?
-        if (host === 'point' && !csrfTokens[host]) {
-            throw new Error('No csrf token generated for this host');
-        }
-        const real_token = csrfTokens[host];
-        if (real_token !== submittedToken) {
-            // TODO: it returns 500 instead of 403
-            throw new Error('Invalid csrf token submitted');
+        if (host === 'point') {
+            if (!csrfTokens[host]) {
+                throw new Error('No csrf token generated for this host');
+            }
+            const real_token = csrfTokens[host];
+            if (real_token !== submittedToken) {
+                // TODO: it returns 500 instead of 403
+                throw new Error('Invalid csrf token submitted');
+            }
         }
     }
 
