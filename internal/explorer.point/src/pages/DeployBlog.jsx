@@ -47,113 +47,152 @@ const IS_BLOG_CREATED_INTERFACE = {
 const DeployBlog = () => {
     const { walletIdentity } = useAppContext();
     const [subhandle, setSubhandle] = useState('');
+    const [loading, setLoading] = useState(null);
+    const [error, setError] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const deploy = async (subidentity) => {
-        // 1. deploy subidentity
-        await axios.post('/v1/api/identity/sub/register', {
-            subidentity,
-            parentIdentity: walletIdentity,
-            _csrf: window.localStorage.getItem('csrf_token'),
-        });
-        console.log(1);
-        // 2. call createBlog
-        const [account] = await window.ethereum.request({
-            method: 'eth_requestAccounts',
-        });
-        console.log('acc: ', account);
-        const createBlogRes = await axios.post(
-            '/v1/api/contract/encodeFunctionCall',
-            {
+        try {
+            setLoading('Registering subidentity...');
+            // 1. deploy subidentity
+            await axios.post('/v1/api/identity/sub/register', {
+                subidentity,
+                parentIdentity: walletIdentity,
+                _csrf: window.localStorage.getItem('csrf_token'),
+            });
+            setLoading('Creating blog contract...');
+            // 2. call createBlog
+            const [account] = await window.ethereum.request({
+                method: 'eth_requestAccounts',
+            });
+            const {
+                data: { data: createBlogData },
+            } = await axios.post('/v1/api/contract/encodeFunctionCall', {
                 jsonInterface: CREATE_BLOG_INTERFACE,
                 params: [account],
                 _csrf: window.localStorage.getItem('csrf_token'),
-            },
-        );
-        const { data: createBlogData } = createBlogRes.data;
-        console.log(2, createBlogData);
-        await window.ethereum.request({
-            method: 'eth_sendTransaction',
-            params: [
-                {
-                    from: account,
-                    to: BLOG_FACTORY_ADDRESS,
-                    data: createBlogData,
-                },
-            ],
-        });
-        console.log(3);
-        // 3. get blog contract
-        const getBlogRes = await axios.post(
-            '/v1/api/contract/encodeFunctionCall',
-            {
+            });
+            await window.ethereum.request({
+                method: 'eth_sendTransaction',
+                params: [
+                    {
+                        from: account,
+                        to: BLOG_FACTORY_ADDRESS,
+                        data: createBlogData,
+                    },
+                ],
+            });
+            setLoading('Checking created blog contract...');
+            // 3. get blog contract
+            const {
+                data: { data: getBlogData },
+            } = await axios.post('/v1/api/contract/encodeFunctionCall', {
                 jsonInterface: IS_BLOG_CREATED_INTERFACE,
                 params: [account],
                 _csrf: window.localStorage.getItem('csrf_token'),
-            },
-        );
-        const { data: getBlogData } = getBlogRes.data;
-        const blogContractAddress = await window.ethereum.request({
-            method: 'eth_call',
-            params: [
-                {
-                    from: account,
-                    to: BLOG_FACTORY_ADDRESS,
-                    data: getBlogData,
+            });
+            const blogContractAddressRes = await window.ethereum.request({
+                method: 'eth_call',
+                params: [
+                    {
+                        from: account,
+                        to: BLOG_FACTORY_ADDRESS,
+                        data: getBlogData,
+                    },
+                    'latest',
+                ],
+            });
+            const {
+                data: {
+                    data: { 0: blogContractAddress },
                 },
-                'latest',
-            ],
-        });
-        console.log(4, blogContractAddress); // TODO: strip zeros!
-        // 4. update IKV rootDir
-        await axios.post('/v1/api/identity/ikvPut', {
-            identity: `${subidentity}.${walletIdentity}`,
-            key: '::rootDir',
-            value: ROOT_DIR_ID,
-            _csrf: window.localStorage.getItem('csrf_token'),
-        });
-        console.log(5);
-        // 5. update IKV zdns
-        await axios.post('/v1/api/identity/ikvPut', {
-            identity: `${subidentity}.${walletIdentity}`,
-            key: 'zdns/routes',
-            value: ROUTES_FILE_ID,
-            _csrf: window.localStorage.getItem('csrf_token'),
-        });
-        console.log(6);
-        // 6. update IKV contract address
-        await axios.post('/v1/api/identity/ikvPut', {
-            identity: `${subidentity}.${walletIdentity}`,
-            key: 'zweb/contracts/address/Blog',
-            value: blogContractAddress,
-            _csrf: window.localStorage.getItem('csrf_token'),
-        });
-        console.log(7);
-        // 7. update IKV contract artifact
-        await axios.post('/v1/api/identity/ikvPut', {
-            identity: `${subidentity}.${walletIdentity}`,
-            key: 'zweb/contracts/abi/Blog',
-            value: ARTIFACT_ID,
-            _csrf: window.localStorage.getItem('csrf_token'),
-        });
-        console.log(8);
+            } = await axios.post('/v1/api/contract/decodeParameters', {
+                typesArray: ['address'],
+                hexString: blogContractAddressRes,
+                _csrf: window.localStorage.getItem('csrf_token'),
+            });
+            setLoading('Updating IKV...');
+            // 4. update IKV rootDir
+            await axios.post('/v1/api/identity/ikvPut', {
+                identity: `${subidentity}.${walletIdentity}`,
+                key: '::rootDir',
+                value: ROOT_DIR_ID,
+                _csrf: window.localStorage.getItem('csrf_token'),
+            });
+            // 5. update IKV zdns
+            await axios.post('/v1/api/identity/ikvPut', {
+                identity: `${subidentity}.${walletIdentity}`,
+                key: 'zdns/routes',
+                value: ROUTES_FILE_ID,
+                _csrf: window.localStorage.getItem('csrf_token'),
+            });
+            // 6. update IKV contract address
+            await axios.post('/v1/api/identity/ikvPut', {
+                identity: `${subidentity}.${walletIdentity}`,
+                key: 'zweb/contracts/address/Blog',
+                value: blogContractAddress,
+                _csrf: window.localStorage.getItem('csrf_token'),
+            });
+            // 7. update IKV contract artifact
+            await axios.post('/v1/api/identity/ikvPut', {
+                identity: `${subidentity}.${walletIdentity}`,
+                key: 'zweb/contracts/abi/Blog',
+                value: ARTIFACT_ID,
+                _csrf: window.localStorage.getItem('csrf_token'),
+            });
+            setLoading(null);
+            setSuccess(true);
+        } catch (e) {
+            setLoading(null);
+            setError(e.message);
+        }
     };
 
     return (
-        <div>
-            <input
-                type="text"
-                value={subhandle}
-                onChange={(e) => {
-                    setSubhandle(e.target.value);
-                }}
-            />
+        <div
+            style={{
+                marginTop: '100px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+            }}
+        >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input
+                    type="text"
+                    value={subhandle}
+                    onChange={(e) => {
+                        setSuccess(false);
+                        setSubhandle(e.target.value);
+                    }}
+                />
+                <p style={{ fontSize: '1.5rem', margin: '0' }}>
+                    .{walletIdentity}.point
+                </p>
+            </div>
             <button
+                style={{ marginTop: '20px' }}
                 onClick={() => {
                     deploy(subhandle);
                 }}
+                disabled={loading || success}
             >
-                Start!
+                {loading ? 'Processing' : 'Start'}
             </button>
+            <p>{loading}</p>
+            <p style={{ color: 'indianred' }}>{error}</p>
+            {success && (
+                <p>
+                    Success! Blog is available at:{' '}
+                    <a
+                        href={`https://${subhandle}.${walletIdentity}.point`}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        {`https://${subhandle}.${walletIdentity}.point`}
+                    </a>
+                </p>
+            )}
         </div>
     );
 };
