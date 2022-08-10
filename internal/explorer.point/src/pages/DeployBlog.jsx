@@ -66,6 +66,7 @@ const DeployBlog = () => {
             {
                 jsonInterface: CREATE_BLOG_INTERFACE,
                 params: [account],
+                _csrf: window.localStorage.getItem('csrf_token'),
             },
         );
         const { data: createBlogData } = createBlogRes.data;
@@ -87,6 +88,7 @@ const DeployBlog = () => {
             {
                 jsonInterface: IS_BLOG_CREATED_INTERFACE,
                 params: [account],
+                _csrf: window.localStorage.getItem('csrf_token'),
             },
         );
         const { data: getBlogData } = getBlogRes.data;
@@ -107,6 +109,7 @@ const DeployBlog = () => {
             identity: `${subidentity}.${walletIdentity}`,
             key: '::rootDir',
             value: ROOT_DIR_ID,
+            _csrf: window.localStorage.getItem('csrf_token'),
         });
         console.log(5);
         // 5. update IKV zdns
@@ -114,6 +117,7 @@ const DeployBlog = () => {
             identity: `${subidentity}.${walletIdentity}`,
             key: 'zdns/routes',
             value: ROUTES_FILE_ID,
+            _csrf: window.localStorage.getItem('csrf_token'),
         });
         console.log(6);
         // 6. update IKV contract address
@@ -121,6 +125,7 @@ const DeployBlog = () => {
             identity: `${subidentity}.${walletIdentity}`,
             key: 'zweb/contracts/address/Blog',
             value: blogContractAddress,
+            _csrf: window.localStorage.getItem('csrf_token'),
         });
         console.log(7);
         // 7. update IKV contract artifact
@@ -128,6 +133,7 @@ const DeployBlog = () => {
             identity: `${subidentity}.${walletIdentity}`,
             key: 'zweb/contracts/abi/Blog',
             value: ARTIFACT_ID,
+            _csrf: window.localStorage.getItem('csrf_token'),
         });
         console.log(8);
     };
