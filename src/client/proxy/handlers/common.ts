@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
-import {promises as fs} from 'fs';
+import {promises as fs, existsSync} from 'fs';
 import {parse} from 'query-string';
 import axios from 'axios';
 import {makeSurePathExists, readFileByPath} from '../../../util';
@@ -56,48 +56,23 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 __dirname,
                 '../../../../internal/explorer.point/public'
             );
-            const routesJsonPath = path.resolve(publicPath, '../routes.json');
-            const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
-
-            const {routeParams, templateFilename, rewritedPath} = getParamsAndTemplate(
-                routes,
-                urlPath
-            );
-
-            if (rewritedPath) {
-                urlPath = rewritedPath;
-            }
-
-            if (templateFilename) {
-                // This is a ZHTML file
-                const templateFileContents = await readFileByPath(
-                    publicPath,
-                    `${templateFilename}`,
-                    'utf-8'
-                );
-
-                const renderer = new Renderer({localDir: publicPath} as any);
-
-                res.header('Content-Type', 'text/html');
-                // TODO: sanitize
-                return renderer.render(templateFilename, templateFileContents, host, {
-                    ...routeParams,
-                    ...queryParams
-                });
-            } else {
-                // This is a static asset
-                const filePath = path.join(publicPath, urlPath);
-                try {
-                    await makeSurePathExists(filePath);
-                } catch (e) {
-                    res.status(404).send('Not Found');
-                }
-
+            // Now point explorer is SPA, so we should either return static asset, or index.zhtml
+            // First, check if it's a static file
+            const filePath = path.join(publicPath, fileName);
+            if (urlPath !== '/' && existsSync(filePath)) {
                 const file = await fs.readFile(filePath);
                 const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
 
                 res.header('content-type', contentType);
                 return file;
+            } else {
+                // If not, render index.zhtml
+                const file = await fs.readFile(path.join(publicPath, 'index.zhtml'), 'utf8');
+                const renderer = new Renderer({localDir: publicPath} as any);
+
+                res.header('Content-Type', 'text/html');
+                // TODO: sanitize
+                return renderer.render('index.zhtml', file, host, {});
             }
         } else if (host.endsWith('.z')) {
             res.header('Location', 'https://' + host.replace(/\.z/, '.point'));
@@ -237,7 +212,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                     renderedId = await getFileIdByPath(rootDirId, urlPath);
                 } catch (e) {
                     // Handling the case with SPA reloaded on non-index page:
-                    // we have to return index file, but without changin the URL
+                    // we have to return index file, but without changing the URL
                     // to make client-side routing work
                     if (Object.keys(routes).length === 1) {
                         const {templateFilename: indexTemplate} = getParamsAndTemplate(routes, '/');
@@ -255,6 +230,8 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                             ...queryParams,
                             ...((req.body as Record<string, unknown>) ?? {})
                         });
+                    } else {
+                        // NOTE: silently move on since Object.keys(routes).length !==1 
                     }
                 }
                 if (!renderedId) {
@@ -363,7 +340,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                     renderedId = await getFileIdByPath(rootDirId, urlPath);
                 } catch (e) {
                     // Handling the case with SPA reloaded on non-index page:
-                    // we have to return index file, but without changin the URL
+                    // we have to return index file, but without changing the URL
                     // to make client-side routing work
                     if (Object.keys(routes).length === 1) {
                         const {templateFilename: indexTemplate} = getParamsAndTemplate(routes, '/');
@@ -378,6 +355,8 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                             ...queryParams,
                             ...((req.body as Record<string, unknown>) ?? {})
                         });
+                    } else {
+                        // NOTE: silently move on since Object.keys(routes).length !==1 
                     }
                 }
 

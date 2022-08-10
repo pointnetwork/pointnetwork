@@ -41,7 +41,7 @@
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({urlToOpen: url, csrfToken: '{{csrfToken}}', host: '{{host}}'})
+            body: JSON.stringify({urlToOpen: url, _csrf: '{{csrfToken}}', host: '{{host}}'})
         });
     }
   </script>
