@@ -243,9 +243,8 @@ ethereum.web3send = async (method, optons = {}) => {
                     value: amountInWei
                 })
                 .on('error', (error, receipt) => {
-                    const {transactionHash, blockNumber, status} = receipt;
                     log.debug(
-                        {error, transactionHash, blockNumber, status, method: method._method.name},
+                        {error, receipt, method: method._method.name},
                         'error sending tx to contract method'
                     );
                 });
