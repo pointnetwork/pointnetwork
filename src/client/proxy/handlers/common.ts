@@ -8,6 +8,7 @@ import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import ZProxySocketController from '../../../api/sockets/ZProxySocketController';
 import {SocketStream} from 'fastify-websocket';
 import Renderer from '../../zweb/renderer';
+import csrfTokens from '../../zweb/renderer/csrfTokens';
 import logger from '../../../core/log';
 import blockchain from '../../../network/providers/ethereum';
 import {getContentTypeFromExt, getParamsAndTemplate} from '../proxyUtils';
@@ -44,9 +45,25 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 if (matches) {
                     refererHost = matches[1];
                 }
+
+                let csrfToken =
+                    queryParams?.csrfToken && typeof queryParams.csrfToken === 'string'
+                        ? queryParams.csrfToken
+                        : '';
+
+                // When the redirection comes from a dApp, it will not contain
+                // a CSRF token, so we generate one for the `WEB2LINK` page.
+                if (!csrfToken) {
+                    csrfToken = require('crypto')
+                        .randomBytes(64)
+                        .toString('hex');
+
+                    csrfTokens[host] = csrfToken;
+                }
+
                 return templateManager.render(Template.WEB2LINK, {
                     url: queryParams?.url,
-                    csrfToken: queryParams?.csrfToken,
+                    csrfToken,
                     host: refererHost
                 });
             }
@@ -231,7 +248,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                             ...((req.body as Record<string, unknown>) ?? {})
                         });
                     } else {
-                        // NOTE: silently move on since Object.keys(routes).length !==1 
+                        // NOTE: silently move on since Object.keys(routes).length !==1
                     }
                 }
                 if (!renderedId) {
@@ -356,7 +373,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                             ...((req.body as Record<string, unknown>) ?? {})
                         });
                     } else {
-                        // NOTE: silently move on since Object.keys(routes).length !==1 
+                        // NOTE: silently move on since Object.keys(routes).length !==1
                     }
                 }
 
