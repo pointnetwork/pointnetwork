@@ -115,7 +115,7 @@ class WalletController extends PointSDKController {
                                         alias = '';
                                 }
                             } catch (e) {
-                                alias = 'Error';
+                                alias = '';
                             }
                         })()
                     ]);
