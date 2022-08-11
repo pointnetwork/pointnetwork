@@ -14,3 +14,4 @@ export * from './getReferralCode';
 export * from './cookieString';
 export * from './calculateDirSize';
 export * from './cacheFactory';
+export * from './splitAndTakeLastPart';
