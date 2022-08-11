@@ -330,6 +330,7 @@ class Renderer {
 
             this.#connectExtendsTagToPointStorage(ExtTwig);
             this.#connectIncludeTagToPointStorage(ExtTwig);
+            this.#connectThrowTag(ExtTwig);
 
             for (const [name, fn] of Object.entries(this.#defineAvailableFunctions())) {
                 ExtTwig.exports.extendFunction(name, fn.bind(ExtTwig));
@@ -554,6 +555,43 @@ class Renderer {
                         }
 
                         return result;
+                    });
+            }
+        });
+    }
+
+    #connectThrowTag(Twig) {
+        Twig.exports.extendTag({
+            /**
+             *  Format: {% throw "Error message" %}
+             */
+            type: 'throw',
+            regex: /^throw\s+(.+?)$/,
+            next: [],
+            open: true,
+            compile(token) {
+                const {match} = token;
+                const expression = match[1].trim();
+
+                delete token.match;
+
+                token.stack = Twig.expression.compile.call(this, {
+                    type: Twig.expression.type.expression,
+                    value: expression
+                }).stack;
+
+                return token;
+            },
+            parse(token, context) {
+                const state = this;
+                let promise = null;
+
+                promise = Twig.Promise.resolve();
+
+                return promise
+                    .then(() => Twig.expression.parseAsync.call(state, token.stack, context))
+                    .then(errorMsg => {
+                        throw new Error(errorMsg);
                     });
             }
         });
