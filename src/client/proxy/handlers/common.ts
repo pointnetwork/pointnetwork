@@ -75,7 +75,9 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 const file = await fs.readFile(path.join(publicPath, 'index.zhtml'), 'utf8');
                 const renderer = new Renderer({localDir: publicPath} as any);
 
-                res.header('Content-Type', 'text/html');
+                const contentType = ext ? getContentTypeFromExt(ext) : 'text/html';
+                res.header('Content-Type', contentType);
+
                 // TODO: sanitize
                 return renderer.render('index.zhtml', file, host, {});
             }
@@ -158,10 +160,10 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             } else {
                 // This is a static asset
                 const filePath = path.join(publicPath, urlPath);
-                if (! existsSync(filePath)) {
+                if (!existsSync(filePath)) {
                     return res.status(404).send('Not Found');
                 }
-                if (! lstatSync(filePath).isFile()) {
+                if (!lstatSync(filePath).isFile()) {
                     return res.status(403).send('Directory listing not allowed');
                 }
 
@@ -370,7 +372,6 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
 
                         res.header('Content-Type', 'text/html');
                         // TODO: sanitize
-
                         return await renderer.render(
                             templateFileId,
                             templateFileContents,
