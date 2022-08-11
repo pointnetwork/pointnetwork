@@ -13,3 +13,4 @@ export * from './escapeString';
 export * from './getReferralCode';
 export * from './cookieString';
 export * from './calculateDirSize';
+export * from './splitAndTakeLastPart';
