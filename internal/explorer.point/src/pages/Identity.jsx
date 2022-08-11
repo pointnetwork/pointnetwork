@@ -29,10 +29,26 @@ const IkvEntry = (props) => {
     const saveChanges = async () => {
         setLoading(true);
         try {
+            //validate item.key
+            const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
+            const found = item.version.match(regex);
+            if(!found){
+                setLoading(false);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Version Number',
+                    text: 'Version should be in the format Major.minor.patch (ex: 1.3.5)',
+                });
+                return;
+            }
+
+            //increment patch of item.key
+            let newVersionParam = found.groups.major + '.' + found.groups.minor + '.' + (parseInt(found.groups.patch) + 1)
+            
             await window.point.contract.send({
                 contract: 'Identity',
                 method: 'ikvPut',
-                params: [handle, item.key, newValue, newVersion],
+                params: [handle, item.key, newValue, newVersionParam],
             });
             setAllowEdition(false);
             onUpdated();
@@ -65,14 +81,7 @@ const IkvEntry = (props) => {
                 )}
             </td>
             <td>
-                {editionAllowed ? (
-                    <input
-                        value={newVersion}
-                        onChange={(event) => setNewVersion(event.target.value)}
-                    />
-                ) : (
-                    item.version
-                )}
+                {item.version}
             </td>
             <td>
                 <BlockTime blockNumber={item.blockNumber} />
@@ -362,6 +371,17 @@ export default function Identity() {
 
     const addIkvEntry = async () => {
         setAddingNewIkv(true);
+        let regexp = new RegExp(/\d+\.\d+\.\d+/);
+        if(!regexp.test(ikvNewEntryVersion)){
+            setAddingNewIkv(false);
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Version Number',
+                text: 'Version should be in the format Major.minor.patch (ex: 1.3.5)',
+            });
+            return;
+        }
+
         try {
             await window.point.contract.send({
                 contract: 'Identity',

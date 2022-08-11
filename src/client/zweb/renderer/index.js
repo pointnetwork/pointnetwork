@@ -12,7 +12,7 @@ const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/providers/ethereum');
 const {readFileByPath} = require('../../../util');
 const keyValue = require('../../../network/keyvalue');
-const csrfTokens = require('./csrfTokens');
+const {default: csrfTokens} = require('./csrfTokens');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
