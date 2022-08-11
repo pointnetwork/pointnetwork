@@ -30,7 +30,24 @@ async function getWeb2MirrorContent() {
 
 export async function getMirrorWeb2Page(req: FastifyRequest) {
     const urlData = req.urlData();
+    const host = String(urlData.host);
     const queryParams = parse(urlData.query ?? '');
+
+    // Some hardcoded domains
+    const FULL_DOMAIN_REDIRECTS : Record<string, string> = {
+        'fonts.googleapis.com': 'gfonts.mirror.point',
+        'fonts.gstatic.com': 'gfontfiles.mirror.point'
+    };
+    if (host.toLowerCase() in FULL_DOMAIN_REDIRECTS) {
+        const redirectedHost = FULL_DOMAIN_REDIRECTS[ host.toLowerCase() ];
+        let url = req.raw.url ?? '';
+        if (host === 'fonts.googleapis.com') {
+            url = url.replace('/css', '/css.css');
+            url = url.replace('/css2', '/css2.css');
+        }
+        return 'https://' + redirectedHost + (!url.startsWith('/') ? '/' : '') + url;
+    }
+
     if (queryParams.mirror === 'false') {
         return;
     }
