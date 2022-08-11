@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
-import {promises as fs, existsSync} from 'fs';
+import {promises as fs, existsSync, lstatSync} from 'fs';
 import {parse} from 'query-string';
 import axios from 'axios';
-import {makeSurePathExists, readFileByPath} from '../../../util';
+import {readFileByPath} from '../../../util';
 import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import ZProxySocketController from '../../../api/sockets/ZProxySocketController';
 import {SocketStream} from 'fastify-websocket';
@@ -115,8 +115,8 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 rootDir = deployConfig.rootDir;
             }
 
-            const publicPath = path.resolve(zappDir, rootDir); if (!FS.existsSync(publicPath)) throw new Error('Public path ' + publicPath + ' doesnt exist.');
-            const routesJsonPath = path.resolve(zappDir, 'routes.json'); if (!FS.existsSync(routesJsonPath)) throw new Error('Routes file ' + routesJsonPath + ' doesnt exist.');
+            const publicPath = path.resolve(zappDir, rootDir); if (!existsSync(publicPath)) throw new Error('Public path ' + publicPath + ' doesnt exist.');
+            const routesJsonPath = path.resolve(zappDir, 'routes.json'); if (!existsSync(routesJsonPath)) throw new Error('Routes file ' + routesJsonPath + ' doesnt exist.');
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
             const {routeParams, templateFilename, rewritedPath} = getParamsAndTemplate(
@@ -150,10 +150,10 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             } else {
                 // This is a static asset
                 const filePath = path.join(publicPath, urlPath);
-                if (! FS.existsSync(filePath)) {
+                if (! existsSync(filePath)) {
                     return res.status(404).send('Not Found');
                 }
-                if (! FS.lstatSync(filePath).isFile()) {
+                if (! lstatSync(filePath).isFile()) {
                     return res.status(403).send('Directory listing not allowed');
                 }
 
@@ -241,7 +241,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                             ...((req.body as Record<string, unknown>) ?? {})
                         });
                     } else {
-                        // NOTE: silently move on since Object.keys(routes).length !==1 
+                        // NOTE: silently move on since Object.keys(routes).length !==1
                     }
                 }
                 if (!renderedId) {
@@ -372,7 +372,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                                 ...((req.body as Record<string, unknown>) ?? {})
                             });
                     } else {
-                        // NOTE: silently move on since Object.keys(routes).length !==1 
+                        // NOTE: silently move on since Object.keys(routes).length !==1
                     }
                 }
 
