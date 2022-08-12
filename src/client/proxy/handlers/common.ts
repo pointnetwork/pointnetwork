@@ -81,24 +81,6 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
         } else if (host.endsWith('.local') || (config.get('mode') === 'zappdev' && host.endsWith('.point'))) {
             // First try route file (and check if this domain even exists)
             const routesId = await blockchain.getZRecord(host, versionRequested);
-            if (!routesId && !host.endsWith('.local')) {
-                throw new HttpNotFoundError('Domain not found (Route file not specified for this domain)');
-            }
-
-            // Point Home
-            const publicPath = path.resolve(__dirname, '../../../../internal/explorer.point/public');
-
-            return await fulfillRequest({
-                req, res,
-                isLocal: true,
-                routes: {'/': 'index.zhtml', 'index.zhtml': 'index.zhtml'},
-                path: urlPath,
-                localRootDirPath: publicPath
-            });
-
-        } else if (host.endsWith('.local') || (config.get('mode') === 'zappdev' && host.endsWith('.point'))) {
-            // First try route file (and check if this domain even exists)
-            const routesId = await blockchain.getZRecord(host, versionRequested);
             if (!routesId && !host.endsWith('.local')) throw new HttpNotFoundError('Domain not found (Route file not specified for this domain)');
 
             const zappName = host.endsWith('dev') ? `${host.split('dev')[0]}.point` : host;
