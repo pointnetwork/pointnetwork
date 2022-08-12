@@ -59,8 +59,8 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
         } catch (e) {
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: 'Something went wrong',
+                title: 'Something went wrong',
+                text: 'Error: ' + e.message,
             });
         }
         setProcessing(false);
