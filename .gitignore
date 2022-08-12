@@ -4,6 +4,7 @@ _local/
 .DS_Store
 resources/demo/config.test4.json
 resources/liveprofile
+internal/explorer.point/public/
 .next/
 debug
 sessions/
@@ -13,7 +14,6 @@ bin/
 .parcel-cache/
 dist
 .vscode
-
 
 key.json
 arweave.json
