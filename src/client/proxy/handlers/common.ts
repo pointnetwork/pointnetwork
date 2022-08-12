@@ -17,7 +17,7 @@ import config from 'config';
 import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
 import {parseDomainRegistry} from '../../../name_service/registry';
-import {HttpNotFoundError} from '../../../core/exceptions';
+import {HttpForbiddenError, HttpNotFoundError} from '../../../core/exceptions';
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');
 const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
@@ -71,7 +71,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             return await fulfillRequest({
                 req, res,
                 isLocal: true,
-                routes: {'/': 'index.zhtml', 'index.zhtml': 'index.zhtml'},
+                routes: {'/': 'index.zhtml'},
                 path: urlPath,
                 localRootDirPath: publicPath
             });
@@ -197,97 +197,112 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
         }
 
     } catch (e) {
-        const status = (e.name === 'HttpNotFoundError') ? 404 : 500;
-        const errorTypeText = (e.name === 'HttpNotFoundError') ? 'Not Found' : 'Backend Error';
-        log.error({stack: e.stack, errorMessage: e.message}, 'Proxy error: ' + errorTypeText);
-        return res.status(status).send(errorTypeText + ': ' + JSON.stringify(e.message).replace(/^"+|"+$/g, ''));
+        const status = e.httpStatusCode || 500;
+        log.error({stack: e.stack, errorMessage: e.message}, 'Error from Renderer');
+        return res.status(status).send('Error from Renderer: ' + JSON.stringify(e.message).replace(/^"+|"+$/g, ''));
     }
 };
 
-const fulfillRequest = async(cfg: RequestFulfillmentConfig) => {
+const tryFulfillZhtmlRequest = async(cfg: RequestFulfillmentConfig, templateFilename: string, routeParams: Record<string, string> | null, host: string) => {
     const {req, res} = cfg;
+    const {queryParams, ext} = await parseRequestForProxy(req);
 
-    let {host, queryParams, ext} = await parseRequestForProxy(req);
+    // This is a ZHTML file
+    let templateFileContents, templateId;
+    if (cfg.isLocal) {
+        // Local
+        if (!cfg.localRootDirPath) throw new Error('localRootDirPath cannot be empty');
+
+        templateId = templateFilename;
+
+        templateFileContents = await readFileByPath(
+            cfg.localRootDirPath,
+            `${templateFilename}`,
+            'utf-8'
+        );
+    } else {
+        // Remote
+        templateId = await getFileIdByPath(cfg.remoteRootDirId, templateFilename);
+        if (!templateId) throw new HttpNotFoundError(`Cannot getFileIdByPath: ${templateFilename}`);
+
+        templateFileContents = await getFile(templateId);
+    }
+
+    let renderer;
+    if (cfg.isLocal) {
+        renderer = new Renderer({localDir: cfg.localRootDirPath} as any);
+    } else {
+        renderer = new Renderer({rootDirId: cfg.remoteRootDirId} as any);
+    }
+
+    const contentType = ext ? getContentTypeFromExt(ext) : 'text/html';
+    res.header('Content-Type', contentType);
+
+    // TODO: sanitize
+    return await renderer.render(templateId, templateFileContents, host, {
+        ...routeParams,
+        ...queryParams,
+        ...((req.body as Record<string, unknown>) ?? {})
+    });
+};
+
+const tryFulfillStaticRequest = async(cfg: RequestFulfillmentConfig, urlPath: string) => {
+    const {req, res} = cfg;
+    const {ext} = await parseRequestForProxy(req);
+
+    let file;
+    if (cfg.isLocal) {
+        // This is a static asset
+        if (!cfg.localRootDirPath) throw new Error('localRootDirPath cannot be empty');
+
+        const filePath = path.join(cfg.localRootDirPath, urlPath);
+        if (! existsSync(filePath)) throw new HttpNotFoundError('Not Found');
+        if (! lstatSync(filePath).isFile()) throw new HttpForbiddenError('Directory listing not allowed');
+
+        file = await fs.readFile(filePath);
+
+    } else {
+        const fileId = await getFileIdByPath(cfg.remoteRootDirId, urlPath);
+        if (!fileId) throw new HttpNotFoundError('File not found by this path');
+
+        file = await getFile(fileId, null);
+    }
+
+    const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
+    res.header('Content-Type', contentType);
+
+    return file;
+};
+
+const fulfillRequest = async(cfg: RequestFulfillmentConfig) => {
+    const {req} = cfg;
+
+    let {host} = await parseRequestForProxy(req);
     if (cfg.rewriteHost) host = cfg.rewriteHost;
 
-    // Download info about root dir
     let {routeParams, templateFilename, possiblyRewrittenUrlPath: urlPath} = getParamsAndTemplate(
         cfg.routes,
         cfg.path
     );
 
-    // TODO: Undocumented!
-    // Handling the case with SPA reloaded on non-index page:
-    // we have to return index file, but without changing the URL
-    // to make client-side routing work
-    if (Object.keys(cfg.routes).length === 1) {
-        ({templateFilename} = getParamsAndTemplate(cfg.routes, '/'));
-    } else {
-        // NOTE: silently move on since Object.keys(routes).length !==1
-    }
-
     if (templateFilename) {
-        // This is a ZHTML file
-        let templateFileContents, templateId;
-        if (cfg.isLocal) {
-            // Local
-            if (!cfg.localRootDirPath) throw new Error('localRootDirPath cannot be empty');
-
-            templateId = templateFilename;
-
-            templateFileContents = await readFileByPath(
-                cfg.localRootDirPath,
-                `${templateFilename}`,
-                'utf-8'
-            );
-        } else {
-            // Remote
-            templateId = await getFileIdByPath(cfg.remoteRootDirId, templateFilename);
-            if (!templateId) throw new HttpNotFoundError(`Cannot getFileIdByPath: ${templateFilename}`);
-
-            templateFileContents = await getFile(templateId);
-        }
-
-        let renderer;
-        if (cfg.isLocal) {
-            renderer = new Renderer({localDir: cfg.localRootDirPath} as any);
-        } else {
-            renderer = new Renderer({rootDirId: cfg.remoteRootDirId} as any);
-        }
-
-        const contentType = ext ? getContentTypeFromExt(ext) : 'text/html';
-        res.header('Content-Type', contentType);
-
-        // TODO: sanitize
-        return await renderer.render(templateId, templateFileContents, host, {
-            ...routeParams,
-            ...queryParams,
-            ...((req.body as Record<string, unknown>) ?? {})
-        });
+        return await tryFulfillZhtmlRequest(cfg, templateFilename, routeParams, host);
     } else {
-        // This is a static asset
-        let file;
-        if (cfg.isLocal) {
-            // This is a static asset
-            if (!cfg.localRootDirPath) throw new Error('localRootDirPath cannot be empty');
-
-            const filePath = path.join(cfg.localRootDirPath, urlPath);
-            if (! existsSync(filePath)) return res.status(404).send('Not Found');
-            if (! lstatSync(filePath).isFile()) return res.status(403).send('Directory listing not allowed');
-
-            file = await fs.readFile(filePath);
-
-        } else {
-            const fileId = await getFileIdByPath(cfg.remoteRootDirId, urlPath);
-            if (!fileId) throw new HttpNotFoundError('File not found by this path');
-
-            file = await getFile(fileId, null);
+        // This is a static asset, no routes matched
+        try {
+            return await tryFulfillStaticRequest(cfg, urlPath);
+        } catch (e) {
+            // TODO: Undocumented!
+            // Handling the case with SPA reloaded on non-index page:
+            // we have to return index file, but without changing the URL
+            // to make client-side routing work
+            if (e instanceof HttpNotFoundError && Object.keys(cfg.routes).length === 1) {
+                ({templateFilename} = getParamsAndTemplate(cfg.routes, '/'));
+                return await tryFulfillZhtmlRequest(cfg, templateFilename!, routeParams, host);
+            } else {
+                throw e;
+            }
         }
-
-        const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
-        res.header('Content-Type', contentType);
-
-        return file;
     }
 };
 
