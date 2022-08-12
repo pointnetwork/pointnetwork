@@ -145,9 +145,7 @@ export default function Home() {
                     onClick={() =>
                         window.open(
                             'https://point/web2redirect?url=' +
-                                encodeURI('https://bounty.pointnetwork.io/') +
-                                '&csrfToken=' +
-                                window.localStorage.getItem('csrf_token'),
+                                encodeURI('https://bounty.pointnetwork.io/'),
                         )
                     }
                 >
