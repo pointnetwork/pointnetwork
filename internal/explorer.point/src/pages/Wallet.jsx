@@ -33,7 +33,7 @@ const WalletRow = ({
             </td>
             <td className="mono">{wallet.alias || wallet.address}</td>
             <td style={{ textAlign: 'right' }}>
-                {wallet.balance === 'Timeout'
+                {isNaN(Number(wallet.balance))
                     ? wallet.balance
                     : wallet.balance.toFixed(8)}{' '}
                 {wallet.currency_code}

@@ -17,6 +17,8 @@ import config from 'config';
 import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
 import {parseDomainRegistry} from '../../../name_service/registry';
+import csrfTokens from '../../zweb/renderer/csrfTokens';
+import {randomBytes} from 'crypto';
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');
 const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
@@ -44,9 +46,12 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 if (matches) {
                     refererHost = matches[1];
                 }
+                if (!csrfTokens.point) {
+                    csrfTokens.point = randomBytes(64).toString('hex');
+                }
                 return templateManager.render(Template.WEB2LINK, {
                     url: queryParams?.url,
-                    csrfToken: queryParams?.csrfToken,
+                    csrfToken: csrfTokens.point,
                     host: refererHost
                 });
             }
