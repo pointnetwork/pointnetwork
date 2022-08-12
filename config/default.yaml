@@ -62,11 +62,21 @@ wallet:
   keystore_path: ~/.point/keystore
 network:
   contracts_path: contracts
-  default_network: "xnet"
+  default_network: "xnetNeptune"
   web3:
-    xnet:
+    xnetNeptune: 
       type: "eth"
-      name: "Xnet"
+      name: "xnetNeptune"
+      http_address: "xnet-neptune-1.point.space:8545"
+      ws_address: "xnet-neptune-1.point.space:8545/ws"
+      currency_name: "tEVMOS"
+      currency_code: "tEVMOS"
+      tls: true
+      gas_price_wei: 7
+      tokens: []
+    xnetPluto:
+      type: "eth"
+      name: "xnetPluto"
       http_address: "xnet-pluto-1.point.space"
       ws_address: "xnet-pluto-1.point.space/ws"
       currency_name: "xPoint"

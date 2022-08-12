@@ -930,7 +930,7 @@ ethereum.getTransactionsByAccount = async ({
 
 ethereum.getOwner = () => getWeb3().utils.toChecksumAddress(getNetworkAddress());
 
-ethereum.getGasPrice = async (network = 'xnet') => {
+ethereum.getGasPrice = async (network = 'xnetNeptune') => {
     if (config.has(`network.web3.${network}.gas_price_wei`)) {
         return Number(config.get(`network.web3.${network}.gas_price_wei`));
     }
