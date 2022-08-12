@@ -303,7 +303,7 @@ class IdentityController extends PointSDKController {
                 return this._response({success: true});
             } catch (error) {
                 log.error(error);
-                return this._response({success: false});
+                return this._response({success: false, reason: error.message});
             }
         }
 
@@ -324,7 +324,7 @@ class IdentityController extends PointSDKController {
                 return this._response({success: true});
             } catch (error) {
                 log.error(error);
-                return this._response({success: false});
+                return this._response({success: false, reason: error.message});
             }
         }
 
