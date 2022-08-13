@@ -71,7 +71,7 @@ network:
       ws_address: "xnet-neptune-1.point.space:8545/ws"
       currency_name: "tEVMOS"
       currency_code: "tEVMOS"
-      tls: true
+      tls: false
       gas_price_wei: 7
       tokens: []
     xnetPluto:
