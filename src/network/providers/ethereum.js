@@ -337,7 +337,30 @@ ethereum.getPastEvents = async (
         options.filter.identityOwner = ethereum.toChecksumAddress(options.filter.identityOwner);
     }
 
-    let events = await contract.getPastEvents(event, options);
+    const eventBlocksPageSize = 10000;
+    let latestBlock = 0;
+    if (options.toBlock === 'latest'){
+        latestBlock = await getWeb3().eth.getBlockNumber();
+    } else {
+        latestBlock = options.toBlock;
+    }
+
+    const ranges = [];
+    for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize){
+        ranges.push(
+            {
+                fromBlock: start, 
+                toBlock: (start + eventBlocksPageSize < latestBlock 
+                    ? start + eventBlocksPageSize 
+                    : latestBlock)
+            });
+    }
+    const eventsParts = await Promise.all(ranges.map(({fromBlock, toBlock}) => contract.getPastEvents(event, {...options, fromBlock, toBlock})));
+    let events = [];
+    for (const evPart of eventsParts){
+        events = events.concat(evPart);
+    }
+    //let events = await contract.getPastEvents(event, options);
 
     //filter non-indexed properties from return value for convenience
     if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
