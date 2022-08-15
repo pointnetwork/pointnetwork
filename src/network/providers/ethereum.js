@@ -339,26 +339,29 @@ ethereum.getPastEvents = async (
 
     const eventBlocksPageSize = 10000;
     let latestBlock = 0;
-    if (options.toBlock === 'latest'){
+    if(options.toBlock === 'latest'){
         latestBlock = await getWeb3().eth.getBlockNumber();
-    } else {
+    }else{
         latestBlock = options.toBlock;
     }
 
-    const ranges = [];
-    for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize){
+    let ranges = [];
+    for(let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize){
         ranges.push(
             {
                 fromBlock: start, 
                 toBlock: (start + eventBlocksPageSize < latestBlock 
-                    ? start + eventBlocksPageSize 
-                    : latestBlock)
+                                ? start + eventBlocksPageSize 
+                                : latestBlock )
             });
     }
-    const eventsParts = await Promise.all(ranges.map(({fromBlock, toBlock}) => contract.getPastEvents(event, {...options, fromBlock, toBlock})));
+    console.log('------------------');
+    ranges.map(({fromBlock, toBlock}) => console.log({...options, fromBlock, toBlock, event}));
+    console.log('------------------');
+    let eventsParts = await Promise.all(ranges.map(({fromBlock, toBlock}) => contract.getPastEvents(event, {...options, fromBlock, toBlock})))
     let events = [];
-    for (const evPart of eventsParts){
-        events = events.concat(evPart);
+    for (let evPart of eventsParts){
+        events = events.concat(evPart)
     }
     //let events = await contract.getPastEvents(event, options);
 
