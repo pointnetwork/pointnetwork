@@ -3,13 +3,8 @@ require('@nomiclabs/hardhat-ethers');
 require('@openzeppelin/hardhat-upgrades');
 require('./hardhat/tasks/explorer/explorer-set-index-md');
 
-<<<<<<< HEAD
 let productionPrivateKey = process.env.DEPLOYER_ACCOUNT;
-if (productionPrivateKey === undefined && process.env.MODE !== 'e2e' && process.env.MODE !== 'zappdev'){
-=======
-let ynetPrivateKey = process.env.DEPLOYER_ACCOUNT;
-if (!['zappdev', 'e2e', 'test'].includes(process.env.MODE) && ynetPrivateKey === undefined) {
->>>>>>> c558703f (Fix tests)
+if (!['zappdev', 'e2e', 'test'].includes(process.env.MODE) && productionPrivateKey === undefined) {
     const homedir = require('os').homedir();
     require('path').resolve(homedir, '.point', 'keystore', 'key.json');
     const wallet = require('ethereumjs-wallet').hdkey.fromMasterSeed(
@@ -17,18 +12,10 @@ if (!['zappdev', 'e2e', 'test'].includes(process.env.MODE) && ynetPrivateKey ===
             require('path').resolve(homedir, '.point', 'keystore', 'key.json')).phrase
         )
     ).getWallet();
-<<<<<<< HEAD
     productionPrivateKey = wallet.getPrivateKey().toString('hex');
-}
-
-if (process.env.MODE !== 'e2e' && process.env.MODE !== 'zappdev' && productionPrivateKey === undefined){
-    throw new Error('productionPrivateKey is not set.');
-=======
-    ynetPrivateKey = wallet.getPrivateKey().toString('hex');
-    if (!ynetPrivateKey) {
-        throw new Error('ynetPrivateKey is not set.');
+    if (!productionPrivateKey) {
+        throw new Error('productionPrivateKey is not set.');
     }
->>>>>>> c558703f (Fix tests)
 }
 
 const privateKey = process.env.DEPLOYER_ACCOUNT || '0x011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc8e';
