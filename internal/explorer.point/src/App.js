@@ -10,6 +10,7 @@ import Final from './pages/Final';
 import Wallet from './pages/Wallet';
 import Zapps from './pages/Zapps';
 import Loading from './components/Loading';
+import DeployBlog from './pages/DeployBlog';
 
 const Main = () => {
     const { walletIdentity, walletAddr, isLoading } = useAppContext();
@@ -40,6 +41,9 @@ const Main = () => {
                             </Route>
                             <Route path="/myidentities">
                                 <MyIdentities owner={walletAddr} />
+                            </Route>
+                            <Route path="/deploy_blog">
+                                <DeployBlog />
                             </Route>
                         </Switch>
                     ) : (

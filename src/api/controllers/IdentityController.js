@@ -11,8 +11,24 @@ const {getReferralCode, isChineseTimezone} = require('../../util');
 const open = require('open');
 const {default: csrfTokens} = require('../../client/zweb/renderer/csrfTokens');
 const {getIdentity} = require('../../name_service/identity');
+const config = require('config');
+const Web3 = require('web3');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
+
+const IKV_PUT_INTERFACE = {
+    inputs:
+        [
+            {internalType:'string', name:'identity', type:'string'},
+            {internalType:'string', name:'key', type:'string'},
+            {internalType:'string', name:'value', type:'string'},
+            {internalType:'string', name:'version', type:'string'}
+        ],
+    name: 'ikvPut',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function'
+};
 
 async function registerBountyReferral(address, type) {
     const referralCode = await getReferralCode();
@@ -345,7 +361,7 @@ class IdentityController extends PointSDKController {
             'Registering a new subidentity'
         );
 
-        await blockchain.registerSubIdentity(
+        await ethereum.registerSubIdentity(
             subidentity,
             parentIdentity,
             owner,
@@ -406,6 +422,38 @@ class IdentityController extends PointSDKController {
             const status = 500;
             this.rep.status(status);
             return this._status(status)._response({errorMsg: err.message});
+        }
+    }
+
+    async ikvPut() {
+        const {
+            identity,
+            key,
+            value,
+            version = 'latest'
+        } = this.req.body;
+
+        try {
+            const web3 = new Web3();
+            const data = web3.eth.abi.encodeFunctionCall(
+                IKV_PUT_INTERFACE,
+                [identity, key, value, version]
+            );
+            await ethereum.send({
+                method: 'eth_sendTransaction',
+                params:[{
+                    from: getNetworkAddress(),
+                    to: config.get('network.identity_contract_address'),
+                    data
+                }],
+                id: new Date().getTime(),
+                network: 'xnet'
+            });
+            this.rep.status(200).send('Success');
+        } catch (e) {
+            log.error('IKV Put error');
+            log.error(e);
+            this.rep.status(500).send('Internal server error');
         }
     }
 }
