@@ -96,9 +96,9 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
 
             const zappName = host.endsWith('dev') ? `${host.split('dev')[0]}.point` : host;
 
-            const zappsDir = String(config.get('zappsdir'));
+            const zappsDir: string = config.get('zappsdir');
             let zappDir: string;
-            if (zappsDir !== 'undefined' && zappsDir !== '' && zappsDir !== 'null') {
+            if (zappsDir) {
                 if (zappsDir.startsWith('/') || zappsDir.startsWith('~')) {
                     zappDir = path.resolve(zappsDir, zappName);
                 } else {
@@ -115,8 +115,16 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 rootDir = deployConfig.rootDir;
             }
 
-            const publicPath = path.resolve(zappDir, rootDir); if (!existsSync(publicPath)) throw new Error('Public path ' + publicPath + ' doesnt exist.');
-            const routesJsonPath = path.resolve(zappDir, 'routes.json'); if (!existsSync(routesJsonPath)) throw new Error('Routes file ' + routesJsonPath + ' doesnt exist.');
+            const publicPath = path.resolve(zappDir, rootDir);
+            if (!existsSync(publicPath)) {
+                throw new Error('Public path ' + publicPath + ' doesnt exist.');
+            }
+
+            const routesJsonPath = path.resolve(zappDir, 'routes.json');
+            if (!existsSync(routesJsonPath)) {
+                throw new Error('Routes file ' + routesJsonPath + ' doesnt exist.');
+            }
+
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
             const {routeParams, templateFilename, rewritedPath} = getParamsAndTemplate(
