@@ -1,7 +1,8 @@
 const Web3 = require('web3');
+const config = require('config');
 const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
-const blockchain = require('../../network/providers/ethereum');
+const ethereum = require('../../network/providers/ethereum');
 
 class ContractController extends PointSDKController {
     constructor(req, reply) {
@@ -18,14 +19,14 @@ class ContractController extends PointSDKController {
     async call() {
         const contract = this.payload.contract;
         const method = this.payload.method;
-        
+
         // Note params must be in a valid array format for parsing
         // since this is passed via url params the type will be string
         // params=["String Param", 999, true, "Another string"] etc...
         const params = this.payload.params ? this.payload.params : [];
         const host = this.payload.host === '@' ? '@' : this.host; //allow call identity contract
 
-        const data = await blockchain.callContract(host, contract, method, params);
+        const data = await ethereum.callContract(host, contract, method, params);
 
         return this._response(data);
     }
@@ -33,7 +34,7 @@ class ContractController extends PointSDKController {
     async load() {
         const contractName = this.req.params.contract;
 
-        const contract = await blockchain.loadWebsiteContract(this.req.identity, contractName);
+        const contract = await ethereum.loadWebsiteContract(this.req.identity, contractName);
 
         const data = {
             address: contract._address,
@@ -59,52 +60,105 @@ class ContractController extends PointSDKController {
         };
         const host = this.payload.host === '@' ? '@' : this.host; //allow call identity contract
 
-        const data = await blockchain.sendToContract(
-            host,
-            contract,
-            method,
-            params,
-            options
-        );
+        const data = await ethereum.sendToContract(host, contract, method, params, options);
 
         return this._response(data);
     }
 
-    async events(){
-        const host = this.payload.host;
-        const contractName = this.payload.contract;
-        const event = this.payload.event;
-        const filter = this.payload.filter ?? {};
-        const fromBlock = this.payload.fromBlock ?? 0;
-        const toBlock = this.payload.toBlock ?? 'latest';
-
-        let addTimestamp = false;
-        if (filter.hasOwnProperty('addTimestamp') && filter.addTimestamp) {
-            delete filter['addTimestamp'];
-            addTimestamp = true;
+    async normalizeEvents(events, addTimestamp) {
+        const eventData = [];
+        for (const ev of events) {
+            const {blockNumber, returnValues} = ev;
+            const timestamp = addTimestamp ? await ethereum.getBlockTimestamp(blockNumber) : null;
+            eventData.push({data: returnValues, blockNumber, timestamp});
         }
-        const options = {filter: filter, fromBlock: fromBlock, toBlock: toBlock};
-        const events = await blockchain.getPastEvents(
+        return eventData;
+    }
+
+    async handleEvents({host, contract, event, addTimestamp, filter, fromBlock, toBlock}) {
+        const options = {filter, fromBlock, toBlock};
+        const events = await ethereum.getPastEvents(
             host.replace('.point', ''),
-            contractName,
+            contract,
             event,
             options
         );
-        const eventData = [];
-        for (const ev of events) {  
-            //console.log(ev, ev.raw);
-            let timestamp = null;
-            if (addTimestamp){
-                timestamp = await blockchain.getBlockTimestamp(ev.blockNumber);
-            }
-            eventData.push({
-                data: ev.returnValues,
-                blockNumber: ev.blockNumber,
-                timestamp: timestamp
-            });
+
+        const eventData = await this.normalizeEvents(events, addTimestamp);
+        return eventData;
+    }
+
+    async handlePaginatedEvents({host, contract, event, addTimestamp, filter, cursor}) {
+        const PAGE_SIZE = config.get('network.event_block_page_size');
+
+        // `from: 0, to: 0` does not work, so, as an exception, if the query is `from: 1, to: N`,
+        // we'll change it to `from: 0, to: N`.
+        const from = cursor - PAGE_SIZE <= 1 ? 0 : cursor - PAGE_SIZE;
+
+        const events = await ethereum.getPaginatedPastEvents(
+            host.replace('.point', ''),
+            contract,
+            event,
+            {filter, fromBlock: from, toBlock: cursor}
+        );
+
+        const eventData = await this.normalizeEvents(events, addTimestamp);
+        const pagination = {
+            from,
+            to: cursor,
+            nextCursor: from > 0 ? from - 1 : null
+        };
+
+        return {events: eventData, pagination};
+    }
+
+    async events() {
+        const {host, contract, event} = this.payload;
+        const filter = this.payload.filter ?? {};
+
+        let addTimestamp = false;
+        if (filter.addTimestamp) {
+            delete filter.addTimestamp;
+            addTimestamp = true;
         }
 
-        return this._response(eventData);
+        if (filter.cursor) {
+            // Handle the request with pagination, don't collect all events at once,
+            // instead attach pagination information to the response and let clients make
+            // further requests.
+            const cursor =
+                filter.cursor === 'latest' ? await ethereum.getBlockNumber() : filter.cursor;
+
+            delete filter.cursor;
+
+            const data = await this.handlePaginatedEvents({
+                host,
+                contract,
+                event,
+                addTimestamp,
+                filter,
+                cursor
+            });
+
+            return this._response(data);
+        }
+
+        // Collect all events at once and send them all toghether in a single response.
+        // The requests to blockchain are themselves paginated, but there's a single
+        // HTTP request/response roundtrip.
+        const fromBlock = this.payload.fromBlock ?? 0;
+        const toBlock = this.payload.toBlock ?? 'latest';
+        const data = await this.handleEvents({
+            host,
+            contract,
+            event,
+            addTimestamp,
+            filter,
+            fromBlock,
+            toBlock
+        });
+
+        return this._response(data);
     }
 
     async encodeFunctionCall() {
