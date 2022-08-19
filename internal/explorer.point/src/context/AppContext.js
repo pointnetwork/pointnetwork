@@ -29,7 +29,7 @@ export const ProvideAppContext = ({ children }) => {
     const fetchData = async () => {
         try {
             let identityData = {};
-            if (window.point.identity.me) {
+            if (window.point && window.point.identity.me) {
                 const resp = await window.point.identity.me();
                 identityData = resp.data;
             } else {
