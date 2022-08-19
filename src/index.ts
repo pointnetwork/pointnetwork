@@ -17,6 +17,8 @@ if (RUNNING_PKG_MODE) {
     process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
 }
 
+process.env.HARDHAT_CONFIG = path.resolve(__dirname, '..', 'resources', 'hardhat.config.js');
+
 disclaimer.output();
 
 // Disable https://nextjs.org/telemetry
