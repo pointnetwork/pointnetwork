@@ -1,35 +1,15 @@
-import { useState, useEffect } from 'react';
 import Loading from '../Loading';
 import SubidentityList from './SubidentityList';
 import SubidentityRegistration from './SubidentityRegistration';
+import usePaginatedEvents from '../../hooks/usePaginatedEvents';
 
 export default function SubIdentities({ owner }) {
-    const [subidentities, setSubidentities] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        async function fetchSubidentities() {
-            setIsLoading(true);
-            setError('');
-            try {
-                const resp = await window.point.contract.events({
-                    host: '@',
-                    contract: 'Identity',
-                    event: 'SubidentityRegistered',
-                    filter: {
-                        identityOwner: owner,
-                    },
-                });
-                setSubidentities(resp.data || []);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-        fetchSubidentities();
-    }, []);
+    const { data, loading, error } = usePaginatedEvents({
+        host: '@',
+        contract: 'Identity',
+        event: 'SubidentityRegistered',
+        filter: { identityOwner: owner },
+    });
 
     const handleNewIdentity = (subidentity, parentIdentity) => {
         setSubidentities((prev) => [
@@ -46,15 +26,13 @@ export default function SubIdentities({ owner }) {
 
     return (
         <div>
-            <h2>Sub-Identities</h2>
+            <h2>Sub-Identities {loading && <Loading />}</h2>
             <hr />
-            {isLoading ? (
-                <Loading />
-            ) : error ? (
+            {error ? (
                 <p className="red">Error: {error}</p>
             ) : (
                 <>
-                    <SubidentityList subidentities={subidentities} />
+                    <SubidentityList subidentities={data} loading={loading} />
                     <SubidentityRegistration
                         onNewIdentity={handleNewIdentity}
                     />
