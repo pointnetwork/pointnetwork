@@ -323,6 +323,29 @@ ethereum.callContract = async (target, contractName, method, params, version = '
     }
 };
 
+ethereum.getPaginatedPastEvents = async (target, contractName, event, options) => {
+    const contract = await ethereum.loadWebsiteContract(target, contractName);
+
+    // If filter contains an address, convert it to checksum.
+    if (options.filter && options.filter.identityOwner) {
+        options.filter.identityOwner = ethereum.toChecksumAddress(options.filter.identityOwner);
+    }
+    if (options.filter && options.filter.identity) {
+        options.filter.identity = ethereum.toChecksumAddress(options.filter.identity);
+    }
+
+    let events = await contract.getPastEvents(event, options);
+
+    // filter non-indexed properties from return value for convenience
+    if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
+        for (const k in options.filter) {
+            events = events.filter(e => e.returnValues[k] === options.filter[k]);
+        }
+    }
+
+    return events;
+};
+
 ethereum.getPastEvents = async (
     target,
     contractName,
@@ -338,28 +361,33 @@ ethereum.getPastEvents = async (
 
     const eventBlocksPageSize = 10000;
     let latestBlock = 0;
-    if (options.toBlock === 'latest'){
+    if (options.toBlock === 'latest') {
         latestBlock = await getWeb3().eth.getBlockNumber();
     } else {
         latestBlock = options.toBlock;
     }
 
     const ranges = [];
-    for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize){
-        ranges.push(
-            {
-                fromBlock: start, 
-                toBlock: (start + eventBlocksPageSize < latestBlock 
-                    ? start + eventBlocksPageSize 
-                    : latestBlock)
-            });
+    for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize) {
+        ranges.push({
+            fromBlock: start,
+            toBlock:
+                start + eventBlocksPageSize < latestBlock
+                    ? start + eventBlocksPageSize
+                    : latestBlock
+        });
     }
-    const eventsParts = await Promise.all(ranges.map(({fromBlock, toBlock}) => contract.getPastEvents(event, {...options, fromBlock, toBlock})));
+
+    const eventsParts = await Promise.all(
+        ranges.map(({fromBlock, toBlock}) =>
+            contract.getPastEvents(event, {...options, fromBlock, toBlock})
+        )
+    );
+
     let events = [];
-    for (const evPart of eventsParts){
+    for (const evPart of eventsParts) {
         events = events.concat(evPart);
     }
-    //let events = await contract.getPastEvents(event, options);
 
     //filter non-indexed properties from return value for convenience
     if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
