@@ -1,7 +1,7 @@
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
 require('@openzeppelin/hardhat-upgrades');
-require('./hardhat/tasks/explorer/explorer-set-index-md');
+require('../hardhat/tasks/explorer/explorer-set-index-md');
 
 let productionPrivateKey = process.env.DEPLOYER_ACCOUNT;
 if (!['zappdev', 'e2e', 'test'].includes(process.env.MODE) && productionPrivateKey === undefined) {
@@ -68,10 +68,10 @@ const config = {
         ]
     },
     paths: {
-        artifacts:'./hardhat/build',
-        sources: './hardhat/contracts',
-        tests: './hardhat/tests',
-        cache: './hardhat/cache'
+        artifacts:'../hardhat/build',
+        sources: '../hardhat/contracts',
+        tests: '../hardhat/tests',
+        cache: '../hardhat/cache'
     },
     networks: {
         development: {
