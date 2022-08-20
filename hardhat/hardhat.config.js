@@ -68,10 +68,10 @@ const config = {
         ]
     },
     paths: {
-        artifacts:'../hardhat/build',
-        sources: '../hardhat/contracts',
-        tests: '../hardhat/tests',
-        cache: '../hardhat/cache'
+        artifacts:'./build',
+        sources: './contracts',
+        tests: './tests',
+        cache: './cache'
     },
     networks: {
         development: {
