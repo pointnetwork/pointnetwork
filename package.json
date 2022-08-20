@@ -178,7 +178,6 @@
     "outputPath": "bin",
     "assets": [
       "package.json",
-      "resources/hardhat.config.js",
       "hardhat/**/*",
       "config/*.yaml",
       "migrations/**/*",
