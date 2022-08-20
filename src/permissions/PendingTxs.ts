@@ -1,20 +1,15 @@
 import crypto from 'crypto';
 import config from 'config';
 import {PendingTx} from './types';
+import {CacheFactory} from '../util';
 
 const DEFAULT_NETWORK: string = config.get('network.default_network');
 
 export class PendingTxs {
-    private expirationSecs: number;
-    private pendingTransactions: Record<string, PendingTx> = {};
+    private pendingTransactions: CacheFactory<string, PendingTx>;
 
     constructor(expirationSecs: number) {
-        this.expirationSecs = expirationSecs;
-    }
-
-    private calculateExpiration() {
-        const now = new Date();
-        return new Date(now.setSeconds(now.getSeconds() + this.expirationSecs));
+        this.pendingTransactions = new CacheFactory<string, PendingTx>(expirationSecs * 1_000);
     }
 
     private generateId() {
@@ -22,50 +17,28 @@ export class PendingTxs {
     }
 
     /**
-     * Deletes old transactions from the pending requests pool.
-     * It's run every time `find()` is invoked to only return valid transactions.
-     * But the method is exposed so that it can be called at will.
-     */
-    gc() {
-        const now = new Date();
-        Object.keys(this.pendingTransactions).forEach(id => {
-            if (now >= this.pendingTransactions[id].expiresAt) {
-                delete this.pendingTransactions[id];
-            }
-        });
-    }
-
-    /**
      * Adds a transaction to the pool of pending requests
      * for future processing.
      */
-    add(params: unknown[], network = DEFAULT_NETWORK) {
+    public add(params: unknown[], network = DEFAULT_NETWORK) {
         const reqId = this.generateId();
-        const expiresAt = this.calculateExpiration();
-        this.pendingTransactions[reqId] = {params, expiresAt, network};
+        this.pendingTransactions.add(reqId, {params, network});
         return reqId;
     }
 
     /**
      * Retrieves a pending request by ID.
-     * It runs `gc` first, so it wil only return a request
-     * if it is not expired.
      */
-    find(reqId: string): PendingTx | undefined {
-        // Remove old requests first.
-        this.gc();
-        return this.pendingTransactions[reqId];
+    public find(reqId: string): PendingTx | null {
+        return this.pendingTransactions.get(reqId);
     }
 
     /**
-     * Deletes a transaction from the pool of pending requests.
+     * Deletes a transaction from the pool of pending requests and returns its ID.
      */
-    rm(reqId: string) {
-        if (!this.pendingTransactions[reqId]) {
-            return null;
-        }
-        delete this.pendingTransactions[reqId];
-        return reqId;
+    public rm(reqId: string) {
+        const found = this.pendingTransactions.rm(reqId);
+        return found ? reqId : null;
     }
 }
 

@@ -1,6 +1,7 @@
 const abiDecoder = require('abi-decoder');
 import ethereum from '../network/providers/ethereum';
 import logger from '../core/log';
+import {CacheFactory} from '../util';
 
 const log = logger.child({module: 'RPC'});
 
@@ -15,48 +16,9 @@ type DecodedTxInput = {
     params: Param[];
 };
 
-/**
- * Keep track of which ABIs have been added, to avoid duplicates, with a TTL.
- */
-export class ABITracker {
-    private addedABIs: Record<string, number> = {};
-    private ttlMs: number;
-
-    constructor(ttlMs?: number) {
-        this.ttlMs = ttlMs ?? 10 * 60 * 1000; // default: 10 minutes.
-    }
-
-    private key(target: string, contract: string): string {
-        return `${target}:${contract}`;
-    }
-
-    private isExpired(key: string): boolean {
-        if (!this.addedABIs[key]) {
-            return false;
-        }
-        const ttl = this.addedABIs[key];
-        return Date.now() - ttl > this.ttlMs;
-    }
-
-    public has(target: string, contract: string): boolean {
-        const key = this.key(target, contract);
-        if (this.isExpired(key)) {
-            delete this.addedABIs[key];
-        }
-        return Boolean(this.addedABIs[key]);
-    }
-
-    public add(target: string, contract: string): void {
-        const key = this.key(target, contract);
-        this.addedABIs[key] = Date.now();
-    }
-
-    public len(): number {
-        return Object.getOwnPropertyNames(this.addedABIs).length;
-    }
-}
-
-const abiTracker = new ABITracker();
+// Keep track of which ABIs have been added, to avoid duplicates, with a TTL.
+const expiration = 10 * 60 * 1_000; // 10 minutes.
+const abiTracker = new CacheFactory<string, number>(expiration);
 
 /**
  * Decode Tx and return human-readable input data.
@@ -72,15 +34,20 @@ export async function decodeTxInputData(
             : null;
 
     if (!target || !contract || !txInputData) {
+        log.error(
+            {target, contract, txInputDataLen: txInputData ? txInputData.length : 0},
+            'Missing information to decode tx input data'
+        );
         return null;
     }
 
-    if (!abiTracker.has(target, contract)) {
+    const cacheKey = `${target}:${contract}`;
+    if (!abiTracker.has(cacheKey)) {
         try {
             const identity = new URL(target).host.replace(/.point$/, '');
             const {_jsonInterface} = await ethereum.loadWebsiteContract(identity, contract);
             abiDecoder.addABI(_jsonInterface);
-            abiTracker.add(target, contract);
+            abiTracker.add(cacheKey, 1);
         } catch (err) {
             log.error({target, contract}, 'Error fetching contract ABI.');
             return null;
