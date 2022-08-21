@@ -10,7 +10,7 @@ import {SocketStream} from 'fastify-websocket';
 import Renderer from '../../zweb/renderer';
 import logger from '../../../core/log';
 import blockchain from '../../../network/providers/ethereum';
-import {getContentTypeFromExt, getParamsAndTemplate} from '../proxyUtils';
+import {getContentTypeFromExt, matchRouteAndParams} from '../proxyUtils';
 // @ts-expect-error no types for package
 import {detectContentType} from 'detect-content-type';
 import config from 'config';
@@ -71,7 +71,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             return await fulfillRequest({
                 req, res,
                 isLocal: true,
-                routes: {'/': 'index.zhtml'},
+                routes: {'*': 'index.zhtml'},
                 path: urlPath,
                 localRootDirPath: publicPath
             });
@@ -288,28 +288,26 @@ const fulfillRequest = async(cfg: RequestFulfillmentConfig) => {
     let {host} = await parseRequestForProxy(req);
     if (cfg.rewriteHost) host = cfg.rewriteHost;
 
-    let {routeParams, templateFilename, possiblyRewrittenUrlPath: urlPath} = getParamsAndTemplate(
+    // We're only trying to match routes this early because of possible :rewrite:, which applies to static too
+    const {routeParams, templateFilename, possiblyRewrittenUrlPath: urlPath} = matchRouteAndParams(
         cfg.routes,
         cfg.path
     );
 
-    if (templateFilename) {
-        return await tryFulfillZhtmlRequest(cfg, templateFilename, routeParams, host);
-    } else {
-        // This is a static asset, no routes matched
-        try {
-            return await tryFulfillStaticRequest(cfg, urlPath);
-        } catch (e) {
-            // TODO: Undocumented!
-            // Handling the case with SPA reloaded on non-index page:
-            // we have to return index file, but without changing the URL
-            // to make client-side routing work
-            if (e instanceof HttpNotFoundError && Object.keys(cfg.routes).length === 1) {
-                ({templateFilename} = getParamsAndTemplate(cfg.routes, '/'));
-                return await tryFulfillZhtmlRequest(cfg, templateFilename!, routeParams, host);
+    // First try static assets
+    try {
+        return await tryFulfillStaticRequest(cfg, urlPath);
+    } catch (e) {
+        if (e instanceof HttpNotFoundError || e instanceof HttpForbiddenError) {
+            // HttpNotFoundError - we didn't find any static file by that path
+            // HttpForbiddenError - e.g. when calling '/' ("Directory listing not allowed)
+            if (templateFilename) {
+                return await tryFulfillZhtmlRequest(cfg, templateFilename, routeParams, host);
             } else {
-                throw e;
+                throw e; // Nothing matched
             }
+        } else {
+            throw e; // unknown error
         }
     }
 };

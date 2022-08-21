@@ -1,7 +1,7 @@
 import {match} from 'node-match-path';
 import mimeTypes from 'mime-types';
 
-export const getParamsAndTemplate = (routes: Record<string, string>, path: string) => {
+export const matchRouteAndParams = (routes: Record<string, string>, path: string) => {
     let routeParams: Record<string, string> | null = null;
     let templateFilename = null;
     for (const k in routes) {
