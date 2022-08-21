@@ -48,13 +48,12 @@ export default function SubIdentityRegistration({ onNewIdentity }) {
                     'Contenty-Type': 'application/json; charset=utf-8',
                 },
                 data: {
-                    subidentity: newSubidentity,
-                    parentIdentity: walletIdentity,
+                    subidentity: identity,
                     _csrf: window.localStorage.getItem('csrf_token'),
                 },
             });
 
-            onNewIdentity(newSubidentity, walletIdentity);
+            onNewIdentity(identity);
             setNewSubidentity('');
         } catch (err) {
             console.error(err);

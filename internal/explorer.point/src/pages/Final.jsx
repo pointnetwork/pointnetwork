@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import axios from 'axios';
 import Loading from '../components/Loading';
 
-const DEFAULT_ERROR_MESSAGE = 'Something went wrong.';
+const DEFAULT_ERROR_MESSAGE = 'Something went wrong';
 const MAX_TWEET_SIZE = 280;
 
 const TwitterIcon = (props) => {
@@ -274,13 +274,19 @@ const Final = () => {
             }
 
             if (!success) {
-                Swal.fire({ title: reason || DEFAULT_ERROR_MESSAGE });
+                Swal.fire({
+                    icon: 'error',
+                    text: reason || DEFAULT_ERROR_MESSAGE,
+                });
                 return;
             }
             window.location = '/';
         } catch (error) {
             setRegistering(false);
-            Swal.fire({ title: DEFAULT_ERROR_MESSAGE });
+            Swal.fire({
+                title: DEFAULT_ERROR_MESSAGE,
+                text: 'Error: ' + error.message,
+            });
         }
     };
 
