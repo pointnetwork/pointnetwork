@@ -12,6 +12,7 @@ import {promises as fs} from 'fs';
 import path from 'path';
 import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, CONCURRENT_DOWNLOAD_DELAY, FILES_DIR, log} from './config';
 import {uploadChunk, getChunk} from './chunk';
+import {isValidStorageId, isZeroStorageId} from '../../util';
 
 type FileInfo = {
     type: keyof typeof FILE_TYPE
@@ -217,6 +218,10 @@ export const getFile = async (
 ): Promise<string | Buffer> => {
     log.debug({fileId: rawId}, 'Getting file');
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
+
+    // ID validation
+    if (! isValidStorageId(id)) throw new Error('Invalid storage ID');
+    if (isZeroStorageId(id)) throw new Error('Zero storage ID doesn\'t exist');
 
     const filePath = path.join(FILES_DIR, `file_${id}`);
     const file = await File.findByIdOrCreate(id);
