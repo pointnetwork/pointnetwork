@@ -218,6 +218,8 @@ export const getFile = async (
     log.debug({fileId: rawId}, 'Getting file');
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
 
+    if (!id) throw new Error('Not found: Empty ID');
+
     const filePath = path.join(FILES_DIR, `file_${id}`);
     const file = await File.findByIdOrCreate(id);
     if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {

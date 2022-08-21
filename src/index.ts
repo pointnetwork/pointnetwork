@@ -201,9 +201,9 @@ if (program.makemigration) {
         './point',
         'makemigration',
         '--models-path',
-        './db/models',
+        'dist/db/models',
         '--migrations-path',
-        './db/migrations',
+        'migrations/database',
         '--name',
         'automigration'
     ];

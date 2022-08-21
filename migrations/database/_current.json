@@ -160,10 +160,335 @@
                     }
                 }
             }
+        },
+        "events": {
+            "tableName": "events",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "unique": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "raw_id": {
+                    "allowNull": true,
+                    "field": "raw_id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "chain_id": {
+                    "allowNull": false,
+                    "field": "chain_id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "contract_address": {
+                    "allowNull": false,
+                    "field": "contract_address",
+                    "seqType": "Sequelize.STRING"
+                },
+                "block_number": {
+                    "allowNull": false,
+                    "field": "block_number",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "transaction_hash": {
+                    "allowNull": false,
+                    "field": "transaction_hash",
+                    "seqType": "Sequelize.STRING"
+                },
+                "transaction_index": {
+                    "allowNull": false,
+                    "field": "transaction_index",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "block_hash": {
+                    "allowNull": false,
+                    "field": "block_hash",
+                    "seqType": "Sequelize.STRING"
+                },
+                "log_index": {
+                    "allowNull": false,
+                    "field": "log_index",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "removed": {
+                    "allowNull": false,
+                    "field": "removed",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "return_values": {
+                    "allowNull": true,
+                    "field": "return_values",
+                    "seqType": "Sequelize.JSON"
+                },
+                "event": {
+                    "allowNull": true,
+                    "field": "event",
+                    "seqType": "Sequelize.STRING"
+                },
+                "signature": {
+                    "allowNull": true,
+                    "field": "signature",
+                    "seqType": "Sequelize.STRING"
+                },
+                "raw": {
+                    "allowNull": true,
+                    "field": "raw",
+                    "seqType": "Sequelize.JSON"
+                },
+                "topic0": {
+                    "allowNull": true,
+                    "field": "topic0",
+                    "seqType": "Sequelize.STRING"
+                },
+                "topic1": {
+                    "allowNull": true,
+                    "field": "topic1",
+                    "seqType": "Sequelize.STRING"
+                },
+                "topic2": {
+                    "allowNull": true,
+                    "field": "topic2",
+                    "seqType": "Sequelize.STRING"
+                },
+                "created_at": {
+                    "allowNull": false,
+                    "field": "created_at",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updated_at": {
+                    "allowNull": false,
+                    "field": "updated_at",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": {
+                "755b66f0fa3549e33f0839c2734c8dbbfbb9343c": {
+                    "fields": [
+                        "chain_id"
+                    ],
+                    "name": "events_chain_id",
+                    "options": {
+                        "indexName": "events_chain_id",
+                        "name": "events_chain_id"
+                    }
+                },
+                "0609645d0cc6269e9407636e24028d52657ee41b": {
+                    "fields": [
+                        "chain_id",
+                        "block_number"
+                    ],
+                    "name": "events_chain_id_block_number",
+                    "options": {
+                        "indexName": "events_chain_id_block_number",
+                        "name": "events_chain_id_block_number"
+                    }
+                },
+                "c3c46238435e7e5689fa760eb98ada9bc2ec072f": {
+                    "fields": [
+                        "chain_id",
+                        "log_index"
+                    ],
+                    "name": "events_chain_id_log_index",
+                    "options": {
+                        "indexName": "events_chain_id_log_index",
+                        "name": "events_chain_id_log_index"
+                    }
+                },
+                "73dd8650b4f4f21ce604622d7664a026962a3b6a": {
+                    "fields": [
+                        "chain_id",
+                        "contract_address",
+                        "event"
+                    ],
+                    "name": "events_chain_id_contract_address_event",
+                    "options": {
+                        "indexName": "events_chain_id_contract_address_event",
+                        "name": "events_chain_id_contract_address_event"
+                    }
+                },
+                "8e656fdeeee6c25494c98886353e75678bfa0bbc": {
+                    "fields": [
+                        "chain_id",
+                        "contract_address",
+                        "event",
+                        "log_index"
+                    ],
+                    "name": "events_chain_id_contract_address_event_log_index",
+                    "options": {
+                        "indexName": "events_chain_id_contract_address_event_log_index",
+                        "name": "events_chain_id_contract_address_event_log_index"
+                    }
+                },
+                "df92d1f5359c2d87bf0979d36fff0344b95caba9": {
+                    "fields": [
+                        "chain_id",
+                        "contract_address",
+                        "block_number"
+                    ],
+                    "name": "events_chain_id_contract_address_block_number",
+                    "options": {
+                        "indexName": "events_chain_id_contract_address_block_number",
+                        "name": "events_chain_id_contract_address_block_number"
+                    }
+                },
+                "1ccbc1021c676f71be01ca9fc46866d7ca7fd6f2": {
+                    "fields": [
+                        "chain_id",
+                        "contract_address",
+                        "event",
+                        "block_number"
+                    ],
+                    "name": "events_chain_id_contract_address_event_block_number",
+                    "options": {
+                        "indexName": "events_chain_id_contract_address_event_block_number",
+                        "name": "events_chain_id_contract_address_event_block_number"
+                    }
+                },
+                "812fe37b024aef2a24307e8c8bf59bd693766b0f": {
+                    "fields": [
+                        "topic0"
+                    ],
+                    "name": "events_topic0",
+                    "options": {
+                        "indexName": "events_topic0",
+                        "name": "events_topic0"
+                    }
+                },
+                "36f214a0be235a4353f0950e2965ded6f939a541": {
+                    "fields": [
+                        "topic1"
+                    ],
+                    "name": "events_topic1",
+                    "options": {
+                        "indexName": "events_topic1",
+                        "name": "events_topic1"
+                    }
+                },
+                "5e7609acb284c29cdd59c1305debb0539a048585": {
+                    "fields": [
+                        "topic2"
+                    ],
+                    "name": "events_topic2",
+                    "options": {
+                        "indexName": "events_topic2",
+                        "name": "events_topic2"
+                    }
+                },
+                "b084f02d942f6206297fc8baf1b5c84e13fb1d6d": {
+                    "fields": [
+                        "chain_id",
+                        "raw_id"
+                    ],
+                    "name": "events_chain_id_raw_id",
+                    "options": {
+                        "indexName": "events_chain_id_raw_id",
+                        "name": "events_chain_id_raw_id"
+                    }
+                }
+            }
+        },
+        "event_scans": {
+            "tableName": "event_scans",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "unique": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "chain_id": {
+                    "allowNull": false,
+                    "unique": false,
+                    "field": "chain_id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "contract_address": {
+                    "allowNull": false,
+                    "field": "contract_address",
+                    "seqType": "Sequelize.STRING"
+                },
+                "from_block": {
+                    "allowNull": false,
+                    "field": "from_block",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "to_block": {
+                    "allowNull": false,
+                    "field": "to_block",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "created_at": {
+                    "allowNull": false,
+                    "field": "created_at",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updated_at": {
+                    "allowNull": false,
+                    "field": "updated_at",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": {
+                "cfda4fda6f4364165cea948c947ee88915769f32": {
+                    "fields": [
+                        "chain_id"
+                    ],
+                    "name": "event_scans_chain_id",
+                    "options": {
+                        "indexName": "event_scans_chain_id",
+                        "name": "event_scans_chain_id"
+                    }
+                },
+                "db887fb1db6840bacff14dfe0a2d262fac11f9bf": {
+                    "fields": [
+                        "chain_id",
+                        "from_block"
+                    ],
+                    "name": "event_scans_chain_id_from_block",
+                    "options": {
+                        "indexName": "event_scans_chain_id_from_block",
+                        "name": "event_scans_chain_id_from_block"
+                    }
+                },
+                "c84a81ac3391dd0ec6ff1318f590644d8c476ef7": {
+                    "fields": [
+                        "chain_id",
+                        "to_block"
+                    ],
+                    "name": "event_scans_chain_id_to_block",
+                    "options": {
+                        "indexName": "event_scans_chain_id_to_block",
+                        "name": "event_scans_chain_id_to_block"
+                    }
+                },
+                "54e5bc1aca3bb3c2120019b2779fa4e6ad62bd23": {
+                    "fields": [
+                        "chain_id",
+                        "contract_address",
+                        "from_block"
+                    ],
+                    "name": "event_scans_chain_id_contract_address_from_block",
+                    "options": {
+                        "indexName": "event_scans_chain_id_contract_address_from_block",
+                        "name": "event_scans_chain_id_contract_address_from_block"
+                    }
+                },
+                "74880f6a2761997fab79f82bfe7ec7022d5def43": {
+                    "fields": [
+                        "chain_id",
+                        "contract_address",
+                        "to_block"
+                    ],
+                    "name": "event_scans_chain_id_contract_address_to_block",
+                    "options": {
+                        "indexName": "event_scans_chain_id_contract_address_to_block",
+                        "name": "event_scans_chain_id_contract_address_to_block"
+                    }
+                }
+            }
         }
     },
-    "path": "/home/vmubnt/pointnet/src/pointnetwork/migrations/database/_current.json",
-    "backupPath": "/home/vmubnt/pointnet/src/pointnetwork/migrations/database/_current_bak.json",
-    "exists": true,
-    "revision": 5
+    "revision": 6
 }
