@@ -1,4 +1,5 @@
 datadir: DATADIR
+deployer_account: DEPLOYER_ACCOUNT
 mode: MODE
 api:
   address: API_ADDRESS

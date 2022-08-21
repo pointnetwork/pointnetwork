@@ -17,8 +17,6 @@ if (RUNNING_PKG_MODE) {
     process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
 }
 
-process.env.HARDHAT_CONFIG = path.resolve(__dirname, '..', 'hardhat', 'hardhat.config.js');
-
 disclaimer.output();
 
 // Disable https://nextjs.org/telemetry
@@ -112,6 +110,7 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 }
 
 // Warning: the below imports should take place after the above config patch!
+process.env.HARDHAT_CONFIG = path.resolve(__dirname, '..', 'hardhat', 'hardhat.config.js');
 
 import config from 'config';
 import logger from './core/log';
