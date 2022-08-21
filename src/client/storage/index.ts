@@ -6,14 +6,15 @@ import {
     statAsync,
     escapeString,
     hashFn,
-    calculateDirSize
+    calculateDirSize,
+    isValidStorageId,
+    isZeroStorageId
 } from '../../util';
 import {promises as fs} from 'fs';
 import path from 'path';
 import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, CONCURRENT_DOWNLOAD_DELAY, FILES_DIR, log} from './config';
 import {uploadChunk, getChunk} from './chunk';
-import {isValidStorageId, isZeroStorageId} from '../../util';
-import {HttpNotFoundError} from "../../core/exceptions";
+import {HttpNotFoundError} from '../../core/exceptions';
 
 type FileInfo = {
     type: keyof typeof FILE_TYPE
