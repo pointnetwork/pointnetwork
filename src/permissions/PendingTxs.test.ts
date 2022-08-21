@@ -1,12 +1,11 @@
 import {PendingTxs} from './PendingTxs';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-const EXPIRATION_SECS = 1;
-let pendingTxs = new PendingTxs(EXPIRATION_SECS);
 
-beforeEach(() => {
-    pendingTxs = new PendingTxs(EXPIRATION_SECS);
-});
+const EXPIRATION_SECS = 1;
+
+let pendingTxs = new PendingTxs(EXPIRATION_SECS);
+beforeEach(() => (pendingTxs = new PendingTxs(EXPIRATION_SECS)));
 
 describe('PendingTxs', () => {
     it(`should add request to the pool and return it's ID`, () => {
@@ -33,7 +32,7 @@ describe('PendingTxs', () => {
         // Remove
         const got = pendingTxs.rm(id);
         expect(got).toEqual(id);
-        expect(pendingTxs.find(id)).toBeUndefined();
+        expect(pendingTxs.find(id)).toBeNull();
     });
 
     it(`should delete a stale request`, async () => {
@@ -42,9 +41,9 @@ describe('PendingTxs', () => {
         const id = pendingTxs.add(tx.params);
 
         // Retrieve (after expiration)
-        await sleep((EXPIRATION_SECS + 0.5) * 1000);
+        await sleep((EXPIRATION_SECS + 0.5) * 1_000);
         const got = pendingTxs.find(id);
-        expect(got).toBeUndefined();
+        expect(got).toBeNull();
     });
 
     it('should retrieve a request that has not expire yet', async () => {
@@ -53,7 +52,7 @@ describe('PendingTxs', () => {
         const id = pendingTxs.add(tx.params);
 
         // Retrieve (before expiration)
-        await sleep((EXPIRATION_SECS - 0.5) * 1000);
+        await sleep((EXPIRATION_SECS - 0.5) * 1_000);
         const got = pendingTxs.find(id);
         expect(got?.params).toEqual(tx.params);
     });

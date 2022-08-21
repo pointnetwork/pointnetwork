@@ -3,5 +3,3 @@ db:
 log:
   sendLogs: false
   level: debug
-api:
-  csrf_enabled: true

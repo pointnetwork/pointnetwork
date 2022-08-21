@@ -33,7 +33,7 @@ const WalletRow = ({
             </td>
             <td className="mono">{wallet.alias || wallet.address}</td>
             <td style={{ textAlign: 'right' }}>
-                {wallet.balance === 'Timeout'
+                {isNaN(Number(wallet.balance))
                     ? wallet.balance
                     : wallet.balance.toFixed(8)}{' '}
                 {wallet.currency_code}
@@ -112,8 +112,8 @@ export default function Wallet() {
 
     const fetchWallets = async () => {
         const controller = new AbortController();
-        // 20 second timeout:
-        setTimeout(() => controller.abort(), 20000);
+        // 60 second timeout:
+        setTimeout(() => controller.abort(), 60000);
 
         const response = await fetch('/v1/api/wallet/getWalletInfo', {
             signal: controller.signal,
@@ -131,7 +131,7 @@ export default function Wallet() {
     const fetchTokens = async () => {
         const controller = new AbortController();
         // 10 second timeout:
-        setTimeout(() => controller.abort(), 10000);
+        setTimeout(() => controller.abort(), 60000);
 
         const response = await fetch('/v1/api/wallet/getTokenBalances', {
             signal: controller.signal,
