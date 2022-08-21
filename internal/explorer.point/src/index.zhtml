@@ -5,9 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#000000" />
         <title>Point Explorer</title>
-        <script defer src="index.js"></script>
-        <link rel="stylesheet" href="index.css">
-        <link rel="stylesheet" href="custom.css">
+        <script defer src="/index.js"></script>
+        <link rel="stylesheet" href="/index.css">
+        <link rel="stylesheet" href="/custom.css">
     </head>
     <body>
         <noscript>You need to enable JavaScript to run Point Explorer App.</noscript>
