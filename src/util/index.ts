@@ -9,6 +9,7 @@ export * from './areScalarArraysEqual';
 export * from './resolveHome';
 export * from './merkle';
 export * from './hashFn';
+export * from './storageIdValidation';
 export * from './escapeString';
 export * from './getReferralCode';
 export * from './cookieString';
