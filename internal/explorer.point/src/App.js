@@ -10,10 +10,22 @@ import Final from './pages/Final';
 import Wallet from './pages/Wallet';
 import Zapps from './pages/Zapps';
 import Loading from './components/Loading';
+import ErrorBlock from './components/ErrorBlock';
 import DeployBlog from './pages/DeployBlog';
 
 const Main = () => {
-    const { walletIdentity, walletAddr, isLoading } = useAppContext();
+    const { walletIdentity, walletAddr, isLoading, walletError } =
+        useAppContext();
+
+    const renderWalletIdentityMissing = () => {
+        if (walletError) {
+            return (
+                <ErrorBlock details="SDK is not installed or broken"></ErrorBlock>
+            );
+        } else {
+            return <Final></Final>;
+        }
+    };
 
     return (
         <main>
@@ -47,7 +59,7 @@ const Main = () => {
                             </Route>
                         </Switch>
                     ) : (
-                        <Final />
+                        renderWalletIdentityMissing()
                     )}
                 </>
             )}
