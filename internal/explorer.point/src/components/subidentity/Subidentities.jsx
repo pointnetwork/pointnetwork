@@ -4,7 +4,7 @@ import SubidentityRegistration from './SubidentityRegistration';
 import usePaginatedEvents from '../../hooks/usePaginatedEvents';
 
 export default function SubIdentities({ owner }) {
-    const { data, loading, error } = usePaginatedEvents({
+    const { data, loading, error, add } = usePaginatedEvents({
         host: '@',
         contract: 'Identity',
         event: 'SubidentityRegistered',
@@ -12,16 +12,13 @@ export default function SubIdentities({ owner }) {
     });
 
     const handleNewIdentity = (subidentity, parentIdentity) => {
-        setSubidentities((prev) => [
-            ...prev,
-            {
-                data: {
-                    subhandle: subidentity,
-                    handle: parentIdentity,
-                    identityOwner: owner,
-                },
+        add({
+            data: {
+                subhandle: subidentity,
+                handle: parentIdentity,
+                identityOwner: owner,
             },
-        ]);
+        });
     };
 
     return (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 export default function usePaginatedEvents({ host, contract, event, filter }) {
     const [data, setData] = useState([]);
@@ -39,5 +39,9 @@ export default function usePaginatedEvents({ host, contract, event, filter }) {
         return () => (mounted.current = false);
     }, []);
 
-    return { data, loading, error };
+    const add = useCallback((newItem) => {
+        setData((prev) => [...prev, newItem]);
+    }, []);
+
+    return { data, loading, error, add };
 }
