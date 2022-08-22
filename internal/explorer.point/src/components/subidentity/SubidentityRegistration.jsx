@@ -54,7 +54,7 @@ export default function SubIdentityRegistration({ onNewIdentity }) {
                 },
             });
 
-            onNewIdentity(identity);
+            onNewIdentity(newSubidentity, walletIdentity);
             setNewSubidentity('');
         } catch (err) {
             console.error(err);
