@@ -48,4 +48,4 @@ Chunk.init(
     }
 );
 
-export default Chunk;
+export {Chunk as default};

@@ -31156,42 +31156,25 @@ try {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _jsxDevRuntime = require("react/jsx-dev-runtime");
-var _react = require("react");
 var _loading = require("../Loading");
 var _loadingDefault = parcelHelpers.interopDefault(_loading);
-var _subIdentitiesList = require("./SubIdentitiesList");
-var _subIdentitiesListDefault = parcelHelpers.interopDefault(_subIdentitiesList);
-var _subIdentityRegistration = require("./SubIdentityRegistration");
-var _subIdentityRegistrationDefault = parcelHelpers.interopDefault(_subIdentityRegistration);
+var _subidentityList = require("./SubidentityList");
+var _subidentityListDefault = parcelHelpers.interopDefault(_subidentityList);
+var _subidentityRegistration = require("./SubidentityRegistration");
+var _subidentityRegistrationDefault = parcelHelpers.interopDefault(_subidentityRegistration);
+var _usePaginatedEvents = require("../../hooks/usePaginatedEvents");
+var _usePaginatedEventsDefault = parcelHelpers.interopDefault(_usePaginatedEvents);
 var _s = $RefreshSig$();
 function SubIdentities({ owner  }) {
     _s();
-    const [subidentities, setSubidentities] = _react.useState([]);
-    const [isLoading, setIsLoading] = _react.useState(false);
-    const [error, setError] = _react.useState('');
-    _react.useEffect(()=>{
-        // TODO: fetch all sub-identities.
-        async function fetchSubidentities() {
-            setIsLoading(true);
-            setError('');
-            try {
-                const resp = await window.point.contract.events({
-                    host: '@',
-                    contract: 'Identity',
-                    event: 'IdentityRegistered',
-                    filter: {
-                        identityOwner: owner
-                    }
-                });
-                setSubidentities(resp.data || []);
-            } catch (err) {
-                setError(err.message);
-            } finally{
-                setIsLoading(false);
-            }
+    const { data , loading , error  } = _usePaginatedEventsDefault.default({
+        host: '@',
+        contract: 'Identity',
+        event: 'SubidentityRegistered',
+        filter: {
+            identityOwner: owner
         }
-    // fetchSubidentities();
-    }, []);
+    });
     const handleNewIdentity = (subidentity)=>{
         setSubidentities((prev)=>[
                 ...prev,
@@ -31205,24 +31188,27 @@ function SubIdentities({ owner  }) {
     return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
         children: [
             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("h2", {
-                children: "Sub-Identities"
-            }, void 0, false, {
+                children: [
+                    "Sub-Identities ",
+                    loading && /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
+                    }, void 0, false, {
+                        fileName: "src/components/subidentity/Subidentities.jsx",
+                        lineNumber: 20,
+                        columnNumber: 44
+                    }, this)
+                ]
+            }, void 0, true, {
                 fileName: "src/components/subidentity/Subidentities.jsx",
-                lineNumber: 41,
+                lineNumber: 20,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("hr", {
             }, void 0, false, {
                 fileName: "src/components/subidentity/Subidentities.jsx",
-                lineNumber: 42,
+                lineNumber: 21,
                 columnNumber: 13
             }, this),
-            isLoading ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_loadingDefault.default, {
-            }, void 0, false, {
-                fileName: "src/components/subidentity/Subidentities.jsx",
-                lineNumber: 44,
-                columnNumber: 17
-            }, this) : error ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
+            error ? /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
                 className: "red",
                 children: [
                     "Error: ",
@@ -31230,22 +31216,23 @@ function SubIdentities({ owner  }) {
                 ]
             }, void 0, true, {
                 fileName: "src/components/subidentity/Subidentities.jsx",
-                lineNumber: 46,
+                lineNumber: 23,
                 columnNumber: 17
             }, this) : /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_jsxDevRuntime.Fragment, {
                 children: [
-                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_subIdentitiesListDefault.default, {
-                        subidentities: subidentities
+                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_subidentityListDefault.default, {
+                        subidentities: data,
+                        loading: loading
                     }, void 0, false, {
                         fileName: "src/components/subidentity/Subidentities.jsx",
-                        lineNumber: 49,
+                        lineNumber: 26,
                         columnNumber: 21
                     }, this),
-                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_subIdentityRegistrationDefault.default, {
+                    /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_subidentityRegistrationDefault.default, {
                         onNewIdentity: handleNewIdentity
                     }, void 0, false, {
                         fileName: "src/components/subidentity/Subidentities.jsx",
-                        lineNumber: 50,
+                        lineNumber: 27,
                         columnNumber: 21
                     }, this)
                 ]
@@ -31253,12 +31240,16 @@ function SubIdentities({ owner  }) {
         ]
     }, void 0, true, {
         fileName: "src/components/subidentity/Subidentities.jsx",
-        lineNumber: 40,
+        lineNumber: 19,
         columnNumber: 9
     }, this));
 }
 exports.default = SubIdentities;
-_s(SubIdentities, "9ZGesXhgeu99kgk7I/anShcuEb0=");
+_s(SubIdentities, "En4xUxjYWkeciJbYsDPB15cY5KU=", false, function() {
+    return [
+        _usePaginatedEventsDefault.default
+    ];
+});
 _c = SubIdentities;
 var _c;
 $RefreshReg$(_c, "SubIdentities");
@@ -31268,35 +31259,35 @@ $RefreshReg$(_c, "SubIdentities");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"gij1U","../Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","react":"6jKMz","./SubIdentitiesList":"gOW94","./SubIdentityRegistration":"htmD2"}],"gOW94":[function(require,module,exports) {
-var $parcel$ReactRefreshHelpers$dded = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
+},{"react/jsx-dev-runtime":"gij1U","../Loading":"9ptwk","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0","./SubidentityList":"hol5Z","./SubidentityRegistration":"htmD2","../../hooks/usePaginatedEvents":"d1ODt"}],"hol5Z":[function(require,module,exports) {
+var $parcel$ReactRefreshHelpers$d0a2 = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 var prevRefreshReg = window.$RefreshReg$;
 var prevRefreshSig = window.$RefreshSig$;
-$parcel$ReactRefreshHelpers$dded.prelude(module);
+$parcel$ReactRefreshHelpers$d0a2.prelude(module);
 
 try {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _jsxDevRuntime = require("react/jsx-dev-runtime");
 var _wouter = require("wouter");
-function SubIdentitiesList({ subidentities  }) {
-    if (!subidentities || subidentities.length === 0) return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
+function SubidentityList({ subidentities , loading  }) {
+    if ((!subidentities || subidentities.length === 0) && !loading) return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("div", {
         style: {
             marginBottom: 100
         },
         children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("p", {
             children: "No sub-identities registered."
         }, void 0, false, {
-            fileName: "src/components/subidentity/SubIdentitiesList.jsx",
+            fileName: "src/components/subidentity/SubidentityList.jsx",
             lineNumber: 7,
             columnNumber: 17
         }, this)
     }, void 0, false, {
-        fileName: "src/components/subidentity/SubIdentitiesList.jsx",
+        fileName: "src/components/subidentity/SubidentityList.jsx",
         lineNumber: 6,
         columnNumber: 13
     }, this));
-    return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("table", {
+    if (subidentities && subidentities.length > 0) return(/*#__PURE__*/ _jsxDevRuntime.jsxDEV("table", {
         className: "table table-bordered table-striped table-hover table-responsive table-primary mb-4",
         children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV("tbody", {
             children: [
@@ -31305,76 +31296,79 @@ function SubIdentitiesList({ subidentities  }) {
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV("th", {
                             children: "Handle"
                         }, void 0, false, {
-                            fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-                            lineNumber: 16,
-                            columnNumber: 21
+                            fileName: "src/components/subidentity/SubidentityList.jsx",
+                            lineNumber: 17,
+                            columnNumber: 25
                         }, this),
                         /*#__PURE__*/ _jsxDevRuntime.jsxDEV("th", {
                             children: "Owner"
                         }, void 0, false, {
-                            fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-                            lineNumber: 17,
-                            columnNumber: 21
+                            fileName: "src/components/subidentity/SubidentityList.jsx",
+                            lineNumber: 18,
+                            columnNumber: 25
                         }, this)
                     ]
                 }, void 0, true, {
-                    fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-                    lineNumber: 15,
-                    columnNumber: 17
+                    fileName: "src/components/subidentity/SubidentityList.jsx",
+                    lineNumber: 16,
+                    columnNumber: 21
                 }, this),
                 subidentities.map((s)=>/*#__PURE__*/ _jsxDevRuntime.jsxDEV("tr", {
                         children: [
                             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("td", {
                                 children: /*#__PURE__*/ _jsxDevRuntime.jsxDEV(_wouter.Link, {
-                                    to: `/identities/${s.handle}`,
+                                    to: `/identities/${s.data.subhandle}.${s.data.handle}`,
                                     target: "_blank",
                                     children: [
                                         "@",
-                                        s.handle
+                                        s.data.subhandle,
+                                        ".",
+                                        s.data.handle
                                     ]
                                 }, void 0, true, {
-                                    fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-                                    lineNumber: 22,
-                                    columnNumber: 29
+                                    fileName: "src/components/subidentity/SubidentityList.jsx",
+                                    lineNumber: 23,
+                                    columnNumber: 33
                                 }, this)
                             }, void 0, false, {
-                                fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-                                lineNumber: 21,
-                                columnNumber: 25
+                                fileName: "src/components/subidentity/SubidentityList.jsx",
+                                lineNumber: 22,
+                                columnNumber: 29
                             }, this),
                             /*#__PURE__*/ _jsxDevRuntime.jsxDEV("td", {
                                 className: "mono",
-                                children: s.owner
+                                children: s.data.identityOwner.toLowerCase()
                             }, void 0, false, {
-                                fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-                                lineNumber: 29,
-                                columnNumber: 25
+                                fileName: "src/components/subidentity/SubidentityList.jsx",
+                                lineNumber: 30,
+                                columnNumber: 29
                             }, this)
                         ]
-                    }, s.handle, true, {
-                        fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-                        lineNumber: 20,
-                        columnNumber: 21
+                    }, `${s.data.subhandle}.${s.data.handle}`, true, {
+                        fileName: "src/components/subidentity/SubidentityList.jsx",
+                        lineNumber: 21,
+                        columnNumber: 25
                     }, this)
                 )
             ]
         }, void 0, true, {
-            fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-            lineNumber: 14,
-            columnNumber: 13
+            fileName: "src/components/subidentity/SubidentityList.jsx",
+            lineNumber: 15,
+            columnNumber: 17
         }, this)
     }, void 0, false, {
-        fileName: "src/components/subidentity/SubIdentitiesList.jsx",
-        lineNumber: 13,
-        columnNumber: 9
+        fileName: "src/components/subidentity/SubidentityList.jsx",
+        lineNumber: 14,
+        columnNumber: 13
     }, this));
+    return null;
 }
-exports.default = SubIdentitiesList;
-_c = SubIdentitiesList;
+exports.default = SubidentityList;
+_c = SubidentityList;
 var _c;
-$RefreshReg$(_c, "SubIdentitiesList");
+$RefreshReg$(_c, "SubidentityList");
 
-  $parcel$ReactRefreshHelpers$dded.postlude(module);
+  $parcel$ReactRefreshHelpers$d0a2.postlude(module);
 } finally {
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
@@ -37417,7 +37411,70 @@ var utils = require('./../utils');
     return utils.isObject(payload) && payload.isAxiosError === true;
 };
 
-},{"./../utils":"lyQpl"}],"jirQB":[function(require,module,exports) {
+},{"./../utils":"lyQpl"}],"d1ODt":[function(require,module,exports) {
+var $parcel$ReactRefreshHelpers$4c0f = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
+var prevRefreshReg = window.$RefreshReg$;
+var prevRefreshSig = window.$RefreshSig$;
+$parcel$ReactRefreshHelpers$4c0f.prelude(module);
+
+try {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _react = require("react");
+var _s = $RefreshSig$();
+function usePaginatedEvents({ host , contract , event , filter  }) {
+    _s();
+    const [data, setData] = _react.useState([]);
+    const [loading, setLoading] = _react.useState(true);
+    const [error, setError] = _react.useState('');
+    const mounted = _react.useRef(true);
+    _react.useEffect(()=>{
+        async function fetchData(cursor = 'latest') {
+            setError('');
+            try {
+                const resp = await window.point.contract.events({
+                    host,
+                    contract,
+                    event,
+                    filter: {
+                        ...filter,
+                        cursor
+                    }
+                });
+                const pagination = resp.data.pagination || {
+                };
+                const events = resp.data.events || [];
+                setData((prev)=>[
+                        ...prev,
+                        ...events
+                    ]
+                );
+                if (pagination.nextCursor && mounted.current) fetchData(pagination.nextCursor);
+                else setLoading(false);
+            } catch (err) {
+                setError(err.message);
+                setLoading(false);
+            }
+        }
+        fetchData();
+        return ()=>mounted.current = false
+        ;
+    }, []);
+    return {
+        data,
+        loading,
+        error
+    };
+}
+exports.default = usePaginatedEvents;
+_s(usePaginatedEvents, "8Wq2nhyav0lZOgjqolxN77oY+4M=");
+
+  $parcel$ReactRefreshHelpers$4c0f.postlude(module);
+} finally {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+},{"react":"6jKMz","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"72jT0"}],"jirQB":[function(require,module,exports) {
 var $parcel$ReactRefreshHelpers$ea0f = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 var prevRefreshReg = window.$RefreshReg$;
 var prevRefreshSig = window.$RefreshSig$;
@@ -45652,8 +45709,8 @@ function keccak256(data) {
 }
 
 },{"js-sha3":"jEWVb","@ethersproject/bytes":"6I2Fq","@parcel/transformer-js/src/esmodule-helpers.js":"eG7YV"}],"jEWVb":[function(require,module,exports) {
-var global = arguments[3];
 var process = require("process");
+var global = arguments[3];
 /**
  * [js-sha3]{@link https://github.com/emn178/js-sha3}
  *

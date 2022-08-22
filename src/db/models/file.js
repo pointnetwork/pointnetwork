@@ -43,4 +43,4 @@ File.init(
     }
 );
 
-export default File;
+export {File as default};
