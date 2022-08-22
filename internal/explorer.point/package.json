@@ -28,12 +28,12 @@
     "wouter": "^2.7.4"
   },
   "scripts": {
-    "clear": "mkdir -p ./public && rm -rf ./public/* .cache .parcel-cache",
+    "clear": "mkdir -p \"./public\" && rm -rf \"./public/*\" \".cache\" \".parcel-cache\"",
     "start": "react-scripts start",
     "watch:docker": "./watch.docker.js",
     "prebuild": "npm ci",
-    "build": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && cp src/favicon.ico public && parcel build src/index.js --dist-dir ./public --no-source-maps",
-    "watch": "npm run clear && cp src/*.zhtml ./public/. && cp src/*.css ./public/. && cp src/favicon.ico public && parcel watch src/index.js --dist-dir ./public/",
+    "build": "npm run clear && cp src/*.zhtml \"./public/.\" && cp src/*.css \"./public/.\" && cp src/favicon.ico \"./public/.\" && parcel build \"src/index.js\" --dist-dir \"./public\" --no-source-maps",
+    "watch": "npm run clear && cp src/*.zhtml \"./public/.\" && cp src/*.css \"./public/.\" && cp src/favicon.ico \"./public/.\" && parcel watch \"src/index.js\" --dist-dir \"./public\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --ext .js --ext .jsx src/",
     "fix": "eslint --ext .js --ext .jsx --fix src/"
