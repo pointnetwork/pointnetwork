@@ -27,4 +27,3 @@ EventScan.init(
 );
 
 export {EventScan as default};
-
