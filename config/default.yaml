@@ -118,6 +118,7 @@ network:
   web3_call_retry_limit: 4
   identity_contract_address: "0x8E34Fc67034b8A593E87d5f2644D098A3dBd2Fe7"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
+  event_block_page_size: 20000
 name_services:
   sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
 payments:

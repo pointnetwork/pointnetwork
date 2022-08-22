@@ -1,6 +1,6 @@
 const PointSDKController = require('./PointSDKController');
-const File = require('../../db/models/file');
-const Chunk = require('../../db/models/chunk');
+const File = require('../../db/models/file').default;
+const Chunk = require('../../db/models/chunk').default;
 const DEFAULT_ENCODING = 'utf-8';
 const {getFile, uploadFile} = require('../../client/storage');
 const config = require('config');

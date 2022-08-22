@@ -18,6 +18,10 @@ const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('
 const {createCache} = require('../../util/cache');
 const {ETH_RESOLVER_ABI} = require('../../name_service/abis/resolver');
 const {POINT_ENS_TEXT_RECORD_KEY} = require('../../name_service/constants');
+const {hashFn} = require('../../util');
+const {Op} = require('sequelize');
+const Event = require('../../db/models/event').default;
+const EventScan = require('../../db/models/event_scan').default;
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -69,7 +73,7 @@ const abisByContractName = {};
 
 // web3.js providers
 const providers = {
-    [DEFAULT_NETWORK]: {
+    [ DEFAULT_NETWORK ]: {
         http: createWeb3Instance({
             protocol: 'http',
             network: DEFAULT_NETWORK
@@ -140,7 +144,8 @@ ethereum.loadPointContract = async (
             if (contractName === 'Identity' && mode !== 'e2e' && mode !== 'zappdev') {
                 try {
                     log.debug('Fetching Identity contract from storage');
-                    const abiFile = await getFile(config.get('identity_contract_id'));
+                    const identityContractAbiId = config.get('identity_contract_id');
+                    const abiFile = await getFile(identityContractAbiId);
                     await fs.writeFile(abiFileName, abiFile);
 
                     log.debug('Successfully fetched identity contract from storage');
@@ -323,6 +328,168 @@ ethereum.callContract = async (target, contractName, method, params, version = '
     }
 };
 
+const _performScanForContractEvents = async(contract, contract_address, chain_id, fromBlock, toBlock) => {
+    log.debug({fn:'_performScanForContractEvents', contract_address, fromBlock, toBlock});
+
+    const event_name = null;
+    const events = await contract.getPastEvents(event_name, {fromBlock: fromBlock, toBlock: toBlock});
+
+    for (const event of events) {
+        const id = hashFn(new Buffer(contract_address + '_' + event.id + '_' + event.transactionHash)).toString('hex');
+
+        await Event.findByIdOrCreate(id, {
+            id,
+            raw_id: event.id,
+            contract_address: contract_address,
+            chain_id: chain_id,
+            block_number: event.blockNumber,
+            block_hash: event.blockHash,
+            transaction_hash: event.transactionHash,
+            transaction_index: event.transactionIndex,
+            log_index: event.logIndex,
+            removed: event.removed,
+            return_values: event.returnValues,
+            event: event.event,
+            signature: event.signature,
+            raw: event.raw,
+            topic0: (event.raw.topics[0]) ? event.raw.topics[0] : null,
+            topic1: (event.raw.topics[1]) ? event.raw.topics[1] : null,
+            topic2: (event.raw.topics[2]) ? event.raw.topics[2] : null
+        });
+    }
+
+    const id = contract_address + '_' + fromBlock + '_' + toBlock;
+    await EventScan.findByIdOrCreate(id, {
+        id,
+        contract_address: contract_address,
+        chain_id: chain_id,
+        from_block: fromBlock,
+        to_block: toBlock
+    });
+};
+
+const _renewContractEventsCache = async(chain_id, contract, contract_address, queryFromBlock, queryToBlock) => {
+    // force to ints for security
+    queryFromBlock = queryFromBlock + 0;
+    queryToBlock = queryToBlock + 0;
+
+    // make sure they're chronological, if not, swap
+    if (queryFromBlock > queryToBlock) {
+        [queryFromBlock, queryToBlock] = [queryToBlock, queryFromBlock];
+    }
+
+    // pull all possible existing scan ranges within reach
+    const query = {
+        where: {
+            contract_address: contract_address,
+            chain_id: chain_id,
+
+            [Op.or]: [
+                // include those with ending of the scanned range within our interval
+                {
+                    [Op.and]: [
+                        {to_block: {[Op.gte]: queryFromBlock}},
+                        {to_block: {[Op.lte]: queryToBlock}}
+                    ]
+                },
+                // include those with beginning of the scanned range within our interval
+                {
+                    [Op.and]: [
+                        {from_block: {[Op.gte]: queryFromBlock}},
+                        {from_block: {[Op.lte]: queryToBlock}}
+                    ]
+                },
+                // include those that are surrounding our interval completely
+                {
+                    [Op.and]: [
+                        {from_block: {[Op.lte]: queryFromBlock}},
+                        {from_block: {[Op.gte]: queryToBlock}}
+                    ]
+                }
+            ]
+        },
+        order: [
+            ['from_block', 'ASC'] // makes it chronological
+        ]
+    };
+    const scanned_ranges = await EventScan.findAll(query);
+
+    // push one "fake" range, so that the cycle goes one last time
+    scanned_ranges.push({from_block: queryToBlock + 1, to_block: queryToBlock + 1, fake: true});
+
+    let cursor = queryFromBlock;
+    let max_scanned = 0;
+    for (const range of scanned_ranges) {
+        if (range.from_block <= cursor) {
+            // the scanned range starts earlier or at the same time as our query beginning or scan_cursor
+            // fast-forward
+            cursor = Math.max(cursor, range.to_block + 1);
+        } else {
+            // our query starts earlier than this range, let's scan everything before it
+            const cursor_end = range.from_block - 1;
+            const range_length = cursor_end - cursor;
+            if (range_length >= 0) { // don't scan negative ranges
+                const PAGE_SIZE = Number(config.get('network.event_block_page_size'));
+                for (let scan_from = cursor; scan_from <= cursor_end; scan_from += PAGE_SIZE) {
+                    const scan_to = Math.min(queryToBlock, scan_from + PAGE_SIZE - 1, cursor_end);
+                    await _performScanForContractEvents(contract, contract_address, chain_id, scan_from, scan_to);
+                }
+            }
+            cursor = Math.max(cursor, range.to_block + 1);
+        }
+        max_scanned = (! range.fake) ? Math.max(max_scanned, range.to_block) : max_scanned;
+
+        if (cursor > queryToBlock) break; // we're done, we're outside the query zone
+    }
+
+    // collapse them
+
+    // we are guaranteed to have scanned queryFromBlock..max_scanned range
+    // if there are more scanned ranges, collapse them
+    const first_range = await EventScan.findOne();
+    if (!first_range) return; // No ranges found by this query - just forget about it
+    if (first_range.from_block === queryFromBlock && first_range.to_block === max_scanned) return; // already done
+
+    first_range.from_block = Math.min(first_range.from_block, queryFromBlock);
+    first_range.to_block = Math.max(first_range.to_block, max_scanned);
+    await first_range.save();
+
+    query.where['id'] = {[Op.ne]: first_range.id};
+    await EventScan.destroy(query);
+};
+
+ethereum.getPaginatedPastEvents = async (target, contractName, event, options) => {
+    const contract = await ethereum.loadWebsiteContract(target, contractName);
+    const contract_address = contract._address;
+
+    // make sure chain_id available, to not mix them
+    const chain_id = DEFAULT_NETWORK;
+    if (!chain_id) throw new Error('Chain ID is empty, don\'t know for which chain to save the events');
+
+    // If filter contains an address, convert it to checksum.
+    if (options.filter && options.filter.identityOwner) {
+        options.filter.identityOwner = ethereum.toChecksumAddress(options.filter.identityOwner);
+    }
+
+    if (options.toBlock === 'latest') {
+        const latestBlockNumber = await ethereum.getBlockNumber();
+        options.toBlock = latestBlockNumber;
+    }
+
+    await _renewContractEventsCache(chain_id, contract, contract_address, options.fromBlock, options.toBlock);
+
+    let events = await Event.fetchCachedEvents(chain_id, contract_address, event, options);
+
+    // filter non-indexed properties from return value for convenience
+    if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
+        for (const k in options.filter) {
+            events = events.filter(e => e.returnValues[k] === options.filter[k]);
+        }
+    }
+
+    return events;
+};
+
 ethereum.getPastEvents = async (
     target,
     contractName,
@@ -336,30 +503,42 @@ ethereum.getPastEvents = async (
         options.filter.identityOwner = ethereum.toChecksumAddress(options.filter.identityOwner);
     }
 
+    return await ethereum.getPaginatedPastEvents(target, contractName, event, options);
+
+
+
+
     const eventBlocksPageSize = 10000;
     let latestBlock = 0;
-    if (options.toBlock === 'latest'){
+    if (options.toBlock === 'latest') {
         latestBlock = await getWeb3().eth.getBlockNumber();
     } else {
         latestBlock = options.toBlock;
     }
 
+
+
     const ranges = [];
-    for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize){
-        ranges.push(
-            {
-                fromBlock: start, 
-                toBlock: (start + eventBlocksPageSize < latestBlock 
-                    ? start + eventBlocksPageSize 
-                    : latestBlock)
-            });
+    for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize) {
+        ranges.push({
+            fromBlock: start,
+            toBlock:
+                start + eventBlocksPageSize < latestBlock
+                    ? start + eventBlocksPageSize
+                    : latestBlock
+        });
     }
-    const eventsParts = await Promise.all(ranges.map(({fromBlock, toBlock}) => contract.getPastEvents(event, {...options, fromBlock, toBlock})));
+
+    const eventsParts = await Promise.all(
+        ranges.map(({fromBlock, toBlock}) =>
+            contract.getPastEvents(event, {...options, fromBlock, toBlock})
+        )
+    );
+
     let events = [];
-    for (const evPart of eventsParts){
+    for (const evPart of eventsParts) {
         events = events.concat(evPart);
     }
-    //let events = await contract.getPastEvents(event, options);
 
     //filter non-indexed properties from return value for convenience
     if (options.hasOwnProperty('filter') && Object.keys(options.filter).length > 0) {
