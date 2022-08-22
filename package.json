@@ -121,7 +121,7 @@
     "start:zappdev": "MODE=zappdev npm run watch",
     "start:dev": "NODE_ENV=development npm run watch",
     "start:e2e": "MODE=e2e npm run watch",
-    "watch": "nodemon",
+    "watch": "npm run --prefix ./internal/explorer.point --ignore-scripts build && nodemon",
     "build": "perl -i -pe\"s|timeout: 20000|timeout: 60000|\" node_modules/@trufflesuite/web3-provider-engine/subproviders/rpc.js && tsc",
     "postbuild": "npm run --prefix ./internal/explorer.point build",
     "pkg": "pkg .",
