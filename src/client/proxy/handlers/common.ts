@@ -18,6 +18,8 @@ import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
 import {parseDomainRegistry} from '../../../name_service/registry';
 import {HttpForbiddenError, HttpNotFoundError} from '../../../core/exceptions';
+import csrfTokens from '../../zweb/renderer/csrfTokens';
+import {randomBytes} from 'crypto';
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');
 const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
@@ -83,16 +85,16 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
 
             const zappName = host.endsWith('dev') ? `${host.split('dev')[0]}.point` : host;
 
-            const configZappsDir = config.has('zappsdir') ? String(config.get('zappsdir')) : '';
+            const configZappsDir: string = config.has('zappsdir') ? config.get('zappsdir') : '';
             let zappDir: string;
-            if (configZappsDir === 'undefined' || configZappsDir === '' || configZappsDir === 'null') {
-                zappDir = path.resolve(__dirname, `../../../../example/${zappName}`);
-            } else {
+            if (configZappsDir) {
                 if (configZappsDir.startsWith('/') || configZappsDir.startsWith('~')) {
                     zappDir = path.resolve(configZappsDir, zappName);
                 } else {
                     zappDir = path.resolve(__dirname, `../../../../${configZappsDir}/${zappName}`);
                 }
+            } else {
+                zappDir = path.resolve(__dirname, `../../../../example/${zappName}`);
             }
 
             const deployJsonPath = path.resolve(zappDir, 'point.deploy.json');
@@ -104,12 +106,12 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
 
             const publicPath = path.resolve(zappDir, rootDirPath);
             if (!existsSync(publicPath)) {
-                throw new Error('Public path ' + publicPath + ' doesnt exist.');
+                throw new Error(`Public path ${publicPath} doesn't exist`);
             }
 
             const routesJsonPath = path.resolve(zappDir, 'routes.json');
             if (!existsSync(routesJsonPath)) {
-                throw new Error('Routes file ' + routesJsonPath + ' doesnt exist.');
+                throw new Error(`Routes file ${routesJsonPath} doesn't exist`);
             }
 
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
@@ -194,9 +196,12 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 if (matches) {
                     refererHost = matches[1];
                 }
+                if (!csrfTokens.point) {
+                    csrfTokens.point = randomBytes(64).toString('hex');
+                }
                 return templateManager.render(Template.WEB2LINK, {
                     url: sanitizeUrl('http://' + host + (req.url ?? '')),
-                    csrfToken: queryParams?.csrfToken,
+                    csrfToken: csrfTokens.point,
                     host: refererHost
                 });
             } else {
