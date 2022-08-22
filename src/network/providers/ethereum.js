@@ -379,7 +379,7 @@ const _renewContractEventsCache = async(chain_id, contract, contract_address, qu
     }
 
     // pull all possible existing scan ranges within reach
-    const scanned_ranges = await EventScan.findAll({
+    const query = {
         where: {
             contract_address: contract_address,
             chain_id: chain_id,
@@ -411,12 +411,14 @@ const _renewContractEventsCache = async(chain_id, contract, contract_address, qu
         order: [
             ['from_block', 'ASC'] // makes it chronological
         ]
-    });
+    };
+    const scanned_ranges = await EventScan.findAll(query);
 
     // push one "fake" range, so that the cycle goes one last time
-    scanned_ranges.push({from_block: queryToBlock + 1, to_block: queryToBlock + 1});
+    scanned_ranges.push({from_block: queryToBlock + 1, to_block: queryToBlock + 1, fake: true});
 
     let cursor = queryFromBlock;
+    let max_scanned = 0;
     for (const range of scanned_ranges) {
         if (range.from_block <= cursor) {
             // the scanned range starts earlier or at the same time as our query beginning or scan_cursor
@@ -435,8 +437,25 @@ const _renewContractEventsCache = async(chain_id, contract, contract_address, qu
             }
             cursor = Math.max(cursor, range.to_block + 1);
         }
+        max_scanned = (! range.fake) ? Math.max(max_scanned, range.to_block) : max_scanned;
+
         if (cursor > queryToBlock) break; // we're done, we're outside the query zone
     }
+
+    // collapse them
+
+    // we are guaranteed to have scanned queryFromBlock..max_scanned range
+    // if there are more scanned ranges, collapse them
+    const first_range = await EventScan.findOne();
+    if (!first_range) return; // No ranges found by this query - just forget about it
+    if (first_range.from_block === queryFromBlock && first_range.to_block === max_scanned) return; // already done
+
+    first_range.from_block = Math.min(first_range.from_block, queryFromBlock);
+    first_range.to_block = Math.max(first_range.to_block, max_scanned);
+    await first_range.save();
+
+    query.where['id'] = {[Op.ne]: first_range.id};
+    await EventScan.destroy(query);
 };
 
 ethereum.getPaginatedPastEvents = async (target, contractName, event, options) => {
