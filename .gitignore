@@ -32,7 +32,6 @@ hardhat/build
 hardhat/contracts
 hardhat/cache
 hardhat/tests
-hardhat/resources
 hardhat/typechain
 resources/liveprofile/
 .openzeppelin

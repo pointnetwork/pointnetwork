@@ -1,6 +1,9 @@
 const initFolders = require('../dist/initFolders');
 const initStorage = require('../dist/client/storage/init');
 const migrate = require('../dist/util/migrate');
+const path = require('path');
+
+process.env.HARDHAT_CONFIG = path.resolve(__dirname, '..', 'hardhat', 'hardhat.config.js');
 
 module.exports = async () => {
     if (process.env.TESTING_IN_DOCKER) {
