@@ -6,12 +6,15 @@ import {
     statAsync,
     escapeString,
     hashFn,
-    calculateDirSize
+    calculateDirSize,
+    isValidStorageId,
+    isZeroStorageId
 } from '../../util';
 import {promises as fs} from 'fs';
 import path from 'path';
 import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, CONCURRENT_DOWNLOAD_DELAY, FILES_DIR, log} from './config';
 import {uploadChunk, getChunk} from './chunk';
+import {HttpNotFoundError} from '../../core/exceptions';
 
 type FileInfo = {
     type: keyof typeof FILE_TYPE
@@ -218,6 +221,10 @@ export const getFile = async (
     log.debug({fileId: rawId}, 'Getting file');
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
 
+    // ID validation
+    if (! isValidStorageId(id)) throw new Error('Invalid storage ID');
+    if (isZeroStorageId(id)) throw new Error('Zero storage ID doesn\'t exist');
+
     const filePath = path.join(FILES_DIR, `file_${id}`);
     const file = await File.findByIdOrCreate(id);
     if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {
@@ -314,13 +321,13 @@ export const getFileIdByPath = async (dirId: string, filePath: string): Promise<
     const segments = filePath.split(/[/\\]/).filter(s => s !== '');
     const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
     if (!nextFileOrDir) {
-        throw new Error(`Failed to find file ${filePath} in directory ${dirId}: not found`);
+        throw new HttpNotFoundError(`Failed to find file ${filePath} in directory ${dirId}: not found`);
     }
     if (segments.length === 1) {
         return nextFileOrDir.id;
     }
     if (nextFileOrDir.type === FILE_TYPE.fileptr) {
-        throw new Error(
+        throw new HttpNotFoundError(
             `Failed to find file ${filePath} in directory ${dirId}: ${segments[0]} is not a directory`
         );
     } else {
