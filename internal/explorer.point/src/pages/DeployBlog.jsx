@@ -2,47 +2,13 @@ import axios from 'axios';
 import { useAppContext } from '../context/AppContext';
 import { useState } from 'react';
 
-// TODO: move somewhere
-const delay = (ms) =>
-    new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-
-const BLOG_FACTORY_ADDRESS = '0x1Df9546CC23D05D99fE05c0b75278d3172afB8C3';
+const VERSION = '0.1';
 const ROOT_DIR_ID =
-    '00f4b6c161016d0adf1bd89ebd43c670ad69288bb3cf3d9407db018dde3c69df';
+    'c4226811df9ef1f97080b6b9d1af107a9795389d8e71beb18717b3b5d6edc1d9';
 const ROUTES_FILE_ID =
-    'c610eae90f7d344183a30049fb217c1c057760fc276ac9acac8bbaf1511ff273';
-const ARTIFACT_ID =
-    'cb33fc5188dce9d263a1af5e7dd264924e285941cd23883511d9f679623b4413';
-
-const CREATE_BLOG_INTERFACE = {
-    inputs: [],
-    name: 'createBlog',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-};
-
-const IS_BLOG_CREATED_INTERFACE = {
-    inputs: [
-        {
-            internalType: 'address',
-            name: '_blogOwner',
-            type: 'address',
-        },
-    ],
-    name: 'isBlogCreated',
-    outputs: [
-        {
-            internalType: 'contract Blog',
-            name: '',
-            type: 'address',
-        },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-};
+    '0b5f577f90775b5f92e3afc5e0ece7ddbf34fe024dcab4a1fb009900738b5ac9';
+const CONTRACT_SOURCE_ID =
+    '5a6b7f2104a6aedb1e25eb2581c345bdc1ada72b536a48fc6a90699e13f04f4c';
 
 const DeployBlog = () => {
     const { walletIdentity } = useAppContext();
@@ -51,89 +17,39 @@ const DeployBlog = () => {
     const [error, setError] = useState(false);
     const [success, setSuccess] = useState(false);
 
-    const checkBlogData = async (acc) => {
-        const {
-            data: { data: getBlogData },
-        } = await axios.post('/v1/api/contract/encodeFunctionCall', {
-            jsonInterface: IS_BLOG_CREATED_INTERFACE,
-            params: [acc],
-            _csrf: window.localStorage.getItem('csrf_token'),
-        });
-        const blogContractAddressRes = await window.ethereum.request({
-            method: 'eth_call',
-            params: [
-                {
-                    from: acc,
-                    to: BLOG_FACTORY_ADDRESS,
-                    data: getBlogData,
-                },
-                'latest',
-            ],
-        });
-        const {
-            data: {
-                data: { 0: blogContractAddress },
-            },
-        } = await axios.post('/v1/api/contract/decodeParameters', {
-            typesArray: ['address'],
-            hexString: blogContractAddressRes,
-            _csrf: window.localStorage.getItem('csrf_token'),
-        });
-        return blogContractAddress;
-    };
-
     const deploy = async (subidentity) => {
         try {
-            setLoading('Registering subidentity...');
             // 1. deploy subidentity
+            setLoading('Registering subidentity...');
             await axios.post('/v1/api/identity/sub/register', {
                 subidentity,
                 parentIdentity: walletIdentity,
                 _csrf: window.localStorage.getItem('csrf_token'),
             });
-            setLoading('Creating blog contract...');
-            // 2. call createBlog
-            const [account] = await window.ethereum.request({
-                method: 'eth_requestAccounts',
-            });
-            const {
-                data: { data: createBlogData },
-            } = await axios.post('/v1/api/contract/encodeFunctionCall', {
-                jsonInterface: CREATE_BLOG_INTERFACE,
-                params: [],
-                _csrf: window.localStorage.getItem('csrf_token'),
-            });
-            await window.ethereum.request({
-                method: 'eth_sendTransaction',
-                params: [
-                    {
-                        from: account,
-                        to: BLOG_FACTORY_ADDRESS,
-                        data: createBlogData,
-                    },
-                ],
-            });
-            setLoading('Checking created blog contract...');
-            // 3. get blog contract
-            // We have an issue that sometimes tx is not mined yet, so we need to try several
-            // times with some interval
-            // TODO: make it cleaner and manually retryable
-            let blogContractAddress;
-            for (let i = 0; i < 5; i++) {
-                const address = await checkBlogData(account);
-                if (address !== '0x0000000000000000000000000000000000000000') {
-                    blogContractAddress = address;
-                    break;
-                }
-                await delay(1000);
-            }
-            if (!blogContractAddress) {
-                throw new Error(
-                    'Could not check for deployed blog after 5 retries',
-                );
-            }
-            setLoading('Updating IKV...');
+
+            // 2. Download contract
+            setLoading('Downloading blog contract...');
+            const { data: contractFile } = await axios.get(
+                `/_storage/${CONTRACT_SOURCE_ID}`,
+            );
+
+            // 3. Deploy contract
+            setLoading('Deploying blog contract...');
+            const formData = new FormData();
+            formData.append('contractNames', '["Blog"]');
+            formData.append('version', VERSION);
+            formData.append('target', `${subidentity}.${walletIdentity}`);
+            formData.append(
+                'files',
+                new Blob([contractFile], { type: 'text/plain' }),
+            );
+            await axios.post(
+                '/point_api/deploy_upgradable_contracts',
+                formData,
+            );
+
             // 4. update IKV rootDir
+            setLoading('Updating IKV...');
             await axios.post('/v1/api/identity/ikvPut', {
                 identity: `${subidentity}.${walletIdentity}`,
                 key: '::rootDir',
@@ -145,20 +61,6 @@ const DeployBlog = () => {
                 identity: `${subidentity}.${walletIdentity}`,
                 key: 'zdns/routes',
                 value: ROUTES_FILE_ID,
-                _csrf: window.localStorage.getItem('csrf_token'),
-            });
-            // 6. update IKV contract address
-            await axios.post('/v1/api/identity/ikvPut', {
-                identity: `${subidentity}.${walletIdentity}`,
-                key: 'zweb/contracts/address/Blog',
-                value: blogContractAddress,
-                _csrf: window.localStorage.getItem('csrf_token'),
-            });
-            // 7. update IKV contract artifact
-            await axios.post('/v1/api/identity/ikvPut', {
-                identity: `${subidentity}.${walletIdentity}`,
-                key: 'zweb/contracts/abi/Blog',
-                value: ARTIFACT_ID,
                 _csrf: window.localStorage.getItem('csrf_token'),
             });
             setLoading(null);
@@ -211,7 +113,8 @@ const DeployBlog = () => {
                         rel="noreferrer"
                     >
                         {`https://${subhandle}.${walletIdentity}.point`}
-                    </a>
+                    </a>{' '}
+                    (But it may take a while for it to be available)
                 </p>
             )}
         </div>

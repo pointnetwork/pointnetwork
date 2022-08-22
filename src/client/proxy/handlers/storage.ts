@@ -8,21 +8,27 @@ import {Template, templateManager} from '../templateManager';
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format
 const attachStorageHandlers = (server: FastifyInstance) => {
-    ['/_storage/', '/_storage'].forEach(route => {
-        server.post(route, async (req, res) => {
-            if (!req.headers['content-type']?.match('multipart/form-data')) {
-                return res.status(415).send('Only multipart/form-data is supported');
-            }
+    server.post('/_storage/', async (req: any, res: any) => {
+        if (!req.headers['content-type']?.match('multipart/form-data')) {
+            return res.status(415).send('Only multipart/form-data is supported');
+        }
 
-            const file = await req.file();
-            if (!file) {
-                return res.status(400).send('No files in the body');
+        const files = [];
+        const fields: Record<string, any> = {};
+        for await (const part of req.parts()) {
+            if (part.file) {
+                files.push(await part.toBuffer());
+            } else {
+                fields[part.fieldname] = (part as any).value;
             }
+        }
 
-            const fileBuf = await file.toBuffer();
-            const uploadedId = await uploadFile(fileBuf);
-            return {data: uploadedId};
-        });
+        if (files.length === 0) {
+            return res.status(400).send('No files in the body');
+        }
+
+        const uploadedId = await uploadFile(files[0]);
+        return res.status(200).send({data: uploadedId});
     });
 
     server.get('/_storage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {

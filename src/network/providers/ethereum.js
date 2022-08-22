@@ -505,9 +505,6 @@ ethereum.getPastEvents = async (
 
     return await ethereum.getPaginatedPastEvents(target, contractName, event, options);
 
-
-
-
     const eventBlocksPageSize = 10000;
     let latestBlock = 0;
     if (options.toBlock === 'latest') {
@@ -515,8 +512,6 @@ ethereum.getPastEvents = async (
     } else {
         latestBlock = options.toBlock;
     }
-
-
 
     const ranges = [];
     for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize) {
