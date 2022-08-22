@@ -4,9 +4,20 @@ export default function usePaginatedEvents({ host, contract, event, filter }) {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const mounted = useRef(true);
+    const mounted = useRef(false);
+    const [rerender, setRerender] = useState(0);
+
+    const refetch = useCallback((delay = 0) => {
+        // Optionally add a delay in case the refetch occurs after sending a tx.
+        setTimeout(() => {
+            if (mounted.current) {
+                setRerender((prev) => prev + 1);
+            }
+        }, delay);
+    }, []);
 
     useEffect(() => {
+        mounted.current = true;
         async function fetchData(cursor = 'latest') {
             setError('');
             try {
@@ -37,11 +48,11 @@ export default function usePaginatedEvents({ host, contract, event, filter }) {
 
         fetchData();
         return () => (mounted.current = false);
-    }, []);
+    }, [rerender]);
 
     const add = useCallback((newItem) => {
         setData((prev) => [...prev, newItem]);
     }, []);
 
-    return { data, loading, error, add };
+    return { data, loading, error, add, refetch };
 }

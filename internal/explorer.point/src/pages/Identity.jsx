@@ -1,11 +1,12 @@
 import { useRoute } from 'wouter';
 import Container from 'react-bootstrap/Container';
 import BlockTime from '../components/BlockTime';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Loading from '../components/Loading';
 import OwnerToIdentity from '../components/OwnerToIdenity';
 import Swal from 'sweetalert2';
 import { useAppContext } from '../context/AppContext';
+import usePaginatedEvents from '../hooks/usePaginatedEvents';
 
 const isHash = (str) => {
     const s = str.startsWith('0x') ? str.substr(2) : str;
@@ -32,7 +33,7 @@ const IkvEntry = (props) => {
             //validate item.key
             const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
             const found = item.version.match(regex);
-            if(!found){
+            if (!found) {
                 setLoading(false);
                 Swal.fire({
                     icon: 'error',
@@ -43,8 +44,13 @@ const IkvEntry = (props) => {
             }
 
             //increment patch of item.key
-            let newVersionParam = found.groups.major + '.' + found.groups.minor + '.' + (parseInt(found.groups.patch) + 1)
-            
+            let newVersionParam =
+                found.groups.major +
+                '.' +
+                found.groups.minor +
+                '.' +
+                (parseInt(found.groups.patch) + 1);
+
             await window.point.contract.send({
                 contract: 'Identity',
                 method: 'ikvPut',
@@ -80,9 +86,7 @@ const IkvEntry = (props) => {
                     item.value
                 )}
             </td>
-            <td>
-                {item.version}
-            </td>
+            <td>{item.version}</td>
             <td>
                 <BlockTime blockNumber={item.blockNumber} />
             </td>
@@ -130,12 +134,8 @@ function parsePublicKey(key) {
 
 export default function Identity() {
     const [, { handle }] = useRoute('/identities/:handle');
-    const [ikvset, setIkvset] = useState([]);
     const [owner, setOwner] = useState();
-    const [deployers, setDeployers] = useState([]);
     const [isLoadingOwner, setIsLoadingOwner] = useState(true);
-    const [isLoadingIkv, setIsLoadingIkv] = useState(true);
-    const [isLoadingDeployers, setIsLoadingDeployers] = useState(true);
     const [isOwner, setIsOwner] = useState(false);
     const [addAddress, setAddAddress] = useState('');
     const [publicKey, setPublicKey] = useState('');
@@ -146,12 +146,24 @@ export default function Identity() {
         identityNetwork,
     } = useAppContext();
 
+    const ikvEvents = usePaginatedEvents({
+        host: '@',
+        contract: 'Identity',
+        event: 'IKVSet',
+        filter: { identity: handle },
+    });
+
+    const deployerEvents = usePaginatedEvents({
+        host: '@',
+        contract: 'Identity',
+        event: 'IdentityDeployerChanged',
+        filter: { identity: handle },
+    });
+
     const isPointIdentity = !['ethereum', 'solana'].includes(identityNetwork);
 
     useEffect(() => {
         fetchOwner();
-        fetchIkv();
-        fetchDeployers();
     }, [handle]);
 
     const fetchOwner = async () => {
@@ -189,68 +201,45 @@ export default function Identity() {
         fetchPublicKey();
     }, [isOwner]);
 
-    const filteredIkvset = Object.values(
-        (ikvset || []).reduce((collected, newItem) => {
-            const {
-                data: { key, value, version },
-                blockNumber,
-            } = newItem;
-            const old = collected[key];
-            if (!old) {
-                collected[key] = {
-                    key,
-                    value,
-                    version,
-                    blockNumber,
-                };
-                return collected;
-            }
-            if (old.blockNumber < blockNumber) {
-                collected[key] = {
-                    key,
-                    value,
-                    version,
-                    blockNumber,
-                };
-            }
-            return collected;
-        }, {}),
+    const filteredIkvset = useMemo(
+        () =>
+            Object.values(
+                ikvEvents.data.reduce((collected, newItem) => {
+                    const {
+                        data: { key, value, version },
+                        blockNumber,
+                    } = newItem;
+                    const old = collected[key];
+                    if (!old) {
+                        collected[key] = {
+                            key,
+                            value,
+                            version,
+                            blockNumber,
+                        };
+                        return collected;
+                    }
+                    if (old.blockNumber < blockNumber) {
+                        collected[key] = {
+                            key,
+                            value,
+                            version,
+                            blockNumber,
+                        };
+                    }
+                    return collected;
+                }, {}),
+            ),
+        [ikvEvents.data],
     );
 
-    const fetchIkv = async () => {
-        setIsLoadingIkv(true);
-        const ikvsetFetched = await window.point.contract.events({
-            host: '@',
-            contract: 'Identity',
-            event: 'IKVSet',
-            filter: { identity: handle },
-        });
-        if (ikvsetFetched.data !== '') {
-            setIkvset(ikvsetFetched.data);
-        }
-        setIsLoadingIkv(false);
-    };
-
-    const fetchDeployers = async () => {
-        setIsLoadingDeployers(true);
-        const deployersFetched = await window.point.contract.events({
-            host: '@',
-            contract: 'Identity',
-            event: 'IdentityDeployerChanged',
-            filter: { identity: handle },
-        });
-        if (deployersFetched.data !== '') {
-            setDeployers(deployersFetched.data);
-        }
-        setIsLoadingDeployers(false);
-    };
-
     const renderDeployerEntry = (deployer) => {
-        const lastEntry = deployers
+        const lastEntry = deployerEvents.data
             .filter((e) => e.data.deployer === deployer)
             .reduce((prev, current) =>
                 prev.blockNumber > current.blockNumber ? prev : current,
             );
+
         return (
             <tr key={deployer}>
                 <th>
@@ -288,13 +277,11 @@ export default function Identity() {
     };
 
     const EmptyMsg = () =>
-        ikvset.length === 0 ? (
+        ikvEvents.data.length === 0 && !ikvEvents.loading ? (
             <div>
                 <em>No records found</em>
             </div>
-        ) : (
-            ''
-        );
+        ) : null;
 
     const handleChange = (e) => {
         setAddAddress(e.target.value);
@@ -309,7 +296,6 @@ export default function Identity() {
 
     const revokeDeployer = async (deployer) => {
         try {
-            setIsLoadingDeployers(true);
             await window.point.contract.call({
                 contract: 'Identity',
                 method: 'removeIdentityDeployer',
@@ -320,20 +306,18 @@ export default function Identity() {
                 title: 'Success',
                 text: 'Deployer removed with success!',
             });
-            fetchDeployers();
+            deployerEvents.refetch(2_000);
         } catch (e) {
             Swal.fire({
                 icon: 'error',
                 title: 'Request Failed',
                 text: e.message,
             });
-            setIsLoadingDeployers(false);
         }
     };
 
     const activateDeployer = async (deployer) => {
         try {
-            setIsLoadingDeployers(true);
             await window.point.contract.call({
                 contract: 'Identity',
                 method: 'addIdentityDeployer',
@@ -344,7 +328,7 @@ export default function Identity() {
                 title: 'Success',
                 text: 'Deployer added with success!',
             });
-            fetchDeployers();
+            deployerEvents.refetch(2_000);
             return true;
         } catch (e) {
             Swal.fire({
@@ -352,7 +336,6 @@ export default function Identity() {
                 title: 'Request Failed',
                 text: e.message,
             });
-            setIsLoadingDeployers(false);
             return false;
         }
     };
@@ -372,7 +355,7 @@ export default function Identity() {
     const addIkvEntry = async () => {
         setAddingNewIkv(true);
         let regexp = new RegExp(/\d+\.\d+\.\d+/);
-        if(!regexp.test(ikvNewEntryVersion)){
+        if (!regexp.test(ikvNewEntryVersion)) {
             setAddingNewIkv(false);
             Swal.fire({
                 icon: 'error',
@@ -393,7 +376,7 @@ export default function Identity() {
                     ikvNewEntryVersion,
                 ],
             });
-            await fetchIkv();
+            ikvEvents.refetch();
             cleanForm();
             setAddingNewIkv(false);
         } catch (error) {
@@ -452,100 +435,93 @@ export default function Identity() {
             </table>
 
             <div className="mt-5 mb-5">
-                <h3 className="mb-4">Identity Key Value Store (ikv):</h3>
-                {isLoadingIkv ? (
-                    <Loading />
-                ) : (
-                    <>
-                        {filteredIkvset.length ? (
-                            <table className="table table-bordered table-primary table-striped table-hover table-responsive">
-                                <thead>
-                                    <th>Key</th>
-                                    <th>Value</th>
-                                    <th>Version</th>
-                                    <th>Modified</th>
-                                    <th></th>
-                                </thead>
-                                <tbody>
-                                    {filteredIkvset.map((item) => (
-                                        <IkvEntry
-                                            key={item.key}
-                                            handle={handle}
-                                            item={item}
-                                            onUpdated={fetchIkv}
-                                            showEdit={showIkvEditForm}
-                                        />
-                                    ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <div>
-                                <EmptyMsg />
+                <h3 className="mb-4">
+                    Identity Key Value Store (ikv):{' '}
+                    {ikvEvents.loading && <Loading />}
+                </h3>
+                <>
+                    {filteredIkvset.length ? (
+                        <table className="table table-bordered table-primary table-striped table-hover table-responsive">
+                            <thead>
+                                <th>Key</th>
+                                <th>Value</th>
+                                <th>Version</th>
+                                <th>Modified</th>
+                                <th></th>
+                            </thead>
+                            <tbody>
+                                {filteredIkvset.map((item) => (
+                                    <IkvEntry
+                                        key={item.key}
+                                        handle={handle}
+                                        item={item}
+                                        onUpdated={ikvEvents.refetch}
+                                        showEdit={showIkvEditForm}
+                                    />
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div>
+                            <EmptyMsg />
+                        </div>
+                    )}
+                    {showIkvEditForm ? (
+                        <div className="row g-3 mt-3">
+                            <h5>Add new entry</h5>
+                            <div className="col-xs-12 col-sm-3">
+                                <input
+                                    type="text"
+                                    name="ikvEntryKey"
+                                    value={ikvNewEntryKey}
+                                    onChange={(event) =>
+                                        setIkvNewEntryKey(event.target.value)
+                                    }
+                                    className="form-control"
+                                    placeholder="Key"
+                                />
                             </div>
-                        )}
-                        {showIkvEditForm ? (
-                            <div className="row g-3 mt-3">
-                                <h5>Add new entry</h5>
-                                <div className="col-xs-12 col-sm-3">
-                                    <input
-                                        type="text"
-                                        name="ikvEntryKey"
-                                        value={ikvNewEntryKey}
-                                        onChange={(event) =>
-                                            setIkvNewEntryKey(
-                                                event.target.value,
-                                            )
-                                        }
-                                        className="form-control"
-                                        placeholder="Key"
-                                    />
-                                </div>
-                                <div className="col-xs-12 col-sm-3">
-                                    <input
-                                        type="text"
-                                        name="ikvEntryValueRef"
-                                        value={ikvNewEntryValue}
-                                        onChange={(event) =>
-                                            setIkvNewEntryValue(
-                                                event.target.value,
-                                            )
-                                        }
-                                        className="form-control"
-                                        placeholder="Value"
-                                    />
-                                </div>
-                                <div className="col-xs-12 col-sm-2">
-                                    <input
-                                        type="text"
-                                        name="ikvEntryVersion"
-                                        value={ikvNewEntryVersion}
-                                        onChange={(event) =>
-                                            setIkvNewEntryVersion(
-                                                event.target.value,
-                                            )
-                                        }
-                                        className="form-control"
-                                        placeholder="Version"
-                                    />
-                                </div>
-                                <div className="col-xs-12 col-sm-4">
-                                    <button
-                                        className="btn btn-primary mb-4 w-full"
-                                        onClick={addIkvEntry}
-                                        disabled={!addEntryButtonEnabled}
-                                    >
-                                        Add
-                                    </button>
-                                </div>
+                            <div className="col-xs-12 col-sm-3">
+                                <input
+                                    type="text"
+                                    name="ikvEntryValueRef"
+                                    value={ikvNewEntryValue}
+                                    onChange={(event) =>
+                                        setIkvNewEntryValue(event.target.value)
+                                    }
+                                    className="form-control"
+                                    placeholder="Value"
+                                />
                             </div>
-                        ) : (
-                            ''
-                        )}
-                    </>
-                )}
+                            <div className="col-xs-12 col-sm-2">
+                                <input
+                                    type="text"
+                                    name="ikvEntryVersion"
+                                    value={ikvNewEntryVersion}
+                                    onChange={(event) =>
+                                        setIkvNewEntryVersion(
+                                            event.target.value,
+                                        )
+                                    }
+                                    className="form-control"
+                                    placeholder="Version"
+                                />
+                            </div>
+                            <div className="col-xs-12 col-sm-4">
+                                <button
+                                    className="btn btn-primary mb-4 w-full"
+                                    onClick={addIkvEntry}
+                                    disabled={!addEntryButtonEnabled}
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                    ) : null}
+                </>
             </div>
 
-            <h3>Deployers:</h3>
+            <h3>Deployers: {deployerEvents.loading && <Loading />}</h3>
             {isOwner && isPointIdentity ? (
                 <div className="row g-3">
                     <div className="col-sm-4">
@@ -568,22 +544,18 @@ export default function Identity() {
                     </div>
                 </div>
             ) : null}
-            {isLoadingDeployers ? (
-                <Loading />
-            ) : (
-                <>
-                    <table className="table table-bordered table-primary table-striped table-hover table-responsive">
-                        <tbody>
-                            {[
-                                ...new Set(
-                                    deployers.map((e) => e.data.deployer),
-                                ),
-                            ].map((deployer) => renderDeployerEntry(deployer))}
-                        </tbody>
-                    </table>
-                    <EmptyMsg />
-                </>
-            )}
+            <>
+                <table className="table table-bordered table-primary table-striped table-hover table-responsive">
+                    <tbody>
+                        {[
+                            ...new Set(
+                                deployerEvents.data.map((e) => e.data.deployer),
+                            ),
+                        ].map((deployer) => renderDeployerEntry(deployer))}
+                    </tbody>
+                </table>
+                <EmptyMsg />
+            </>
         </Container>
     );
 }
