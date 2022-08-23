@@ -12,6 +12,8 @@ import Zapps from './pages/Zapps';
 import Loading from './components/Loading';
 import ErrorBlock from './components/ErrorBlock';
 import DeployBlog from './pages/DeployBlog';
+import Upload from './pages/Upload';
+import UploadLocalServer from './pages/UploadLocalServer';
 
 const Main = () => {
     const { walletIdentity, walletAddr, isLoading, walletError } =
@@ -56,6 +58,12 @@ const Main = () => {
                             </Route>
                             <Route path="/deploy_blog">
                                 <DeployBlog />
+                            </Route>
+                            <Route path="/upload_test">
+                                <Upload />
+                            </Route>
+                            <Route path="/upload_local_server">
+                                <UploadLocalServer />
                             </Route>
                         </Switch>
                     ) : (
