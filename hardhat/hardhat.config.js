@@ -4,17 +4,24 @@ require('@openzeppelin/hardhat-upgrades');
 require('../hardhat/tasks/explorer/explorer-set-index-md');
 const config = require('config');
 const path = require('path');
+const os = require('os');
+
 
 let privateKey;
 // This will read either from config or from DEPLOYER_ACCOUNT env var
 if (config.has('deployer_account')) {
     privateKey = config.get('deployer_account');
 } else {
-    const keystorePath = path.resolve(config.get('wallet.keystore_path'));
+    const keystorePath = config.get('wallet.keystore_path');
     const wallet = require('ethereumjs-wallet').hdkey.fromMasterSeed(
         require('bip39').mnemonicToSeedSync(
             require(
-                path.join(keystorePath, 'key.json')
+                path.join(
+                    keystorePath.startsWith('~')
+                        ? `${os.homedir()}/${keystorePath.slice(1)}`
+                        : keystorePath,
+                    'key.json'
+                )
             ).phrase
         )
     ).getWallet();
