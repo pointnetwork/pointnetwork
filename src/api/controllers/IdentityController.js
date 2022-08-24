@@ -38,7 +38,7 @@ async function registerBountyReferral(address, type) {
         event = 'twitter_reg';
     }
 
-    const url = `https://bounty.pointnetwork.io/ref_success?event=${event}&ref=${referralCode ||
+    const url = `https://sale.pointnetwork.io/ref_success?event=${event}&ref=${referralCode ||
         EMPTY_REFERRAL_CODE}&addr=${address}`;
 
     return await axios.get(url);
