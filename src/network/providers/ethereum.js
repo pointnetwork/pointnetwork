@@ -988,8 +988,9 @@ ethereum.registerSubIdentity = async (subidentity, parentIdentity, address, comm
         if (Buffer.byteLength(commPublicKey) !== 64) {
             throw Error('registerIdentity: commPublicKey must be 64 bytes');
         }
-
-        parentIdentity = parentIdentity.replace('.point', '');
+        const parts = subidentity.split('.');
+        parentIdentity = parts[1];
+        subidentity = parts[0];
 
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
