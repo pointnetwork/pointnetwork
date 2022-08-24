@@ -151,7 +151,7 @@ export default function Home() {
                 >
                     <div className="bounty-banner-inner">
                         <div className="bounty-banner-header">
-                            <img alt="bounty" src={bountyLogo} />
+                            <img alt="Public Sale" src={bountyLogo} />
                             <h2>
                                 POINT <span>Public Sale</span>
                             </h2>
