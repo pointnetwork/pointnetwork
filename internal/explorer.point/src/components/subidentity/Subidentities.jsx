@@ -1,40 +1,41 @@
 import Loading from '../Loading';
 import SubidentityList from './SubidentityList';
 import SubidentityRegistration from './SubidentityRegistration';
-import usePaginatedEvents from '../../hooks/usePaginatedEvents';
+import { useState, useEffect } from 'react';
 
 export default function SubIdentities({ owner }) {
-    const { data, loading, error, add } = usePaginatedEvents({
-        host: '@',
-        contract: 'Identity',
-        event: 'SubidentityRegistered',
-        filter: { identityOwner: owner },
-    });
+    const [subidentities, setsubidentities] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchSubidentities();
+    }, []);
+
+    const fetchSubidentities = async () => {
+        setIsLoading(true);
+        const ids = await window.point.contract.call({
+            contract: 'Identity',
+            method: 'getSubidentitiesByOwner',
+            params: [owner],
+        });
+        setsubidentities(ids.data);
+
+        setIsLoading(false);
+    };
+
 
     const handleNewIdentity = (subidentity, parentIdentity) => {
-        add({
-            data: {
-                subhandle: subidentity,
-                handle: parentIdentity,
-                identityOwner: owner,
-            },
-        });
+        fetchSubidentities();
     };
 
     return (
         <div>
-            <h2>Sub-Identities {loading && <Loading />}</h2>
+            <h2>Sub-Identities {isLoading ? <Loading /> : ''}</h2>
             <hr />
-            {error ? (
-                <p className="red">Error: {error}</p>
-            ) : (
-                <>
-                    <SubidentityList subidentities={data} loading={loading} />
-                    <SubidentityRegistration
-                        onNewIdentity={handleNewIdentity}
-                    />
-                </>
-            )}
+            <SubidentityList owner={owner} subidentities={subidentities} loading={isLoading} />
+            <SubidentityRegistration
+                onNewIdentity={handleNewIdentity}
+            />
         </div>
     );
 }
