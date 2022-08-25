@@ -23,19 +23,20 @@ export default function SubIdentities({ owner }) {
         setIsLoading(false);
     };
 
-
-    const handleNewIdentity = (subidentity, parentIdentity) => {
+    const handleNewIdentity = () => {
         fetchSubidentities();
     };
 
     return (
         <div>
-            <h2>Sub-Identities {isLoading ? <Loading /> : ''}</h2>
+            <h2>Sub-Identities {isLoading ? <Loading /> : null}</h2>
             <hr />
-            <SubidentityList owner={owner} subidentities={subidentities} loading={isLoading} />
-            <SubidentityRegistration
-                onNewIdentity={handleNewIdentity}
+            <SubidentityList
+                owner={owner}
+                subidentities={subidentities}
+                loading={isLoading}
             />
+            <SubidentityRegistration onNewIdentity={handleNewIdentity} />
         </div>
     );
 }

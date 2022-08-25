@@ -73,7 +73,7 @@ const abisByContractName = {};
 
 // web3.js providers
 const providers = {
-    [ DEFAULT_NETWORK ]: {
+    [DEFAULT_NETWORK]: {
         http: createWeb3Instance({
             protocol: 'http',
             network: DEFAULT_NETWORK
@@ -328,14 +328,25 @@ ethereum.callContract = async (target, contractName, method, params, version = '
     }
 };
 
-const _performScanForContractEvents = async(contract, contract_address, chain_id, fromBlock, toBlock) => {
-    log.debug({fn:'_performScanForContractEvents', contract_address, fromBlock, toBlock});
+const _performScanForContractEvents = async (
+    contract,
+    contract_address,
+    chain_id,
+    fromBlock,
+    toBlock
+) => {
+    log.debug({fn: '_performScanForContractEvents', contract_address, fromBlock, toBlock});
 
     const event_name = null;
-    const events = await contract.getPastEvents(event_name, {fromBlock: fromBlock, toBlock: toBlock});
+    const events = await contract.getPastEvents(event_name, {
+        fromBlock: fromBlock,
+        toBlock: toBlock
+    });
 
     for (const event of events) {
-        const id = hashFn(new Buffer(contract_address + '_' + event.id + '_' + event.transactionHash)).toString('hex');
+        const id = hashFn(
+            new Buffer(contract_address + '_' + event.id + '_' + event.transactionHash)
+        ).toString('hex');
 
         await Event.findByIdOrCreate(id, {
             id,
@@ -352,9 +363,9 @@ const _performScanForContractEvents = async(contract, contract_address, chain_id
             event: event.event,
             signature: event.signature,
             raw: event.raw,
-            topic0: (event.raw.topics[0]) ? event.raw.topics[0] : null,
-            topic1: (event.raw.topics[1]) ? event.raw.topics[1] : null,
-            topic2: (event.raw.topics[2]) ? event.raw.topics[2] : null
+            topic0: event.raw.topics[0] ? event.raw.topics[0] : null,
+            topic1: event.raw.topics[1] ? event.raw.topics[1] : null,
+            topic2: event.raw.topics[2] ? event.raw.topics[2] : null
         });
     }
 
@@ -368,7 +379,13 @@ const _performScanForContractEvents = async(contract, contract_address, chain_id
     });
 };
 
-const _renewContractEventsCache = async(chain_id, contract, contract_address, queryFromBlock, queryToBlock) => {
+const _renewContractEventsCache = async (
+    chain_id,
+    contract,
+    contract_address,
+    queryFromBlock,
+    queryToBlock
+) => {
     // force to ints for security
     queryFromBlock = queryFromBlock + 0;
     queryToBlock = queryToBlock + 0;
@@ -428,16 +445,23 @@ const _renewContractEventsCache = async(chain_id, contract, contract_address, qu
             // our query starts earlier than this range, let's scan everything before it
             const cursor_end = range.from_block - 1;
             const range_length = cursor_end - cursor;
-            if (range_length >= 0) { // don't scan negative ranges
+            if (range_length >= 0) {
+                // don't scan negative ranges
                 const PAGE_SIZE = Number(config.get('network.event_block_page_size'));
                 for (let scan_from = cursor; scan_from <= cursor_end; scan_from += PAGE_SIZE) {
                     const scan_to = Math.min(queryToBlock, scan_from + PAGE_SIZE - 1, cursor_end);
-                    await _performScanForContractEvents(contract, contract_address, chain_id, scan_from, scan_to);
+                    await _performScanForContractEvents(
+                        contract,
+                        contract_address,
+                        chain_id,
+                        scan_from,
+                        scan_to
+                    );
                 }
             }
             cursor = Math.max(cursor, range.to_block + 1);
         }
-        max_scanned = (! range.fake) ? Math.max(max_scanned, range.to_block) : max_scanned;
+        max_scanned = !range.fake ? Math.max(max_scanned, range.to_block) : max_scanned;
 
         if (cursor > queryToBlock) break; // we're done, we're outside the query zone
     }
@@ -464,7 +488,9 @@ ethereum.getPaginatedPastEvents = async (target, contractName, event, options) =
 
     // make sure chain_id available, to not mix them
     const chain_id = DEFAULT_NETWORK;
-    if (!chain_id) throw new Error('Chain ID is empty, don\'t know for which chain to save the events');
+    if (!chain_id) {
+        throw new Error(`Chain ID is empty, don't know for which chain to save the events`);
+    }
 
     // If filter contains an address, convert it to checksum.
     if (options.filter && options.filter.identityOwner) {
@@ -476,7 +502,13 @@ ethereum.getPaginatedPastEvents = async (target, contractName, event, options) =
         options.toBlock = latestBlockNumber;
     }
 
-    await _renewContractEventsCache(chain_id, contract, contract_address, options.fromBlock, options.toBlock);
+    await _renewContractEventsCache(
+        chain_id,
+        contract,
+        contract_address,
+        options.fromBlock,
+        options.toBlock
+    );
 
     let events = await Event.fetchCachedEvents(chain_id, contract_address, event, options);
 
@@ -505,9 +537,6 @@ ethereum.getPastEvents = async (
 
     return await ethereum.getPaginatedPastEvents(target, contractName, event, options);
 
-
-
-
     const eventBlocksPageSize = 10000;
     let latestBlock = 0;
     if (options.toBlock === 'latest') {
@@ -515,8 +544,6 @@ ethereum.getPastEvents = async (
     } else {
         latestBlock = options.toBlock;
     }
-
-
 
     const ranges = [];
     for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize) {
@@ -988,9 +1015,6 @@ ethereum.registerSubIdentity = async (subidentity, parentIdentity, address, comm
         if (Buffer.byteLength(commPublicKey) !== 64) {
             throw Error('registerIdentity: commPublicKey must be 64 bytes');
         }
-        const parts = subidentity.split('.');
-        parentIdentity = parts[1];
-        subidentity = parts[0];
 
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
