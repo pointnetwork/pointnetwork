@@ -37,6 +37,10 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
 const networks = config.get('network.web3');
 const DEFAULT_NETWORK = config.get('network.default_network');
+const CONTRACT_BUILD_DIR = path.resolve(
+    resolveHome(config.get('datadir')),
+    config.get('network.contracts_path')
+);
 
 function createWeb3Instance({protocol, network}) {
     const blockchainUrl = networks[network][protocol === 'ws' ? 'ws_address' : 'http_address'];
@@ -119,6 +123,62 @@ const getEthers = (chain = DEFAULT_NETWORK) => {
     return ethersProviders[chain];
 };
 
+const isIdentityAbiRelevant = async () => {
+    const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
+    const abiFileHash = config.get('identity_contract_id');
+
+    try {
+        const abiAndMetadata = JSON.parse(await fs.readFile(abiPath));
+        const {updatedAt} = abiAndMetadata;
+
+        log.debug({
+            abiPath,
+            abiFileHash,
+            preservedAbiFileHash: abiAndMetadata.abiFileHash || null,
+            updatedAt: isFinite(updatedAt) && new Date (updatedAt).toISOString() || null
+        }, 'Checking identity abi relevance');
+
+        return abiAndMetadata.abiFileHash === abiFileHash;
+    } catch (e) {
+        log.error({
+            error: e.message,
+            stack: e.stack,
+            abiPath,
+            abiFileHash
+        }, 'Failed to check identity abi relevance');
+
+        return false;
+    }
+};
+
+const fetchAndSaveIdentityAbiFromStorage = async () => {
+    const abiFileHash = config.get('identity_contract_id');
+    const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
+
+    log.debug({abiFileHash}, 'Fetching Identity contract from storage');
+
+    try {
+        const abiFile = await getFile(abiFileHash);
+        const abiAndMetadata = JSON.parse(abiFile);
+
+        abiAndMetadata.abiFileHash = abiFileHash;
+        abiAndMetadata.updatedAt = Date.now();
+
+        await fs.writeFile(abiPath, JSON.stringify(abiAndMetadata));
+
+        log.debug('Successfully fetched identity contract abi from storage');
+
+        return abisByContractName['Identity'] = abiAndMetadata;
+    } catch (e) {
+        log.error({
+            error: e.message,
+            stack: e.stack,
+            abiFileHash,
+            localAbiPath: abiPath
+        }, 'Failed to fetch identity abi from storage');
+    }
+};
+
 // Client that consolidates all blockchain-related functionality
 const ethereum = {};
 
@@ -128,55 +188,43 @@ ethereum.loadPointContract = async (
     basepath = path.resolve(__dirname, '..', '..')
 ) => {
     if (!(contractName in abisByContractName)) {
-        const buildDirPath = path.resolve(
-            resolveHome(config.get('datadir')),
-            config.get('network.contracts_path')
-        );
-
-        const abiFileName = path.resolve(buildDirPath, contractName + '.json');
+        const abiFileName = path.resolve(CONTRACT_BUILD_DIR, contractName + '.json');
 
         try {
             await statAsync(abiFileName);
         } catch (e) {
-            log.debug(`${contractName} contract not found`);
+            log.debug({contractName, at}, `Abi is not found locally, compiling`);
 
-            const mode = config.get('mode');
-            if (contractName === 'Identity' && mode !== 'e2e' && mode !== 'zappdev') {
-                try {
-                    log.debug('Fetching Identity contract from storage');
-                    const identityContractAbiId = config.get('identity_contract_id');
-                    const abiFile = await getFile(identityContractAbiId);
-                    await fs.writeFile(abiFileName, abiFile);
-
-                    log.debug('Successfully fetched identity contract from storage');
-
-                    abisByContractName[contractName] = JSON.parse(abiFile).abi;
-                    return new (getWeb3().eth.Contract)(abisByContractName[contractName], at);
-                } catch (e) {
-                    log.error('Failed to fetch Identity contract from storage: ' + e.message);
-                }
-            }
-
-            log.debug(`Compiling ${contractName} contract at ${at}`);
             const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
-            await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
+            await compileAndSaveContract({name: contractName, contractPath, CONTRACT_BUILD_DIR});
 
             log.debug('Identity contract successfully compiled');
         }
 
         const abiFile = JSON.parse(await fs.readFile(abiFileName, 'utf8'));
 
-        abisByContractName[contractName] = abiFile.abi;
+        abisByContractName[contractName] = abiFile;
     }
 
     const web3 = getWeb3();
-    return new web3.eth.Contract(abisByContractName[contractName], at);
+    return new web3.eth.Contract(abisByContractName[contractName].abi, at);
 };
 
 ethereum.loadIdentityContract = async () => {
-    const at = config.get('network.identity_contract_address');
-    log.debug({address: at}, 'Identity contract address');
-    return await ethereum.loadPointContract('Identity', at);
+    const mode = config.get('mode');
+
+    if (mode !== 'e2e' && mode !== 'zappdev') {
+        const isAbiRelevant = await isIdentityAbiRelevant();
+
+        if (!isAbiRelevant) {
+            await fetchAndSaveIdentityAbiFromStorage();
+        }
+    }
+
+    const address = config.get('network.identity_contract_address');
+    log.debug({address}, 'Identity contract address');
+
+    return await ethereum.loadPointContract('Identity', address);
 };
 
 ethereum.loadWebsiteContract = async (
