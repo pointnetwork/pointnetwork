@@ -488,8 +488,9 @@ ethereum.getPaginatedPastEvents = async (target, contractName, event, options) =
 
     // make sure chain_id available, to not mix them
     const chain_id = DEFAULT_NETWORK;
-    if (!chain_id)
-        throw new Error("Chain ID is empty, don't know for which chain to save the events");
+    if (!chain_id) {
+        throw new Error(`Chain ID is empty, don't know for which chain to save the events`);
+    }
 
     // If filter contains an address, convert it to checksum.
     if (options.filter && options.filter.identityOwner) {
