@@ -189,94 +189,63 @@ export default function Identity() {
         fetchPublicKey();
     }, [isOwner]);
 
-    const filteredIkvset = Object.values(
-        (ikvset || []).reduce((collected, newItem) => {
-            const {
-                data: { key, value, version },
-                blockNumber,
-            } = newItem;
-            const old = collected[key];
-            if (!old) {
-                collected[key] = {
-                    key,
-                    value,
-                    version,
-                    blockNumber,
-                };
-                return collected;
-            }
-            if (old.blockNumber < blockNumber) {
-                collected[key] = {
-                    key,
-                    value,
-                    version,
-                    blockNumber,
-                };
-            }
-            return collected;
-        }, {}),
-    );
+    
 
     const fetchIkv = async () => {
         setIsLoadingIkv(true);
-        const ikvsetFetched = await window.point.contract.events({
-            host: '@',
+        const ikvsetFetched = await window.point.contract.call({
             contract: 'Identity',
-            event: 'IKVSet',
-            filter: { identity: handle },
+            method: 'getIkvList',
+            params: [handle],
         });
         if (ikvsetFetched.data !== '') {
-            setIkvset(ikvsetFetched.data);
+            setIkvset(ikvsetFetched.data.map(e => {return {identity: e[0], key: e[1], value: e[2], version: e[3]}}));
         }
         setIsLoadingIkv(false);
     };
 
     const fetchDeployers = async () => {
         setIsLoadingDeployers(true);
-        const deployersFetched = await window.point.contract.events({
-            host: '@',
+        const deployersFetched = await window.point.contract.call({
             contract: 'Identity',
-            event: 'IdentityDeployerChanged',
-            filter: { identity: handle },
+            method: 'getDeployersList',
+            params: [handle],
         });
         if (deployersFetched.data !== '') {
-            setDeployers(deployersFetched.data);
+            setDeployers(deployersFetched.data.map(e => {return {identity: e[0], deployer: e[1], allowed: e[2], blockNumber: e[3]}}));
         }
         setIsLoadingDeployers(false);
     };
 
     const renderDeployerEntry = (deployer) => {
-        const lastEntry = deployers
-            .filter((e) => e.data.deployer === deployer)
-            .reduce((prev, current) =>
-                prev.blockNumber > current.blockNumber ? prev : current,
-            );
+        
+        console.log(deployer)
         return (
-            <tr key={deployer}>
+            <tr key={deployer.deployer}>
                 <th>
-                    <OwnerToIdentity owner={deployer} />
+                    <OwnerToIdentity owner={deployer.deployer} />
                 </th>
-                <td>{deployer}</td>
+                <td>{deployer.deployer}</td>
                 <td>
-                    {lastEntry.data.allowed === true ? 'Allowed' : 'Revoked'}
+                    {deployer.allowed === true ? 'Allowed' : 'Revoked'}
                 </td>
                 <td>
-                    <BlockTime blockNumber={lastEntry.blockNumber} />
+                    <BlockTime blockNumber={deployer?.blockNumber} />
                 </td>
 
                 {isOwner ? (
                     <td>
-                        {lastEntry.data.allowed === true ? (
+                        {deployer.allowed === true ? (
                             <button
                                 className="btn btn-sm btn-danger"
-                                onClick={() => revokeDeployer(deployer)}
+                                onClick={() => revokeDeployer(deployer.deployer)}
                             >
                                 Revoke
                             </button>
                         ) : (
                             <button
                                 className="btn btn-sm btn-primary"
-                                onClick={() => activateDeployer(deployer)}
+                                onClick={() => activateDeployer(deployer.deployer)}
                             >
                                 Reactivate
                             </button>
@@ -457,7 +426,7 @@ export default function Identity() {
                     <Loading />
                 ) : (
                     <>
-                        {filteredIkvset.length ? (
+                        {ikvset.length ? (
                             <table className="table table-bordered table-primary table-striped table-hover table-responsive">
                                 <thead>
                                     <th>Key</th>
@@ -467,7 +436,7 @@ export default function Identity() {
                                     <th></th>
                                 </thead>
                                 <tbody>
-                                    {filteredIkvset.map((item) => (
+                                    {ikvset.map((item) => (
                                         <IkvEntry
                                             key={item.key}
                                             handle={handle}
@@ -574,11 +543,7 @@ export default function Identity() {
                 <>
                     <table className="table table-bordered table-primary table-striped table-hover table-responsive">
                         <tbody>
-                            {[
-                                ...new Set(
-                                    deployers.map((e) => e.data.deployer),
-                                ),
-                            ].map((deployer) => renderDeployerEntry(deployer))}
+                            {deployers.map((deployer) => renderDeployerEntry(deployer))}
                         </tbody>
                     </table>
                     <EmptyMsg />
