@@ -119,17 +119,6 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
 }
 
-// ----------------------- New ------------------------ //
-
-if (program.new) {
-    const create = require('./core/new');
-    create({website: program.new})
-        .then(() => process.exit())
-        .catch((e: any) => { console.error('Error: ' + e.message); process.exit(); });
-    // @ts-ignore
-    return;
-}
-
 // ------------------- Init Logger ----------------- //
 
 import logger from './core/log';
@@ -142,6 +131,17 @@ const die = (err: Error) => {
     log.fatal(err);
     exit(1);
 };
+
+// ----------------------- New ------------------------ //
+
+if (program.new) {
+    const create = require('./core/new');
+    create({website: program.new})
+        .then(() => process.exit())
+        .catch((e: any) => { log.error('Error: ' + e.message); process.exit(); });
+    // @ts-ignore
+    return;
+}
 
 // --------------------- Config --------------------- //
 import config from 'config';

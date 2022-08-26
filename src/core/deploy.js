@@ -41,6 +41,8 @@ const deploy = async ({
     );
     if (result.status !== 200) {
         log.error(result, 'Deploy error');
+    } else if (result.data.status !== 'success') {
+        log.error(result.data);
     }
     log.info(`Deploy time: ${Date.now() - start} ms`);
 };
