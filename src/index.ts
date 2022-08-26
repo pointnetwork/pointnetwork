@@ -150,7 +150,6 @@ import config from 'config';
 
 if (program.deploy) {
     const deploy = require('./core/deploy');
-    log.debug('Starting deployment of ' + program.deploy_path + '...');
     deploy({
         deploy_path: program.deploy_path,
         deploy_contracts: program.deploy_contracts,

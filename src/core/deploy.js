@@ -21,6 +21,8 @@ const deploy = async ({
         }
     }
 
+    log.debug('Starting deployment of ' + deploy_path + '...');
+
     const deploy_path_absolute = path.resolve(deploy_path);
     if (!deploy_path_absolute) {
         throw new Error('Invalid path');
