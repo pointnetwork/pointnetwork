@@ -5,7 +5,7 @@ const log = logger.child({module: 'new'});
 const copy = require('recursive-copy');
 
 const copyFolder = async(from, to) => {
-    await copy(from, to);
+    await copy(from, to, {expand: true, dot: true});
 };
 
 const create = async ({website}) => {
