@@ -1,6 +1,6 @@
 import { Link } from 'wouter';
 
-export default function SubidentityList({ subidentities, loading }) {
+export default function SubidentityList({ subidentities, loading, owner }) {
     if ((!subidentities || subidentities.length === 0) && !loading) {
         return (
             <div style={{ marginBottom: 100 }}>
@@ -18,17 +18,17 @@ export default function SubidentityList({ subidentities, loading }) {
                         <th>Owner</th>
                     </tr>
                     {subidentities.map((s) => (
-                        <tr key={`${s.data.subhandle}.${s.data.handle}`}>
+                        <tr key={`${s}`}>
                             <td>
                                 <Link
-                                    to={`/identities/${s.data.subhandle}.${s.data.handle}`}
+                                    to={`/identities/${s}`}
                                     target="_blank"
                                 >
-                                    @{s.data.subhandle}.{s.data.handle}
+                                    @{s}
                                 </Link>
                             </td>
                             <td className="mono">
-                                {s.data.identityOwner.toLowerCase()}
+                                {owner.toLowerCase()}
                             </td>
                         </tr>
                     ))}

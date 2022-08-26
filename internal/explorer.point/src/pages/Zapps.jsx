@@ -2,44 +2,59 @@ import Container from 'react-bootstrap/Container';
 import Loading from '../components/Loading';
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 export default function Zapps() {
     const [zapps, setZapps] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const [dappsLength, setDappsLength] = useState(0);
+    const [cursor, setCursor] = useState(0);
 
+    const PAGE_SIZE = 100;
     useEffect(() => {
         fetchZapps();
     }, []);
 
     const fetchZapps = async () => {
-        setIsLoading(true);
-        const zappsFetched = [];
-        const identitiesFetched = await window.point.contract.events({
-            host: '@',
+        if (dappsLength === 0) {
+            setIsLoading(true);
+        }
+
+        const dappsLengthFetched = await window.point.contract.call({
             contract: 'Identity',
-            event: 'IdentityRegistered',
+            method: 'getDappsLength',
+            params: [],
         });
 
-        const ikvsetFetched = await window.point.contract.events({
-            host: '@',
+        setDappsLength(dappsLengthFetched.data);
+
+        const dappsFetched = await window.point.contract.call({
             contract: 'Identity',
-            event: 'IKVSet',
+            method: 'getPaginatedDapps',
+            params: [cursor, PAGE_SIZE],
         });
-        if (ikvsetFetched.data != '') {
-            for (const id of identitiesFetched.data) {
-                const domainExists =
-                    ikvsetFetched.data.filter(
-                        (ikve) =>
-                            ikve.data.identity == id.data.handle &&
-                            ikve.data.key == 'zdns/routes',
-                    ).length > 0;
-                if (domainExists) {
-                    zappsFetched.push(id.data);
-                }
-            }
+
+        setCursor(cursor + dappsFetched.data.length);
+
+        if (
+            zapps.length + dappsFetched.data.length >=
+            dappsLengthFetched.data
+        ) {
+            setHasMore(false);
         }
-        setZapps(zappsFetched);
-        setIsLoading(false);
+
+        setZapps(
+            zapps.concat(
+                dappsFetched.data.map((e) => {
+                    return { handle: e[0], owner: e[1], hasDomain: e[2] };
+                }),
+            ),
+        );
+
+        if (dappsLength === 0) {
+            setIsLoading(false);
+        }
     };
 
     const renderZappEntry = (id) => {
@@ -50,7 +65,7 @@ export default function Zapps() {
                         @{id.handle}
                     </Link>
                 </td>
-                <td className="mono">{id.identityOwner}</td>
+                <td className="mono">{id.owner}</td>
                 <td className="mono">
                     <b>
                         <a
@@ -80,21 +95,28 @@ export default function Zapps() {
             <Container className="p-3">
                 <br />
                 <h1>Apps</h1>
-                Total: {zapps.length}
+                Total: {dappsLength}
                 <hr />
-                <table className="table table-bordered table-striped table-hover table-responsive table-primary">
-                    <tbody>
-                        <tr>
-                            <th>Handle</th>
-                            <th>Owner</th>
-                            <th>App</th>
-                        </tr>
-                        {isLoading
-                            ? null
-                            : zapps.map((e) => renderZappEntry(e))}
-                    </tbody>
-                </table>
-                {isLoading ? <Loading /> : <EmptyMsg />}
+                <InfiniteScroll
+                    dataLength={zapps.length}
+                    next={fetchZapps}
+                    hasMore={hasMore}
+                    loader={<Loading />}
+                    style={{height: 'inherit', overflow: 'inherit'}}
+                >
+                    <table className="table table-bordered table-striped table-hover table-responsive table-primary">
+                        <tbody>
+                            <tr>
+                                <th>Handle</th>
+                                <th>Owner</th>
+                                <th>App</th>
+                            </tr>
+                            {isLoading
+                                ? null
+                                : zapps.map((e) => renderZappEntry(e))}
+                        </tbody>
+                    </table>
+                </InfiniteScroll>
             </Container>
         </>
     );

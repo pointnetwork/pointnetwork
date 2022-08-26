@@ -127,11 +127,15 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
         } else if (host.endsWith('.point')) {
             // First try route file (and check if this domain even exists)
             const zrouteId = await blockchain.getZRecord(host, versionRequested);
-            if (!zrouteId) throw new HttpNotFoundError('Domain not found (Route file not specified for this domain)');
+            if (!zrouteId) {
+                throw new HttpNotFoundError('Domain not found (Route file not specified for this domain)');
+            }
 
             log.debug({host, zrouteId}, 'Requesting ZRoute id for domain');
             const routes = await getJSON(zrouteId);
-            if (!routes) throw new HttpNotFoundError(`Cannot parse json of zrouteId ${zrouteId}`);
+            if (!routes) {
+                throw new HttpNotFoundError(`Cannot parse json of zrouteId ${zrouteId}`);
+            }
 
             // Download info about root dir
             const rootDirId = await blockchain.getKeyValue(
@@ -141,7 +145,9 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 'exact',
                 true
             );
-            if (!rootDirId) throw new HttpNotFoundError(`Root dir id not found for host ${host}`);
+            if (!rootDirId) {
+                throw new HttpNotFoundError(`Root dir id not found for host ${host}`);
+            }
 
             return await fulfillRequest({
                 req, res,
@@ -266,17 +272,26 @@ const tryFulfillStaticRequest = async(cfg: RequestFulfillmentConfig, urlPath: st
     let file;
     if (cfg.isLocal) {
         // This is a static asset
-        if (!cfg.localRootDirPath) throw new Error('localRootDirPath cannot be empty');
+        if (!cfg.localRootDirPath) {
+            throw new Error('localRootDirPath cannot be empty');
+        }
 
         const filePath = path.join(cfg.localRootDirPath, urlPath);
-        if (! existsSync(filePath)) throw new HttpNotFoundError('Not Found');
-        if (! lstatSync(filePath).isFile()) throw new HttpForbiddenError('Directory listing not allowed');
+        if (! existsSync(filePath)) {
+            throw new HttpNotFoundError('Not Found');
+        }
+
+        if (! lstatSync(filePath).isFile()) {
+            throw new HttpForbiddenError('Directory listing not allowed');
+        }
 
         file = await fs.readFile(filePath);
 
     } else {
         const fileId = await getFileIdByPath(cfg.remoteRootDirId, urlPath);
-        if (!fileId) throw new HttpNotFoundError('File not found by this path');
+        if (!fileId) {
+            throw new HttpNotFoundError('File not found by this path');
+        }
 
         file = await getFile(fileId, null);
     }

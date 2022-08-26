@@ -37,6 +37,10 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const web3CallRetryLimit = config.get('network.web3_call_retry_limit');
 const networks = config.get('network.web3');
 const DEFAULT_NETWORK = config.get('network.default_network');
+const CONTRACT_BUILD_DIR = path.resolve(
+    resolveHome(config.get('datadir')),
+    config.get('network.contracts_path')
+);
 
 function createWeb3Instance({protocol, network}) {
     const blockchainUrl = networks[network][protocol === 'ws' ? 'ws_address' : 'http_address'];
@@ -73,7 +77,7 @@ const abisByContractName = {};
 
 // web3.js providers
 const providers = {
-    [ DEFAULT_NETWORK ]: {
+    [DEFAULT_NETWORK]: {
         http: createWeb3Instance({
             protocol: 'http',
             network: DEFAULT_NETWORK
@@ -119,6 +123,62 @@ const getEthers = (chain = DEFAULT_NETWORK) => {
     return ethersProviders[chain];
 };
 
+const isIdentityAbiRelevant = async () => {
+    const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
+    const abiFileHash = config.get('identity_contract_id');
+
+    try {
+        const abiAndMetadata = JSON.parse(await fs.readFile(abiPath));
+        const {updatedAt} = abiAndMetadata;
+
+        log.debug({
+            abiPath,
+            abiFileHash,
+            preservedAbiFileHash: abiAndMetadata.abiFileHash || null,
+            updatedAt: isFinite(updatedAt) && new Date (updatedAt).toISOString() || null
+        }, 'Checking identity abi relevance');
+
+        return abiAndMetadata.abiFileHash === abiFileHash;
+    } catch (e) {
+        log.error({
+            error: e.message,
+            stack: e.stack,
+            abiPath,
+            abiFileHash
+        }, 'Failed to check identity abi relevance');
+
+        return false;
+    }
+};
+
+const fetchAndSaveIdentityAbiFromStorage = async () => {
+    const abiFileHash = config.get('identity_contract_id');
+    const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
+
+    log.debug({abiFileHash}, 'Fetching Identity contract from storage');
+
+    try {
+        const abiFile = await getFile(abiFileHash);
+        const abiAndMetadata = JSON.parse(abiFile);
+
+        abiAndMetadata.abiFileHash = abiFileHash;
+        abiAndMetadata.updatedAt = Date.now();
+
+        await fs.writeFile(abiPath, JSON.stringify(abiAndMetadata));
+
+        log.debug('Successfully fetched identity contract abi from storage');
+
+        return abisByContractName['Identity'] = abiAndMetadata;
+    } catch (e) {
+        log.error({
+            error: e.message,
+            stack: e.stack,
+            abiFileHash,
+            localAbiPath: abiPath
+        }, 'Failed to fetch identity abi from storage');
+    }
+};
+
 // Client that consolidates all blockchain-related functionality
 const ethereum = {};
 
@@ -128,55 +188,43 @@ ethereum.loadPointContract = async (
     basepath = path.resolve(__dirname, '..', '..')
 ) => {
     if (!(contractName in abisByContractName)) {
-        const buildDirPath = path.resolve(
-            resolveHome(config.get('datadir')),
-            config.get('network.contracts_path')
-        );
-
-        const abiFileName = path.resolve(buildDirPath, contractName + '.json');
+        const abiFileName = path.resolve(CONTRACT_BUILD_DIR, contractName + '.json');
 
         try {
             await statAsync(abiFileName);
         } catch (e) {
-            log.debug(`${contractName} contract not found`);
+            log.debug({contractName, at}, `Abi is not found locally, compiling`);
 
-            const mode = config.get('mode');
-            if (contractName === 'Identity' && mode !== 'e2e' && mode !== 'zappdev') {
-                try {
-                    log.debug('Fetching Identity contract from storage');
-                    const identityContractAbiId = config.get('identity_contract_id');
-                    const abiFile = await getFile(identityContractAbiId);
-                    await fs.writeFile(abiFileName, abiFile);
-
-                    log.debug('Successfully fetched identity contract from storage');
-
-                    abisByContractName[contractName] = JSON.parse(abiFile).abi;
-                    return new (getWeb3().eth.Contract)(abisByContractName[contractName], at);
-                } catch (e) {
-                    log.error('Failed to fetch Identity contract from storage: ' + e.message);
-                }
-            }
-
-            log.debug(`Compiling ${contractName} contract at ${at}`);
             const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
-            await compileAndSaveContract({name: contractName, contractPath, buildDirPath});
+            await compileAndSaveContract({name: contractName, contractPath, CONTRACT_BUILD_DIR});
 
             log.debug('Identity contract successfully compiled');
         }
 
         const abiFile = JSON.parse(await fs.readFile(abiFileName, 'utf8'));
 
-        abisByContractName[contractName] = abiFile.abi;
+        abisByContractName[contractName] = abiFile;
     }
 
     const web3 = getWeb3();
-    return new web3.eth.Contract(abisByContractName[contractName], at);
+    return new web3.eth.Contract(abisByContractName[contractName].abi, at);
 };
 
 ethereum.loadIdentityContract = async () => {
-    const at = config.get('network.identity_contract_address');
-    log.debug({address: at}, 'Identity contract address');
-    return await ethereum.loadPointContract('Identity', at);
+    const mode = config.get('mode');
+
+    if (mode !== 'e2e' && mode !== 'zappdev') {
+        const isAbiRelevant = await isIdentityAbiRelevant();
+
+        if (!isAbiRelevant) {
+            await fetchAndSaveIdentityAbiFromStorage();
+        }
+    }
+
+    const address = config.get('network.identity_contract_address');
+    log.debug({address}, 'Identity contract address');
+
+    return await ethereum.loadPointContract('Identity', address);
 };
 
 ethereum.loadWebsiteContract = async (
@@ -328,14 +376,25 @@ ethereum.callContract = async (target, contractName, method, params, version = '
     }
 };
 
-const _performScanForContractEvents = async(contract, contract_address, chain_id, fromBlock, toBlock) => {
-    log.debug({fn:'_performScanForContractEvents', contract_address, fromBlock, toBlock});
+const _performScanForContractEvents = async (
+    contract,
+    contract_address,
+    chain_id,
+    fromBlock,
+    toBlock
+) => {
+    log.debug({fn: '_performScanForContractEvents', contract_address, fromBlock, toBlock});
 
     const event_name = null;
-    const events = await contract.getPastEvents(event_name, {fromBlock: fromBlock, toBlock: toBlock});
+    const events = await contract.getPastEvents(event_name, {
+        fromBlock: fromBlock,
+        toBlock: toBlock
+    });
 
     for (const event of events) {
-        const id = hashFn(new Buffer(contract_address + '_' + event.id + '_' + event.transactionHash)).toString('hex');
+        const id = hashFn(
+            new Buffer(contract_address + '_' + event.id + '_' + event.transactionHash)
+        ).toString('hex');
 
         await Event.findByIdOrCreate(id, {
             id,
@@ -352,9 +411,9 @@ const _performScanForContractEvents = async(contract, contract_address, chain_id
             event: event.event,
             signature: event.signature,
             raw: event.raw,
-            topic0: (event.raw.topics[0]) ? event.raw.topics[0] : null,
-            topic1: (event.raw.topics[1]) ? event.raw.topics[1] : null,
-            topic2: (event.raw.topics[2]) ? event.raw.topics[2] : null
+            topic0: event.raw.topics[0] ? event.raw.topics[0] : null,
+            topic1: event.raw.topics[1] ? event.raw.topics[1] : null,
+            topic2: event.raw.topics[2] ? event.raw.topics[2] : null
         });
     }
 
@@ -368,7 +427,13 @@ const _performScanForContractEvents = async(contract, contract_address, chain_id
     });
 };
 
-const _renewContractEventsCache = async(chain_id, contract, contract_address, queryFromBlock, queryToBlock) => {
+const _renewContractEventsCache = async (
+    chain_id,
+    contract,
+    contract_address,
+    queryFromBlock,
+    queryToBlock
+) => {
     // force to ints for security
     queryFromBlock = queryFromBlock + 0;
     queryToBlock = queryToBlock + 0;
@@ -379,7 +444,7 @@ const _renewContractEventsCache = async(chain_id, contract, contract_address, qu
     }
 
     // pull all possible existing scan ranges within reach
-    const scanned_ranges = await EventScan.findAll({
+    const query = {
         where: {
             contract_address: contract_address,
             chain_id: chain_id,
@@ -411,12 +476,14 @@ const _renewContractEventsCache = async(chain_id, contract, contract_address, qu
         order: [
             ['from_block', 'ASC'] // makes it chronological
         ]
-    });
+    };
+    const scanned_ranges = await EventScan.findAll(query);
 
     // push one "fake" range, so that the cycle goes one last time
-    scanned_ranges.push({from_block: queryToBlock + 1, to_block: queryToBlock + 1});
+    scanned_ranges.push({from_block: queryToBlock + 1, to_block: queryToBlock + 1, fake: true});
 
     let cursor = queryFromBlock;
+    let max_scanned = 0;
     for (const range of scanned_ranges) {
         if (range.from_block <= cursor) {
             // the scanned range starts earlier or at the same time as our query beginning or scan_cursor
@@ -426,17 +493,41 @@ const _renewContractEventsCache = async(chain_id, contract, contract_address, qu
             // our query starts earlier than this range, let's scan everything before it
             const cursor_end = range.from_block - 1;
             const range_length = cursor_end - cursor;
-            if (range_length >= 0) { // don't scan negative ranges
+            if (range_length >= 0) {
+                // don't scan negative ranges
                 const PAGE_SIZE = Number(config.get('network.event_block_page_size'));
                 for (let scan_from = cursor; scan_from <= cursor_end; scan_from += PAGE_SIZE) {
                     const scan_to = Math.min(queryToBlock, scan_from + PAGE_SIZE - 1, cursor_end);
-                    await _performScanForContractEvents(contract, contract_address, chain_id, scan_from, scan_to);
+                    await _performScanForContractEvents(
+                        contract,
+                        contract_address,
+                        chain_id,
+                        scan_from,
+                        scan_to
+                    );
                 }
             }
             cursor = Math.max(cursor, range.to_block + 1);
         }
+        max_scanned = !range.fake ? Math.max(max_scanned, range.to_block) : max_scanned;
+
         if (cursor > queryToBlock) break; // we're done, we're outside the query zone
     }
+
+    // collapse them
+
+    // we are guaranteed to have scanned queryFromBlock..max_scanned range
+    // if there are more scanned ranges, collapse them
+    const first_range = await EventScan.findOne();
+    if (!first_range) return; // No ranges found by this query - just forget about it
+    if (first_range.from_block === queryFromBlock && first_range.to_block === max_scanned) return; // already done
+
+    first_range.from_block = Math.min(first_range.from_block, queryFromBlock);
+    first_range.to_block = Math.max(first_range.to_block, max_scanned);
+    await first_range.save();
+
+    query.where['id'] = {[Op.ne]: first_range.id};
+    await EventScan.destroy(query);
 };
 
 ethereum.getPaginatedPastEvents = async (target, contractName, event, options) => {
@@ -445,7 +536,9 @@ ethereum.getPaginatedPastEvents = async (target, contractName, event, options) =
 
     // make sure chain_id available, to not mix them
     const chain_id = DEFAULT_NETWORK;
-    if (!chain_id) throw new Error('Chain ID is empty, don\'t know for which chain to save the events');
+    if (!chain_id) {
+        throw new Error(`Chain ID is empty, don't know for which chain to save the events`);
+    }
 
     // If filter contains an address, convert it to checksum.
     if (options.filter && options.filter.identityOwner) {
@@ -457,7 +550,13 @@ ethereum.getPaginatedPastEvents = async (target, contractName, event, options) =
         options.toBlock = latestBlockNumber;
     }
 
-    await _renewContractEventsCache(chain_id, contract, contract_address, options.fromBlock, options.toBlock);
+    await _renewContractEventsCache(
+        chain_id,
+        contract,
+        contract_address,
+        options.fromBlock,
+        options.toBlock
+    );
 
     let events = await Event.fetchCachedEvents(chain_id, contract_address, event, options);
 
@@ -486,9 +585,6 @@ ethereum.getPastEvents = async (
 
     return await ethereum.getPaginatedPastEvents(target, contractName, event, options);
 
-
-
-
     const eventBlocksPageSize = 10000;
     let latestBlock = 0;
     if (options.toBlock === 'latest') {
@@ -496,8 +592,6 @@ ethereum.getPastEvents = async (
     } else {
         latestBlock = options.toBlock;
     }
-
-
 
     const ranges = [];
     for (let start = options.fromBlock; start < latestBlock; start += eventBlocksPageSize) {
@@ -969,8 +1063,6 @@ ethereum.registerSubIdentity = async (subidentity, parentIdentity, address, comm
         if (Buffer.byteLength(commPublicKey) !== 64) {
             throw Error('registerIdentity: commPublicKey must be 64 bytes');
         }
-
-        parentIdentity = parentIdentity.replace('.point', '');
 
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');

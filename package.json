@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -121,9 +121,11 @@
     "start:zappdev": "MODE=zappdev npm run watch",
     "start:dev": "NODE_ENV=development npm run watch",
     "start:e2e": "MODE=e2e npm run watch",
-    "watch": "nodemon",
+    "watch": "npm run --prefix ./internal/explorer.point --ignore-scripts build && nodemon",
     "build": "perl -i -pe\"s|timeout: 20000|timeout: 60000|\" node_modules/@trufflesuite/web3-provider-engine/subproviders/rpc.js && tsc",
+    "patch": "perl -i -pe\"s|timeout: 20000|timeout: 60000|\" node_modules/@trufflesuite/web3-provider-engine/subproviders/rpc.js",
     "postbuild": "npm run --prefix ./internal/explorer.point build",
+    "postinstall": "echo '\\nPatching modules...' && npm run patch && echo '...done\\n'",
     "pkg": "pkg .",
     "pkg:win": "pkg --targets node16-win-x64 --output bin/pointnetwork-win .",
     "pkg:linux": "pkg --targets node16-linux-x64 --output bin/pointnetwork-linux .",
@@ -177,7 +179,6 @@
     "outputPath": "bin",
     "assets": [
       "package.json",
-      "hardhat.config.js",
       "hardhat/**/*",
       "config/*.yaml",
       "migrations/**/*",
