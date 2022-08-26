@@ -66,6 +66,7 @@
     "query-string": "^7.0.1",
     "react": "^17.0.2",
     "readline": "^1.3.0",
+    "recursive-copy": "^2.0.14",
     "sequelize": "^6.6.5",
     "sequelize-auto-migrations": "github:scimonster/sequelize-auto-migrations#a063aa6535a3f580623581bf866cef2d609531ba",
     "solc0_8": "npm:solc@^0.8.16",

@@ -2,6 +2,11 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../log');
 const log = logger.child({module: 'new'});
+const copy = require('recursive-copy');
+
+const copyFolder = async(from, to) => {
+    await copy(from, to);
+};
 
 const create = async ({website}) => {
     website = website.trim();
@@ -39,7 +44,7 @@ const create = async ({website}) => {
     // * Copy public directory
     const templatePath = path.resolve(__dirname, '..', '..', '..', 'resources', 'app_templates', 'empty');
     if (!templatePath) throw new Error('Could not locate public template directory to copy from');
-    fs.cpSync(templatePath, path.join(website_dir, 'public'), {recursive: true});
+    await copyFolder(templatePath, path.join(website_dir, 'public'));
 
     log.info('Website directory "' + website + '" successfully created! Now you can `cd` into it and `point deploy`');
 };
