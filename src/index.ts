@@ -17,6 +17,8 @@ if (RUNNING_PKG_MODE) {
     process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
 }
 
+process.env.HARDHAT_CONFIG = path.resolve(__dirname, '..', 'hardhat', 'hardhat.config.js');
+
 disclaimer.output();
 
 // Disable https://nextjs.org/telemetry
@@ -117,9 +119,6 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
 }
 
-// Warning: the below imports should take place after the above config patch!
-process.env.HARDHAT_CONFIG = path.resolve(__dirname, '..', 'hardhat', 'hardhat.config.js');
-
 // ----------------------- New ------------------------ //
 
 if (program.new) {
@@ -144,6 +143,24 @@ const die = (err: Error) => {
     exit(1);
 };
 
+// ------------------- Init Logger ----------------- //
+
+import config from 'config';
+import startPoint from './core/index';
+import migrate from './util/migrate';
+import initFolders from './initFolders';
+import {statAsync, resolveHome} from './util';
+
+// ----------------- Console Mode -------------------- //
+
+if (program.attach) {
+    const Console = require('./console');
+    const console = new Console();
+    console.start();
+    // @ts-ignore
+    return;
+}
+
 // -------------------- Deployer --------------------- //
 
 if (program.deploy) {
@@ -159,14 +176,6 @@ if (program.deploy) {
     // @ts-ignore
     return;
 }
-
-// -------------------- Start ------------------------- //
-
-import config from 'config';
-import startPoint from './core/index';
-import migrate from './util/migrate';
-import initFolders from './initFolders';
-import {statAsync, resolveHome} from './util';
 
 // ----------------- Console Mode -------------------- //
 
