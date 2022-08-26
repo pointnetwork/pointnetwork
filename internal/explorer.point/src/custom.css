@@ -54,7 +54,6 @@ a.nav-link.active {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    /* max-width: 1100px; */
     margin: 0 auto 100px auto;
 }
 
