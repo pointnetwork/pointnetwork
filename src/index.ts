@@ -69,21 +69,29 @@ program
     .description('destroys everything in datadir: database and files. dangerous!')
     .action(() => void (program.debug_destroy_everything = true));
 program
-    .command('deploy <path>')
+    .command('deploy')
     .description('deploy a website')
-    .action((path, cmd) => {
-        program.deploy = path;
-        program.deploy_contracts = Boolean(cmd.contracts);
-        program.dev = Boolean(cmd.dev);
-        program.force_deploy_proxy = Boolean(cmd.forceDeployProxy);
-    })
+    .argument('[path]', '(optional) path to the website; if empty, tries the current working directory', null)
     .option('--contracts', '(re)deploy contracts too', false)
     .option('--dev', 'deploy zapp to dev too', false)
     .option(
         '--force-deploy-proxy',
         'Force the replacement of the proxy on upgradable contracts',
         false
-    );
+    )
+    .action((path, cmd) => {
+        program.deploy = true;
+        program.deploy_path = path;
+        program.deploy_contracts = Boolean(cmd.contracts);
+        program.dev = Boolean(cmd.dev);
+        program.force_deploy_proxy = Boolean(cmd.forceDeployProxy);
+    });
+program
+    .command('new <website>')
+    .description('init a new Point website')
+    .action((website/*, cmd*/) => {
+        program.new = website;
+    });
 program
     .command('upload <path>')
     .description('uploads a file or directory')
@@ -111,15 +119,9 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
 }
 
-import config from 'config';
-import logger from './core/log';
-import startPoint from './core/index';
-import migrate from './util/migrate';
-import initFolders from './initFolders';
-import {statAsync, resolveHome} from './util';
-
 // ------------------- Init Logger ----------------- //
 
+import logger from './core/log';
 const log = logger.child({module: 'point'});
 const exit = (code: number) => {
     log.close();
@@ -130,28 +132,50 @@ const die = (err: Error) => {
     exit(1);
 };
 
-// ----------------- Console Mode -------------------- //
+// ----------------------- New ------------------------ //
 
-if (program.attach) {
-    const Console = require('./console');
-    const console = new Console();
-    console.start();
+if (program.new) {
+    const create = require('./core/new');
+    create({website: program.new})
+        .then(() => process.exit())
+        .catch((e: any) => { log.error('Error: ' + e.message); process.exit(); });
     // @ts-ignore
     return;
 }
+
+// --------------------- Config --------------------- //
+import config from 'config';
 
 // -------------------- Deployer --------------------- //
 
 if (program.deploy) {
     const deploy = require('./core/deploy');
+    log.debug('Starting deployment of ' + program.deploy_path + '...');
     deploy({
-        deploy_path: program.deploy,
+        deploy_path: program.deploy_path,
         deploy_contracts: program.deploy_contracts,
         dev: program.dev,
         force_deploy_proxy: program.force_deploy_proxy
     })
         .then(exit)
         .catch(die);
+    // @ts-ignore
+    return;
+}
+
+// --------------------- Start -------------------- //
+
+import startPoint from './core/index';
+import migrate from './util/migrate';
+import initFolders from './initFolders';
+import {statAsync, resolveHome} from './util';
+
+// ----------------- Console Mode -------------------- //
+
+if (program.attach) {
+    const Console = require('./console');
+    const console = new Console();
+    console.start();
     // @ts-ignore
     return;
 }

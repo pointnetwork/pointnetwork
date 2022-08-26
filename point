@@ -2,10 +2,20 @@
 var path = require('path');
 
 let prepare = '';
-if (process.argv.length >= 4 && process.argv[2] === 'deploy'){
+if (process.argv.length >= 3 && process.argv[2] === 'deploy'){
     prepare = 'cd ' + process.argv[1].slice(0, process.argv[1].length - 6) + ' && ';
-    const absolutePath = path.resolve(process.argv[3]);
-    process.argv[3] = absolutePath;
+    if (process.argv.length >= 4) {
+        if (process.argv[3].startsWith('-')) {
+            // it's a flag, path is empty, add the current path after everything
+            process.argv.push(path.resolve('.'));
+        } else {
+            // modify: relative -> absolute path
+            process.argv[3] = path.resolve(process.argv[3]);
+        }
+    } else {
+        // empty path
+        process.argv.push(path.resolve('.'));
+    }
 }
 
 require('child_process').spawnSync(

@@ -184,6 +184,7 @@
       "migrations/**/*",
       "internal/**/*",
       "resources/certs/*.{crt,key,srl}",
+      "resources/app_templates/**/*",
       "node_modules/sqlite3/**/*",
       "node_modules/eccrypto/**/*",
       "node_modules/bigint-buffer/**/*",
