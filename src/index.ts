@@ -143,28 +143,14 @@ const die = (err: Error) => {
     exit(1);
 };
 
-// ------------------- Init Logger ----------------- //
-
+// --------------------- Config --------------------- //
 import config from 'config';
-import startPoint from './core/index';
-import migrate from './util/migrate';
-import initFolders from './initFolders';
-import {statAsync, resolveHome} from './util';
-
-// ----------------- Console Mode -------------------- //
-
-if (program.attach) {
-    const Console = require('./console');
-    const console = new Console();
-    console.start();
-    // @ts-ignore
-    return;
-}
 
 // -------------------- Deployer --------------------- //
 
 if (program.deploy) {
     const deploy = require('./core/deploy');
+    log.debug('Starting deployment of ' + program.deploy_path + '...');
     deploy({
         deploy_path: program.deploy_path,
         deploy_contracts: program.deploy_contracts,
@@ -176,6 +162,13 @@ if (program.deploy) {
     // @ts-ignore
     return;
 }
+
+// --------------------- Start -------------------- //
+
+import startPoint from './core/index';
+import migrate from './util/migrate';
+import initFolders from './initFolders';
+import {statAsync, resolveHome} from './util';
 
 // ----------------- Console Mode -------------------- //
 

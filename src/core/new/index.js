@@ -35,9 +35,9 @@ const create = async ({website}) => {
     fs.writeFileSync(path.join(website_dir, 'routes.json'), JSON.stringify(routes, null, 4));
 
     // * Copy public directory
-    const publicPath = path.resolve(__dirname, 'templates', 'public');
-    if (!publicPath) throw new Error('Could not locate public template directory to copy from');
-    fs.cpSync(publicPath, path.join(website_dir, 'public'), {recursive: true});
+    const templatePath = path.resolve(__dirname, '..', '..', '..', 'resources', 'app_templates', 'empty');
+    if (!templatePath) throw new Error('Could not locate public template directory to copy from');
+    fs.cpSync(templatePath, path.join(website_dir, 'public'), {recursive: true});
 
     console.info('Website directory "' + website + '" successfully created! Now you can `cd` into it and `point deploy`');
 };
