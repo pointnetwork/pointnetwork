@@ -16,7 +16,7 @@ const create = async ({website}) => {
         throw new Error('{website} should end with .point, .sol or other web3 domain');
     }
 
-    if (!/^[a-z0-9\.]*?$/ig.test(website)) {
+    if (!/^[a-z0-9-_\.]*?$/ig.test(website)) {
         throw new Error('Invalid {website} name given');
     }
 
