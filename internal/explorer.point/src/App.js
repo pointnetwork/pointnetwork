@@ -1,4 +1,3 @@
-import '@fontsource/karla/600.css';
 import { ProvideAppContext, useAppContext } from './context/AppContext';
 import { Route, Switch } from 'wouter';
 import Header from './components/Header';
