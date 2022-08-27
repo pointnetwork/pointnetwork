@@ -164,7 +164,9 @@ export default function Home() {
                     )
                 }
             >
-                <h5>POINT <span>Public Sale</span></h5>
+                <h5>
+                    POINT <span>Public Sale</span>
+                </h5>
                 <ArrowForwardIcon fontSize="small" />
             </div>
         </Container>
