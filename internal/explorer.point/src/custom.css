@@ -1,18 +1,29 @@
 .navbar {
-    padding: 0;
+    background: linear-gradient(to bottom, #1E2022 0%, rgb(0, 0, 0) 100%);
+    min-height: 60px;
+    padding: 10px 0;
 }
+
 .mono {
     font-family: "Lucida Console", Courier, monospace;
 }
+
 a {
     color: #438fa6;
 }
+
+a.nav-link {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
 a.nav-link.active {
-    background: linear-gradient(to bottom, #aaa 0%, transparent 100%);
+    background-color: rgba(255, 255, 255, .2);
+    border-radius: 4px;
 }
 
 .imgLogo {
-    height: 1.6em;
+    height: 2.25rem;
     margin-right: 0.8em;
 }
 
@@ -54,7 +65,6 @@ a.nav-link.active {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    /* max-width: 1100px; */
     margin: 0 auto 100px auto;
 }
 

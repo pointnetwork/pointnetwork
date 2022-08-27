@@ -3,7 +3,6 @@ import Container from 'react-bootstrap/Container';
 import { useAppContext } from '../context/AppContext';
 import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png';
-// import bountyLogo from '../assets/pointcoin.png';
 import Markdown from 'markdown-to-jsx';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import blogIcon from '../assets/blog.svg';
