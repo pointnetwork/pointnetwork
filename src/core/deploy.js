@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const config = require('config');
@@ -7,15 +8,29 @@ const log = logger.child({module: 'Deploy'});
 const PORT = Number(config.get('api.port'));
 
 const deploy = async ({
-    deploy_path,
+    deploy_path = null,
     deploy_contracts = false,
     dev = false,
     force_deploy_proxy = false
 }) => {
+    if (deploy_path === null) {
+        deploy_path = path.resolve('.');
+        if (!fs.existsSync(path.join(deploy_path, 'point.deploy.json'))) {
+            throw new Error('Empty path given, and point.deploy.json is not found here. ' +
+                'Are you sure you\'re in a dApp directory?');
+        }
+    }
+
+    log.debug('Starting deployment of ' + deploy_path + '...');
+
     const deploy_path_absolute = path.resolve(deploy_path);
     if (!deploy_path_absolute) {
-        throw new Error('invalid path');
+        throw new Error('Invalid path');
     }
+    if (!fs.existsSync(deploy_path_absolute)) {
+        throw new Error(`Path {deploy_path} doesn\'t exist`);
+    }
+
     const start = Date.now();
     const result = await axios.post(
         `http://localhost:${PORT}/v1/api/deploy`,
@@ -28,6 +43,8 @@ const deploy = async ({
     );
     if (result.status !== 200) {
         log.error(result, 'Deploy error');
+    } else if (result.data.status !== 'success') {
+        log.error(result.data);
     }
     log.info(`Deploy time: ${Date.now() - start} ms`);
 };
