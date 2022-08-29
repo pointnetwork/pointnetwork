@@ -16,21 +16,6 @@ class ContractController extends PointSDKController {
         this.reply = reply;
     }
 
-    async call() {
-        const contract = this.payload.contract;
-        const method = this.payload.method;
-
-        // Note params must be in a valid array format for parsing
-        // since this is passed via url params the type will be string
-        // params=["String Param", 999, true, "Another string"] etc...
-        const params = this.payload.params ? this.payload.params : [];
-        const host = this.payload.host === '@' ? '@' : this.host; //allow call identity contract
-
-        const data = await ethereum.callContract(host, contract, method, params);
-
-        return this._response(data);
-    }
-
     async load() {
         const contractName = this.req.params.contract;
 
@@ -40,27 +25,6 @@ class ContractController extends PointSDKController {
             address: contract._address,
             abi: contract._jsonInterface
         };
-
-        return this._response(data);
-    }
-
-    async send() {
-        const contract = this.payload.contract;
-        const method = this.payload.method;
-        const gasLimit = this.payload.gasLimit;
-        const amountInWei = this.payload.amountInWei;
-
-        // Note params must be in a valid array format for parsing
-        // since this is passed via url params the type will be string
-        // params=["String Param", 999, true, "Another string"] etc...
-        const params = this.payload.params ? this.payload.params : [];
-        const options = {
-            amountInWei,
-            gasLimit
-        };
-        const host = this.payload.host === '@' ? '@' : this.host; //allow call identity contract
-
-        const data = await ethereum.sendToContract(host, contract, method, params, options);
 
         return this._response(data);
     }
