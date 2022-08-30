@@ -1,7 +1,7 @@
 import Container from 'react-bootstrap/Container';
 import Loading from '../components/Loading';
 import { useState, useEffect } from 'react';
-import { Link } from 'wouter';
+import { Link } from 'react-router-dom';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 export default function Identities() {
@@ -100,7 +100,7 @@ export default function Identities() {
                     next={fetchIdentities}
                     hasMore={hasMore}
                     loader={<Loading />}
-                    style={{height: 'inherit', overflow: 'inherit'}}
+                    style={{ height: 'inherit', overflow: 'inherit' }}
                 >
                     <table className="table table-bordered table-striped table-hover table-responsive table-primary">
                         <tbody>

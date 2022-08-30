@@ -4,8 +4,9 @@ import React, {
     useState,
     useEffect,
     useCallback,
+    useMemo,
 } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const defaultContext = {
     walletAddress: undefined,
@@ -24,7 +25,8 @@ export const ProvideAppContext = ({ children }) => {
     const [publicKey, setPublicKey] = useState('');
     const [walletAddr, setWalletAddr] = useState('');
     const [walletError, setWallerError] = useState();
-    const [, setLocation] = useLocation();
+    const navigate = useNavigate();
+    const { search, pathname } = useLocation();
 
     const fetchData = async () => {
         try {
@@ -55,9 +57,29 @@ export const ProvideAppContext = ({ children }) => {
         fetchData();
     }, []);
 
-    const goHome = useCallback(async () => {
-        setLocation('/');
+    const goHome = useCallback(() => {
+        navigate('/');
     }, []);
+
+    const setAuthToken = async (tkn) => {
+        const res = await window.point.point.set_auth_token(tkn);
+        if (!res.ok) {
+            throw new Error('Failed to set point auth token');
+        }
+        navigate(pathname);
+        fetchData();
+    };
+
+    const token = useMemo(() => {
+        const query = new URLSearchParams(search);
+        return query.get('token');
+    }, [search]);
+
+    useEffect(() => {
+        if (token) {
+            setAuthToken(token);
+        }
+    }, [token]);
 
     const context = {
         isLoading,

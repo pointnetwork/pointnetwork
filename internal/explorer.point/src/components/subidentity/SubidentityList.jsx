@@ -1,4 +1,4 @@
-import { Link } from 'wouter';
+import { Link } from 'react-router-dom';
 
 export default function SubidentityList({ subidentities, loading, owner }) {
     if ((!subidentities || subidentities.length === 0) && !loading) {
@@ -20,16 +20,11 @@ export default function SubidentityList({ subidentities, loading, owner }) {
                     {subidentities.map((s) => (
                         <tr key={`${s}`}>
                             <td>
-                                <Link
-                                    to={`/identities/${s}`}
-                                    target="_blank"
-                                >
+                                <Link to={`/identities/${s}`} target="_blank">
                                     @{s}
                                 </Link>
                             </td>
-                            <td className="mono">
-                                {owner.toLowerCase()}
-                            </td>
+                            <td className="mono">{owner.toLowerCase()}</td>
                         </tr>
                     ))}
                 </tbody>

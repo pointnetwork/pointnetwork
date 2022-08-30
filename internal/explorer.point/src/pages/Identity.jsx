@@ -1,4 +1,4 @@
-import { useRoute } from 'wouter';
+import { useParams } from 'react-router-dom';
 import Container from 'react-bootstrap/Container';
 import BlockTime from '../components/BlockTime';
 import React, { useState, useEffect } from 'react';
@@ -29,10 +29,10 @@ const IkvEntry = (props) => {
     const saveChanges = async () => {
         setLoading(true);
         try {
-            //validate item.key
+            // validate item.key
             const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
             const found = item.version.match(regex);
-            if(!found){
+            if (!found) {
                 setLoading(false);
                 Swal.fire({
                     icon: 'error',
@@ -42,9 +42,14 @@ const IkvEntry = (props) => {
                 return;
             }
 
-            //increment patch of item.key
-            let newVersionParam = found.groups.major + '.' + found.groups.minor + '.' + (parseInt(found.groups.patch) + 1)
-            
+            // increment patch of item.key
+            const newVersionParam =
+                found.groups.major +
+                '.' +
+                found.groups.minor +
+                '.' +
+                (parseInt(found.groups.patch) + 1);
+
             await window.point.contract.send({
                 contract: 'Identity',
                 method: 'ikvPut',
@@ -80,9 +85,7 @@ const IkvEntry = (props) => {
                     item.value
                 )}
             </td>
-            <td>
-                {item.version}
-            </td>
+            <td>{item.version}</td>
             <td>
                 <BlockTime blockNumber={item.blockNumber} />
             </td>
@@ -129,7 +132,7 @@ function parsePublicKey(key) {
 }
 
 export default function Identity() {
-    const [, { handle }] = useRoute('/identities/:handle');
+    const { handle } = useParams();
     const [ikvset, setIkvset] = useState([]);
     const [owner, setOwner] = useState();
     const [deployers, setDeployers] = useState([]);
@@ -189,8 +192,6 @@ export default function Identity() {
         fetchPublicKey();
     }, [isOwner]);
 
-    
-
     const fetchIkv = async () => {
         setIsLoadingIkv(true);
         const ikvsetFetched = await window.point.contract.call({
@@ -199,7 +200,16 @@ export default function Identity() {
             params: [handle],
         });
         if (ikvsetFetched.data !== '') {
-            setIkvset(ikvsetFetched.data.map(e => {return {identity: e[0], key: e[1], value: e[2], version: e[3]}}));
+            setIkvset(
+                ikvsetFetched.data.map((e) => {
+                    return {
+                        identity: e[0],
+                        key: e[1],
+                        value: e[2],
+                        version: e[3],
+                    };
+                }),
+            );
         }
         setIsLoadingIkv(false);
     };
@@ -212,23 +222,29 @@ export default function Identity() {
             params: [handle],
         });
         if (deployersFetched.data !== '') {
-            setDeployers(deployersFetched.data.map(e => {return {identity: e[0], deployer: e[1], allowed: e[2], blockNumber: e[3]}}));
+            setDeployers(
+                deployersFetched.data.map((e) => {
+                    return {
+                        identity: e[0],
+                        deployer: e[1],
+                        allowed: e[2],
+                        blockNumber: e[3],
+                    };
+                }),
+            );
         }
         setIsLoadingDeployers(false);
     };
 
     const renderDeployerEntry = (deployer) => {
-        
-        console.log(deployer)
+        console.log(deployer);
         return (
             <tr key={deployer.deployer}>
                 <th>
                     <OwnerToIdentity owner={deployer.deployer} />
                 </th>
                 <td>{deployer.deployer}</td>
-                <td>
-                    {deployer.allowed === true ? 'Allowed' : 'Revoked'}
-                </td>
+                <td>{deployer.allowed === true ? 'Allowed' : 'Revoked'}</td>
                 <td>
                     <BlockTime blockNumber={deployer?.blockNumber} />
                 </td>
@@ -238,14 +254,18 @@ export default function Identity() {
                         {deployer.allowed === true ? (
                             <button
                                 className="btn btn-sm btn-danger"
-                                onClick={() => revokeDeployer(deployer.deployer)}
+                                onClick={() =>
+                                    revokeDeployer(deployer.deployer)
+                                }
                             >
                                 Revoke
                             </button>
                         ) : (
                             <button
                                 className="btn btn-sm btn-primary"
-                                onClick={() => activateDeployer(deployer.deployer)}
+                                onClick={() =>
+                                    activateDeployer(deployer.deployer)
+                                }
                             >
                                 Reactivate
                             </button>
@@ -340,8 +360,8 @@ export default function Identity() {
 
     const addIkvEntry = async () => {
         setAddingNewIkv(true);
-        let regexp = new RegExp(/\d+\.\d+\.\d+/);
-        if(!regexp.test(ikvNewEntryVersion)){
+        const regexp = new RegExp(/\d+\.\d+\.\d+/);
+        if (!regexp.test(ikvNewEntryVersion)) {
             setAddingNewIkv(false);
             Swal.fire({
                 icon: 'error',
@@ -543,7 +563,9 @@ export default function Identity() {
                 <>
                     <table className="table table-bordered table-primary table-striped table-hover table-responsive">
                         <tbody>
-                            {deployers.map((deployer) => renderDeployerEntry(deployer))}
+                            {deployers.map((deployer) =>
+                                renderDeployerEntry(deployer),
+                            )}
                         </tbody>
                     </table>
                     <EmptyMsg />
