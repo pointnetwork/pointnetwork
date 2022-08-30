@@ -38,8 +38,6 @@ module.exports = [
     ['POST', '/v1/api/wallet/decryptData', 'WalletController@decryptData'],
     ['POST', '/v1/api/wallet/decryptSymmetricKey', 'WalletController@decryptSymmetricKey'],
     ['POST', '/v1/api/wallet/decryptDataWithDecryptedKey', 'WalletController@decryptDataWithDecryptedKey'],
-    ['POST', '/v1/api/contract/call', 'ContractController@call'],
-    ['POST', '/v1/api/contract/send', 'ContractController@send'],
     ['GET', '/v1/api/contract/load/:contract', 'ContractController@load'],
     ['POST', '/v1/api/contract/events', 'ContractController@events'],
     ['POST', '/v1/api/web2/open', 'Web2Controller@open'],
