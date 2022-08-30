@@ -75,7 +75,8 @@
     "umzug": "^3.0.0",
     "web3": "^1.7.3",
     "web3-provider-engine": "16.0.3",
-    "web3-providers-http": "1.6.0"
+    "web3-providers-http": "1.6.0",
+    "point-contract-manager": "github:pointnetwork/point-contracts#v0.1.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
