@@ -1,5 +1,5 @@
 import { ProvideAppContext, useAppContext } from './context/AppContext';
-import { Route, Switch } from 'wouter';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Identities from './pages/Identities';
@@ -34,29 +34,27 @@ const Main = () => {
                 <>
                     <Header isRegistered={Boolean(walletIdentity)} />
                     {walletIdentity ? (
-                        <Switch>
-                            <Route path="/">
-                                <Home />
-                            </Route>
-                            <Route path="/wallet">
-                                <Wallet />
-                            </Route>
-                            <Route path="/identities/:handle">
-                                <Identity />
-                            </Route>
-                            <Route path="/identities">
-                                <Identities />
-                            </Route>
-                            <Route path="/zapps">
-                                <Zapps />
-                            </Route>
-                            <Route path="/myidentities">
-                                <MyIdentities owner={walletAddr} />
-                            </Route>
-                            <Route path="/deploy_blog">
-                                <DeployBlog />
-                            </Route>
-                        </Switch>
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/wallet" element={<Wallet />} />
+                            <Route
+                                path="/identities/:handle"
+                                element={<Identity />}
+                            />
+                            <Route
+                                path="/identities"
+                                element={<Identities />}
+                            />
+                            <Route path="/zapps" element={<Zapps />} />
+                            <Route
+                                path="/myidentities"
+                                element={<MyIdentities owner={walletAddr} />}
+                            />
+                            <Route
+                                path="/deploy_blog"
+                                element={<DeployBlog />}
+                            />
+                        </Routes>
                     ) : (
                         renderWalletIdentityMissing()
                     )}
@@ -67,9 +65,11 @@ const Main = () => {
 };
 
 const App = () => (
-    <ProvideAppContext>
-        <Main />
-    </ProvideAppContext>
+    <BrowserRouter>
+        <ProvideAppContext>
+            <Main />
+        </ProvideAppContext>
+    </BrowserRouter>
 );
 
 export default App;

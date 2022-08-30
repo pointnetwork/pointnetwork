@@ -1,5 +1,5 @@
 import Container from 'react-bootstrap/Container';
-import { Link, Redirect } from 'wouter';
+import { Link, Navigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import Subidentities from '../components/subidentity/Subidentities';
 
@@ -7,7 +7,7 @@ export default function MyIdentities({ owner }) {
     const { walletIdentity } = useAppContext();
 
     if (!owner) {
-        return <Redirect to="/identities" />;
+        return <Navigate to="/identities" />;
     }
 
     return (
