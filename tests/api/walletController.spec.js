@@ -107,13 +107,7 @@ describe('Wallet controller', () => {
             headers: {host: 'balance.point'}
         });
 
-        // TODO: we cannot return real 403 status
-        // expect(res.statusCode).toEqual(403);
-        expect(res.payload).toEqual(JSON.stringify({
-            status: 403,
-            data: 'Forbidden',
-            headers: {}
-        }));
+        expect(res.statusCode).toEqual(403);
     });
 
     it('Hash', async () => {

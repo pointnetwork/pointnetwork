@@ -3,3 +3,5 @@ deployer_account: 011967d88c6b79116bb879d4c2bc2c3caa23569edd85dfe0bc596846837bbc
 log:
   level: error
   sendLogs: false
+api:
+  csrf_enabled: false

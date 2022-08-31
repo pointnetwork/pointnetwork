@@ -9,7 +9,7 @@ const attachPointApiHandler = (server: FastifyInstance) => {
         url: '/point_api/wallet/:method',
         handler: async (req: FastifyRequest<{Params: {method: string}}>, res) => {
             await checkAuthToken(req, res);
-            if (req.headers.host !== 'point') {
+            if (!(['point', 'confirmation-window'].includes(req.headers.host!))) {
                 res.status(403).send('Forbidden');
                 return;
             }
