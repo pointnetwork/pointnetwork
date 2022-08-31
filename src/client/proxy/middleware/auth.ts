@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import config from 'config';
 import {verify} from 'jsonwebtoken';
+import {resolveHome} from '../../../util';
 
 let secretToken = '';
 
@@ -11,7 +12,7 @@ export const checkAuthToken = async (req: FastifyRequest, reply: FastifyReply) =
     if (process.env.MODE === 'test') return;
     if (!secretToken) {
         secretToken = await fs.readFile(
-            path.join(config.get('wallet.keystore_path'), 'token.txt'), 'utf8'
+            path.join(resolveHome(config.get('wallet.keystore_path')), 'token.txt'), 'utf8'
         );
     }
     const jwt = req.headers['x-point-token'] as string;

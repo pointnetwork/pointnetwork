@@ -9,6 +9,7 @@ import {verify} from 'jsonwebtoken';
 import fs from 'fs-extra';
 import path from 'path';
 import config from 'config';
+import {resolveHome} from '../../util';
 const log = logger.child({module: 'ZProxySocketController'});
 
 export const SUBSCRIPTION_EVENT_TYPES = {
@@ -42,7 +43,7 @@ class ZProxySocketController {
 
             if (!secretToken) {
                 secretToken = await fs.readFile(
-                    path.join(config.get('wallet.keystore_path'), 'token.txt'), 'utf8'
+                    path.join(resolveHome(config.get('wallet.keystore_path')), 'token.txt'), 'utf8'
                 );
             }
             const token = request.__point_token;
