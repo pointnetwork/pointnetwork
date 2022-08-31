@@ -1,0 +1,25 @@
+import {FastifyReply, FastifyRequest} from 'fastify';
+import fs from 'fs-extra';
+import path from 'path';
+import config from 'config';
+import {verify} from 'jsonwebtoken';
+
+let secretToken = '';
+
+export const checkAuthToken = async (req: FastifyRequest, reply: FastifyReply) => {
+    if (!secretToken) {
+        secretToken = await fs.readFile(
+            path.join(config.get('wallet.keystore_path'), 'token.txt'), 'utf8'
+        );
+    }
+    const jwt = req.headers['x-point-token'] as string;
+    if (!jwt) {
+        reply.status(401).send('Unauthorized');
+        return;
+    }
+    try {
+        verify(jwt.replace(/^Bearer\s/, ''), secretToken);
+    } catch (e) {
+        reply.status(401).send('Unauthorized');
+    }
+};

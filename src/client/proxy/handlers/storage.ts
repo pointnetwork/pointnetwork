@@ -12,6 +12,7 @@ import {
     getEncryptedSymetricObjFromJSON
 } from '../../../client/encryptIdentityUtils';
 import {getNetworkPrivateKey} from '../../../wallet/keystore';
+import {checkAuthToken} from '../middleware/auth';
 
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format
@@ -21,6 +22,8 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             if (!req.headers['content-type']?.match('multipart/form-data')) {
                 return res.status(415).send('Only multipart/form-data is supported');
             }
+
+            await checkAuthToken(req, res);
 
             const file = await req.file();
             if (!file) {
@@ -38,6 +41,8 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             if (!req.headers['content-type']?.match('multipart/form-data')) {
                 return res.status(415).send('Only multipart/form-data is supported');
             }
+
+            await checkAuthToken(req, res);
 
             const file = await req.file();
             if (!file) {
@@ -74,6 +79,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
     });
 
     server.get('/_encryptedStorage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {
+        await checkAuthToken(req, res);
         let file;
         const qs = req.query as {eSymmetricObj: string, symmetricObj: string};
         try {
@@ -136,6 +142,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
     });
 
     server.get('/_storage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {
+        await checkAuthToken(req, res);
         let file;
         try {
             file = await getFile(req.params.hash, null);
