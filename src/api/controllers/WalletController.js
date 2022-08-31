@@ -230,7 +230,8 @@ class WalletController extends PointSDKController {
     async send() {
         const {host} = this.req.headers;
         if (host !== 'point') {
-            return {status: 403};
+            this.reply.status(403).send('Forbidden');
+            return;
         }
         const {to, network, value, messageId} = this.payload;
         return sendTransaction({to, network, value, messageId});
@@ -239,7 +240,8 @@ class WalletController extends PointSDKController {
     async sendToken() {
         const {host} = this.req.headers;
         if (host !== 'point') {
-            return {status: 403};
+            this.reply.status(403).send('Forbidden');
+            return;
         }
 
         const {tokenAddress, to, network, value, messageId} = this.payload;

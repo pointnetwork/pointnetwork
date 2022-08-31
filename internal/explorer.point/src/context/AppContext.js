@@ -30,6 +30,14 @@ export const ProvideAppContext = ({ children }) => {
 
     const fetchData = async () => {
         try {
+            const token = await window.point.point.get_auth_token();
+            // If token is not set, it should be saved and then the page should be redirected,
+            // so this function will trigger again. But let's keep a console log for the case
+            // when it's missing completely
+            if (!token) {
+                console.error('No auth token found in SDK');
+                return;
+            }
             const resp = await window.point.identity.me();
             const identityData = resp.data;
 
