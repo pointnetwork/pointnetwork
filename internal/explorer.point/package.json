@@ -28,7 +28,7 @@
     "wouter": "^2.7.4"
   },
   "scripts": {
-    "clear": "mkdir -p \"./public\" && rm -rf \"./public/*\" \".cache\" \".parcel-cache\"",
+    "clear": "rm -rf \"./public/*\" \".cache\" \".parcel-cache\"",
     "start": "react-scripts start",
     "watch:docker": "./watch.docker.js",
     "prebuild": "npm ci",
