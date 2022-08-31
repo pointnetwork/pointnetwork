@@ -58,11 +58,9 @@ for (const apiRoute of api_routes) {
                     reply.status(401).send('Unauthorized');
                     return;
                 }
-                console.log(123, jwt.replace(/^Bearer\s/, ''), secretToken);
                 try {
                     verify(jwt.replace(/^Bearer\s/, ''), secretToken);
                 } catch (e) {
-                    console.log(456, e);
                     reply.status(401).send('Unauthorized');
                     return;
                 }
