@@ -6,12 +6,13 @@ import SendModal from '../components/wallet/SendModal';
 import Swal from 'sweetalert2';
 import ErrorBlock from '../components/ErrorBlock';
 
-window.openTelegram = () => {
+window.openTelegram = async () => {
     fetch('/v1/api/web2/open', {
         method: 'POST',
         headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
+            'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
         },
         body: JSON.stringify({
             urlToOpen: 'https://t.me/pointnetwork',
@@ -117,6 +118,9 @@ export default function Wallet() {
 
         const response = await fetch('/v1/api/wallet/getWalletInfo', {
             signal: controller.signal,
+            headers: {
+                'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+            },
         });
         if (!response.ok) {
             throw new Error(
@@ -135,6 +139,9 @@ export default function Wallet() {
 
         const response = await fetch('/v1/api/wallet/getTokenBalances', {
             signal: controller.signal,
+            headers: {
+                'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+            },
         });
         if (!response.ok) {
             throw new Error(

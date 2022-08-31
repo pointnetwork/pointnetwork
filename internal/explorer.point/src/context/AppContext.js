@@ -30,17 +30,8 @@ export const ProvideAppContext = ({ children }) => {
 
     const fetchData = async () => {
         try {
-            let identityData = {};
-            if (window.point && window.point.identity.me) {
-                const resp = await window.point.identity.me();
-                identityData = resp.data;
-            } else {
-                const resp = await fetch(
-                    '/v1/api/identity/isIdentityRegistered/',
-                );
-                const data = await resp.json();
-                identityData = data.data;
-            }
+            const resp = await window.point.identity.me();
+            const identityData = resp.data;
 
             setWalletIdentity(identityData.identity);
             setWalletAddr(identityData.address);
@@ -54,8 +45,10 @@ export const ProvideAppContext = ({ children }) => {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (window.point) {
+            fetchData();
+        }
+    }, [window.point]);
 
     const goHome = useCallback(() => {
         navigate('/');
