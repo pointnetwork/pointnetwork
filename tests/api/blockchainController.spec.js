@@ -1,6 +1,5 @@
 import apiServer from '../../src/api/server';
 import handleRPC from '../../src/rpc/rpc-handlers';
-import config from 'config';
 
 jest.mock('../../src/rpc/rpc-handlers', () => ({
     __esModule: true,
