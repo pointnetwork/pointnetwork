@@ -228,8 +228,9 @@ export default function Wallet() {
     return (
         <>
             <div className="warning-banner">
-                This is experimental software, please be extra cautious funding
-                your wallet and sending any tokens
+                <b>Warning:</b> This is experimental software. Please do not
+                fund Point Wallet with large amount of assets, only for
+                experiments.
             </div>
             <Container className="p-3">
                 {isLoading ? (
