@@ -13,7 +13,7 @@ describe('Web2 controller', () => {
             url: 'https://point/v1/api/web2/open',
             body: JSON.stringify({urlToOpen: 'https://example2.com'}),
             headers: {
-                host: 'example2.com',
+                'host': 'example2.com',
                 'Content-Type': 'application/json'
             }
         });
