@@ -139,25 +139,6 @@ export default function Home() {
 
                 <h5>Explore featured Apps</h5>
                 {isLoading ? <Loading /> : zappsList}
-
-                <div
-                    className="bounty-banner"
-                    onClick={() =>
-                        window.open(
-                            'https://point/web2redirect?url=' +
-                                encodeURI('https://sale.pointnetwork.io/'),
-                        )
-                    }
-                >
-                    <div className="bounty-banner-inner">
-                        <div className="bounty-banner-header">
-                            <img alt="Public Sale" src={bountyLogo} />
-                            <h2>
-                                POINT <span>Public Sale</span>
-                            </h2>
-                        </div>
-                    </div>
-                </div>
             </Container>
         </>
     );

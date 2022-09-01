@@ -149,3 +149,13 @@ a.nav-link.active {
         margin: 10px 0;
     }
 }
+
+.warning-banner {
+    text-align: center;
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    background: rgb(71,53,17);
+    background: linear-gradient(90deg, rgba(71,53,17,1) 0%, rgba(223,180,0,1) 35%, rgba(237,208,12,1) 100%);
+    color: rgb(255, 255, 255);
+}
