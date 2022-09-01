@@ -8,6 +8,7 @@ import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import blogIcon from '../assets/blog.svg';
 import emailIcon from '../assets/email.svg';
 import socialIcon from '../assets/social.svg';
+import driveIcon from '../assets/drive.svg';
 import walletIcon from '../assets/wallet.svg';
 import '@fontsource/source-sans-pro';
 
@@ -22,12 +23,14 @@ export default function Home() {
         'social.point': 'Social',
         'email.point': 'Email',
         'blog.point': 'Blog',
+        'drive.point': 'Drive',
     };
 
     const featuredIcons = {
         'social.point': socialIcon,
         'email.point': emailIcon,
         'blog.point': blogIcon,
+        'drive.point': driveIcon,
     };
 
     useEffect(() => {
