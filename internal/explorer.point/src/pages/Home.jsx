@@ -4,7 +4,6 @@ import { useAppContext } from '../context/AppContext';
 import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png';
 import Markdown from 'markdown-to-jsx';
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import blogIcon from '../assets/blog.svg';
 import emailIcon from '../assets/email.svg';
 import socialIcon from '../assets/social.svg';
@@ -156,21 +155,6 @@ export default function Home() {
             ) : (
                 zappsList
             )}
-
-            <div
-                className="announcement-banner"
-                onClick={() =>
-                    window.open(
-                        'https://point/web2redirect?url=' +
-                            encodeURI('https://sale.pointnetwork.io/'),
-                    )
-                }
-            >
-                <h5>
-                    POINT <span>Public Sale</span>
-                </h5>
-                <ArrowForwardIcon fontSize="small" />
-            </div>
         </Container>
     );
 }
