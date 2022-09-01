@@ -13,7 +13,7 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
         .digest('hex');
 
     // Encrypt each data passed
-    for (const data of dataArray){
+    for (const data of dataArray) {
         // Secret symmetric key, generated randomly
         const symmetricKey = crypto.randomBytes(24);
 
@@ -30,10 +30,10 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
         const messageForPublicKeyEncryption = `|${hostNameHashHex}|${symmetricKey.toString(
             'hex'
         )}|${iv.toString('hex')}|`;
-        
+
         //for each public key
         const encryptedSymmetricObjs = [];
-        for (const pk of publicKeys){
+        for (const pk of publicKeys) {
             // Prepare public key buffer
             const publicKeyBuffer = Buffer.concat([
                 Buffer.from('04', 'hex'),
@@ -51,17 +51,15 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
                 encryptedSymmetricObjChunks[k] = encryptedSymmetricObj[k].toString('hex');
             }
 
-            encryptedSymmetricObjs.push(
-                {
-                    pk: pk,
-                    encryptedSymmetricObj: encryptedSymmetricObj,
-                    encryptedSymmetricObjJSON: JSON.stringify(encryptedSymmetricObjChunks)
-                }
-            );
+            encryptedSymmetricObjs.push({
+                pk: pk,
+                encryptedSymmetricObj: encryptedSymmetricObj,
+                encryptedSymmetricObjJSON: JSON.stringify(encryptedSymmetricObjChunks)
+            });
         }
         encryptedMessagesSymmetricObjs.push(encryptedSymmetricObjs);
     }
-    const encryptedMessagesStr = encryptedMessages.map((e) => e.toString('hex'));
+    const encryptedMessagesStr = encryptedMessages.map(e => e.toString('hex'));
     return {
         encryptedMessages: encryptedMessagesStr,
         encryptedMessagesSymmetricObjs: encryptedMessagesSymmetricObjs
@@ -122,7 +120,7 @@ module.exports.decryptSymmetricKey = async (host, encryptedSymmetricObj, private
         Buffer.from(privateKey, 'hex'),
         encryptedSymmetricObj
     );
-    const [, hostNameHash, ,] = symmetricObj.toString().split('|');
+    const [, hostNameHash] = symmetricObj.toString().split('|');
     if (decryptHostNameHash.digest('hex') !== hostNameHash) {
         throw new Error('Host is invalid');
     }
@@ -180,7 +178,7 @@ module.exports.decryptMultipleData = async (host, dataArray, encryptedSymmetricO
     }
 
     const decryptedDataArray = [];
-    for (const data of dataArray){
+    for (const data of dataArray) {
         const decipher = crypto.createDecipheriv(
             'aes192',
             Buffer.from(symmetricKey, 'hex'),
