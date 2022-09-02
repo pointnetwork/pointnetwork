@@ -30,14 +30,14 @@ export const ProvideAppContext = ({ children }) => {
 
     const fetchData = async () => {
         try {
-            const token = await window.point.point.get_auth_token();
-            // If token is not set, it should be saved and then the page should be redirected,
-            // so this function will trigger again. But let's keep a console log for the case
-            // when it's missing completely
-            if (!token) {
+            try {
+                await window.point.point.get_auth_token();
+            } catch (e) {
                 console.error('No auth token found in SDK');
+                setTimeout(fetchData, 500);
                 return;
             }
+
             const resp = await window.point.identity.me();
             const identityData = resp.data;
 
@@ -47,9 +47,8 @@ export const ProvideAppContext = ({ children }) => {
             setIdentityNetwork(identityData.network);
         } catch (e) {
             setWallerError(e);
-        } finally {
-            setIsLoading(false);
         }
+        setIsLoading(false);
     };
 
     useEffect(() => {
@@ -68,7 +67,6 @@ export const ProvideAppContext = ({ children }) => {
             throw new Error('Failed to set point auth token');
         }
         navigate(pathname);
-        fetchData();
     };
 
     const token = useMemo(() => {
