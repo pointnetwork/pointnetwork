@@ -16,6 +16,29 @@ class ContractController extends PointSDKController {
         this.reply = reply;
     }
 
+    async safeCall() {
+        const contractName = this.payload.contract;
+        const methodName = this.payload.method;
+        const params = this.payload.params ? this.payload.params : [];
+        const host = this.host;
+
+        const contract = await ethereum.loadWebsiteContract(host, contractName);
+
+        const method = contract.options.jsonInterface.find(m => m.name === methodName);
+        if (!method) {
+            this.reply.status(400).send('No such method');
+            return;
+        }
+        if (!['view', 'pure'].includes(method.stateMutability)) {
+            this.reply.status(403).send('Only view and pure method calls are alowed');
+            return;
+        }
+
+        const data = await ethereum.callContract(host, contractName, methodName, params);
+
+        return this._response(data);
+    }
+
     async load() {
         const contractName = this.req.params.contract;
 

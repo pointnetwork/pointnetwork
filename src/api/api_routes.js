@@ -60,6 +60,7 @@ module.exports = [
         'WalletController@decryptDataWithDecryptedKey',
         {protected: true}
     ],
+    ['POST', '/v1/api/contract/safe_call', 'ContractController@safeCall'],
     ['GET', '/v1/api/contract/load/:contract', 'ContractController@load', {protected: true}],
     ['POST', '/v1/api/contract/events', 'ContractController@events', {protected: true}],
     ['POST', '/v1/api/web2/open', 'Web2Controller@open', {protected: true}],
