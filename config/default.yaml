@@ -63,7 +63,7 @@ wallet:
   keystore_path: ~/.point/keystore
 network:
   contracts_path: contracts
-  default_network: "xnet"
+  default_network: "mainnet"
   web3:
     mainnet:
       type: "eth"
