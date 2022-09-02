@@ -46,6 +46,7 @@ export default function SubIdentityRegistration({ onNewIdentity }) {
                 method: 'POST',
                 headers: {
                     'Contenty-Type': 'application/json; charset=utf-8',
+                    'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
                 },
                 data: {
                     subidentity: newSubidentity,
