@@ -1,6 +1,7 @@
 datadir: ~/.point
 mode: ""
 identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3ccd40328
+sdk_file: ""
 api:
   address: 127.0.0.1
   port: 2468
