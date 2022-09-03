@@ -831,6 +831,13 @@ ethereum.getKeyLastVersion = async (identity, key) => {
     }
 };
 
+// Gets an ik version entry directly from the contract storage without using events
+ethereum.getikVersion = async (identity, key) => {
+    const identityContract = await ethereum.loadIdentityContract();
+    const version = await identityContract.methods.ikVersionGet(identity, key).call();
+    return version;
+};
+
 ethereum.compareVersions = (v1, v2) => {
     const v1p = v1.split('.');
     const v2p = v2.split('.');

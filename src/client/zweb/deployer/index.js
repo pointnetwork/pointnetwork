@@ -104,7 +104,7 @@ class Deployer {
         if (!isPointTarget && !isAlias) return null;
 
         const baseVersion = this.getBaseVersion(cfgVersion);
-        const lastVersion = await blockchain.getKeyLastVersion(identity, '::rootDir');
+        const lastVersion = await blockchain.getikVersion(identity, '::rootDir');
 
         if (this.isNewBaseVersionValid(lastVersion, baseVersion)) {
             return this.getNewPatchedVersion(lastVersion, baseVersion);
