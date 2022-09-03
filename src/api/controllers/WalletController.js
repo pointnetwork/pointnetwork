@@ -51,11 +51,6 @@ class WalletController extends PointSDKController {
     }
 
     hash() {
-        const {host} = this.req.headers;
-        if (host !== 'confirmation-window') {
-            return this._status(403)._response('Forbidden');
-        }
-
         const partialPK = getNetworkPrivateKey().slice(0, 33);
         const hashBuffer = ethereumjs.sha256(Buffer.from(partialPK));
         const hash = ethereumjs.bufferToHex(hashBuffer);
@@ -228,20 +223,11 @@ class WalletController extends PointSDKController {
     }
 
     async send() {
-        const {host} = this.req.headers;
-        if (host !== 'point') {
-            return {status: 403};
-        }
         const {to, network, value, messageId} = this.payload;
         return sendTransaction({to, network, value, messageId});
     }
 
     async sendToken() {
-        const {host} = this.req.headers;
-        if (host !== 'point') {
-            return {status: 403};
-        }
-
         const {tokenAddress, to, network, value, messageId} = this.payload;
 
         return sendToken({tokenAddress, to, network, value, messageId});

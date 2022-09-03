@@ -131,7 +131,7 @@ const Final = () => {
             return;
         }
         setIdentity(identity);
-        debounced.current = setTimeout(() => {
+        debounced.current = setTimeout(async () => {
             setError('');
             setLoading(true);
             axios
@@ -139,6 +139,9 @@ const Final = () => {
                     cancelToken: new axios.CancelToken((c) => {
                         cancelRef.current = c;
                     }),
+                    headers: {
+                        'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+                    },
                 })
                 .then(({ data }) => {
                     setLoading(false);
@@ -261,6 +264,9 @@ const Final = () => {
                     code: activationCode,
                     url: tweetUrl,
                 },
+                headers: {
+                    'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+                },
             });
 
             setRegistering(false);
@@ -303,6 +309,9 @@ const Final = () => {
                 data: {
                     url,
                     _csrf: csrf_token,
+                },
+                headers: {
+                    'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
                 },
             });
             setOpeningTwitter(false);

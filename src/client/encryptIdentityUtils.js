@@ -122,7 +122,7 @@ module.exports.decryptSymmetricKey = async (host, encryptedSymmetricObj, private
         Buffer.from(privateKey, 'hex'),
         encryptedSymmetricObj
     );
-    const [, hostNameHash, ,] = symmetricObj.toString().split('|');
+    const [, hostNameHash] = symmetricObj.toString().split('|');
     if (decryptHostNameHash.digest('hex') !== hostNameHash) {
         throw new Error('Host is invalid');
     }
