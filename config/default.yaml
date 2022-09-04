@@ -4,8 +4,7 @@ identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3cc
 api:
   address: 127.0.0.1
   port: 2468
-  csrf_enabled: false
-  sdk_auth_key: "POINTSDK_TOKEN"
+  csrf_enabled: true
 db:
   define:
     underscored: true
@@ -65,6 +64,15 @@ network:
   contracts_path: contracts
   default_network: "xnet"
   web3:
+    mainnet:
+      type: eth
+      name: Main Net
+      http_address: rpc-mainnet-1.point.space
+      ws_address: rpc-mainnet-1.point.space/ws
+      currency_name: Point
+      currency_code: POINT
+      tls: true
+      tokens: []
     xnet:
       type: "eth"
       name: "Xnet"

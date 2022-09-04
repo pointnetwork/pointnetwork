@@ -1,16 +1,24 @@
-import fastify, {HTTPMethods} from 'fastify';
+import fastify, {FastifyRequest, HTTPMethods} from 'fastify';
 import logger from '../core/log';
 import fastifyWs from 'fastify-websocket';
 import {transformErrorResp} from '../errors';
 import identityMdw from './middleware/identity';
+import csrfTokens from '../client/zweb/renderer/csrfTokens';
+import fs from 'fs-extra';
+import path from 'path';
+import config from 'config';
+import {verify} from 'jsonwebtoken';
+import {resolveHome} from '../util';
 const ws_routes = require('./ws_routes');
 const api_routes = require('./api_routes');
 
+let secretToken = '';
 const apiServer = fastify({
     logger: logger.child({module: 'ApiServer.server'}),
     pluginTimeout: 20000
     // todo: more configuration?
 });
+const CSRF_ENABLED = config.get('api.csrf_enabled');
 
 // https://github.com/fastify/fastify-websocket - for websocket support
 apiServer.register(fastifyWs, {options: {clientTracking: true}});
@@ -22,7 +30,44 @@ for (const apiRoute of api_routes) {
         method: apiRoute[0] as HTTPMethods,
         url: apiRoute[1],
         preHandler: identityMdw,
-        handler: async (request, reply) => {
+        handler: async (request: FastifyRequest<{Body: Record<string, unknown>}>, reply) => {
+
+            // CSRF check
+            const host = request.headers.host;
+            // TODO: we are not using CSRF for other hosts, should we?
+            if (CSRF_ENABLED && request.method === 'POST' && host === 'point') {
+                if (!csrfTokens[host]) {
+                    reply.status(403).send('No csrf token generated for this host');
+                    return;
+                }
+                const real_token = csrfTokens[host];
+                if (real_token !== request.body._csrf) {
+                    reply.status(403).send('Invalid csrf token submitted');
+                    return;
+                }
+            }
+
+            // Auth token check
+            // TODO: make proper tests with the token
+            if (apiRoute[3]?.protected && process.env.MODE !== 'test') {
+                if (!secretToken) {
+                    secretToken = await fs.readFile(
+                        path.join(resolveHome(config.get('wallet.keystore_path')), 'token.txt'), 'utf8'
+                    );
+                }
+                const jwt = request.headers['x-point-token'] as string;
+                if (!jwt) {
+                    reply.status(401).send('Unauthorized');
+                    return;
+                }
+                try {
+                    verify(jwt.replace(/^Bearer\s/, ''), secretToken);
+                } catch (e) {
+                    reply.status(401).send('Unauthorized');
+                    return;
+                }
+            }
+
             const controller = new (require('./controllers/' + controllerName))(
                 request,
                 reply

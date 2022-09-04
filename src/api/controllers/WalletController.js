@@ -5,6 +5,8 @@ const {getNetworkPublicKey, getNetworkPrivateKey} = require('../../wallet/keysto
 const {
     encryptData,
     decryptData,
+    decryptSymmetricKey,
+    decryptDataWithDecryptedKey,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
 const {getBalance, getWalletAddress, sendTransaction, sendToken} = require('../../wallet');
@@ -49,11 +51,6 @@ class WalletController extends PointSDKController {
     }
 
     hash() {
-        const {host} = this.req.headers;
-        if (host !== 'confirmation-window') {
-            return this._status(403)._response('Forbidden');
-        }
-
         const partialPK = getNetworkPrivateKey().slice(0, 33);
         const hashBuffer = ethereumjs.sha256(Buffer.from(partialPK));
         const hash = ethereumjs.bufferToHex(hashBuffer);
@@ -65,16 +62,6 @@ class WalletController extends PointSDKController {
         const identity = await ethereum.getCurrentIdentity();
         const pointIdentity = identity ? `${identity}.point` : 'N/A';
         const wallets = [
-            // TODO: remove this placeholder once we add a real point network
-            {
-                network: 'pointnet',
-                type: 'eth',
-                currency_name: 'Point',
-                currency_code: 'POINT',
-                address: pointIdentity,
-                alias: pointIdentity,
-                balance: 0
-            },
             ...(await Promise.all(
                 Object.keys(networks).map(async network => {
                     let balance;
@@ -226,20 +213,11 @@ class WalletController extends PointSDKController {
     }
 
     async send() {
-        const {host} = this.req.headers;
-        if (host !== 'point') {
-            return {status: 403};
-        }
         const {to, network, value, messageId} = this.payload;
         return sendTransaction({to, network, value, messageId});
     }
 
     async sendToken() {
-        const {host} = this.req.headers;
-        if (host !== 'point') {
-            return {status: 403};
-        }
-
         const {tokenAddress, to, network, value, messageId} = this.payload;
 
         return sendToken({tokenAddress, to, network, value, messageId});
@@ -250,6 +228,32 @@ class WalletController extends PointSDKController {
         const {host} = this.req.headers;
         const encryptedData = await encryptData(host, data, publicKey);
         return this._response(encryptedData);
+    }
+
+    async decryptSymmetricKey() {
+        const {host} = this.req.headers;
+        const privateKey = getNetworkPrivateKey();
+
+        const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
+            JSON.parse(this.payload.encryptedSymmetricObj)
+        );
+        const decryptedSymmetricKey = await decryptSymmetricKey(
+            host,
+            encryptedSymmetricObj,
+            privateKey
+        );
+        return this._response({decryptedSymmetricKey});
+    }
+
+    async decryptDataWithDecryptedKey() {
+        const {host} = this.req.headers;
+        
+        const decryptedData = await decryptDataWithDecryptedKey(
+            host,
+            Buffer.from(this.payload.encryptedData, 'hex'),
+            this.payload.symmetricObj
+        );
+        return this._response({decryptedData: decryptedData.plaintext.toString()});
     }
 
     async decryptData() {

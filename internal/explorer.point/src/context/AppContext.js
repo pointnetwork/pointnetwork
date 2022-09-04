@@ -4,8 +4,9 @@ import React, {
     useState,
     useEffect,
     useCallback,
+    useMemo,
 } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const defaultContext = {
     walletAddress: undefined,
@@ -24,21 +25,21 @@ export const ProvideAppContext = ({ children }) => {
     const [publicKey, setPublicKey] = useState('');
     const [walletAddr, setWalletAddr] = useState('');
     const [walletError, setWallerError] = useState();
-    const [, setLocation] = useLocation();
+    const navigate = useNavigate();
+    const { search, pathname } = useLocation();
 
     const fetchData = async () => {
         try {
-            let identityData = {};
-            if (window.point && window.point.identity.me) {
-                const resp = await window.point.identity.me();
-                identityData = resp.data;
-            } else {
-                const resp = await fetch(
-                    '/v1/api/identity/isIdentityRegistered/',
-                );
-                const data = await resp.json();
-                identityData = data.data;
+            try {
+                await window.point.point.get_auth_token();
+            } catch (e) {
+                console.error('No auth token found in SDK');
+                setTimeout(fetchData, 500);
+                return;
             }
+
+            const resp = await window.point.identity.me();
+            const identityData = resp.data;
 
             setWalletIdentity(identityData.identity);
             setWalletAddr(identityData.address);
@@ -46,18 +47,38 @@ export const ProvideAppContext = ({ children }) => {
             setIdentityNetwork(identityData.network);
         } catch (e) {
             setWallerError(e);
-        } finally {
-            setIsLoading(false);
         }
+        setIsLoading(false);
     };
 
     useEffect(() => {
-        fetchData();
+        if (window.point) {
+            fetchData();
+        }
+    }, [window.point]);
+
+    const goHome = useCallback(() => {
+        navigate('/');
     }, []);
 
-    const goHome = useCallback(async () => {
-        setLocation('/');
-    }, []);
+    const setAuthToken = async (tkn) => {
+        const res = await window.point.point.set_auth_token(tkn);
+        if (!res.ok) {
+            throw new Error('Failed to set point auth token');
+        }
+        navigate(pathname);
+    };
+
+    const token = useMemo(() => {
+        const query = new URLSearchParams(search);
+        return query.get('token');
+    }, [search]);
+
+    useEffect(() => {
+        if (token) {
+            setAuthToken(token);
+        }
+    }, [token]);
 
     const context = {
         isLoading,

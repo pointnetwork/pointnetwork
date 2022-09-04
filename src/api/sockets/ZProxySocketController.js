@@ -5,6 +5,11 @@ See client/proxy/index.js for usage details of ZProxy and setup of the WebSocket
 import ethereum from '../../network/providers/ethereum';
 import handleRPC from '../../rpc/rpc-handlers';
 import logger from '../../core/log';
+import {verify} from 'jsonwebtoken';
+import fs from 'fs-extra';
+import path from 'path';
+import config from 'config';
+import {resolveHome} from '../../util';
 const log = logger.child({module: 'ZProxySocketController'});
 
 export const SUBSCRIPTION_EVENT_TYPES = {
@@ -21,6 +26,8 @@ export const SUBSCRIPTION_REQUEST_TYPES = {
     RPC: 'rpc'
 };
 
+let secretToken = '';
+
 class ZProxySocketController {
     constructor(_ws, _wss, _hostname) {
         this.ws = _ws;
@@ -33,6 +40,21 @@ class ZProxySocketController {
         this.ws.on('message', async msg => {
             const {hostname} = this;
             const request = JSON.parse(msg);
+
+            if (!secretToken) {
+                secretToken = await fs.readFile(
+                    path.join(resolveHome(config.get('wallet.keystore_path')), 'token.txt'), 'utf8'
+                );
+            }
+            const token = request.__point_token;
+            if (!token) {
+                return this.pushToClient({error: 'Missing auth token'});
+            }
+            try {
+                verify(token, secretToken);
+            } catch (e) {
+                return this.pushToClient({error: 'Bad auth token'});
+            }
 
             switch (request.type) {
                 case SUBSCRIPTION_REQUEST_TYPES.SUBSCRIBE: {
