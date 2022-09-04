@@ -49,6 +49,8 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
     try {
         const {host, queryParams, urlPath} = await parseRequestForProxy(req);
 
+        log.warn('getHttpRequestHandler');
+
         // Note: will not work for some modes, e.g. when MODE=zappdev and the site is loaded directly from the local file system
         const versionRequested = (queryParams.__point_version as string) ?? 'latest';
 
@@ -149,6 +151,8 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 throw new HttpNotFoundError(`Root dir id not found for host ${host}`);
             }
 
+            log.warn({urlPath}, 'Fulfilling request');
+
             return await fulfillRequest({
                 req, res,
                 isLocal: false,
@@ -222,7 +226,12 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
     }
 };
 
-const tryFulfillZhtmlRequest = async(cfg: RequestFulfillmentConfig, templateFilename: string, routeParams: Record<string, string> | null, host: string) => {
+const tryFulfillZhtmlRequest = async(
+    cfg: RequestFulfillmentConfig,
+    templateFilename: string,
+    routeParams: Record<string, string> | null,
+    host: string
+) => {
     const {req, res} = cfg;
     const {queryParams, ext} = await parseRequestForProxy(req);
 
@@ -258,6 +267,16 @@ const tryFulfillZhtmlRequest = async(cfg: RequestFulfillmentConfig, templateFile
     res.header('Content-Type', contentType);
 
     // TODO: sanitize
+    log.warn({
+        ext,
+        host,
+        templateId,
+        templateFilename,
+        contentType,
+        routeParams,
+        queryParams
+    }, 'tryFulfillZhtmlRequest');
+
     return await renderer.render(templateId, templateFileContents, host, {
         ...routeParams,
         ...queryParams,
@@ -299,6 +318,7 @@ const tryFulfillStaticRequest = async(cfg: RequestFulfillmentConfig, urlPath: st
     const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
     res.header('Content-Type', contentType);
 
+    log.warn({ext, urlPath, contentType}, 'tryFulfillStaticRequest');
     return file;
 };
 
@@ -332,7 +352,10 @@ const fulfillRequest = async(cfg: RequestFulfillmentConfig) => {
     }
 };
 
-const queryExtDomain = async (host: string, queryParams: ParsedQuery<string>): Promise<DomainInfoPointers> => {
+const queryExtDomain = async (
+    host: string,
+    queryParams: ParsedQuery<string>
+): Promise<DomainInfoPointers> => {
     // For Solana/Ethereum domains, we store Point data in the domain registry.
     const service = host.endsWith('.sol') ? 'SNS' : 'ENS';
     let identity = '';
@@ -389,6 +412,8 @@ const parseRequestForProxy = async (req: FastifyRequest) => {
     const urlPath = urlData.path ?? '';
     const fileName = splitAndTakeLastPart(urlPath, '/')!;
     const ext = splitAndTakeLastPart(fileName, '.', null);
+
+    log.warn({host, urlData, queryParams, urlPath, fileName, ext}, 'Parsed request data');
 
     return {host, urlData, queryParams, urlPath, fileName, ext};
 };

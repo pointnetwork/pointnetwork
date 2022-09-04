@@ -4,6 +4,9 @@ const {uploadFile, getFile, FILE_TYPE} = require('../../storage');
 import detectContentType from 'detect-content-type';
 import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
 import {Template, templateManager} from '../templateManager';
+import logger from '../../../core/log';
+
+const log = logger.child({module: 'ZProxy-storage-handlers'});
 
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format
@@ -58,6 +61,8 @@ const attachStorageHandlers = (server: FastifyInstance) => {
         const acceptHeaders = req.headers.accept === undefined ? '' : req.headers.accept;
 
         res.header('content-type', contentType);
+
+        log.warn({contentType, hash: req.params.hash}, 'resolving storage request');
 
         // if requesting a file directly from storage and the accept headers are wide open
         // and the file is not an image or video then return as a file attachment
