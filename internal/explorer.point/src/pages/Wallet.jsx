@@ -233,103 +233,116 @@ export default function Wallet() {
     }
 
     return (
-        <Container className="p-3">
-            {isLoading ? (
-                <Loading />
-            ) : error ? (
-                <ErrorBlock
-                    title="Sorry, something went wrong fetching the wallet data."
-                    details={error}
-                />
-            ) : (
-                <>
-                    {receiveModalData && (
-                        <ReceiveModal
-                            currency={receiveModalData.currency}
-                            address={receiveModalData.address}
-                            onClose={closeReceiveModal}
-                        />
-                    )}
-                    {sendModalData && (
-                        <SendModal
-                            onClose={closeSendModal}
-                            networkType={sendModalData.networkType}
-                            onSubmit={send}
-                            decimals={sendModalData.decimals}
-                        />
-                    )}
-                    <br />
-                    <h1>Wallet</h1>
-                    <table className="table table-bordered table-striped table-hover table-responsive table-primary">
-                        <tbody>
-                            <tr>
-                                <th>Currency</th>
-                                <th>Address</th>
-                                <th style={{ textAlign: 'right' }}>Balance</th>
-                                <th style={{ textAlign: 'right' }}>Actions</th>
-                            </tr>
-                            {wallets.map((wallet, index) => (
-                                <WalletRow
-                                    key={index}
-                                    wallet={wallet}
-                                    openReceiveModal={openReceiveModal}
-                                    openSendModal={openSendModal}
-                                    walletHistory={walletHistory}
-                                />
-                            ))}
-                        </tbody>
-                    </table>
-                    <br />
-                    <h1>ERC20 Tokens</h1>
-                    {Object.keys(tokens).map((network) => (
-                        <>
-                            <h2>{network}</h2>
-                            <table className="table table-bordered table-striped table-hover table-responsive table-primary">
-                                <tbody>
-                                    {tokens[network]?.length > 0 ? (
-                                        <>
+        <>
+            <div className="warning-banner">
+                <b>Warning:</b> This is experimental software. Please do not
+                fund Point Wallet with large amount of assets, only for
+                experiments.
+            </div>
+            <Container className="p-3">
+                {isLoading ? (
+                    <Loading />
+                ) : error ? (
+                    <ErrorBlock
+                        title="Sorry, something went wrong fetching the wallet data."
+                        details={error}
+                    />
+                ) : (
+                    <>
+                        {receiveModalData && (
+                            <ReceiveModal
+                                currency={receiveModalData.currency}
+                                address={receiveModalData.address}
+                                onClose={closeReceiveModal}
+                            />
+                        )}
+                        {sendModalData && (
+                            <SendModal
+                                onClose={closeSendModal}
+                                networkType={sendModalData.networkType}
+                                onSubmit={send}
+                                decimals={sendModalData.decimals}
+                            />
+                        )}
+                        <br />
+                        <h1>Wallet</h1>
+                        <table className="table table-bordered table-striped table-hover table-responsive table-primary">
+                            <tbody>
+                                <tr>
+                                    <th>Currency</th>
+                                    <th>Address</th>
+                                    <th style={{ textAlign: 'right' }}>
+                                        Balance
+                                    </th>
+                                    <th style={{ textAlign: 'right' }}>
+                                        Actions
+                                    </th>
+                                </tr>
+                                {wallets.map((wallet, index) => (
+                                    <WalletRow
+                                        key={index}
+                                        wallet={wallet}
+                                        openReceiveModal={openReceiveModal}
+                                        openSendModal={openSendModal}
+                                        walletHistory={walletHistory}
+                                    />
+                                ))}
+                            </tbody>
+                        </table>
+                        <br />
+                        <h1>ERC20 Tokens</h1>
+                        {Object.keys(tokens).map((network) => (
+                            <>
+                                <h2>{network}</h2>
+                                <table className="table table-bordered table-striped table-hover table-responsive table-primary">
+                                    <tbody>
+                                        {tokens[network]?.length > 0 ? (
+                                            <>
+                                                <tr>
+                                                    <th>Token Name</th>
+                                                    <th>Token Address</th>
+                                                    <th
+                                                        style={{
+                                                            textAlign: 'right',
+                                                        }}
+                                                    >
+                                                        Balance
+                                                    </th>
+                                                    <th
+                                                        style={{
+                                                            textAlign: 'right',
+                                                        }}
+                                                    >
+                                                        Actions
+                                                    </th>
+                                                </tr>
+                                                {tokens[network]?.map(
+                                                    (token, index) => (
+                                                        <TokenRow
+                                                            token={token}
+                                                            key={index}
+                                                            openSendModal={
+                                                                openSendModal
+                                                            }
+                                                            network={network}
+                                                        />
+                                                    ),
+                                                )}
+                                            </>
+                                        ) : (
                                             <tr>
-                                                <th>Token Name</th>
-                                                <th>Token Address</th>
-                                                <th
-                                                    style={{
-                                                        textAlign: 'right',
-                                                    }}
-                                                >
-                                                    Balance
-                                                </th>
-                                                <th
-                                                    style={{
-                                                        textAlign: 'right',
-                                                    }}
-                                                >
-                                                    Actions
-                                                </th>
+                                                <td>
+                                                    No tokens for this network
+                                                </td>
                                             </tr>
-                                            {tokens[network]?.map(
-                                                (token, index) => (
-                                                    <TokenRow
-                                                        token={token}
-                                                        key={index}
-                                                        openSendModal={
-                                                            openSendModal
-                                                        }
-                                                        network={network}
-                                                    />
-                                                ),
-                                            )}
-                                        </>
-                                    ) : (
-                                        <tr>
-                                            <td>No tokens for this network</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </>
-                    ))}
-                </>
-            )}
-        </Container>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </>
+                        ))}
+                    </>
+                )}
+            </Container>
+        </>
     );
 }
