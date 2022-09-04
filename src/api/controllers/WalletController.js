@@ -62,16 +62,6 @@ class WalletController extends PointSDKController {
         const identity = await ethereum.getCurrentIdentity();
         const pointIdentity = identity ? `${identity}.point` : 'N/A';
         const wallets = [
-            // TODO: remove this placeholder once we add a real point network
-            {
-                network: 'pointnet',
-                type: 'eth',
-                currency_name: 'Point',
-                currency_code: 'POINT',
-                address: pointIdentity,
-                alias: pointIdentity,
-                balance: 0
-            },
             ...(await Promise.all(
                 Object.keys(networks).map(async network => {
                     let balance;

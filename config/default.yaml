@@ -64,6 +64,15 @@ network:
   contracts_path: contracts
   default_network: "xnet"
   web3:
+    mainnet:
+      type: eth
+      name: Main Net
+      http_address: rpc-mainnet-1.point.space
+      ws_address: rpc-mainnet-1.point.space/ws
+      currency_name: Point
+      currency_code: POINT
+      tls: true
+      tokens: []
     xnet:
       type: "eth"
       name: "Xnet"

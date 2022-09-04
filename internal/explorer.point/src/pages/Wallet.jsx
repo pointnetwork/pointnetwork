@@ -205,10 +205,6 @@ export default function Wallet() {
         tokenAddress,
         decimals,
     }) => {
-        if (network === 'pointnet') {
-            openPlaceholderWindow();
-            return;
-        }
         setSendModalData({ networkType, network, tokenAddress, decimals });
     };
 
@@ -217,10 +213,6 @@ export default function Wallet() {
     };
 
     const openReceiveModal = (currency, address) => {
-        if (currency === 'POINT') {
-            openPlaceholderWindow();
-            return;
-        }
         setReceiveModalData({ currency, address });
     };
 
