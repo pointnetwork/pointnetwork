@@ -31,7 +31,9 @@ redirectToHttpsServer.on('connect', (req, cltSocket, head) => {
 });
 
 // Proxy server, redirecting everything to the main server
-const proxyServer = net.createServer();
+// const proxyServer = net.createServer();
+const proxyServer = new net.Server();
+
 proxyServer.on('connection', socket => {
     // We need only the data once, the starting packet
     socket.once('data', buffer => {
@@ -40,7 +42,14 @@ proxyServer.on('connection', socket => {
 
         // Determine if this is an HTTP(s) request
         const byte = buffer[0];
-        log.info({byte}, 'Connection received');
+        const logObj: Record<string, string | number> = {byte, bytes: buffer.byteLength};
+        if (byte === 22) {
+            logObj.hex = buffer.toString('hex');
+            logObj.bin = buffer.toString('binary');
+        } else {
+            logObj.utf8 = buffer.toString('utf-8');
+        }
+        log.warn(logObj, 'Connection received');
 
         let proxy;
         if (byte === 22) {
@@ -70,17 +79,30 @@ proxyServer.on('connection', socket => {
         // the socket may be resumed synchronously.
         process.nextTick(() => socket.resume());
     });
+
+    socket.on('ready', () => log.warn('Socket ready'));
+    socket.on('error', error => log.error({error}, 'Socket error'));
+    socket.on('timeout', () => log.error('Socket timeout'));
+    socket.on('drain', () => log.warn('Socket drain'));
+    socket.on('end', () => log.warn('Socket end'));
+    socket.on('close', () => log.warn('Socket close'));
 });
 
 proxyServer.on('error', error => {
     log.error({error}, 'Proxy error');
 });
 
+proxyServer.on('drop', () => {
+    log.error(
+        'When the number of connections reaches the threshold of server.maxConnections, the server will drop new connections '
+    );
+});
+
 const startProxy = async () => {
     await httpsServer.listen(0);
     await proxyServer.listen(PROXY_PORT);
 
-    log.info(`Proxy started on port ${PROXY_PORT}`);
+    log.warn(`Proxy started on port ${PROXY_PORT}`);
 };
 
 export default startProxy;
