@@ -1,6 +1,6 @@
 import fastify, {FastifyRequest, HTTPMethods} from 'fastify';
 import logger from '../core/log';
-import fastifyWs from 'fastify-websocket';
+import fastifyWs from '@fastify/websocket';
 import {transformErrorResp} from '../errors';
 import identityMdw from './middleware/identity';
 import csrfTokens from '../client/zweb/renderer/csrfTokens';

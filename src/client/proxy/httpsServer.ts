@@ -6,7 +6,7 @@ import logger from '../../core/log';
 import fastifyUrlData from '@fastify/url-data';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyFormBody from '@fastify/formbody';
-import fastifyWs from 'fastify-websocket';
+import fastifyWs from '@fastify/websocket';
 import {transformErrorResp} from '../../errors';
 import attachHandlers from './handlers';
 import {cors} from './middleware';
@@ -44,7 +44,12 @@ const httpsServer = Fastify({
     logger: log
 });
 httpsServer.register(fastifyUrlData);
-httpsServer.register(fastifyMultipart);
+httpsServer.register(fastifyMultipart, {
+    limits: {
+        fileSize: 100000000,
+        files: 1
+    }
+});
 httpsServer.register(fastifyFormBody);
 httpsServer.register(fastifyWs);
 
