@@ -1,11 +1,16 @@
-import Container from 'react-bootstrap/Container';
-
 import { useState, useEffect } from 'react';
+import Container from 'react-bootstrap/Container';
 import { useAppContext } from '../context/AppContext';
 import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png';
-import bountyLogo from '../assets/pointcoin.png';
 import Markdown from 'markdown-to-jsx';
+import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
+import blogIcon from '../assets/blog.svg';
+import emailIcon from '../assets/email.svg';
+import socialIcon from '../assets/social.svg';
+import driveIcon from '../assets/drive.svg';
+import walletIcon from '../assets/wallet.svg';
+import '@fontsource/source-sans-pro';
 
 export default function Home() {
     const { walletIdentity } = useAppContext();
@@ -15,9 +20,17 @@ export default function Home() {
     const [markdown, setMarkdown] = useState('');
 
     const featuredZapps = {
-        'blog.point': 'Blog',
-        'social.point': 'Point Social',
+        'social.point': 'Social',
         'email.point': 'Email',
+        'blog.point': 'Blog',
+        'drive.point': 'Drive',
+    };
+
+    const featuredIcons = {
+        'social.point': socialIcon,
+        'email.point': emailIcon,
+        'blog.point': blogIcon,
+        'drive.point': driveIcon,
     };
 
     useEffect(() => {
@@ -63,57 +76,59 @@ export default function Home() {
 
     const renderZappEntry = (k) => {
         return (
-            <a href={'https://' + k} target="_blank" rel="noreferrer">
-                <div className="zapp" key={k}>
-                    <div className="zapp-icon-container">
-                        <img
-                            alt={k}
-                            className="zapp-icon"
-                            src={`https://${k}/favicon.ico`}
-                            onError={({ currentTarget }) => {
-                                currentTarget.src = appLogo;
-                            }}
-                        />
-                    </div>
-                    <div className="zapp-title-container">
-                        <span>{featuredZapps[k]}</span>
-                    </div>
-                    <div className="zapp-title-container">
-                        <span className="text-muted text-smallest">
-                            https://{k}
-                        </span>
-                    </div>
+            <a
+                href={'https://' + k}
+                target="_blank"
+                rel="noreferrer"
+                className="zapp"
+                key={k}
+            >
+                <div className="zapp-icon-container">
+                    <img
+                        alt={k}
+                        className="zapp-icon"
+                        src={featuredIcons[k]}
+                        onError={({ currentTarget }) => {
+                            currentTarget.src = appLogo;
+                        }}
+                    />
+                </div>
+
+                <div className="zapp-information-container">
+                    <h4>{featuredZapps[k]}</h4>
+                    <span>https://{k}</span>
                 </div>
             </a>
         );
     };
 
     const renderWalletEntry = (
-        <a href={'https://point/wallet'} target="_blank" rel="noreferrer">
-            <div className="zapp">
-                <div className="zapp-icon-container">
-                    <img
-                        alt="wallet"
-                        className="zapp-icon"
-                        src={'https://point/wallet.ico'}
-                        onError={({ currentTarget }) => {
-                            currentTarget.src = appLogo;
-                        }}
-                    />
-                </div>
-                <div className="zapp-title-container">
-                    <span>Wallet</span>
-                </div>
-                <div className="zapp-title-container">
-                    <span className="text-muted text-smallest">
-                        https://point/wallet
-                    </span>
-                </div>
+        <a
+            href={'https://point/wallet'}
+            target="_blank"
+            rel="noreferrer"
+            className="zapp"
+        >
+            <div className="zapp-icon-container">
+                <img
+                    alt="wallet"
+                    className="zapp-icon"
+                    src={walletIcon}
+                    onError={({ currentTarget }) => {
+                        currentTarget.src = appLogo;
+                    }}
+                />
+            </div>
+
+            <div className="zapp-information-container">
+                <h4>Wallet</h4>
+                <span>https://point/wallet</span>
             </div>
         </a>
     );
 
     let zappsList = <div className="zapps">{renderWalletEntry}</div>;
+
     if (zapps.length > 0) {
         zappsList = (
             <div className="zapps">
@@ -123,23 +138,24 @@ export default function Home() {
     }
 
     return (
-        <>
-            <Container className="p-3">
-                <br />
-                <br />
-                <h1 className="header">
-                    Welcome to Web 3.0,{' '}
-                    <strong>
-                        @{!walletIdentity ? <Loading /> : walletIdentity}
-                    </strong>
-                    !
-                </h1>
+        <Container className="home-container">
+            <h1 className="home-header">
+                Welcome to <span>Web 3.0</span>
+            </h1>
 
-                {isLoadingMD ? <Loading /> : <Markdown>{markdown}</Markdown>}
+            <h3 className="home-subtitle">Explore featured Apps</h3>
+            <hr className="zapps-separator" />
 
-                <h5>Explore featured Apps</h5>
-                {isLoading ? <Loading /> : zappsList}
-            </Container>
-        </>
+            {isLoading ? (
+                <Loading
+                    style={{
+                        display: 'block',
+                        margin: '0 auto',
+                    }}
+                />
+            ) : (
+                zappsList
+            )}
+        </Container>
     );
 }

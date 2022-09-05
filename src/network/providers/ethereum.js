@@ -131,21 +131,27 @@ const isIdentityAbiRelevant = async () => {
         const abiAndMetadata = JSON.parse(await fs.readFile(abiPath));
         const {updatedAt} = abiAndMetadata;
 
-        log.debug({
-            abiPath,
-            abiFileHash,
-            preservedAbiFileHash: abiAndMetadata.abiFileHash || null,
-            updatedAt: isFinite(updatedAt) && new Date (updatedAt).toISOString() || null
-        }, 'Checking identity abi relevance');
+        log.debug(
+            {
+                abiPath,
+                abiFileHash,
+                preservedAbiFileHash: abiAndMetadata.abiFileHash || null,
+                updatedAt: (isFinite(updatedAt) && new Date(updatedAt).toISOString()) || null
+            },
+            'Checking identity abi relevance'
+        );
 
         return abiAndMetadata.abiFileHash === abiFileHash;
     } catch (e) {
-        log.error({
-            error: e.message,
-            stack: e.stack,
-            abiPath,
-            abiFileHash
-        }, 'Failed to check identity abi relevance');
+        log.error(
+            {
+                error: e.message,
+                stack: e.stack,
+                abiPath,
+                abiFileHash
+            },
+            'Failed to check identity abi relevance'
+        );
 
         return false;
     }
@@ -168,14 +174,17 @@ const fetchAndSaveIdentityAbiFromStorage = async () => {
 
         log.debug('Successfully fetched identity contract abi from storage');
 
-        return abisByContractName['Identity'] = abiAndMetadata;
+        return (abisByContractName['Identity'] = abiAndMetadata);
     } catch (e) {
-        log.error({
-            error: e.message,
-            stack: e.stack,
-            abiFileHash,
-            localAbiPath: abiPath
-        }, 'Failed to fetch identity abi from storage');
+        log.error(
+            {
+                error: e.message,
+                stack: e.stack,
+                abiFileHash,
+                localAbiPath: abiPath
+            },
+            'Failed to fetch identity abi from storage'
+        );
     }
 };
 
@@ -196,7 +205,11 @@ ethereum.loadPointContract = async (
             log.debug({contractName, at}, `Abi is not found locally, compiling`);
 
             const contractPath = path.resolve(basepath, '..', 'hardhat', 'contracts');
-            await compileAndSaveContract({name: contractName, contractPath, CONTRACT_BUILD_DIR});
+            await compileAndSaveContract({
+                name: contractName,
+                contractPath,
+                buildDirPath: CONTRACT_BUILD_DIR
+            });
 
             log.debug('Identity contract successfully compiled');
         }

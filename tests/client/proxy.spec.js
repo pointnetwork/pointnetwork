@@ -39,7 +39,7 @@ jest.mock('axios', () => ({
 }));
 
 describe('Proxy', () => {
-    it('Should perform contract_send request', async () => {
+    it.skip('Should perform contract_send request', async () => {
         expect.assertions(3);
 
         const res = await httpsServer.inject({
@@ -76,7 +76,7 @@ describe('Proxy', () => {
         expect(res.payload).toMatch('<title>Point Explorer</title>');
     });
 
-    it('Should perform keyvalue_get request', async () => {
+    it.skip('Should perform keyvalue_get request', async () => {
         expect.assertions(3);
 
         const res = await httpsServer.inject({
@@ -90,7 +90,7 @@ describe('Proxy', () => {
         expect(ethereum.getKeyValue).toHaveBeenCalledWith('keyvalue_get_domain', 'test_key0');
     });
 
-    it('Should perform keyvalue_append request', async () => {
+    it.skip('Should perform keyvalue_append request', async () => {
         expect.assertions(3);
 
         const res = await httpsServer.inject({

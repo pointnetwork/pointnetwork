@@ -16,17 +16,25 @@ class ContractController extends PointSDKController {
         this.reply = reply;
     }
 
-    async call() {
-        const contract = this.payload.contract;
-        const method = this.payload.method;
-
-        // Note params must be in a valid array format for parsing
-        // since this is passed via url params the type will be string
-        // params=["String Param", 999, true, "Another string"] etc...
+    async safeCall() {
+        const contractName = this.payload.contract;
+        const methodName = this.payload.method;
         const params = this.payload.params ? this.payload.params : [];
-        const host = this.payload.host === '@' ? '@' : this.host; //allow call identity contract
+        const host = this.host;
 
-        const data = await ethereum.callContract(host, contract, method, params);
+        const contract = await ethereum.loadWebsiteContract(host, contractName);
+
+        const method = contract.options.jsonInterface.find(m => m.name === methodName);
+        if (!method) {
+            this.reply.status(400).send('No such method');
+            return;
+        }
+        if (!['view', 'pure'].includes(method.stateMutability)) {
+            this.reply.status(403).send('Only view and pure method calls are alowed');
+            return;
+        }
+
+        const data = await ethereum.callContract(host, contractName, methodName, params);
 
         return this._response(data);
     }
@@ -40,27 +48,6 @@ class ContractController extends PointSDKController {
             address: contract._address,
             abi: contract._jsonInterface
         };
-
-        return this._response(data);
-    }
-
-    async send() {
-        const contract = this.payload.contract;
-        const method = this.payload.method;
-        const gasLimit = this.payload.gasLimit;
-        const amountInWei = this.payload.amountInWei;
-
-        // Note params must be in a valid array format for parsing
-        // since this is passed via url params the type will be string
-        // params=["String Param", 999, true, "Another string"] etc...
-        const params = this.payload.params ? this.payload.params : [];
-        const options = {
-            amountInWei,
-            gasLimit
-        };
-        const host = this.payload.host === '@' ? '@' : this.host; //allow call identity contract
-
-        const data = await ethereum.sendToContract(host, contract, method, params, options);
 
         return this._response(data);
     }

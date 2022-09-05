@@ -450,15 +450,6 @@ const attachCommonHandler = (server: FastifyInstance) => {
     server.route({
         method: 'GET',
         url: '/ws',
-        preValidation: async (
-            req: FastifyRequest<{Querystring: Record<string, string>}>,
-            reply
-        ) => {
-            if (req.query.token !== config.get('api.sdk_auth_key')) {
-                log.error('Invalid Client KEY for websocket connection.');
-                await reply.status(401).send('not authenticated');
-            }
-        },
         handler: async () => undefined, // to avoid 'handler not defined' error.
         wsHandler
     });
