@@ -49,6 +49,8 @@ echo "cp resources/arweave-test-key.json ~/workspace/pn/devlocal/keystore/arweav
 cp resources/arweave-test-key.json ~/workspace/pn/devlocal/keystore/arweave.json
 echo 'Creating token in ~/workspace/pn/devlocal/keystore/token.txt'
 echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/devlocal/keystore/token.txt
+echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json"
+cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json
 
 echo "mkdir -p ~/workspace/pn/visitlocal/keystore"
 mkdir -p ~/workspace/pn/visitlocal/keystore
@@ -59,6 +61,8 @@ echo "cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arw
 cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arweave.json
 echo 'Creating token in ~/workspace/pn/visitlocal/keystore/token.txt'
 echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/visitlocal/keystore/token.txt
+echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json"
+cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json
 
 #installing local node
 echo "installing local node"
