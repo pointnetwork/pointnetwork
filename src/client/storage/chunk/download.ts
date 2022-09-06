@@ -29,7 +29,7 @@ const getChunk = async (
         return fs.readFile(chunkPath, {encoding});
     }
     if (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.IN_PROGRESS) {
-        log.debug({chunkId}, 'Chunk download already in progress, waiting');
+        // log.debug({chunkId}, 'Chunk download already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return getChunk(chunkId, encoding); // use cache should be true in this case
     }
@@ -63,7 +63,7 @@ const getChunk = async (
         const txid = edge.node.id;
 
         try {
-            log.debug({chunkId}, 'Downloading chunk from Arweave cache');
+            // log.debug({chunkId}, 'Downloading chunk from Arweave cache');
             const {data} = await storage.getTxFromCache(txid);
             log.debug({chunkId, txid}, 'Successfully downloaded chunk from Arweave cache');
             const buf = Buffer.from(data);
@@ -82,7 +82,7 @@ const getChunk = async (
         }
 
         try {
-            log.debug({chunkId, txid}, 'Downloading chunk from Arweave node');
+            // log.debug({chunkId, txid}, 'Downloading chunk from Arweave node');
             const data = await storage.getDataByTxId(txid);
             log.warn({chunkId, txid}, 'Successfully downloaded chunk from Arweave node');
             const buf = Buffer.from(data);

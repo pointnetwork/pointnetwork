@@ -4,10 +4,7 @@ const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
 const config = require('config');
 const logger = require('../../../core/log');
-const {
-    getNetworkPrivateKey,
-    getNetworkAddress
-} = require('../../../wallet/keystore');
+const {getNetworkPrivateKey, getNetworkAddress} = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/providers/ethereum');
 const {readFileByPath} = require('../../../util');
@@ -69,7 +66,7 @@ class Renderer {
             storage_get_by_ikv: async function(identity, key) {
                 try {
                     const fileKey = await blockchain.getKeyValue(identity, key);
-                    log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
+                    // log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
                     return await getFile(fileKey);
                 } catch (e) {
                     log.error({identity, key, ...e}, 'storage_get_by_ikv error');

@@ -161,7 +161,7 @@ const fetchAndSaveIdentityAbiFromStorage = async () => {
     const abiFileHash = config.get('identity_contract_id');
     const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
 
-    log.debug({abiFileHash}, 'Fetching Identity contract from storage');
+    // log.debug({abiFileHash}, 'Fetching Identity contract from storage');
 
     try {
         const abiFile = await getFile(abiFileHash);
@@ -351,7 +351,7 @@ ethereum.web3send = async (method, optons = {}) => {
 ethereum.callContract = async (target, contractName, method, params, version = 'latest') => {
     // todo: multiple arguments, but check existing usage // huh?
     let attempt = 0;
-    log.debug({target, contractName, method, params}, 'Contract Call');
+    // log.debug({target, contractName, method, params}, 'Contract Call');
     while (true) {
         try {
             const contract = await ethereum.loadWebsiteContract(target, contractName, version);
@@ -1197,7 +1197,7 @@ ethereum.getTransactionsByAccount = async ({
 
     for (let i = startBlockNumber; i <= endBlockNumber; i++) {
         if (i % 1000 === 0) {
-            log.debug('Searching block ' + i);
+            // log.debug('Searching block ' + i);
         }
 
         const block = provider.eth.getBlock(i, true);

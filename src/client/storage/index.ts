@@ -17,16 +17,16 @@ import {uploadChunk, getChunk} from './chunk';
 import {HttpNotFoundError} from '../../core/exceptions';
 
 type FileInfo = {
-    type: keyof typeof FILE_TYPE
-    name: string
-    size: number
-    id: string
-}
+    type: keyof typeof FILE_TYPE;
+    name: string;
+    size: number;
+    id: string;
+};
 
 type DirInfo = {
-    type: 'dir',
-    files: FileInfo[]
-}
+    type: 'dir';
+    files: FileInfo[];
+};
 
 export const FILE_TYPE = {
     fileptr: 'fileptr', // File
@@ -44,16 +44,16 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
         const filePath = path.join(FILES_DIR, `file_${fileId}`);
         const file = await File.findByIdOrCreate(fileId);
         if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
-            log.debug({fileId}, 'File already exists, cancelling upload');
+            // log.debug({fileId}, 'File already exists, cancelling upload');
             return fileId;
         }
         if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
-            log.debug({fileId}, 'File  upload already in progress, waiting');
+            // log.debug({fileId}, 'File  upload already in progress, waiting');
             await delay(CONCURRENT_DOWNLOAD_DELAY);
             return uploadFile(data);
         }
 
-        log.debug({fileId}, 'Starting file upload');
+        // log.debug({fileId}, 'Starting file upload');
         try {
             file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
             await file.save();
@@ -110,16 +110,16 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
 
     const file = await File.findByIdOrCreate(fileId);
     if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
-        log.debug({fileId}, 'File already exists, cancelling upload');
+        // log.debug({fileId}, 'File already exists, cancelling upload');
         return fileId;
     }
     if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
-        log.debug({fileId}, 'File upload already in progress, waiting');
+        // log.debug({fileId}, 'File upload already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return uploadFile(data);
     }
 
-    log.debug({fileId}, 'Uploading file');
+    // log.debug({fileId}, 'Uploading file');
     try {
         file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
         await file.save();
@@ -140,7 +140,7 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
             }
         });
 
-        log.debug({fileId}, 'File successfully uploaded, saving to disk');
+        // log.debug({fileId}, 'File successfully uploaded, saving to disk');
 
         await fs.writeFile(filePath, buf);
         file.size = buf.length;
@@ -227,17 +227,17 @@ export const getFile = async (
     }
 
     if (isZeroStorageId(id)) {
-        throw new Error('Zero storage ID doesn\'t exist');
+        throw new Error("Zero storage ID doesn't exist");
     }
 
     const filePath = path.join(FILES_DIR, `file_${id}`);
     const file = await File.findByIdOrCreate(id);
     if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {
-        log.debug({fileId: file.id}, 'Returning file from cache');
+        // log.debug({fileId: file.id}, 'Returning file from cache');
         return await fs.readFile(filePath, {encoding});
     }
     if (file.dl_status === FILE_DOWNLOAD_STATUS.IN_PROGRESS) {
-        log.debug({fileId: file.id}, 'File download already in progress, waiting');
+        // log.debug({fileId: file.id}, 'File download already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return getFile(id, encoding); // use cache should be true in this case
     }
@@ -247,7 +247,7 @@ export const getFile = async (
         file.dl_status = FILE_DOWNLOAD_STATUS.IN_PROGRESS;
         await file.save();
 
-        log.debug({fileId: file.id}, 'Getting info chunk');
+        // log.debug({fileId: file.id}, 'Getting info chunk');
 
         // TODO: retry logic
         const chunkInfo = await getChunk(file.id, encoding);
@@ -263,7 +263,7 @@ export const getFile = async (
             return encoding === null ? chunkInfo : chunkInfo.toString(encoding);
         }
 
-        log.debug({fileId: file.id}, 'Processing chunk info');
+        // log.debug({fileId: file.id}, 'Processing chunk info');
         const toParse = chunkInfoString.slice(CHUNKINFO_PROLOGUE.length);
         const {type, hash, chunks, filesize, merkle: merkleHash} = JSON.parse(toParse);
 
@@ -282,7 +282,7 @@ export const getFile = async (
             throw new Error('Incorrect Merkle hash');
         }
 
-        log.debug({fileId: file.id}, 'Chunk info for file processed, getting chunks');
+        // log.debug({fileId: file.id}, 'Chunk info for file processed, getting chunks');
 
         // TODO: retry logic
         const chunkBuffers = await Promise.all(
@@ -291,10 +291,12 @@ export const getFile = async (
         const fileBuffer = Buffer.concat([
             ...chunkBuffers.slice(0, -1),
             // We should trim the trailing zeros from the last chunk
-            chunkBuffers.length ? chunkBuffers[chunkBuffers.length - 1].slice(
-                0,
-                filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
-            ) : Buffer.from([])
+            chunkBuffers.length
+                ? chunkBuffers[chunkBuffers.length - 1].slice(
+                      0,
+                      filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
+                  )
+                : Buffer.from([])
         ]);
 
         log.debug({fileId: file.id}, 'Successfully proceeded file chunks');
@@ -326,7 +328,9 @@ export const getFileIdByPath = async (dirId: string, filePath: string): Promise<
     const segments = filePath.split(/[/\\]/).filter(s => s !== '');
     const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
     if (!nextFileOrDir) {
-        throw new HttpNotFoundError(`Failed to find file ${filePath} in directory ${dirId}: not found`);
+        throw new HttpNotFoundError(
+            `Failed to find file ${filePath} in directory ${dirId}: not found`
+        );
     }
     if (segments.length === 1) {
         return nextFileOrDir.id;

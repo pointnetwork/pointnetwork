@@ -23,7 +23,7 @@ const httpsServer = Fastify({
                     if (!secureContext) {
                         log.debug({servername}, `Not found SSL certificate for host`);
                     } else {
-                        log.debug({servername}, `SSL certificate has been found and assigned`);
+                        // log.debug({servername}, `SSL certificate has been found and assigned`);
                     }
 
                     if (typeof cb !== 'function') {
