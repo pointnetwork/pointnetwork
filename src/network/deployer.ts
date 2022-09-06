@@ -12,7 +12,7 @@ import fs from 'fs-extra';
 import axios from 'axios';
 import tar from 'tar-fs';
 import gunzip from 'gunzip-maybe';
-const log = logger.child({module: 'Deployer'});
+const log = logger.child({module: 'Deployer_new'});
 
 const IS_PACKAGED = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
@@ -101,6 +101,7 @@ const storeContractArtifacts = async ({
 };
 
 const getProxyMetadataFilePath = async () => {
+    // TODO: move it to config
     const networkNames: Record<number, string> = {
         1: 'mainnet',
         2: 'morden',

@@ -1,12 +1,21 @@
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
 require('@openzeppelin/hardhat-upgrades');
-require('../hardhat/tasks/explorer/explorer-set-index-md');
+require('./tasks/explorer/explorer-set-index-md');
 const config = require('config');
 const path = require('path');
 const os = require('os');
 
+// Import from src doesn't work here
+const resolveHome = (filepath) => {
+    if (filepath[0] === '~') {
+        return path.join(process.env.HOME || os.homedir(), filepath.slice(1));
+    }
+    return filepath;
+};
+
 const IS_PACKAGED = Boolean(process.pkg);
+const ROOT_DIR_PACKAGED = path.join(resolveHome(config.get('datadir')), 'hardhat');
 
 let privateKey;
 // This will read either from config or from DEPLOYER_ACCOUNT env var
@@ -60,11 +69,11 @@ module.exports = {
         ]
     },
     paths: IS_PACKAGED ? {
-        root: path.join(os.homedir(), '.point', 'hardhat'),
-        artifacts: path.join(os.homedir(), '.point', 'hardhat', 'build'),
-        sources: path.join(os.homedir(), '.point', 'hardhat', 'contracts'),
-        tests: path.join(os.homedir(), '.point', 'hardhat', 'tests'),
-        cache: path.join(os.homedir(), '.point', 'hardhat', 'cache')
+        root: ROOT_DIR_PACKAGED,
+        artifacts: path.join(ROOT_DIR_PACKAGED, 'build'),
+        sources: path.join(ROOT_DIR_PACKAGED, 'contracts'),
+        tests: path.join(ROOT_DIR_PACKAGED, 'tests'),
+        cache: path.join(ROOT_DIR_PACKAGED, 'cache')
     } : {
         artifacts:'./build',
         sources: './contracts',

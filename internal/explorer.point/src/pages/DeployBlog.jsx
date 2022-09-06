@@ -4,11 +4,11 @@ import { useState } from 'react';
 
 const VERSION = '0.1';
 const ROOT_DIR_ID =
-    'c4226811df9ef1f97080b6b9d1af107a9795389d8e71beb18717b3b5d6edc1d9';
+    'b21d4961e6f4d8fdb8f95d05687aaa3c76faaed359e9c048df7c74fcad8c4164';
 const ROUTES_FILE_ID =
-    '0b5f577f90775b5f92e3afc5e0ece7ddbf34fe024dcab4a1fb009900738b5ac9';
+    '5f38f36718c426e74ded142347ecc4310e8eb4755c31ce06bcecd26cdbfe7b41';
 const CONTRACT_SOURCE_ID =
-    '5a6b7f2104a6aedb1e25eb2581c345bdc1ada72b536a48fc6a90699e13f04f4c';
+    '042a2609875d2f5b628896adfc3affec2fd8aaf104f8824918cd94086872dc66';
 
 const DeployBlog = () => {
     const { walletIdentity } = useAppContext();
@@ -21,16 +21,29 @@ const DeployBlog = () => {
         try {
             // 1. deploy subidentity
             setLoading('Registering subidentity...');
-            await axios.post('/v1/api/identity/sub/register', {
-                subidentity,
-                parentIdentity: walletIdentity,
-                _csrf: window.localStorage.getItem('csrf_token'),
-            });
+            await axios.post(
+                '/v1/api/identity/sub/register',
+                {
+                    subidentity,
+                    parentIdentity: walletIdentity,
+                    _csrf: window.localStorage.getItem('csrf_token'),
+                },
+                {
+                    headers: {
+                        'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+                    },
+                },
+            );
 
             // 2. Download contract
             setLoading('Downloading blog contract...');
             const { data: contractFile } = await axios.get(
                 `/_storage/${CONTRACT_SOURCE_ID}`,
+                {
+                    headers: {
+                        'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+                    },
+                },
             );
 
             // 3. Deploy contract
@@ -50,23 +63,44 @@ const DeployBlog = () => {
             await axios.post(
                 '/point_api/deploy_upgradable_contracts',
                 formData,
+                {
+                    headers: {
+                        'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+                    },
+                },
             );
 
             // 4. update IKV rootDir
             setLoading('Updating IKV...');
-            await axios.post('/v1/api/identity/ikvPut', {
-                identity: `${subidentity}.${walletIdentity}`,
-                key: '::rootDir',
-                value: ROOT_DIR_ID,
-                _csrf: window.localStorage.getItem('csrf_token'),
-            });
+            await axios.post(
+                '/v1/api/identity/ikvPut',
+                {
+                    identity: `${subidentity}.${walletIdentity}`,
+                    key: '::rootDir',
+                    value: ROOT_DIR_ID,
+                    _csrf: window.localStorage.getItem('csrf_token'),
+                },
+                {
+                    headers: {
+                        'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+                    },
+                },
+            );
             // 5. update IKV zdns
-            await axios.post('/v1/api/identity/ikvPut', {
-                identity: `${subidentity}.${walletIdentity}`,
-                key: 'zdns/routes',
-                value: ROUTES_FILE_ID,
-                _csrf: window.localStorage.getItem('csrf_token'),
-            });
+            await axios.post(
+                '/v1/api/identity/ikvPut',
+                {
+                    identity: `${subidentity}.${walletIdentity}`,
+                    key: 'zdns/routes',
+                    value: ROUTES_FILE_ID,
+                    _csrf: window.localStorage.getItem('csrf_token'),
+                },
+                {
+                    headers: {
+                        'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+                    },
+                },
+            );
             setLoading(null);
             setSuccess(true);
         } catch (e) {
@@ -117,8 +151,8 @@ const DeployBlog = () => {
                         rel="noreferrer"
                     >
                         {`https://${subhandle}.${walletIdentity}.point`}
-                    </a>{' '}
-                    (But it may take a while for it to be available)
+                    </a>
+                    &nbsp; (But it may take a while for it to be available)
                 </p>
             )}
         </div>

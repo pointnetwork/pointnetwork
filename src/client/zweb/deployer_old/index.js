@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const logger = require('../../../core/log');
-const log = logger.child({module: 'Deployer_old'});
+const log = logger.child({module: 'Deployer'});
 const {compileContract, getImportsFactory, encodeCookieString, merge} = require('../../../util');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 const blockchain = require('../../../network/providers/ethereum');
