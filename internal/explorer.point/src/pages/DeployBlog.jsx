@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 const VERSION = '0.1';
 const ROOT_DIR_ID =
-    'ed273aa789545f7e826f8d3dd5996a0c15d077c98d5f88dddcd54537d816d03b';
+    '6ce5c3f525128f4173cd4931870b28d05280d66bd206826be1f23242d05c94bb';
 const ROUTES_FILE_ID =
     '5f38f36718c426e74ded142347ecc4310e8eb4755c31ce06bcecd26cdbfe7b41';
 const CONTRACT_SOURCE_ID =
