@@ -227,7 +227,7 @@ export const getFile = async (
     }
 
     if (isZeroStorageId(id)) {
-        throw new Error("Zero storage ID doesn't exist");
+        throw new Error('Zero storage ID doesn\'t exist');
     }
 
     const filePath = path.join(FILES_DIR, `file_${id}`);
@@ -293,9 +293,9 @@ export const getFile = async (
             // We should trim the trailing zeros from the last chunk
             chunkBuffers.length
                 ? chunkBuffers[chunkBuffers.length - 1].slice(
-                      0,
-                      filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
-                  )
+                    0,
+                    filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
+                )
                 : Buffer.from([])
         ]);
 

@@ -85,10 +85,11 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
         ) {
             // First try route file (and check if this domain even exists)
             const routesId = await blockchain.getZRecord(host, versionRequested);
-            if (!routesId && !host.endsWith('.local'))
+            if (!routesId && !host.endsWith('.local')) {
                 throw new HttpNotFoundError(
                     'Domain not found (Route file not specified for this domain)'
                 );
+            }
 
             const zappName = host.endsWith('dev') ? `${host.split('dev')[0]}.point` : host;
 
@@ -397,10 +398,11 @@ const queryExtDomain = async (
         const version = (queryParams.__point_version as string) ?? 'latest';
 
         routesId = (await blockchain.getZRecord(identity, version)) as string;
-        if (!routesId)
+        if (!routesId) {
             throw new HttpNotFoundError(
                 'Domain not found (Route file not specified for this domain)'
             );
+        }
 
         rootDirId = await blockchain.getKeyValue(identity, '::rootDir', version);
         if (!rootDirId) throw new HttpNotFoundError(`Root dir id not found for host ${identity}`);
