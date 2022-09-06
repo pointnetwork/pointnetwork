@@ -20,7 +20,7 @@ alias point-dev-stop="./scripts/stop-local.sh"
 alias point-dev-clean="./scripts/clean-local.sh"
 
 # point-browser can be used when running the node outside of Docker
-alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url https://point/"
+alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url 'https://point?token$(cat ~/.point/keystore/token.txt)'"
 
 # point-browser-docker-owner / visitor starts a point browser using one saved zappdev environment Firefox profiles
 alias point-browser-owner="web-ext run --firefox-profile=website_owner --keep-profile-changes --source-dir dist/prod --url 'https://point?token=xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA'"
