@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { useAppContext } from '../context/AppContext';
 import { useState } from 'react';
+import Alert from 'react-bootstrap/Alert';
+import Button from 'react-bootstrap/Button';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import FormControl from 'react-bootstrap/FormControl';
+import './deploy.css';
 
 const VERSION = '0.1';
 const ROOT_DIR_ID =
@@ -103,6 +109,7 @@ const DeployBlog = () => {
             );
             setLoading(null);
             setSuccess(true);
+            setError(null);
         } catch (e) {
             setLoading(null);
             setError(e.message);
@@ -110,51 +117,79 @@ const DeployBlog = () => {
     };
 
     return (
-        <div
-            style={{
-                marginTop: '100px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-            }}
-        >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-                <input
-                    type="text"
-                    value={subhandle}
-                    onChange={(e) => {
-                        setSuccess(false);
-                        setSubhandle(e.target.value);
-                    }}
-                />
-                <p style={{ fontSize: '1.5rem', margin: '0' }}>
-                    .{walletIdentity}.point
-                </p>
-            </div>
-            <button
-                style={{ marginTop: '20px' }}
-                onClick={() => {
-                    deploy(subhandle);
-                }}
-                disabled={loading || success}
-            >
-                {loading ? 'Processing' : 'Start'}
-            </button>
-            <p>{loading}</p>
-            <p style={{ color: 'indianred' }}>{error}</p>
-            {success && (
-                <p>
-                    Success! Blog is available at:{' '}
-                    <a
-                        href={`https://${subhandle}.${walletIdentity}.point`}
-                        target="_blank"
-                        rel="noreferrer"
+        <div className="deploy-container">
+            {success ? (
+                <Alert variant="success" className="mt-4">
+                    <Alert.Heading>Deployment Successful!</Alert.Heading>
+                    <p>
+                        Blog is available at:{' '}
+                        <Alert.Link
+                            href={`https://${subhandle}.${walletIdentity}.point`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            {`https://${subhandle}.${walletIdentity}.point`}
+                        </Alert.Link>
+                        . You can now visit your domain and start writing blog
+                        posts. (But it may take a while for it to be available)
+                    </p>
+                </Alert>
+            ) : error ? (
+                <Alert variant="danger" className="mt-4">
+                    <Alert.Heading>Deployment Failed!</Alert.Heading>
+                    <p>
+                        Failed to deploy blog at:
+                        {` https://${subhandle}.${walletIdentity}.point. `}
+                        Please try again.
+                    </p>
+                </Alert>
+            ) : null}
+            <Row className="my-5">
+                <Col>
+                    <h1 className="mt-2 mb-2">
+                        Share your ideas over your own domain, uncensored.
+                    </h1>
+                    <h4>Launch your own blogging site!</h4>
+                    <p className="mt-5 mb-0 text-secondary">
+                        Enter the subdomain below where you want your blog to be
+                        deployed.
+                    </p>
+                    <p className="mt-0 text-secondary">
+                        A great option is "blog.{walletIdentity}.point", but you
+                        can pick any name you want.
+                    </p>
+                    <Row className="align-items-center mb-3">
+                        <Col style={{ paddingRight: 0 }}>
+                            <FormControl
+                                value={subhandle}
+                                type="text"
+                                placeholder="blog"
+                                onChange={(e) => {
+                                    setSuccess(false);
+                                    setSubhandle(e.target.value);
+                                }}
+                            />
+                        </Col>
+                        <Col>.{walletIdentity}.point</Col>
+                    </Row>
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            deploy(subhandle);
+                        }}
+                        disabled={loading || success || !subhandle}
                     >
-                        {`https://${subhandle}.${walletIdentity}.point`}
-                    </a>
-                    &nbsp; (But it may take a while for it to be available)
-                </p>
-            )}
+                        Deploy
+                    </Button>
+                </Col>
+                <Col className="position-relative">
+                    {/* <Image src={image} fluid rounded className="p-4 pt-5" /> */}
+                    <h1 className="position-absolute text-white top-50 start-50 translate-middle">
+                        We'll show an image carousal here
+                    </h1>
+                    <div className="bg-primary rounded clipped-bg position-absolute top-0"></div>
+                </Col>
+            </Row>
         </div>
     );
 };
