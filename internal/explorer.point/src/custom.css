@@ -173,3 +173,76 @@ a.nav-link.active {
 .border-red {
     border-color: red;
 }
+
+.bounty-banner {
+    position: fixed;
+    background: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 3px;
+    width: 80vw;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.bounty-banner:hover {
+    background: linear-gradient(90deg, #fee563 0%, #fec455 80%, #86692e 100%);
+}
+
+.bounty-banner-inner {
+    align-items: center;
+    background: linear-gradient(90deg, #fffdf5 0%, #fffbf5 50%, #fcfbf7 100%);
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    padding: 25px;
+}
+
+.bounty-banner-header {
+    align-items: center;
+    display: flex;
+}
+
+.bounty-banner-header img {
+    height: 50px;
+}
+
+.bounty-banner-header h2 {
+    font-family: 'Karla', sans-serif;
+    font-weight: 600;
+    margin: 0 0 0 20px;
+}
+
+.bounty-banner-header h2 span {
+    background-image: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);;
+    color: #333;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+@media (max-width: 767px) {
+    .bounty-banner-inner {
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .bounty-banner-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .bounty-banner-header h2 {
+        margin: 10px 0;
+    }
+}
+
+.warning-banner {
+    text-align: center;
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    background: rgb(71,53,17);
+    background: linear-gradient(90deg, rgba(71,53,17,1) 0%, rgba(223,180,0,1) 35%, rgba(237,208,12,1) 100%);
+    color: rgb(255, 255, 255);
+}

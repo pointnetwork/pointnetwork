@@ -1,11 +1,12 @@
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
 require('@openzeppelin/hardhat-upgrades');
-require('../hardhat/tasks/explorer/explorer-set-index-md');
+require('./tasks/explorer/explorer-set-index-md');
 const config = require('config');
 const path = require('path');
 const os = require('os');
 
+const IS_PACKAGED = Boolean(process.pkg);
 
 let privateKey;
 // This will read either from config or from DEPLOYER_ACCOUNT env var
@@ -58,7 +59,13 @@ module.exports = {
             }
         ]
     },
-    paths: {
+    paths: IS_PACKAGED ? {
+        root: path.join(os.homedir(), '.point', 'hardhat'),
+        artifacts: path.join(os.homedir(), '.point', 'hardhat', 'build'),
+        sources: path.join(os.homedir(), '.point', 'hardhat', 'contracts'),
+        tests: path.join(os.homedir(), '.point', 'hardhat', 'tests'),
+        cache: path.join(os.homedir(), '.point', 'hardhat', 'cache')
+    } : {
         artifacts:'./build',
         sources: './contracts',
         tests: './tests',
