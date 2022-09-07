@@ -1,11 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
-const config = require('config');
+const Deployer = require('../client/zweb/deployer_old');
 const logger = require('./log');
-const log = logger.child({module: 'Deploy'});
 
-const PORT = Number(config.get('api.port'));
+const log = logger.child({module: 'Deploy'});
 
 const deploy = async ({
     deploy_path = null,
@@ -16,8 +14,10 @@ const deploy = async ({
     if (deploy_path === null) {
         deploy_path = path.resolve('.');
         if (!fs.existsSync(path.join(deploy_path, 'point.deploy.json'))) {
-            throw new Error('Empty path given, and point.deploy.json is not found here. ' +
-                'Are you sure you\'re in a dApp directory?');
+            throw new Error(
+                'Empty path given, and point.deploy.json is not found here. ' +
+                    'Are you sure you are in a dApp directory?'
+            );
         }
     }
 
@@ -25,27 +25,26 @@ const deploy = async ({
 
     const deploy_path_absolute = path.resolve(deploy_path);
     if (!deploy_path_absolute) {
-        throw new Error('Invalid path');
+        throw new Error(`Invalid path ${deploy_path}`);
     }
     if (!fs.existsSync(deploy_path_absolute)) {
-        throw new Error(`Path {deploy_path} doesn\'t exist`);
+        throw new Error(`Path ${deploy_path_absolute} doesn't exist`);
     }
 
     const start = Date.now();
-    const result = await axios.post(
-        `http://localhost:${PORT}/v1/api/deploy`,
-        {
-            deploy_path,
-            deploy_contracts,
+
+    try {
+        const deployer = new Deployer();
+        await deployer.deploy({
+            deployPath: deploy_path_absolute,
+            deployContracts: deploy_contracts,
             dev,
-            force_deploy_proxy
-        }
-    );
-    if (result.status !== 200) {
-        log.error(result, 'Deploy error');
-    } else if (result.data.status !== 'success') {
-        log.error(result.data);
+            forceDeployProxy: force_deploy_proxy
+        });
+    } catch (err) {
+        log.error(err, 'Deployment error');
     }
+
     log.info(`Deploy time: ${Date.now() - start} ms`);
 };
 
