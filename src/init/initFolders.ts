@@ -1,6 +1,6 @@
-import {resolveHome, makeSurePathExists, makeSureKeyfileHasPhrase} from './util';
 import path from 'path';
 import config from 'config';
+import {resolveHome, makeSurePathExists, makeSureKeyfileHasPhrase} from '../util';
 
 const initFolders = async () => {
     const datadir: string = resolveHome(config.get('datadir'));
