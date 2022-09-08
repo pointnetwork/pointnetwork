@@ -4,11 +4,9 @@ import fastifyWs from 'fastify-websocket';
 import {transformErrorResp} from '../errors';
 import identityMdw from './middleware/identity';
 import csrfTokens from '../client/zweb/renderer/csrfTokens';
-import fs from 'fs-extra';
-import path from 'path';
 import config from 'config';
 import {verify} from 'jsonwebtoken';
-import {resolveHome} from '../util';
+import {getSecretToken} from '../util';
 const ws_routes = require('./ws_routes');
 const api_routes = require('./api_routes');
 
@@ -51,9 +49,7 @@ for (const apiRoute of api_routes) {
             // TODO: make proper tests with the token
             if (apiRoute[3]?.protected && process.env.MODE !== 'test') {
                 if (!secretToken) {
-                    secretToken = await fs.readFile(
-                        path.join(resolveHome(config.get('wallet.keystore_path')), 'token.txt'), 'utf8'
-                    );
+                    secretToken = await getSecretToken();
                 }
                 const jwt = request.headers['x-point-token'] as string;
                 if (!jwt) {

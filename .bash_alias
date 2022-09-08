@@ -20,11 +20,14 @@ alias point-dev-stop="./scripts/stop-local.sh"
 alias point-dev-clean="./scripts/clean-local.sh"
 
 # point-browser can be used when running the node outside of Docker
-alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url https://point/"
+alias point-browser="web-ext run --firefox-profile=pointnetwork --keep-profile-changes --source-dir dist/prod --url 'https://point?token$(cat ~/.point/keystore/token.txt)'"
 
 # point-browser-docker-owner / visitor starts a point browser using one saved zappdev environment Firefox profiles
-alias point-browser-owner="web-ext run --firefox-profile=website_owner --keep-profile-changes --source-dir dist/prod --url https://point/"
-alias point-browser-visitor="web-ext run --firefox-profile=website_visitor --keep-profile-changes --source-dir dist/prod --url https://point/"
+alias point-browser-owner="web-ext run --firefox-profile=website_owner --keep-profile-changes --source-dir dist/prod --url 'https://point?token=xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA'"
+alias point-browser-visitor="web-ext run --firefox-profile=website_visitor --keep-profile-changes --source-dir dist/prod --url 'https://point?token=xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA'"
+
+# point-browser-dev starts a point browser instance loading the pointsdk extention from the dist folder so that it can also be worked on by the developer using extention hot reloading provided by web-ext. See the pointsdk repo for details.
+alias point-browser-dev="web-ext run --firefox-profile=website_owner --keep-profile-changes --source-dir dist --url 'https://point?token=xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA'"
 
 # build a local image from the current working branch
 build-image() {
@@ -40,9 +43,6 @@ build-image() {
         echo "Docker Image for current branch exists. To rebuild the image run 'build-image --force'";
     fi;
 }
-
-# point-browser-dev starts a point browser instance loading the pointsdk extention from the dist folder so that it can also be worked on by the developer using extention hot reloading provided by web-ext. See the pointsdk repo for details.
-alias point-browser-dev="web-ext run --firefox-profile=website_owner --keep-profile-changes --source-dir dist --url https://point/"
 
 # dexec is a helper function to start a bash terminal in a running docker container
 dexec() { docker exec -it "$1" bash; }
