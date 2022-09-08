@@ -13,6 +13,12 @@ const isHash = (str) => {
     return new RegExp('^[0-9a-fA-F]+$').test(s);
 };
 
+function openBlobUrl(blob){
+    // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, target="_blank");
+}
+
 const IkvEntry = (props) => {
     const { handle, item, onUpdated, showEdit } = props;
     const [loading, setLoading] = useState(false);
@@ -25,6 +31,11 @@ const IkvEntry = (props) => {
         setNewVersion(item.version);
         setAllowEdition(true);
     };
+
+    const openFile = async (id) => {
+        const blob = await window.point.storage.getFile({id: `${id}`});
+        openBlobUrl(blob);
+    }
 
     const saveChanges = async () => {
         setLoading(true);
@@ -75,9 +86,8 @@ const IkvEntry = (props) => {
                     />
                 ) : isHash(item.value) ? (
                     <a
-                        href={'/_storage/' + item.value}
-                        target="_blank"
-                        rel="noreferrer"
+                        href="#"
+                        onClick={() => openFile(item.value)}
                     >
                         {item.value}
                     </a>

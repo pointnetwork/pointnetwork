@@ -16,7 +16,7 @@
     </tr>
     {{#each filesInfo}}
     <tr>
-      <td> {{{ icon }}} <a href='{{ link }}' target='_blank'>
+      <td> {{{ icon }}} <a href='#' onclick="javascript:openFile('{{ fileId }}')" target='_blank'>
           {{ name }}
         </a></td>
 
@@ -25,6 +25,17 @@
     </tr>
     {{/each}}
   </table>
+  <script>
+    function openBlobUrl(blob){
+      // Convert your blob into a Blob URL (a special url that points to an object in the browser's memory)
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, target="_blank");
+    }
+    const openFile = async (id) => {
+        const blob = await window.point.storage.getFile({id: `${id}`});
+        openBlobUrl(blob);
+    }
+  </script>
 </body>
 
 </html>
