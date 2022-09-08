@@ -141,7 +141,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 );
             }
 
-            // log.debug({host, zrouteId}, 'Requesting ZRoute id for domain');
+            log.trace({host, zrouteId}, 'Requesting ZRoute id for domain');
             const routes = await getJSON(zrouteId);
             if (!routes) {
                 throw new HttpNotFoundError(`Cannot parse json of zrouteId ${zrouteId}`);
@@ -368,7 +368,6 @@ const queryExtDomain = async (
 
     const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
     if (!resp.data.data?.content?.trim()) {
-        // log.debug({host}, `No Point data found in the domain registry for "${host}".`);
         throw new HttpNotFoundError(`No Point data found in the domain registry for "${host}".`);
     }
 

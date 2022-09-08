@@ -66,7 +66,6 @@ class Renderer {
             storage_get_by_ikv: async function(identity, key) {
                 try {
                     const fileKey = await blockchain.getKeyValue(identity, key);
-                    // log.debug({identity, key, fileKey}, 'storage_get_by_ikv'); // TODO: logger doesn't work here
                     return await getFile(fileKey);
                 } catch (e) {
                     log.error({identity, key, ...e}, 'storage_get_by_ikv error');

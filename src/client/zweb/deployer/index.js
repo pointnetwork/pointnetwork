@@ -293,10 +293,6 @@ class Deployer {
                             log.debug('deployProxy call');
                             const cfg = {kind: 'uups'};
                             const idContract = await blockchain.loadIdentityContract();
-                            // log.debug(
-                            //     {address: idContract.options.address},
-                            //     'Identity contract address'
-                            // );
                             try {
                                 log.debug(
                                     {IdContractAddress: idContract.options.address, identity},
