@@ -351,7 +351,7 @@ ethereum.web3send = async (method, optons = {}) => {
 ethereum.callContract = async (target, contractName, method, params, version = 'latest') => {
     // todo: multiple arguments, but check existing usage // huh?
     let attempt = 0;
-    log.debug({target, contractName, method, params}, 'Contract Call');
+    log.trace({target, contractName, method, params}, 'Contract Call');
     while (true) {
         try {
             const contract = await ethereum.loadWebsiteContract(target, contractName, version);

@@ -27,7 +27,7 @@ const getChunk = async (
         return fs.readFile(chunkPath, {encoding});
     }
     if (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.IN_PROGRESS) {
-        log.debug({chunkId}, 'Chunk download already in progress, waiting');
+        // log.debug({chunkId}, 'Chunk download already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return getChunk(chunkId, encoding); // use cache should be true in this case
     }
@@ -49,8 +49,8 @@ const getChunk = async (
             // TODO: Remove the axios hack below when this bug of arlocal is resolved.
             // https://github.com/textury/arlocal/issues/63
             // It is fixed, but don't seems to work in all cases.
-            const data = (await axios.get('http://' +  HOST +
-                ':' + PORT + '/tx/' +  txid + '/data')).data;
+            const data = (await axios.get('http://' + HOST + ':' + PORT + '/tx/' + txid + '/data'))
+                .data;
             const buf = Buffer.from(data, 'base64');
 
             /*
