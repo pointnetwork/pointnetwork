@@ -1,11 +1,16 @@
+import config from 'config';
 import apiServer from '../../src/api/server';
 import ethereum from '../../src/network/providers/ethereum';
 import solana from '../../src/network/providers/solana';
 import httpsServer from '../../src/client/proxy/httpsServer';
 
-jest.mock('../../src/network/providers/ethereum', () => ({getBalance: jest.fn(async () => 1000000000000)}));
+jest.mock('../../src/network/providers/ethereum', () => ({
+    getBalance: jest.fn(async () => 1000000000000)
+}));
 
-jest.mock('../../src/network/providers/solana', () => ({getBalance: jest.fn(async () => 1000000000)}));
+jest.mock('../../src/network/providers/solana', () => ({
+    getBalance: jest.fn(async () => 1000000000)
+}));
 
 describe('Wallet controller', () => {
     it('Public key', async () => {
@@ -71,7 +76,7 @@ describe('Wallet controller', () => {
         expect(res.statusCode).toEqual(200);
         expect(ethereum.getBalance).toHaveBeenCalledWith({
             address: expect.stringMatching(/^0x/),
-            network: 'xnet'
+            network: config.get('network.default_network')
         });
         expect(JSON.parse(res.payload)).toEqual({
             status: 200,
