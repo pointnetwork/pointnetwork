@@ -1224,7 +1224,7 @@ ethereum.getTransactionsByAccount = async ({
 
 ethereum.getOwner = () => getWeb3().utils.toChecksumAddress(getNetworkAddress());
 
-ethereum.getGasPrice = async (network = 'mainnet') => {
+ethereum.getGasPrice = async (network = DEFAULT_NETWORK) => {
     if (config.has(`network.web3.${network}.gas_price_wei`)) {
         return Number(config.get(`network.web3.${network}.gas_price_wei`));
     }
