@@ -28,21 +28,21 @@ const log = logger.child({module: 'ZProxy'});
 const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
 interface DomainInfoPointers {
-    host: string,
-    routesId: string|undefined,
-    rootDirId: string|undefined,
-    identity: string
+    host: string;
+    routesId: string | undefined;
+    rootDirId: string | undefined;
+    identity: string;
 }
 
 interface RequestFulfillmentConfig {
-    req: FastifyRequest,
-    res: FastifyReply,
+    req: FastifyRequest;
+    res: FastifyReply;
     isLocal: boolean;
-    routes: any,
-    path: string,
-    localRootDirPath?: string,
-    remoteRootDirId?: string,
-    rewriteHost?: string
+    routes: any;
+    path: string;
+    localRootDirPath?: string;
+    remoteRootDirId?: string;
+    rewriteHost?: string;
 }
 
 const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyReply) => {
@@ -54,11 +54,9 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
 
         if (!host) {
             throw Error('Host cannot be empty');
-
         } else if (host.endsWith('.z')) {
             res.header('Location', 'https://' + host.replace(/\.z/, '.point'));
             return res.status(301).send();
-
         } else if (host === 'point') {
             // Point Home
 
@@ -68,20 +66,30 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             }
 
             // Point Home
-            const publicPath = path.resolve(__dirname, '../../../../internal/explorer.point/public');
+            const publicPath = path.resolve(
+                __dirname,
+                '../../../../internal/explorer.point/public'
+            );
 
             return await fulfillRequest({
-                req, res,
+                req,
+                res,
                 isLocal: true,
                 routes: {'*': 'index.zhtml'},
                 path: urlPath,
                 localRootDirPath: publicPath
             });
-
-        } else if (host.endsWith('.local') || (config.get('mode') === 'zappdev' && host.endsWith('.point'))) {
+        } else if (
+            host.endsWith('.local') ||
+            (config.get('mode') === 'zappdev' && host.endsWith('.point'))
+        ) {
             // First try route file (and check if this domain even exists)
             const routesId = await blockchain.getZRecord(host, versionRequested);
-            if (!routesId && !host.endsWith('.local')) throw new HttpNotFoundError('Domain not found (Route file not specified for this domain)');
+            if (!routesId && !host.endsWith('.local')) {
+                throw new HttpNotFoundError(
+                    'Domain not found (Route file not specified for this domain)'
+                );
+            }
 
             const zappName = host.endsWith('dev') ? `${host.split('dev')[0]}.point` : host;
 
@@ -117,21 +125,23 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
 
             return await fulfillRequest({
-                req, res,
+                req,
+                res,
                 isLocal: true,
                 routes,
                 path: urlPath,
                 localRootDirPath: publicPath
             });
-
         } else if (host.endsWith('.point')) {
             // First try route file (and check if this domain even exists)
             const zrouteId = await blockchain.getZRecord(host, versionRequested);
             if (!zrouteId) {
-                throw new HttpNotFoundError('Domain not found (Route file not specified for this domain)');
+                throw new HttpNotFoundError(
+                    'Domain not found (Route file not specified for this domain)'
+                );
             }
 
-            log.debug({host, zrouteId}, 'Requesting ZRoute id for domain');
+            log.trace({host, zrouteId}, 'Requesting ZRoute id for domain');
             const routes = await getJSON(zrouteId);
             if (!routes) {
                 throw new HttpNotFoundError(`Cannot parse json of zrouteId ${zrouteId}`);
@@ -150,13 +160,13 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             }
 
             return await fulfillRequest({
-                req, res,
+                req,
+                res,
                 isLocal: false,
                 routes,
                 path: urlPath,
                 remoteRootDirId: rootDirId
             });
-
         } else if (host.endsWith('.sol') || host.endsWith('.eth')) {
             const {routesId, rootDirId, identity} = await queryExtDomain(host, queryParams);
 
@@ -165,25 +175,31 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             if (!routes) throw new HttpNotFoundError(`Cannot parse json of zrouteId ${routesId}`);
 
             return await fulfillRequest({
-                req, res,
+                req,
+                res,
                 isLocal: false,
                 routes,
                 path: urlPath,
                 remoteRootDirId: rootDirId,
                 rewriteHost: identity
             });
-
         } else {
             // Web2?
             let urlMirrorUrl;
-            try { urlMirrorUrl = await getMirrorWeb2Page(req); } catch (error) { /* ignore */ }
+            try {
+                urlMirrorUrl = await getMirrorWeb2Page(req);
+            } catch (error) {
+                /* ignore */
+            }
             if (urlMirrorUrl) {
                 // Set CORS headers
                 const allowedOrigin = req.headers.referer?.replace(/\/$/, '');
                 res.header('Vary', 'Origin');
 
-                const allowCORS = ['fonts.googleapis.com', 'fonts.gstatic.com'].includes(String(req.urlData().host));
-                res.header('Access-Control-Allow-Origin', (allowCORS) ? '*' : allowedOrigin);
+                const allowCORS = ['fonts.googleapis.com', 'fonts.gstatic.com'].includes(
+                    String(req.urlData().host)
+                );
+                res.header('Access-Control-Allow-Origin', allowCORS ? '*' : allowedOrigin);
 
                 // Redirect to mirror URL
                 return res.redirect(urlMirrorUrl);
@@ -211,18 +227,26 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                     host: refererHost
                 });
             } else {
-                throw new HttpNotFoundError('Could not match requested tld with any programmed case');
+                throw new HttpNotFoundError(
+                    'Could not match requested tld with any programmed case'
+                );
             }
         }
-
     } catch (e) {
         const status = e.httpStatusCode || 500;
         log.error({stack: e.stack, errorMessage: e.message}, 'Error from Renderer');
-        return res.status(status).send('Error from Renderer: ' + JSON.stringify(e.message).replace(/^"+|"+$/g, ''));
+        return res
+            .status(status)
+            .send('Error from Renderer: ' + JSON.stringify(e.message).replace(/^"+|"+$/g, ''));
     }
 };
 
-const tryFulfillZhtmlRequest = async(cfg: RequestFulfillmentConfig, templateFilename: string, routeParams: Record<string, string> | null, host: string) => {
+const tryFulfillZhtmlRequest = async (
+    cfg: RequestFulfillmentConfig,
+    templateFilename: string,
+    routeParams: Record<string, string> | null,
+    host: string
+) => {
     const {req, res} = cfg;
     const {queryParams, ext} = await parseRequestForProxy(req);
 
@@ -265,7 +289,7 @@ const tryFulfillZhtmlRequest = async(cfg: RequestFulfillmentConfig, templateFile
     });
 };
 
-const tryFulfillStaticRequest = async(cfg: RequestFulfillmentConfig, urlPath: string) => {
+const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: string) => {
     const {req, res} = cfg;
     const {ext} = await parseRequestForProxy(req);
 
@@ -277,16 +301,15 @@ const tryFulfillStaticRequest = async(cfg: RequestFulfillmentConfig, urlPath: st
         }
 
         const filePath = path.join(cfg.localRootDirPath, urlPath);
-        if (! existsSync(filePath)) {
+        if (!existsSync(filePath)) {
             throw new HttpNotFoundError('Not Found');
         }
 
-        if (! lstatSync(filePath).isFile()) {
+        if (!lstatSync(filePath).isFile()) {
             throw new HttpForbiddenError('Directory listing not allowed');
         }
 
         file = await fs.readFile(filePath);
-
     } else {
         const fileId = await getFileIdByPath(cfg.remoteRootDirId, urlPath);
         if (!fileId) {
@@ -302,7 +325,7 @@ const tryFulfillStaticRequest = async(cfg: RequestFulfillmentConfig, urlPath: st
     return file;
 };
 
-const fulfillRequest = async(cfg: RequestFulfillmentConfig) => {
+const fulfillRequest = async (cfg: RequestFulfillmentConfig) => {
     const {req} = cfg;
 
     let {host} = await parseRequestForProxy(req);
@@ -332,7 +355,10 @@ const fulfillRequest = async(cfg: RequestFulfillmentConfig) => {
     }
 };
 
-const queryExtDomain = async (host: string, queryParams: ParsedQuery<string>): Promise<DomainInfoPointers> => {
+const queryExtDomain = async (
+    host: string,
+    queryParams: ParsedQuery<string>
+): Promise<DomainInfoPointers> => {
     // For Solana/Ethereum domains, we store Point data in the domain registry.
     const service = host.endsWith('.sol') ? 'SNS' : 'ENS';
     let identity = '';
@@ -342,7 +368,6 @@ const queryExtDomain = async (host: string, queryParams: ParsedQuery<string>): P
 
     const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
     if (!resp.data.data?.content?.trim()) {
-        log.debug({host}, `No Point data found in the domain registry for "${host}".`);
         throw new HttpNotFoundError(`No Point data found in the domain registry for "${host}".`);
     }
 
@@ -351,18 +376,17 @@ const queryExtDomain = async (host: string, queryParams: ParsedQuery<string>): P
     identity = domainData.identity ? `${domainData.identity}.point` : host;
     routesId = domainData.routesId;
     rootDirId = domainData.rootDirId;
-    log.debug(
-        {host, identity, routesId, rootDirId, isAlias},
-        `Resolved ${service} domain`
-    );
+    log.debug({host, identity, routesId, rootDirId, isAlias}, `Resolved ${service} domain`);
 
     // Return bad request if missing data in the domain registry.
     if (!isAlias && (!routesId || !rootDirId)) {
         // If the .sol domain is not an alias to a .point domain, all these
         // fields need to be present so that we can fetch the content.
         const msg = `Missing Point information in "${host}" domain registry.`;
-        log.debug({host, identity, routesId, rootDirId, isAlias}, msg);
-        throw new HttpNotFoundError(msg);
+        // log.debug({host, identity, routesId, rootDirId, isAlias}, msg);
+        throw new HttpNotFoundError(
+            msg + ' : ' + JSON.stringify({host, identity, routesId, rootDirId, isAlias})
+        );
     }
 
     if (isAlias) {
@@ -373,7 +397,11 @@ const queryExtDomain = async (host: string, queryParams: ParsedQuery<string>): P
         const version = (queryParams.__point_version as string) ?? 'latest';
 
         routesId = (await blockchain.getZRecord(identity, version)) as string;
-        if (!routesId) throw new HttpNotFoundError('Domain not found (Route file not specified for this domain)');
+        if (!routesId) {
+            throw new HttpNotFoundError(
+                'Domain not found (Route file not specified for this domain)'
+            );
+        }
 
         rootDirId = await blockchain.getKeyValue(identity, '::rootDir', version);
         if (!rootDirId) throw new HttpNotFoundError(`Root dir id not found for host ${identity}`);
