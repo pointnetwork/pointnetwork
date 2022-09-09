@@ -14,14 +14,15 @@ storage:
   use_arlocal: true
   arweave_gateway_url: http://localhost:1984/graphql
 network:
+  default_network: "development"  
   web3:
-    xnet:
+    development:
       type: "eth"
-      name: "Xnet"
+      name: "development"
       http_address: "localhost:7545"
       ws_address: "localhost:7545"
-      currency_name: "xPoint"
-      currency_code: "xPOINT"
+      currency_name: "dPoint"
+      currency_code: "dPOINT"
       tls: false
       gas_price_wei: 615842087
       tokens: []
