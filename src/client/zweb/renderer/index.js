@@ -1,5 +1,6 @@
 const TwigLib = require('twig');
 const _ = require('lodash');
+const {promises: fs} = require('fs');
 const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
 const config = require('config');
@@ -15,6 +16,9 @@ const keyValue = require('../../../network/keyvalue');
 const {default: csrfTokens} = require('./csrfTokens');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
+
+const mode = config.has('mode') && config.get('mode');
+const sdkFile = config.has('sdk_file') && config.get('sdk_file');
 
 class Renderer {
     #twigs = {};
@@ -50,7 +54,29 @@ class Renderer {
             // than have a memory leak with thousands of Twig objects in memory waiting
             this.#removeTwigForHost(host);
 
-            return result.toString();
+            let render = result.toString();
+
+            log.warn({mode}, 'Checking app mode');
+            if (mode === 'gateway' && sdkFile) {
+                log.warn({sdkFile}, 'Entering gateway mode');
+                const sdk = await fs.readFile(sdkFile, {encoding: 'utf-8'});
+                log.warn({sdk}, 'Read sdk');
+                if (sdk) {
+                    const scriptElement = `<script defer>${sdk}</script>`;
+                    if (render.indexOf('</head>')) {
+                        log.warn('Replacing <head>');
+                        render = render.replace('</head>', `${scriptElement}</head>`);
+                    } else if (render.indexOf('</body>')) {
+                        log.warn('Replacing <body>');
+                        render = render.replace('</body>', `${scriptElement}</body>`);
+                    } else {
+                        log.warn('Adding script');
+                        render += scriptElement;
+                    }
+                }
+            }
+
+            return render;
         } catch (e) {
             this.#removeTwigForHost(host);
             throw e;
