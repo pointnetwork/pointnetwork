@@ -144,7 +144,6 @@ const attachStorageHandlers = (server: FastifyInstance) => {
     });
 
     server.get('/_storage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {
-        await checkAuthToken(req, res);
         let file;
         try {
             file = await getFile(req.params.hash, null);

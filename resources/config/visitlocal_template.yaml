@@ -23,7 +23,7 @@ network:
       currency_name: "xPoint"
       currency_code: "xPOINT"
       tls: false
-      gas_price_wei: 610158337
+      gas_price_wei: 615842087
       tokens: []
     # rinkeby:
     #   type: "eth"

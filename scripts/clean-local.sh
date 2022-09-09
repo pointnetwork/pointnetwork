@@ -44,6 +44,10 @@ echo "cp resources/blockchain-test-key.json ~/workspace/pn/devlocal/keystore/key
 cp resources/blockchain-test-key.json ~/workspace/pn/devlocal/keystore/key.json
 echo "cp resources/arweave-test-key.json ~/workspace/pn/devlocal/keystore/arweave.json"
 cp resources/arweave-test-key.json ~/workspace/pn/devlocal/keystore/arweave.json
+echo 'Creating token in ~/workspace/pn/devlocal/keystore/token.txt'
+echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/devlocal/keystore/token.txt
+echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json"
+cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json
 
 echo "mkdir -p ~/workspace/pn/visitlocal/keystore"
 mkdir -p ~/workspace/pn/visitlocal/keystore
@@ -52,3 +56,7 @@ echo "cp resources/blockchain-test-key2.json ~/workspace/pn/visitlocal/keystore/
 cp resources/blockchain-test-key2.json ~/workspace/pn/visitlocal/keystore/key.json
 echo "cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arweave.json"
 cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arweave.json
+echo 'Creating token in ~/workspace/pn/visitlocal/keystore/token.txt'
+echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/visitlocal/keystore/token.txt
+echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json"
+cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json

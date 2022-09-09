@@ -17,16 +17,16 @@ import {uploadChunk, getChunk} from './chunk';
 import {HttpNotFoundError} from '../../core/exceptions';
 
 type FileInfo = {
-    type: keyof typeof FILE_TYPE
-    name: string
-    size: number
-    id: string
-}
+    type: keyof typeof FILE_TYPE;
+    name: string;
+    size: number;
+    id: string;
+};
 
 type DirInfo = {
-    type: 'dir',
-    files: FileInfo[]
-}
+    type: 'dir';
+    files: FileInfo[];
+};
 
 export const FILE_TYPE = {
     fileptr: 'fileptr', // File
@@ -39,21 +39,21 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
 
     if (totalChunks === 1) {
         const fileId = hashFn(buf).toString('hex');
-        log.debug({fileId}, 'File to be uploaded and consists only from 1 chunk');
+        log.trace({fileId}, 'File to be uploaded and consists only from 1 chunk');
 
         const filePath = path.join(FILES_DIR, `file_${fileId}`);
         const file = await File.findByIdOrCreate(fileId);
         if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
-            log.debug({fileId}, 'File already exists, cancelling upload');
+            log.trace({fileId}, 'File already exists, cancelling upload');
             return fileId;
         }
         if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
-            log.debug({fileId}, 'File  upload already in progress, waiting');
+            log.trace({fileId}, 'File  upload already in progress, waiting');
             await delay(CONCURRENT_DOWNLOAD_DELAY);
             return uploadFile(data);
         }
 
-        log.debug({fileId}, 'Starting file upload');
+        log.trace({fileId}, 'Starting file upload');
         try {
             file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
             await file.save();
@@ -70,7 +70,7 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
             file.ul_status = FILE_UPLOAD_STATUS.COMPLETED;
             await file.save();
 
-            log.debug({fileId}, 'File successfully uploaded');
+            log.trace({fileId}, 'File successfully uploaded');
 
             return fileId;
         } catch (e) {
@@ -105,21 +105,21 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
     // File id always matches it's index chunk id
     const fileId = hashFn(chunkInfoBuffer).toString('hex');
 
-    log.debug({fileId}, 'Successfully chunkified file');
+    log.trace({fileId}, 'Successfully chunkified file');
     const filePath = path.join(FILES_DIR, `file_${fileId}`);
 
     const file = await File.findByIdOrCreate(fileId);
     if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
-        log.debug({fileId}, 'File already exists, cancelling upload');
+        log.trace({fileId}, 'File already exists, cancelling upload');
         return fileId;
     }
     if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
-        log.debug({fileId}, 'File upload already in progress, waiting');
+        log.trace({fileId}, 'File upload already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return uploadFile(data);
     }
 
-    log.debug({fileId}, 'Uploading file');
+    log.trace({fileId}, 'Uploading file');
     try {
         file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
         await file.save();
@@ -140,14 +140,14 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
             }
         });
 
-        log.debug({fileId}, 'File successfully uploaded, saving to disk');
+        log.trace({fileId}, 'File successfully uploaded, saving to disk');
 
         await fs.writeFile(filePath, buf);
         file.size = buf.length;
         file.ul_status = FILE_UPLOAD_STATUS.COMPLETED;
         await file.save();
 
-        log.debug({fileId}, 'File successfully uploaded and saved');
+        log.trace({fileId}, 'File successfully uploaded and saved');
         return fileId;
     } catch (e) {
         log.error({fileId, message: e.message, stack: e.stack}, 'File upload failed');
@@ -171,7 +171,7 @@ export const uploadDir = async (dirPath: string) => {
         throw e;
     }
 
-    log.debug({dirPath: escapeString(dirPath)}, 'Uploading directory');
+    log.trace({dirPath: escapeString(dirPath)}, 'Uploading directory');
 
     const files = await fs.readdir(dirPath);
     const dirInfo: DirInfo = {
@@ -208,7 +208,7 @@ export const uploadDir = async (dirPath: string) => {
 
     const id = await uploadFile(JSON.stringify(dirInfo));
 
-    log.debug({dirPath: escapeString(dirPath)}, 'Successfully uploaded directory');
+    log.trace({dirPath: escapeString(dirPath)}, 'Successfully uploaded directory');
 
     return id;
 };
@@ -218,7 +218,7 @@ export const getFile = async (
     encoding: BufferEncoding = 'utf8',
     useCache = true
 ): Promise<string | Buffer> => {
-    log.debug({fileId: rawId}, 'Getting file');
+    log.trace({fileId: rawId}, 'Getting file');
     const id = (rawId.startsWith('0x') ? rawId.replace('0x', '') : rawId).toLowerCase();
 
     // ID validation
@@ -233,27 +233,27 @@ export const getFile = async (
     const filePath = path.join(FILES_DIR, `file_${id}`);
     const file = await File.findByIdOrCreate(id);
     if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {
-        log.debug({fileId: file.id}, 'Returning file from cache');
+        log.trace({fileId: file.id}, 'Returning file from cache');
         return await fs.readFile(filePath, {encoding});
     }
     if (file.dl_status === FILE_DOWNLOAD_STATUS.IN_PROGRESS) {
-        log.debug({fileId: file.id}, 'File download already in progress, waiting');
+        log.trace({fileId: file.id}, 'File download already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return getFile(id, encoding); // use cache should be true in this case
     }
 
-    log.debug({fileId: file.id}, 'Downloading file');
+    log.trace({fileId: file.id}, 'Downloading file');
     try {
         file.dl_status = FILE_DOWNLOAD_STATUS.IN_PROGRESS;
         await file.save();
 
-        log.debug({fileId: file.id}, 'Getting info chunk');
+        log.trace({fileId: file.id}, 'Getting info chunk');
 
         // TODO: retry logic
         const chunkInfo = await getChunk(file.id, encoding);
         const chunkInfoString = chunkInfo.toString();
         if (!chunkInfoString.startsWith(CHUNKINFO_PROLOGUE)) {
-            log.debug({fileId: file.id}, 'File consists of a single chunk, returning it');
+            log.trace({fileId: file.id}, 'File consists of a single chunk, returning it');
             await fs.writeFile(filePath, chunkInfo);
 
             file.size = chunkInfo.length;
@@ -263,7 +263,7 @@ export const getFile = async (
             return encoding === null ? chunkInfo : chunkInfo.toString(encoding);
         }
 
-        log.debug({fileId: file.id}, 'Processing chunk info');
+        log.trace({fileId: file.id}, 'Processing chunk info');
         const toParse = chunkInfoString.slice(CHUNKINFO_PROLOGUE.length);
         const {type, hash, chunks, filesize, merkle: merkleHash} = JSON.parse(toParse);
 
@@ -282,7 +282,7 @@ export const getFile = async (
             throw new Error('Incorrect Merkle hash');
         }
 
-        log.debug({fileId: file.id}, 'Chunk info for file processed, getting chunks');
+        log.trace({fileId: file.id}, 'Chunk info for file processed, getting chunks');
 
         // TODO: retry logic
         const chunkBuffers = await Promise.all(
@@ -291,13 +291,15 @@ export const getFile = async (
         const fileBuffer = Buffer.concat([
             ...chunkBuffers.slice(0, -1),
             // We should trim the trailing zeros from the last chunk
-            chunkBuffers.length ? chunkBuffers[chunkBuffers.length - 1].slice(
-                0,
-                filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
-            ) : Buffer.from([])
+            chunkBuffers.length
+                ? chunkBuffers[chunkBuffers.length - 1].slice(
+                    0,
+                    filesize - (chunkBuffers.length - 1) * CHUNK_SIZE
+                )
+                : Buffer.from([])
         ]);
 
-        log.debug({fileId: file.id}, 'Successfully proceeded file chunks');
+        log.trace({fileId: file.id}, 'Successfully proceeded file chunks');
 
         await fs.writeFile(filePath, fileBuffer);
 
@@ -316,7 +318,7 @@ export const getFile = async (
 
 // @eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getJSON = async <T = any>(id: string, useCache = true): Promise<T> => {
-    log.debug({id}, 'Getting JSON');
+    log.trace({id}, 'Getting JSON');
     const file = await getFile(id, 'utf8', useCache);
     return JSON.parse(file.toString('utf-8'));
 };
@@ -326,7 +328,9 @@ export const getFileIdByPath = async (dirId: string, filePath: string): Promise<
     const segments = filePath.split(/[/\\]/).filter(s => s !== '');
     const nextFileOrDir = directory.files.find(f => f.name === segments[0]);
     if (!nextFileOrDir) {
-        throw new HttpNotFoundError(`Failed to find file ${filePath} in directory ${dirId}: not found`);
+        throw new HttpNotFoundError(
+            `Failed to find file ${filePath} in directory ${dirId}: not found`
+        );
     }
     if (segments.length === 1) {
         return nextFileOrDir.id;

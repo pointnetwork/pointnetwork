@@ -63,16 +63,17 @@ wallet:
   keystore_path: ~/.point/keystore
 network:
   contracts_path: contracts
-  default_network: "xnet"
+  default_network: "mainnet"
   web3:
     mainnet:
-      type: eth
-      name: Main Net
-      http_address: rpc-mainnet-1.point.space
-      ws_address: rpc-mainnet-1.point.space/ws
-      currency_name: Point
-      currency_code: POINT
+      type: "eth"
+      name: "mainnet"
+      http_address: "rpc-mainnet-1.point.space"
+      ws_address: "rpc-mainnet-1.point.space/ws"
+      currency_name: "Point"
+      currency_code: "POINT"
       tls: true
+      gas_price_wei: 7
       tokens: []
     xnet:
       type: "eth"
@@ -125,9 +126,9 @@ network:
       currency_code: "SOL"
       tls: true
   web3_call_retry_limit: 4
-  identity_contract_address: "0x8E34Fc67034b8A593E87d5f2644D098A3dBd2Fe7"
+  identity_contract_address: "0x47204DA8c773Aec5E2947055a081fC312A5C82cf"
   hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
-  event_block_page_size: 20000
+  event_block_page_size: 10000
 name_services:
   sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
 payments:
