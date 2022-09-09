@@ -5,7 +5,15 @@ import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import Image from 'react-bootstrap/Image';
+import Carousel from 'react-bootstrap/Carousel';
 import FormControl from 'react-bootstrap/FormControl';
+import image1 from '../assets/blog-images/blogsoftware-1.png';
+import image2 from '../assets/blog-images/blogsoftware-2.png';
+import image3 from '../assets/blog-images/blogsoftware-3.png';
+import image4 from '../assets/blog-images/blogsoftware-4.png';
+import image5 from '../assets/blog-images/blogsoftware-5.png';
+import image6 from '../assets/blog-images/blogsoftware-6.png';
 import './deploy.css';
 
 const VERSION = '0.1';
@@ -16,12 +24,23 @@ const ROUTES_FILE_ID =
 const CONTRACT_SOURCE_ID =
     '042a2609875d2f5b628896adfc3affec2fd8aaf104f8824918cd94086872dc66';
 
+const blogImagesCarouselData = [
+    { caption: 'Create blog posts', img: image1 },
+    { caption: 'Share on your wall', img: image2 },
+    { caption: 'Blog post preview - 1', img: image3 },
+    { caption: 'Blog post preview - 2', img: image4 },
+    { caption: 'Admin Panel', img: image6 },
+    { caption: 'Customization', img: image5 },
+];
+
 const DeployBlog = () => {
     const { walletIdentity } = useAppContext();
     const [subhandle, setSubhandle] = useState('');
     const [loading, setLoading] = useState(null);
     const [error, setError] = useState(false);
     const [success, setSuccess] = useState(false);
+
+    const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
     const deploy = async (subidentity) => {
         try {
@@ -117,9 +136,9 @@ const DeployBlog = () => {
     };
 
     return (
-        <div className="deploy-container">
+        <div className="deploy-container p-5">
             {success ? (
-                <Alert variant="success" className="mt-4">
+                <Alert variant="success">
                     <Alert.Heading>Deployment Successful!</Alert.Heading>
                     <p>
                         Blog is available at:{' '}
@@ -135,7 +154,7 @@ const DeployBlog = () => {
                     </p>
                 </Alert>
             ) : error ? (
-                <Alert variant="danger" className="mt-4">
+                <Alert variant="danger">
                     <Alert.Heading>Deployment Failed!</Alert.Heading>
                     <p>
                         Failed to deploy blog at:
@@ -144,13 +163,13 @@ const DeployBlog = () => {
                     </p>
                 </Alert>
             ) : null}
-            <Row className="my-5">
-                <Col>
-                    <h1 className="mt-2 mb-2">
+            <Row>
+                <Col xs={5}>
+                    <h1 className="mt-2 mb-2 ">
                         Share your ideas over your own domain, uncensored.
                     </h1>
                     <h4>Launch your own blogging site!</h4>
-                    <p className="mt-5 mb-0 text-secondary">
+                    <p className="mt-4 mb-0 text-secondary">
                         Enter the subdomain below where you want your blog to be
                         deployed.
                     </p>
@@ -182,11 +201,32 @@ const DeployBlog = () => {
                         Deploy
                     </Button>
                 </Col>
-                <Col className="position-relative">
-                    {/* <Image src={image} fluid rounded className="p-4 pt-5" /> */}
-                    <h1 className="position-absolute text-white top-50 start-50 translate-middle">
-                        We'll show an image carousal here
-                    </h1>
+                <Col xs={1}></Col>
+                <Col
+                    xs={6}
+                    className="position-relative d-flex flex-column align-items-center justify-content-center"
+                >
+                    <h4 className="mb-3 text-white">
+                        {blogImagesCarouselData[activeSlideIndex].caption}
+                    </h4>
+                    <Carousel
+                        interval={2000}
+                        className="shadow-lg"
+                        indicators={false}
+                        pause={false}
+                        onSlide={setActiveSlideIndex}
+                    >
+                        {blogImagesCarouselData.map((item) => (
+                            <Carousel.Item key={item.caption}>
+                                <Image
+                                    src={item.img}
+                                    fluid
+                                    rounded
+                                    className="border"
+                                />
+                            </Carousel.Item>
+                        ))}
+                    </Carousel>
                     <div className="bg-primary rounded clipped-bg position-absolute top-0"></div>
                 </Col>
             </Row>
