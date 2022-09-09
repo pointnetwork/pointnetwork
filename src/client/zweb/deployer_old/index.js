@@ -104,7 +104,7 @@ class Deployer {
         if (!isPointTarget && !isAlias) return null;
 
         const baseVersion = this.getBaseVersion(cfgVersion);
-        const lastVersion = await blockchain.getKeyLastVersion(identity, '::rootDir');
+        const lastVersion = await blockchain.getikVersion(identity, '::rootDir');
 
         if (this.isNewBaseVersionValid(lastVersion, baseVersion)) {
             return this.getNewPatchedVersion(lastVersion, baseVersion);
@@ -293,10 +293,6 @@ class Deployer {
                             log.debug('deployProxy call');
                             const cfg = {kind: 'uups'};
                             const idContract = await blockchain.loadIdentityContract();
-                            log.debug(
-                                {address: idContract.options.address},
-                                'Identity contract address'
-                            );
                             try {
                                 log.debug(
                                     {IdContractAddress: idContract.options.address, identity},

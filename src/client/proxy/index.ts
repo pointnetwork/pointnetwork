@@ -40,7 +40,7 @@ proxyServer.on('connection', socket => {
 
         // Determine if this is an HTTP(s) request
         const byte = buffer[0];
-        log.info({byte}, 'Connection received');
+        log.trace({byte}, 'Connection received');
 
         let proxy;
         if (byte === 22) {
