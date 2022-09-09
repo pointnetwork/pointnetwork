@@ -26,6 +26,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             await checkAuthToken(req, res);
 
             const file = await req.file();
+
             if (!file) {
                 return res.status(400).send('No files in the body');
             }
@@ -45,6 +46,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             await checkAuthToken(req, res);
 
             const file = await req.file();
+
             if (!file) {
                 return res.status(400).send('No files in the body');
             }

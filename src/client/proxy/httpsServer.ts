@@ -16,6 +16,7 @@ const httpsServer = Fastify({
     serverFactory(handler) {
         const server = https.createServer(
             {
+                keepAlive: true,
                 SNICallback: (servername, cb) => {
                     const certData = getCertificate(servername);
                     const secureContext = tls.createSecureContext(certData);
@@ -44,7 +45,12 @@ const httpsServer = Fastify({
     logger: log
 });
 httpsServer.register(fastifyUrlData);
-httpsServer.register(fastifyMultipart);
+httpsServer.register(fastifyMultipart, {
+    onFile: (fieldname, file, filename) => {
+        log.warn({fieldname, filename}, 'File received');
+        file.on('error', (e) => log.error(e, 'File error'));
+    }
+});
 httpsServer.register(fastifyFormBody);
 httpsServer.register(fastifyWs);
 
