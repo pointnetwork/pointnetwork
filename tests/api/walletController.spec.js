@@ -1,3 +1,4 @@
+import config from 'config';
 import apiServer from '../../src/api/server';
 import ethereum from '../../src/network/providers/ethereum';
 import solana from '../../src/network/providers/solana';
@@ -71,7 +72,7 @@ describe('Wallet controller', () => {
         expect(res.statusCode).toEqual(200);
         expect(ethereum.getBalance).toHaveBeenCalledWith({
             address: expect.stringMatching(/^0x/),
-            network: 'xnet'
+            network: config.get('network.default_network')
         });
         expect(JSON.parse(res.payload)).toEqual({
             status: 200,
