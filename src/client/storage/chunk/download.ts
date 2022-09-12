@@ -29,7 +29,7 @@ const getChunk = async (
         return fs.readFile(chunkPath, {encoding});
     }
     if (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.IN_PROGRESS) {
-        log.debug({chunkId}, 'Chunk download already in progress, waiting');
+        log.trace({chunkId}, 'Chunk download already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return getChunk(chunkId, encoding); // use cache should be true in this case
     }

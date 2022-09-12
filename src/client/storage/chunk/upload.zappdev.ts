@@ -17,7 +17,7 @@ const signTx = async (data: Buffer, tags: Record<string, string>) => {
 
     const transaction = await arweave.createTransaction({data}, arweaveKey);
 
-    for (const k in tags){
+    for (const k in tags) {
         const v = tags[k];
         transaction.addTag(k, v);
     }
@@ -30,12 +30,14 @@ const signTx = async (data: Buffer, tags: Record<string, string>) => {
 
 const broadcastTx = async (transaction: Transaction) => {
     const uploader = await arweave.transactions.getUploader(transaction);
-    while (!uploader.isComplete) { await uploader.uploadChunk(); }
+    while (!uploader.isComplete) {
+        await uploader.uploadChunk();
+    }
 
     return transaction;
 };
 
-async function uploadArweave (data: Buffer, tags: Record<string, string>) {
+async function uploadArweave(data: Buffer, tags: Record<string, string>) {
     // upload to areweave directly without using bundler
     let transaction = await signTx(data, tags);
     transaction = await broadcastTx(transaction);
@@ -53,7 +55,7 @@ const uploadChunk = async (data: Buffer): Promise<string> => {
         return chunkId;
     }
     if (chunk.ul_status === CHUNK_UPLOAD_STATUS.IN_PROGRESS) {
-        log.debug({chunkId}, 'Chunk upload already in progress, waiting');
+        // log.debug({chunkId}, 'Chunk upload already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
         return uploadChunk(data);
     }
@@ -76,9 +78,13 @@ const uploadChunk = async (data: Buffer): Promise<string> => {
 
         //TODO: check status from bundler
         if (response.data.status !== 'ok') {
-            throw new Error(`Chunk ${chunkId} uploading failed: arweave endpoint error: ${
-                JSON.stringify(response.data, null, 2)
-            }`);
+            throw new Error(
+                `Chunk ${chunkId} uploading failed: arweave endpoint error: ${JSON.stringify(
+                    response.data,
+                    null,
+                    2
+                )}`
+            );
         }
 
         log.debug({chunkId}, 'Chunk successfully uploaded, saving to disk');

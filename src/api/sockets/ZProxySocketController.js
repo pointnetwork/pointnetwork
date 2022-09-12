@@ -6,10 +6,7 @@ import ethereum from '../../network/providers/ethereum';
 import handleRPC from '../../rpc/rpc-handlers';
 import logger from '../../core/log';
 import {verify} from 'jsonwebtoken';
-import fs from 'fs-extra';
-import path from 'path';
-import config from 'config';
-import {resolveHome} from '../../util';
+import {getSecretToken} from '../../util';
 const log = logger.child({module: 'ZProxySocketController'});
 
 export const SUBSCRIPTION_EVENT_TYPES = {
@@ -42,9 +39,7 @@ class ZProxySocketController {
             const request = JSON.parse(msg);
 
             if (!secretToken) {
-                secretToken = await fs.readFile(
-                    path.join(resolveHome(config.get('wallet.keystore_path')), 'token.txt'), 'utf8'
-                );
+                secretToken = await getSecretToken();
             }
             const token = request.__point_token;
             if (!token) {

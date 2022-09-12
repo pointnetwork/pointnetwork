@@ -351,7 +351,7 @@ ethereum.web3send = async (method, optons = {}) => {
 ethereum.callContract = async (target, contractName, method, params, version = 'latest') => {
     // todo: multiple arguments, but check existing usage // huh?
     let attempt = 0;
-    log.debug({target, contractName, method, params}, 'Contract Call');
+    log.trace({target, contractName, method, params}, 'Contract Call');
     while (true) {
         try {
             const contract = await ethereum.loadWebsiteContract(target, contractName, version);
@@ -831,6 +831,13 @@ ethereum.getKeyLastVersion = async (identity, key) => {
     }
 };
 
+// Gets an ik version entry directly from the contract storage without using events
+ethereum.getikVersion = async (identity, key) => {
+    const identityContract = await ethereum.loadIdentityContract();
+    const version = await identityContract.methods.ikVersionGet(identity, key).call();
+    return version;
+};
+
 ethereum.compareVersions = (v1, v2) => {
     const v1p = v1.split('.');
     const v2p = v2.split('.');
@@ -1217,7 +1224,7 @@ ethereum.getTransactionsByAccount = async ({
 
 ethereum.getOwner = () => getWeb3().utils.toChecksumAddress(getNetworkAddress());
 
-ethereum.getGasPrice = async (network = 'xnet') => {
+ethereum.getGasPrice = async (network = 'mainnet') => {
     if (config.has(`network.web3.${network}.gas_price_wei`)) {
         return Number(config.get(`network.web3.${network}.gas_price_wei`));
     }
