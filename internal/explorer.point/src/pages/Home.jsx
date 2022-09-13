@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
-import { useAppContext } from '../context/AppContext';
 import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png';
-import Markdown from 'markdown-to-jsx';
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import blogIcon from '../assets/blog.svg';
 import emailIcon from '../assets/email.svg';
 import socialIcon from '../assets/social.svg';
@@ -13,11 +10,8 @@ import walletIcon from '../assets/wallet.svg';
 import '@fontsource/source-sans-pro';
 
 export default function Home() {
-    const { walletIdentity } = useAppContext();
     const [zapps, setZapps] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isLoadingMD, setIsLoadingMD] = useState(true);
-    const [markdown, setMarkdown] = useState('');
 
     const featuredZapps = {
         'social.point': 'Social',
@@ -35,27 +29,7 @@ export default function Home() {
 
     useEffect(() => {
         fetchZappsDeployed();
-        fetchMarkdown();
     }, []);
-
-    const fetchMarkdown = async () => {
-        setIsLoadingMD(true);
-        try {
-            const id = await window.point.contract.call({
-                contract: 'Identity',
-                method: 'ikvGet',
-                params: ['explorer', 'markdown/index'],
-            });
-            const markdownData = await window.point.storage.getString({
-                id: id.data,
-                encoding: 'utf-8',
-            });
-            setMarkdown(markdownData.data);
-        } catch (e) {
-            setMarkdown('');
-        }
-        setIsLoadingMD(false);
-    };
 
     const fetchZappsDeployed = async () => {
         setIsLoading(true);
