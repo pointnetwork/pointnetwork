@@ -5,7 +5,6 @@ import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png';
 import Markdown from 'markdown-to-jsx';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
-import blogIcon from '../assets/blog.svg';
 import emailIcon from '../assets/email.svg';
 import socialIcon from '../assets/social.svg';
 import driveIcon from '../assets/drive.svg';
@@ -23,7 +22,6 @@ export default function Home() {
     const featuredZapps = {
         'social.point': 'Social',
         'email.point': 'Email',
-        'blog.point': 'Blog',
         'drive.point': 'Drive',
         'tube.point': 'Tube',
     };
@@ -31,7 +29,6 @@ export default function Home() {
     const featuredIcons = {
         'social.point': socialIcon,
         'email.point': emailIcon,
-        'blog.point': blogIcon,
         'drive.point': driveIcon,
         'tube.point': tubeIcon,
     };
