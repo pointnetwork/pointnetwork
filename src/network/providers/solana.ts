@@ -3,10 +3,16 @@ import {
     getHashedName,
     getNameAccountKey,
     NameRegistryState,
-    updateNameRegistryData,
     performReverseLookup,
     getFavoriteDomain,
-    getAllDomains
+    getAllDomains,
+    getPointRecord,
+    Record as SNSRecord,
+    getDomainKey,
+    createNameRegistry,
+    updateInstruction,
+    NAME_PROGRAM_ID,
+    Numberu32
 } from '@bonfida/spl-name-service';
 import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
@@ -238,7 +244,8 @@ const solana = {
         const hashed = await getHashedName(domain);
         const key = await getNameAccountKey(hashed, undefined, SOL_TLD_AUTHORITY);
         const {registry} = await NameRegistryState.retrieve(provider.connection, key);
-        const content = registry.data?.toString().replace(/\x00/g, '');
+        const {data} = await getPointRecord(provider.connection, domain);
+        const content = data?.toString().replace(/\x00/g, '');
 
         return {
             owner: registry.owner.toBase58(),
@@ -287,20 +294,53 @@ const solana = {
 
         const {connection, wallet} = provider;
         const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
-        const offset = 0;
-        const buf = Buffer.from(data);
-        const buffers = [buf, Buffer.alloc(1_000 - buf.length)];
+        const ixs: web3.TransactionInstruction[] = [];
+        const record = SNSRecord.POINT;
+        const {pubkey: recordKey} = await getDomainKey(`${record}.${domain}`, true);
+        const {pubkey: domainKey} = await getDomainKey(domain);
+        const recordInfo = await connection.getAccountInfo(recordKey);
 
-        const instruction = await updateNameRegistryData(
-            provider.connection,
-            domain,
+        if (!recordInfo?.data) {
+            log.debug({domain: domainName}, 'POINT record does not exist, creating it...');
+            const space = 2_000;
+            const lamports = await connection.getMinimumBalanceForRentExemption(
+                space + NameRegistryState.HEADER_LEN
+            );
+
+            const createIx = await createNameRegistry(
+                connection,
+                Buffer.from([1]).toString() + record,
+                space,
+                wallet.publicKey,
+                wallet.publicKey,
+                lamports,
+                undefined,
+                domainKey
+            );
+            ixs.push(createIx);
+        }
+
+        const dataBuf = Buffer.from(data);
+        if (dataBuf.length > 1_000) {
+            log.error({domain: domainName, dataSize: dataBuf.length}, 'Data too large');
+            throw new Error(
+                `Data to be writen to POINT record is too large: ${dataBuf.length}, max allowed is 1000 bytes.`
+            );
+        }
+
+        const dataToWrite = Buffer.concat([dataBuf, Buffer.alloc(1_000 - dataBuf.length)]);
+        const offset = new Numberu32(0);
+
+        const updateIx = updateInstruction(
+            NAME_PROGRAM_ID,
+            recordKey,
             offset,
-            Buffer.concat(buffers),
-            undefined,
-            SOL_TLD_AUTHORITY
+            dataToWrite,
+            wallet.publicKey
         );
+        ixs.push(updateIx);
 
-        const txId = await sendInstructions(connection, [wallet], [instruction]);
+        const txId = await sendInstructions(connection, [wallet], ixs);
         return txId;
     },
     isAddress: (address: string) => {
