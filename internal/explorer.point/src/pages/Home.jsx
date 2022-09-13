@@ -9,6 +9,7 @@ import blogIcon from '../assets/blog.svg';
 import emailIcon from '../assets/email.svg';
 import socialIcon from '../assets/social.svg';
 import driveIcon from '../assets/drive.svg';
+import tubeIcon from '../assets/tube.svg';
 import walletIcon from '../assets/wallet.svg';
 import '@fontsource/source-sans-pro';
 
@@ -24,6 +25,7 @@ export default function Home() {
         'email.point': 'Email',
         'blog.point': 'Blog',
         'drive.point': 'Drive',
+        'tube.point': 'Tube',
     };
 
     const featuredIcons = {
@@ -31,6 +33,7 @@ export default function Home() {
         'email.point': emailIcon,
         'blog.point': blogIcon,
         'drive.point': driveIcon,
+        'tube.point': tubeIcon,
     };
 
     useEffect(() => {
