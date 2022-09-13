@@ -33,7 +33,7 @@ storage:
   download_cache_path: client_storage_download_cache
   concurrent_upload_limit: 10
   concurrent_validation_limit: 10
-  upload_loop_interval: 2000
+  upload_loop_interval: 100
   request_timeout: 30000
   mirror_cache_expiration: 300000
   upload_expire: 60000
