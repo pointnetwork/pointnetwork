@@ -51,7 +51,10 @@ proxyServer.on('connection', socket => {
         return {proxyHeaders, headers, body};
     };
     const printDataDetails = (msg: string) => {
-        const dataBuf = Buffer.concat(dataByClientPort[port]);
+        const dataBuf = Array.isArray(dataByClientPort[port]) && dataByClientPort[port].length
+            ? Buffer.concat(dataByClientPort[port])
+            : Buffer.from([]);
+
         const {proxyHeaders, headers, body} = parseRequestData(dataBuf);
         socketLog.warn({
             bytesRead: socket.bytesRead,
@@ -85,12 +88,12 @@ proxyServer.on('connection', socket => {
     }, 'Client socket connected'));
     socket.on('close', (...args) => {
         clearTimeout(timeout);
-        printDataDetails('Socker has closed successfully');
+        printDataDetails('Socket has closed successfully');
         socketLog.info({args}, 'Client socket is closed');
     });
     socket.on('end', (...args) => {
         clearTimeout(timeout);
-        printDataDetails('Socker has ended successfully');
+        printDataDetails('Socket has ended successfully');
         socketLog.warn({args}, 'Client socket is ended');
     });
     socket.on('error', (e) => {
@@ -122,7 +125,7 @@ proxyServer.on('connection', socket => {
         let proxy;
         if (byte === 22) {
             // HTTPS
-            proxy = httpsServer.server;
+            proxy = httpsServer;
         } else if (32 < byte && byte < 127) {
             // HTTP
             proxy = redirectToHttpsServer;
@@ -156,10 +159,19 @@ proxyServer.on('drop', (...args) => {
     log.error({args}, 'Dropped connection');
 });
 
-const startProxy = async () => {
-    await httpsServer.listen(0);
-    await proxyServer.listen(PROXY_PORT);
+proxyServer.on('drop', (...args) => {
+    log.error({args}, 'Dropped connection');
+});
 
+const startProxy = async () => {
+    if (process.env.PROXY) {
+        await httpsServer.listen(0);
+        await proxyServer.listen(PROXY_PORT);
+    } else {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        await httpsServer.app.listen(PROXY_PORT);
+    }
     log.info(`Proxy started on port ${PROXY_PORT}`);
 };
 

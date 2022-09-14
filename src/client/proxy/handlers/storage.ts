@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import {FastifyInstance, FastifyRequest} from 'fastify';
 const {uploadFile, getFile, FILE_TYPE} = require('../../storage');
 // @ts-expect-error no types for package

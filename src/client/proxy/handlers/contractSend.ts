@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import {FastifyInstance, FastifyRequest} from 'fastify';
 import {parse} from 'query-string';
 import blockchain from '../../../network/providers/ethereum';

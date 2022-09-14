@@ -20,7 +20,7 @@ db:
   enable_db_logging: true
 log:
   enabled: true
-  level: info
+  level: warn
   sendLogs: true
   sendLogsTo: "http://logstash.pointspace.io:12201"
 console:

@@ -1,14 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
 import {promises as fs, existsSync, lstatSync} from 'fs';
-import {parse, ParsedQuery} from 'query-string';
-import axios from 'axios';
+// import {parse, ParsedQuery} from 'query-string';
+// import axios from 'axios';
 import {readFileByPath, splitAndTakeLastPart} from '../../../util';
-import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import ZProxySocketController from '../../../api/sockets/ZProxySocketController';
-import {SocketStream} from 'fastify-websocket';
+// import {SocketStream} from 'fastify-websocket';
 import Renderer from '../../zweb/renderer';
 import logger from '../../../core/log';
 import blockchain from '../../../network/providers/ethereum';
@@ -17,28 +14,31 @@ import {getContentTypeFromExt, matchRouteAndParams} from '../proxyUtils';
 import {detectContentType} from 'detect-content-type';
 import config from 'config';
 import {Template, templateManager} from '../templateManager';
-import {getMirrorWeb2Page} from './mirror';
-import {parseDomainRegistry} from '../../../name_service/registry';
+// import {getMirrorWeb2Page} from './mirror';
+// import {parseDomainRegistry} from '../../../name_service/registry';
 import {HttpForbiddenError, HttpNotFoundError} from '../../../core/exceptions';
 import csrfTokens from '../../zweb/renderer/csrfTokens';
 import {randomBytes} from 'crypto';
+
+import {Request as ExpressRequest, Response as ExpressResponse} from 'express';
+
 const {getJSON, getFileIdByPath, getFile} = require('../../storage');
 const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
 const log = logger.child({module: 'ZProxy'});
 
-const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
+// const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
-interface DomainInfoPointers {
-    host: string;
-    routesId: string | undefined;
-    rootDirId: string | undefined;
-    identity: string;
-}
+// interface DomainInfoPointers {
+//     host: string;
+//     routesId: string | undefined;
+//     rootDirId: string | undefined;
+//     identity: string;
+// }
 
 interface RequestFulfillmentConfig {
-    req: FastifyRequest;
-    res: FastifyReply;
+    req: ExpressRequest;
+    res: ExpressResponse;
     isLocal: boolean;
     routes: any;
     path: string;
@@ -47,12 +47,16 @@ interface RequestFulfillmentConfig {
     rewriteHost?: string;
 }
 
-const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyReply) => {
+export const getHttpRequestHandler = () => async (req: ExpressRequest, res: ExpressResponse) => {
     try {
         const {host, queryParams, urlPath} = await parseRequestForProxy(req);
 
+        log.warn({host, queryParams, urlPath}, 'Request is received');
+
         // Note: will not work for some modes, e.g. when MODE=zappdev and the site is loaded directly from the local file system
         const versionRequested = (queryParams.__point_version as string) ?? 'latest';
+
+        log.warn({isPoint: host === 'point'}, 'Point!');
 
         if (!host) {
             throw Error('Host cannot be empty');
@@ -61,6 +65,8 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             return res.status(301).send();
         } else if (host === 'point') {
             // Point Home
+
+            log.warn({reqUrl: req.url}, 'Host === point');
 
             // Edge case for web2redirect URI
             if (req.url.startsWith('/web2redirect')) {
@@ -78,7 +84,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 res,
                 isLocal: true,
                 routes: {'*': 'index.zhtml'},
-                path: urlPath,
+                path: urlPath as string,
                 localRootDirPath: publicPath
             });
         } else if (
@@ -131,7 +137,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 res,
                 isLocal: true,
                 routes,
-                path: urlPath,
+                path: urlPath as string,
                 localRootDirPath: publicPath
             });
         } else if (host.endsWith('.point')) {
@@ -166,50 +172,50 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 res,
                 isLocal: false,
                 routes,
-                path: urlPath,
+                path: urlPath as string,
                 remoteRootDirId: rootDirId
             });
         } else if (host.endsWith('.sol') || host.endsWith('.eth')) {
-            const {routesId, rootDirId, identity} = await queryExtDomain(host, queryParams);
+            // const {routesId, rootDirId, identity} = await queryExtDomain(host, queryParams);
 
-            // Fetch routes file
-            const routes = await getJSON(routesId);
-            if (!routes) throw new HttpNotFoundError(`Cannot parse json of zrouteId ${routesId}`);
+            // // Fetch routes file
+            // const routes = await getJSON(routesId);
+            // if (!routes) throw new HttpNotFoundError(`Cannot parse json of zrouteId ${routesId}`);
 
-            return await fulfillRequest({
-                req,
-                res,
-                isLocal: false,
-                routes,
-                path: urlPath,
-                remoteRootDirId: rootDirId,
-                rewriteHost: identity
-            });
+            // return await fulfillRequest({
+            //     req,
+            //     res,
+            //     isLocal: false,
+            //     routes,
+            //     path: urlPath,
+            //     remoteRootDirId: rootDirId,
+            //     rewriteHost: identity
+            // });
         } else {
             // Web2?
-            let urlMirrorUrl;
-            try {
-                urlMirrorUrl = await getMirrorWeb2Page(req);
-            } catch (error) {
-                /* ignore */
-            }
-            if (urlMirrorUrl) {
-                // Set CORS headers
-                const allowedOrigin = req.headers.referer?.replace(/\/$/, '');
-                res.header('Vary', 'Origin');
+            // let urlMirrorUrl;
+            // try {
+            //     urlMirrorUrl = await getMirrorWeb2Page(req);
+            // } catch (error) {
+            //     /* ignore */
+            // }
+            // if (urlMirrorUrl) {
+            //     // Set CORS headers
+            //     const allowedOrigin = req.headers.referer?.replace(/\/$/, '');
+            //     res.header('Vary', 'Origin');
 
-                const allowCORS = ['fonts.googleapis.com', 'fonts.gstatic.com'].includes(
-                    String(req.urlData().host)
-                );
-                res.header('Access-Control-Allow-Origin', allowCORS ? '*' : allowedOrigin);
+            //     const allowCORS = ['fonts.googleapis.com', 'fonts.gstatic.com'].includes(
+            //         String(req.urlData().host)
+            //     );
+            //     res.header('Access-Control-Allow-Origin', allowCORS ? '*' : allowedOrigin);
 
-                // Redirect to mirror URL
-                return res.redirect(urlMirrorUrl);
-            }
+            //     // Redirect to mirror URL
+            //     return res.redirect(urlMirrorUrl);
+            // }
 
-            if (host.startsWith('www.google.com') || host.startsWith('google.com')) {
-                return res.redirect('https://search.point/search?q=' + queryParams?.q);
-            }
+            // if (host.startsWith('www.google.com') || host.startsWith('google.com')) {
+            //     return res.redirect('https://search.point/search?q=' + queryParams?.q);
+            // }
 
             const expression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
             const regex = new RegExp(expression);
@@ -281,14 +287,14 @@ const tryFulfillZhtmlRequest = async (
     }
 
     const contentType = ext ? getContentTypeFromExt(ext) : 'text/html';
-    res.header('Content-Type', contentType);
+    res.header('Content-Type', contentType || 'text/plain');
 
     // TODO: sanitize
-    return await renderer.render(templateId, templateFileContents, host, {
+    return res.send(await renderer.render(templateId, templateFileContents, host, {
         ...routeParams,
         ...queryParams,
         ...((req.body as Record<string, unknown>) ?? {})
-    });
+    }));
 };
 
 const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: string) => {
@@ -324,19 +330,27 @@ const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: s
     const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
     res.header('Content-Type', contentType);
 
-    return file;
+    log.warn({ext, contentType, urlPath}, 'Resolving a static file');
+
+    return res.send(file);
 };
 
 const fulfillRequest = async (cfg: RequestFulfillmentConfig) => {
     const {req} = cfg;
 
     let {host} = await parseRequestForProxy(req);
+
     if (cfg.rewriteHost) host = cfg.rewriteHost;
 
     // We're only trying to match routes this early because of possible :rewrite:, which applies to static too
     const {routeParams, templateFilename, possiblyRewrittenUrlPath: urlPath} = matchRouteAndParams(
         cfg.routes,
         cfg.path
+    );
+
+    log.warn(
+        {routeParams, templateFilename, possiblyRewrittenUrlPath: urlPath},
+        'matched RouteAndParams'
     );
 
     // First try static assets
@@ -357,73 +371,73 @@ const fulfillRequest = async (cfg: RequestFulfillmentConfig) => {
     }
 };
 
-const queryExtDomain = async (
-    host: string,
-    queryParams: ParsedQuery<string>
-): Promise<DomainInfoPointers> => {
-    // For Solana/Ethereum domains, we store Point data in the domain registry.
-    const service = host.endsWith('.sol') ? 'SNS' : 'ENS';
-    let identity = '';
-    let routesId: string | undefined;
-    let rootDirId: string | undefined;
-    let isAlias = false;
+// const queryExtDomain = async (
+//     host: string,
+//     queryParams: ParsedQuery<string>
+// ): Promise<DomainInfoPointers> => {
+//     // For Solana/Ethereum domains, we store Point data in the domain registry.
+//     const service = host.endsWith('.sol') ? 'SNS' : 'ENS';
+//     let identity = '';
+//     let routesId: string | undefined;
+//     let rootDirId: string | undefined;
+//     let isAlias = false;
 
-    const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
-    if (!resp.data.data?.content?.trim()) {
-        throw new HttpNotFoundError(`No Point data found in the domain registry for "${host}".`);
-    }
+//     const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
+//     if (!resp.data.data?.content?.trim()) {
+//         throw new HttpNotFoundError(`No Point data found in the domain registry for "${host}".`);
+//     }
 
-    const domainData = parseDomainRegistry(resp.data.data);
-    isAlias = domainData.isAlias;
-    identity = domainData.identity ? `${domainData.identity}.point` : host;
-    routesId = domainData.routesId;
-    rootDirId = domainData.rootDirId;
-    log.debug({host, identity, routesId, rootDirId, isAlias}, `Resolved ${service} domain`);
+//     const domainData = parseDomainRegistry(resp.data.data);
+//     isAlias = domainData.isAlias;
+//     identity = domainData.identity ? `${domainData.identity}.point` : host;
+//     routesId = domainData.routesId;
+//     rootDirId = domainData.rootDirId;
+//     log.debug({host, identity, routesId, rootDirId, isAlias}, `Resolved ${service} domain`);
 
-    // Return bad request if missing data in the domain registry.
-    if (!isAlias && (!routesId || !rootDirId)) {
-        // If the .sol domain is not an alias to a .point domain, all these
-        // fields need to be present so that we can fetch the content.
-        const msg = `Missing Point information in "${host}" domain registry.`;
-        // log.debug({host, identity, routesId, rootDirId, isAlias}, msg);
-        throw new HttpNotFoundError(
-            msg + ' : ' + JSON.stringify({host, identity, routesId, rootDirId, isAlias})
-        );
-    }
+//     // Return bad request if missing data in the domain registry.
+//     if (!isAlias && (!routesId || !rootDirId)) {
+//         // If the .sol domain is not an alias to a .point domain, all these
+//         // fields need to be present so that we can fetch the content.
+//         const msg = `Missing Point information in "${host}" domain registry.`;
+//         // log.debug({host, identity, routesId, rootDirId, isAlias}, msg);
+//         throw new HttpNotFoundError(
+//             msg + ' : ' + JSON.stringify({host, identity, routesId, rootDirId, isAlias})
+//         );
+//     }
 
-    if (isAlias) {
-        // .sol domain is an alias to a .point one, so we fetch the routes
-        // and root directory from our Identity contract, as with any other
-        // .point domain
-        log.debug({host, identity}, `${service} domain is an alias`);
-        const version = (queryParams.__point_version as string) ?? 'latest';
+//     if (isAlias) {
+//         // .sol domain is an alias to a .point one, so we fetch the routes
+//         // and root directory from our Identity contract, as with any other
+//         // .point domain
+//         log.debug({host, identity}, `${service} domain is an alias`);
+//         const version = (queryParams.__point_version as string) ?? 'latest';
 
-        routesId = (await blockchain.getZRecord(identity, version)) as string;
-        if (!routesId) {
-            throw new HttpNotFoundError(
-                'Domain not found (Route file not specified for this domain)'
-            );
-        }
+//         routesId = (await blockchain.getZRecord(identity, version)) as string;
+//         if (!routesId) {
+//             throw new HttpNotFoundError(
+//                 'Domain not found (Route file not specified for this domain)'
+//             );
+//         }
 
-        rootDirId = await blockchain.getKeyValue(identity, '::rootDir', version);
-        if (!rootDirId) throw new HttpNotFoundError(`Root dir id not found for host ${identity}`);
-    }
+//         rootDirId = await blockchain.getKeyValue(identity, '::rootDir', version);
+//         if (!rootDirId) throw new HttpNotFoundError(`Root dir id not found for host ${identity}`);
+//     }
 
-    return {host, routesId, rootDirId, identity};
-};
+//     return {host, routesId, rootDirId, identity};
+// };
 
-const parseRequestForProxy = async (req: FastifyRequest) => {
+const parseRequestForProxy = async (req: ExpressRequest) => {
     const host = req.headers.host!;
-    const urlData = req.urlData();
-    const queryParams = parse(urlData.query ?? '');
+    const urlData = req.query;
+    const queryParams = urlData;
     const urlPath = urlData.path ?? '';
-    const fileName = splitAndTakeLastPart(urlPath, '/')!;
+    const fileName = splitAndTakeLastPart(urlPath as string, '/')!;
     const ext = splitAndTakeLastPart(fileName, '.', null);
 
     return {host, urlData, queryParams, urlPath, fileName, ext};
 };
 
-const renderPointHomeWeb2RedirectPage = async (req: FastifyRequest, res: FastifyReply) => {
+const renderPointHomeWeb2RedirectPage = async (req: ExpressRequest, res: ExpressResponse) => {
     const {queryParams} = await parseRequestForProxy(req);
 
     res.header('Content-Type', 'text/html');
@@ -441,27 +455,27 @@ const renderPointHomeWeb2RedirectPage = async (req: FastifyRequest, res: Fastify
 
 export const wsConnections: Record<string, ZProxySocketController> = {};
 
-const attachCommonHandler = (server: FastifyInstance) => {
-    const handler = getHttpRequestHandler();
-    const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) => {
-        wsConnections[Math.random()] = new ZProxySocketController(
-            socket,
-            server.websocketServer,
-            hostname
-        );
-    };
+// const attachCommonHandler = (server: FastifyInstance) => {
+//     const handler = getHttpRequestHandler();
+//     const wsHandler = ({socket}: SocketStream, {hostname}: FastifyRequest) => {
+//         wsConnections[Math.random()] = new ZProxySocketController(
+//             socket,
+//             server.websocketServer,
+//             hostname
+//         );
+//     };
 
-    // Handle websocket requests.
-    server.route({
-        method: 'GET',
-        url: '/ws',
-        handler: async () => undefined, // to avoid 'handler not defined' error.
-        wsHandler
-    });
+//     // Handle websocket requests.
+//     server.route({
+//         method: 'GET',
+//         url: '/ws',
+//         handler: async () => undefined, // to avoid 'handler not defined' error.
+//         wsHandler
+//     });
 
-    // Handle REST API requests.
-    server.route({method: 'GET', url: '*', handler});
-    server.route({method: 'POST', url: '*', handler});
-};
+//     // Handle REST API requests.
+//     server.route({method: 'GET', url: '*', handler});
+//     server.route({method: 'POST', url: '*', handler});
+// };
 
-export default attachCommonHandler;
+// export default attachCommonHandler;
