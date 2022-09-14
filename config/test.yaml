@@ -5,3 +5,5 @@ log:
   sendLogs: false
 api:
   csrf_enabled: false
+network:
+  default_network: "xnet"
