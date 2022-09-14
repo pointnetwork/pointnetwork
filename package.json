@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.3.26",
+  "version": "0.4.5",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -68,7 +68,6 @@
     "point-contract-manager": "github:pointnetwork/point-contracts#v0.1.0",
     "proper-lockfile": "^4.1.2",
     "query-string": "^7.0.1",
-    "react": "^17.0.2",
     "readline": "^1.3.0",
     "recursive-copy": "^2.0.14",
     "sequelize": "^6.6.5",

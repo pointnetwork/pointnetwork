@@ -13,17 +13,17 @@ const {default: csrfTokens} = require('../../client/zweb/renderer/csrfTokens');
 const {getIdentity} = require('../../name_service/identity');
 const config = require('config');
 const Web3 = require('web3');
+const {addToCache} = require('../../name_service/identity-cache');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
 const IKV_PUT_INTERFACE = {
-    inputs:
-        [
-            {internalType:'string', name:'identity', type:'string'},
-            {internalType:'string', name:'key', type:'string'},
-            {internalType:'string', name:'value', type:'string'},
-            {internalType:'string', name:'version', type:'string'}
-        ],
+    inputs: [
+        {internalType: 'string', name: 'identity', type: 'string'},
+        {internalType: 'string', name: 'key', type: 'string'},
+        {internalType: 'string', name: 'value', type: 'string'},
+        {internalType: 'string', name: 'version', type: 'string'}
+    ],
     name: 'ikvPut',
     outputs: [],
     stateMutability: 'nonpayable',
@@ -267,6 +267,9 @@ class IdentityController extends PointSDKController {
                 );
             }
 
+            // Add to cache so that users don't have to wait until expiration to see the updates.
+            addToCache({address: owner, identity, publicKey, network: 'point'});
+
             log.info(
                 {identity, owner, publicKey: publicKey.toString('hex')},
                 'Successfully registered new identity'
@@ -426,26 +429,25 @@ class IdentityController extends PointSDKController {
     }
 
     async ikvPut() {
-        const {
-            identity,
-            key,
-            value,
-            version = 'latest'
-        } = this.req.body;
+        const {identity, key, value, version = 'latest'} = this.req.body;
 
         try {
             const web3 = new Web3();
-            const data = web3.eth.abi.encodeFunctionCall(
-                IKV_PUT_INTERFACE,
-                [identity, key, value, version]
-            );
+            const data = web3.eth.abi.encodeFunctionCall(IKV_PUT_INTERFACE, [
+                identity,
+                key,
+                value,
+                version
+            ]);
             await ethereum.send({
                 method: 'eth_sendTransaction',
-                params:[{
-                    from: getNetworkAddress(),
-                    to: config.get('network.identity_contract_address'),
-                    data
-                }],
+                params: [
+                    {
+                        from: getNetworkAddress(),
+                        to: config.get('network.identity_contract_address'),
+                        data
+                    }
+                ],
                 id: new Date().getTime(),
                 network: 'xnet'
             });

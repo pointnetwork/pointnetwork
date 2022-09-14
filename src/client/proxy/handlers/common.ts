@@ -280,7 +280,8 @@ const tryFulfillZhtmlRequest = async (
         renderer = new Renderer({rootDirId: cfg.remoteRootDirId} as any);
     }
 
-    const contentType = ext ? getContentTypeFromExt(ext) : 'text/html';
+    const contentTypeFromExt = getContentTypeFromExt(ext || '');
+    const contentType = contentTypeFromExt || 'text/html';
     res.header('Content-Type', contentType);
 
     // TODO: sanitize
