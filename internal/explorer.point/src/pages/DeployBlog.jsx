@@ -174,8 +174,8 @@ const DeployBlog = () => {
                         deployed.
                     </p>
                     <p className="mt-0 text-secondary">
-                        A great option is "blog.{walletIdentity}.point", but you
-                        can pick any name you want.
+                        A great option is &quot;blog.{walletIdentity}
+                        .point&quot;, but you can pick any name you want.
                     </p>
                     <Row className="align-items-center mb-3">
                         <Col style={{ paddingRight: 0 }}>
@@ -191,14 +191,15 @@ const DeployBlog = () => {
                         </Col>
                         <Col>.{walletIdentity}.point</Col>
                     </Row>
+                    <p className="mt-0 text-secondary">{loading}</p>
                     <Button
                         variant="primary"
                         onClick={() => {
                             deploy(subhandle);
                         }}
-                        disabled={loading || success || !subhandle}
+                        disabled={Boolean(loading) || success || !subhandle}
                     >
-                        Deploy
+                        {loading ? 'Deploying...' : 'Deploy'}
                     </Button>
                 </Col>
                 <Col xs={1}></Col>

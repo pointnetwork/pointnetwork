@@ -8,6 +8,7 @@ import socialIcon from '../assets/social.svg';
 import driveIcon from '../assets/drive.svg';
 import walletIcon from '../assets/wallet.svg';
 import '@fontsource/source-sans-pro';
+import { Link } from 'react-router-dom';
 
 export default function Home() {
     const [zapps, setZapps] = useState([]);
@@ -16,14 +17,12 @@ export default function Home() {
     const featuredZapps = {
         'social.point': 'Social',
         'email.point': 'Email',
-        'blog.point': 'Blog',
         'drive.point': 'Drive',
     };
 
     const featuredIcons = {
         'social.point': socialIcon,
         'email.point': emailIcon,
-        'blog.point': blogIcon,
         'drive.point': driveIcon,
     };
 
@@ -76,37 +75,60 @@ export default function Home() {
         );
     };
 
-    const renderWalletEntry = (
-        <a
-            href={'https://point/wallet'}
-            target="_blank"
-            rel="noreferrer"
-            className="zapp"
-        >
-            <div className="zapp-icon-container">
-                <img
-                    alt="wallet"
-                    className="zapp-icon"
-                    src={walletIcon}
-                    onError={({ currentTarget }) => {
-                        currentTarget.src = appLogo;
-                    }}
-                />
-            </div>
+    const internalEntries = (
+        <>
+            <a
+                href={'https://point/wallet'}
+                target="_blank"
+                rel="noreferrer"
+                className="zapp"
+            >
+                <div className="zapp-icon-container">
+                    <img
+                        alt="wallet"
+                        className="zapp-icon"
+                        src={walletIcon}
+                        onError={({ currentTarget }) => {
+                            currentTarget.src = appLogo;
+                        }}
+                    />
+                </div>
 
-            <div className="zapp-information-container">
-                <h4>Wallet</h4>
-                <span>https://point/wallet</span>
-            </div>
-        </a>
+                <div className="zapp-information-container">
+                    <h4>Wallet</h4>
+                    <span>https://point/wallet</span>
+                </div>
+            </a>
+            <Link
+                to="/deploy_blog"
+                target="_blank"
+                rel="noreferrer"
+                className="zapp"
+            >
+                <div className="zapp-icon-container">
+                    <img
+                        alt="deploy_blog"
+                        className="zapp-icon"
+                        src={blogIcon}
+                        onError={({ currentTarget }) => {
+                            currentTarget.src = appLogo;
+                        }}
+                    />
+                </div>
+
+                <div className="zapp-information-container">
+                    <h4>Make your blog</h4>
+                </div>
+            </Link>
+        </>
     );
 
-    let zappsList = <div className="zapps">{renderWalletEntry}</div>;
+    let zappsList = <div className="zapps">{internalEntries}</div>;
 
     if (zapps.length > 0) {
         zappsList = (
             <div className="zapps">
-                {[renderWalletEntry, zapps.map((k) => renderZappEntry(k))]}
+                {[internalEntries, zapps.map((k) => renderZappEntry(k))]}
             </div>
         );
     }
