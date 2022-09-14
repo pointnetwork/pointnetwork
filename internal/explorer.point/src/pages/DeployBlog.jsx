@@ -76,7 +76,10 @@ const DeployBlog = () => {
             const formData = new FormData();
             formData.append('contractNames', '["Blog"]');
             formData.append('version', VERSION);
-            formData.append('target', `${subidentity}.${walletIdentity}`);
+            formData.append(
+                'target',
+                `${subidentity}.${walletIdentity.toLowerCase()}`,
+            );
             formData.append(
                 'dependencies',
                 '["@openzeppelin/contracts", "@openzeppelin/contracts-upgradeable"]',
@@ -100,7 +103,7 @@ const DeployBlog = () => {
             await axios.post(
                 '/v1/api/identity/ikvPut',
                 {
-                    identity: `${subidentity}.${walletIdentity}`,
+                    identity: `${subidentity}.${walletIdentity.toLowerCase()}`,
                     key: '::rootDir',
                     value: ROOT_DIR_ID,
                     _csrf: window.localStorage.getItem('csrf_token'),
@@ -115,7 +118,7 @@ const DeployBlog = () => {
             await axios.post(
                 '/v1/api/identity/ikvPut',
                 {
-                    identity: `${subidentity}.${walletIdentity}`,
+                    identity: `${subidentity}.${walletIdentity.toLowerCase()}`,
                     key: 'zdns/routes',
                     value: ROUTES_FILE_ID,
                     _csrf: window.localStorage.getItem('csrf_token'),
@@ -195,7 +198,7 @@ const DeployBlog = () => {
                     <Button
                         variant="primary"
                         onClick={() => {
-                            deploy(subhandle);
+                            deploy(subhandle.toLowerCase());
                         }}
                         disabled={Boolean(loading) || success || !subhandle}
                     >
