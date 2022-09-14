@@ -6,7 +6,7 @@ import axios from 'axios';
 import {readFileByPath, splitAndTakeLastPart} from '../../../util';
 import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import ZProxySocketController from '../../../api/sockets/ZProxySocketController';
-import {SocketStream} from 'fastify-websocket';
+import {SocketStream} from '@fastify/websocket';
 import Renderer from '../../zweb/renderer';
 import logger from '../../../core/log';
 import blockchain from '../../../network/providers/ethereum';
@@ -451,11 +451,13 @@ const attachCommonHandler = (server: FastifyInstance) => {
     };
 
     // Handle websocket requests.
-    server.route({
-        method: 'GET',
-        url: '/ws',
-        handler: async () => undefined, // to avoid 'handler not defined' error.
-        wsHandler
+    server.register(async _server => {
+        _server.route({
+            method: 'GET',
+            url: '/ws',
+            handler: async () => undefined, // to avoid 'handler not defined' error.
+            wsHandler
+        });
     });
 
     // Handle REST API requests.

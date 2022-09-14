@@ -6,6 +6,8 @@ import httpsServer from './httpsServer';
 
 const log = logger.child({module: 'Proxy'});
 const PROXY_PORT = Number(config.get('zproxy.port'));
+const SERVER_PORT = Number(config.get('zproxy.server_port'));
+const SERVER_HTTP_PORT = Number(config.get('zproxy.server_http_port'));
 
 // Redirects http to https to the same host
 const redirectToHttpsHandler: RequestListener = function(request, response) {
@@ -32,43 +34,76 @@ redirectToHttpsServer.on('connect', (req, cltSocket, head) => {
 
 // Proxy server, redirecting everything to the main server
 const proxyServer = net.createServer();
-proxyServer.on('connection', socket => {
-    // We need only the data once, the starting packet
-    socket.once('data', buffer => {
-        // Pause the socket
-        socket.pause();
+proxyServer.on('connection', clientToProxySocket => {
+    clientToProxySocket.setKeepAlive(true);
+    let proxyToServerSocket: net.Socket;
 
-        // Determine if this is an HTTP(s) request
-        const byte = buffer[0];
-        log.trace({byte}, 'Connection received');
+    clientToProxySocket.on('error', error => {
+        log.error({error}, 'Client to proxy socket error');
+    });
 
-        let proxy;
-        if (byte === 22) {
-            // HTTPS
-            proxy = httpsServer.server;
-        } else if (32 < byte && byte < 127) {
-            // HTTP
-            proxy = redirectToHttpsServer;
+    clientToProxySocket.on('close', hadError => {
+        if (hadError) {
+            log.error('Client to proxy socket closed with error');
         } else {
-            // TODO:
-            const error = new Error(`Expected protocols: "http", "https". Actual: ${byte}`);
-            log.error(error, 'Access Runtime Error');
+            log.debug('Client to proxy socket closed');
         }
+    });
 
-        if (proxy) {
-            // Push the buffer back onto the front of the data stream
-            socket.unshift(buffer);
-
-            // Emit the socket to the HTTP(s) server
-            proxy.emit('connection', socket);
+    clientToProxySocket.on('end', () => {
+        log.debug('Client to proxy socket end by client');
+        if ((proxyToServerSocket as any)?.readyState === 'open') {
+            log.debug('Sending end to proxy to server socket');
+            proxyToServerSocket.end();
         }
+    });
 
-        // As of NodeJS 10.x the socket must be
-        // resumed asynchronously or the socket
-        // connection hangs, potentially crashing
-        // the process. Prior to NodeJS 10.x
-        // the socket may be resumed synchronously.
-        process.nextTick(() => socket.resume());
+    // We need only the data once, the starting packet
+    clientToProxySocket.once('data', data => {
+        clientToProxySocket.pause();
+        const isTLSConnect = data.toString().indexOf('CONNECT') !== -1;
+        const isHTTPSConnection = data[0] === 22;
+
+        proxyToServerSocket = net.createConnection({
+            host: 'localhost',
+            port: isTLSConnect || isHTTPSConnection ? SERVER_PORT : SERVER_HTTP_PORT
+        });
+
+        proxyToServerSocket.on('connect', () => {
+            proxyToServerSocket.setKeepAlive(true);
+            if (isTLSConnect) {
+                //Send Back OK to HTTPS CONNECT Request
+                clientToProxySocket.write(
+                    'HTTP/1.1 200 Connection Established\r\n' +
+                    'Proxy-agent: Node.js-Proxy\r\n' +
+                    '\r\n'
+                );
+            }
+
+            proxyToServerSocket.on('error', error => {
+                log.error({error}, 'Proxy to server socket error');
+            });
+
+            proxyToServerSocket.on('close', hadError => {
+                if (hadError) {
+                    log.error('Proxy to server socket closed with error');
+                } else {
+                    log.debug('Proxy to server socket closed');
+                }
+            });
+
+            proxyToServerSocket.on('end', () => {
+                log.debug('Proxy to server socket end by server');
+                if ((clientToProxySocket as any).readyState === 'open') {
+                    log.debug('Sending end to client to proxy socket');
+                    clientToProxySocket.end();
+                }
+            });
+
+            // Piping the sockets
+            proxyToServerSocket.pipe(clientToProxySocket);
+            clientToProxySocket.pipe(proxyToServerSocket);
+        });
     });
 });
 
@@ -77,7 +112,8 @@ proxyServer.on('error', error => {
 });
 
 const startProxy = async () => {
-    await httpsServer.listen(0);
+    await httpsServer.listen(SERVER_PORT);
+    await redirectToHttpsServer.listen(SERVER_HTTP_PORT);
     await proxyServer.listen(PROXY_PORT);
 
     log.info(`Proxy started on port ${PROXY_PORT}`);
