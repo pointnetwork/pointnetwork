@@ -569,6 +569,10 @@ class Deployer {
             } else {
                 if (process.env.MODE === 'zappdev') {
                     await this.registerNewIdentity(identity, owner);
+                } else {
+                    throw new Error(
+                        `You must register ${identity} before you can make a deployment. Start Point, head over to https://point in Point Browser, register ${identity} and then retry the deploy command.`
+                    );
                 }
             }
         } else {
