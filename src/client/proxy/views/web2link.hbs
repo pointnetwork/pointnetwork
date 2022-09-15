@@ -40,7 +40,6 @@
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`
             },
             body: JSON.stringify({urlToOpen: url, _csrf: '{{csrfToken}}', host: '{{host}}'})
         });
