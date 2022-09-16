@@ -6,6 +6,10 @@ import {Command} from 'commander';
 import disclaimer from './disclaimer';
 import {getContractAddress, compileAndSaveContract} from './util/contract';
 
+if (process.env.NODE_ENV === undefined && process.env.APP_ENV === undefined) {
+    process.env.NODE_ENV = 'production';
+}
+
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
 if (RUNNING_PKG_MODE) {
