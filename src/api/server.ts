@@ -12,7 +12,7 @@ const api_routes = require('./api_routes');
 
 let secretToken = '';
 const apiServer = fastify({
-    logger: logger.child({module: 'ApiServer.server'}),
+    logger: logger.child({module: 'Api Fastify Server'}, {level: 'warn'}),
     pluginTimeout: 20000
     // todo: more configuration?
 });
