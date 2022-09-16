@@ -41,7 +41,7 @@ const httpsServer = Fastify({
         return server;
     },
     trustProxy: '127.0.0.1',
-    logger: log
+    logger: log.child({module: 'Http Fastify server'}, {level: 'warn'})
 });
 httpsServer.register(fastifyUrlData);
 httpsServer.register(fastifyMultipart);
