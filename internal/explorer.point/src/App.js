@@ -22,7 +22,7 @@ const Main = () => {
                 <ErrorBlock details="SDK is not installed or broken"></ErrorBlock>
             );
         } else {
-            return <Final></Final>;
+            return <Final />;
         }
     };
 

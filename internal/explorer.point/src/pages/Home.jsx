@@ -10,21 +10,21 @@ import walletIcon from '../assets/wallet.svg';
 import '@fontsource/source-sans-pro';
 import { Link } from 'react-router-dom';
 
+const FEATURED_ZAPPS = {
+    'social.point': 'Social',
+    'email.point': 'Email',
+    'drive.point': 'Drive',
+};
+
+const FEATURED_ICONS = {
+    'social.point': socialIcon,
+    'email.point': emailIcon,
+    'drive.point': driveIcon,
+};
+
 export default function Home() {
     const [zapps, setZapps] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-
-    const featuredZapps = {
-        'social.point': 'Social',
-        'email.point': 'Email',
-        'drive.point': 'Drive',
-    };
-
-    const featuredIcons = {
-        'social.point': socialIcon,
-        'email.point': emailIcon,
-        'drive.point': driveIcon,
-    };
 
     useEffect(() => {
         fetchZappsDeployed();
@@ -33,7 +33,7 @@ export default function Home() {
     const fetchZappsDeployed = async () => {
         setIsLoading(true);
         const zappsDeployed = [];
-        for (const k in featuredZapps) {
+        for (const k in FEATURED_ZAPPS) {
             const zappRoutes = await window.point.contract.call({
                 contract: 'Identity',
                 method: 'ikvGet',
@@ -60,7 +60,7 @@ export default function Home() {
                     <img
                         alt={k}
                         className="zapp-icon"
-                        src={featuredIcons[k]}
+                        src={FEATURED_ICONS[k]}
                         onError={({ currentTarget }) => {
                             currentTarget.src = appLogo;
                         }}
@@ -68,7 +68,7 @@ export default function Home() {
                 </div>
 
                 <div className="zapp-information-container">
-                    <h4>{featuredZapps[k]}</h4>
+                    <h4>{FEATURED_ZAPPS[k]}</h4>
                     <span>https://{k}</span>
                 </div>
             </a>

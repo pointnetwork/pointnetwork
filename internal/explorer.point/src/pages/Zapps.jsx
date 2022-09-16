@@ -4,17 +4,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
+const PAGE_SIZE = 100;
+
 export default function Zapps() {
     const [zapps, setZapps] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
     const [dappsLength, setDappsLength] = useState(0);
     const [cursor, setCursor] = useState(0);
-
-    const PAGE_SIZE = 100;
-    useEffect(() => {
-        fetchZapps();
-    }, []);
 
     const fetchZapps = async () => {
         if (dappsLength === 0) {
@@ -56,6 +53,10 @@ export default function Zapps() {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchZapps();
+    }, []);
 
     const renderZappEntry = (id) => {
         return (
