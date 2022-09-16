@@ -466,6 +466,26 @@ class IdentityController extends PointSDKController {
             this.rep.status(500).send('Internal server error');
         }
     }
+
+    async linkPointAddress() {
+        const {domain, network} = this.req.body;
+        if (network !== 'solana') {
+            const msg = `Sorry, ${network} is not supported, only solana is supported at the moment`;
+            const status = 400;
+            this.rep.status(status);
+            return this._status(status)._response({errorMsg: msg});
+        }
+
+        try {
+            const pointAddress = getNetworkAddress();
+            const txId = await solana.setPointAddress(domain, pointAddress);
+            return this._response({txId});
+        } catch (err) {
+            const status = 500;
+            this.rep.status(status);
+            return this._status(status)._response({errorMsg: err.message});
+        }
+    }
 }
 
 module.exports = IdentityController;
