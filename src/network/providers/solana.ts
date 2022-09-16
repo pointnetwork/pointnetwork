@@ -244,12 +244,18 @@ const solana = {
         const hashed = await getHashedName(domain);
         const key = await getNameAccountKey(hashed, undefined, SOL_TLD_AUTHORITY);
         const {registry} = await NameRegistryState.retrieve(provider.connection, key);
-        const {data} = await getPointRecord(provider.connection, domain);
-        const content = data?.toString().replace(/\x00/g, '');
+
+        let content: string | null = null;
+        try {
+            const {data} = await getPointRecord(provider.connection, domain);
+            content = data?.toString().replace(/\x00/g, '') || null;
+        } catch (err) {
+            log.info({domain: domainName}, 'No POINT record found for this domain.');
+        }
 
         return {
             owner: registry.owner.toBase58(),
-            content: content || null
+            content
         };
     },
     /**
