@@ -129,7 +129,7 @@
     "start:dev": "cross-env NODE_ENV=development npm run watch",
     "start:e2e": "cross-env MODE=e2e npm run watch",
     "watch": "npm run --prefix ./internal/explorer.point --ignore-scripts build && nodemon",
-    "build": "npm run patch && tsc",
+    "build": "tsc",
     "patch": "perl -i -pe\"s|timeout: 20000|timeout: 60000|\" node_modules/@trufflesuite/web3-provider-engine/subproviders/rpc.js",
     "postbuild": "npm run --prefix ./internal/explorer.point build",
     "postinstall": "echo '\\nPatching modules...' && npm run patch && echo '...done\\n'",
