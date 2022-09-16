@@ -14,6 +14,7 @@ const {getIdentity} = require('../../name_service/identity');
 const config = require('config');
 const Web3 = require('web3');
 const {addToCache} = require('../../name_service/identity-cache');
+const {parseDomainRegistry} = require('../../name_service/registry');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
@@ -140,20 +141,27 @@ class IdentityController extends PointSDKController {
         const identity = this.req.params.identity;
         let owner = '';
         let network = '';
+        let pointAddress = '';
+
         if (identity.endsWith('.sol')) {
             const registry = await solana.resolveDomain(identity);
+            const domainData = parseDomainRegistry(registry);
             owner = registry.owner;
+            pointAddress = domainData.pointAddress;
             network = 'solana';
         } else if (identity.endsWith('.eth')) {
             const registry = await ethereum.resolveDomain(identity);
             owner = registry.owner;
+            pointAddress = ''; // TODO: replicate SNS implementation in ENS.
             network = 'ethereum';
         } else {
-            owner = await ethereum.ownerByIdentity(identity);
+            const address = await ethereum.ownerByIdentity(identity);
+            owner = address;
+            pointAddress = address;
             network = 'point';
         }
 
-        return this._response({owner, network});
+        return this._response({owner, network, pointAddress});
     }
 
     async ownerToIdentity() {

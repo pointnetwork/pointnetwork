@@ -69,7 +69,35 @@ const mergeTestCases: MergeTestCase[] = [
         {a: 'b', pn_root: 'root-id', pn_routes: 'routes-id'}
     ],
     ['pn_root=root-id;pn_routes=routes-id', {pn_alias: 'social'}, {pn_alias: 'social'}],
-    ['pn_root=root-id;a=b;pn_routes=routes-id', {pn_alias: 'social'}, {a: 'b', pn_alias: 'social'}]
+    ['pn_root=root-id;a=b;pn_routes=routes-id', {pn_alias: 'social'}, {a: 'b', pn_alias: 'social'}],
+    [
+        'pn_root=root-id;pn_routes=routes-id',
+        {pn_addr: '0xF5277b8B7a620f1E04a4a205A6e552D084BBf76B'},
+        {
+            pn_root: 'root-id',
+            pn_routes: 'routes-id',
+            pn_addr: '0xF5277b8B7a620f1E04a4a205A6e552D084BBf76B'
+        }
+    ],
+    [
+        'pn_addr=0xF5277b8B7a620f1E04a4a205A6e552D084BBf76B;pn_alias=aka',
+        {pn_addr: '0x5F13B25C1cA5d121aF55482679393064ad3C448D'},
+        {pn_addr: '0x5F13B25C1cA5d121aF55482679393064ad3C448D', pn_alias: 'aka'}
+    ],
+    [
+        'pn_addr=0xF5277b8B7a620f1E04a4a205A6e552D084BBf76B;pn_root=root-id;pn_routes=routes-id',
+        {pn_alias: 'aka'},
+        {pn_addr: '0xF5277b8B7a620f1E04a4a205A6e552D084BBf76B', pn_alias: 'aka'}
+    ],
+    [
+        'pn_addr=0xF5277b8B7a620f1E04a4a205A6e552D084BBf76B;pn_root=root-id;pn_routes=routes-id',
+        {pn_root: 'new-root', pn_routes: 'new-routes'},
+        {
+            pn_addr: '0xF5277b8B7a620f1E04a4a205A6e552D084BBf76B',
+            pn_root: 'new-root',
+            pn_routes: 'new-routes'
+        }
+    ]
 ];
 
 describe('merge', () => {
