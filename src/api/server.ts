@@ -10,6 +10,8 @@ import {getSecretToken} from '../util';
 const ws_routes = require('./ws_routes');
 const api_routes = require('./api_routes');
 
+const IS_GATEWAY = config.get('mode') === 'gateway';
+
 let secretToken = '';
 const apiServer = fastify({
     logger: logger.child({module: 'Api Fastify server'}, {level: 'warn'}),
@@ -24,53 +26,55 @@ apiServer.register(fastifyWs, {options: {clientTracking: true}});
 for (const apiRoute of api_routes) {
     const [controllerName, actionName] = apiRoute[2].split('@');
 
-    apiServer.route({
-        method: apiRoute[0] as HTTPMethods,
-        url: apiRoute[1],
-        preHandler: identityMdw,
-        handler: async (request: FastifyRequest<{Body: Record<string, unknown>}>, reply) => {
+    if (!(IS_GATEWAY && apiRoute[3]?.gatewayDisabled)) {
+        apiServer.route({
+            method: apiRoute[0] as HTTPMethods,
+            url: apiRoute[1],
+            preHandler: identityMdw,
+            handler: async (request: FastifyRequest<{Body: Record<string, unknown>}>, reply) => {
 
-            // CSRF check
-            const host = request.headers.host;
-            // TODO: we are not using CSRF for other hosts, should we?
-            if (CSRF_ENABLED && request.method === 'POST' && host === 'point') {
-                if (!csrfTokens[host]) {
-                    reply.status(403).send('No csrf token generated for this host');
-                    return;
+                // CSRF check
+                const host = request.headers.host;
+                // TODO: we are not using CSRF for other hosts, should we?
+                if (CSRF_ENABLED && request.method === 'POST' && host === 'point') {
+                    if (!csrfTokens[host]) {
+                        reply.status(403).send('No csrf token generated for this host');
+                        return;
+                    }
+                    const real_token = csrfTokens[host];
+                    if (real_token !== request.body._csrf) {
+                        reply.status(403).send('Invalid csrf token submitted');
+                        return;
+                    }
                 }
-                const real_token = csrfTokens[host];
-                if (real_token !== request.body._csrf) {
-                    reply.status(403).send('Invalid csrf token submitted');
-                    return;
+
+                // Auth token check
+                // TODO: make proper tests with the token
+                if (apiRoute[3]?.protected && process.env.MODE !== 'test') {
+                    if (!secretToken) {
+                        secretToken = await getSecretToken();
+                    }
+                    const jwt = request.headers['x-point-token'] as string;
+                    if (!jwt) {
+                        reply.status(401).send('Unauthorized');
+                        return;
+                    }
+                    try {
+                        verify(jwt.replace(/^Bearer\s/, ''), secretToken);
+                    } catch (e) {
+                        reply.status(401).send('Unauthorized');
+                        return;
+                    }
                 }
+
+                const controller = new (require('./controllers/' + controllerName))(
+                    request,
+                    reply
+                );
+                return controller[actionName](request, reply);
             }
-
-            // Auth token check
-            // TODO: make proper tests with the token
-            if (apiRoute[3]?.protected && process.env.MODE !== 'test') {
-                if (!secretToken) {
-                    secretToken = await getSecretToken();
-                }
-                const jwt = request.headers['x-point-token'] as string;
-                if (!jwt) {
-                    reply.status(401).send('Unauthorized');
-                    return;
-                }
-                try {
-                    verify(jwt.replace(/^Bearer\s/, ''), secretToken);
-                } catch (e) {
-                    reply.status(401).send('Unauthorized');
-                    return;
-                }
-            }
-
-            const controller = new (require('./controllers/' + controllerName))(
-                request,
-                reply
-            );
-            return controller[actionName](request, reply);
-        }
-    });
+        });
+    }
 }
 
 for (const wsRoute of ws_routes) {
