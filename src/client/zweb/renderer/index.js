@@ -8,14 +8,18 @@ const logger = require('../../../core/log');
 const {getNetworkPrivateKey, getNetworkAddress} = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/providers/ethereum');
-const {readFileByPath} = require('../../../util');
+const {readFileByPath, getSecretToken} = require('../../../util');
 const keyValue = require('../../../network/keyvalue');
 const {default: csrfTokens} = require('./csrfTokens');
+const {sign} = require('jsonwebtoken');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
 
 const mode = config.has('mode') && config.get('mode');
 const sdkFile = config.has('sdk_file') && config.get('sdk_file');
+
+const generateJwt = async () =>
+    sign({payload: 'point_token'}, await getSecretToken(), {expiresIn: '1h'});
 
 class Renderer {
     #twigs = {};
@@ -59,16 +63,20 @@ class Renderer {
                 const sdk = await fs.readFile(sdkFile, {encoding: 'utf-8'});
                 log.warn({sdk}, 'Read sdk');
                 if (sdk) {
-                    const scriptElement = `<script defer>${sdk}</script>`;
+                    const tokenScipt = `<script>
+                        window.IS_GATEWAY = true;
+                        window.POINT_JWT = "${await generateJwt()}";
+                    </script>`;
+                    const sdkScript = `<script defer>${sdk}</script>`;
                     if (render.indexOf('</head>')) {
                         log.warn('Replacing <head>');
-                        render = render.replace('</head>', `${scriptElement}</head>`);
+                        render = render.replace('</head>', `${tokenScipt}${sdkScript}</head>`);
                     } else if (render.indexOf('</body>')) {
                         log.warn('Replacing <body>');
-                        render = render.replace('</body>', `${scriptElement}</body>`);
+                        render = render.replace('<body>', `<body>${tokenScipt}${sdkScript}`);
                     } else {
                         log.warn('Adding script');
-                        render += scriptElement;
+                        render += sdkScript;
                     }
                 }
             }
