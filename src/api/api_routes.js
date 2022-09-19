@@ -29,12 +29,6 @@ module.exports = [
         'IdentityController@isIdentityRegistered',
         {protected: true}
     ],
-    [
-        'POST',
-        '/v1/api/identity/linkPointAddress/',
-        'IdentityController@linkPointAddress',
-        {protected: true}
-    ],
     ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'], // TODO: why POST?
     ['POST', '/v1/api/identity/open', 'IdentityController@openLink', {protected: true}],
     ['POST', '/v1/api/identity/register', 'IdentityController@registerIdentity', {protected: true}],

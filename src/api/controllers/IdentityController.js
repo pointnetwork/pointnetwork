@@ -152,7 +152,7 @@ class IdentityController extends PointSDKController {
         } else if (identity.endsWith('.eth')) {
             const registry = await ethereum.resolveDomain(identity);
             owner = registry.owner;
-            pointAddress = ''; // TODO: replicate SNS implementation in ENS.
+            pointAddress = registry.owner;
             network = 'ethereum';
         } else {
             const address = await ethereum.ownerByIdentity(identity);
@@ -464,26 +464,6 @@ class IdentityController extends PointSDKController {
             log.error('IKV Put error');
             log.error(e);
             this.rep.status(500).send('Internal server error');
-        }
-    }
-
-    async linkPointAddress() {
-        const {domain, network} = this.req.body;
-        if (network !== 'solana') {
-            const msg = `Sorry, ${network} is not supported, only solana is supported at the moment`;
-            const status = 400;
-            this.rep.status(status);
-            return this._status(status)._response({errorMsg: msg});
-        }
-
-        try {
-            const pointAddress = getNetworkAddress();
-            const txId = await solana.setPointAddress(domain, pointAddress);
-            return this._response({txId});
-        } catch (err) {
-            const status = 500;
-            this.rep.status(status);
-            return this._status(status)._response({errorMsg: err.message});
         }
     }
 }
