@@ -15,6 +15,11 @@ if (RUNNING_PKG_MODE) {
     // when using vercel/pkg process.cwd references real folder and not packaged folder
     // overwriting this env variable fixes the problems
     process.env.NODE_CONFIG_DIR = path.resolve(__dirname, '..', 'config');
+    // also, when running packaged app, production config will be loaded if
+    // another one is not specified explicitly
+    if (process.env.NODE_ENV === undefined && process.env.NODE_CONFIG_ENV === undefined) {
+        process.env.NODE_CONFIG_ENV = 'production';
+    }
 }
 
 process.env.HARDHAT_CONFIG = path.resolve(__dirname, '..', 'hardhat', 'hardhat.config.js');
