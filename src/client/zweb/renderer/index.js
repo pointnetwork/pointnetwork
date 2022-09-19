@@ -57,11 +57,9 @@ class Renderer {
 
             let render = result.toString();
 
-            log.warn({mode}, 'Checking app mode');
             if (mode === 'gateway' && sdkFile) {
-                log.warn({sdkFile}, 'Entering gateway mode');
+                log.debug({sdkFile}, 'Entering gateway mode');
                 const sdk = await fs.readFile(sdkFile, {encoding: 'utf-8'});
-                log.warn({sdk}, 'Read sdk');
                 if (sdk) {
                     const tokenScipt = `<script>
                         window.IS_GATEWAY = true;
@@ -69,13 +67,13 @@ class Renderer {
                     </script>`;
                     const sdkScript = `<script defer>${sdk}</script>`;
                     if (render.indexOf('</head>')) {
-                        log.warn('Replacing <head>');
+                        log.debug('Replacing <head>');
                         render = render.replace('</head>', `${tokenScipt}${sdkScript}</head>`);
                     } else if (render.indexOf('</body>')) {
-                        log.warn('Replacing <body>');
+                        log.debug('Replacing <body>');
                         render = render.replace('<body>', `<body>${tokenScipt}${sdkScript}`);
                     } else {
-                        log.warn('Adding script');
+                        log.warn('Neither head not body found, appending script to the page');
                         render += sdkScript;
                     }
                 }
