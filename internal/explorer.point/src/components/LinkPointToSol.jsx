@@ -23,6 +23,25 @@ const styles = {
     },
 };
 
+const learnMoreHTMLString = (solDomain) => `
+    <p>
+        By linking your POINT address, you will be able to use your SOL domain
+        to interact in Point Network.
+    </p>
+    <p>
+        For example, people will be able to email you at <b>${solDomain}</b>,
+        send POINT to it, share files, etc.
+    </p>
+    <p>
+        <em>
+            <small>
+                Please mind that this requires writing to your Solana Domain Registry,
+                which means it will cost some SOL to cover the transaction fees.
+            </small>
+        </em>
+    </p>
+`;
+
 const LinkPointToSol = () => {
     const { walletIdentity } = useAppContext();
     const [hasPointAddress, setHasPointAddress] = useState(true);
@@ -84,6 +103,14 @@ const LinkPointToSol = () => {
         setDisplay(false);
     };
 
+    const handleLearnMore = async () => {
+        await Swal.fire(
+            'Linking your POINT address',
+            learnMoreHTMLString(walletIdentity),
+            'info',
+        );
+    };
+
     if (hasPointAddress || !display) {
         return null;
     }
@@ -110,6 +137,12 @@ const LinkPointToSol = () => {
                     onClick={handleDoNotShowAgain}
                 >
                     Don't show this again
+                </button>
+                <button
+                    className="btn btn-sm btn-link"
+                    onClick={handleLearnMore}
+                >
+                    Learn more
                 </button>
             </div>
         </div>
