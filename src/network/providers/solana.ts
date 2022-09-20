@@ -18,7 +18,7 @@ import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
 import {DomainRegistry} from '../../name_service/types';
-import {encodeCookieString, merge} from '../../util/cookieString';
+import {encodeCookieString, mergeAndResolveConflicts} from '../../util/cookieString';
 const logger = require('../../core/log');
 const log = logger.child({module: 'SolanaProvider'});
 
@@ -373,7 +373,9 @@ const solana = {
         }
 
         // Write to Domain Registry and return Tx ID.
-        const data = encodeCookieString(merge(preExistingContent, {pn_addr: pointAddress}));
+        const data = encodeCookieString(
+            mergeAndResolveConflicts(preExistingContent, {pn_addr: pointAddress})
+        );
         const txId = await solana.setDomainContent(solDomain, data, network);
         log.info({solDomain, pointAddress, txId}, 'Wrote Point address to SOL record.');
         return txId;

@@ -1,4 +1,4 @@
-import {parseCookieString, encodeCookieString, merge} from './cookieString';
+import {parseCookieString, encodeCookieString, mergeAndResolveConflicts} from './cookieString';
 
 type ParseTestCase = [string, Record<string, string>];
 
@@ -102,6 +102,6 @@ const mergeTestCases: MergeTestCase[] = [
 
 describe('merge', () => {
     test.each(mergeTestCases)('merges %s and %s', (str, obj, expected) => {
-        expect(merge(str, obj)).toEqual(expected);
+        expect(mergeAndResolveConflicts(str, obj)).toEqual(expected);
     });
 });
