@@ -18,6 +18,7 @@ import {getSolanaKeyPair} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
 import {DomainRegistry} from '../../name_service/types';
+import {encodeCookieString, mergeAndResolveConflicts} from '../../util/cookieString';
 const logger = require('../../core/log');
 const log = logger.child({module: 'SolanaProvider'});
 
@@ -347,6 +348,36 @@ const solana = {
         ixs.push(updateIx);
 
         const txId = await sendInstructions(connection, [wallet], ixs);
+        return txId;
+    },
+    setPointAddress: async (solDomain: string, pointAddress: string, network = 'solana') => {
+        // Check ownership of .sol domain
+        const id = Date.now();
+        const [{result}, domainRegistry] = await Promise.all([
+            solana.requestAccount(id, network),
+            solana.resolveDomain(solDomain, network)
+        ]);
+
+        const solanaAddress = result.publicKey;
+        if (solanaAddress !== domainRegistry.owner) {
+            const errMsg = `"${solDomain}" is owned by ${domainRegistry.owner}, you need to transfer it to your Point Wallet (${solanaAddress}). Also, please make sure you have some SOL in your Point Wallet to cover transaction fees.`;
+            log.error({solanaAddress, solDomain, domainOwner: domainRegistry.owner}, errMsg);
+            throw new Error(errMsg);
+        }
+
+        // Preserve any existing content, (over)writing the `pn_addr` key only.
+        let preExistingContent = '';
+        const {content} = domainRegistry;
+        if (content && typeof content === 'string' && content.trim()) {
+            preExistingContent = content;
+        }
+
+        // Write to Domain Registry and return Tx ID.
+        const data = encodeCookieString(
+            mergeAndResolveConflicts(preExistingContent, {pn_addr: pointAddress})
+        );
+        const txId = await solana.setDomainContent(solDomain, data, network);
+        log.info({solDomain, pointAddress, txId}, 'Wrote Point address to SOL record.');
         return txId;
     },
     isAddress: (address: string) => {
