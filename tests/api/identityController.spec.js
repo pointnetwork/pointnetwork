@@ -66,7 +66,8 @@ describe('Identity controller', () => {
                 status: 200,
                 data: {
                     owner: '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D',
-                    network: 'point'
+                    network: 'point',
+                    pointAddress: '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D'
                 },
                 headers: {}
             })
