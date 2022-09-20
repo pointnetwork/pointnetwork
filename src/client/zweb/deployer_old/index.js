@@ -2,7 +2,12 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
-const {compileContract, getImportsFactory, encodeCookieString, merge} = require('../../../util');
+const {
+    compileContract,
+    getImportsFactory,
+    encodeCookieString,
+    mergeAndResolveConflicts
+} = require('../../../util');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 const blockchain = require('../../../network/providers/ethereum');
 const solana = require('../../../network/providers/solana');
@@ -491,7 +496,7 @@ class Deployer {
         log.info({domain, data, service}, 'Saving data to domain registry.');
 
         if (service === 'SNS') {
-            const dataStr = encodeCookieString(merge(preExistingData, data));
+            const dataStr = encodeCookieString(mergeAndResolveConflicts(preExistingData, data));
             await solana.setDomainContent(domain, dataStr);
         } else if (service === 'ENS') {
             // we don't have to care about preExistingData in ENS as we save the data
