@@ -66,8 +66,8 @@ const IkvEntry = (props) => {
 
     return (
         <tr>
-            <th>{item.key}</th>
-            <td>
+            <td>{item.key}</td>
+            <td style={{ wordWrap: 'break-word', maxWidth: '400px' }}>
                 {editionAllowed ? (
                     <input
                         value={newValue}
@@ -86,9 +86,6 @@ const IkvEntry = (props) => {
                 )}
             </td>
             <td>{item.version}</td>
-            <td>
-                <BlockTime blockNumber={item.blockNumber} />
-            </td>
             <td>
                 {editionAllowed ? (
                     <>
@@ -237,7 +234,6 @@ export default function Identity() {
     };
 
     const renderDeployerEntry = (deployer) => {
-        console.log(deployer);
         return (
             <tr key={deployer.deployer}>
                 <th>
@@ -452,7 +448,6 @@ export default function Identity() {
                                     <th>Key</th>
                                     <th>Value</th>
                                     <th>Version</th>
-                                    <th>Modified</th>
                                     <th></th>
                                 </thead>
                                 <tbody>

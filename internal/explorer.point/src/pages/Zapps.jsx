@@ -81,15 +81,6 @@ export default function Zapps() {
         );
     };
 
-    const EmptyMsg = () =>
-        zapps.length === 0 ? (
-            <div>
-                <em>No records found</em>
-            </div>
-        ) : (
-            ''
-        );
-
     return (
         <>
             <Container className="p-3">
