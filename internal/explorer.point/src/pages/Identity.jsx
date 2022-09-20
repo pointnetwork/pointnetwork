@@ -4,6 +4,7 @@ import BlockTime from '../components/BlockTime';
 import React, { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
 import OwnerToIdentity from '../components/OwnerToIdenity';
+import PointAddressRow from '../components/PointAddressRow';
 import Swal from 'sweetalert2';
 import { useAppContext } from '../context/AppContext';
 
@@ -12,6 +13,9 @@ const isHash = (str) => {
     if (s.length !== 64) return false;
     return new RegExp('^[0-9a-fA-F]+$').test(s);
 };
+
+const getDomainSpace = (handle) =>
+    handle.endsWith('.sol') ? handle : `${handle}.point`;
 
 const IkvEntry = (props) => {
     const { handle, item, onUpdated, showEdit } = props;
@@ -140,6 +144,7 @@ export default function Identity() {
     const [addAddress, setAddAddress] = useState('');
     const [publicKey, setPublicKey] = useState('');
     const [isLoadingPublicKey, setIsLoadingPublicKey] = useState(true);
+    const [pointAddress, setPointAddress] = useState('');
     const {
         walletAddr,
         publicKey: walletPublicKey,
@@ -160,6 +165,7 @@ export default function Identity() {
             identity: handle,
         });
         setOwner(result.data.owner);
+        setPointAddress(result.data.pointAddress);
         setIsLoadingOwner(false);
         setIsOwner(
             result.data.owner.toLowerCase() === walletAddr.toLowerCase(),
@@ -411,15 +417,20 @@ export default function Identity() {
                         <th>Owner:</th>
                         <td>{isLoadingOwner ? <Loading /> : owner}</td>
                     </tr>
+                    <PointAddressRow
+                        handle={handle}
+                        pointAddress={pointAddress}
+                        isOwner={isOwner}
+                    />
                     <tr>
                         <th>Domain Space:</th>
                         <td>
                             <a
-                                href={'https://' + handle + '.point/'}
+                                href={`https://${getDomainSpace(handle)}`}
                                 target="_blank"
                                 rel="noreferrer"
                             >
-                                {handle}.point
+                                {getDomainSpace(handle)}
                             </a>
                         </td>
                     </tr>

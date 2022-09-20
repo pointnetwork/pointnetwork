@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { useAppContext } from '../context/AppContext';
+import useLinkPointToSol from '../hooks/useLinkPointToSol';
 
-const USER_REJECTION_CODE = 4001;
 const LS_KEY = 'point_to_sol_msg';
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -53,6 +53,9 @@ const LinkPointToSol = () => {
     const [display, setDisplay] = useState(
         () => localStorage.getItem(LS_KEY) !== 'hide',
     );
+    const linkPointToSol = useLinkPointToSol(walletIdentity, () =>
+        setDisplay(false),
+    );
 
     useEffect(() => {
         async function fetchData() {
@@ -75,29 +78,6 @@ const LinkPointToSol = () => {
             fetchData();
         }
     }, [walletIdentity]);
-
-    const linkPointToSol = async () => {
-        try {
-            await window.point.point.link_point_to_sol(walletIdentity);
-            await Swal.fire(
-                'Done!',
-                'You have successfully linked your POINT address to your SOL domain.',
-                'success',
-            );
-            setDisplay(false);
-        } catch (err) {
-            if (err.code === USER_REJECTION_CODE) {
-                await Swal.fire('Request cancelled.', '', 'info');
-            } else {
-                await Swal.fire(
-                    'Sorry, something went wrong',
-                    'Please try again later or contact support',
-                    'error',
-                );
-                console.error(err);
-            }
-        }
-    };
 
     const handleRemindMeLater = () => {
         setDisplay(false);
