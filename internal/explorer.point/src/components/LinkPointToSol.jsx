@@ -8,18 +8,23 @@ const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const styles = {
     container: {
+        position: 'absolute',
+        top: 60,
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
         borderRadius: 4,
         boxShadow: '0px 7px 15px 0 rgba(0, 0, 0, .15)',
-        padding: 16,
-        marginTop: 24,
+        padding: '8px 24px',
         color: 'rgb(124, 124, 124)',
         display: 'grid',
-        gridTemplateColumns: '1fr 200px',
+        gridTemplateColumns: '1fr 100px',
         alignItems: 'center',
-        gridColumnGap: 42,
+        gridColumnGap: 24,
     },
     description: {
         margin: 0,
+        padding: 0,
     },
 };
 
@@ -30,7 +35,7 @@ const learnMoreHTMLString = (solDomain) => `
     </p>
     <p>
         For example, people will be able to email you at <b>${solDomain}</b>,
-        send POINT to it, share files, etc.
+        send POINTs to it, share files, etc.
     </p>
     <p>
         <em>
@@ -117,34 +122,36 @@ const LinkPointToSol = () => {
 
     return (
         <div style={styles.container}>
-            <p style={styles.description}>
-                We've noticed you're using a <em>SOL</em> domain, for the best
-                experience, we recommend linking your <em>POINT</em> address to
-                your <em>SOL</em> domain.
-            </p>
-            <button className="btn btn-md btn-success" onClick={linkPointToSol}>
-                Link POINT to SOL
-            </button>
             <div>
-                <button
-                    className="btn btn-sm btn-link"
-                    onClick={handleRemindMeLater}
-                >
-                    Remind me later
-                </button>
-                <button
-                    className="btn btn-sm btn-link"
-                    onClick={handleDoNotShowAgain}
-                >
-                    Don't show this again
-                </button>
-                <button
-                    className="btn btn-sm btn-link"
-                    onClick={handleLearnMore}
-                >
-                    Learn more
-                </button>
+                <p style={styles.description}>
+                    We've noticed you're using a <em>SOL</em> domain, for the
+                    best experience, we recommend linking your <em>POINT</em>{' '}
+                    address to it.
+                </p>
+                <div>
+                    <button
+                        className="btn btn-sm btn-link"
+                        onClick={handleRemindMeLater}
+                    >
+                        Remind me later
+                    </button>
+                    <button
+                        className="btn btn-sm btn-link"
+                        onClick={handleDoNotShowAgain}
+                    >
+                        Don't show this again
+                    </button>
+                    <button
+                        className="btn btn-sm btn-link"
+                        onClick={handleLearnMore}
+                    >
+                        Learn more
+                    </button>
+                </div>
             </div>
+            <button className="btn btn-md btn-success" onClick={linkPointToSol}>
+                Link
+            </button>
         </div>
     );
 };
