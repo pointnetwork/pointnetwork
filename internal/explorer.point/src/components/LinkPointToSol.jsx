@@ -46,7 +46,7 @@ const LinkPointToSol = () => {
 
         if (
             walletIdentity.endsWith('.sol') &&
-            window.point.point.link_point_to_sol
+            typeof window.point.point.link_point_to_sol === 'function'
         ) {
             fetchData();
         }
