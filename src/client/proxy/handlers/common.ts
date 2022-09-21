@@ -206,7 +206,11 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             }
 
             if (host.startsWith('www.google.com') || host.startsWith('google.com')) {
-                return res.redirect('https://search.point/search?q=' + queryParams?.q);
+                const q = queryParams?.q || '';
+                if (typeof q === 'string' && (q.endsWith('.sol') || q.endsWith('.point'))) {
+                    return res.redirect(`https://${q}`);
+                }
+                return res.redirect('https://search.point/search?q=' + q);
             }
 
             const expression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
