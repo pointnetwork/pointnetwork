@@ -22,6 +22,10 @@ const {hashFn} = require('../../util');
 const {Op} = require('sequelize');
 const Event = require('../../db/models/event').default;
 const EventScan = require('../../db/models/event_scan').default;
+const {CacheFactory} = require('../../util');
+
+const cacheExpiration = 2 * 60 * 1_000; // 2 minutes
+const ensDomainCache = new CacheFactory(cacheExpiration);
 
 function isRetryableError({message}) {
     for (const code in retryableErrors) {
@@ -1278,7 +1282,19 @@ ethereum.send = ({method, params = [], id, network}) =>
         );
     });
 
+/**
+ * Looks for the Domain Regitry in Ethereum and returns it's owner and the
+ * contents of the `point` text record.
+ *
+ * (implements a cache to avoid querying Ethereum too often)
+ */
 ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
+    const cacheKey = `${network}:${domainName}`;
+    const cachedDomainRegistry = ensDomainCache.get(cacheKey);
+    if (cachedDomainRegistry) {
+        return cachedDomainRegistry;
+    }
+
     const provider = getEthers(network);
     const resolver = await provider.getResolver(domainName);
 
@@ -1291,7 +1307,9 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
         resolver.getText(POINT_ENS_TEXT_RECORD_KEY)
     ]);
 
-    return {owner, content};
+    const domainRegistry = {owner, content};
+    ensDomainCache.add(cacheKey, domainRegistry);
+    return domainRegistry;
 };
 
 /**
@@ -1321,6 +1339,13 @@ ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
     const wallet = new ethers.Wallet(pk, provider);
     const ensWithSigner = ensContract.connect(wallet);
     const tx = await ensWithSigner.setText(hash, POINT_ENS_TEXT_RECORD_KEY, data);
+
+    // Remove cached entry (if any) so the updated content is fetched on the next request.
+    const cacheKey = `${network}:${domainName}`;
+    if (ensDomainCache.has(cacheKey)) {
+        ensDomainCache.rm(cacheKey);
+    }
+
     return tx;
 };
 
