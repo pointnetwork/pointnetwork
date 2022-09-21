@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
 import Loading from '../components/Loading';
+import LinkPointToSol from '../components/LinkPointToSol';
 import appLogo from '../assets/pointlogo.png';
 import blogIcon from '../assets/blog.svg';
 import emailIcon from '../assets/email.svg';
@@ -135,6 +136,8 @@ export default function Home() {
 
     return (
         <Container className="home-container">
+            <LinkPointToSol />
+
             <h1 className="home-header">
                 Welcome to <span>Web 3.0</span>
             </h1>

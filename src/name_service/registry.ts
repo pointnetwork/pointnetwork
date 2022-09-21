@@ -7,20 +7,11 @@ import {parseCookieString} from '../util';
  */
 export function parseDomainRegistry(registry: DomainRegistry): PointDomainData {
     const values = parseCookieString(registry.content ?? '');
-
-    // If the registry has a `pn_alias`, it means we need to redirect
-    // all requests to the `.sol` domain to the `.point` alias.
-    if (values['pn_alias']) {
-        return {identity: values['pn_alias'], isAlias: true};
-    }
-
-    // The registry does not have a `pn_alias`, which means we need to fetch
-    // the content using the routes ID and root directory ID stored in the
-    // domain registry.
     return {
-        identity: '',
-        isAlias: false,
-        routesId: values['pn_routes'] || '',
-        rootDirId: values['pn_root'] || ''
+        pointAddress: values.pn_addr || '',
+        identity: values.pn_alias || '',
+        isAlias: Boolean(values.pn_alias),
+        routesId: values.pn_alias ? '' : values.pn_routes || '',
+        rootDirId: values.pn_alias ? '' : values.pn_root || ''
     };
 }

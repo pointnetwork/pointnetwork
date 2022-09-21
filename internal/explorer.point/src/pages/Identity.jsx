@@ -6,6 +6,8 @@ import { useAppContext } from '../context/AppContext';
 import parsePublicKey from '../utils/parsePublicKey';
 import Deployers from '../components/identity/Deployers';
 import IkvList from '../components/identity/IkvList';
+import PointAddressRow from '../components/PointAddressRow';
+import getDomainSpace from '../utils/getDomainSpace';
 
 export default function Identity() {
     const { handle } = useParams();
@@ -14,6 +16,7 @@ export default function Identity() {
     const [isOwner, setIsOwner] = useState(false);
     const [publicKey, setPublicKey] = useState('');
     const [isLoadingPublicKey, setIsLoadingPublicKey] = useState(true);
+    const [pointAddress, setPointAddress] = useState('');
     const {
         walletAddr,
         publicKey: walletPublicKey,
@@ -28,6 +31,7 @@ export default function Identity() {
             identity: handle,
         });
         setOwner(result.data.owner);
+        setPointAddress(result.data.pointAddress);
         setIsLoadingOwner(false);
         setIsOwner(
             result.data.owner.toLowerCase() === walletAddr.toLowerCase(),
@@ -75,15 +79,20 @@ export default function Identity() {
                         <th>Owner:</th>
                         <td>{isLoadingOwner ? <Loading /> : owner}</td>
                     </tr>
+                    <PointAddressRow
+                        handle={handle}
+                        pointAddress={pointAddress}
+                        isOwner={isOwner}
+                    />
                     <tr>
                         <th>Domain Space:</th>
                         <td>
                             <a
-                                href={'https://' + handle + '.point/'}
+                                href={`https://${getDomainSpace(handle)}`}
                                 target="_blank"
                                 rel="noreferrer"
                             >
-                                {handle}.point
+                                {getDomainSpace(handle)}
                             </a>
                         </td>
                     </tr>
