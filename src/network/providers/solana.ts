@@ -14,7 +14,7 @@ import {
     NAME_PROGRAM_ID,
     Numberu32
 } from '@bonfida/spl-name-service';
-import {getSolanaKeyPair} from '../../wallet/keystore';
+import {getSolanaKeyPair, getNetworkPublicKey} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
 import {DomainRegistry} from '../../name_service/types';
@@ -372,7 +372,7 @@ const solana = {
 
         return txId;
     },
-    setPointAddress: async (solDomain: string, pointAddress: string, network = 'solana') => {
+    setPointReference: async (solDomain: string, network = 'solana') => {
         // Check ownership of .sol domain
         const id = Date.now();
         const [{result}, domainRegistry] = await Promise.all([
@@ -394,12 +394,20 @@ const solana = {
             preExistingContent = content;
         }
 
+        const publicKey = getNetworkPublicKey();
+
         // Write to Domain Registry and return Tx ID.
         const data = encodeCookieString(
-            mergeAndResolveConflicts(preExistingContent, {pn_addr: pointAddress})
+            mergeAndResolveConflicts(preExistingContent, {pn_key: publicKey})
         );
+
         const txId = await solana.setDomainContent(solDomain, data, network);
-        log.info({solDomain, pointAddress, txId}, 'Wrote Point address to SOL record.');
+        log.info({
+            solDomain,
+            publicKey,
+            txId
+        }, 'Set Point public key reference in SOL domain record.');
+
         return txId;
     },
     isAddress: (address: string) => {
