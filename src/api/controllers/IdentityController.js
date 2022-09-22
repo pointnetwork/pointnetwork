@@ -187,9 +187,16 @@ class IdentityController extends PointSDKController {
 
     async publicKeyByIdentity() {
         const identity = this.req.params.identity;
-        if (identity.endsWith('.sol') || identity.endsWith('.eth')) {
+
+        if (identity.endsWith('.eth')) {
             this.rep.status(422);
-            return this._status(422)._response('This endpoint only supports Point identities.');
+            return this._status(422)._response('This endpoint does not support ENS identities.');
+        }
+
+        if (identity.endsWith('.sol')) {
+            const registry = await solana.resolveDomain(identity);
+            const {pointPublicKey} = parseDomainRegistry(registry);
+            return this._response({publicKey: pointPublicKey ? `0x${pointPublicKey}` : ''});
         }
 
         const publicKey = await ethereum.commPublicKeyByIdentity(identity);
