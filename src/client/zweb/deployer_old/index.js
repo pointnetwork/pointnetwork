@@ -234,7 +234,7 @@ class Deployer {
             identity = target.replace(/\.point$/, '');
         }
 
-        return {target, isPointTarget, identity, isAlias};
+        return {target: target.toLowerCase(), isPointTarget, identity, isAlias};
     }
 
     /**
@@ -409,10 +409,13 @@ class Deployer {
                         let proxy;
                         //loads the contract factory
                         const contractF = await hre.ethers.getContractFactory(contractName);
+                        //if there is no previous deployment or
+                        // do not found metadata file or
+                        // forcing the deployment of a new proxy
                         if (
-                            proxyAddress == null || //if there is no previous deployment 
-                            proxyDescriptionFileId == null || // do not found metadata file
-                            force_deploy_proxy // or forcing the deployment of a new proxy
+                            proxyAddress == null || 
+                            proxyDescriptionFileId == null || 
+                            force_deploy_proxy 
                         ) {
                             //deploy a new proxy
                             log.debug('deployProxy call');
@@ -904,7 +907,7 @@ class Deployer {
      * @param {string} deployPath - The pathe from where the contract is placed (dapp folder).
      * @returns {object} - {contract - Web3.js instance of the contract, artifacts - the artifacts from the contracts inside the file complied}
      */
-    async compileContract(contractName, deployPath) {
+    async compileContract(contractName, fileName, deployPath) {
         const contractPath = path.join(deployPath, 'contracts');
         const nodeModulesPath = path.join(deployPath, 'node_modules');
         const originalPath = path.join(deployPath, 'contracts');
@@ -962,7 +965,7 @@ class Deployer {
      * 
      * @returns the id of the file from artifacts stored
      */
-    async storeContractArtifacts(artifacts, contractName, version, address, target) {
+    async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
         //convert the abi to string.
         const artifactsJSON = JSON.stringify(artifacts);
 
