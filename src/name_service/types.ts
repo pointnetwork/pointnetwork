@@ -4,6 +4,7 @@ export type PointDomainData = {
     routesId: string;
     rootDirId: string;
     pointAddress: string;
+    pointPublicKey: string;
 };
 
 export type DomainRegistry = {
