@@ -1,10 +1,11 @@
-const phrase = process.argv[2] || require(
+const seedOrPhrase = process.argv[2] || require(
     require('path').resolve(__dirname, '..', 'resources', 'blockchain-test-key.json')
 ).phrase;
 
-const wallet = require('ethereumjs-wallet').hdkey.fromMasterSeed(
-    require('bip39').mnemonicToSeedSync(phrase)
-).getWallet();
+const ethereum = require('ethereumjs-wallet');
+const wallet = /^(0x)?[a-fA-F0-9]{64}$/.test(seedOrPhrase)
+    ? ethereum.default.fromPrivateKey(Buffer.from(seedOrPhrase, 'hex'))
+    : ethereum.hdkey.fromMasterSeed(require('bip39').mnemonicToSeedSync(seedOrPhrase)).getWallet();
 
 console.log({
     privateKey: wallet.getPrivateKey().toString('hex'),
