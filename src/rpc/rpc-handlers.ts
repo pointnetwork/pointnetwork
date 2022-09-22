@@ -4,7 +4,7 @@ import ethereum from '../network/providers/ethereum';
 import config from 'config';
 import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
 import {decodeTxInputData} from './decode';
-import {getNetworkAddress} from '../wallet/keystore';
+import {getNetworkPublicKey} from '../wallet/keystore';
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
@@ -85,9 +85,9 @@ const confirmTransaction: HandlerFunc = async data => {
                         ...(tx.params[0] as SolanaSendFundsParams),
                         network
                     });
-                } else if ((tx.params[0] as {domain: string; pointAddress: string}).domain) {
-                    const data = tx.params[0] as {domain: string; pointAddress: string};
-                    result = await solana.setPointAddress(data.domain, data.pointAddress, network);
+                } else if ((tx.params[0] as {domain: string}).domain) {
+                    const data = tx.params[0] as {domain: string};
+                    result = await solana.setPointReference(data.domain, network);
                 } else {
                     result = await solana.signAndSendTransaction(
                         id,
@@ -129,14 +129,14 @@ const snsWriteRequest: HandlerFunc = async data => {
     }
 
     const network = 'solana'; // SNS integration only works with mainnet
-    const txData = {domain: params[0].domain, pointAddress: getNetworkAddress()};
+    const txData = {domain: params[0].domain, publicKey: getNetworkPublicKey()};
     const reqId = pendingTxs.add([txData], network);
 
     const decodedTxData = {
         name: 'SetPOINTRecord',
         params: [
             {name: 'SOLDomain', value: txData.domain, type: 'string'},
-            {name: 'POINTAddress', value: txData.pointAddress, type: 'byte32'}
+            {name: 'POINTPublicKey', value: txData.publicKey, type: 'byte64'} // NB: actually it is hex
         ]
     };
 
