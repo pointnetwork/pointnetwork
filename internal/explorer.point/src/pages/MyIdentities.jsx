@@ -35,7 +35,9 @@ export default function MyIdentities({ owner }) {
                 </tbody>
             </table>
 
-            <Subidentities owner={owner} />
+            {walletIdentity?.endsWith('.sol') ? null : (
+                <Subidentities owner={owner} />
+            )}
         </Container>
     );
 }
