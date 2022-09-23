@@ -57,7 +57,7 @@ const IkvEntry = (props) => {
             await window.point.contract.send({
                 contract: 'Identity',
                 method: 'ikvPut',
-                params: [handle, item.key, newValue, newVersionParam],
+                params: [handle.toLowerCase(), item.key, newValue, newVersionParam],
             });
             setAllowEdition(false);
             onUpdated();
@@ -200,7 +200,7 @@ export default function Identity() {
         const ikvsetFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getIkvList',
-            params: [handle],
+            params: [handle.toLowerCase()],
         });
         if (ikvsetFetched.data !== '') {
             setIkvset(
@@ -222,7 +222,7 @@ export default function Identity() {
         const deployersFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getDeployersList',
-            params: [handle],
+            params: [handle.toLowerCase()],
         });
         if (deployersFetched.data !== '') {
             setDeployers(
@@ -328,7 +328,7 @@ export default function Identity() {
             await window.point.contract.call({
                 contract: 'Identity',
                 method: 'addIdentityDeployer',
-                params: [handle, deployer],
+                params: [handle.toLowerCase(), deployer],
             });
             Swal.fire({
                 icon: 'success',
@@ -378,7 +378,7 @@ export default function Identity() {
                 contract: 'Identity',
                 method: 'ikvPut',
                 params: [
-                    handle,
+                    handle.toLowerCase(),
                     ikvNewEntryKey,
                     ikvNewEntryValue,
                     ikvNewEntryVersion,
