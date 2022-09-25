@@ -31,6 +31,8 @@ const IKV_PUT_INTERFACE = {
     type: 'function'
 };
 
+const DEFAULT_NETWORK = config.get('network.default_network');
+
 async function registerBountyReferral(address, type) {
     const referralCode = await getReferralCode();
 
@@ -444,7 +446,7 @@ class IdentityController extends PointSDKController {
     }
 
     async ikvPut() {
-        const {identity, key, value, version = 'latest'} = this.req.body;
+        const {identity, key, value, version = 'latest', network = DEFAULT_NETWORK} = this.req.body;
 
         try {
             const web3 = new Web3();
@@ -464,7 +466,7 @@ class IdentityController extends PointSDKController {
                     }
                 ],
                 id: new Date().getTime(),
-                network: 'xnet'
+                network
             });
             this.rep.status(200).send('Success');
         } catch (e) {
