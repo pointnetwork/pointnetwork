@@ -41,7 +41,12 @@ const IkvEntry = ({ handle, item, onUpdated, showEdit }) => {
             await window.point.contract.send({
                 contract: 'Identity',
                 method: 'ikvPut',
-                params: [handle, item.key, newValue, newVersionParam],
+                params: [
+                    handle.toLowerCase(),
+                    item.key,
+                    newValue,
+                    newVersionParam,
+                ],
             });
             setAllowEdition(false);
             onUpdated();
