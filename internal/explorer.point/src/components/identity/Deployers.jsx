@@ -16,7 +16,7 @@ const Deployers = ({ isOwner, isPointIdentity }) => {
         const deployersFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getDeployersList',
-            params: [handle],
+            params: [handle.toLowerCase()],
         });
         if (deployersFetched.data !== '') {
             setDeployers(
@@ -78,7 +78,7 @@ const Deployers = ({ isOwner, isPointIdentity }) => {
             await window.point.contract.call({
                 contract: 'Identity',
                 method: 'addIdentityDeployer',
-                params: [handle, deployer],
+                params: [handle.toLowerCase(), deployer],
             });
             Swal.fire({
                 icon: 'success',

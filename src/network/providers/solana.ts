@@ -14,16 +14,20 @@ import {
     NAME_PROGRAM_ID,
     Numberu32
 } from '@bonfida/spl-name-service';
-import {getSolanaKeyPair} from '../../wallet/keystore';
+import {getSolanaKeyPair, getNetworkPublicKey} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
 import {DomainRegistry} from '../../name_service/types';
 import {encodeCookieString, mergeAndResolveConflicts} from '../../util/cookieString';
+import {CacheFactory} from '../../util';
 const logger = require('../../core/log');
 const log = logger.child({module: 'SolanaProvider'});
 
 // Address of the `.sol` TLD
 const SOL_TLD_AUTHORITY = new web3.PublicKey(config.get('name_services.sol_tld_authority'));
+
+const cacheExpiration = 2 * 60 * 1_000; // 2 minutes
+const solDomainCache = new CacheFactory<string, DomainRegistry>(cacheExpiration);
 
 export type SolanaSendFundsParams = {to: string; lamports: number; network: string};
 
@@ -234,10 +238,22 @@ const solana = {
 
         return connection.getSignaturesForAddress(pubKey, {before, until, limit});
     },
+    /**
+     * Looks for the Domain Regitry in Solana and returns it's owner and the
+     * contents of the `POINT` record.
+     *
+     * (implements a cache to avoid querying Solana too often)
+     */
     resolveDomain: async (domainName: string, network = 'solana'): Promise<DomainRegistry> => {
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network "${network}".`);
+        }
+
+        const cacheKey = `${network}:${domainName}`;
+        const cachedDomainRegistry = solDomainCache.get(cacheKey);
+        if (cachedDomainRegistry) {
+            return cachedDomainRegistry;
         }
 
         // Domain without the `.sol`
@@ -254,10 +270,9 @@ const solana = {
             log.info({domain: domainName}, 'No POINT record found for this domain.');
         }
 
-        return {
-            owner: registry.owner.toBase58(),
-            content
-        };
+        const domainRegistry = {owner: registry.owner.toBase58(), content};
+        solDomainCache.add(cacheKey, domainRegistry);
+        return domainRegistry;
     },
     /**
      * Retrieve the `.sol` domain owned by `owner`.
@@ -348,9 +363,16 @@ const solana = {
         ixs.push(updateIx);
 
         const txId = await sendInstructions(connection, [wallet], ixs);
+
+        // Remove cached entry (if any) so the updated content is fetched on the next request.
+        const cacheKey = `${network}:${domainName}`;
+        if (solDomainCache.has(cacheKey)) {
+            solDomainCache.rm(cacheKey);
+        }
+
         return txId;
     },
-    setPointAddress: async (solDomain: string, pointAddress: string, network = 'solana') => {
+    setPointReference: async (solDomain: string, network = 'solana') => {
         // Check ownership of .sol domain
         const id = Date.now();
         const [{result}, domainRegistry] = await Promise.all([
@@ -372,12 +394,20 @@ const solana = {
             preExistingContent = content;
         }
 
+        const publicKey = getNetworkPublicKey();
+
         // Write to Domain Registry and return Tx ID.
         const data = encodeCookieString(
-            mergeAndResolveConflicts(preExistingContent, {pn_addr: pointAddress})
+            mergeAndResolveConflicts(preExistingContent, {pn_key: publicKey})
         );
+
         const txId = await solana.setDomainContent(solDomain, data, network);
-        log.info({solDomain, pointAddress, txId}, 'Wrote Point address to SOL record.');
+        log.info({
+            solDomain,
+            publicKey,
+            txId
+        }, 'Set Point public key reference in SOL domain record.');
+
         return txId;
     },
     isAddress: (address: string) => {

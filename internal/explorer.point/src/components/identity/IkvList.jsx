@@ -39,7 +39,7 @@ const IkvList = ({ isPointIdentity, owner }) => {
                 contract: 'Identity',
                 method: 'ikvPut',
                 params: [
-                    handle,
+                    handle.toLowerCase(),
                     ikvNewEntryKey,
                     ikvNewEntryValue,
                     ikvNewEntryVersion,
@@ -59,7 +59,7 @@ const IkvList = ({ isPointIdentity, owner }) => {
         const ikvsetFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getIkvList',
-            params: [handle],
+            params: [handle.toLowerCase()],
         });
         if (ikvsetFetched.data !== '') {
             setIkvset(

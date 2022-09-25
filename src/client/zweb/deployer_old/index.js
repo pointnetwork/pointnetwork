@@ -21,20 +21,40 @@ const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
 const POINT_SDK_VERSION = 'zweb/point/sdk/version';
 const POINT_NODE_VERSION = 'zweb/point/node/version';
 
+/**
+ * Class responsible to deploy DApps in Point Network.
+ */
 class Deployer {
+    /**
+     * Constructor for the class
+     */
     constructor() {
         this.cache_uploaded = {}; // todo: unused? either remove or use
     }
 
+    /**
+     * Initialization method
+     */
     async start() {
         // todo
     }
 
+    /**
+     * Gets the cache dir from the config
+     * 
+     * @returns cache dir
+     */
     getCacheDir() {
         const cache_dir = path.join(config.get('datadir'), config.get('deployer.cache_path'));
         return cache_dir;
     }
 
+    /**
+     * Get the version number and format it as Major.Minor.
+     * 
+     * @param {string|number} version - Version as stated in point.deploy.json
+     * @returns {string} - Base version formated as Major.Minor
+     */
     getBaseVersion(version) {
         let baseVersion;
         if (typeof version === 'number' && version.toString().indexOf('.') === -1) {
@@ -59,10 +79,22 @@ class Deployer {
         return baseVersion;
     }
 
+    /**
+     * Checks if the version passed is in the format Major.Minor
+     * 
+     * @param {string} baseVersion - Version string
+     * @returns {boolean} if the version is in the format Major.Minor
+     */
     isVersionFormated(baseVersion) {
         return /^\d+\.\d+$/.test(String(baseVersion));
     }
 
+    /**
+     * Split the version string in Major.Minor.Path
+     * 
+     * @param {string} version - Version string  
+     * @returns {object} - Version splited on a object with the properties major, minor and path.
+     */
     getVersionParts(version) {
         const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
         const found = version.match(regex);
@@ -77,6 +109,13 @@ class Deployer {
         }
     }
 
+    /**
+     * Checks if the new base version (Major.minor) is higher that the old one.
+     * 
+     * @param {string} oldVersion - old base version.
+     * @param {string} newBaseVersion - new base version.
+     * @returns {boolean} - If the new base versio is higher than the old one.
+     */
     isNewBaseVersionValid(oldVersion, newBaseVersion) {
         if (oldVersion === null || oldVersion === undefined || oldVersion === '') {
             return true;
@@ -91,6 +130,15 @@ class Deployer {
         }
     }
 
+    /**
+     * Get a new base patched version incremented by one (format Major.minor.patch)
+     * if the base version is not changed from old one, or with .0 
+     * if the base version is different from the previous one.
+     * 
+     * @param {string} oldVersion - Old base version string 
+     * @param {string} newBaseVersion - New base version string
+     * @returns {string} - new patched version
+     */
     getNewPatchedVersion(oldVersion, newBaseVersion) {
         if (oldVersion === null || oldVersion === undefined || oldVersion === '') {
             return newBaseVersion + '.0';
@@ -105,6 +153,18 @@ class Deployer {
         }
     }
 
+    /**
+     * Get the version which the DApp will be deployed considering the version
+     * stated in the point.deploy.json and the latest version of the DApp deployed in the blockchain.
+     * 
+     * @param {string} cfgVersion - Version stated in the point.deploy.json.
+     * @param {string} identity - Identity to search the latest version deployed in the blockchain.
+     * @param {boolean} isPointTarget - If the target is a .point domain.
+     * @param {boolean} isAlias - If the target is an alias.
+     * @returns {string} - New valid version to deploy the DApp.
+     * 
+     * @throws - Error if the version passed in the cfgVersion parameter is invalid for the identity.
+     */
     async getVersion(cfgVersion, identity, isPointTarget, isAlias) {
         if (!isPointTarget && !isAlias) return null;
 
@@ -124,10 +184,24 @@ class Deployer {
         }
     }
 
+    /**
+     * Get domain name service used in a domain.
+     * 
+     * @param {string} domain - The fill name of the domain 
+     * @returns SNS or ENS dependind of the domain name passed.
+     */
     getNameService(domain) {
         return domain.endsWith('.sol') ? 'SNS' : 'ENS';
     }
 
+    /**
+     * Get the target and identity to deploy the DApp
+     * 
+     * @param {object} config - The configuration object of the deploy 
+     * @param {boolean} contracts - If the contracts flag is set 
+     * @param {boolean} dev - If the dev flag is set
+     * @returns {object} - {target - string target to deploy, isPointTarget - boolean - if is .point domain, identity - string, isAlias - if it is an alias}
+     */
     getTargetAndIdentity(config, contracts, dev) {
         let identity;
         let target;
@@ -165,9 +239,17 @@ class Deployer {
             identity = target.replace(/\.point$/, '');
         }
 
-        return {target, isPointTarget, identity, isAlias};
+        return {target: target.toLowerCase(), isPointTarget, identity, isAlias};
     }
 
+    /**
+     * Verify if the owner address parameter is authorized as deployer for this identity
+     * 
+     * @param {string} identity - identity
+     * @param {address} owner - address which wants to deploy for this identity
+     * 
+     * @throws Error if the address is not authorized as a deployer of the identity
+     */
     async ensureIsDeployer(identity, owner) {
         const isDeployer = await blockchain.isIdentityDeployer(identity, owner);
         if (!isDeployer) {
@@ -178,6 +260,12 @@ class Deployer {
         }
     }
 
+    /**
+     * Register a new identity for the specified owner
+     * 
+     * @param {string} identity - identity name
+     * @param {address} owner - address of the owner
+     */
     async registerNewIdentity(identity, owner) {
         const publicKey = getNetworkPublicKey();
         log.info(
@@ -199,16 +287,32 @@ class Deployer {
         );
     }
 
+    /**
+     * Deply a set of contracts specified in point.deploy.json of the DApp.
+     * 
+     * @param {object} config - point.deploy config object.
+     * @param {string} deployPath - Path to the DApp.
+     * @param {string} version - Version specified to deploy. 
+     * @param {string} target - the target name which will the contracts be deployed
+     * @param {boolean} force_deploy_proxy - flag to force deploy a new proxy for upgradable contracts
+     */
     async deployContracts(config, deployPath, version, target, force_deploy_proxy) {
         let proxyMetadataFilePath = '';
         let contractNames = config.contracts;
         if (!contractNames) contractNames = [];
         const identity = target.replace('.point', '');
 
+        //checks if the contracts of the dapp are upgradable and compile upgradable contracts
+        //this step is necessary to hardhat upgradable plugin to work.
         if (config.hasOwnProperty('upgradable') && config.upgradable) {
+            //retrieve the metadata file path which should match with openzeppelin plugin one to work
             proxyMetadataFilePath = await this.getProxyMetadataFilePath();
+
+            //for each contract declared in point.deploy.json
             for (const contractName of contractNames) {
+                //resolve the path to the contract
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                //copy it to hardhat folder for compiling it
                 fs.copyFileSync(
                     fileName,
                     path.resolve(
@@ -223,7 +327,9 @@ class Deployer {
                     )
                 );
             }
+            //compile all contracts with hardhat command.
             await hre.run('compile');
+            //delete the sources for cleaning any cache for next compilations.
             for (const contractName of contractNames) {
                 fs.unlinkSync(
                     path.resolve(
@@ -239,14 +345,21 @@ class Deployer {
                 );
             }
         }
+
+        //for each contract
         for (const contractName of contractNames) {
+            
+            //resolve the file name
             const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
 
             try {
                 let address;
                 let artifactsDeployed;
+                //if useIDE flag is set, will use specific paths and abis from the
+                //specified IDE to write arctifacts and addresses to IKV registry.
                 if (config.hasOwnProperty('useIDE')) {
                     let abiPath = '';
+                    //get abiPath from truffle
                     if (config.useIDE.name === 'truffle') {
                         abiPath = path.join(
                             deployPath,
@@ -256,6 +369,7 @@ class Deployer {
                             contractName + '.json'
                         );
                     } else if (config.useIDE.name === 'hardhat') {
+                        //get abi path from hardhat
                         abiPath = path.join(
                             deployPath,
                             config.useIDE.projectDir,
@@ -266,49 +380,74 @@ class Deployer {
                         );
                     }
 
+                    //reads and load the abi from the file.
                     if (abiPath !== '' && fs.existsSync(abiPath)) {
                         const abiFile = fs.readFileSync(abiPath, 'utf-8');
                         artifactsDeployed = JSON.parse(abiFile);
                     }
-
+                    //get the contract address from the point.deploy.json
                     address = config.useIDE.addresses[contractName];
                 } else {
+                    // will not use an IDE for deployment, so is the default deployment
+                    // for point.
+
                     if (config.hasOwnProperty('upgradable') && config.upgradable === true) {
+                        //if the contracts are upgradable 
+
+                        //get the address of the proxy
                         const proxyAddress = await blockchain.getKeyValue(
                             target,
                             'zweb/contracts/address/' + contractName,
                             version,
                             'equalOrBefore'
                         );
-
+                        
+                        //get proxy metadata file from the IKV registry
                         const proxyDescriptionFileId = await blockchain.getKeyValue(
                             target,
                             PROXY_METADATA_KEY,
                             version,
                             'equalOrBefore'
                         );
-
+                        
+                        //using openzeppelin upgradable hardhat plugin:
                         let proxy;
+                        //loads the contract factory
                         const contractF = await hre.ethers.getContractFactory(contractName);
+                        //if there is no previous deployment or
+                        // do not found metadata file or
+                        // forcing the deployment of a new proxy
                         if (
-                            proxyAddress == null ||
-                            proxyDescriptionFileId == null ||
-                            force_deploy_proxy
+                            proxyAddress == null || 
+                            proxyDescriptionFileId == null || 
+                            force_deploy_proxy 
                         ) {
+                            //deploy a new proxy
                             log.debug('deployProxy call');
                             const cfg = {kind: 'uups'};
+                            //loads the identity contract
                             const idContract = await blockchain.loadIdentityContract();
                             try {
                                 log.debug(
                                     {IdContractAddress: idContract.options.address, identity},
                                     'deploying proxy binded with identity contract and identity'
                                 );
+                                // Uses the address of identity contract and identity name as
+                                // parameters for deploying a new proxy using openzeppelin 
+                                // hardhat upgradable plugin. Those parameters should be declared
+                                // in the initializer of the upgradable contract.
                                 proxy = await hre.upgrades.deployProxy(
                                     contractF,
                                     [idContract.options.address, identity],
                                     cfg
                                 );
                             } catch (e) {
+                                // Fallback in case of fail the deployment of the proxy.
+                                // Some cases the upgradable contrac may not have parameters in the initializers of 
+                                // the upgradable contract. In this case, the deployment is performed
+                                // without parameters. In this way, the deployers feature
+                                // will not work and only the owner of the proxy will be able
+                                // to upgrade the proxy.
                                 log.warn(
                                     'Deploying proxy binded with id contract and identity failed.'
                                 );
@@ -319,42 +458,62 @@ class Deployer {
                                 proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
                             }
                         } else {
+                            //will upgrade the proxy
                             log.debug('upgradeProxy call');
+
                             //restore from blockchain upgradable contracts and proxy metadata if does not exist.
                             if (!fs.existsSync('./.openzeppelin')) {
                                 fs.mkdirSync('./.openzeppelin');
                             }
+                            //write the file for the path that the plugin needs to validate the
+                            //upgradable contract.
                             fs.writeFileSync(
                                 proxyMetadataFilePath,
                                 await getFile(proxyDescriptionFileId)
                             );
 
                             try {
+                                //try to upgrade the proxy
+                                //in this step the contract is validated and if any problem
+                                //is found the plugin raises an erro.
                                 proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
                             } catch (e) {
+                                //fallback for solve a common problem for upgrade the proxy
                                 log.debug('upgradeProxy call failed');
+
+                                //Proxy metadata file can be corrupted or not updated. Then:
+                                //Delete the metadata file.
                                 log.debug('deleting proxy metadata file');
                                 fs.unlinkSync(proxyMetadataFilePath);
+                                //Restore the file from the blockchain.
                                 log.debug('calling forceImport');
                                 const kind = 'uups';
                                 await hre.upgrades.forceImport(proxyAddress, contractF, {kind});
+                                //try to deploy again with the new metadata file.
                                 log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
                                 proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
                             }
                         }
+                        //wait until the proxy is effectivelly deployed.
                         await proxy.deployed();
+                        //get the address of the proxy
                         address = proxy.address;
-
+                        //reads the atifacts using hardhat.
                         artifactsDeployed = await hre.artifacts.readArtifact(contractName);
                     } else {
+                        //the contracts are not upgradable, so normal deployment
+
+                        //complie using solc
                         const {contract, artifacts} = await this.compileContract(
                             contractName,
                             fileName,
                             deployPath
                         );
 
+                        //get the artifacts
                         artifactsDeployed = artifacts;
 
+                        //send the transaction of deployment to the blockchain
                         address = await blockchain.deployContract(
                             contract,
                             artifacts,
@@ -363,6 +522,7 @@ class Deployer {
                     }
                 }
 
+                //upload files to arweave and store IKV values for the deployment
                 const artifactsStorageId = await this.storeContractArtifacts(
                     artifactsDeployed,
                     fileName,
@@ -381,15 +541,17 @@ class Deployer {
             }
         }
 
+        //if the contracts are upgradable, metadata file will be uploaded and IKV from it stored.
         if (config.hasOwnProperty('upgradable') && config.upgradable === true) {
             try {
                 // Upload proxy metadata
-
                 const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
 
                 log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
+                //upload the file
                 const proxyMetadataFileUploadedId = await uploadFile(JSON.stringify(proxyMetadata));
+                //update the IKV from metadata file
                 await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
                 log.debug('Proxy metadata updated');
             } catch (e) {
@@ -399,12 +561,25 @@ class Deployer {
         }
     }
 
+    /**
+     * Upload the static compiled Js files to arweave.
+     * 
+     * @param {string} deployPath - The path to the DApp.
+     * @param {string} rootDir - The name of the folder of the DApp which contain js compiled static files.
+     * @returns {string} the id of the directory tht was uploaded. 
+     */
     async uploadRootDir(deployPath, rootDir = 'public') {
         log.debug('Uploading root directory...');
         const publicDirId = await uploadDir(path.join(deployPath, rootDir));
         return publicDirId;
     }
 
+    /**
+     * Upload the routes.json file to arweave
+     * 
+     * @param {string} deployPath - Path to the DApp root folder which must contain routes.json.
+     * @returns {string} id of the file uploaded 
+     */
     async uploadRoutes(deployPath) {
         const routesFilePath = path.join(deployPath, 'routes.json');
         const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
@@ -414,12 +589,22 @@ class Deployer {
         return uploadFile(JSON.stringify(routes));
     }
 
+    /**
+     * Get the chain id from the connected blochain using hardhat and ethers default provider.
+     * 
+     * @returns {number} chain id.
+     */
     async getChainId() {
         const id = await hre.ethers.provider.send('eth_chainId', []);
         return new BN(id.replace(/^0x/, ''), 'hex').toNumber();
     }
 
-    //code to return exact the same file path of openzeppelin upgradable plugin
+    /**
+     * Get the exact the same file path of openzeppelin upgradable plugin
+     * for using with upgradable plugin deployment.
+     * 
+     * @returns the full path, including the name, for the metadata file.
+     */
     async getProxyMetadataFilePath() {
         const networkNames = {
             1: 'mainnet',
@@ -436,6 +621,13 @@ class Deployer {
         return path.join('.', manifestDir, `${name}.json`);
     }
 
+    /**
+     * Executes a command in the shell.
+     * Used to run git commands during the deployment. 
+     * 
+     * @param {string} command - command string
+     * @returns {string} the result of the command
+     */
     execCommand(command) {
         try {
             return execSync(command).toString();
@@ -444,6 +636,12 @@ class Deployer {
         }
     }
 
+    /**
+     * Verify if the domain name is owned by the connected account.
+     * 
+     * @param {string} target - the target domain (SNS or ENS)
+     * @returns {object} - {domainOwner - address of the owner, content - from the name record}
+     */
     async ensureIsDomainOwner(target) {
         const service = this.getNameService(target);
 
@@ -491,6 +689,13 @@ class Deployer {
         }
     }
 
+    /**
+     * Edits the domain registry of a domain (ENS or SNS).
+     * 
+     * @param {string} domain - Name of the domain (ENS or SNS)
+     * @param {string} data - The data to be registered 
+     * @param {string} preExistingData - Previous data to be merged with the new one.
+     */
     async editDomainRegistry(domain, data, preExistingData) {
         const service = this.getNameService(domain);
         log.info({domain, data, service}, 'Saving data to domain registry.');
@@ -510,6 +715,15 @@ class Deployer {
         log.info({domain, data, service}, 'Successfully updated domain registry.');
     }
 
+    /**
+     * Deploy a DApp to Point Network
+     * 
+     * @param {string} deployPath - Path to the dapp folder which will be deployed
+     * @param {boolean} deployContracts - Flag that indicate if will deploy contracts or not.
+     * @param {boolean} dev - Flag that indicate if it is in dev mode or not
+     * @param {boolean} forceDeployProxy - Flag that indicate if will force to deploy a new proxy or not (only for upgradable contracts)
+     * @param {object} config - Configuration object loaded from deployment description of the Dapp (point.deploy.json)
+     */
     async deploy({
         deployPath,
         deployContracts = false,
@@ -517,6 +731,7 @@ class Deployer {
         forceDeployProxy = false,
         config
     }) {
+        //loads the config file
         let deployConfig = config;
         if (!deployConfig) {
             // todo: error handling, as usual
@@ -525,6 +740,7 @@ class Deployer {
             deployConfig = JSON.parse(deployConfigFile);
         }
 
+        //check if all entries needed in point.deploy.json are present in the parameter
         if (
             !deployConfig.hasOwnProperty('version') ||
             !deployConfig.hasOwnProperty('target') ||
@@ -537,12 +753,14 @@ class Deployer {
             throw new Error(errMsg);
         }
 
+        //load targed and identity data
         const {target, isPointTarget, identity, isAlias} = this.getTargetAndIdentity(
             deployConfig,
             deployContracts,
             dev
         );
-
+        
+        //get the version for the deploy
         const version = await this.getVersion(
             deployConfig.version,
             identity,
@@ -554,26 +772,42 @@ class Deployer {
         let preExistingDomainContent = '';
 
         if (isPointTarget) {
+            //if is a .point domain
+            
+            //get the default address connected
             const owner = blockchain.getOwner();
 
+            //get the default signer for ethers
             const sigAddr = (await hre.ethers.getSigner()).address;
+
+            //if they are not the same throw an error.
             if (owner !== sigAddr) {
                 throw new Error(
                     `Invalid config, aborting. The wallet address ${owner} is different than ethers default signer ${sigAddr}.`
                 );
             }
 
+            //get the owner address for the target identity
             const registeredOwner = await blockchain.ownerByIdentity(identity);
             log.info({target, identity, owner, registeredOwner}, 'Owner information');
 
+            //checks if the identity is already registered
             const identityIsRegistered =
                 registeredOwner && registeredOwner !== '0x0000000000000000000000000000000000000000';
 
+            //if is registered checks if the owner has access to deploy to this identity
             if (identityIsRegistered) {
                 await this.ensureIsDeployer(identity, owner);
             } else {
+                //In zappdev env is possible to deploy to a not registered yet identity.
+                //This makes easy the development because you just deploy the DApp
+                //and the identity is created and registered on the fly. 
                 if (process.env.MODE === 'zappdev') {
                     await this.registerNewIdentity(identity, owner);
+                } else {
+                    throw new Error(
+                        `You must register ${identity} before you can make a deployment. Start Point, head over to https://point in Point Browser, register ${identity} and then retry the deploy command.`
+                    );
                 }
             }
         } else {
@@ -588,15 +822,19 @@ class Deployer {
             }
         }
 
+        //upload static files and routes.json
         const [publicDirId, routeFileUploadedId] = await Promise.all([
             this.uploadRootDir(deployPath, deployConfig.rootDir),
             this.uploadRoutes(deployPath)
         ]);
 
+        //if is a .point domain or alias
         if (isPointTarget || isAlias) {
+
             // Deploy contracts (if required) and store routes and root dir IDs in Point Identity contract.
             const pointIdentity = isAlias ? identity : target;
             if (deployContracts) {
+                //deploy contracts if needed.  
                 await this.deployContracts(
                     deployConfig,
                     deployPath,
@@ -610,7 +848,8 @@ class Deployer {
                 {publicDirId, routeFileUploadedId, target, identity},
                 'Saving routes and root dir IDs to Point Identity contract...'
             );
-
+            
+            //update rootDir entry in IKV system
             await this.updateKeyValue(
                 pointIdentity,
                 {'::rootDir': publicDirId},
@@ -619,8 +858,10 @@ class Deployer {
                 version
             );
 
+            //update zdns entry in IKV system
             await this.updateZDNS(pointIdentity, routeFileUploadedId, version);
 
+            //update the key values entries from point.deploy.json
             await this.updateKeyValue(
                 pointIdentity,
                 deployConfig.keyvalue,
@@ -628,9 +869,12 @@ class Deployer {
                 deployContracts,
                 version
             );
-
+            
+            //store the commit sha from root directory of the DApp in the IKV system
+            //for version control of the code deployed.
             await this.updateCommitSha(pointIdentity, deployPath, version);
-
+            
+            //store the point sdk version needed to run this dapp if is set in point.deploy.json
             if (deployConfig.hasOwnProperty('pointSDKVersion')) {
                 await this.updatePointVersionTag(
                     pointIdentity,
@@ -640,6 +884,7 @@ class Deployer {
                 );
             }
 
+            //store the point node version needed to run this dapp if is set in point.deploy.json
             if (deployConfig.hasOwnProperty('pointNodeVersion')) {
                 await this.updatePointVersionTag(
                     pointIdentity,
@@ -650,6 +895,7 @@ class Deployer {
             }
         }
 
+        //if is ENS or SNS domain (not .point)
         if (!isPointTarget) {
             // Write Point data to domain registry.
             const domainRegistryData = isAlias
@@ -663,6 +909,13 @@ class Deployer {
         log.info('Deploy finished');
     }
 
+    /**
+     * Compiles a contract using SOLC and Web3.js.
+     * 
+     * @param {string} contractName - The name of the contrac
+     * @param {string} deployPath - The pathe from where the contract is placed (dapp folder).
+     * @returns {object} - {contract - Web3.js instance of the contract, artifacts - the artifacts from the contracts inside the file complied}
+     */
     async compileContract(contractName, fileName, deployPath) {
         const contractPath = path.join(deployPath, 'contracts');
         const nodeModulesPath = path.join(deployPath, 'node_modules');
@@ -710,17 +963,33 @@ class Deployer {
         return {contract, artifacts};
     }
 
+    /**
+     * Store the contract and artifacts in arweave and IKV system.
+     * 
+     * @param {object} artifacts - the artifacts of the contract (abi)
+     * @param {string} contractName - the name of the contract
+     * @param {string} version - the version of the contract
+     * @param {address} address - the address from where the contract was deployed
+     * @param {string} target - the target domain 
+     * 
+     * @returns the id of the file from artifacts stored
+     */
     async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
+        //convert the abi to string.
         const artifactsJSON = JSON.stringify(artifacts);
 
+        //upload the abi string.
         const artifactsStorageId = await uploadFile(artifactsJSON);
 
+        //register the contract address in the IKV system
         await blockchain.putKeyValue(
             target,
             'zweb/contracts/address/' + contractName,
             address,
             version
         );
+        
+        //register the abi in the IKV system
         await blockchain.putKeyValue(
             target,
             'zweb/contracts/abi/' + contractName,
@@ -731,18 +1000,40 @@ class Deployer {
         return artifactsStorageId;
     }
 
+    /**
+     * Update the ZDNS entry in IKV system
+     * 
+     * @param {string} host - the host/domain to update the record.
+     * @param {string} id - the id of the file uploaded to arweave
+     * @param {string} version - the version of the entry 
+     */
     async updateZDNS(host, id, version) {
         const target = host.replace('.point', '');
         log.info({target, id}, 'Updating ZDNS');
         await blockchain.putZRecord(target, '0x' + id, version);
     }
 
+    /**
+     * Update the metadata record in IKV system
+     * 
+     * @param {*} host - the host/target to update
+     * @param {*} id - the id of the file uploaded to arweave 
+     * @param {*} version - the version of the entry
+     */
     async updateProxyMetadata(host, id, version) {
         const target = host.replace('.point', '');
         log.info({target, id}, 'Updating Proxy Metatada');
         await blockchain.putKeyValue(target, PROXY_METADATA_KEY, id, version);
     }
 
+    /**
+     * Get the last commit sha from the root directory of the DApp and update the
+     * IKV system with it for source code version control.
+     * 
+     * @param {string} host - the host/target involved 
+     * @param {string} deployPath - the path to the DApp 
+     * @param {string} version - the version of the entry
+     */
     async updateCommitSha(host, deployPath, version) {
         const target = host.replace('.point', '');
 
@@ -763,12 +1054,33 @@ class Deployer {
         }
     }
 
+    /**
+     * Updates a entry for point engine version or point SDK required for running a DApp.
+     * 
+     * @param {string} host - the host/target involved
+     * @param {string} key - key for the update POINT_SDK_VERSION or POINT_NODE_VERSION
+     * @param {string} value - the value for storing
+     * @param {string} version - the version of the dapp
+     */
     async updatePointVersionTag(host, key, value, version) {
         const target = host.replace('.point', '');
         log.info({target, key}, 'Updating Point Version Tag');
         await blockchain.putKeyValue(target, key, value, version);
     }
 
+
+    /**
+     * Update the IKV system inserting the values passed and calling contract methods passed as values.
+     * This method also upload files to arweave if they are passed in the keyvalue entry.
+     * 
+     * To better understand this method please see keyvalue entry in this file: https://github.com/pointnetwork/template.point/blob/main/point.deploy.json.
+     * 
+     * @param {string} target - the host involved
+     * @param {object} values - values to be stored in the IKV system. Can include contract_send and storage[content] also. 
+     * @param {string} deployPath - the path to the DApp 
+     * @param {boolean} deployContracts - flag which indicate if contract_send methods will be called.
+     * @param {string} version - the version of the DApp.
+     */
     async updateKeyValue(target, values = {}, deployPath, deployContracts = false, version) {
         const replaceContentsWithCids = async obj => {
             const result = {};
