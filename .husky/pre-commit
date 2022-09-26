@@ -4,3 +4,4 @@
 npm run fix
 # this is failing - will be re-enabled after merging my react refactoring PR
 #cd internal/explorer.point && npm run fix
+npm exec tsc
