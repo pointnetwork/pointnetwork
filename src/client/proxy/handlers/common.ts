@@ -238,10 +238,19 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
         }
     } catch (e) {
         const status = e.httpStatusCode || 500;
+        res.status(status);
         log.error({stack: e.stack, errorMessage: e.message}, 'Error from Renderer');
-        return res
-            .status(status)
-            .send('Error from Renderer: ' + JSON.stringify(e.message).replace(/^"+|"+$/g, ''));
+        const parsedErrMsg = JSON.stringify(e.message).replace(/^"+|"+$/g, '');
+
+        if (req.headers.accept?.includes('text/html')) {
+            res.header('Content-Type', 'text/html');
+            return templateManager.render(Template.ERROR, {
+                code: status,
+                message: parsedErrMsg
+            });
+        }
+
+        return res.send(`Error from Renderer: ${parsedErrMsg}`);
     }
 };
 
