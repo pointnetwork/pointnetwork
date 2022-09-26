@@ -108,6 +108,7 @@
     "hardhat": "^2.8.4",
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.0",
+    "husky": "^8.0.1",
     "jest": "^28.1.2",
     "jest-circus": "^28.1.2",
     "jest-junit": "^14.0.0",

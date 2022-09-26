@@ -1068,7 +1068,6 @@ class Deployer {
         await blockchain.putKeyValue(target, key, value, version);
     }
 
-
     /**
      * Update the IKV system inserting the values passed and calling contract methods passed as values.
      * This method also upload files to arweave if they are passed in the keyvalue entry.
