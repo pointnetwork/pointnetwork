@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
 import OwnerToIdentity from '../components/OwnerToIdenity';
 import PointAddressRow from '../components/PointAddressRow';
+import PublicKeyRow from '../components/PublicKeyRow';
 import Swal from 'sweetalert2';
 import { useAppContext } from '../context/AppContext';
 
@@ -57,7 +58,12 @@ const IkvEntry = (props) => {
             await window.point.contract.send({
                 contract: 'Identity',
                 method: 'ikvPut',
-                params: [handle, item.key, newValue, newVersionParam],
+                params: [
+                    handle.toLowerCase(),
+                    item.key,
+                    newValue,
+                    newVersionParam,
+                ],
             });
             setAllowEdition(false);
             onUpdated();
@@ -127,11 +133,6 @@ const IkvEntry = (props) => {
     );
 };
 
-function parsePublicKey(key) {
-    const matches = key.replace('0x', '').match(/.{1,8}/g);
-    return matches ? matches.join(' ') : key;
-}
-
 export default function Identity() {
     const { handle } = useParams();
     const [ikvset, setIkvset] = useState([]);
@@ -142,8 +143,6 @@ export default function Identity() {
     const [isLoadingDeployers, setIsLoadingDeployers] = useState(true);
     const [isOwner, setIsOwner] = useState(false);
     const [addAddress, setAddAddress] = useState('');
-    const [publicKey, setPublicKey] = useState('');
-    const [isLoadingPublicKey, setIsLoadingPublicKey] = useState(true);
     const [pointAddress, setPointAddress] = useState('');
     const {
         walletAddr,
@@ -172,35 +171,12 @@ export default function Identity() {
         );
     };
 
-    const fetchPublicKey = async () => {
-        if (isOwner) {
-            setPublicKey(walletPublicKey);
-            return;
-        }
-
-        setIsLoadingPublicKey(true);
-        try {
-            const result = await window.point.identity.publicKeyByIdentity({
-                identity: handle,
-            });
-            setPublicKey(result.data.publicKey);
-        } catch {
-            setPublicKey('n/a');
-        } finally {
-            setIsLoadingPublicKey(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchPublicKey();
-    }, [isOwner]);
-
     const fetchIkv = async () => {
         setIsLoadingIkv(true);
         const ikvsetFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getIkvList',
-            params: [handle],
+            params: [handle.toLowerCase()],
         });
         if (ikvsetFetched.data !== '') {
             setIkvset(
@@ -222,7 +198,7 @@ export default function Identity() {
         const deployersFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getDeployersList',
-            params: [handle],
+            params: [handle.toLowerCase()],
         });
         if (deployersFetched.data !== '') {
             setDeployers(
@@ -328,7 +304,7 @@ export default function Identity() {
             await window.point.contract.call({
                 contract: 'Identity',
                 method: 'addIdentityDeployer',
-                params: [handle, deployer],
+                params: [handle.toLowerCase(), deployer],
             });
             Swal.fire({
                 icon: 'success',
@@ -378,7 +354,7 @@ export default function Identity() {
                 contract: 'Identity',
                 method: 'ikvPut',
                 params: [
-                    handle,
+                    handle.toLowerCase(),
                     ikvNewEntryKey,
                     ikvNewEntryValue,
                     ikvNewEntryVersion,
@@ -422,6 +398,11 @@ export default function Identity() {
                         pointAddress={pointAddress}
                         isOwner={isOwner}
                     />
+                    <PublicKeyRow
+                        handle={handle}
+                        isOwner={isOwner}
+                        walletPublicKey={walletPublicKey}
+                    />
                     <tr>
                         <th>Domain Space:</th>
                         <td>
@@ -432,16 +413,6 @@ export default function Identity() {
                             >
                                 {getDomainSpace(handle)}
                             </a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Communication Public Key:</th>
-                        <td className="overflow-wrap: break-word;">
-                            {isLoadingPublicKey ? (
-                                <Loading />
-                            ) : (
-                                parsePublicKey(publicKey)
-                            )}
                         </td>
                     </tr>
                 </tbody>
