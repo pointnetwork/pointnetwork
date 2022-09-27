@@ -3,10 +3,10 @@ import Container from 'react-bootstrap/Container';
 import React, { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
 import { useAppContext } from '../context/AppContext';
-import parsePublicKey from '../utils/parsePublicKey';
 import Deployers from '../components/identity/Deployers';
 import IkvList from '../components/identity/IkvList';
 import PointAddressRow from '../components/PointAddressRow';
+import PublicKeyRow from '../components/PublicKeyRow';
 import getDomainSpace from '../utils/getDomainSpace';
 
 export default function Identity() {
@@ -14,8 +14,6 @@ export default function Identity() {
     const [owner, setOwner] = useState();
     const [isLoadingOwner, setIsLoadingOwner] = useState(true);
     const [isOwner, setIsOwner] = useState(false);
-    const [publicKey, setPublicKey] = useState('');
-    const [isLoadingPublicKey, setIsLoadingPublicKey] = useState(true);
     const [pointAddress, setPointAddress] = useState('');
     const {
         walletAddr,
@@ -42,28 +40,6 @@ export default function Identity() {
         fetchOwner();
     }, [handle]);
 
-    const fetchPublicKey = async () => {
-        if (isOwner) {
-            setPublicKey(walletPublicKey);
-            return;
-        }
-        setIsLoadingPublicKey(true);
-        try {
-            const result = await window.point.identity.publicKeyByIdentity({
-                identity: handle,
-            });
-            setPublicKey(result.data.publicKey);
-        } catch {
-            setPublicKey('n/a');
-        } finally {
-            setIsLoadingPublicKey(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchPublicKey();
-    }, [isOwner]);
-
     return (
         <Container className="p-3">
             <br />
@@ -84,6 +60,11 @@ export default function Identity() {
                         pointAddress={pointAddress}
                         isOwner={isOwner}
                     />
+                    <PublicKeyRow
+                        handle={handle}
+                        isOwner={isOwner}
+                        walletPublicKey={walletPublicKey}
+                    />
                     <tr>
                         <th>Domain Space:</th>
                         <td>
@@ -94,16 +75,6 @@ export default function Identity() {
                             >
                                 {getDomainSpace(handle)}
                             </a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Communication Public Key:</th>
-                        <td className="overflow-wrap: break-word;">
-                            {isLoadingPublicKey ? (
-                                <Loading />
-                            ) : (
-                                parsePublicKey(publicKey)
-                            )}
                         </td>
                     </tr>
                 </tbody>
