@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
+/**
+ * Render the identities page.
+ * 
+ * @returns {JSX.Element} - the identity page.
+ */
 export default function Identities() {
     const [identities, setIdentities] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -17,27 +22,36 @@ export default function Identities() {
         fetchIdentities();
     }, []);
 
+    /**
+     * Fetch a page of identities 
+     */
     const fetchIdentities = async () => {
+        //didn't fetched yet, so the first time start loading. 
+        //After that, infinite scroll handle showing the spinner.
         if (identitiesLength === 0) {
             setIsLoading(true);
         }
-
+        // gets the length of all identities
         const identitiesLengthFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getIdentitiesLength',
             params: [],
         });
 
+        // set the identities length
         setIdentitiesLength(identitiesLengthFetched.data);
 
+        //fetch the data
         const ids = await window.point.contract.call({
             contract: 'Identity',
             method: 'getPaginatedIdentities',
             params: [cursor, PAGE_SIZE],
         });
 
+        //set the position of the cursor for infinite scroll
         setCursor(cursor + ids.data.length);
 
+        //checks if has more data to fetch
         if (
             identities.length + ids.data.length >=
             identitiesLengthFetched.data
@@ -45,6 +59,7 @@ export default function Identities() {
             setHasMore(false);
         }
 
+        //set the identities state variable variable 
         setIdentities(
             identities.concat(
                 ids.data.map((e) => {
@@ -52,12 +67,24 @@ export default function Identities() {
                 }),
             ),
         );
-
+        
+        //If is the first time fetching data stops loading.
+        //After that, infinite scroll handle showing the spinner.
         if (identitiesLength === 0) {
             setIsLoading(false);
         }
     };
 
+    /**
+     * Renders one identity entry
+     * 
+     * @param {object} id - an identity object
+     * @param {string} id.handle - the identity handle
+     * @param {address} id.owner - the address of the owner of the identity
+     * @param {boolean} id.hasDomain - if an identity is a dapp
+     * 
+     * @returns {JSX.Element} - the identity row
+     */
     const renderIdentityEntry = (id) => {
         const domainExists = id.hasDomain;
 

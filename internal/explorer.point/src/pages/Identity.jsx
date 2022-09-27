@@ -9,15 +9,38 @@ import PublicKeyRow from '../components/PublicKeyRow';
 import Swal from 'sweetalert2';
 import { useAppContext } from '../context/AppContext';
 
+/**
+ * Checks if a string is in a hash format
+ * 
+ * @param {string} str - string to be checked 
+ * @returns bool - if the string is a hash
+ */
 const isHash = (str) => {
     const s = str.startsWith('0x') ? str.substr(2) : str;
     if (s.length !== 64) return false;
     return new RegExp('^[0-9a-fA-F]+$').test(s);
 };
 
+/**
+ * Get the domain name for the handle passed.
+ * 
+ * @param {string} handle - the handle
+ * @returns {string} - domain name
+ */
 const getDomainSpace = (handle) =>
     handle.endsWith('.sol') ? handle : `${handle}.point`;
 
+
+/**
+ * Compoment that renders an IKV entry for display and edit it.
+ * 
+ * @param {object} props 
+ * @param {string} props.handle - the handle which the entry will be edited
+ * @param {object} props.item - the item to be displayed and edited with key, value and version props
+ * @param {function} props.onUpdated - callback called when the update 
+ * @param {boolean} props.showEdit - if the edition is enabled 
+ * @returns {JSX.Element} an IKV Entry
+ */
 const IkvEntry = (props) => {
     const { handle, item, onUpdated, showEdit } = props;
     const [loading, setLoading] = useState(false);
@@ -25,12 +48,18 @@ const IkvEntry = (props) => {
     const [newValue, setNewValue] = useState(item.value);
     const [newVersion, setNewVersion] = useState(item.version);
 
+    /**
+     * called to display the edition form for the item
+     */
     const allowEdition = () => {
         setNewValue(item.value);
         setNewVersion(item.version);
         setAllowEdition(true);
     };
 
+    /**
+     * Called to save the changes in the edit form for the IKV item.
+     */
     const saveChanges = async () => {
         setLoading(true);
         try {
@@ -65,7 +94,10 @@ const IkvEntry = (props) => {
                     newVersionParam,
                 ],
             });
+
+            //disable edition
             setAllowEdition(false);
+            //fetch item again
             onUpdated();
             setLoading(false);
         } catch (error) {
@@ -133,6 +165,11 @@ const IkvEntry = (props) => {
     );
 };
 
+/**
+ * Render the identity page
+ * 
+ * @returns {JSX.Element} identity page
+ */
 export default function Identity() {
     const { handle } = useParams();
     const [ikvset, setIkvset] = useState([]);
@@ -158,6 +195,9 @@ export default function Identity() {
         fetchDeployers();
     }, [handle]);
 
+    /**
+     * Retrieve the owner data 
+     */
     const fetchOwner = async () => {
         setIsLoadingOwner(true);
         const result = await window.point.identity.identityToOwner({
@@ -171,6 +211,9 @@ export default function Identity() {
         );
     };
 
+    /**
+     * fetch ikv data
+     */
     const fetchIkv = async () => {
         setIsLoadingIkv(true);
         const ikvsetFetched = await window.point.contract.call({
@@ -193,6 +236,9 @@ export default function Identity() {
         setIsLoadingIkv(false);
     };
 
+    /**
+     * Fetch deployers data
+     */
     const fetchDeployers = async () => {
         setIsLoadingDeployers(true);
         const deployersFetched = await window.point.contract.call({
@@ -215,6 +261,15 @@ export default function Identity() {
         setIsLoadingDeployers(false);
     };
 
+    /**
+     * Render a deployer entry
+     * 
+     * @param {object} deployer
+     * @param {address} deployer.deployer - address of the deployer
+     * @param {number} deployer.blockNumber - block number of latest change in the deployer
+     * @param {boolean} deployer.allowed - if the deployer is allowed or revoked
+     * @returns {JSX.Element} - deployer entry
+     */
     const renderDeployerEntry = (deployer) => {
         return (
             <tr key={deployer.deployer}>
@@ -274,6 +329,11 @@ export default function Identity() {
         }
     };
 
+    /**
+     * Revoke the deployer permission from one address in the seletect identity 
+     * 
+     * @param {address} deployer - address of the deployer to be revoked
+     */
     const revokeDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
@@ -298,6 +358,12 @@ export default function Identity() {
         }
     };
 
+    /**
+     * Grant the deployer permission from one address in the seletect identity 
+     * 
+     * @param {address} deployer - the address for the deployer permission be granted
+     * @returns {boolean} if the operation succeed.
+     */
     const activateDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
@@ -324,18 +390,26 @@ export default function Identity() {
         }
     };
 
+    //values for the fields from the form for new entry
     const [ikvNewEntryKey, setIkvNewEntryKey] = useState('');
     const [ikvNewEntryValue, setIkvNewEntryValue] = useState('');
     const [ikvNewEntryVersion, setIkvNewEntryVersion] = useState('');
 
+    //flag to check if is adding a new ikv entry
     const [addingNewIkv, setAddingNewIkv] = useState(false);
 
+    //method to clean the form
     const cleanForm = () => {
         setIkvNewEntryKey('');
         setIkvNewEntryValue('');
         setIkvNewEntryVersion('');
     };
 
+    /**
+     * Add an IKV entry
+     * 
+     * @returns void
+     */
     const addIkvEntry = async () => {
         setAddingNewIkv(true);
         const regexp = new RegExp(/\d+\.\d+\.\d+/);
@@ -369,12 +443,14 @@ export default function Identity() {
         }
     };
 
+    //enable add entry button
     const addEntryButtonEnabled =
         !addingNewIkv &&
         Boolean(ikvNewEntryKey) &&
         Boolean(ikvNewEntryValue) &&
         Boolean(ikvNewEntryVersion);
 
+    //checks if can show the ikv edit form
     const showIkvEditForm =
         walletAddr.toLowerCase() === owner?.toLowerCase() && isPointIdentity;
 
@@ -510,7 +586,7 @@ export default function Identity() {
                     </>
                 )}
             </div>
-
+            
             <h3>Deployers:</h3>
             {isOwner && isPointIdentity ? (
                 <div className="row g-3">
