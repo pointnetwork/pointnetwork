@@ -282,14 +282,18 @@ const tryFulfillZhtmlRequest = async (
         renderer = new Renderer({rootDirId: cfg.remoteRootDirId} as any);
     }
 
-    res.header('Content-Type', 'text/html');
-
     // TODO: sanitize
-    return await renderer.render(templateId, templateFileContents, host, {
+    const rendered = await renderer.render(templateId, templateFileContents, host, {
         ...routeParams,
         ...queryParams,
         ...((req.body as Record<string, unknown>) ?? {})
     });
+    const contentType = detectContentType(Buffer.from(rendered));
+    if (!(contentType.match('text/html'))) {
+        throw new Error(`Not a valid HTML: ${templateFilename}`);
+    }
+    res.header('Content-Type', contentType);
+    return rendered;
 };
 
 const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: string) => {
