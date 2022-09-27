@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Container from 'react-bootstrap/Container';
 import React, { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
@@ -11,6 +11,7 @@ import getDomainSpace from '../utils/getDomainSpace';
 
 export default function Identity() {
     const { handle } = useParams();
+    const navigate = useNavigate();
     const [owner, setOwner] = useState();
     const [isLoadingOwner, setIsLoadingOwner] = useState(true);
     const [isOwner, setIsOwner] = useState(false);
@@ -48,8 +49,22 @@ export default function Identity() {
             <table className="table table-bordered table-primary table-striped table-hover table-responsive">
                 <tbody>
                     <tr>
-                        <th>Handle:</th>
-                        <td>@{handle}</td>
+                        <th className="vertical-center">Handle:</th>
+                        <td className="with-content-right">
+                            @{handle}
+                            {isOwner && handle.endsWith('.sol') ? (
+                                <button
+                                    onClick={() => navigate('/registration')}
+                                    className="btn btn-sm btn-link"
+                                    title={
+                                        'You can create a Point identity to use in Point Network ' +
+                                        'instead of your .sol domain'
+                                    }
+                                >
+                                    Register Point Identity
+                                </button>
+                            ) : null}
+                        </td>
                     </tr>
                     <tr>
                         <th>Owner:</th>
