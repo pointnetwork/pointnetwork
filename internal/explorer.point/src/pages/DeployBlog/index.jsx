@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
 import { useState } from 'react';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
@@ -8,14 +8,15 @@ import Col from 'react-bootstrap/Col';
 import Image from 'react-bootstrap/Image';
 import Carousel from 'react-bootstrap/Carousel';
 import FormControl from 'react-bootstrap/FormControl';
-import image1 from '../assets/blog-images/blogsoftware-1.png';
-import image2 from '../assets/blog-images/blogsoftware-2.png';
-import image3 from '../assets/blog-images/blogsoftware-3.png';
-import image4 from '../assets/blog-images/blogsoftware-4.png';
-import image5 from '../assets/blog-images/blogsoftware-5.png';
-import image6 from '../assets/blog-images/blogsoftware-6.png';
-import './deploy.css';
+import image1 from '../../assets/blog-images/blogsoftware-1.png';
+import image2 from '../../assets/blog-images/blogsoftware-2.png';
+import image3 from '../../assets/blog-images/blogsoftware-3.png';
+import image4 from '../../assets/blog-images/blogsoftware-4.png';
+import image5 from '../../assets/blog-images/blogsoftware-5.png';
+import image6 from '../../assets/blog-images/blogsoftware-6.png';
+import './DeplyBlog.css';
 
+// TODO: do something better than hard-coding
 const VERSION = '0.1';
 const ROOT_DIR_ID =
     '6ce5c3f525128f4173cd4931870b28d05280d66bd206826be1f23242d05c94bb';
@@ -24,7 +25,7 @@ const ROUTES_FILE_ID =
 const CONTRACT_SOURCE_ID =
     '042a2609875d2f5b628896adfc3affec2fd8aaf104f8824918cd94086872dc66';
 
-const blogImagesCarouselData = [
+const BLOG_IMAGES = [
     { caption: 'Create blog posts', img: image1 },
     { caption: 'Share on your wall', img: image2 },
     { caption: 'Blog post preview - 1', img: image3 },
@@ -76,7 +77,10 @@ const DeployBlog = () => {
             const formData = new FormData();
             formData.append('contractNames', '["Blog"]');
             formData.append('version', VERSION);
-            formData.append('target', `${subidentity}.${walletIdentity}`);
+            formData.append(
+                'target',
+                `${subidentity}.${walletIdentity.toLowerCase()}`,
+            );
             formData.append(
                 'dependencies',
                 '["@openzeppelin/contracts", "@openzeppelin/contracts-upgradeable"]',
@@ -100,7 +104,7 @@ const DeployBlog = () => {
             await axios.post(
                 '/v1/api/identity/ikvPut',
                 {
-                    identity: `${subidentity}.${walletIdentity}`,
+                    identity: `${subidentity}.${walletIdentity.toLowerCase()}`,
                     key: '::rootDir',
                     value: ROOT_DIR_ID,
                     _csrf: window.localStorage.getItem('csrf_token'),
@@ -115,7 +119,7 @@ const DeployBlog = () => {
             await axios.post(
                 '/v1/api/identity/ikvPut',
                 {
-                    identity: `${subidentity}.${walletIdentity}`,
+                    identity: `${subidentity}.${walletIdentity.toLowerCase()}`,
                     key: 'zdns/routes',
                     value: ROUTES_FILE_ID,
                     _csrf: window.localStorage.getItem('csrf_token'),
@@ -174,8 +178,8 @@ const DeployBlog = () => {
                         deployed.
                     </p>
                     <p className="mt-0 text-secondary">
-                        A great option is "blog.{walletIdentity}.point", but you
-                        can pick any name you want.
+                        A great option is &quot;blog.{walletIdentity}
+                        .point&quot;, but you can pick any name you want.
                     </p>
                     <Row className="align-items-center mb-3">
                         <Col style={{ paddingRight: 0 }}>
@@ -191,14 +195,15 @@ const DeployBlog = () => {
                         </Col>
                         <Col>.{walletIdentity}.point</Col>
                     </Row>
+                    <p className="mt-0 text-secondary">{loading}</p>
                     <Button
                         variant="primary"
                         onClick={() => {
-                            deploy(subhandle);
+                            deploy(subhandle.toLowerCase());
                         }}
-                        disabled={loading || success || !subhandle}
+                        disabled={Boolean(loading) || success || !subhandle}
                     >
-                        Deploy
+                        {loading ? 'Deploying...' : 'Deploy'}
                     </Button>
                 </Col>
                 <Col xs={1}></Col>
@@ -207,7 +212,7 @@ const DeployBlog = () => {
                     className="position-relative d-flex flex-column align-items-center justify-content-center"
                 >
                     <h4 className="mb-3 text-white">
-                        {blogImagesCarouselData[activeSlideIndex].caption}
+                        {BLOG_IMAGES[activeSlideIndex].caption}
                     </h4>
                     <Carousel
                         interval={2000}
@@ -216,7 +221,7 @@ const DeployBlog = () => {
                         pause={false}
                         onSlide={setActiveSlideIndex}
                     >
-                        {blogImagesCarouselData.map((item) => (
+                        {BLOG_IMAGES.map((item) => (
                             <Carousel.Item key={item.caption}>
                                 <Image
                                     src={item.img}

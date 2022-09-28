@@ -1,9 +1,11 @@
 import Container from 'react-bootstrap/Container';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Loading from '../components/Loading';
 import ReceiveModal from '../components/wallet/ReceiveModal';
 import SendModal from '../components/wallet/SendModal';
 import ErrorBlock from '../components/ErrorBlock';
+import WalletRow from '../components/wallet/WalletRow';
+import TokenRow from '../components/wallet/TokenRow';
 
 window.openTelegram = async () => {
     fetch('/v1/api/web2/open', {
@@ -18,88 +20,6 @@ window.openTelegram = async () => {
             _csrf: localStorage.getItem('csrf_token'),
         }),
     });
-};
-
-const WalletRow = ({
-    wallet,
-    openReceiveModal,
-    openSendModal,
-    walletHistory,
-}) => {
-    return (
-        <tr key={wallet.currency_code}>
-            <td>
-                <strong>{wallet.currency_name}</strong> ({wallet.currency_code})
-            </td>
-            <td className="mono">{wallet.alias || wallet.address}</td>
-            <td style={{ textAlign: 'right' }}>
-                {isNaN(Number(wallet.balance))
-                    ? wallet.balance
-                    : wallet.balance.toFixed(8)}{' '}
-                {wallet.currency_code}
-            </td>
-            <td style={{ textAlign: 'right' }}>
-                <a
-                    href="#"
-                    className="btn btn-sm btn-warning"
-                    onClick={() =>
-                        openSendModal({
-                            networkType: wallet.type,
-                            network: wallet.network,
-                        })
-                    }
-                >
-                    Send
-                </a>
-                &nbsp;
-                <a
-                    href="#"
-                    className="btn btn-sm btn-success"
-                    onClick={() =>
-                        openReceiveModal(wallet.currency_code, wallet.address)
-                    }
-                >
-                    Receive
-                </a>
-                &nbsp;
-                <a
-                    href="#"
-                    className="btn btn-sm btn-info"
-                    onClick={() => walletHistory(wallet.currency_code)}
-                >
-                    History
-                </a>
-            </td>
-        </tr>
-    );
-};
-
-const TokenRow = ({ token, network, openSendModal }) => {
-    return (
-        <tr key={token.address}>
-            <td>
-                <strong>{token.name}</strong>
-            </td>
-            <td className="mono">{token.address}</td>
-            <td style={{ textAlign: 'right' }}>{token.balance}</td>
-            <td style={{ textAlign: 'right' }}>
-                <a
-                    href="#"
-                    className="btn btn-sm btn-warning"
-                    onClick={() =>
-                        openSendModal({
-                            networkType: 'eth',
-                            tokenAddress: token.address,
-                            network,
-                            decimals: token.decimals,
-                        })
-                    }
-                >
-                    Send
-                </a>
-            </td>
-        </tr>
-    );
 };
 
 export default function Wallet() {
@@ -270,8 +190,8 @@ export default function Wallet() {
                         </table>
                         <br />
                         <h1>ERC20 Tokens</h1>
-                        {Object.keys(tokens).map((network) => (
-                            <>
+                        {Object.keys(tokens).map((network, index) => (
+                            <Fragment key={index}>
                                 <h2>{network}</h2>
                                 <table className="table table-bordered table-striped table-hover table-responsive table-primary">
                                     <tbody>
@@ -317,7 +237,7 @@ export default function Wallet() {
                                         )}
                                     </tbody>
                                 </table>
-                            </>
+                            </Fragment>
                         ))}
                     </>
                 )}

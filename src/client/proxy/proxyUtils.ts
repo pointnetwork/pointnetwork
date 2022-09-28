@@ -33,7 +33,7 @@ export const getContentTypeFromExt = (ext: string) => {
     if (ext === 'zhtml') {
         ext = 'html';
     }
-    return mimeTypes.lookup('.' + ext) ?? 'application/octet-stream';
+    return mimeTypes.lookup('.' + ext);
 };
 
 export const isDirectoryJson = (text: string) => {

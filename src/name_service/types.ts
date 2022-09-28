@@ -1,8 +1,10 @@
 export type PointDomainData = {
     identity: string;
     isAlias: boolean;
-    routesId?: string;
-    rootDirId?: string;
+    routesId: string;
+    rootDirId: string;
+    pointAddress: string;
+    pointPublicKey: string;
 };
 
 export type DomainRegistry = {

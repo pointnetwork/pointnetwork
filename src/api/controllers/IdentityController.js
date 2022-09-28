@@ -14,6 +14,7 @@ const {getIdentity} = require('../../name_service/identity');
 const config = require('config');
 const Web3 = require('web3');
 const {addToCache} = require('../../name_service/identity-cache');
+const {parseDomainRegistry} = require('../../name_service/registry');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
 
@@ -29,6 +30,8 @@ const IKV_PUT_INTERFACE = {
     stateMutability: 'nonpayable',
     type: 'function'
 };
+
+const DEFAULT_NETWORK = config.get('network.default_network');
 
 async function registerBountyReferral(address, type) {
     const referralCode = await getReferralCode();
@@ -140,20 +143,27 @@ class IdentityController extends PointSDKController {
         const identity = this.req.params.identity;
         let owner = '';
         let network = '';
+        let pointAddress = '';
+
         if (identity.endsWith('.sol')) {
             const registry = await solana.resolveDomain(identity);
+            const domainData = parseDomainRegistry(registry);
             owner = registry.owner;
+            pointAddress = domainData.pointAddress;
             network = 'solana';
         } else if (identity.endsWith('.eth')) {
             const registry = await ethereum.resolveDomain(identity);
             owner = registry.owner;
+            pointAddress = registry.owner;
             network = 'ethereum';
         } else {
-            owner = await ethereum.ownerByIdentity(identity);
+            const address = await ethereum.ownerByIdentity(identity);
+            owner = address;
+            pointAddress = address;
             network = 'point';
         }
 
-        return this._response({owner, network});
+        return this._response({owner, network, pointAddress});
     }
 
     async ownerToIdentity() {
@@ -179,9 +189,16 @@ class IdentityController extends PointSDKController {
 
     async publicKeyByIdentity() {
         const identity = this.req.params.identity;
-        if (identity.endsWith('.sol') || identity.endsWith('.eth')) {
+
+        if (identity.endsWith('.eth')) {
             this.rep.status(422);
-            return this._status(422)._response('This endpoint only supports Point identities.');
+            return this._status(422)._response('This endpoint does not support ENS identities.');
+        }
+
+        if (identity.endsWith('.sol')) {
+            const registry = await solana.resolveDomain(identity);
+            const {pointPublicKey} = parseDomainRegistry(registry);
+            return this._response({publicKey: pointPublicKey ? `0x${pointPublicKey}` : ''});
         }
 
         const publicKey = await ethereum.commPublicKeyByIdentity(identity);
@@ -429,7 +446,7 @@ class IdentityController extends PointSDKController {
     }
 
     async ikvPut() {
-        const {identity, key, value, version = 'latest'} = this.req.body;
+        const {identity, key, value, version = 'latest', network = DEFAULT_NETWORK} = this.req.body;
 
         try {
             const web3 = new Web3();
@@ -449,7 +466,7 @@ class IdentityController extends PointSDKController {
                     }
                 ],
                 id: new Date().getTime(),
-                network: 'xnet'
+                network
             });
             this.rep.status(200).send('Success');
         } catch (e) {

@@ -10,9 +10,11 @@ import {getSecretToken} from '../util';
 const ws_routes = require('./ws_routes');
 const api_routes = require('./api_routes');
 
+const IS_GATEWAY = config.get('mode') === 'gateway';
+
 let secretToken = '';
 const apiServer = fastify({
-    logger: logger.child({module: 'ApiServer.server'}),
+    logger: logger.child({module: 'Api Fastify server'}, {level: 'warn'}),
     pluginTimeout: 20000
     // todo: more configuration?
 });
@@ -23,6 +25,10 @@ apiServer.register(fastifyWs, {options: {clientTracking: true}});
 
 for (const apiRoute of api_routes) {
     const [controllerName, actionName] = apiRoute[2].split('@');
+
+    if (IS_GATEWAY && apiRoute[3]?.gatewayDisabled) {
+        continue;
+    }
 
     apiServer.route({
         method: apiRoute[0] as HTTPMethods,

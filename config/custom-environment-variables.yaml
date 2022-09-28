@@ -1,6 +1,7 @@
 datadir: DATADIR
 deployer_account: DEPLOYER_ACCOUNT
 mode: MODE
+sdk_file: SDK_FILE
 api:
   address: API_ADDRESS
   port: API_PORT

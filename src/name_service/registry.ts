@@ -1,5 +1,15 @@
 import {DomainRegistry, PointDomainData} from './types';
 import {parseCookieString} from '../util';
+import {keccak256} from 'ethereumjs-util';
+import {toChecksumAddress} from '../network/providers/ethereum';
+
+export const isValidPublicKeyString = (key: string): boolean => (
+    typeof key === 'string' && /^(0x)?[a-fA-F0-9]{128}$/.test(key)
+);
+
+export const getAddressFromPublicKey = (key: Buffer | string): Buffer => (
+    keccak256(Buffer.isBuffer(key) ? key : Buffer.from(key.replace('0x', ''), 'hex')).slice(-20)
+);
 
 /**
  * Parses a registry obtained from SNS or ENS and returns
@@ -7,20 +17,17 @@ import {parseCookieString} from '../util';
  */
 export function parseDomainRegistry(registry: DomainRegistry): PointDomainData {
     const values = parseCookieString(registry.content ?? '');
+    const {pn_key: pointPublicKey = ''} = values || {};
+    const pointAddress = isValidPublicKeyString(pointPublicKey)
+        ? toChecksumAddress(`0x${getAddressFromPublicKey(pointPublicKey).toString('hex')}`)
+        : '';
 
-    // If the registry has a `pn_alias`, it means we need to redirect
-    // all requests to the `.sol` domain to the `.point` alias.
-    if (values['pn_alias']) {
-        return {identity: values['pn_alias'], isAlias: true};
-    }
-
-    // The registry does not have a `pn_alias`, which means we need to fetch
-    // the content using the routes ID and root directory ID stored in the
-    // domain registry.
     return {
-        identity: '',
-        isAlias: false,
-        routesId: values['pn_routes'] || '',
-        rootDirId: values['pn_root'] || ''
+        pointAddress,
+        pointPublicKey,
+        identity: values.pn_alias || '',
+        isAlias: Boolean(values.pn_alias),
+        routesId: values.pn_alias ? '' : values.pn_routes || '',
+        rootDirId: values.pn_alias ? '' : values.pn_root || ''
     };
 }
