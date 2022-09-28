@@ -9,17 +9,14 @@ import InfiniteScroll from 'react-infinite-scroll-component';
  * 
  * @returns {JSX.Element} - ZApps page
  */
+const PAGE_SIZE = 100;
+
 export default function Zapps() {
     const [zapps, setZapps] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [hasMore, setHasMore] = useState(true);
     const [dappsLength, setDappsLength] = useState(0);
     const [cursor, setCursor] = useState(0);
-
-    const PAGE_SIZE = 100;
-    useEffect(() => {
-        fetchZapps();
-    }, []);
 
     /**
      * Fetchs the zapps
@@ -72,6 +69,11 @@ export default function Zapps() {
             setIsLoading(false);
         }
     };
+
+    
+    useEffect(() => {
+        fetchZapps();
+    }, []);
 
     /**
      * Renders one zapp entry 

@@ -30,7 +30,7 @@ const PointAddressRow = ({ handle, pointAddress, isOwner }) => {
         <tr>
             <th>Point Address:</th>
             <td style={{ display: 'flex', alignItems: 'center' }}>
-                You don't have a POINT address linked to your SOL domain.
+                You don&apos;t have a POINT address linked to your SOL domain.
                 <button
                     className="btn btn-sm btn-outline-success"
                     onClick={linkPointToSol}

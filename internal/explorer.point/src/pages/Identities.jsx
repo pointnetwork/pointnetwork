@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
+const PAGE_SIZE = 100;
+
 /**
  * Render the identities page.
  * 
@@ -15,8 +17,6 @@ export default function Identities() {
     const [hasMore, setHasMore] = useState(true);
     const [identitiesLength, setIdentitiesLength] = useState(0);
     const [cursor, setCursor] = useState(0);
-
-    const PAGE_SIZE = 100;
 
     useEffect(() => {
         fetchIdentities();
