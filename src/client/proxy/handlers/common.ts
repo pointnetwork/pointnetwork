@@ -12,7 +12,7 @@ import logger from '../../../core/log';
 import blockchain from '../../../network/providers/ethereum';
 import {getContentTypeFromExt, matchRouteAndParams} from '../proxyUtils';
 // @ts-expect-error no types for package
-import {detectContentType} from 'detect-content-type';
+import detectContentType from 'detect-content-type';
 import config from 'config';
 import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
@@ -261,7 +261,7 @@ const tryFulfillZhtmlRequest = async (
     host: string
 ) => {
     const {req, res} = cfg;
-    const {queryParams, ext} = await parseRequestForProxy(req);
+    const {queryParams} = await parseRequestForProxy(req);
 
     // This is a ZHTML file
     let templateFileContents, templateId;
@@ -291,16 +291,18 @@ const tryFulfillZhtmlRequest = async (
         renderer = new Renderer({rootDirId: cfg.remoteRootDirId} as any);
     }
 
-    const contentTypeFromExt = getContentTypeFromExt(ext || '');
-    const contentType = contentTypeFromExt || 'text/html';
-    res.header('Content-Type', contentType);
-
     // TODO: sanitize
-    return await renderer.render(templateId, templateFileContents, host, {
+    const rendered = await renderer.render(templateId, templateFileContents, host, {
         ...routeParams,
         ...queryParams,
         ...((req.body as Record<string, unknown>) ?? {})
     });
+    const contentType = detectContentType(Buffer.from(rendered));
+    if (!(contentType.match('text/html'))) {
+        throw new Error(`Not a valid HTML: ${templateFilename}`);
+    }
+    res.header('Content-Type', contentType);
+    return rendered;
 };
 
 const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: string) => {
@@ -333,7 +335,10 @@ const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: s
         file = await getFile(fileId, null);
     }
 
-    const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
+    let contentType = detectContentType(file);
+    if (contentType.match('text/plain') && ext) {
+        contentType = getContentTypeFromExt(ext);
+    }
     res.header('Content-Type', contentType);
 
     return file;
