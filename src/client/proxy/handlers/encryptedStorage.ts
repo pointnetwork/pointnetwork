@@ -30,10 +30,13 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
                 return res.status(400).send('No files in the body');
             }
 
+            //get the identities that will be used for encyption 
             const identities = req.headers['identities']?.toString();
             if (identities === undefined || identities === ''){
                 return res.status(400).send('No identity passed');
             }
+
+            //get the pks that will be used for encyption 
             const pks = [];
             for (const id of identities.split(',')){
                 const publicKey = await blockchain.commPublicKeyByIdentity(id);
@@ -48,9 +51,17 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
             dataArray = dataArray.concat(metadata?.split(','));
 
             const {host} = req.headers;
+
+            //call the encryption method
             const encryptedData = await encryptMultipleData(host, dataArray, pks);
+
+            //get for now only one encrypted data for upload, can be multiple in a loop in the future.
             const dataToUpload = Buffer.from(encryptedData.encryptedMessages[0], 'hex');
+
+            //upload the file
             const uploadedId = await uploadFile(dataToUpload);
+
+            //return the encrypted data and the encrypted symmetric keys
             return {
                 data: uploadedId,
                 metadata: encryptedData.encryptedMessages.slice(1),
@@ -59,31 +70,41 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
         });
     });
 
+    // gets an encrypted file, decrypts it and return to the user
     server.get('/_encryptedStorage/:hash', async (req: FastifyRequest<{Params: {hash: string}}>, res) => {
         await checkAuthToken(req, res);
         let file;
+
+        //get the encrypted symmetric key from the query string
         const qs = req.query as {eSymmetricObj: string, symmetricObj: string};
         try {
+            //get the file
             file = await getFile(req.params.hash, null);
         } catch (e) {
             return res.status(404).send('Not found');
         }
         const {host} = req.headers;
         const fileBuffer = Buffer.from(file, 'hex');
+
+        //get the private key from the logged user
         const privateKey = getNetworkPrivateKey();
 
+        //decrypt the file
         let decryptedData;
         if (qs.eSymmetricObj){
+            //using and encrypted symmetric key
             const encryptedSymmetricObj = getEncryptedSymetricObjFromJSON(
                 JSON.parse(qs.eSymmetricObj)
             );
             decryptedData = await decryptData(host, fileBuffer, encryptedSymmetricObj, privateKey);
         } else if (qs.symmetricObj){
+            //using an decrypted symmetric key
             decryptedData = await decryptDataWithDecryptedKey(host, fileBuffer, qs.symmetricObj);
         } else {
             throw new Error('No symmetric obj passed');
         }
 
+        //return the data for the user.
         const fileString = decryptedData.plaintext.toString();
         file = decryptedData.plaintext;
 

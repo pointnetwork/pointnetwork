@@ -1,6 +1,17 @@
 const crypto = require('crypto');
 const eccrypto = require('eccrypto');
 
+/**
+ * Encrypt multiple data with multiple public keys. Each data will be encrypted with a different symmetric key
+ * and then will be encrypted for each public key passed. 
+ * 
+ * @param {string} host - the host for the data to be encrypted
+ * @param {string[]} dataArray - an array of data to be encrypted. Each data will be encrypted with a different symmetric key.
+ * @param {string[]} publicKeys - an array of public keys for encrypting data.
+ * 
+ * @returns {object} {encryptedMessages - array of encrypted data, encryptedMessagesSymmetricObjs - matrix of Symmetric Objects for each data and each public key passed}
+ * 
+ */
 module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
     //Create response arrays
     const encryptedMessages = [];
@@ -68,6 +79,14 @@ module.exports.encryptMultipleData = async (host, dataArray, publicKeys) => {
     };
 };
 
+/**
+ * Encrypt data using a symmetric key generated and a public key passed (digital envelope).
+ * 
+ * @param {string} host - the host for the data to be encrypted
+ * @param {string} plaintext - the data to be encrypted
+ * @param {string} publicKey - the public key for using in the encryption
+ * @returns {object} - {encryptedMessage - the encrypted data, encryptedSymmetricObj - the symmetric object, encryptedSymmetricObjJSON - the symmetric object as json}
+ */
 module.exports.encryptData = async (host, plaintext, publicKey) => {
     // Secret symmetric key, generated randomly
     const symmetricKey = crypto.randomBytes(24);
@@ -115,6 +134,15 @@ module.exports.encryptData = async (host, plaintext, publicKey) => {
     };
 };
 
+/**
+ * Decrypts the symmetric object using the private key passed. 
+ * 
+ * @param {string} host - the host for the data to be encrypted
+ * @param {object} encryptedSymmetricObj - symmetryc object encrypted with a public key
+ * @param {string} privateKey - the private key for decrypt the symmetric object
+ * 
+ * @returns {string} - the symmetric key decrypted.
+ */
 module.exports.decryptSymmetricKey = async (host, encryptedSymmetricObj, privateKey) => {
     const decryptHostNameHash = crypto.createHash('sha256');
     decryptHostNameHash.update(host);
@@ -129,6 +157,14 @@ module.exports.decryptSymmetricKey = async (host, encryptedSymmetricObj, private
     return symmetricObj.toString();
 };
 
+/**
+ * Decrypt data using a decypted symmetric key.
+ * 
+ * @param {string} host - the host which will 
+ * @param {string} cyphertext - the encrypted text 
+ * @param {object} symmetricObj - the decrypted symmetric object
+ * @returns {object} - {plaintext - the decrypted text, hostNameHash - hash of host name used, symmetricKey - the symmetric key used, iv - intialization vector used}
+ */
 module.exports.decryptDataWithDecryptedKey = async (host, cyphertext, symmetricObj) => {
     const decryptHostNameHash = crypto.createHash('sha256');
     decryptHostNameHash.update(host);
@@ -146,6 +182,16 @@ module.exports.decryptDataWithDecryptedKey = async (host, cyphertext, symmetricO
     return {plaintext, hostNameHash, symmetricKey, iv};
 };
 
+/**
+ * Decrypts data using a private key and an encryptedSymmetricObj (which was encrypted using the public key).
+ * 
+ * @param {string} host - the host for decryption
+ * @param {string} cyphertext - the encrypted text
+ * @param {object} encryptedSymmetricObj - the encrypted symmetric object
+ * @param {string} privateKey - the private key for decryption
+ * 
+ * @returns object - {plaintext - decrypted text, hostNameHash - hash of host name used, symmetricKey - the symmetric key used, iv - intialization vector used}
+ */
 module.exports.decryptData = async (host, cyphertext, encryptedSymmetricObj, privateKey) => {
     const decryptHostNameHash = crypto.createHash('sha256');
     decryptHostNameHash.update(host);
@@ -167,32 +213,14 @@ module.exports.decryptData = async (host, cyphertext, encryptedSymmetricObj, pri
     return {plaintext, hostNameHash, symmetricKey, iv};
 };
 
-module.exports.decryptMultipleData = async (host, dataArray, encryptedSymmetricObj, privateKey) => {
-    const decryptHostNameHash = crypto.createHash('sha256');
-    decryptHostNameHash.update(host);
-    const symmetricObj = await eccrypto.decrypt(
-        Buffer.from(privateKey, 'hex'),
-        encryptedSymmetricObj
-    );
-    const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|');
-    if (decryptHostNameHash.digest('hex') !== hostNameHash) {
-        throw new Error('Host is invalid');
-    }
+//deleted unused and not working method.
 
-    const decryptedDataArray = [];
-    for (const data of dataArray){
-        const decipher = crypto.createDecipheriv(
-            'aes192',
-            Buffer.from(symmetricKey, 'hex'),
-            Buffer.from(iv, 'hex')
-        );
-        const plaintext = Buffer.concat([decipher.update(data), decipher.final()]);
-        decryptedDataArray.push(plaintext);
-    }
-
-    return {decryptedDataArray, hostNameHash, symmetricKey, iv};
-};
-
+/**
+ * Converts from JSON to object the symmetric object
+ * 
+ * @param {object} encryptedSymmetricObjJSON - encrypted object in json format
+ * @returns {object} encryptedSymmetricObj - encrypted object in original format (binary parts)
+ */
 module.exports.getEncryptedSymetricObjFromJSON = encryptedSymmetricObjJSON => {
     const encryptedSymmetricObj = {};
     for (const k in encryptedSymmetricObjJSON) {
