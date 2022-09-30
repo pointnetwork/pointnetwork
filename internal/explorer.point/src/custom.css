@@ -10,6 +10,12 @@
     line-height: 1.5rem;
 }
 
+.navbar-toggler {
+    padding: .3rem .4rem;
+    background: rgba(255, 255, 255, .2);
+    border: none;
+}
+
 .mono {
     font-family: "Lucida Console", Courier, monospace;
 }
@@ -235,6 +241,14 @@ a.nav-link:not(.active):hover {
 }
 
 @media (max-width: 767px) {
+    .navbar-collapse {
+        margin-top: 10px;
+    }
+
+    a.nav-link {
+        text-align: center;
+    }
+
     .bounty-banner-inner {
         flex-direction: column;
         justify-content: center;
