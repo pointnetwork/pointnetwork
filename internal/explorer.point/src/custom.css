@@ -1,7 +1,13 @@
 .navbar {
     background: linear-gradient(to bottom, #1E2022 0%, rgb(0, 0, 0) 100%);
+    font-family: "Source Sans Pro", sans-serif;
     min-height: 60px;
     padding: 10px 0;
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    line-height: 1.5rem;
 }
 
 .mono {
@@ -13,13 +19,20 @@ a {
 }
 
 a.nav-link {
+    border-radius: 4px;
+    font-size: 1.15rem;
+    line-height: 1.5rem;
+    margin: 0 1px;
     padding-left: 15px;
     padding-right: 15px;
 }
 
 a.nav-link.active {
     background-color: rgba(255, 255, 255, .2);
-    border-radius: 4px;
+}
+
+a.nav-link:not(.active):hover {
+    background-color: rgba(255, 255, 255, .05);
 }
 
 .imgLogo {
