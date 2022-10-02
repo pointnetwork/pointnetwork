@@ -1,6 +1,5 @@
 datadir: ~/.point
 mode: ""
-identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3ccd40328
 sdk_file: ""
 api:
   address: 127.0.0.1
@@ -75,6 +74,8 @@ network:
       tls: true
       gas_price_wei: 7
       tokens: []
+      identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3ccd40328
+      identity_contract_address: "0x47204DA8c773Aec5E2947055a081fC312A5C82cf"
     xnet:
       type: "eth"
       name: "Xnet"
@@ -85,16 +86,8 @@ network:
       tls: true
       gas_price_wei: 1
       tokens: []
-    ynet:
-      type: "eth"
-      name: "Ynet"
-      http_address: "ynet.point.space:44444"
-      ws_address: "ynet.point.space:55555"
-      currency_name: "yPoint"
-      currency_code: "yPOINT"
-      tls: false
-      gas_price_wei: 1
-      tokens: []
+      identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3ccd40328 # TODO: is version correct?
+      identity_contract_address: "0x8E34Fc67034b8A593E87d5f2644D098A3dBd2Fe7"
     rinkeby:
       type: "eth"
       name: "Rinkeby"
@@ -126,8 +119,6 @@ network:
       currency_code: "SOL"
       tls: true
   web3_call_retry_limit: 4
-  identity_contract_address: "0x47204DA8c773Aec5E2947055a081fC312A5C82cf"
-  hardcode_default_provider: "0x3C903ADdcC954B318A5077D0f7bce44a7b9c95B1"
   event_block_page_size: 10000
 name_services:
   sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"

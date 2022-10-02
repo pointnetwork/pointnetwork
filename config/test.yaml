@@ -7,4 +7,3 @@ api:
   csrf_enabled: false
 network:
   default_network: "xnet"
-  identity_contract_address: "0x8E34Fc67034b8A593E87d5f2644D098A3dBd2Fe7"

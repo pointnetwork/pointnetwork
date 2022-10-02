@@ -14,9 +14,9 @@ storage:
   use_arlocal: true
   arweave_gateway_url: http://arlocal:1984/graphql
 network:
-  default_network: "ynet"
+  default_network: "local"
   web3:
-    ynet:
+    local:
       http_address: "blockchain_node:7545"
       ws_address: "blockchain_node:7545"
       gas_price_wei: 1000000
