@@ -83,12 +83,14 @@ const abisByContractName = {};
 
 // web3.js providers
 const providers = {
-    [DEFAULT_NETWORK]: {
-        http: createWeb3Instance({
-            protocol: 'http',
-            network: DEFAULT_NETWORK
-        })
-    }
+    ...(config.get('mode') === 'test' ? {} : {
+        [DEFAULT_NETWORK]: {
+            http: createWeb3Instance({
+                protocol: 'http',
+                network: DEFAULT_NETWORK
+            })
+        }
+    })
 };
 
 const getWeb3 = ({chain = DEFAULT_NETWORK, protocol = 'http'} = {}) => {

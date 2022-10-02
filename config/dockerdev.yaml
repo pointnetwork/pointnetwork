@@ -10,3 +10,10 @@ api:
   address: 0.0.0.0
 zproxy:
   host: 0.0.0.0
+network:
+  default_network: "local"
+  web3:
+    local:
+      http_address: "blockchain_node:7545"
+      ws_address: "blockchain_node:7545"
+      gas_price_wei: 1000000

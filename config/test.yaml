@@ -6,4 +6,11 @@ log:
 api:
   csrf_enabled: false
 network:
-  default_network: "xnet"
+  default_network: "mock_eth_net"
+  web3:
+    mock_eth_net:
+      identity_contract_id: ""
+      identity_contract_address: ""
+      type: eth
+    mock_sol_net:
+      type: solana

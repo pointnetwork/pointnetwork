@@ -71,7 +71,9 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
         (acc, cur) => ({
             ...acc,
             [cur]: {
-                connection: createSolanaConnection(networks[cur].http_address),
+                connection: config.get('mode') === 'test'
+                    ? null
+                    : createSolanaConnection(networks[cur].http_address),
                 wallet: getSolanaKeyPair()
             }
         }),

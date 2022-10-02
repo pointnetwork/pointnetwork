@@ -62,62 +62,6 @@ wallet:
   keystore_path: ~/.point/keystore
 network:
   contracts_path: contracts
-  default_network: "mainnet"
-  web3:
-    mainnet:
-      type: "eth"
-      name: "mainnet"
-      http_address: "rpc-mainnet-1.point.space"
-      ws_address: "rpc-mainnet-1.point.space/ws"
-      currency_name: "Point"
-      currency_code: "POINT"
-      tls: true
-      gas_price_wei: 7
-      tokens: []
-      identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3ccd40328
-      identity_contract_address: "0x47204DA8c773Aec5E2947055a081fC312A5C82cf"
-    xnet:
-      type: "eth"
-      name: "Xnet"
-      http_address: "xnet-uranus-1.point.space"
-      ws_address: "xnet-uranus-1.point.space/ws"
-      currency_name: "xPoint"
-      currency_code: "xPOINT"
-      tls: true
-      gas_price_wei: 1
-      tokens: []
-      identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3ccd40328 # TODO: is version correct?
-      identity_contract_address: "0x8E34Fc67034b8A593E87d5f2644D098A3dBd2Fe7"
-    rinkeby:
-      type: "eth"
-      name: "Rinkeby"
-      http_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
-      ws_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
-      currency_name: "rinkebyEth"
-      currency_code: "rinkebyETH"
-      eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
-      tls: true
-      tokens:
-        - name: "USDC"
-          address: "0x87284d4150b0FADe12255A7d208AD46526C519ee"
-        - name: "USDT"
-          address: "0xd92e713d051c37ebb2561803a3b5fbabc4962431"
-        - name: "DAI"
-          address: "0x95b58a6Bff3D14B7DB2f5cb5F0Ad413DC2940658"
-    solana_devnet:
-      type: "solana"
-      name: "Solana Devnet"
-      http_address: "api.devnet.solana.com"
-      currency_name: "devSol"
-      currency_code: "devSOL"
-      tls: true
-    solana:
-      type: "solana"
-      name: "Solana"
-      http_address: "api.mainnet-beta.solana.com"
-      currency_name: "Sol"
-      currency_code: "SOL"
-      tls: true
   web3_call_retry_limit: 4
   event_block_page_size: 10000
 name_services:
