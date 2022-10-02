@@ -126,7 +126,7 @@
     "test:docker": "cross-env MODE=test TESTING_IN_DOCKER=true jest tests/docker/*.spec.js --forceExit --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
     "start": "NODE_CONFIG_ENV=production node dist/index.js",
     "start:zappdev": "cross-env NODE_CONFIG_ENV=zappdev MODE=zappdev npm run watch",
-    "start:dev": "cross-env NODE_CONFIG_ENV=development npm run watch",
+    "start:dev": "cross-env npm run watch",
     "start:e2e": "cross-env NODE_CONFIG_ENV=e2e MODE=e2e npm run watch",
     "watch": "npm run --prefix ./internal/explorer.point --ignore-scripts build && nodemon",
     "build": "tsc",

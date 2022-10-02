@@ -17,3 +17,4 @@ network:
       http_address: "blockchain_node:7545"
       ws_address: "blockchain_node:7545"
       gas_price_wei: 1000000
+      identity_contract_id: ""

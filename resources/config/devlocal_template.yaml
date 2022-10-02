@@ -14,9 +14,9 @@ storage:
   use_arlocal: true
   arweave_gateway_url: http://localhost:1984/graphql
 network:
-  default_network: "development"  
+  default_network: "local"
   web3:
-    development:
+    local:
       type: "eth"
       name: "development"
       http_address: "localhost:7545"
@@ -26,15 +26,30 @@ network:
       tls: false
       gas_price_wei: 615842087
       tokens: []
-    # rinkeby:
-    #   type: "eth"
-    #   name: "Rinkeby"
-    #   http_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
-    #   ws_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
-    #   currency_name: "rinkebyEth"
-    #   currency_code: "rinkebyETH"
-    #   eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
-    #   tls: true
+      identity_contract_id: ""
+    solana:
+      type: "solana"
+      name: "Solana"
+      http_address: "api.mainnet-beta.solana.com"
+      currency_name: "Sol"
+      currency_code: "SOL"
+      tls: true
+    rinkeby:
+      type: "eth"
+      name: "Rinkeby"
+      http_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
+      ws_address: "rinkeby.infura.io/v3/90b29027d7a346bd951a7569bf598474" # TODO: project ID
+      currency_name: "rinkebyEth"
+      currency_code: "rinkebyETH"
+      eth_tld_resolver: "0xf6305c19e814d2a75429Fd637d01F7ee0E77d615"
+      tls: true
+      tokens:
+        - name: "USDC"
+          address: "0x87284d4150b0FADe12255A7d208AD46526C519ee"
+        - name: "USDT"
+          address: "0xd92e713d051c37ebb2561803a3b5fbabc4962431"
+        - name: "DAI"
+          address: "0x95b58a6Bff3D14B7DB2f5cb5F0Ad413DC2940658"
 api:
   address: 127.0.0.1
   port: 24681
