@@ -16,7 +16,6 @@ jobs:
         node-version: 16.x
 
     - run: npm install
-    - run: npm run build
     - run: npm run test:ci
 
     - name: Publish Unit Test Results

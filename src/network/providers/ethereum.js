@@ -49,6 +49,11 @@ const IDENTITY_CONTRACT_ID = config.get(`network.web3.${DEFAULT_NETWORK}.identit
 const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
 
 function createWeb3Instance({protocol, network}) {
+    // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
+    // modifuy this confition
+    if (config.get('mode') === 'test') {
+        throw new Error('This function should not be called during tests');
+    }
     const blockchainUrl = networks[network][protocol === 'ws' ? 'ws_address' : 'http_address'];
     const tls = networks[network].tls;
     const privateKey = '0x' + getNetworkPrivateKey();
@@ -100,6 +105,9 @@ const getWeb3 = ({chain = DEFAULT_NETWORK, protocol = 'http'} = {}) => {
             .includes(chain)
     ) {
         throw new Error(`No Eth provider for network ${chain}`);
+    }
+    if (config.get('mode') === 'test') {
+        return new Web3();
     }
     if (!providers[chain]) {
         providers[chain] = {};

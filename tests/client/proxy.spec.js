@@ -62,7 +62,7 @@ describe('Proxy', () => {
         );
     });
 
-    it.skip('Should load explorer index page', async () => {
+    it('Should load explorer index page', async () => {
         expect.assertions(3);
 
         const res = await httpsServer.inject({
