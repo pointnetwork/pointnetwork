@@ -213,7 +213,43 @@ module.exports.decryptData = async (host, cyphertext, encryptedSymmetricObj, pri
     return {plaintext, hostNameHash, symmetricKey, iv};
 };
 
-//deleted unused and not working method.
+/**
+ * Decrypt and array of data for a specific private key.
+ * TODO: now this method is using the same symmetric key for all data. This is not secure, the data should not use the same symmetric key for different data. Needs change for one symmetric key for each data. 
+ * 
+ * 
+ * @param {string} host - the host for decryption
+ * @param {string[]} dataArray - an array of data to be decrypted. Each data will be decrypted with a different symmetric key.
+ * @param {object[]} encryptedSymmetricObj - Symmetric Objects for each data passed
+ * @param {string} privateKey - the private key for decrypting data.
+ * @returns object - {decryptedDataArray - decrypted data array, hostNameHash - hash of host name used, symmetricKey - the symmetric key used, iv - intialization vector used}
+ */
+module.exports.decryptMultipleData = async (host, dataArray, encryptedSymmetricObj, privateKey) => {
+    const decryptHostNameHash = crypto.createHash('sha256');
+    decryptHostNameHash.update(host);
+    const symmetricObj = await eccrypto.decrypt(
+        Buffer.from(privateKey, 'hex'),
+        encryptedSymmetricObj
+    );
+    const [, hostNameHash, symmetricKey, iv] = symmetricObj.toString().split('|');
+    if (decryptHostNameHash.digest('hex') !== hostNameHash) {
+        throw new Error('Host is invalid');
+    }
+
+    const decryptedDataArray = [];
+    for (const data of dataArray){
+        const decipher = crypto.createDecipheriv(
+            'aes192',
+            Buffer.from(symmetricKey, 'hex'),
+            Buffer.from(iv, 'hex')
+        );
+        const plaintext = Buffer.concat([decipher.update(data), decipher.final()]);
+        decryptedDataArray.push(plaintext);
+    }
+
+    return {decryptedDataArray, hostNameHash, symmetricKey, iv};
+};
+
 
 /**
  * Converts from JSON to object the symmetric object
