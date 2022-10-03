@@ -24,7 +24,7 @@ network:
       currency_name: "dPoint"
       currency_code: "dPOINT"
       tls: false
-      gas_price_wei: 615842087
+      gas_price_wei: 615852038
       tokens: []
       identity_contract_id: ""
     solana:
