@@ -121,9 +121,10 @@
     "typescript": "^4.7.3"
   },
   "scripts": {
-    "pretest": "mkdir -p ./tests/resources/datadir/keystore && cp ./resources/blockchain-test-key.json ./tests/resources/datadir/keystore/key.json && npm run build",
-    "test": "npm run pretest && npm run build:explorer:dev && POINT_DATADIR=./tests/resources/datadir POINT_KEYSTORE=./tests/resources/datadir/keystore NODE_CONFIG_ENV=test MODE=test jest --forceExit",
-    "test:ci": "npm run pretest && npm run build:explorer && POINT_DATADIR=./tests/resources/datadir POINT_KEYSTORE=./tests/resources/datadir/keystore MODE=test jest --forceExit --reporters=default --reporters=jest-junit",
+    "pretest": "mkdir -p ./tests/resources/datadir/keystore && cp ./resources/blockchain-test-key.json ./tests/resources/datadir/keystore/key.json",
+    "pretest:ci": "npm run pretest",
+    "test": "npm run build:explorer:dev && POINT_DATADIR=./tests/resources/datadir POINT_KEYSTORE=./tests/resources/datadir/keystore NODE_CONFIG_ENV=test MODE=test jest --forceExit",
+    "test:ci": "npm run build:explorer && POINT_DATADIR=./tests/resources/datadir POINT_KEYSTORE=./tests/resources/datadir/keystore MODE=test jest --forceExit --reporters=default --reporters=jest-junit",
     "test:docker": "cross-env MODE=test TESTING_IN_DOCKER=true jest tests/docker/*.spec.js --forceExit --modulePathIgnorePatterns [] --reporters=default --reporters=jest-junit",
     "start": "NODE_CONFIG_ENV=production node dist/index.js",
     "start:zappdev": "cross-env NODE_CONFIG_ENV=zappdev MODE=zappdev npm run watch",
