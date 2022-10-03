@@ -57,7 +57,7 @@ interface TransactionInstructionJSON {
 
 const createSolanaConnection = (blockchainUrl: string, protocol = 'https') => {
     // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
-    // modifuy this confition
+    // modify this confition
     if (config.get('mode') === 'test') {
         throw new Error('This function should not be called during tests');
     }
