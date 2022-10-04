@@ -1,6 +1,5 @@
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
-require('@openzeppelin/hardhat-upgrades');
 require('./tasks/explorer/explorer-set-index-md');
 const config = require('config');
 const path = require('path');
