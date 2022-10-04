@@ -273,7 +273,6 @@ module.exports.decryptMultipleData = async (host, dataArray, encryptedSymmetricO
     return {decryptedDataArray, hostNameHash, symmetricKey, iv};
 };
 
-
 /**
  * Converts from JSON to object the symmetric object
  * 

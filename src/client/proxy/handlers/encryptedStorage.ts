@@ -42,8 +42,7 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
                 const publicKey = await blockchain.commPublicKeyByIdentity(id);
 
                 //data validation
-                if(publicKey === undefined)
-                    throw new Error(`Public key not found for the identity ${id}`);
+                if (publicKey === undefined) {throw new Error(`Public key not found for the identity ${id}`);}
 
                 pks.push(publicKey);
             }
@@ -58,8 +57,7 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
             const {host} = req.headers;
 
             //data validation
-            if(host === undefined)
-                throw new Error("Host header parameter is required for encryption");
+            if (host === undefined) {throw new Error('Host header parameter is required for encryption');}
 
             //call the encryption method
             const encryptedData = await encryptMultipleData(host, dataArray, pks);
@@ -95,8 +93,7 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
         const {host} = req.headers;
 
         //data validation
-        if(host === undefined)
-            throw new Error("Host header parameter is required for encryption");
+        if (host === undefined) {throw new Error('Host header parameter is required for encryption');}
 
         const fileBuffer = Buffer.from(file, 'hex');
 
