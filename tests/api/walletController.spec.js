@@ -48,7 +48,7 @@ describe('Wallet controller', () => {
 
         const res = await apiServer.inject({
             method: 'GET',
-            url: 'https://address.point/v1/api/wallet/address?network=solana_devnet',
+            url: 'https://address.point/v1/api/wallet/address?network=mock_sol_net',
             headers: {host: 'address.point'}
         });
 
@@ -86,12 +86,12 @@ describe('Wallet controller', () => {
 
         const res = await apiServer.inject({
             method: 'GET',
-            url: 'https://balance.point/v1/api/wallet/balance?network=solana_devnet',
+            url: 'https://balance.point/v1/api/wallet/balance?network=mock_sol_net',
             headers: {host: 'balance.point'}
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(solana.getBalance).toHaveBeenCalledWith('solana_devnet');
+        expect(solana.getBalance).toHaveBeenCalledWith('mock_sol_net');
         expect(JSON.parse(res.payload)).toEqual({
             status: 200,
             data: {balance: 1000000000},

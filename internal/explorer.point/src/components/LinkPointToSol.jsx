@@ -104,9 +104,9 @@ const LinkPointToSol = () => {
         <div style={styles.container}>
             <div>
                 <p style={styles.description}>
-                    We've noticed you're using a <em>SOL</em> domain, for the
-                    best experience, we recommend linking your <em>POINT</em>{' '}
-                    address to it.
+                    We&apos;ve noticed you&apos;re using a <em>SOL</em> domain,
+                    for the best experience, we recommend linking your{' '}
+                    <em>POINT</em> address to it.
                 </p>
                 <div>
                     <button
@@ -119,7 +119,7 @@ const LinkPointToSol = () => {
                         className="btn btn-sm btn-link"
                         onClick={handleDoNotShowAgain}
                     >
-                        Don't show this again
+                        Don&apos;t show this again
                     </button>
                     <button
                         className="btn btn-sm btn-link"

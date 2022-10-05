@@ -37,6 +37,7 @@ resources/liveprofile/
 .openzeppelin
 typechain-types
 
+tests/resources/datadir
 junit.xml
 
 /example
