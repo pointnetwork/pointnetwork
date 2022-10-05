@@ -76,9 +76,10 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
         (acc, cur) => ({
             ...acc,
             [cur]: {
-                connection: config.get('mode') === 'test'
-                    ? null
-                    : createSolanaConnection(networks[cur].http_address),
+                connection:
+                    config.get('mode') === 'test'
+                        ? null
+                        : createSolanaConnection(networks[cur].http_address),
                 wallet: getSolanaKeyPair()
             }
         }),
@@ -301,14 +302,22 @@ const solana = {
         } catch (err) {
             // There's no favourite domain, retrieve them all and pick the first one.
             // TODO: if there is more than 1 domain, ask the user to pick one.
-            const domains = await getAllDomains(provider.connection, owner);
-            if (domains.length > 0) {
-                const domainName = await performReverseLookup(provider.connection, domains[0]);
-                log.debug(
-                    {owner: owner.toBase58(), numDomains: domains.length, firstDomain: domainName},
-                    'Domains found.'
-                );
-                return `${domainName}.sol`;
+            try {
+                const domains = await getAllDomains(provider.connection, owner);
+                if (domains.length > 0) {
+                    const domainName = await performReverseLookup(provider.connection, domains[0]);
+                    log.debug(
+                        {
+                            owner: owner.toBase58(),
+                            numDomains: domains.length,
+                            firstDomain: domainName
+                        },
+                        'Domains found.'
+                    );
+                    return `${domainName}.sol`;
+                }
+            } catch (err) {
+                log.debug(err, 'Error tyring to get all .sol domains owned by user');
             }
 
             log.debug({owner: owner.toBase58()}, 'No domains found.');
@@ -409,11 +418,14 @@ const solana = {
         );
 
         const txId = await solana.setDomainContent(solDomain, data, network);
-        log.info({
-            solDomain,
-            publicKey,
-            txId
-        }, 'Set Point public key reference in SOL domain record.');
+        log.info(
+            {
+                solDomain,
+                publicKey,
+                txId
+            },
+            'Set Point public key reference in SOL domain record.'
+        );
 
         return txId;
     },
