@@ -109,7 +109,7 @@ export class Manifest {
         try {
             await fs.access(file);
             return true;
-        } catch (e: any) {
+        } catch (e) {
             return false;
         }
     }
@@ -144,7 +144,7 @@ export class Manifest {
         if (this.file !== this.fallbackFile && (await this.exists(this.fallbackFile))) {
             try {
                 await fs.rename(this.fallbackFile, this.file);
-            } catch (e: any) {
+            } catch (e) {
                 throw new Error(`Failed to rename network file from ${this.fallbackFile} to ${this.file}: ${e.message}`);
             }
         }
@@ -155,7 +155,7 @@ export class Manifest {
         try {
             const data = JSON.parse(await this.readFile()) as ManifestData;
             return validateOrUpdateManifestVersion(data);
-        } catch (e: any) {
+        } catch (e) {
             if (e.code === 'ENOENT') {
                 return defaultManifest();
             } else {

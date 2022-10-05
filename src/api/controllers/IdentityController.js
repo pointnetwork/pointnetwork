@@ -148,7 +148,7 @@ class IdentityController extends PointSDKController {
         }
 
         const owner = await ethereum.ownerByIdentity(identity);
-        this.rep.status(200).send({identityRegistered: owner !== ADDRESS_ZERO});
+        this.rep.status(200).send({identityRegistered: owner && owner !== ADDRESS_ZERO});
     }
 
     async identityToOwner() {
