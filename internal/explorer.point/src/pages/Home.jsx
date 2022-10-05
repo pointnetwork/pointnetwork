@@ -100,7 +100,7 @@ export default function Home() {
                     <span>https://point/wallet</span>
                 </div>
             </a>
-            <Link
+            {/* <Link
                 to="/deploy_blog"
                 target="_blank"
                 rel="noreferrer"
@@ -120,7 +120,7 @@ export default function Home() {
                 <div className="zapp-information-container">
                     <h4>Make your blog</h4>
                 </div>
-            </Link>
+            </Link> */}
         </>
     );
 
