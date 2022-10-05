@@ -442,17 +442,19 @@ const parseRequestForProxy = async (req: FastifyRequest) => {
 
 const renderPointHomeWeb2RedirectPage = async (req: FastifyRequest, res: FastifyReply) => {
     const {queryParams} = await parseRequestForProxy(req);
+    if (req.headers.host !== 'point') {
+        return res.status(403).send('Forbidden');
+    }
 
     res.header('Content-Type', 'text/html');
-    let refererHost = req.headers.referer || '';
-    const matches = refererHost.match(/^https:\/\/(.*)\//);
-    if (matches) {
-        refererHost = matches[1];
+
+    if (!csrfTokens.point) {
+        csrfTokens.point = randomBytes(64).toString('hex');
     }
     return templateManager.render(Template.WEB2LINK, {
         url: queryParams?.url,
-        csrfToken: queryParams?.csrfToken,
-        host: refererHost
+        csrfToken: csrfTokens.point,
+        host: 'point'
     });
 };
 
