@@ -3,6 +3,8 @@ import solana from '../network/providers/solana';
 import ethereum from '../network/providers/ethereum';
 import {IdentityData, IdentityParams} from './types';
 import {identityCache} from './identity-cache';
+import logger from '../core/log';
+const log = logger.child({module: 'getIdentity'});
 
 const defaultParams: IdentityParams = {
     solAddress: '',
@@ -89,82 +91,94 @@ export async function getIdentity({
     }
 
     if (targets.length === 0 || targets.includes('solana')) {
-        // Check for `.sol` identity.
-        const solanaPublicKey = solAddress
-            ? solana.toPublicKey(solAddress)
-            : getSolanaKeyPair().publicKey;
+        try {
+            const solanaPublicKey = solAddress
+                ? solana.toPublicKey(solAddress)
+                : getSolanaKeyPair().publicKey;
 
-        // Look in cache.
-        const cacheKey = `sol:${solanaPublicKey.toString()}`;
-        const identity = identityCache.get(cacheKey);
+            // Look in cache.
+            const cacheKey = `sol:${solanaPublicKey.toString()}`;
+            const identity = identityCache.get(cacheKey);
 
-        // Return cached identity only if it is not `null`.
-        if (identity && identity.identity) {
-            return identity;
-        }
-
-        // Fetch idendity from blockchain and cache it. If no identity is found, cache it
-        // as `null` so we don't ask again for the same address, until the cache expires.
-        if (!identity) {
-            const solDomain = await solana.getDomain(solanaPublicKey, solNetwork);
-            if (solDomain) {
-                const identity: IdentityData = {
-                    identity: solDomain,
-                    address: solanaPublicKey.toString(),
-                    publicKey: solanaPublicKey.toString(),
-                    network: 'solana'
-                };
-
-                identityCache.add(cacheKey, identity);
+            // Return cached identity only if it is not `null`.
+            if (identity && identity.identity) {
                 return identity;
-            } else {
-                identityCache.add(cacheKey, {
-                    identity: null,
-                    address: solanaPublicKey.toString(),
-                    publicKey: solanaPublicKey.toString(),
-                    network: 'solana'
-                });
             }
+
+            // Fetch idendity from blockchain and cache it. If no identity is found, cache it
+            // as `null` so we don't ask again for the same address, until the cache expires.
+            if (!identity) {
+                const solDomain = await solana.getDomain(solanaPublicKey, solNetwork);
+                if (solDomain) {
+                    const identity: IdentityData = {
+                        identity: solDomain,
+                        address: solanaPublicKey.toString(),
+                        publicKey: solanaPublicKey.toString(),
+                        network: 'solana'
+                    };
+
+                    identityCache.add(cacheKey, identity);
+                    return identity;
+                } else {
+                    identityCache.add(cacheKey, {
+                        identity: null,
+                        address: solanaPublicKey.toString(),
+                        publicKey: solanaPublicKey.toString(),
+                        network: 'solana'
+                    });
+                }
+            }
+        } catch (error) {
+            log.error(`Error when trying to get identity for solana`);
         }
+
+        // Check for `.sol` identity.
+
     }
 
     if (targets.length === 0 || targets.includes('ethereum')) {
-        // Check for `.eth` identity.
-        const ethereumPublicKey = getNetworkPublicKey();
-        const ethereumAddress = ethAddress || getNetworkAddress();
 
-        // Look in cache.
-        const cacheKey = `eth:${ethereumAddress}`;
-        const identity = identityCache.get(cacheKey);
+        try {
+            // Check for `.eth` identity.
+            const ethereumPublicKey = getNetworkPublicKey();
+            const ethereumAddress = ethAddress || getNetworkAddress();
 
-        // Return cached identity only if it is not `null`.
-        if (identity && identity.identity) {
-            return identity;
-        }
+            // Look in cache.
+            const cacheKey = `eth:${ethereumAddress}`;
+            const identity = identityCache.get(cacheKey);
 
-        // Fetch idendity from blockchain and cache it. If no identity is found, cache it
-        // as `null` so we don't ask again for the same address, until the cache expires.
-        if (!identity) {
-            const ethDomain = await ethereum.getDomain(ethereumAddress, ethNetwork);
-            if (ethDomain) {
-                const identity: IdentityData = {
-                    identity: ethDomain,
-                    address: ethereumAddress,
-                    publicKey: ethereumPublicKey,
-                    network: 'ethereum'
-                };
-
-                identityCache.add(cacheKey, identity);
+            // Return cached identity only if it is not `null`.
+            if (identity && identity.identity) {
                 return identity;
-            } else {
-                identityCache.add(cacheKey, {
-                    identity: null,
-                    address: ethereumAddress,
-                    publicKey: ethereumPublicKey,
-                    network: 'ethereum'
-                });
             }
+
+            // Fetch idendity from blockchain and cache it. If no identity is found, cache it
+            // as `null` so we don't ask again for the same address, until the cache expires.
+            if (!identity) {
+                const ethDomain = await ethereum.getDomain(ethereumAddress, ethNetwork);
+                if (ethDomain) {
+                    const identity: IdentityData = {
+                        identity: ethDomain,
+                        address: ethereumAddress,
+                        publicKey: ethereumPublicKey,
+                        network: 'ethereum'
+                    };
+
+                    identityCache.add(cacheKey, identity);
+                    return identity;
+                } else {
+                    identityCache.add(cacheKey, {
+                        identity: null,
+                        address: ethereumAddress,
+                        publicKey: ethereumPublicKey,
+                        network: 'ethereum'
+                    });
+                }
+            }
+        } catch (error) {
+            log.error(`Error when trying to get identity for network ${ethNetwork}`);
         }
+
     }
 
     // Return empty identity when one is not found anywhere.
