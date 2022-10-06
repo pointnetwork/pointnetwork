@@ -50,7 +50,7 @@ const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.id
 
 function createWeb3Instance({protocol, network}) {
     // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
-    // modify this confition
+    // modify this condition
     if (config.get('mode') === 'test') {
         throw new Error('This function should not be called during tests');
     }
@@ -62,6 +62,18 @@ function createWeb3Instance({protocol, network}) {
 
     if (protocol === 'ws') {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
+        process.addListener('exit', () => {
+            try {
+                log.info(`Closing web3 provider websocket connection to ${url}...`);
+                provider.disconnect();
+                log.info(`Successfully closed web3 provider websocket connection to ${url}...`);
+            } catch (error) {
+                log.error(
+                    {error: error.toString()},
+                    `Closing web3 provider websocket connection to ${url} failed`
+                );
+            }
+        });
     }
 
     const hdWalletProvider = new HDWalletProvider({
