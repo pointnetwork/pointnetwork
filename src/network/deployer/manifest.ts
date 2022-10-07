@@ -16,7 +16,7 @@ import config from 'config';
 
 const currentManifestVersion = '3.2';
 
-interface ManifestData {
+export interface ManifestData {
     manifestVersion: string;
     impls: {
         [version in string]?: ImplDeployment;
@@ -25,7 +25,7 @@ interface ManifestData {
     admin?: Deployment;
 }
 
-interface ImplDeployment extends Deployment {
+export interface ImplDeployment extends Deployment {
     layout: StorageLayout;
     allAddresses?: string[];
 }

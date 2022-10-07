@@ -4,10 +4,10 @@ import {logWarning} from '@openzeppelin/upgrades-core';
 import {
     deploy,
     getProxyFactory,
-    deployProxyImpl,
     getInitializerData
 } from '@openzeppelin/hardhat-upgrades/dist/utils';
 import {Manifest} from './manifest';
+import {deployProxyImpl} from './deployProxyImpl';
 
 // Copied from @openzeppeling/hardhat-upgrades and modified to add ability to change
 // the location of .openzeppelin folder

@@ -1,5 +1,4 @@
 import '@nomiclabs/hardhat-ethers';
-import '@openzeppelin/hardhat-upgrades';
 import path from 'path';
 import hre from 'hardhat';
 import ethereum from '../providers/ethereum';
