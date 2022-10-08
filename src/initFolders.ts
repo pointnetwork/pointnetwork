@@ -34,7 +34,14 @@ const initFolders = async () => {
         path.join(datadir, config.get('storage.upload_cache_path')),
         path.join(datadir, config.get('storage.download_cache_path')),
         path.join(datadir, config.get('storage.files_path')),
-        path.join(datadir, config.get('network.contracts_path'))
+        path.join(datadir, config.get('network.contracts_path')),
+        path.join(datadir, 'hardhat'),
+        path.join(datadir, 'hardhat', 'build'),
+        path.join(datadir, 'hardhat', 'contracts'),
+        path.join(datadir, 'hardhat', 'tests'),
+        path.join(datadir, 'hardhat', 'cache'),
+        path.join(datadir, 'hardhat', 'node_modules'),
+        path.join(datadir, '.openzeppelin')
     ];
 
     await Promise.all(nestedFolders.map(f => makeSurePathExists(f, true)));

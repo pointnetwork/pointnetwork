@@ -1,4 +1,5 @@
 import '@nomiclabs/hardhat-ethers';
+import '@openzeppelin/hardhat-upgrades';
 import path from 'path';
 import hre from 'hardhat';
 import ethereum from '../providers/ethereum';
@@ -6,7 +7,6 @@ import {uploadFile} from '../../client/storage';
 import logger from '../../core/log';
 import BN from 'bn.js';
 import {Artifact} from 'hardhat/types';
-import os from 'os';
 import fs from 'fs-extra';
 import axios from 'axios';
 import tar from 'tar-fs';
@@ -16,7 +16,6 @@ import {resolveHome} from '../../util';
 import config from 'config';
 const log = logger.child({module: 'Deployer_new'});
 
-const IS_PACKAGED = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 
 // TODO: this is a temporary solution, supporting only limited number of dependencies
@@ -28,10 +27,7 @@ const NPM_DEPS_URLS: Record<string, string> = {
 const downloadNpmDependency = (dependency: string) => new Promise<void>(async (resolve, reject) => {
     try {
         log.debug({dependency}, 'Downloading npm dependency');
-        const depsPath = path.join(os.homedir(), '.point', 'hardhat', 'node_modules');
-        if (!fs.existsSync(depsPath)) {
-            await fs.mkdirp(depsPath);
-        }
+        const depsPath = path.join(resolveHome(config.get('datadir')), 'hardhat', 'node_modules');
         
         if (fs.existsSync(path.join(depsPath, dependency))) {
             log.debug({dependency}, 'NPM dependency already exists, skipping');
@@ -118,15 +114,9 @@ const getProxyMetadataFilePath = async () => {
     ).toNumber();
 
     const name = networkNames[chainId] ?? `unknown-${chainId}`;
-    const openzeppelinPath = path.resolve(
+    return path.resolve(
         resolveHome(config.get('datadir')),
-        '.openzeppelin'
-    );
-    if (!fs.existsSync(openzeppelinPath)) {
-        await fs.mkdirp(openzeppelinPath);
-    }
-    return path.join(
-        openzeppelinPath,
+        '.openzeppelin',
         `${name}.json`
     );
 };
@@ -149,19 +139,11 @@ export const deployUpgradableContracts = async ({
 }) => {
     const proxyMetadataFilePath = await getProxyMetadataFilePath();
     const identity = target.replace(/.point$/, '');
-    const hardhatContractsDir = IS_PACKAGED
-        ? path.join(os.homedir(), '.point', 'hardhat', 'contracts')
-        : path.resolve(
-            __dirname,
-            '..',
-            '..',
-            '..',
-            'hardhat',
-            'contracts'
-        );
-    if (!fs.existsSync(hardhatContractsDir)) {
-        await fs.mkdirp(hardhatContractsDir);
-    }
+    const hardhatContractsDir = path.join(
+        resolveHome(config.get('datadir')),
+        'hardhat',
+        'contracts'
+    );
 
     await Promise.all(contracts.map(async contract => {
         await fs.writeFile(
@@ -170,9 +152,7 @@ export const deployUpgradableContracts = async ({
         );
     }));
 
-    if (IS_PACKAGED) {
-        await Promise.all(dependencies.map(async dep => {await downloadNpmDependency(dep);}));
-    }
+    await Promise.all(dependencies.map(async dep => {await downloadNpmDependency(dep);}));
 
     await hre.run('compile');
 
