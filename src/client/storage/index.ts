@@ -1,7 +1,6 @@
 import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
 import {
     merkle,
-    delay,
     areScalarArraysEqual,
     statAsync,
     escapeString,
@@ -12,9 +11,25 @@ import {
 } from '../../util';
 import {promises as fs} from 'fs';
 import path from 'path';
-import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, CONCURRENT_DOWNLOAD_DELAY, FILES_DIR, log} from './config';
-import {uploadChunk, getChunk} from './chunk';
+import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, FILES_DIR, log} from './config';
+import {getChunk} from './chunk';
 import {HttpNotFoundError} from '../../core/exceptions';
+import {waitForEvent, EventTypes} from './callbacks';
+import {enqueueChunkForUpload, waitForChunkUpload} from './chunk/upload';
+import {sequelize} from '../../db/models';
+const _ = require('lodash');
+
+// todo: remove
+// (async() => {
+//     const defaults = undefined;
+//     const upsertResult = await File.upsert(Object.assign({}, {id: 'b89ca6397b11125953858136bcc27b6e0ad4db9a64d88028c9c99f927affdfe1'}, defaults), {returning: true});
+//     console.log('upsert', upsertResult);
+//
+//     const selectResult = await File.find('b89ca6397b11125953858136bcc27b6e0ad4db9a64d88028c9c99f927affdfe1');
+//     console.log('select', selectResult);
+//
+//     process.exit();
+// })();
 
 type FileInfo = {
     type: keyof typeof FILE_TYPE;
@@ -33,129 +48,145 @@ export const FILE_TYPE = {
     dirptr: 'dirptr' // Directory
 } as const;
 
-export const uploadFile = async (data: Buffer | string): Promise<string> => {
-    const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
+export const waitForFileChunksToUpload = async (id: string): Promise<void> => {
+    const file = await File.find(id);
+    if (! file) throw new Error('File not found in the database');
 
-    if (totalChunks === 1) {
-        const fileId = hashFn(buf).toString('hex');
-        log.trace({fileId}, 'File to be uploaded and consists only from 1 chunk');
+    const chunkIds = _.uniq(file.chunk_ids);
+    if (file.chunk_ids.length > 1) chunkIds.push(id); // not forgetting about chunkinfo chunk
 
-        const filePath = path.join(FILES_DIR, `file_${fileId}`);
-        const file = await File.findByIdOrCreate(fileId);
+    await Promise.all(chunkIds.map((chunkId: string) => waitForChunkUpload(chunkId)));
+};
+export const waitForFileChunksToUploadAndMarkAsSuccessful = async (id: string): Promise<void> => {
+    await waitForFileChunksToUpload(id);
+    await markFileAsSuccessfulUpload(id);
+};
+
+const chunksToTotalLength = (chunks: Buffer[]): number =>
+    (chunks.length - 1) * CHUNK_SIZE + chunks[ chunks.length - 1 ].byteLength;
+
+const buffersToHashes = (bufs: Buffer[]): Buffer[] =>
+    bufs.map(buf => hashFn(buf));
+const buffersToHashesHex = (bufs: Buffer[]): string[] =>
+    buffersToHashes(bufs).map(buf => buf.toString('hex'));
+
+const markFileAsFailedUpload = async(fileId: string) => {
+    await sequelize.transaction(async (t) => {
+        const file = await File.findByIdOrCreate(fileId, {}, t, t.LOCK.SHARE);
+
+        // doesn't matter which status, all of them work
+
+        file.ul_status = FILE_UPLOAD_STATUS.COMPLETED;
+        await file.save({transaction: t});
+    });
+};
+const markFileAsSuccessfulUpload = async(fileId: string) => {
+    await sequelize.transaction(async (t) => {
+        const file = await File.findByIdOrCreate(fileId, {}, t, t.LOCK.SHARE);
+
         if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
-            log.trace({fileId}, 'File already exists, cancelling upload');
+            // If it's ever been uploaded completely, ignore
+            return;
+        }
+
+        // IN_PROGRESS, NOT_STARTED and FAILED statuses end up here
+
+        file.ul_status = FILE_UPLOAD_STATUS.FAILED;
+        await file.save({transaction: t});
+    });
+};
+const markFileAsBeingUploaded = async(fileId: string, chunkIds: string[], fileSize: number) => {
+    // Note: this function is internal
+    // We implicitly trust fileId and chunks here and don't re-verify
+
+    console.log('MARK FILE AS BEING UPLOADED '+fileId+' size '+fileSize);
+    await sequelize.transaction(async (t) => {
+        const file = await File.findByIdOrCreate(fileId, {}, t, t.LOCK.SHARE);
+
+        if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
+            log.trace({fileId}, 'File already exists and uploaded, cancelling upload');
             return fileId;
         }
         if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
-            log.trace({fileId}, 'File  upload already in progress, waiting');
-            await delay(CONCURRENT_DOWNLOAD_DELAY);
-            return uploadFile(data);
-        }
-
-        log.trace({fileId}, 'Starting file upload');
-        try {
-            file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
-            await file.save();
-
-            const chunkId = await uploadChunk(buf);
-            if (chunkId !== fileId) {
-                throw new Error(
-                    `Unexpected different ids for file and it's only chunk: ${fileId}, ${chunkId}`
-                );
-            }
-
-            await fs.writeFile(filePath, buf);
-            file.size = buf.length;
-            file.ul_status = FILE_UPLOAD_STATUS.COMPLETED;
-            await file.save();
-
-            log.trace({fileId}, 'File successfully uploaded');
-
+            log.trace({fileId}, 'File upload already in progress, not marking');
             return fileId;
-        } catch (e) {
-            log.error({fileId, message: e.message, stack: e.stack}, 'File upload failed');
-            file.ul_status = FILE_UPLOAD_STATUS.FAILED;
-            await file.save();
-            throw e;
         }
-    }
 
-    const chunks = [];
-    for (let i = 0; i < totalChunks; i++) {
-        chunks.push(buf.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));
-    }
+        // only NOT_STARTED and FAILED statuses end up here
 
-    const chunkHashes = chunks.map(chunk => hashFn(chunk).toString('hex'));
-    const merkleTree = merkle(
-        chunkHashes.map(x => Buffer.from(x, 'hex')),
-        hashFn
-    );
+        file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
+        file.chunk_ids = chunkIds;
+        file.size = fileSize;
+        await file.save({transaction: t});
+    });
+};
+
+const chunkify = (buf: Buffer): Buffer[] => {
+    const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
+    if (totalChunks <= 1) {
+        return [buf];
+    } else {
+        const chunkBufs = [];
+        for (let i = 0; i < totalChunks; i++) {
+            chunkBufs.push(buf.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));
+        }
+        return chunkBufs;
+    }
+};
+
+const createChunkInfoChunk = (chunks: Buffer[]): Buffer => {
+    const chunkHashes = buffersToHashes(chunks);
+    const merkleTree = merkle(chunkHashes, hashFn);
+    const filesize = chunksToTotalLength(chunks);
     const chunkInfoContents =
         CHUNKINFO_PROLOGUE +
         JSON.stringify({
             type: 'file',
-            chunks: chunkHashes,
+            chunks: chunkHashes.map((b) => b.toString('hex')),
             hash: 'keccak256',
-            filesize: buf.length,
-            merkle: merkleTree.map(x => x.toString('hex'))
+            filesize,
+            merkle: merkleTree.map((x) => x.toString('hex'))
         });
-    const chunkInfoBuffer = Buffer.from(chunkInfoContents, 'utf-8');
 
-    // File id always matches it's index chunk id
-    const fileId = hashFn(chunkInfoBuffer).toString('hex');
+    return Buffer.from(chunkInfoContents, 'utf-8');
+};
 
-    log.trace({fileId}, 'Successfully chunkified file');
-    const filePath = path.join(FILES_DIR, `file_${fileId}`);
+export const uploadData = async (data: Buffer | string): Promise<string> => {
+    const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    const chunks = chunkify(buf);
 
-    const file = await File.findByIdOrCreate(fileId);
-    if (file.ul_status === FILE_UPLOAD_STATUS.COMPLETED) {
-        log.trace({fileId}, 'File already exists, cancelling upload');
-        return fileId;
+    let fileId;
+    let chunkInfoChunk;
+    if (chunks.length <= 1) {
+        chunkInfoChunk = null;
+        fileId = hashFn(buf).toString('hex');
+    } else {
+        chunkInfoChunk = createChunkInfoChunk(chunks);
+        // File id always matches its info chunk id
+        fileId = hashFn(chunkInfoChunk).toString('hex');
     }
-    if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
-        log.trace({fileId}, 'File upload already in progress, waiting');
-        await delay(CONCURRENT_DOWNLOAD_DELAY);
-        return uploadFile(data);
-    }
 
-    log.trace({fileId}, 'Uploading file');
+    log.trace({fileId}, 'Successfully chunkified file, marking as being uploaded');
+    await markFileAsBeingUploaded(fileId, buffersToHashesHex(chunks), buf.byteLength);
+
     try {
-        file.ul_status = FILE_UPLOAD_STATUS.IN_PROGRESS;
-        await file.save();
+        log.trace({fileId}, 'Calling enqueueChunkForUpload for all file chunks');
+        await Promise.all(chunks.map((chunkBuf) => enqueueChunkForUpload(chunkBuf)));
+        if (chunkInfoChunk) await enqueueChunkForUpload(chunkInfoChunk);
 
-        const indexChunkId = await uploadChunk(chunkInfoBuffer);
-        if (indexChunkId !== fileId) {
-            throw new Error(
-                `Unexpected different ids for file and it's index chunk: ${fileId}, ${indexChunkId}`
-            );
-        }
-        const chunkIds = await Promise.all(chunks.map(chunk => uploadChunk(chunk)));
-        chunkIds.forEach((chunkId, index) => {
-            if (chunkId !== chunkHashes[index]) {
-                throw new Error(
-                    `Unexpected different chunks ids, should be same: ${chunkId},
-                    ${chunkHashes[index]}`
-                );
-            }
-        });
+        log.trace({fileId}, 'Waiting for file chunks to be uploaded');
+        await waitForFileChunksToUploadAndMarkAsSuccessful(fileId);
 
-        log.trace({fileId}, 'File successfully uploaded, saving to disk');
-
-        await fs.writeFile(filePath, buf);
-        file.size = buf.length;
-        file.ul_status = FILE_UPLOAD_STATUS.COMPLETED;
-        await file.save();
-
-        log.trace({fileId}, 'File successfully uploaded and saved');
         return fileId;
+
     } catch (e) {
         log.error({fileId, message: e.message, stack: e.stack}, 'File upload failed');
-        file.ul_status = FILE_UPLOAD_STATUS.FAILED;
-        await file.save();
-        throw e;
+        await markFileAsFailedUpload(fileId);
+        throw e; // todo: don't want to retry?
     }
 };
+
+export const uploadFile = uploadData; // todo: deprecate
 
 export const uploadDir = async (dirPath: string) => {
     try {
@@ -195,7 +226,7 @@ export const uploadDir = async (dirPath: string) => {
                 });
             } else {
                 const file = await fs.readFile(filePath);
-                const fileId = await uploadFile(file);
+                const fileId = await uploadData(file);
                 dirInfo.files.push({
                     type: FILE_TYPE.fileptr,
                     name: fileName,
@@ -206,7 +237,7 @@ export const uploadDir = async (dirPath: string) => {
         })
     );
 
-    const id = await uploadFile(JSON.stringify(dirInfo));
+    const id = await uploadData(JSON.stringify(dirInfo));
 
     log.trace({dirPath: escapeString(dirPath)}, 'Successfully uploaded directory');
 
@@ -238,8 +269,11 @@ export const getFile = async (
     }
     if (file.dl_status === FILE_DOWNLOAD_STATUS.IN_PROGRESS) {
         log.trace({fileId: file.id}, 'File download already in progress, waiting');
-        await delay(CONCURRENT_DOWNLOAD_DELAY);
-        return getFile(id, encoding); // use cache should be true in this case
+        return await waitForEvent(
+            EventTypes.FILE_DOWNLOAD_STATUS_CHANGED,
+            file.id,
+            getFile.bind(null, rawId, encoding, useCache)
+        );
     }
 
     log.trace({fileId: file.id}, 'Downloading file');

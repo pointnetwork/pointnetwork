@@ -3,7 +3,7 @@ import {parse} from 'query-string';
 import blockchain from '../../../network/providers/ethereum';
 import {Template, templateManager} from '../templateManager';
 import {escapeString} from '../../../util';
-const {uploadFile} = require('../../storage');
+const {uploadData} = require('../../storage');
 
 const attachContractSendHandler = (server: FastifyInstance) => {
     server.post(
@@ -45,7 +45,7 @@ const attachContractSendHandler = (server: FastifyInstance) => {
             let redirectUrl;
             for (const k in entries) {
                 if (k.startsWith('storage[')) {
-                    const uploadedId = await uploadFile(entries[k]);
+                    const uploadedId = await uploadData(entries[k]);
 
                     delete entries[k];
                     entries[k.replace('storage[', '').replace(']', '')] = uploadedId;

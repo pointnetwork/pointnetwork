@@ -3,7 +3,7 @@ import '@openzeppelin/hardhat-upgrades';
 import path from 'path';
 import hre from 'hardhat';
 import ethereum from './providers/ethereum';
-import {getFile, uploadFile} from '../client/storage';
+import {getFile, uploadData} from '../client/storage';
 import logger from '../core/log';
 import BN from 'bn.js';
 import {Artifact} from 'hardhat/types';
@@ -30,7 +30,7 @@ const downloadNpmDependency = (dependency: string) => new Promise<void>(async (r
         if (!fs.existsSync(depsPath)) {
             await fs.mkdirp(depsPath);
         }
-        
+
         if (fs.existsSync(path.join(depsPath, dependency))) {
             log.debug({dependency}, 'NPM dependency already exists, skipping');
             resolve();
@@ -82,7 +82,7 @@ const storeContractArtifacts = async ({
 }) => {
     const artifactsJSON = JSON.stringify(artifacts);
 
-    const artifactsStorageId = await uploadFile(artifactsJSON);
+    const artifactsStorageId = await uploadData(artifactsJSON);
 
     await ethereum.putKeyValue(
         target,
@@ -259,7 +259,7 @@ export const deployUpgradableContracts = async ({
     const proxyMetadata = JSON.parse(proxyMetadataFile);
 
     log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
-    const proxyMetadataFileUploadedId = await uploadFile(JSON.stringify(proxyMetadata));
+    const proxyMetadataFileUploadedId = await uploadData(JSON.stringify(proxyMetadata));
     log.debug({target, proxyMetadataFileUploadedId}, 'Updating Proxy Metadata');
     await ethereum.putKeyValue(
         target,

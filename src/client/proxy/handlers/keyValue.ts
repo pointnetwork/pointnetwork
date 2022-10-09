@@ -3,7 +3,7 @@ import {getNetworkAddress} from '../../../wallet/keystore';
 import blockchain from '../../../network/providers/ethereum';
 import keyValue from '../../../network/keyvalue';
 import {Template, templateManager} from '../templateManager';
-const {uploadFile} = require('../../storage');
+const {uploadData} = require('../../storage');
 
 const attachKeyValueHandlers = (server: FastifyInstance) => {
     server.post(
@@ -26,7 +26,7 @@ const attachKeyValueHandlers = (server: FastifyInstance) => {
             let redirectUrl;
             for (const k in entries) {
                 if (k.startsWith('storage[')) {
-                    const uploadedId = await uploadFile(entries[k]);
+                    const uploadedId = await uploadData(entries[k]);
 
                     delete entries[k];
                     entries[k.replace('storage[', '').replace(']', '')] = uploadedId;

@@ -1,5 +1,9 @@
+import {processQueue, EventTypes} from '../../client/storage/callbacks';
+import logger from '../../core/log';
+
 const Model = require('./base');
 const Sequelize = require('sequelize');
+const log = logger.child({module: 'Chunk model'});
 
 export const CHUNK_DOWNLOAD_STATUS = {
     NOT_STARTED: 'NOT_STARTED',
@@ -18,8 +22,21 @@ export const CHUNK_UPLOAD_STATUS = {
 };
 
 class Chunk extends Model {
-    constructor(...args) {
+    declare id: string;
+    declare size: number;
+    declare ul_status: string;
+    declare dl_status: string;
+    declare retry_count: number;
+    declare validation_retry_count: number;
+    declare txid: string | null;
+    declare expires: number | null;
+
+    constructor(...args: any[]) {
         super(...args);
+    }
+
+    isExpired() {
+        return this.expires !== null && this.expires < new Date().getTime();
     }
 }
 
@@ -47,5 +64,19 @@ Chunk.init(
         ]
     }
 );
+
+const modificationHook = (m: Chunk) => {
+    if (m.changed().includes('ul_status')) {
+        processQueue(EventTypes.CHUNK_UPLOAD_STATUS_CHANGED, m.id);
+    }
+    if (m.changed().includes('dl_status')) {
+        processQueue(EventTypes.CHUNK_DOWNLOAD_STATUS_CHANGED, m.id);
+    }
+};
+
+Chunk.addHook('afterDestroy', (m: Chunk) => modificationHook(m));
+Chunk.addHook('afterUpdate', (m: Chunk) => modificationHook(m));
+Chunk.addHook('afterSave', (m: Chunk) => modificationHook(m));
+Chunk.addHook('afterUpsert', (m: [ Chunk, boolean | null ]) => modificationHook(m[0]));
 
 export {Chunk as default};

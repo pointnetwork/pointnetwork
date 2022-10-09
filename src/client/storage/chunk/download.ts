@@ -2,18 +2,18 @@
 import Chunk, {CHUNK_DOWNLOAD_STATUS} from '../../../db/models/chunk';
 import path from 'path';
 import {promises as fs} from 'fs';
-import {delay, hashFn} from '../../../util';
+import {hashFn} from '../../../util';
 import {downloadChunk as downloadChunkFromBundler} from '../bundler';
 import getDownloadQuery from '../query';
 import {request} from 'graphql-request';
 import {storage} from '../client/client';
 import {
     BUNDLER_DOWNLOAD_URL,
-    CONCURRENT_DOWNLOAD_DELAY,
     DOWNLOAD_CACHE_PATH,
     GATEWAY_URL,
     log
 } from '../config';
+import {EventTypes, waitForEvent} from '../callbacks';
 
 const getChunk = async (
     chunkId: string,
@@ -30,8 +30,11 @@ const getChunk = async (
     }
     if (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.IN_PROGRESS) {
         log.trace({chunkId}, 'Chunk download already in progress, waiting');
-        await delay(CONCURRENT_DOWNLOAD_DELAY);
-        return getChunk(chunkId, encoding); // use cache should be true in this case
+        return await waitForEvent(
+            EventTypes.CHUNK_UPLOAD_STATUS_CHANGED,
+            chunk.id,
+            getChunk.bind(null, chunkId, encoding)
+        );
     }
 
     chunk.dl_status = CHUNK_DOWNLOAD_STATUS.IN_PROGRESS;

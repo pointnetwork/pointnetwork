@@ -19,7 +19,7 @@ class DeployController {
         if (!deploy_path) {
             return {status: 'error', error: 'deploy path not specified'};
         }
-        
+
         try {
             this.deployer = new Deployer();
             await this.deployer.deploy({
@@ -31,7 +31,7 @@ class DeployController {
             });
             return {status: 'success'};
         } catch (e) {
-            log.error(e, 'DeployController.deploy error');
+            log.error({e}, 'DeployController.deploy error: ' + e.message);
             return {status: 'error', error: e.toString()};
         }
     }

@@ -1,7 +1,7 @@
 'use strict';
 
 import path from 'path';
-import {Sequelize} from 'sequelize';
+import {Sequelize, Transaction} from 'sequelize';
 import config from 'config';
 import logger from '../core/log';
 import {resolveHome} from '../util';
@@ -26,7 +26,8 @@ export class Database {
                     transactionType: dbConfig.transactionType,
                     retry: {max: dbConfig.retry.max},
                     logQueryParameters: true,
-                    logging: config.get('db.enable_db_logging') ? log.trace.bind(log) : false
+                    logging: config.get('db.enable_db_logging') ? log.trace.bind(log) : false,
+                    isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE
                 }
             );
         }

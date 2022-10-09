@@ -1,15 +1,14 @@
 const sequelize_lib = require('sequelize');
-const _ = require('lodash');
 const {Database} = require('..');
-const logger = require('../../core/log');
-const log = logger.child({module: 'Model'});
+import {LOCK,ModelAttributes, Attributes, InitOptions, Model as M, Transaction, ModelStatic, BelongsToOptions} from 'Sequelize';
+import _ from 'lodash';
 
-const addUnderscoreIdFields = {};
+const addUnderscoreIdFields: Record<string, string[]> = {};
 
 class Model extends sequelize_lib.Model {
-    constructor(...args) {
-        super(...args);
-    }
+    // constructor(...args) {
+    //     super(...args);
+    // }
 
     static get connection() {
         if (!Model._connection) {
@@ -18,7 +17,7 @@ class Model extends sequelize_lib.Model {
         return Model._connection;
     }
 
-    static init(attributes, options) {
+    static init(attributes: ModelAttributes<M, Attributes<M>>, options: InitOptions<M>) {
         const defaultOptions = {sequelize: Model.connection};
         options = Object.assign({}, defaultOptions, options);
 
@@ -40,42 +39,58 @@ class Model extends sequelize_lib.Model {
         super.init(attributes, options);
     }
 
-    static async findOrCreate({where, defaults}, retry = false) {
-        const res = await super.findOne({where});
-        if (res) {
-            return res;
-        }
-        try {
-            const created = await super.create({
-                ...where,
-                ...defaults
-            });
-            return created;
-        } catch (e) {
-            log.error(e, 'Error in find or create');
-            if (!retry && e.name === 'SequelizeUniqueConstraintError') {
-                // We are running into the race condition, caused by concurrent tries
-                // to findOrCreate the same directory. In this case, a single retry
-                // should work, since the entity is already created at this moment
-                log.debug('Retrying to find or create');
-                return this.findOrCreate({where, defaults}, true);
-            }
-            throw e;
-        }
-    }
+    // static async findOrCreate({where, defaults}, retry = false) {
+    //     const res = await super.findOne({where});
+    //     if (res) {
+    //         return res;
+    //     }
+    //     try {
+    //         const created = await super.create({
+    //             ...where,
+    //             ...defaults
+    //         });
+    //         return created;
+    //     } catch (e) {
+    //         if (!retry && e.name === 'SequelizeUniqueConstraintError') {
+    //             // We are running into the race condition, caused by concurrent tries
+    //             // to findOrCreate the same directory. In this case, a single retry
+    //             // should work, since the entity is already created at this moment
+    //             log.debug({where, defaults, retry});
+    //             log.debug('findOrCreate ran into SequelizeUniqueConstraintError. Retrying to findOrCreate...');
+    //             return await this.findOrCreate({where, defaults}, true);
+    //         } else {
+    //             log.error(e, 'Error in find or create');
+    //             throw e;
+    //         }
+    //     }
+    // }
 
-    static async findByIdOrCreate(id, defaults) {
-        return this.findOrCreate({where: {id}, defaults});
+    static async findByIdOrCreate(id: string, defaults:  | null, transaction: Transaction, lock: LOCK) {
+        const options: Record<string, any> = {returning: true};
+        if (transaction) options.transaction = transaction;
+        if (lock) options.lock = lock;
+
+        const upsertResult = await this.upsert(Object.assign({}, {id}, defaults), options);
+
+        if (upsertResult[1] !== null) throw new Error('upsertResult[1] !== null');
+
+        // const instance = upsertResult[0];
+        // return instance;
+
+        return await this.findOrFail(id, options);
+
+        // return this.findOrCreate({where: {id}, defaults});
     }
 
     async refresh() {
         return await this.reload();
     }
 
-    static async allBy(field, value, logging = true) {
-        return await this.findAll({where: {[field]: value}, logging});
+    static async allBy(field: string, value: string, logging = true, options: any) {
+        const _options = Object.assign({}, {where: {[field]: value}, logging}, options);
+        return await this.findAll(_options);
     }
-    static async findOneBy(field, value) {
+    static async findOneBy(field: string, value: string) {
         const collection = await this.findAll({
             where: {[field]: value},
             limit: 1 // Note: we only want one instance
@@ -83,7 +98,7 @@ class Model extends sequelize_lib.Model {
         return collection.length < 1 ? null : collection[0];
     }
 
-    static async findOneByOrFail(field, value) {
+    static async findOneByOrFail(field: string, value: string) {
         const one = await this.findOneBy(field, value);
         if (one === null) {
             throw Error(
@@ -93,17 +108,17 @@ class Model extends sequelize_lib.Model {
         return one;
     }
 
-    static async find(id) {
-        return await this.findByPk(id);
+    static async find(id: string, ...args: any[]) {
+        return await this.findByPk(id, ...args);
     }
 
-    static async findOrFail(id, ...args) {
+    static async findOrFail(id: string, ...args: any[]) {
         const result = await this.findByPk(id, ...args);
         if (!result) throw Error('Row not found: Model ' + this.constructor.name + ', id #' + id); // todo: sanitize!
         return result;
     }
 
-    static belongsTo(model, ...args) {
+    static belongsTo(model: ModelStatic<M>, ...args: BelongsToOptions[]) {
         // See constructor for the explanation of this block
         if (!addUnderscoreIdFields[this.name]) addUnderscoreIdFields[this.name] = [];
         addUnderscoreIdFields[this.name].push(model.name);
@@ -118,7 +133,7 @@ class Model extends sequelize_lib.Model {
         super.belongsTo(model, ...args);
     }
 
-    static transaction(...args) {
+    static transaction(...args: any[]) {
         return this.connection.transaction(...args);
     }
 

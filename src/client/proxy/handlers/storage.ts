@@ -1,5 +1,5 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-const {uploadFile, getFile, FILE_TYPE} = require('../../storage');
+const {uploadData, getFile, FILE_TYPE} = require('../../storage');
 // @ts-expect-error no types for package
 import detectContentType from 'detect-content-type';
 import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
@@ -31,11 +31,11 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             }
 
             const fileBuf = await file.toBuffer();
-            const uploadedId = await uploadFile(fileBuf);
+            const uploadedId = await uploadData(fileBuf);
             return {data: uploadedId};
         });
     });
-    
+
     ['/_encryptedStorage/', '/_encryptedStorage'].forEach(route => {
         server.post(route, async (req, res) => {
             if (!req.headers['content-type']?.match('multipart/form-data')) {
@@ -48,7 +48,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             if (!file) {
                 return res.status(400).send('No files in the body');
             }
-            
+
             const identities = req.headers['identities']?.toString();
             if (identities === undefined || identities === ''){
                 return res.status(400).send('No identity passed');
@@ -58,7 +58,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
                 const publicKey = await blockchain.commPublicKeyByIdentity(id);
                 pks.push(publicKey);
             }
-            
+
             let dataArray: any = [];
             const fileBuf = await file.toBuffer();
             dataArray.push(fileBuf);
@@ -69,10 +69,10 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             const {host} = req.headers;
             const encryptedData = await encryptMultipleData(host, dataArray, pks);
             const dataToUpload = Buffer.from(encryptedData.encryptedMessages[0], 'hex');
-            const uploadedId = await uploadFile(dataToUpload);
+            const uploadedId = await uploadData(dataToUpload);
             return {
-                data: uploadedId, 
-                metadata: encryptedData.encryptedMessages.slice(1), 
+                data: uploadedId,
+                metadata: encryptedData.encryptedMessages.slice(1),
                 encryptedMessagesSymmetricObjs: encryptedData.encryptedMessagesSymmetricObjs
             };
         });
@@ -102,10 +102,10 @@ const attachStorageHandlers = (server: FastifyInstance) => {
         } else {
             throw new Error('No symmetric obj passed');
         }
-        
+
         const fileString = decryptedData.plaintext.toString();
         file = decryptedData.plaintext;
-        
+
         if (isDirectoryJson(fileString)) {
             const filesInfo = JSON.parse(fileString).files.map((file: Record<string, string>) => {
                 const ext = file.name.split('.').slice(-1);
@@ -152,7 +152,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
 
         if (isDirectoryJson(fileString)) {
             const filesInfo = JSON.parse(fileString).files.map((file: Record<string, string>) => {
-                
+
                 const icons: Record<typeof FILE_TYPE, string> = {
                     [FILE_TYPE.fileptr]: '&#128196; ',
                     [FILE_TYPE.dirptr]: '&#128193; '
