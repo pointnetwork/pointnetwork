@@ -3,7 +3,7 @@ import path from 'path';
 import {promises as fs, existsSync, lstatSync} from 'fs';
 import {parse, ParsedQuery} from 'query-string';
 import axios from 'axios';
-import {readFileByPath, splitAndTakeLastPart} from '../../../util';
+import {readFileByPath, splitAndTakeLastPart, sanitizeSVG} from '../../../util';
 import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import ZProxySocketController from '../../../api/sockets/ZProxySocketController';
 import {SocketStream} from 'fastify-websocket';
@@ -298,7 +298,7 @@ const tryFulfillZhtmlRequest = async (
         ...((req.body as Record<string, unknown>) ?? {})
     });
     const contentType = detectContentType(Buffer.from(rendered));
-    if (!(contentType.match('text/html'))) {
+    if (!contentType.match('text/html')) {
         throw new Error(`Not a valid HTML: ${templateFilename}`);
     }
     res.header('Content-Type', contentType);
@@ -336,10 +336,15 @@ const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: s
     }
 
     let contentType = detectContentType(file);
-    if (contentType.match('text/plain') && ext) {
+    if (contentType.match('text/(plain|xml)') && ext) {
         contentType = getContentTypeFromExt(ext);
     }
     res.header('Content-Type', contentType);
+
+    if (contentType.match(/image\/svg\+xml/)) {
+        // Sanitize SVG to prevent XSS.
+        file = sanitizeSVG(file);
+    }
 
     return file;
 };
