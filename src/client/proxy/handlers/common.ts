@@ -222,6 +222,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 if (matches) {
                     refererHost = matches[1];
                 }
+                //if the first time, create the csrf token.
                 if (!csrfTokens.point) {
                     csrfTokens.point = randomBytes(64).toString('hex');
                 }
@@ -448,6 +449,7 @@ const renderPointHomeWeb2RedirectPage = async (req: FastifyRequest, res: Fastify
 
     res.header('Content-Type', 'text/html');
 
+    //if there is no csrf token creates it.
     if (!csrfTokens.point) {
         csrfTokens.point = randomBytes(64).toString('hex');
     }
