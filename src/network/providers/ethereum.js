@@ -2,12 +2,12 @@ const path = require('path');
 const Web3 = require('web3');
 const {ethers} = require('ethers');
 const ethereumjs = require('ethereumjs-util');
-const {promises: fs} = require('fs');
+const {promises: fs, existsSync} = require('fs');
 const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
 const namehash = require('@ensdomains/eth-ens-namehash');
-const {getFile, getJSON} = require('../../client/storage');
+const {getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
@@ -155,7 +155,8 @@ const isIdentityAbiRelevant = async () => {
     const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
 
     try {
-        const abiAndMetadata = JSON.parse(await fs.readFile(abiPath));
+        if (!existsSync(abiPath)) return false;
+        const abiAndMetadata = JSON.parse(await fs.readFile(abiPath, 'utf8'));
         const {updatedAt} = abiAndMetadata;
 
         log.debug(
@@ -190,8 +191,7 @@ const fetchAndSaveIdentityAbiFromStorage = async () => {
     log.debug({abiFileHash: IDENTITY_CONTRACT_ID}, 'Fetching Identity contract from storage');
 
     try {
-        const abiFile = await getFile(IDENTITY_CONTRACT_ID);
-        const abiAndMetadata = JSON.parse(abiFile);
+        const abiAndMetadata = await getJSON(IDENTITY_CONTRACT_ID);
 
         abiAndMetadata.abiFileHash = IDENTITY_CONTRACT_ID;
         abiAndMetadata.updatedAt = Date.now();
@@ -200,7 +200,7 @@ const fetchAndSaveIdentityAbiFromStorage = async () => {
 
         log.debug('Successfully fetched identity contract abi from storage');
 
-        return (abisByContractName['Identity'] = abiAndMetadata);
+        abisByContractName['Identity'] = abiAndMetadata;
     } catch (e) {
         log.error(
             {

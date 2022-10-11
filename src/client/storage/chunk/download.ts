@@ -1,7 +1,7 @@
 // TODO: add better error handling with custom errors and keeping error messages in DB
 import Chunk, {CHUNK_DOWNLOAD_STATUS} from '../../../db/models/chunk';
 import path from 'path';
-import {promises as fs} from 'fs';
+import {existsSync, promises as fs} from 'fs';
 import {delay, hashFn} from '../../../util';
 import {downloadChunk as downloadChunkFromBundler} from '../bundler';
 import getDownloadQuery from '../query';
@@ -26,7 +26,10 @@ const getChunk = async (
 
     if (useCache && chunk.dl_status === CHUNK_DOWNLOAD_STATUS.COMPLETED) {
         log.debug({chunkId}, 'Returning chunk from cache');
-        return fs.readFile(chunkPath, {encoding});
+        if (existsSync(chunkPath)) {
+            return await fs.readFile(chunkPath, {encoding});
+        }
+        log.warn({chunkId}, 'Chunk marked as downloaded, but is missing on the disk');
     }
     if (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.IN_PROGRESS) {
         log.trace({chunkId}, 'Chunk download already in progress, waiting');
