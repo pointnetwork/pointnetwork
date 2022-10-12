@@ -1,6 +1,10 @@
 #!/bin/bash
 
+export NODE_PATH=$(which node)/bin
+export PATH=$NODE_PATH:$PATH
+
 PLATFORM=''
+
 case "$OSTYPE" in
   darwin*)  PLATFORM="darwin" ;;
   linux*)   PLATFORM="linux" ;;
@@ -37,6 +41,15 @@ done
 #install identity contract
 echo "installing identity contract project"
 source .bash_alias
+
+if [ ! -d "../point-contracts" ]; then
+  echo "point-contracts repository does not exist, cloning"
+  cd ..
+  # ideally we should check that git is installed, but it's a dev script, so we assume...
+  git clone https://github.com/pointnetwork/point-contracts.git
+  cd pointnetwork
+fi
+
 cd ../point-contracts
 rm -rf cache
 rm -rf typechain
@@ -48,10 +61,17 @@ npx hardhat compile
 cd ../pointnetwork
 npm install --target_platform=$PLATFORM
 
+cd internal/explorer.point
+npm install --target_platform=$PLATFORM
+
+cd ../../../pointnetwork
+
 #creating local directories
 echo "creating local directories"
 echo "mkdir -p ~/workspace/pn/devlocal/keystore"
 mkdir -p ~/workspace/pn/devlocal/keystore
+echo "mkdir -p ~/workspace/pn/devlocal/contracts"
+mkdir -p ~/workspace/pn/devlocal/contracts
 
 echo "cp resources/blockchain-test-key.json ~/workspace/pn/devlocal/keystore/key.json"
 cp resources/blockchain-test-key.json ~/workspace/pn/devlocal/keystore/key.json
@@ -59,11 +79,11 @@ echo "cp resources/arweave-test-key.json ~/workspace/pn/devlocal/keystore/arweav
 cp resources/arweave-test-key.json ~/workspace/pn/devlocal/keystore/arweave.json
 echo 'Creating token in ~/workspace/pn/devlocal/keystore/token.txt'
 echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/devlocal/keystore/token.txt
-# echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json"
-# cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json
+echo "cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json"
+cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json
 
-echo "mkdir -p ~/workspace/pn/visitlocal/keystore"
-mkdir -p ~/workspace/pn/visitlocal/keystore
+echo "mkdir -p ~/workspace/pn/visitlocal/contracts"
+mkdir -p ~/workspace/pn/visitlocal/contracts
 
 echo "cp resources/blockchain-test-key2.json ~/workspace/pn/visitlocal/keystore/key.json"
 cp resources/blockchain-test-key2.json ~/workspace/pn/visitlocal/keystore/key.json
@@ -71,8 +91,8 @@ echo "cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arw
 cp resources/arweave-test-key2.json ~/workspace/pn/visitlocal/keystore/arweave.json
 echo 'Creating token in ~/workspace/pn/visitlocal/keystore/token.txt'
 echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/visitlocal/keystore/token.txt
-# echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json"
-# cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json
+echo "cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json"
+cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json
 
 #installing local node
 echo "installing local node"
@@ -87,7 +107,7 @@ cp resources/config/devlocal_template.yaml config/devlocal.yaml
 echo "cp resources/config/visitlocal_template.yaml config/visitlocal.yaml"
 cp resources/config/visitlocal_template.yaml config/visitlocal.yaml
 
-echo "Rreplacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
+echo "Replacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
 
 if [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
   WIN_HOME=$(echo $HOME | perl -pe 's!/!\\\\!'g | perl -pe 's!\\\\(\S)!$1:!')
