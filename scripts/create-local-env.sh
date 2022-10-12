@@ -44,10 +44,9 @@ rm -rf build
 echo "npm install --target_platform=$PLATFORM"
 npm install --target_platform=$PLATFORM
 echo "npx hardhat compile"
+npx hardhat compile
 cd ../pointnetwork
 npm install --target_platform=$PLATFORM
-npx hardhat compile
-
 
 #creating local directories
 echo "creating local directories"
