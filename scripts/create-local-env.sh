@@ -1,7 +1,8 @@
 #!/bin/bash
 
-export NODE_PATH=$(which node)/bin
-export PATH=$NODE_PATH:$PATH
+#Set NODE_PATH and PATH environment variables
+# export NODE_PATH='/path/to/node'
+# export PATH=$NODE_PATH/bin:$PATH
 
 PLATFORM=''
 
