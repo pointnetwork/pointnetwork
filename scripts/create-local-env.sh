@@ -28,6 +28,16 @@ done
 #install identity contract
 echo "installing identity contract project"
 source .bash_alias
+
+#checking it point-contracts folder exists
+if [ ! -d "../point-contracts" ]; then
+  echo "point-contracts repository does not exist, cloning"
+  cd ..
+  # ideally we should check that git is installed, but it's a dev script, so we assume...
+  git clone https://github.com/pointnetwork/point-contracts.git
+  cd pointnetwork
+fi
+
 cd ../point-contracts
 rm -rf cache
 rm -rf typechain
@@ -70,23 +80,7 @@ echo "npm i"
 npm i
 echo "npm run build"
 npm run build
-
-echo "coping and replacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
-echo "cp resources/config/devlocal_template.yaml config/devlocal.yaml"
-cp resources/config/devlocal_template.yaml config/devlocal.yaml
-echo "cp resources/config/visitlocal_template.yaml config/visitlocal.yaml"
-cp resources/config/visitlocal_template.yaml config/visitlocal.yaml
-
-echo "Rreplacing ~ for full home path on devlocal.yaml and visitlocal.yaml files"
-
-if [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
-  WIN_HOME=$(echo $HOME | perl -pe 's!/!\\\\!'g | perl -pe 's!\\\\(\S)!$1:!')
-  echo $WIN_HOME
-  perl -i -pe"s|~|$WIN_HOME|" config/devlocal.yaml
-  perl -i -pe"s|~|$WIN_HOME|" config/visitlocal.yaml        
-else
-  perl -i -pe"s|~|$HOME|" config/devlocal.yaml
-  perl -i -pe"s|~|$HOME|" config/visitlocal.yaml
-fi
+echo "npm run build:explorer"
+npm run build:explorer
 
 echo "Installation of local env ended"
