@@ -17,6 +17,7 @@ const {addToCache} = require('../../name_service/identity-cache');
 const {parseDomainRegistry} = require('../../name_service/registry');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 const IKV_PUT_INTERFACE = {
     inputs: [
@@ -138,6 +139,16 @@ class IdentityController extends PointSDKController {
             identityRegistred: Boolean(identityData.identity),
             ...identityData
         });
+    }
+
+    async identityRegistered() {
+        const identity = this.req.query.identity;
+        if (!identity) {
+            return this.res.status(400).send('Missing query param: identity');
+        }
+
+        const owner = await ethereum.ownerByIdentity(identity);
+        this.rep.status(200).send({identityRegistered: owner && owner !== ADDRESS_ZERO});
     }
 
     async identityToOwner() {

@@ -2,19 +2,20 @@ import '@nomiclabs/hardhat-ethers';
 import '@openzeppelin/hardhat-upgrades';
 import path from 'path';
 import hre from 'hardhat';
-import ethereum from './providers/ethereum';
-import {getFile, uploadFile} from '../client/storage';
-import logger from '../core/log';
+import ethereum from '../providers/ethereum';
+import {uploadFile} from '../../client/storage';
+import logger from '../../core/log';
 import BN from 'bn.js';
 import {Artifact} from 'hardhat/types';
-import os from 'os';
 import fs from 'fs-extra';
 import axios from 'axios';
 import tar from 'tar-fs';
 import gunzip from 'gunzip-maybe';
+import {deployProxy} from './deployProxy';
+import {resolveHome} from '../../util';
+import config from 'config';
 const log = logger.child({module: 'Deployer_new'});
 
-const IS_PACKAGED = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 
 // TODO: this is a temporary solution, supporting only limited number of dependencies
@@ -26,10 +27,7 @@ const NPM_DEPS_URLS: Record<string, string> = {
 const downloadNpmDependency = (dependency: string) => new Promise<void>(async (resolve, reject) => {
     try {
         log.debug({dependency}, 'Downloading npm dependency');
-        const depsPath = path.join(os.homedir(), '.point', 'hardhat', 'node_modules');
-        if (!fs.existsSync(depsPath)) {
-            await fs.mkdirp(depsPath);
-        }
+        const depsPath = path.join(resolveHome(config.get('datadir')), 'hardhat', 'node_modules');
         
         if (fs.existsSync(path.join(depsPath, dependency))) {
             log.debug({dependency}, 'NPM dependency already exists, skipping');
@@ -116,14 +114,9 @@ const getProxyMetadataFilePath = async () => {
     ).toNumber();
 
     const name = networkNames[chainId] ?? `unknown-${chainId}`;
-    // upgradeable plugin always uses process.cwd(). However, it's not a problem, since we
-    // don't rely on this file, we rely on IKV
-    const openzeppelinPath = path.join(process.cwd(), '.openzeppelin');
-    if (!fs.existsSync(openzeppelinPath)) {
-        await fs.mkdirp(openzeppelinPath);
-    }
-    return path.join(
-        openzeppelinPath,
+    return path.resolve(
+        resolveHome(config.get('datadir')),
+        '.openzeppelin',
         `${name}.json`
     );
 };
@@ -146,18 +139,11 @@ export const deployUpgradableContracts = async ({
 }) => {
     const proxyMetadataFilePath = await getProxyMetadataFilePath();
     const identity = target.replace(/.point$/, '');
-    const hardhatContractsDir = IS_PACKAGED
-        ? path.join(os.homedir(), '.point', 'hardhat', 'contracts')
-        : path.resolve(
-            __dirname,
-            '..',
-            '..',
-            'hardhat',
-            'contracts'
-        );
-    if (!fs.existsSync(hardhatContractsDir)) {
-        await fs.mkdirp(hardhatContractsDir);
-    }
+    const hardhatContractsDir = path.join(
+        resolveHome(config.get('datadir')),
+        'hardhat',
+        'contracts'
+    );
 
     await Promise.all(contracts.map(async contract => {
         await fs.writeFile(
@@ -166,9 +152,7 @@ export const deployUpgradableContracts = async ({
         );
     }));
 
-    if (IS_PACKAGED) {
-        await Promise.all(dependencies.map(async dep => {await downloadNpmDependency(dep);}));
-    }
+    await Promise.all(dependencies.map(async dep => {await downloadNpmDependency(dep);}));
 
     await hre.run('compile');
 
@@ -177,16 +161,12 @@ export const deployUpgradableContracts = async ({
 
         const proxyAddress = await ethereum.getKeyValue(
             target,
-            'zweb/contracts/address/' + contract.name,
-            version,
-            'equalOrBefore'
+            'zweb/contracts/address/' + contract.name
         );
 
         const proxyDescriptionFileId = await ethereum.getKeyValue(
             target,
-            PROXY_METADATA_KEY,
-            version,
-            'equalOrBefore'
+            PROXY_METADATA_KEY
         );
 
         let proxy;
@@ -203,10 +183,10 @@ export const deployUpgradableContracts = async ({
                     {IdContractAddress: idContract.options.address, identity},
                     'deploying proxy binded with identity contract and identity'
                 );
-                proxy = await hre.upgrades.deployProxy(
+                proxy = await deployProxy(
+                    hre,
                     contractF,
-                    [idContract.options.address, identity],
-                    {kind: 'uups'}
+                    [idContract.options.address, identity]
                 );
             } catch (e) {
                 log.warn(
@@ -216,26 +196,30 @@ export const deployUpgradableContracts = async ({
                     {IdContractAddress: idContract.options.address, identity},
                     'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.'
                 );
-                proxy = await hre.upgrades.deployProxy(contractF, [], {kind: 'uups'});
+                proxy = await deployProxy(hre, contractF, []);
             }
         } else {
-            log.debug('upgradeProxy call');
-            await fs.writeFile(
-                proxyMetadataFilePath,
-                await getFile(proxyDescriptionFileId)
-            );
-
-            try {
-                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-            } catch (e) {
-                log.debug('upgradeProxy call failed');
-                log.debug('deleting proxy metadata file');
-                await fs.unlink(proxyMetadataFilePath);
-                log.debug('calling forceImport');
-                await hre.upgrades.forceImport(proxyAddress, contractF, {kind: 'uups'});
-                log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
-                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-            }
+            // TODO: this is not used yet, but should be implemented
+            // in theory, we should only uncomment and replace upgradeProxy and forceImport
+            // functions so that take data from manifest from the modified path
+            throw new Error('Upgrade proxy not implemented yet');
+            // log.debug('upgradeProxy call');
+            // await fs.writeFile(
+            //     proxyMetadataFilePath,
+            //     await getFile(proxyDescriptionFileId)
+            // );
+            //
+            // try {
+            //     proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+            // } catch (e) {
+            //     log.debug('upgradeProxy call failed');
+            //     log.debug('deleting proxy metadata file');
+            //     await fs.unlink(proxyMetadataFilePath);
+            //     log.debug('calling forceImport');
+            //     await hre.upgrades.forceImport(proxyAddress, contractF, {kind: 'uups'});
+            //     log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
+            //     proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+            // }
         }
         await proxy.deployed();
         const address = proxy.address;

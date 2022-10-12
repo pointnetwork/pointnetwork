@@ -34,7 +34,6 @@ hardhat/cache
 hardhat/tests
 hardhat/typechain
 resources/liveprofile/
-.openzeppelin
 typechain-types
 
 tests/resources/datadir

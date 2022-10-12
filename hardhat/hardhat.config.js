@@ -1,12 +1,16 @@
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
-require('@openzeppelin/hardhat-upgrades');
 require('./tasks/explorer/explorer-set-index-md');
 const config = require('config');
 const path = require('path');
 const os = require('os');
 
-const IS_PACKAGED = Boolean(process.pkg);
+const resolveHome = (filepath) => {
+    if (filepath[0] === '~') {
+        return path.join(process.env.HOME || os.homedir(), filepath.slice(1));
+    }
+    return filepath;
+};
 
 let privateKey;
 // This will read either from config or from DEPLOYER_ACCOUNT env var
@@ -59,17 +63,12 @@ module.exports = {
             }
         ]
     },
-    paths: IS_PACKAGED ? {
-        root: path.join(os.homedir(), '.point', 'hardhat'),
-        artifacts: path.join(os.homedir(), '.point', 'hardhat', 'build'),
-        sources: path.join(os.homedir(), '.point', 'hardhat', 'contracts'),
-        tests: path.join(os.homedir(), '.point', 'hardhat', 'tests'),
-        cache: path.join(os.homedir(), '.point', 'hardhat', 'cache')
-    } : {
-        artifacts:'./build',
-        sources: './contracts',
-        tests: './tests',
-        cache: './cache'
+    paths: {
+        root: path.join(resolveHome(config.get('datadir')), 'hardhat'),
+        artifacts: path.join(resolveHome(config.get('datadir')), 'hardhat', 'build'),
+        sources: path.join(resolveHome(config.get('datadir')), 'hardhat', 'contracts'),
+        tests: path.join(resolveHome(config.get('datadir')), 'hardhat', 'tests'),
+        cache: path.join(resolveHome(config.get('datadir')), 'hardhat', 'cache')
     },
     networks: Object.keys(networks)
         .filter(key => networks[key].type === 'eth')
