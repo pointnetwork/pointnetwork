@@ -82,6 +82,8 @@ echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/devlocal/keystore/token
 echo "cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json"
 cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json
 
+echo "mkdir -p ~/workspace/pn/visitlocal/keystore"
+mkdir -p ~/workspace/pn/visitlocal/keystore
 echo "mkdir -p ~/workspace/pn/visitlocal/contracts"
 mkdir -p ~/workspace/pn/visitlocal/contracts
 
