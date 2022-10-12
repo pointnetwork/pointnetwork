@@ -1,5 +1,6 @@
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
+require('@openzeppelin/hardhat-upgrades');
 require('./tasks/explorer/explorer-set-index-md');
 const config = require('config');
 const path = require('path');
@@ -63,7 +64,12 @@ module.exports = {
             }
         ]
     },
-    paths: {
+    paths: process.env.MODE === 'zappdev' ? {
+        artifacts:'./build',
+        sources: './contracts',
+        tests: './tests',
+        cache: './cache'
+    } : {
         root: path.join(resolveHome(config.get('datadir')), 'hardhat'),
         artifacts: path.join(resolveHome(config.get('datadir')), 'hardhat', 'build'),
         sources: path.join(resolveHome(config.get('datadir')), 'hardhat', 'contracts'),
