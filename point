@@ -19,7 +19,7 @@ if (process.argv.length >= 3 && process.argv[2] === 'deploy'){
 }
 
 require('child_process').spawnSync(
-    prepare + 'npm run start --',
+    prepare + 'node dist/index.js',
     process.argv.slice(2),
     {stdio: 'inherit', shell: true}
 );
