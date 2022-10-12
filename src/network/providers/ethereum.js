@@ -155,7 +155,6 @@ const isIdentityAbiRelevant = async () => {
     const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
 
     try {
-        if (!existsSync(abiPath)) return false;
         const abiAndMetadata = JSON.parse(await fs.readFile(abiPath, 'utf8'));
         const {updatedAt} = abiAndMetadata;
 
@@ -201,6 +200,7 @@ const fetchAndSaveIdentityAbiFromStorage = async () => {
         log.debug('Successfully fetched identity contract abi from storage');
 
         abisByContractName['Identity'] = abiAndMetadata;
+        return abisByContractName['Identity'];
     } catch (e) {
         log.error(
             {
