@@ -214,6 +214,7 @@ class IdentityController extends PointSDKController {
 
     async openLink() {
         const {url, _csrf} = this.req.body;
+        //checks the CSFR to open a link.
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
@@ -249,6 +250,7 @@ class IdentityController extends PointSDKController {
         if (host !== 'point') {
             return this.rep.status(403).send('Forbidden');
         }
+        //checks the csrf to register an identity
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
@@ -364,6 +366,8 @@ class IdentityController extends PointSDKController {
         if (host !== 'point') {
             return this.rep.status(403).send('Forbidden');
         }
+
+        //check the csrf token to register an subidentity
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }

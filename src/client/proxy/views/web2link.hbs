@@ -42,7 +42,7 @@
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({urlToOpen: url, _csrf: '{{csrfToken}}', host: '{{host}}'})
-        });
+        });//send the request with csrf token.
     }
   </script>
 </body>

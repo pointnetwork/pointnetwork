@@ -18,6 +18,8 @@ const apiServer = fastify({
     pluginTimeout: 20000
     // todo: more configuration?
 });
+
+//loads the configuration to protect against CSRF attacks
 const CSRF_ENABLED = config.get('api.csrf_enabled');
 
 // https://github.com/fastify/fastify-websocket - for websocket support
