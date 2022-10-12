@@ -1,14 +1,5 @@
 #!/bin/bash
 
-PLATFORM=''
-case "$OSTYPE" in
-  darwin*)  PLATFORM="darwin" ;;
-  linux*)   PLATFORM="linux" ;;
-  msys*)    PLATFORM="win32" ;;
-  cygwin*)  PLATFORM="win32" ;;
-  *)        echo "unknown: $OSTYPE" ;;
-esac
-
 isNpmPackageInstalled() {
   npm list -g | grep -c $1 > /dev/null 2>&1
 }
@@ -29,8 +20,8 @@ do
       echo $package is already installed, skipping installation.
   else
       echo $package is NOT installed, installing...
-      echo npm -i --target_platform=$PLATFORM -g $package
-      npm -i --target_platform=$PLATFORM -g $package
+      echo npm i -g $package
+      npm i -g $package
   fi
 done
 
@@ -41,8 +32,8 @@ cd ../point-contracts
 rm -rf cache
 rm -rf typechain
 rm -rf build
-echo "npm -i --target_platform=$PLATFORM"
-npm -i --target_platform=$PLATFORM
+echo "npm i"
+npm i
 echo "npx hardhat compile"
 npx hardhat compile
 cd ../pointnetwork
@@ -75,8 +66,8 @@ cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/
 
 #installing local node
 echo "installing local node"
-echo "npm -i --target_platform=$PLATFORM"
-npm -i --target_platform=$PLATFORM
+echo "npm i"
+npm i
 echo "npm run build"
 npm run build
 
