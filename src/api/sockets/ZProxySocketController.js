@@ -119,15 +119,15 @@ class ZProxySocketController {
         }
     }
 
-    pushRPCMessage(msg) {
-        log.info(msg, 'Pushing RPC message');
-        return this.pushToClient(msg);
+    pushRPCMessage({type, subscriptionId, ...msg}) {
+        log.trace({type, subscriptionId}, 'Pushing RPC message');
+        return this.pushToClient({type, subscriptionId, ...msg});
     }
 
-    pushSubscriptionEvent({type, subscriptionId, request, data}) {
-        log.info({type, subscriptionId, request, data}, 'Pushing subscription event');
+    pushSubscriptionEvent({type, subscriptionId, ...msg}) {
+        log.trace({type, subscriptionId}, 'Pushing subscription event');
 
-        return this.pushToClient({type, subscriptionId, request, data});
+        return this.pushToClient({type, subscriptionId, ...msg});
     }
 }
 

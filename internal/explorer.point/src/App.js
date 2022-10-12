@@ -54,6 +54,7 @@ const Main = () => {
                                 path="/deploy_blog"
                                 element={<DeployBlog />}
                             />
+                            <Route path="/registration" element={<Final />} />
                         </Routes>
                     ) : (
                         renderWalletIdentityMissing()

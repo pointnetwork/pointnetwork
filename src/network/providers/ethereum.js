@@ -45,8 +45,15 @@ const CONTRACT_BUILD_DIR = path.resolve(
     resolveHome(config.get('datadir')),
     config.get('network.contracts_path')
 );
+const IDENTITY_CONTRACT_ID = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_id`);
+const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
 
 function createWeb3Instance({protocol, network}) {
+    // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
+    // modify this condition
+    if (config.get('mode') === 'test') {
+        throw new Error('This function should not be called during tests');
+    }
     const blockchainUrl = networks[network][protocol === 'ws' ? 'ws_address' : 'http_address'];
     const tls = networks[network].tls;
     const privateKey = '0x' + getNetworkPrivateKey();
@@ -55,6 +62,18 @@ function createWeb3Instance({protocol, network}) {
 
     if (protocol === 'ws') {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
+        process.addListener('exit', () => {
+            try {
+                log.info(`Closing web3 provider websocket connection to ${url}...`);
+                provider.disconnect();
+                log.info(`Successfully closed web3 provider websocket connection to ${url}...`);
+            } catch (error) {
+                log.error(
+                    {error: error.toString()},
+                    `Closing web3 provider websocket connection to ${url} failed`
+                );
+            }
+        });
     }
 
     const hdWalletProvider = new HDWalletProvider({
@@ -81,12 +100,14 @@ const abisByContractName = {};
 
 // web3.js providers
 const providers = {
-    [DEFAULT_NETWORK]: {
-        http: createWeb3Instance({
-            protocol: 'http',
-            network: DEFAULT_NETWORK
-        })
-    }
+    ...(config.get('mode') === 'test' ? {} : {
+        [DEFAULT_NETWORK]: {
+            http: createWeb3Instance({
+                protocol: 'http',
+                network: DEFAULT_NETWORK
+            })
+        }
+    })
 };
 
 const getWeb3 = ({chain = DEFAULT_NETWORK, protocol = 'http'} = {}) => {
@@ -96,6 +117,9 @@ const getWeb3 = ({chain = DEFAULT_NETWORK, protocol = 'http'} = {}) => {
             .includes(chain)
     ) {
         throw new Error(`No Eth provider for network ${chain}`);
+    }
+    if (config.get('mode') === 'test') {
+        return new Web3();
     }
     if (!providers[chain]) {
         providers[chain] = {};
@@ -129,7 +153,6 @@ const getEthers = (chain = DEFAULT_NETWORK) => {
 
 const isIdentityAbiRelevant = async () => {
     const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
-    const abiFileHash = config.get('identity_contract_id');
 
     try {
         const abiAndMetadata = JSON.parse(await fs.readFile(abiPath));
@@ -138,21 +161,21 @@ const isIdentityAbiRelevant = async () => {
         log.debug(
             {
                 abiPath,
-                abiFileHash,
+                abiFileHash: IDENTITY_CONTRACT_ID,
                 preservedAbiFileHash: abiAndMetadata.abiFileHash || null,
                 updatedAt: (isFinite(updatedAt) && new Date(updatedAt).toISOString()) || null
             },
             'Checking identity abi relevance'
         );
 
-        return abiAndMetadata.abiFileHash === abiFileHash;
+        return abiAndMetadata.abiFileHash === IDENTITY_CONTRACT_ID;
     } catch (e) {
         log.error(
             {
                 error: e.message,
                 stack: e.stack,
                 abiPath,
-                abiFileHash
+                abiFileHash: IDENTITY_CONTRACT_ID
             },
             'Failed to check identity abi relevance'
         );
@@ -162,16 +185,15 @@ const isIdentityAbiRelevant = async () => {
 };
 
 const fetchAndSaveIdentityAbiFromStorage = async () => {
-    const abiFileHash = config.get('identity_contract_id');
     const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
 
-    log.debug({abiFileHash}, 'Fetching Identity contract from storage');
+    log.debug({abiFileHash: IDENTITY_CONTRACT_ID}, 'Fetching Identity contract from storage');
 
     try {
-        const abiFile = await getFile(abiFileHash);
+        const abiFile = await getFile(IDENTITY_CONTRACT_ID);
         const abiAndMetadata = JSON.parse(abiFile);
 
-        abiAndMetadata.abiFileHash = abiFileHash;
+        abiAndMetadata.abiFileHash = IDENTITY_CONTRACT_ID;
         abiAndMetadata.updatedAt = Date.now();
 
         await fs.writeFile(abiPath, JSON.stringify(abiAndMetadata));
@@ -184,7 +206,7 @@ const fetchAndSaveIdentityAbiFromStorage = async () => {
             {
                 error: e.message,
                 stack: e.stack,
-                abiFileHash,
+                abiFileHash: IDENTITY_CONTRACT_ID,
                 localAbiPath: abiPath
             },
             'Failed to fetch identity abi from storage'
@@ -238,10 +260,9 @@ ethereum.loadIdentityContract = async () => {
         }
     }
 
-    const address = config.get('network.identity_contract_address');
-    log.debug({address}, 'Identity contract address');
+    log.debug({address: IDENTITY_CONTRACT_ADDRESS}, 'Identity contract address');
 
-    return await ethereum.loadPointContract('Identity', address);
+    return await ethereum.loadPointContract('Identity', IDENTITY_CONTRACT_ADDRESS);
 };
 
 ethereum.loadWebsiteContract = async (

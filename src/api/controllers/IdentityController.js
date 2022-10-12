@@ -32,6 +32,7 @@ const IKV_PUT_INTERFACE = {
 };
 
 const DEFAULT_NETWORK = config.get('network.default_network');
+const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
 
 async function registerBountyReferral(address, type) {
     const referralCode = await getReferralCode();
@@ -461,7 +462,7 @@ class IdentityController extends PointSDKController {
                 params: [
                     {
                         from: getNetworkAddress(),
-                        to: config.get('network.identity_contract_address'),
+                        to: IDENTITY_CONTRACT_ADDRESS,
                         data
                     }
                 ],

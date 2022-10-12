@@ -3,7 +3,7 @@
 # This script is used to build sqlite3 binaries to be packaged by vercel/pkg
 # You can add more platforms and archs in the array below
 
-platforms=(darwin win32);
+platforms=(darwin win32 linux);
 archs=(x64);
 libcs=(glibc musl);
 
