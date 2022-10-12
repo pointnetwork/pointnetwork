@@ -29,8 +29,8 @@ do
       echo $package is already installed, skipping installation.
   else
       echo $package is NOT installed, installing...
-      echo npm -i --target_platform=$PLATFORM -g $package
-      npm -i --target_platform=$PLATFORM -g $package
+      echo npm install --target_platform=$PLATFORM -g $package
+      npm install --target_platform=$PLATFORM -g $package
   fi
 done
 
@@ -41,11 +41,12 @@ cd ../point-contracts
 rm -rf cache
 rm -rf typechain
 rm -rf build
-echo "npm -i --target_platform=$PLATFORM"
-npm -i --target_platform=$PLATFORM
+echo "npm install --target_platform=$PLATFORM"
+npm install --target_platform=$PLATFORM
 echo "npx hardhat compile"
-npx hardhat compile
 cd ../pointnetwork
+npx hardhat compile
+
 
 #creating local directories
 echo "creating local directories"
@@ -74,9 +75,10 @@ echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visit
 cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json
 
 #installing local node
+cd ../pointnetwork
 echo "installing local node"
-echo "npm -i --target_platform=$PLATFORM"
-npm -i --target_platform=$PLATFORM
+echo "npm install --target_platform=$PLATFORM"
+npm install --target_platform=$PLATFORM
 echo "npm run build"
 npm run build
 
