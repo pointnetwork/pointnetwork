@@ -46,7 +46,9 @@ const CONTRACT_BUILD_DIR = path.resolve(
     config.get('network.contracts_path')
 );
 const IDENTITY_CONTRACT_ID = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_id`);
-const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
+const IDENTITY_CONTRACT_ADDRESS = config.get(
+    `network.web3.${DEFAULT_NETWORK}.identity_contract_address`
+);
 
 function createWeb3Instance({protocol, network}) {
     // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
@@ -1258,9 +1260,10 @@ ethereum.getGasPrice = async (network = DEFAULT_NETWORK) => {
     return gasPrice;
 };
 
-ethereum.getContractFromAbi = abi => {
+ethereum.getContractFromAbi = (abi, address) => {
     const web3 = getWeb3();
-    return new web3.eth.Contract(abi);
+    const args = address ? [abi, address] : [abi];
+    return new web3.eth.Contract(...args);
 };
 
 ethereum.deployContract = async (contract, artifacts, contractName) => {
