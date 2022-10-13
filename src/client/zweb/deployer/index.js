@@ -298,8 +298,15 @@ class Deployer {
      */
     async deployContracts(config, deployPath, version, target, force_deploy_proxy) {
         let proxyMetadataFilePath = '';
-        let contractNames = config.contracts;
-        if (!contractNames) contractNames = [];
+
+        const contracts = config.contracts || [];
+        const contractNames = contracts.map(contract => (typeof(contract) === 'string') ? contract : contract.name);
+        const contractMap = contracts.reduce((prev, cur) => {
+            const isOldFormat = (typeof(cur) === 'string');
+            const name = (isOldFormat) ? cur : cur.name;
+            prev[name] = (isOldFormat) ? {upgradable: (config.hasOwnProperty('upgradable') && config.upgradable)} : cur;
+            return prev;
+        }, {});
         const identity = target.replace('.point', '');
 
         //checks if the contracts of the dapp are upgradable and compile upgradable contracts
@@ -348,196 +355,199 @@ class Deployer {
 
         //for each contract
         for (const contractName of contractNames) {
+
+            if (!(contractMap[contractName].hasOwnProperty('exclude') && contractMap[contractName].exclude === true)) {
             
-            //resolve the file name
-            const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
+                //resolve the file name
+                const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
 
-            try {
-                let address;
-                let artifactsDeployed;
-                //if useIDE flag is set, will use specific paths and abis from the
-                //specified IDE to write arctifacts and addresses to IKV registry.
-                if (config.hasOwnProperty('useIDE')) {
-                    let abiPath = '';
-                    //get abiPath from truffle
-                    if (config.useIDE.name === 'truffle') {
-                        abiPath = path.join(
-                            deployPath,
-                            config.useIDE.projectDir,
-                            'build',
-                            'contracts',
-                            contractName + '.json'
-                        );
-                    } else if (config.useIDE.name === 'hardhat') {
-                        //get abi path from hardhat
-                        abiPath = path.join(
-                            deployPath,
-                            config.useIDE.projectDir,
-                            'build',
-                            'contracts',
-                            contractName + '.sol',
-                            contractName + '.json'
-                        );
-                    }
+                try {
+                    let address;
+                    let artifactsDeployed;
+                    //if useIDE flag is set, will use specific paths and abis from the
+                    //specified IDE to write arctifacts and addresses to IKV registry.
+                    if (config.hasOwnProperty('useIDE')) {
+                        let abiPath = '';
+                        //get abiPath from truffle
+                        if (config.useIDE.name === 'truffle') {
+                            abiPath = path.join(
+                                deployPath,
+                                config.useIDE.projectDir,
+                                'build',
+                                'contracts',
+                                contractName + '.json'
+                            );
+                        } else if (config.useIDE.name === 'hardhat') {
+                            //get abi path from hardhat
+                            abiPath = path.join(
+                                deployPath,
+                                config.useIDE.projectDir,
+                                'build',
+                                'contracts',
+                                contractName + '.sol',
+                                contractName + '.json'
+                            );
+                        }
 
-                    //reads and load the abi from the file.
-                    if (abiPath !== '' && fs.existsSync(abiPath)) {
-                        const abiFile = fs.readFileSync(abiPath, 'utf-8');
-                        artifactsDeployed = JSON.parse(abiFile);
-                    }
-                    //get the contract address from the point.deploy.json
-                    address = config.useIDE.addresses[contractName];
-                } else {
-                    // will not use an IDE for deployment, so is the default deployment
-                    // for point.
+                        //reads and load the abi from the file.
+                        if (abiPath !== '' && fs.existsSync(abiPath)) {
+                            const abiFile = fs.readFileSync(abiPath, 'utf-8');
+                            artifactsDeployed = JSON.parse(abiFile);
+                        }
+                        //get the contract address from the point.deploy.json
+                        address = config.useIDE.addresses[contractName];
+                    } else {
+                        // will not use an IDE for deployment, so is the default deployment
+                        // for point.
 
-                    if (config.hasOwnProperty('upgradable') && config.upgradable === true) {
-                        //if the contracts are upgradable 
+                        if (config.hasOwnProperty('upgradable') && config.upgradable === true && contractMap[contractName].upgradable) {
+                            //if the contracts are upgradable 
 
-                        //get the address of the proxy
-                        const proxyAddress = await blockchain.getKeyValue(
-                            target,
-                            'zweb/contracts/address/' + contractName,
-                            version,
-                            'equalOrBefore'
-                        );
-                        
-                        //get proxy metadata file from the IKV registry
-                        const proxyDescriptionFileId = await blockchain.getKeyValue(
-                            target,
-                            PROXY_METADATA_KEY,
-                            version,
-                            'equalOrBefore'
-                        );
-                        
-                        //using openzeppelin upgradable hardhat plugin:
-                        let proxy;
-                        //loads the contract factory
-                        const contractF = await hre.ethers.getContractFactory(contractName);
-                        //if there is no previous deployment or
-                        // do not found metadata file or
-                        // forcing the deployment of a new proxy
-                        if (
-                            proxyAddress == null || 
-                            proxyDescriptionFileId == null || 
-                            force_deploy_proxy 
-                        ) {
-                            //deploy a new proxy
-                            log.debug('deployProxy call');
-                            const cfg = {kind: 'uups'};
-                            //loads the identity contract
-                            const idContract = await blockchain.loadIdentityContract();
-                            try {
-                                log.debug(
-                                    {IdContractAddress: idContract.options.address, identity},
-                                    'deploying proxy binded with identity contract and identity'
+                            //get the address of the proxy
+                            const proxyAddress = await blockchain.getKeyValue(
+                                target,
+                                'zweb/contracts/address/' + contractName,
+                                version,
+                                'equalOrBefore'
+                            );
+                            
+                            //get proxy metadata file from the IKV registry
+                            const proxyDescriptionFileId = await blockchain.getKeyValue(
+                                target,
+                                PROXY_METADATA_KEY,
+                                version,
+                                'equalOrBefore'
+                            );
+                            
+                            //using openzeppelin upgradable hardhat plugin:
+                            let proxy;
+                            //loads the contract factory
+                            const contractF = await hre.ethers.getContractFactory(contractName);
+                            //if there is no previous deployment or
+                            // do not found metadata file or
+                            // forcing the deployment of a new proxy
+                            if (
+                                proxyAddress == null || 
+                                proxyDescriptionFileId == null || 
+                                force_deploy_proxy 
+                            ) {
+                                //deploy a new proxy
+                                log.debug('deployProxy call');
+                                const cfg = {kind: 'uups'};
+                                //loads the identity contract
+                                const idContract = await blockchain.loadIdentityContract();
+                                try {
+                                    log.debug(
+                                        {IdContractAddress: idContract.options.address, identity},
+                                        'deploying proxy binded with identity contract and identity'
+                                    );
+                                    // Uses the address of identity contract and identity name as
+                                    // parameters for deploying a new proxy using openzeppelin 
+                                    // hardhat upgradable plugin. Those parameters should be declared
+                                    // in the initializer of the upgradable contract.
+                                    proxy = await hre.upgrades.deployProxy(
+                                        contractF,
+                                        [idContract.options.address, identity],
+                                        cfg
+                                    );
+                                } catch (e) {
+                                    // Fallback in case of fail the deployment of the proxy.
+                                    // Some cases the upgradable contrac may not have parameters in the initializers of 
+                                    // the upgradable contract. In this case, the deployment is performed
+                                    // without parameters. In this way, the deployers feature
+                                    // will not work and only the owner of the proxy will be able
+                                    // to upgrade the proxy.
+                                    log.warn(
+                                        'Deploying proxy binded with id contract and identity failed.'
+                                    );
+                                    log.debug(
+                                        {IdContractAddress: idContract.options.address, identity},
+                                        'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.'
+                                    );
+                                    proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
+                                }
+                            } else {
+                                //will upgrade the proxy
+                                log.debug('upgradeProxy call');
+
+                                //restore from blockchain upgradable contracts and proxy metadata if does not exist.
+                                if (!fs.existsSync('./.openzeppelin')) {
+                                    fs.mkdirSync('./.openzeppelin');
+                                }
+                                //write the file for the path that the plugin needs to validate the
+                                //upgradable contract.
+                                fs.writeFileSync(
+                                    proxyMetadataFilePath,
+                                    await getFile(proxyDescriptionFileId)
                                 );
-                                // Uses the address of identity contract and identity name as
-                                // parameters for deploying a new proxy using openzeppelin 
-                                // hardhat upgradable plugin. Those parameters should be declared
-                                // in the initializer of the upgradable contract.
-                                proxy = await hre.upgrades.deployProxy(
-                                    contractF,
-                                    [idContract.options.address, identity],
-                                    cfg
-                                );
-                            } catch (e) {
-                                // Fallback in case of fail the deployment of the proxy.
-                                // Some cases the upgradable contrac may not have parameters in the initializers of 
-                                // the upgradable contract. In this case, the deployment is performed
-                                // without parameters. In this way, the deployers feature
-                                // will not work and only the owner of the proxy will be able
-                                // to upgrade the proxy.
-                                log.warn(
-                                    'Deploying proxy binded with id contract and identity failed.'
-                                );
-                                log.debug(
-                                    {IdContractAddress: idContract.options.address, identity},
-                                    'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.'
-                                );
-                                proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
+
+                                try {
+                                    //try to upgrade the proxy
+                                    //in this step the contract is validated and if any problem
+                                    //is found the plugin raises an erro.
+                                    proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                                } catch (e) {
+                                    //fallback for solve a common problem for upgrade the proxy
+                                    log.debug('upgradeProxy call failed');
+
+                                    //Proxy metadata file can be corrupted or not updated. Then:
+                                    //Delete the metadata file.
+                                    log.debug('deleting proxy metadata file');
+                                    fs.unlinkSync(proxyMetadataFilePath);
+                                    //Restore the file from the blockchain.
+                                    log.debug('calling forceImport');
+                                    const kind = 'uups';
+                                    await hre.upgrades.forceImport(proxyAddress, contractF, {kind});
+                                    //try to deploy again with the new metadata file.
+                                    log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
+                                    proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                                }
                             }
+                            //wait until the proxy is effectivelly deployed.
+                            await proxy.deployed();
+                            //get the address of the proxy
+                            address = proxy.address;
+                            //reads the atifacts using hardhat.
+                            artifactsDeployed = await hre.artifacts.readArtifact(contractName);
                         } else {
-                            //will upgrade the proxy
-                            log.debug('upgradeProxy call');
+                            //the contracts are not upgradable, so normal deployment
 
-                            //restore from blockchain upgradable contracts and proxy metadata if does not exist.
-                            if (!fs.existsSync('./.openzeppelin')) {
-                                fs.mkdirSync('./.openzeppelin');
-                            }
-                            //write the file for the path that the plugin needs to validate the
-                            //upgradable contract.
-                            fs.writeFileSync(
-                                proxyMetadataFilePath,
-                                await getFile(proxyDescriptionFileId)
+                            //complie using solc
+                            const {contract, artifacts} = await this.compileContract(
+                                contractName,
+                                fileName,
+                                deployPath
                             );
 
-                            try {
-                                //try to upgrade the proxy
-                                //in this step the contract is validated and if any problem
-                                //is found the plugin raises an erro.
-                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-                            } catch (e) {
-                                //fallback for solve a common problem for upgrade the proxy
-                                log.debug('upgradeProxy call failed');
+                            //get the artifacts
+                            artifactsDeployed = artifacts;
 
-                                //Proxy metadata file can be corrupted or not updated. Then:
-                                //Delete the metadata file.
-                                log.debug('deleting proxy metadata file');
-                                fs.unlinkSync(proxyMetadataFilePath);
-                                //Restore the file from the blockchain.
-                                log.debug('calling forceImport');
-                                const kind = 'uups';
-                                await hre.upgrades.forceImport(proxyAddress, contractF, {kind});
-                                //try to deploy again with the new metadata file.
-                                log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
-                                proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-                            }
+                            //send the transaction of deployment to the blockchain
+                            address = await blockchain.deployContract(
+                                contract,
+                                artifacts,
+                                contractName
+                            );
                         }
-                        //wait until the proxy is effectivelly deployed.
-                        await proxy.deployed();
-                        //get the address of the proxy
-                        address = proxy.address;
-                        //reads the atifacts using hardhat.
-                        artifactsDeployed = await hre.artifacts.readArtifact(contractName);
-                    } else {
-                        //the contracts are not upgradable, so normal deployment
-
-                        //complie using solc
-                        const {contract, artifacts} = await this.compileContract(
-                            contractName,
-                            fileName,
-                            deployPath
-                        );
-
-                        //get the artifacts
-                        artifactsDeployed = artifacts;
-
-                        //send the transaction of deployment to the blockchain
-                        address = await blockchain.deployContract(
-                            contract,
-                            artifacts,
-                            contractName
-                        );
                     }
+
+                    //upload files to arweave and store IKV values for the deployment
+                    const artifactsStorageId = await this.storeContractArtifacts(
+                        artifactsDeployed,
+                        fileName,
+                        contractName,
+                        version,
+                        address,
+                        target
+                    );
+
+                    log.debug(
+                        `Contract ${contractName} with Artifacts Storage ID ${artifactsStorageId} is deployed to ${address}`
+                    );
+                } catch (e) {
+                    log.error(e, 'Zapp contract deployment error');
+                    throw e;
                 }
-
-                //upload files to arweave and store IKV values for the deployment
-                const artifactsStorageId = await this.storeContractArtifacts(
-                    artifactsDeployed,
-                    fileName,
-                    contractName,
-                    version,
-                    address,
-                    target
-                );
-
-                log.debug(
-                    `Contract ${contractName} with Artifacts Storage ID ${artifactsStorageId} is deployed to ${address}`
-                );
-            } catch (e) {
-                log.error(e, 'Zapp contract deployment error');
-                throw e;
             }
         }
 
@@ -547,7 +557,6 @@ class Deployer {
                 // Upload proxy metadata
                 const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
-
                 log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
                 //upload the file
                 const proxyMetadataFileUploadedId = await uploadFile(JSON.stringify(proxyMetadata));
