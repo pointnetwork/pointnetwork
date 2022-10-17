@@ -346,3 +346,12 @@ export const getFileIdByPath = async (dirId: string, filePath: string): Promise<
         return getFileIdByPath(nextFileOrDir.id, path.join(...segments.slice(1)));
     }
 };
+
+export const isFileCached = async (fileId: string): Promise<boolean> => {
+    const id = (fileId.startsWith('0x') ? fileId.replace('0x', '') : fileId).toLowerCase();
+    const filePath = path.join(FILES_DIR, `file_${id}`);
+    return fs
+        .access(filePath)
+        .then(() => true)
+        .catch(() => false);
+};
