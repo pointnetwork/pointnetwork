@@ -5,22 +5,39 @@ import { useParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { useAppContext } from '../../context/AppContext';
 
+/**
+ * Render a list of ikv
+ * 
+ * @param {object} props
+ * @param {boolean} props.isPointIdentity - if is a point identity
+ * @param {address} props.owner - the address of the owner of the identity
+ * @returns 
+ */
 const IkvList = ({ isPointIdentity, owner }) => {
     const { handle } = useParams();
     const { walletAddr } = useAppContext();
     const [ikvset, setIkvset] = useState([]);
     const [isLoadingIkv, setIsLoadingIkv] = useState(true);
+    //values for the fields from the form for new entry
     const [ikvNewEntryKey, setIkvNewEntryKey] = useState('');
     const [ikvNewEntryValue, setIkvNewEntryValue] = useState('');
     const [ikvNewEntryVersion, setIkvNewEntryVersion] = useState('');
+    //flag to check if is adding a new ikv entry
     const [addingNewIkv, setAddingNewIkv] = useState(false);
 
+    //method to clean the form
     const cleanForm = () => {
         setIkvNewEntryKey('');
         setIkvNewEntryValue('');
         setIkvNewEntryVersion('');
     };
 
+
+    /**
+     * Add an IKV entry
+     * 
+     * @returns void
+     */
     const addIkvEntry = async () => {
         setAddingNewIkv(true);
         const regexp = new RegExp(/\d+\.\d+\.\d+/);
@@ -54,6 +71,9 @@ const IkvList = ({ isPointIdentity, owner }) => {
         }
     };
 
+    /**
+     * fetch ikv data
+     */    
     const fetchIkv = async () => {
         setIsLoadingIkv(true);
         const ikvsetFetched = await window.point.contract.call({
@@ -80,12 +100,14 @@ const IkvList = ({ isPointIdentity, owner }) => {
         fetchIkv();
     }, [handle]);
 
+    //enable add entry button
     const addEntryButtonEnabled =
         !addingNewIkv &&
         Boolean(ikvNewEntryKey) &&
         Boolean(ikvNewEntryValue) &&
         Boolean(ikvNewEntryVersion);
 
+    //checks if can show the ikv edit form
     const showIkvEditForm =
         walletAddr.toLowerCase() === owner?.toLowerCase() && isPointIdentity;
 
