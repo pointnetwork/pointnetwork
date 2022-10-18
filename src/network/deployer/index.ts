@@ -98,7 +98,7 @@ const storeContractArtifacts = async ({
     return artifactsStorageId;
 };
 
-const getProxyMetadataFilePath = async () => {
+export const getProxyMetadataFilePath = async () => {
     // TODO: move it to config
     const networkNames: Record<number, string> = {
         1: 'mainnet',

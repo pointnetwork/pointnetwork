@@ -1,25 +1,31 @@
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs-extra');
 const logger = require('../../../core/log');
 const log = logger.child({module: 'Deployer'});
 const {
     compileContract,
     getImportsFactory,
     encodeCookieString,
-    mergeAndResolveConflicts
+    mergeAndResolveConflicts,
+    resolveHome
 } = require('../../../util');
 const {getNetworkPublicKey} = require('../../../wallet/keystore');
 const blockchain = require('../../../network/providers/ethereum');
 const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
-const {execSync} = require('child_process');
-const {getFile, uploadDir, uploadFile} = require('../../storage');
+const {execSync, exec} = require('child_process');
+const {uploadDir, uploadFile} = require('../../storage');
+const config = require('config');
+const {deployProxy} = require('../../../network/deployer/deployProxy');
+const {hardhatConfigMinimal} = require('./hardhatConfigMinimal');
+const {getProxyMetadataFilePath} = require('../../../network/deployer');
 
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
 const POINT_SDK_VERSION = 'zweb/point/sdk/version';
 const POINT_NODE_VERSION = 'zweb/point/node/version';
+const DATADIR = resolveHome(config.get('datadir'));
 
 /**
  * Class responsible to deploy DApps in Point Network.
@@ -288,7 +294,99 @@ class Deployer {
     }
 
     /**
-     * Deply a set of contracts specified in point.deploy.json of the DApp.
+     * Installs hardhat and @openzeppelin/hardhat-upgrades as local dependencies in the dApp folder
+     *
+     * @param {string} deployPath - absolute path to the project folder
+     * @returns {Promise<void>}
+     */
+    installLocalDeps = (deployPath) => new Promise((resolve, reject) => {
+        log.info('Installing local dependencies');
+        const proc = exec(
+            'npm install -D hardhat @openzeppelin/hardhat-upgrades',
+            {
+                cwd: deployPath,
+                env: {
+                    ...process.env,
+                    HARDHAT_CONFIG: undefined
+                }
+            }
+        );
+
+        proc.stdout.on('data', data => {
+            log.info(data);
+        });
+        proc.stderr.on('data', data => {
+            log.error(data);
+        });
+
+        proc.on('exit', async code => {
+            if (code !== 0) {
+                reject(new Error(`Installer process exited with code ${code}`));
+            } else {
+                resolve();
+            }
+        });
+    });
+
+    /**
+     * Compiles contracts in the destination folder using hardhat
+     *
+     * @param {string} deployPath - absolute path to the project folder
+     * @returns {Promise<void>}
+     */
+    compileLocal = (deployPath) => new Promise(async (resolve, reject) => {
+        const localHardhatFilePath = path.join(deployPath, 'hardhat.config.js');
+        if (!fs.existsSync(localHardhatFilePath)) {
+            await fs.writeFile(
+                localHardhatFilePath,
+                hardhatConfigMinimal,
+                'utf8'
+            );
+        }
+
+        const packageJson = JSON.parse(await fs.readFile(
+            path.join(deployPath, 'package.json'), 'utf8'
+        ));
+        if (!(
+            ('hardhat' in packageJson.dependencies || 'hardhat' in packageJson.devDependencies) &&
+            ('@@openzeppelin/hardhat-upgrades' in packageJson.dependencies ||
+                '@openzeppelin/hardhat-upgrades' in packageJson.devDependencies)
+        )) {
+            await this.installLocalDeps(deployPath);
+        }
+
+        log.info('Compiling using harhdat in dApp folder');
+
+        const proc = exec(
+            `npx hardhat compile`,
+            {
+                cwd: deployPath,
+                env: {
+                    ...process.env,
+                    HARDHAT_CONFIG: undefined
+                }
+            }
+        );
+
+        proc.stdout.on('data', data => {
+            log.info(data);
+        });
+        proc.stderr.on('data', data => {
+            log.error(data);
+        });
+
+        proc.on('exit', async code => {
+            if (code !== 0) {
+                reject(new Error(`Compiler process exited with code ${code}`));
+            } else {
+                log.info('Compiled successfully');
+                resolve();
+            }
+        });
+    });
+
+    /**
+     * Deploy a set of contracts specified in point.deploy.json of the DApp.
      * 
      * @param {object} config - point.deploy config object.
      * @param {string} deployPath - Path to the DApp.
@@ -313,44 +411,14 @@ class Deployer {
         //this step is necessary to hardhat upgradable plugin to work.
         if (config.hasOwnProperty('upgradable') && config.upgradable) {
             //retrieve the metadata file path which should match with openzeppelin plugin one to work
-            proxyMetadataFilePath = await this.getProxyMetadataFilePath();
+            proxyMetadataFilePath = await getProxyMetadataFilePath(deployPath);
 
-            //for each contract declared in point.deploy.json
-            for (const contractName of contractNames) {
-                //resolve the path to the contract
-                const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
-                //copy it to hardhat folder for compiling it
-                fs.copyFileSync(
-                    fileName,
-                    path.resolve(
-                        __dirname,
-                        '..',
-                        '..',
-                        '..',
-                        '..',
-                        'hardhat',
-                        'contracts',
-                        contractName + '.sol'
-                    )
-                );
-            }
-            //compile all contracts with hardhat command.
-            await hre.run('compile');
-            //delete the sources for cleaning any cache for next compilations.
-            for (const contractName of contractNames) {
-                fs.unlinkSync(
-                    path.resolve(
-                        __dirname,
-                        '..',
-                        '..',
-                        '..',
-                        '..',
-                        'hardhat',
-                        'contracts',
-                        contractName + '.sol'
-                    )
-                );
-            }
+            await this.compileLocal(deployPath);
+
+            await Promise.all([
+                fs.copy(path.join(deployPath, 'cache'), path.join(DATADIR, 'hardhat', 'cache')),
+                fs.copy(path.join(deployPath, 'artifacts'), path.join(DATADIR, 'hardhat', 'build'))
+            ]);
         }
 
         //for each contract
@@ -391,7 +459,7 @@ class Deployer {
 
                         //reads and load the abi from the file.
                         if (abiPath !== '' && fs.existsSync(abiPath)) {
-                            const abiFile = fs.readFileSync(abiPath, 'utf-8');
+                            const abiFile = await fs.readFile(abiPath, 'utf-8');
                             artifactsDeployed = JSON.parse(abiFile);
                         }
                         //get the contract address from the point.deploy.json
@@ -406,17 +474,13 @@ class Deployer {
                             //get the address of the proxy
                             const proxyAddress = await blockchain.getKeyValue(
                                 target,
-                                'zweb/contracts/address/' + contractName,
-                                version,
-                                'equalOrBefore'
+                                'zweb/contracts/address/' + contractName
                             );
                             
                             //get proxy metadata file from the IKV registry
                             const proxyDescriptionFileId = await blockchain.getKeyValue(
                                 target,
-                                PROXY_METADATA_KEY,
-                                version,
-                                'equalOrBefore'
+                                PROXY_METADATA_KEY
                             );
                             
                             //using openzeppelin upgradable hardhat plugin:
@@ -427,13 +491,12 @@ class Deployer {
                             // do not found metadata file or
                             // forcing the deployment of a new proxy
                             if (
-                                proxyAddress == null || 
-                                proxyDescriptionFileId == null || 
+                                !proxyAddress ||
+                                !proxyDescriptionFileId ||
                                 force_deploy_proxy 
                             ) {
                                 //deploy a new proxy
                                 log.debug('deployProxy call');
-                                const cfg = {kind: 'uups'};
                                 //loads the identity contract
                                 const idContract = await blockchain.loadIdentityContract();
                                 try {
@@ -445,10 +508,10 @@ class Deployer {
                                     // parameters for deploying a new proxy using openzeppelin 
                                     // hardhat upgradable plugin. Those parameters should be declared
                                     // in the initializer of the upgradable contract.
-                                    proxy = await hre.upgrades.deployProxy(
+                                    proxy = await deployProxy(
+                                        hre,
                                         contractF,
-                                        [idContract.options.address, identity],
-                                        cfg
+                                        [idContract.options.address, identity]
                                     );
                                 } catch (e) {
                                     // Fallback in case of fail the deployment of the proxy.
@@ -464,44 +527,46 @@ class Deployer {
                                         {IdContractAddress: idContract.options.address, identity},
                                         'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.'
                                     );
-                                    proxy = await hre.upgrades.deployProxy(contractF, [], cfg);
+                                    proxy = await deployProxy(hre, contractF, []);
                                 }
                             } else {
-                                //will upgrade the proxy
-                                log.debug('upgradeProxy call');
-
-                                //restore from blockchain upgradable contracts and proxy metadata if does not exist.
-                                if (!fs.existsSync('./.openzeppelin')) {
-                                    fs.mkdirSync('./.openzeppelin');
-                                }
-                                //write the file for the path that the plugin needs to validate the
-                                //upgradable contract.
-                                fs.writeFileSync(
-                                    proxyMetadataFilePath,
-                                    await getFile(proxyDescriptionFileId)
-                                );
-
-                                try {
-                                    //try to upgrade the proxy
-                                    //in this step the contract is validated and if any problem
-                                    //is found the plugin raises an erro.
-                                    proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-                                } catch (e) {
-                                    //fallback for solve a common problem for upgrade the proxy
-                                    log.debug('upgradeProxy call failed');
-
-                                    //Proxy metadata file can be corrupted or not updated. Then:
-                                    //Delete the metadata file.
-                                    log.debug('deleting proxy metadata file');
-                                    fs.unlinkSync(proxyMetadataFilePath);
-                                    //Restore the file from the blockchain.
-                                    log.debug('calling forceImport');
-                                    const kind = 'uups';
-                                    await hre.upgrades.forceImport(proxyAddress, contractF, {kind});
-                                    //try to deploy again with the new metadata file.
-                                    log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
-                                    proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-                                }
+                                // TODO: this is not used yet, but should be implemented
+                                throw new Error('Upgrade proxy not implemented yet');
+                                // //will upgrade the proxy
+                                // log.debug('upgradeProxy call');
+                                //
+                                // //restore from blockchain upgradable contracts and proxy metadata if does not exist.
+                                // if (!fs.existsSync('./.openzeppelin')) {
+                                //     fs.mkdirSync('./.openzeppelin');
+                                // }
+                                // //write the file for the path that the plugin needs to validate the
+                                // //upgradable contract.
+                                // fs.writeFileSync(
+                                //     proxyMetadataFilePath,
+                                //     await getFile(proxyDescriptionFileId)
+                                // );
+                                //
+                                // try {
+                                //     //try to upgrade the proxy
+                                //     //in this step the contract is validated and if any problem
+                                //     //is found the plugin raises an erro.
+                                //     proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                                // } catch (e) {
+                                //     //fallback for solve a common problem for upgrade the proxy
+                                //     log.debug('upgradeProxy call failed');
+                                //
+                                //     //Proxy metadata file can be corrupted or not updated. Then:
+                                //     //Delete the metadata file.
+                                //     log.debug('deleting proxy metadata file');
+                                //     fs.unlinkSync(proxyMetadataFilePath);
+                                //     //Restore the file from the blockchain.
+                                //     log.debug('calling forceImport');
+                                //     const kind = 'uups';
+                                //     await hre.upgrades.forceImport(proxyAddress, contractF, {kind});
+                                //     //try to deploy again with the new metadata file.
+                                //     log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
+                                //     proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
+                                // }
                             }
                             //wait until the proxy is effectivelly deployed.
                             await proxy.deployed();
@@ -555,7 +620,7 @@ class Deployer {
         if (config.hasOwnProperty('upgradable') && config.upgradable === true) {
             try {
                 // Upload proxy metadata
-                const proxyMetadataFile = fs.readFileSync(proxyMetadataFilePath, 'utf-8');
+                const proxyMetadataFile = await fs.readFile(proxyMetadataFilePath, 'utf-8');
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
                 log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
                 //upload the file
@@ -563,6 +628,14 @@ class Deployer {
                 //update the IKV from metadata file
                 await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
                 log.debug('Proxy metadata updated');
+
+                log.debug('Removing artifacts and cache');
+                await Promise.all([
+                    fs.emptyDir(path.join(DATADIR, 'hardhat', 'build')),
+                    fs.emptyDir(path.join(DATADIR, 'hardhat', 'cache')),
+                    fs.emptyDir(path.join(DATADIR, '.openzeppelin'))
+                ]);
+                log.debug('Removed artifacts and cache');
             } catch (e) {
                 log.error(e, 'Zapp contract deployment error');
                 throw e;
@@ -591,7 +664,7 @@ class Deployer {
      */
     async uploadRoutes(deployPath) {
         const routesFilePath = path.join(deployPath, 'routes.json');
-        const routesFile = fs.readFileSync(routesFilePath, 'utf-8');
+        const routesFile = await fs.readFile(routesFilePath, 'utf-8');
         const routes = JSON.parse(routesFile);
 
         log.debug({routes}, 'Uploading route file...');
@@ -611,24 +684,23 @@ class Deployer {
     /**
      * Get the exact the same file path of openzeppelin upgradable plugin
      * for using with upgradable plugin deployment.
-     * 
+     *
      * @returns the full path, including the name, for the metadata file.
      */
-    async getProxyMetadataFilePath() {
-        const networkNames = {
-            1: 'mainnet',
-            2: 'morden',
-            3: 'ropsten',
-            4: 'rinkeby',
-            5: 'goerli',
-            42: 'kovan'
-        };
-        const manifestDir = '.openzeppelin';
-
-        const chainId = await this.getChainId();
-        const name = networkNames[chainId] ?? `unknown-${chainId}`;
-        return path.join('.', manifestDir, `${name}.json`);
-    }
+    // async getProxyMetadataFilePath(deployPath) {
+    //     const networkNames = {
+    //         1: 'mainnet',
+    //         2: 'morden',
+    //         3: 'ropsten',
+    //         4: 'rinkeby',
+    //         5: 'goerli',
+    //         42: 'kovan'
+    //     };
+    //
+    //     const chainId = await this.getChainId();
+    //     const name = networkNames[chainId] ?? `unknown-${chainId}`;
+    //     return path.join(deployPath, 'hardhat', '.openzeppelin', `${name}.json`);
+    // }
 
     /**
      * Executes a command in the shell.
@@ -745,7 +817,7 @@ class Deployer {
         if (!deployConfig) {
             // todo: error handling, as usual
             const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
-            const deployConfigFile = await fs.promises.readFile(deployConfigFilePath, 'utf-8');
+            const deployConfigFile = await fs.readFile(deployConfigFilePath, 'utf-8');
             deployConfig = JSON.parse(deployConfigFile);
         }
 
@@ -1109,7 +1181,7 @@ class Deployer {
                         }
 
                         const ext = value.file.replace(/.*\.([a-zA-Z0-9]+)$/, '$1');
-                        const file = await fs.promises.readFile(filePath);
+                        const file = await fs.readFile(filePath);
                         const cid = await uploadFile(file);
 
                         value = '/_storage/' + cid + '.' + ext;
