@@ -682,27 +682,6 @@ class Deployer {
     }
 
     /**
-     * Get the exact the same file path of openzeppelin upgradable plugin
-     * for using with upgradable plugin deployment.
-     *
-     * @returns the full path, including the name, for the metadata file.
-     */
-    // async getProxyMetadataFilePath(deployPath) {
-    //     const networkNames = {
-    //         1: 'mainnet',
-    //         2: 'morden',
-    //         3: 'ropsten',
-    //         4: 'rinkeby',
-    //         5: 'goerli',
-    //         42: 'kovan'
-    //     };
-    //
-    //     const chainId = await this.getChainId();
-    //     const name = networkNames[chainId] ?? `unknown-${chainId}`;
-    //     return path.join(deployPath, 'hardhat', '.openzeppelin', `${name}.json`);
-    // }
-
-    /**
      * Executes a command in the shell.
      * Used to run git commands during the deployment. 
      * 
