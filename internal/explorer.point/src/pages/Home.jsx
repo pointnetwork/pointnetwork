@@ -136,7 +136,7 @@ export default function Home() {
 
     return (
         <Container className="home-container">
-            <LinkPointToSol />
+            {/* <LinkPointToSol /> */}
 
             <h1 className="home-header">
                 Welcome to <span>Web 3.0</span>
