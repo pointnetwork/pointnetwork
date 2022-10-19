@@ -2,14 +2,25 @@ const abiDecoder = require('abi-decoder');
 import {BigNumber} from 'ethers';
 import ethereum from '../network/providers/ethereum';
 import logger from '../core/log';
-import {CacheFactory} from '../util';
+import {CacheFactory, isValidStorageId, isZeroStorageId} from '../util';
+import {isFileCached} from '../client/storage';
 
 const log = logger.child({module: 'RPC'});
+
+enum ParamMetaType {
+    STORAGE_ID = 'storage_id',
+    ZERO_CONTENT = 'zero_content',
+    TX_HASH = 'tx_hash',
+    NOT_FOUND = 'not_found'
+}
 
 type Param = {
     name: string;
     value: string;
     type: string;
+    meta?: {
+        type: ParamMetaType;
+    };
 };
 
 export type DecodedTxInput = {
@@ -101,4 +112,46 @@ export async function decodeTxInputData(
     }
 
     return {...decoded, gas};
+}
+
+async function addMetadaToParam(param: Param, network: string) {
+    if (!param.value || typeof param.value !== 'string') {
+        return;
+    }
+
+    if (isZeroStorageId(param.value)) {
+        param.meta = {type: ParamMetaType.ZERO_CONTENT};
+        return;
+    }
+
+    if (isValidStorageId(param.value)) {
+        // `isValidStorageId` does not necessarily mean it's actually a storage ID,
+        // it means it looks like one. So, to tell for sure if it's actually a storage ID,
+        // we look for the potential file in the local cache.
+        if (await isFileCached(param.value)) {
+            param.meta = {type: ParamMetaType.STORAGE_ID};
+        } else {
+            // Check if it's a blockchain tx hash
+            try {
+                const receipt = await ethereum.getTransactionReceipt(param.value, network);
+                if (receipt.blockNumber) {
+                    param.meta = {type: ParamMetaType.TX_HASH};
+                } else {
+                    throw new Error(`${param.value} is not a blockchain transaction hash`);
+                }
+            } catch {
+                param.meta = {type: ParamMetaType.NOT_FOUND};
+            }
+        }
+    }
+}
+
+/**
+ * Adds metadata about the transaction inputs.
+ */
+export async function addMetadata(txData: DecodedTxInput, network: string) {
+    if (!txData.params || txData.params.length === 0) {
+        return;
+    }
+    await Promise.all(txData.params.map(param => addMetadaToParam(param, network)));
 }

@@ -3,7 +3,7 @@ import pendingTxs from '../permissions/PendingTxs';
 import ethereum from '../network/providers/ethereum';
 import config from 'config';
 import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
-import {decodeTxInputData, DecodedTxInput} from './decode';
+import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode';
 import {getNetworkPublicKey} from '../wallet/keystore';
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
@@ -43,6 +43,9 @@ const storeTransaction: HandlerFunc = async data => {
     }
 
     const decodedTxData = await decodeTxInputData(target, contract, params);
+    if (decodedTxData) {
+        await addMetadata(decodedTxData, network);
+    }
 
     // Store request for future processing,
     // and send `reqId` to client so it can ask user approval.

@@ -1375,4 +1375,10 @@ ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
 
 ethereum.isAddress = address => ethers.utils.isAddress(address);
 
+ethereum.getTransactionReceipt = async (txHash, network = DEFAULT_NETWORK) => {
+    const provider = getEthers(network);
+    const receipt = await provider.getTransactionReceipt(txHash);
+    return receipt;
+};
+
 module.exports = ethereum;
