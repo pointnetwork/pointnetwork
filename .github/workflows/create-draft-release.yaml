@@ -1,13 +1,12 @@
 # This workflow will package the application
 
-name: Create release
+name: 🛠 Create a draft release
 
 on:
   push:
     # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-
 
 jobs:
   create_release:
@@ -16,10 +15,18 @@ jobs:
       release_upload_url: ${{ steps.create_release.outputs.upload_url }}
       release_name: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
     steps:
-    - name: Get the Source Tag
+    - name: 🏷 Get the source tag
       id: get_source_tag
       run: echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
-    - name: Create Release
+
+    - name: 📋 Generate release changelog
+      uses: heinrichreimer/github-changelog-generator-action@v2.3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        future-release: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
+        release-branch:  ${{ github.head_ref || github.ref_name }}
+
+    - name: 📦 Create release
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -44,15 +51,15 @@ jobs:
     - run: npm i -g npm
     - run: npm i -g json
     - run: npm install
-    - name: Run build
+    - name: 🛠 Run build
       run: npm run build
-    - name: Create sqlite binaries
+    - name: 🛠 Create sqlite binaries
       run: ./scripts/build-sqlite3-for-all-platforms.sh
-    - name: Create package
+    - name: 🛠 Create package
       run: npm run pkg:linux
-    - name: Compress pkg
+    - name: 🗃 Compress pkg
       run: ./scripts/package-executables.sh
-    - name: upload linux artefact
+    - name: 📤 Upload linux artefact
       id: upload_linux
       uses: pointnetwork/upload-release-asset@v2.0.0
       env:
@@ -78,15 +85,15 @@ jobs:
     - run: npm i -g npm
     - run: npm i -g json
     - run: npm install
-    - name: Run build
+    - name: 🛠 Run build
       run: npm run build
-    - name: Create sqlite binaries
+    - name: 🛠 Create sqlite binaries
       run: ./scripts/build-sqlite3-for-all-platforms.sh
-    - name: Create package
+    - name: 🛠 Create package
       run: npm run pkg:macos
-    - name: Compress pkg
+    - name: 🗃 Compress pkg
       run: ./scripts/package-executables.sh
-    - name: upload macos artefact
+    - name: 📤 Upload macos artefact
       id: upload_mac
       uses: pointnetwork/upload-release-asset@v2.0.0
       env:
@@ -111,15 +118,15 @@ jobs:
     - run: npm i -g npm
     - run: npm i -g json
     - run: npm install
-    - name: Run build
+    - name: 🛠 Run build
       run: npm run build
-    - name: Create sqlite binaries
+    - name: 🛠 Create sqlite binaries
       run: ./scripts/build-sqlite3-for-all-platforms.sh
-    - name: Create package
+    - name: 🛠 Create package
       run: npm run pkg:win
-    - name: Compress pkg
+    - name: 🗃 Compress pkg
       run: bash ./scripts/package-executables.sh
-    - name: upload windows artefact
+    - name: 📤 Upload windows artefact
       id: upload_win
       uses: pointnetwork/upload-release-asset@v2.0.0
       env:
@@ -134,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [create_release, build_on_win, build_on_linux, build_on_mac]
     steps:
-    - name: Generate hash file
+    - name: "#️⃣ Generate hash file"
       uses: DamianReeves/write-file-action@master
       with:
         path: ./hash
@@ -143,7 +150,7 @@ jobs:
           ${{ needs.build_on_linux.outputs.linux_filename }}: ${{ needs.build_on_linux.outputs.linux_hash }}
           ${{ needs.build_on_mac.outputs.macos_filename }}: ${{ needs.build_on_mac.outputs.macos_hash }}
         write-mode: append
-    - name: Upload sha256 file
+    - name: 📤 Upload sha256 file
       uses: pointnetwork/upload-release-asset@v2.0.0
       env:
         GITHUB_TOKEN: ${{ github.token }}
