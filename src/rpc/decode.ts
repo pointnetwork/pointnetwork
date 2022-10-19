@@ -1,9 +1,11 @@
 const abiDecoder = require('abi-decoder');
 import {BigNumber} from 'ethers';
 import ethereum from '../network/providers/ethereum';
+import solana from '../network/providers/solana';
 import logger from '../core/log';
 import {CacheFactory, isValidStorageId, isZeroStorageId} from '../util';
 import {isFileCached} from '../client/storage';
+import {getIdentity} from '../name_service/identity';
 
 const log = logger.child({module: 'RPC'});
 
@@ -11,7 +13,8 @@ enum ParamMetaType {
     STORAGE_ID = 'storage_id',
     ZERO_CONTENT = 'zero_content',
     TX_HASH = 'tx_hash',
-    NOT_FOUND = 'not_found'
+    NOT_FOUND = 'not_found',
+    IDENTITIES = 'identities'
 }
 
 type Param = {
@@ -20,6 +23,7 @@ type Param = {
     type: string;
     meta?: {
         type: ParamMetaType;
+        identities?: string[];
     };
 };
 
@@ -114,8 +118,51 @@ export async function decodeTxInputData(
     return {...decoded, gas};
 }
 
+/**
+ * Checks if an address owns a handle (has registered an identity).
+ * If it does, it returns the handle,
+ * if it doesn't, it returns the address.
+ */
+async function getIdentityByAddress(address: string): Promise<string> {
+    let key = '';
+    let targets: string[] = [];
+    if (solana.isAddress(address)) {
+        key = 'solAddress';
+        targets = ['solana'];
+    } else if (ethereum.isAddress(address)) {
+        key = 'ethAddress';
+        targets = ['point'];
+    }
+
+    if (!key || targets.length === 0) {
+        return address;
+    }
+
+    try {
+        const {identity} = await getIdentity({[key]: address, targets});
+        return identity || address;
+    } catch {
+        return address;
+    }
+}
+
 async function addMetadaToParam(param: Param, network: string) {
-    if (!param.value || typeof param.value !== 'string') {
+    if (!param.value) {
+        return;
+    }
+
+    // Check if param is an address, and if so check if it owns a handle.
+    if (param.type === 'address') {
+        const identity = await getIdentityByAddress(param.value);
+        if (identity) {
+            param.meta = {type: ParamMetaType.IDENTITIES, identities: [identity]};
+        }
+    } else if (param.type === 'address[]' && Array.isArray(param.value)) {
+        const identities = await Promise.all(param.value.map(addr => getIdentityByAddress(addr)));
+        param.meta = {type: ParamMetaType.IDENTITIES, identities};
+    }
+
+    if (typeof param.value !== 'string') {
         return;
     }
 
@@ -124,6 +171,7 @@ async function addMetadaToParam(param: Param, network: string) {
         return;
     }
 
+    // Check if param is a storage ID or a transaction hash.
     if (isValidStorageId(param.value)) {
         // `isValidStorageId` does not necessarily mean it's actually a storage ID,
         // it means it looks like one. So, to tell for sure if it's actually a storage ID,

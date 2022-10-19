@@ -154,7 +154,8 @@ export const sendToken = async ({tokenAddress, to, network = DEFAULT_NETWORK, va
         from: getWalletAddress({network}),
         to: tokenAddress,
         data,
-        value
+        value,
+        beneficiary: to
     }];
 
     const reqId = pendingTxs.add(params, network);
