@@ -23,8 +23,8 @@ jobs:
       uses: heinrichreimer/github-changelog-generator-action@v2.3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        future-release: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
-        release-branch:  ${{ github.head_ref || github.ref_name }}
+        futureRelease: ${{ steps.get_source_tag.outputs.SOURCE_TAG }}
+        releaseBranch:  ${{ github.head_ref || github.ref_name }}
 
     - name: 📦 Create release
       id: create_release
