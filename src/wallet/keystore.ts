@@ -8,7 +8,7 @@ import * as bip39 from 'bip39';
 import {mnemonicToSeedSync} from 'bip39';
 import {Keypair} from '@solana/web3.js';
 import {derivePath} from 'ed25519-hd-key';
-import { DirectSecp256k1HdWallet, OfflineSigner } from '@cosmjs/proto-signing';
+import {DirectSecp256k1HdWallet, OfflineSigner} from '@cosmjs/proto-signing';
 const keystorePath: string = resolveHome(config.get('wallet.keystore_path'));
 
 // The one used by Phantom Wallet.
