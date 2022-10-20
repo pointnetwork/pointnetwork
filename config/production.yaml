@@ -57,3 +57,9 @@ network:
       currency_name: "Sol"
       currency_code: "SOL"
       tls: true
+    cosmos_testnet:
+      type: 'cosmos'
+      name: 'cosmos_testnet'
+      http_address: 'cosmos-testnet-rpc.allthatnode.com:26657'
+      currency_name: 'atom'
+      currency_code: 'atom'
