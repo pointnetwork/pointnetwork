@@ -15,7 +15,7 @@ import {
 import {
     deploy,
     readValidations,
-    Options,
+    UpgradeOptions,
     UpgradeProxyOptions,
     withDefaults
 } from '@openzeppelin/hardhat-upgrades/dist/utils';
@@ -39,13 +39,13 @@ interface DeployData {
     encodedArgs: string;
     version: Version;
     layout: StorageLayout;
-    fullOpts: Required<Options>;
+    fullOpts: Required<UpgradeOptions>;
 }
 
 export async function deployProxyImpl(
     hre: HardhatRuntimeEnvironment,
     ImplFactory: ContractFactory,
-    opts: Options,
+    opts: UpgradeOptions,
     proxyAddress?: string
 ): Promise<DeployedProxyImpl> {
     const deployData = await getDeployData(hre, ImplFactory, opts);
@@ -64,7 +64,7 @@ export async function deployProxyImpl(
 async function getDeployData(
     hre: HardhatRuntimeEnvironment,
     ImplFactory: ContractFactory,
-    opts: Options
+    opts: UpgradeOptions
 ): Promise<DeployData> {
     const {provider} = hre.network;
     const validations = await readValidations(hre);

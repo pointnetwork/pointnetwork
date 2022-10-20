@@ -64,12 +64,7 @@ module.exports = {
             }
         ]
     },
-    paths: process.env.MODE === 'zappdev' ? {
-        artifacts:'./build',
-        sources: './contracts',
-        tests: './tests',
-        cache: './cache'
-    } : {
+    paths: {
         root: path.join(resolveHome(config.get('datadir')), 'hardhat'),
         artifacts: path.join(resolveHome(config.get('datadir')), 'hardhat', 'build'),
         sources: path.join(resolveHome(config.get('datadir')), 'hardhat', 'contracts'),
