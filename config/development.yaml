@@ -60,3 +60,12 @@ network:
       currency_name: "Sol"
       currency_code: "SOL"
       tls: true
+    cosmos_testnet:
+      type: 'cosmos'
+      name: 'cosmos_testnet'
+      http_address: 'rpc-mainnet-1.point.space:26657'
+      currency_name: 'point'
+      currency_code: 'point'
+      defaultGasPrice: 0.025upoint;
+      defaultSendFee: 80000;
+      defaultSendFeeUnit: upoint;
