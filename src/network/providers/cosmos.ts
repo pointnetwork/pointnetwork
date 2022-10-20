@@ -73,7 +73,6 @@ export async function createCosmosProvider() {
                 throw new Error(`Unknown network ${network}`);
             }
             const [firstAccount] = await provider.wallet.getAccounts();
-            log.info(JSON.stringify(firstAccount));
             return {
                 jsonrpc: '2.0',
                 result: {publicKey: firstAccount.address},
