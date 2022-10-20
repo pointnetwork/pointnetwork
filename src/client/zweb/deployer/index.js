@@ -14,11 +14,10 @@ const blockchain = require('../../../network/providers/ethereum');
 const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
-const {execSync, exec} = require('child_process');
+const {execSync} = require('child_process');
 const {uploadDir, uploadFile} = require('../../storage');
 const config = require('config');
 const {deployProxy} = require('../../../network/deployer/deployProxy');
-const {hardhatConfigMinimal} = require('./hardhatConfigMinimal');
 const {getProxyMetadataFilePath} = require('../../../network/deployer');
 
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
@@ -294,98 +293,6 @@ class Deployer {
     }
 
     /**
-     * Installs hardhat and @openzeppelin/hardhat-upgrades as local dependencies in the dApp folder
-     *
-     * @param {string} deployPath - absolute path to the project folder
-     * @returns {Promise<void>}
-     */
-    installLocalDeps = (deployPath) => new Promise((resolve, reject) => {
-        log.info('Installing local dependencies');
-        const proc = exec(
-            'npm install -D hardhat @openzeppelin/hardhat-upgrades',
-            {
-                cwd: deployPath,
-                env: {
-                    ...process.env,
-                    HARDHAT_CONFIG: undefined
-                }
-            }
-        );
-
-        proc.stdout.on('data', data => {
-            log.info(data);
-        });
-        proc.stderr.on('data', data => {
-            log.error(data);
-        });
-
-        proc.on('exit', async code => {
-            if (code !== 0) {
-                reject(new Error(`Installer process exited with code ${code}`));
-            } else {
-                resolve();
-            }
-        });
-    });
-
-    /**
-     * Compiles contracts in the destination folder using hardhat
-     *
-     * @param {string} deployPath - absolute path to the project folder
-     * @returns {Promise<void>}
-     */
-    compileLocal = (deployPath) => new Promise(async (resolve, reject) => {
-        const localHardhatFilePath = path.join(deployPath, 'hardhat.config.js');
-        if (!fs.existsSync(localHardhatFilePath)) {
-            await fs.writeFile(
-                localHardhatFilePath,
-                hardhatConfigMinimal,
-                'utf8'
-            );
-        }
-
-        const packageJson = JSON.parse(await fs.readFile(
-            path.join(deployPath, 'package.json'), 'utf8'
-        ));
-        if (!(
-            ('hardhat' in packageJson.dependencies || 'hardhat' in packageJson.devDependencies) &&
-            ('@@openzeppelin/hardhat-upgrades' in packageJson.dependencies ||
-                '@openzeppelin/hardhat-upgrades' in packageJson.devDependencies)
-        )) {
-            await this.installLocalDeps(deployPath);
-        }
-
-        log.info('Compiling using harhdat in dApp folder');
-
-        const proc = exec(
-            `npx hardhat compile`,
-            {
-                cwd: deployPath,
-                env: {
-                    ...process.env,
-                    HARDHAT_CONFIG: undefined
-                }
-            }
-        );
-
-        proc.stdout.on('data', data => {
-            log.info(data);
-        });
-        proc.stderr.on('data', data => {
-            log.error(data);
-        });
-
-        proc.on('exit', async code => {
-            if (code !== 0) {
-                reject(new Error(`Compiler process exited with code ${code}`));
-            } else {
-                log.info('Compiled successfully');
-                resolve();
-            }
-        });
-    });
-
-    /**
      * Deploy a set of contracts specified in point.deploy.json of the DApp.
      * 
      * @param {object} config - point.deploy config object.
@@ -413,11 +320,28 @@ class Deployer {
             //retrieve the metadata file path which should match with openzeppelin plugin one to work
             proxyMetadataFilePath = await getProxyMetadataFilePath(deployPath);
 
-            await this.compileLocal(deployPath);
+            const nodeModulesPath = path.join(DATADIR, 'hardhat', 'node_modules');
+            const contractsPath = path.join(DATADIR, 'hardhat', 'contracts');
+            if (fs.existsSync(nodeModulesPath)) {
+                await fs.remove(nodeModulesPath);
+            }
+            if (fs.existsSync(contractsPath)) {
+                await fs.remove(contractsPath);
+            }
+            await fs.symlink(
+                path.join(deployPath, 'node_modules'),
+                nodeModulesPath
+            );
+            await fs.symlink(
+                path.join(deployPath, 'contracts'),
+                contractsPath
+            );
+
+            await hre.run('compile');
 
             await Promise.all([
-                fs.copy(path.join(deployPath, 'cache'), path.join(DATADIR, 'hardhat', 'cache')),
-                fs.copy(path.join(deployPath, 'artifacts'), path.join(DATADIR, 'hardhat', 'build'))
+                fs.unlink(nodeModulesPath),
+                fs.unlink(contractsPath)
             ]);
         }
 
@@ -809,7 +733,7 @@ class Deployer {
         ) {
             const errMsg =
                 'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.';
-            log.error({deployConfigFilePath: deployConfigFilePath}, errMsg);
+            log.error(errMsg);
             throw new Error(errMsg);
         }
 
