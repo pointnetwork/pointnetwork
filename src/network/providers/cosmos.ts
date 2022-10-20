@@ -47,6 +47,15 @@ export async function getProviders(
     return providers;
 }
 
+interface SignAndSendTransactionOpts {
+  recipient: string;
+  gasPrice?: string;
+  sendFee?: number;
+  amount: number;
+  unit: string;
+  memo?: string;
+}
+
 export async function createCosmosProvider() {
     const providers: Record<string, { connection: SigningStargateClient, wallet: OfflineSigner }> =
       await getProviders(config.get('network.web3'));
@@ -65,36 +74,28 @@ export async function createCosmosProvider() {
             };
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        signAndSendTransaction: async (id: number, network: string, params: any) => {
+        signAndSendTransaction: async (id: number, network: string,
+            options: SignAndSendTransactionOpts) => {
             const provider = providers[network];
             if (!provider) {
                 throw new Error(`Unknown network ${network}`);
             }
             const {connection, wallet} = provider;
-
-            const {recipient, amount} = params;
-            // const recipient = 'cosmos1xv9tklw7d82sezh9haa573wufgy59vmwe6xxe5';
-            // const amount = coins(1, 'uatom');
-
+            const gasPrice = GasPrice.fromString(options.gasPrice || '0.025uatom');
+            const sendFee: StdFee = calculateFee(options.sendFee || 80_000, gasPrice);
             const accounts = await wallet.getAccounts();
+            const unit = options.unit || 'uatom'
+            const {recipient, amount} = options;
             const [firstAccount] = accounts;
-            const defaultGasPrice = GasPrice.fromString('0.025uatom');
-            const defaultSendFee: StdFee = calculateFee(80_000, defaultGasPrice);
-
-            console.log('sender', firstAccount.address);
-            console.log('transactionFee', defaultSendFee);
-            console.log('amount', amount);
-
             const transaction = await connection.sendTokens(
                 firstAccount.address,
                 recipient,
-                amount,
-                defaultSendFee,
-                'Transaction'
+                coins(amount, unit),
+                sendFee,
+                options.memo
             );
             assertIsDeliverTxSuccess(transaction);
             console.log('Successfully broadcasted:', transaction);
-
             return {
                 jsonrpc: '2.0',
                 result: transaction,
