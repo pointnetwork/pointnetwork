@@ -57,8 +57,8 @@ rm -rf typechain
 rm -rf build
 echo "npm install --target_platform=$PLATFORM"
 npm install --target_platform=$PLATFORM
-echo "npx hardhat compile"
-npx hardhat compile
+echo "npm run build"
+npm run build
 cd ../pointnetwork
 npm install --target_platform=$PLATFORM
 
