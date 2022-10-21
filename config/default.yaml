@@ -66,6 +66,11 @@ network:
   event_block_page_size: 10000
 name_services:
   sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
+  ens:
+    enabled: false
+  sns:
+    enabled: true
+    get_all_domains: true
 payments:
   token_address: "0xbf9be54Df2001E6Bd044cED0E508d936A9d38b1D"
 rpc:
