@@ -49,6 +49,7 @@ const IDENTITY_CONTRACT_ID = config.get(`network.web3.${DEFAULT_NETWORK}.identit
 const IDENTITY_CONTRACT_ADDRESS = config.get(
     `network.web3.${DEFAULT_NETWORK}.identity_contract_address`
 );
+const ENS_ENABLED = config.get('name_services.ens.enabled');
 
 function createWeb3Instance({protocol, network}) {
     // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
@@ -1313,6 +1314,11 @@ ethereum.send = ({method, params = [], id, network}) =>
  * (implements a cache to avoid querying Ethereum too often)
  */
 ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return {owner: '', content: null};
+    }
+
     const cacheKey = `${network}:${domainName}`;
     const cachedDomainRegistry = ensDomainCache.get(cacheKey);
     if (cachedDomainRegistry) {
@@ -1343,6 +1349,11 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
  * they are not automatically set up.
  */
 ethereum.getDomain = async (address, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return null;
+    }
+
     const provider = getEthers(network);
     const domain = await provider.lookupAddress(address);
     const msg = domain ? 'Domain found.' : 'Domain not found.';
@@ -1351,6 +1362,11 @@ ethereum.getDomain = async (address, network = 'rinkeby') => {
 };
 
 ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return '';
+    }
+
     if (!networks[network] || !networks[network].eth_tld_resolver) {
         throw new Error(`Missing TLD public resolver contract address for network "${network}"`);
     }
