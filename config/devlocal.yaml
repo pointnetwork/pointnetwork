@@ -30,7 +30,7 @@ network:
     solana:
       type: "solana"
       name: "Solana"
-      http_address: "api.mainnet-beta.solana.com"
+      http_address: "solana-api.projectserum.com"
       currency_name: "Sol"
       currency_code: "SOL"
       tls: true
