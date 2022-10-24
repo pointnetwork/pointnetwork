@@ -15,10 +15,12 @@ const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
 const {execSync} = require('child_process');
-const {uploadDir, uploadFile} = require('../../storage');
+const {uploadDir, uploadFile, getFile} = require('../../storage');
 const config = require('config');
 const {deployProxy} = require('../../../network/deployer/deployProxy');
 const {getProxyMetadataFilePath} = require('../../../network/deployer');
+const {upgradeProxy} = require('../../../network/deployer/upgradeProxy');
+const {forceImport} = require('../../../network/deployer/forceImport');
 
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
@@ -454,43 +456,36 @@ class Deployer {
                                     proxy = await deployProxy(hre, contractF, []);
                                 }
                             } else {
-                                // TODO: this is not used yet, but should be implemented
-                                throw new Error('Upgrade proxy not implemented yet');
-                                // //will upgrade the proxy
-                                // log.debug('upgradeProxy call');
-                                //
-                                // //restore from blockchain upgradable contracts and proxy metadata if does not exist.
-                                // if (!fs.existsSync('./.openzeppelin')) {
-                                //     fs.mkdirSync('./.openzeppelin');
-                                // }
-                                // //write the file for the path that the plugin needs to validate the
-                                // //upgradable contract.
-                                // fs.writeFileSync(
-                                //     proxyMetadataFilePath,
-                                //     await getFile(proxyDescriptionFileId)
-                                // );
-                                //
-                                // try {
-                                //     //try to upgrade the proxy
-                                //     //in this step the contract is validated and if any problem
-                                //     //is found the plugin raises an erro.
-                                //     proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-                                // } catch (e) {
-                                //     //fallback for solve a common problem for upgrade the proxy
-                                //     log.debug('upgradeProxy call failed');
-                                //
-                                //     //Proxy metadata file can be corrupted or not updated. Then:
-                                //     //Delete the metadata file.
-                                //     log.debug('deleting proxy metadata file');
-                                //     fs.unlinkSync(proxyMetadataFilePath);
-                                //     //Restore the file from the blockchain.
-                                //     log.debug('calling forceImport');
-                                //     const kind = 'uups';
-                                //     await hre.upgrades.forceImport(proxyAddress, contractF, {kind});
-                                //     //try to deploy again with the new metadata file.
-                                //     log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
-                                //     proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-                                // }
+                                //will upgrade the proxy
+                                log.debug('upgradeProxy call');
+
+                                //write the file for the path that the plugin needs to validate the
+                                //upgradable contract.
+                                await fs.writeFile(
+                                    proxyMetadataFilePath,
+                                    await getFile(proxyDescriptionFileId)
+                                );
+
+                                try {
+                                    //try to upgrade the proxy
+                                    //in this step the contract is validated and if any problem
+                                    //is found the plugin raises an error.
+                                    proxy = await upgradeProxy(hre, proxyAddress, contractF);
+                                } catch (e) {
+                                    //fallback for solve a common problem for upgrade the proxy
+                                    log.debug('upgradeProxy call failed');
+
+                                    //Proxy metadata file can be corrupted or not updated. Then:
+                                    //Delete the metadata file.
+                                    log.debug('deleting proxy metadata file');
+                                    await fs.remove(proxyMetadataFilePath);
+                                    //Restore the file from the blockchain.
+                                    log.debug('calling forceImport');
+                                    await forceImport(hre, proxyAddress, contractF, {kind: 'uups'});
+                                    //try to deploy again with the new metadata file.
+                                    log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
+                                    proxy = await upgradeProxy(hre, proxyAddress, contractF);
+                                }
                             }
                             //wait until the proxy is effectivelly deployed.
                             await proxy.deployed();
