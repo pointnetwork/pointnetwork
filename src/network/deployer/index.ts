@@ -144,6 +144,16 @@ export const deployUpgradableContracts = async ({
         'hardhat',
         'contracts'
     );
+    const hardhatDependenciesDir = path.join(
+        resolveHome(config.get('datadir')),
+        'hardhat',
+        'node_modules'
+    );
+
+    await Promise.all([
+        fs.mkdirp(hardhatContractsDir),
+        fs.mkdirp(hardhatDependenciesDir)
+    ]);
 
     await Promise.all(contracts.map(async contract => {
         await fs.writeFile(
@@ -156,9 +166,12 @@ export const deployUpgradableContracts = async ({
 
     await hre.run('compile');
 
-    await Promise.all(contracts.map(async contract => {
-        await fs.unlink(path.join(hardhatContractsDir, `${contract.name}.sol`));
+    await Promise.all([
+        fs.remove(hardhatContractsDir),
+        fs.remove(hardhatDependenciesDir)
+    ]);
 
+    await Promise.all(contracts.map(async contract => {
         const proxyAddress = await ethereum.getKeyValue(
             target,
             'zweb/contracts/address/' + contract.name
