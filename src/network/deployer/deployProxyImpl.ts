@@ -6,7 +6,6 @@ import {
     getStorageLayoutForAddress,
     getUnlinkedBytecode,
     getVersion,
-    processProxyKind,
     StorageLayout,
     ValidationDataCurrent,
     ValidationOptions,
@@ -24,6 +23,7 @@ import {FormatTypes} from 'ethers/lib/utils';
 import type {EthereumProvider, HardhatRuntimeEnvironment} from 'hardhat/types';
 import {Manifest} from './manifest';
 import {fetchOrDeploy} from './fetchOrDeploy';
+import {processProxyKind} from './processProxyKind';
 
 // Copied from @openzeppeling/hardhat-upgrades and modified to add ability to change
 // the location of .openzeppelin folder
@@ -61,7 +61,7 @@ export async function deployProxyImpl(
     return deployImpl(deployData, ImplFactory, opts, currentImplAddress);
 }
 
-async function getDeployData(
+export async function getDeployData(
     hre: HardhatRuntimeEnvironment,
     ImplFactory: ContractFactory,
     opts: UpgradeOptions

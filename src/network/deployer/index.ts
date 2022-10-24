@@ -3,7 +3,7 @@ import '@openzeppelin/hardhat-upgrades';
 import path from 'path';
 import hre from 'hardhat';
 import ethereum from '../providers/ethereum';
-import {uploadFile} from '../../client/storage';
+import {getFile, uploadFile} from '../../client/storage';
 import logger from '../../core/log';
 import BN from 'bn.js';
 import {Artifact} from 'hardhat/types';
@@ -14,6 +14,8 @@ import gunzip from 'gunzip-maybe';
 import {deployProxy} from './deployProxy';
 import {resolveHome} from '../../util';
 import config from 'config';
+import {upgradeProxy} from './upgradeProxy';
+import {forceImport} from './forceImport';
 const log = logger.child({module: 'Deployer_new'});
 
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
@@ -212,27 +214,23 @@ export const deployUpgradableContracts = async ({
                 proxy = await deployProxy(hre, contractF, []);
             }
         } else {
-            // TODO: this is not used yet, but should be implemented
-            // in theory, we should only uncomment and replace upgradeProxy and forceImport
-            // functions so that take data from manifest from the modified path
-            throw new Error('Upgrade proxy not implemented yet');
-            // log.debug('upgradeProxy call');
-            // await fs.writeFile(
-            //     proxyMetadataFilePath,
-            //     await getFile(proxyDescriptionFileId)
-            // );
-            //
-            // try {
-            //     proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-            // } catch (e) {
-            //     log.debug('upgradeProxy call failed');
-            //     log.debug('deleting proxy metadata file');
-            //     await fs.unlink(proxyMetadataFilePath);
-            //     log.debug('calling forceImport');
-            //     await hre.upgrades.forceImport(proxyAddress, contractF, {kind: 'uups'});
-            //     log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
-            //     proxy = await hre.upgrades.upgradeProxy(proxyAddress, contractF);
-            // }
+            log.debug('upgradeProxy call');
+            await fs.writeFile(
+                proxyMetadataFilePath,
+                await getFile(proxyDescriptionFileId)
+            );
+
+            try {
+                proxy = await upgradeProxy(hre, proxyAddress, contractF);
+            } catch (e) {
+                log.debug('upgradeProxy call failed');
+                log.debug('deleting proxy metadata file');
+                await fs.remove(proxyMetadataFilePath);
+                log.debug('calling forceImport');
+                await forceImport(hre, proxyAddress, contractF, {kind: 'uups'});
+                log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
+                proxy = await upgradeProxy(hre, proxyAddress, contractF);
+            }
         }
         await proxy.deployed();
         const address = proxy.address;

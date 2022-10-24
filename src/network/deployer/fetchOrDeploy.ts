@@ -171,3 +171,11 @@ const adminLens = lens('proxy admin', 'proxy admin', data => ({
     get: () => data.admin,
     set: (value?: Deployment) => (data.admin = value)
 }));
+
+export async function fetchOrDeployAdmin(
+    provider: EthereumProvider,
+    deploy: () => Promise<Deployment>,
+    opts?: DeployOpts
+): Promise<string> {
+    return (await fetchOrDeployGeneric(adminLens, provider, deploy, opts)).address;
+}
