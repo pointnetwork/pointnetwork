@@ -17,13 +17,18 @@ enum ParamMetaType {
     IDENTITIES = 'identities'
 }
 
+type IdentityMeta = {
+    handle: string;
+    address: string;
+};
+
 type Param = {
     name: string;
     value: string;
     type: string;
     meta?: {
         type: ParamMetaType;
-        identities?: string[];
+        identities?: IdentityMeta[];
     };
 };
 
@@ -123,7 +128,7 @@ export async function decodeTxInputData(
  * If it does, it returns the handle,
  * if it doesn't, it returns the address.
  */
-async function getIdentityByAddress(address: string): Promise<string> {
+async function getIdentityByAddress(address: string): Promise<IdentityMeta> {
     let key = '';
     let targets: string[] = [];
     if (solana.isAddress(address)) {
@@ -135,14 +140,14 @@ async function getIdentityByAddress(address: string): Promise<string> {
     }
 
     if (!key || targets.length === 0) {
-        return address;
+        return {address, handle: ''};
     }
 
     try {
         const {identity} = await getIdentity({[key]: address, targets});
-        return identity || address;
+        return {address, handle: identity ?? ''};
     } catch {
-        return address;
+        return {address, handle: ''};
     }
 }
 
