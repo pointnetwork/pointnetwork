@@ -65,7 +65,7 @@ class ContractController extends PointSDKController {
     async handleEvents({host, contract, event, addTimestamp, filter, fromBlock, toBlock}) {
         const options = {filter, fromBlock, toBlock};
         const events = await ethereum.getPastEvents(
-            host.replace('.point', ''),
+            host.replace(/\.point&/, ''),
             contract,
             event,
             options
@@ -83,7 +83,7 @@ class ContractController extends PointSDKController {
         const from = cursor - PAGE_SIZE <= 1 ? 0 : cursor - PAGE_SIZE;
 
         const events = await ethereum.getPaginatedPastEvents(
-            host.replace('.point', ''),
+            host.replace(/\.point$/, ''),
             contract,
             event,
             {filter, fromBlock: from, toBlock: cursor}

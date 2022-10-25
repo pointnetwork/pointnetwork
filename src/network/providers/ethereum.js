@@ -830,7 +830,7 @@ ethereum.isIdentityDeployer = async (identity, address) => {
 const zRecordCache = createCache();
 
 ethereum.getZRecord = async (domain, version = 'latest') => {
-    domain = domain.replace('.point', ''); // todo: rtrim instead
+    domain = domain.replace(/\.point$/, '');
     return zRecordCache.get(`${domain}-${ZDNS_ROUTES_KEY}-${version}`, async () => {
         const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version, 'exact', true);
         return result?.substr(0, 2) === '0x' ? result.substr(2) : result;
@@ -838,7 +838,7 @@ ethereum.getZRecord = async (domain, version = 'latest') => {
 };
 
 ethereum.putZRecord = async (domain, routesFile, version) => {
-    domain = domain.replace('.point', ''); // todo: rtrim instead
+    domain = domain.replace(/\.point$/, '');
     return await ethereum.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile, version);
 };
 
@@ -959,7 +959,7 @@ ethereum.getKeyValue = async (
             throw Error('blockchain.getKeyValue(): version must be a string');
         }
 
-        identity = identity.replace('.point', ''); // todo: rtrim instead
+        identity = identity.replace(/\.point$/, '');
         const baseKey = `${identity}-${key}`;
         if (version === 'latest') {
             return keyValueCache.get(baseKey, async () => {
@@ -1001,7 +1001,7 @@ ethereum.getKeyValue = async (
 ethereum.putKeyValue = async (identity, key, value, version) => {
     try {
         // todo: only send transaction if it's different. if it's already the same value, no need
-        identity = identity.replace('.point', ''); // todo: rtrim instead
+        identity = identity.replace(/\.point$/, '');
         const contract = await ethereum.loadIdentityContract();
         const method = contract.methods.ikvPut(identity, key, value, version);
         log.debug({identity, key, value, version}, 'Ready to put key value');
@@ -1023,7 +1023,7 @@ ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessa
         }
         // todo: validate identity and address
 
-        identity = identity.replace('.point', ''); // todo: rtrim instead
+        identity = identity.replace(/\.point$/, '');
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
 
@@ -1070,7 +1070,7 @@ ethereum.registerIdentity = async (identity, address, commPublicKey) => {
         }
         // todo: validate identity and address
 
-        identity = identity.replace('.point', ''); // todo: rtrim instead
+        identity = identity.replace(/\.point$/, '');
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
 
