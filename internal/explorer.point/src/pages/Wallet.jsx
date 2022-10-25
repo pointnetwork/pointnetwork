@@ -1,11 +1,15 @@
+import { useEffect, useState } from 'react';
 import Container from 'react-bootstrap/Container';
-import { Fragment, useEffect, useState } from 'react';
+import Table from 'react-bootstrap/Table';
+import Tab from 'react-bootstrap/Tab';
+import Tabs from 'react-bootstrap/Tabs';
 import Loading from '../components/Loading';
 import ReceiveModal from '../components/wallet/ReceiveModal';
 import SendModal from '../components/wallet/SendModal';
 import ErrorBlock from '../components/ErrorBlock';
 import WalletRow from '../components/wallet/WalletRow';
 import TokenRow from '../components/wallet/TokenRow';
+import '@fontsource/source-sans-pro';
 
 window.openTelegram = async () => {
     fetch('/v1/api/web2/open', {
@@ -138,7 +142,7 @@ export default function Wallet() {
                 fund Point Wallet with large amount of assets, only for
                 experiments.
             </div>
-            <Container className="p-3">
+            <Container className="p-3 wallet-container">
                 {isLoading ? (
                     <Loading />
                 ) : error ? (
@@ -164,19 +168,21 @@ export default function Wallet() {
                             />
                         )}
                         <br />
-                        <h1>Wallet</h1>
-                        <table className="table table-bordered table-striped table-hover table-responsive table-primary">
-                            <tbody>
+                        <h1 className="wallet-header">Wallet</h1>
+                        <Table responsive>
+                            <thead>
                                 <tr>
                                     <th>Currency</th>
                                     <th>Address</th>
                                     <th style={{ textAlign: 'right' }}>
                                         Balance
                                     </th>
-                                    <th style={{ textAlign: 'right' }}>
+                                    <th style={{ textAlign: 'right', paddingRight: '15px' }}>
                                         Actions
                                     </th>
                                 </tr>
+                            </thead>
+                            <tbody>
                                 {wallets.map((wallet, index) => (
                                     <WalletRow
                                         key={index}
@@ -187,58 +193,45 @@ export default function Wallet() {
                                     />
                                 ))}
                             </tbody>
-                        </table>
+                        </Table>
                         <br />
-                        <h1>ERC20 Tokens</h1>
-                        {Object.keys(tokens).map((network, index) => (
-                            <Fragment key={index}>
-                                <h2>{network}</h2>
-                                <table className="table table-bordered table-striped table-hover table-responsive table-primary">
-                                    <tbody>
-                                        {tokens[network]?.length > 0 ? (
-                                            <>
+                        <h1 className="wallet-header">ERC20 Tokens</h1>
+                        <Tabs className="wallet-tabs">
+                            {Object.keys(tokens).map((network, index) => (
+                                <Tab key={index} eventKey={network} title={network}>
+                                    {tokens[network]?.length > 0 ? (
+                                        <Table responsive>
+                                            <thead>
                                                 <tr>
                                                     <th>Token Name</th>
                                                     <th>Token Address</th>
-                                                    <th
-                                                        style={{
-                                                            textAlign: 'right',
-                                                        }}
-                                                    >
+                                                    <th style={{ textAlign: 'right' }}>
                                                         Balance
                                                     </th>
-                                                    <th
-                                                        style={{
-                                                            textAlign: 'right',
-                                                        }}
-                                                    >
+                                                    <th style={{ textAlign: 'right', paddingRight: '15px' }}>
                                                         Actions
                                                     </th>
                                                 </tr>
-                                                {tokens[network]?.map(
-                                                    (token, index) => (
-                                                        <TokenRow
-                                                            token={token}
-                                                            key={index}
-                                                            openSendModal={
-                                                                openSendModal
-                                                            }
-                                                            network={network}
-                                                        />
-                                                    ),
-                                                )}
-                                            </>
-                                        ) : (
-                                            <tr>
-                                                <td>
-                                                    No tokens for this network
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </Fragment>
-                        ))}
+                                            </thead>
+                                            <tbody>
+                                                {tokens[network]?.map((token, index) => (
+                                                    <TokenRow
+                                                        token={token}
+                                                        key={index}
+                                                        openSendModal={
+                                                            openSendModal
+                                                        }
+                                                        network={network}
+                                                    />
+                                                ))}
+                                            </tbody>
+                                        </Table>
+                                    ) : (
+                                        <p className="wallet-no-tokens">No tokens for this network</p>
+                                    )}
+                                </Tab>
+                            ))}
+                        </Tabs>
                     </>
                 )}
             </Container>
