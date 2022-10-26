@@ -6,6 +6,9 @@ import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/provide
 import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode';
 import {getNetworkPublicKey} from '../wallet/keystore';
 import logger from '../core/log';
+import {keplr} from '../network/providers/keplr';
+import {Keplr} from '@keplr-wallet/provider';
+
 const log = logger.child({module: 'RPC'});
 
 const DEFAULT_NETWORK = config.get('network.default_network');
@@ -177,6 +180,30 @@ const specialHandlers: Record<string, HandlerFunc> = {
             const statusCode = err.code === -32603 ? 500 : 400;
             return {status: statusCode, result: {code: statusCode, message: err.message}};
         }
+    },
+    keplr: async (data) => {
+        const {method, params} = data;
+        const methodName = method.split('_')[1];
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        const keplrMethod = keplr[methodName as keyof Keplr] as Function;
+        if (typeof keplrMethod === 'function') {
+            try {
+                const result = await keplrMethod.apply(keplr, params) || {};
+                return {status: 200, result};
+            } catch (error) {
+                return {
+                    status: 400, result: {
+                        __error: {
+                            message: error.message,
+                            module: error.module,
+                            code: error.code
+                        }
+                    }
+                };
+            }
+
+        }
+        return {status: 500, result: 'Not valid method'};
     }
 };
 
@@ -243,19 +270,20 @@ const handleRPC: HandlerFunc = async data => {
         const network = data.network ?? DEFAULT_NETWORK;
         const id = data.id ?? new Date().getTime();
         const {method, params, origin, target, contract} = data;
-
         // Check for methods related to permissions.
         const permissionHandler = permissionHandlers[method];
         if (permissionHandler) {
             const res = await permissionHandler({id, method, params, origin, network});
             return res;
         }
-
+        if (method.startsWith('keplr_')) {
+            const specialHandler = specialHandlers['keplr'];
+            return specialHandler({id, method, params, network, target, contract});
+        }
         // Check for special/custom methods.
         const specialHandler = specialHandlers[method];
         if (specialHandler) {
-            const res = await specialHandler({id, method, params, network, target, contract});
-            return res;
+            return specialHandler({id, method, params, network, target, contract});
         }
 
         // `method` is a standard RPC method (EIP-1474).
@@ -280,7 +308,6 @@ const handleRPC: HandlerFunc = async data => {
                     }
                 };
         }
-
         return {status: 200, result};
     } catch (err) {
         log.error({message: err.message, stack: err.stack}, 'Error handling RPC');

@@ -5,6 +5,8 @@ import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
 import {getContractAddress, compileAndSaveContract} from './util/contract';
+import {startKeplrBackground} from './network/providers/keplrBackground';
+startKeplrBackground();
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 

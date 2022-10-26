@@ -78,7 +78,6 @@ class ZProxySocketController {
 
                 case SUBSCRIPTION_REQUEST_TYPES.RPC: {
                     const {method, params, id, network, __hostname, meta} = request;
-
                     const {status, result} = await handleRPC({
                         method,
                         params,
