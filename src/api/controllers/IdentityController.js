@@ -14,8 +14,10 @@ const {getIdentity} = require('../../name_service/identity');
 const config = require('config');
 const Web3 = require('web3');
 const {addToCache} = require('../../name_service/identity-cache');
+const {parseDomainRegistry} = require('../../name_service/registry');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 const IKV_PUT_INTERFACE = {
     inputs: [
@@ -29,6 +31,9 @@ const IKV_PUT_INTERFACE = {
     stateMutability: 'nonpayable',
     type: 'function'
 };
+
+const DEFAULT_NETWORK = config.get('network.default_network');
+const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
 
 async function registerBountyReferral(address, type) {
     const referralCode = await getReferralCode();
@@ -136,24 +141,41 @@ class IdentityController extends PointSDKController {
         });
     }
 
+    async identityRegistered() {
+        const identity = this.req.query.identity;
+        if (!identity) {
+            return this.res.status(400).send('Missing query param: identity');
+        }
+
+        const owner = await ethereum.ownerByIdentity(identity);
+        this.rep.status(200).send({identityRegistered: owner && owner !== ADDRESS_ZERO});
+    }
+
     async identityToOwner() {
         const identity = this.req.params.identity;
         let owner = '';
         let network = '';
+        let pointAddress = '';
+
         if (identity.endsWith('.sol')) {
             const registry = await solana.resolveDomain(identity);
+            const domainData = parseDomainRegistry(registry);
             owner = registry.owner;
+            pointAddress = domainData.pointAddress;
             network = 'solana';
         } else if (identity.endsWith('.eth')) {
             const registry = await ethereum.resolveDomain(identity);
             owner = registry.owner;
+            pointAddress = registry.owner;
             network = 'ethereum';
         } else {
-            owner = await ethereum.ownerByIdentity(identity);
+            const address = await ethereum.ownerByIdentity(identity);
+            owner = address;
+            pointAddress = address;
             network = 'point';
         }
 
-        return this._response({owner, network});
+        return this._response({owner, network, pointAddress});
     }
 
     async ownerToIdentity() {
@@ -179,9 +201,16 @@ class IdentityController extends PointSDKController {
 
     async publicKeyByIdentity() {
         const identity = this.req.params.identity;
-        if (identity.endsWith('.sol') || identity.endsWith('.eth')) {
+
+        if (identity.endsWith('.eth')) {
             this.rep.status(422);
-            return this._status(422)._response('This endpoint only supports Point identities.');
+            return this._status(422)._response('This endpoint does not support ENS identities.');
+        }
+
+        if (identity.endsWith('.sol')) {
+            const registry = await solana.resolveDomain(identity);
+            const {pointPublicKey} = parseDomainRegistry(registry);
+            return this._response({publicKey: pointPublicKey ? `0x${pointPublicKey}` : ''});
         }
 
         const publicKey = await ethereum.commPublicKeyByIdentity(identity);
@@ -196,6 +225,7 @@ class IdentityController extends PointSDKController {
 
     async openLink() {
         const {url, _csrf} = this.req.body;
+        //checks the CSFR to open a link.
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
@@ -231,6 +261,7 @@ class IdentityController extends PointSDKController {
         if (host !== 'point') {
             return this.rep.status(403).send('Forbidden');
         }
+        //checks the csrf to register an identity
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
@@ -346,6 +377,8 @@ class IdentityController extends PointSDKController {
         if (host !== 'point') {
             return this.rep.status(403).send('Forbidden');
         }
+
+        //check the csrf token to register an subidentity
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
@@ -429,7 +462,7 @@ class IdentityController extends PointSDKController {
     }
 
     async ikvPut() {
-        const {identity, key, value, version = 'latest'} = this.req.body;
+        const {identity, key, value, version = 'latest', network = DEFAULT_NETWORK} = this.req.body;
 
         try {
             const web3 = new Web3();
@@ -444,12 +477,12 @@ class IdentityController extends PointSDKController {
                 params: [
                     {
                         from: getNetworkAddress(),
-                        to: config.get('network.identity_contract_address'),
+                        to: IDENTITY_CONTRACT_ADDRESS,
                         data
                     }
                 ],
                 id: new Date().getTime(),
-                network: 'xnet'
+                network
             });
             this.rep.status(200).send('Success');
         } catch (e) {

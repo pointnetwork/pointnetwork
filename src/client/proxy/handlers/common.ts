@@ -3,7 +3,7 @@ import path from 'path';
 import {promises as fs, existsSync, lstatSync} from 'fs';
 import {parse, ParsedQuery} from 'query-string';
 import axios from 'axios';
-import {readFileByPath, splitAndTakeLastPart} from '../../../util';
+import {readFileByPath, splitAndTakeLastPart, sanitizeSVG} from '../../../util';
 import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import ZProxySocketController from '../../../api/sockets/ZProxySocketController';
 import {SocketStream} from 'fastify-websocket';
@@ -12,7 +12,7 @@ import logger from '../../../core/log';
 import blockchain from '../../../network/providers/ethereum';
 import {getContentTypeFromExt, matchRouteAndParams} from '../proxyUtils';
 // @ts-expect-error no types for package
-import {detectContentType} from 'detect-content-type';
+import detectContentType from 'detect-content-type';
 import config from 'config';
 import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
@@ -206,7 +206,11 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             }
 
             if (host.startsWith('www.google.com') || host.startsWith('google.com')) {
-                return res.redirect('https://search.point/search?q=' + queryParams?.q);
+                const q = queryParams?.q || '';
+                if (typeof q === 'string' && (q.endsWith('.sol') || q.endsWith('.point'))) {
+                    return res.redirect(`https://${q}`);
+                }
+                return res.redirect('https://search.point/search?q=' + q);
             }
 
             const expression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
@@ -218,6 +222,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 if (matches) {
                     refererHost = matches[1];
                 }
+                //if the first time, create the csrf token.
                 if (!csrfTokens.point) {
                     csrfTokens.point = randomBytes(64).toString('hex');
                 }
@@ -234,10 +239,19 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
         }
     } catch (e) {
         const status = e.httpStatusCode || 500;
+        res.status(status);
         log.error({stack: e.stack, errorMessage: e.message}, 'Error from Renderer');
-        return res
-            .status(status)
-            .send('Error from Renderer: ' + JSON.stringify(e.message).replace(/^"+|"+$/g, ''));
+        const parsedErrMsg = JSON.stringify(e.message).replace(/^"+|"+$/g, '');
+
+        if (req.headers.accept?.includes('text/html')) {
+            res.header('Content-Type', 'text/html');
+            return templateManager.render(Template.ERROR, {
+                code: status,
+                message: parsedErrMsg
+            });
+        }
+
+        return res.send(`Error from Renderer: ${parsedErrMsg}`);
     }
 };
 
@@ -248,7 +262,7 @@ const tryFulfillZhtmlRequest = async (
     host: string
 ) => {
     const {req, res} = cfg;
-    const {queryParams, ext} = await parseRequestForProxy(req);
+    const {queryParams} = await parseRequestForProxy(req);
 
     // This is a ZHTML file
     let templateFileContents, templateId;
@@ -278,15 +292,18 @@ const tryFulfillZhtmlRequest = async (
         renderer = new Renderer({rootDirId: cfg.remoteRootDirId} as any);
     }
 
-    const contentType = ext ? getContentTypeFromExt(ext) : 'text/html';
-    res.header('Content-Type', contentType);
-
     // TODO: sanitize
-    return await renderer.render(templateId, templateFileContents, host, {
+    const rendered = await renderer.render(templateId, templateFileContents, host, {
         ...routeParams,
         ...queryParams,
         ...((req.body as Record<string, unknown>) ?? {})
     });
+    const contentType = detectContentType(Buffer.from(rendered));
+    if (!contentType.match('text/html')) {
+        throw new Error(`Not a valid HTML: ${templateFilename}`);
+    }
+    res.header('Content-Type', contentType);
+    return rendered;
 };
 
 const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: string) => {
@@ -319,8 +336,16 @@ const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: s
         file = await getFile(fileId, null);
     }
 
-    const contentType = ext ? getContentTypeFromExt(ext) : detectContentType(file);
+    let contentType = detectContentType(file);
+    if (contentType.match('text/(plain|xml)') && ext) {
+        contentType = getContentTypeFromExt(ext);
+    }
     res.header('Content-Type', contentType);
+
+    if (contentType.match(/image\/svg\+xml/)) {
+        // Sanitize SVG to prevent XSS.
+        file = sanitizeSVG(file);
+    }
 
     return file;
 };
@@ -423,17 +448,20 @@ const parseRequestForProxy = async (req: FastifyRequest) => {
 
 const renderPointHomeWeb2RedirectPage = async (req: FastifyRequest, res: FastifyReply) => {
     const {queryParams} = await parseRequestForProxy(req);
+    if (req.headers.host !== 'point') {
+        return res.status(403).send('Forbidden');
+    }
 
     res.header('Content-Type', 'text/html');
-    let refererHost = req.headers.referer || '';
-    const matches = refererHost.match(/^https:\/\/(.*)\//);
-    if (matches) {
-        refererHost = matches[1];
+
+    //if there is no csrf token creates it.
+    if (!csrfTokens.point) {
+        csrfTokens.point = randomBytes(64).toString('hex');
     }
     return templateManager.render(Template.WEB2LINK, {
         url: queryParams?.url,
-        csrfToken: queryParams?.csrfToken,
-        host: refererHost
+        csrfToken: csrfTokens.point,
+        host: 'point'
     });
 };
 

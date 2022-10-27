@@ -16,12 +16,13 @@ storage:
   request_timeout: 300000
   upload_expire: 300000
 network:
-  default_network: "ynet"
+  default_network: "local"
   web3:
-    ynet:
+    local:
       http_address: "blockchain_node:7545"
       ws_address: "blockchain_node:7545"
       gas_price_wei: 1000000
+      identity_contract_id: ""
 api:
   address: 0.0.0.0
 zproxy:

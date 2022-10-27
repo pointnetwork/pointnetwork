@@ -1,5 +1,6 @@
 const TwigLib = require('twig');
 const _ = require('lodash');
+const {promises: fs} = require('fs');
 const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
 const config = require('config');
@@ -7,11 +8,19 @@ const logger = require('../../../core/log');
 const {getNetworkPrivateKey, getNetworkAddress} = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/providers/ethereum');
-const {readFileByPath} = require('../../../util');
+const {readFileByPath, getSecretToken} = require('../../../util');
 const keyValue = require('../../../network/keyvalue');
+//get the object that stores the csrf tokens.
 const {default: csrfTokens} = require('./csrfTokens');
+const {sign} = require('jsonwebtoken');
 
 // todo: maybe use twing nodule instead? https://github.com/ericmorand/twing
+
+const mode = config.has('mode') && config.get('mode');
+const sdkFile = config.has('sdk_file') && config.get('sdk_file');
+
+const generateJwt = async () =>
+    sign({payload: 'point_token'}, await getSecretToken(), {expiresIn: '1h'});
 
 class Renderer {
     #twigs = {};
@@ -47,7 +56,31 @@ class Renderer {
             // than have a memory leak with thousands of Twig objects in memory waiting
             this.#removeTwigForHost(host);
 
-            return result.toString();
+            let render = result.toString();
+
+            if (mode === 'gateway' && sdkFile) {
+                log.debug({sdkFile}, 'Entering gateway mode');
+                const sdk = await fs.readFile(sdkFile, {encoding: 'utf-8'});
+                if (sdk) {
+                    const tokenScipt = `<script>
+                        window.IS_GATEWAY = true;
+                        window.POINT_JWT = "${await generateJwt()}";
+                    </script>`;
+                    const sdkScript = `<script defer>${sdk}</script>`;
+                    if (render.indexOf('</head>')) {
+                        log.debug('Replacing <head>');
+                        render = render.replace('</head>', `${tokenScipt}${sdkScript}</head>`);
+                    } else if (render.indexOf('</body>')) {
+                        log.debug('Replacing <body>');
+                        render = render.replace('<body>', `<body>${tokenScipt}${sdkScript}`);
+                    } else {
+                        log.warn('Neither head not body found, appending script to the page');
+                        render += sdkScript;
+                    }
+                }
+            }
+
+            return render;
         } catch (e) {
             this.#removeTwigForHost(host);
             throw e;
@@ -134,7 +167,7 @@ class Renderer {
                 version = 'latest'
             ) {
                 return await blockchain.sendToContract(
-                    host.replace('.point', ''),
+                    host.replace(/\.point$/, ''),
                     contractName,
                     methodName,
                     params,
@@ -147,7 +180,7 @@ class Renderer {
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
                 const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
                 const events = await blockchain.getPastEvents(
-                    host.replace('.point', ''),
+                    host.replace(/\.point$/, ''),
                     contractName,
                     event,
                     options
@@ -215,7 +248,7 @@ class Renderer {
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
-
+            //generate the csrf token
             csrf_value: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (!csrfTokens[this.host]) {
@@ -225,6 +258,7 @@ class Renderer {
                 }
                 return csrfTokens[this.host];
             },
+            //create the field with csrf token.
             csrf_field: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (!csrfTokens[this.host]) {
@@ -234,15 +268,19 @@ class Renderer {
                 }
                 return `<input name="_csrf" value="${csrfTokens[this.host]}" />`;
             },
+            //check the csrf token.
             csrf_guard: async function(submitted_token) {
+                //no token
                 if (!csrfTokens) {
                     throw new Error(
                         'No csrf token generated for this host (rather, no tokens at all)'
                     );
                 }
+                //no token for the host
                 if (!csrfTokens[this.host]) {
                     throw new Error('No csrf token generated for this host');
                 }
+                //invalid token
                 const real_token = csrfTokens[this.host];
                 if (real_token !== submitted_token) {
                     throw new Error('Invalid csrf token submitted');

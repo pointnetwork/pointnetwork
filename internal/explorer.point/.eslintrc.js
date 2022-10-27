@@ -42,7 +42,7 @@ module.exports = {
         'no-eval': 2,
         'no-with': 2,
         'valid-typeof': 2,
-        'no-unused-vars': 'error',
+        'no-unused-vars': 'off', // to avoid duplication with @typescript-eslint/no-unused-vars
         'no-continue': 1,
         'no-unreachable': 1,
         'no-unused-expressions': 1,
@@ -53,6 +53,7 @@ module.exports = {
         'max-len': [1, 120, 4],
         'react/prefer-es6-class': 1,
         'react/react-in-jsx-scope': 0,
-        'react/prop-types': 0
+        'react/prop-types': 0,
+        'no-console': ['error', {allow: ['error']}],
     },
 };

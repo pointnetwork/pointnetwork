@@ -1,7 +1,19 @@
 .navbar {
     background: linear-gradient(to bottom, #1E2022 0%, rgb(0, 0, 0) 100%);
+    font-family: "Source Sans Pro", sans-serif;
     min-height: 60px;
     padding: 10px 0;
+}
+
+.navbar-brand {
+    font-size: 1.4rem;
+    line-height: 1.5rem;
+}
+
+.navbar-toggler {
+    padding: .3rem .4rem;
+    background: rgba(255, 255, 255, .2);
+    border: none;
 }
 
 .mono {
@@ -13,13 +25,20 @@ a {
 }
 
 a.nav-link {
+    border-radius: 4px;
+    font-size: 1.15rem;
+    line-height: 1.5rem;
+    margin: 0 1px;
     padding-left: 15px;
     padding-right: 15px;
 }
 
 a.nav-link.active {
     background-color: rgba(255, 255, 255, .2);
-    border-radius: 4px;
+}
+
+a.nav-link:not(.active):hover {
+    background-color: rgba(255, 255, 255, .05);
 }
 
 .imgLogo {
@@ -221,7 +240,177 @@ a.nav-link.active {
     -webkit-text-fill-color: transparent;
 }
 
+.warning-banner {
+    background: linear-gradient(90deg, rgba(71,53,17,1) 0%, rgba(223,180,0,1) 35%, rgba(237,208,12,1) 100%);
+    background: rgb(71,53,17);
+    color: rgb(255, 255, 255);
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 1.1rem;
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+}
+
+.vertical-center {
+    vertical-align: middle;
+}
+
+.with-content-right {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.wallet-header {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-left: 5px;
+}
+
+.wallet-container {
+    font-family: "Source Sans Pro", sans-serif;
+}
+
+.wallet-container thead {
+    border-bottom: 2px solid rgba(124, 124, 124, .2);
+    color: rgb(124, 124, 124);
+}
+
+.wallet-row {
+    border-bottom: 0;
+    cursor: default;
+    transition: .2s all ease-in-out;
+}
+
+.wallet-row:hover {
+    border-radius: 10px;
+    box-shadow: 0px 7px 15px 0 rgba(0, 0, 0, .15);
+    position: relative;
+}
+
+.wallet-row td {
+    padding: .6rem .5rem;
+    border-bottom: none;
+}
+
+.wallet-information {
+    align-items: center;
+    display: flex;
+}
+
+.wallet-information .icon {
+    display: flex;
+    height: 40px;
+    justify-content: center;
+    margin-right: 10px;
+    width: 50px;
+}
+
+.wallet-information .icon img {
+    height: 100%;
+}
+
+.wallet-information .data {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3rem;
+}
+
+.wallet-information .data span {
+    color: rgb(124, 124, 124);
+    font-size: 0.95rem;
+}
+
+.wallet-address {
+    font-size: 1.05rem;
+}
+
+.wallet-actions {
+    text-align: right;
+}
+
+.wallet-actions .btn {
+    border-radius: 6px;
+    border: none;
+    font-size: .95rem;
+    margin-right: 5px;
+    padding: .25rem .7rem;
+}
+
+.wallet-actions .btn:focus {
+    box-shadow: none;
+}
+
+.wallet-actions .btn-send {
+    background-color: rgba(255, 206, 21, .3);
+    color: #E0B000;
+}
+
+.wallet-actions .btn-send:hover {
+    color: #A38000;
+}
+
+.wallet-actions .btn-receive {
+    background-color: rgba(0, 192, 77, .3);
+    color: #00c04d;
+}
+
+.wallet-actions .btn-receive:hover {
+    color: #008F39;
+}
+
+.wallet-actions .btn-history {
+    background-color: rgba(34, 141, 255, .3);
+    color: #228dff;
+}
+
+.wallet-actions .btn-history:hover {
+    color: #0076F5;
+}
+
+.wallet-tabs {
+    border-bottom: 0;
+    margin-bottom: 20px;
+}
+
+.wallet-tabs.nav-tabs .nav-item {
+    margin-right: 5px;
+}
+
+.wallet-tabs.nav-tabs .nav-link {
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    border: none;
+    color: rgb(124, 124, 124);
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: .2rem .3rem;
+}
+
+.wallet-tabs.nav-tabs .nav-link.active {
+    border-bottom: 2px solid rgb(33, 37, 41);
+    color: rgb(33, 37, 41);
+}
+
+.wallet-no-tokens {
+    font-size: 1.05rem;
+}
+
+.wallet-container .table-responsive {
+    margin: 0 -15px;
+    padding: 0 15px;
+}
+
 @media (max-width: 767px) {
+    .navbar-collapse {
+        margin-top: 10px;
+    }
+
+    a.nav-link {
+        text-align: center;
+    }
+
     .bounty-banner-inner {
         flex-direction: column;
         justify-content: center;
@@ -237,12 +426,9 @@ a.nav-link.active {
     }
 }
 
-.warning-banner {
-    text-align: center;
-    width: 100%;
-    padding: 10px;
-    font-size: 1rem;
-    background: rgb(71,53,17);
-    background: linear-gradient(90deg, rgba(71,53,17,1) 0%, rgba(223,180,0,1) 35%, rgba(237,208,12,1) 100%);
-    color: rgb(255, 255, 255);
+
+@media (max-width: 991px) {
+    .wallet-row td {
+        white-space: nowrap;
+    }
 }

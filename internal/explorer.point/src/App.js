@@ -22,7 +22,7 @@ const Main = () => {
                 <ErrorBlock details="SDK is not installed or broken"></ErrorBlock>
             );
         } else {
-            return <Final></Final>;
+            return <Final />;
         }
     };
 
@@ -54,6 +54,7 @@ const Main = () => {
                                 path="/deploy_blog"
                                 element={<DeployBlog />}
                             />
+                            <Route path="/registration" element={<Final />} />
                         </Routes>
                     ) : (
                         renderWalletIdentityMissing()

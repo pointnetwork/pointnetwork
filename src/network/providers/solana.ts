@@ -3,20 +3,34 @@ import {
     getHashedName,
     getNameAccountKey,
     NameRegistryState,
-    updateNameRegistryData,
     performReverseLookup,
     getFavoriteDomain,
-    getAllDomains
+    getAllDomains,
+    getPointRecord,
+    Record as SNSRecord,
+    getDomainKey,
+    createNameRegistry,
+    updateInstruction,
+    NAME_PROGRAM_ID,
+    Numberu32
 } from '@bonfida/spl-name-service';
-import {getSolanaKeyPair} from '../../wallet/keystore';
+import {getSolanaKeyPair, getNetworkPublicKey} from '../../wallet/keystore';
 import config from 'config';
 import axios from 'axios';
 import {DomainRegistry} from '../../name_service/types';
+import {encodeCookieString, mergeAndResolveConflicts} from '../../util/cookieString';
+import {CacheFactory} from '../../util';
 const logger = require('../../core/log');
 const log = logger.child({module: 'SolanaProvider'});
 
 // Address of the `.sol` TLD
 const SOL_TLD_AUTHORITY = new web3.PublicKey(config.get('name_services.sol_tld_authority'));
+
+const SNS_ENABLED = config.get('name_services.sns.enabled');
+const SNS_GET_ALL_DOMAINS = config.get('name_services.sns.get_all_domains');
+
+const cacheExpiration = 2 * 60 * 1_000; // 2 minutes
+const solDomainCache = new CacheFactory<string, DomainRegistry>(cacheExpiration);
 
 export type SolanaSendFundsParams = {to: string; lamports: number; network: string};
 
@@ -45,6 +59,11 @@ interface TransactionInstructionJSON {
 }
 
 const createSolanaConnection = (blockchainUrl: string, protocol = 'https') => {
+    // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
+    // modify this confition
+    if (config.get('mode') === 'test') {
+        throw new Error('This function should not be called during tests');
+    }
     const url = `${protocol}://${blockchainUrl}`;
     const connection = new web3.Connection(url, 'confirmed');
     log.debug({blockchainUrl}, 'Created solana instance');
@@ -60,7 +79,10 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
         (acc, cur) => ({
             ...acc,
             [cur]: {
-                connection: createSolanaConnection(networks[cur].http_address),
+                connection:
+                    config.get('mode') === 'test'
+                        ? null
+                        : createSolanaConnection(networks[cur].http_address),
                 wallet: getSolanaKeyPair()
             }
         }),
@@ -227,10 +249,27 @@ const solana = {
 
         return connection.getSignaturesForAddress(pubKey, {before, until, limit});
     },
+    /**
+     * Looks for the Domain Regitry in Solana and returns it's owner and the
+     * contents of the `POINT` record.
+     *
+     * (implements a cache to avoid querying Solana too often)
+     */
     resolveDomain: async (domainName: string, network = 'solana'): Promise<DomainRegistry> => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return {owner: '', content: null};
+        }
+
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network "${network}".`);
+        }
+
+        const cacheKey = `${network}:${domainName}`;
+        const cachedDomainRegistry = solDomainCache.get(cacheKey);
+        if (cachedDomainRegistry) {
+            return cachedDomainRegistry;
         }
 
         // Domain without the `.sol`
@@ -238,12 +277,18 @@ const solana = {
         const hashed = await getHashedName(domain);
         const key = await getNameAccountKey(hashed, undefined, SOL_TLD_AUTHORITY);
         const {registry} = await NameRegistryState.retrieve(provider.connection, key);
-        const content = registry.data?.toString().replace(/\x00/g, '');
 
-        return {
-            owner: registry.owner.toBase58(),
-            content: content || null
-        };
+        let content: string | null = null;
+        try {
+            const {data} = await getPointRecord(provider.connection, domain);
+            content = data?.toString().replace(/\x00/g, '') || null;
+        } catch (err) {
+            log.info({domain: domainName}, 'No POINT record found for this domain.');
+        }
+
+        const domainRegistry = {owner: registry.owner.toBase58(), content};
+        solDomainCache.add(cacheKey, domainRegistry);
+        return domainRegistry;
     },
     /**
      * Retrieve the `.sol` domain owned by `owner`.
@@ -252,6 +297,11 @@ const solana = {
      * Otherwise, all domains owned by `owner` are retrieved and the first one is returned.
      */
     getDomain: async (owner: web3.PublicKey, network = 'solana'): Promise<string | null> => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return null;
+        }
+
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network "${network}".`);
@@ -263,16 +313,28 @@ const solana = {
             log.debug({owner: owner.toBase58(), domain: reverse}, 'Favourite domain found.');
             return `${reverse}.sol`;
         } catch (err) {
-            // There's no favourite domain, retrieve them all and pick the first one.
-            // TODO: if there is more than 1 domain, ask the user to pick one.
-            const domains = await getAllDomains(provider.connection, owner);
-            if (domains.length > 0) {
-                const domainName = await performReverseLookup(provider.connection, domains[0]);
-                log.debug(
-                    {owner: owner.toBase58(), numDomains: domains.length, firstDomain: domainName},
-                    'Domains found.'
-                );
-                return `${domainName}.sol`;
+            if (SNS_GET_ALL_DOMAINS) {
+                // There's no favourite domain, retrieve them all and pick the first one.
+                try {
+                    const domains = await getAllDomains(provider.connection, owner);
+                    if (domains.length > 0) {
+                        const domainName = await performReverseLookup(
+                            provider.connection,
+                            domains[0]
+                        );
+                        log.debug(
+                            {
+                                owner: owner.toBase58(),
+                                numDomains: domains.length,
+                                firstDomain: domainName
+                            },
+                            'Domains found.'
+                        );
+                        return `${domainName}.sol`;
+                    }
+                } catch (err) {
+                    log.debug(err, `Error trying to get all domains of ${owner}`);
+                }
             }
 
             log.debug({owner: owner.toBase58()}, 'No domains found.');
@@ -280,6 +342,11 @@ const solana = {
         }
     },
     setDomainContent: async (domainName: string, data: string, network = 'solana') => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return '';
+        }
+
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network "${network}".`);
@@ -287,20 +354,106 @@ const solana = {
 
         const {connection, wallet} = provider;
         const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
-        const offset = 0;
-        const buf = Buffer.from(data);
-        const buffers = [buf, Buffer.alloc(1_000 - buf.length)];
+        const ixs: web3.TransactionInstruction[] = [];
+        const record = SNSRecord.POINT;
+        const {pubkey: recordKey} = await getDomainKey(`${record}.${domain}`, true);
+        const {pubkey: domainKey} = await getDomainKey(domain);
+        const recordInfo = await connection.getAccountInfo(recordKey);
 
-        const instruction = await updateNameRegistryData(
-            provider.connection,
-            domain,
+        if (!recordInfo?.data) {
+            log.debug({domain: domainName}, 'POINT record does not exist, creating it...');
+            const space = 2_000;
+            const lamports = await connection.getMinimumBalanceForRentExemption(
+                space + NameRegistryState.HEADER_LEN
+            );
+
+            const createIx = await createNameRegistry(
+                connection,
+                Buffer.from([1]).toString() + record,
+                space,
+                wallet.publicKey,
+                wallet.publicKey,
+                lamports,
+                undefined,
+                domainKey
+            );
+            ixs.push(createIx);
+        }
+
+        const dataBuf = Buffer.from(data);
+        if (dataBuf.length > 1_000) {
+            log.error({domain: domainName, dataSize: dataBuf.length}, 'Data too large');
+            throw new Error(
+                `Data to be writen to POINT record is too large: ${dataBuf.length}, max allowed is 1000 bytes.`
+            );
+        }
+
+        const dataToWrite = Buffer.concat([dataBuf, Buffer.alloc(1_000 - dataBuf.length)]);
+        const offset = new Numberu32(0);
+
+        const updateIx = updateInstruction(
+            NAME_PROGRAM_ID,
+            recordKey,
             offset,
-            Buffer.concat(buffers),
-            undefined,
-            SOL_TLD_AUTHORITY
+            dataToWrite,
+            wallet.publicKey
+        );
+        ixs.push(updateIx);
+
+        const txId = await sendInstructions(connection, [wallet], ixs);
+
+        // Remove cached entry (if any) so the updated content is fetched on the next request.
+        const cacheKey = `${network}:${domainName}`;
+        if (solDomainCache.has(cacheKey)) {
+            solDomainCache.rm(cacheKey);
+        }
+
+        return txId;
+    },
+    setPointReference: async (solDomain: string, network = 'solana') => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return '';
+        }
+
+        // Check ownership of .sol domain
+        const id = Date.now();
+        const [{result}, domainRegistry] = await Promise.all([
+            solana.requestAccount(id, network),
+            solana.resolveDomain(solDomain, network)
+        ]);
+
+        const solanaAddress = result.publicKey;
+        if (solanaAddress !== domainRegistry.owner) {
+            const errMsg = `"${solDomain}" is owned by ${domainRegistry.owner}, you need to transfer it to your Point Wallet (${solanaAddress}). Also, please make sure you have some SOL in your Point Wallet to cover transaction fees.`;
+            log.error({solanaAddress, solDomain, domainOwner: domainRegistry.owner}, errMsg);
+            throw new Error(errMsg);
+        }
+
+        // Preserve any existing content, (over)writing the `pn_addr` key only.
+        let preExistingContent = '';
+        const {content} = domainRegistry;
+        if (content && typeof content === 'string' && content.trim()) {
+            preExistingContent = content;
+        }
+
+        const publicKey = getNetworkPublicKey();
+
+        // Write to Domain Registry and return Tx ID.
+        const data = encodeCookieString(
+            mergeAndResolveConflicts(preExistingContent, {pn_key: publicKey})
         );
 
-        const txId = await sendInstructions(connection, [wallet], [instruction]);
+        const txId = await solana.setDomainContent(solDomain, data, network);
+        log.info(
+            {
+                solDomain,
+                publicKey,
+                txId
+            },
+            'Set Point public key reference in SOL domain record.'
+        );
+
         return txId;
     },
     isAddress: (address: string) => {

@@ -1,66 +1,43 @@
 import { useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
-import { useAppContext } from '../context/AppContext';
 import Loading from '../components/Loading';
+import LinkPointToSol from '../components/LinkPointToSol';
 import appLogo from '../assets/pointlogo.png';
-import Markdown from 'markdown-to-jsx';
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
+import blogIcon from '../assets/blog.svg';
 import emailIcon from '../assets/email.svg';
 import socialIcon from '../assets/social.svg';
 import driveIcon from '../assets/drive.svg';
 import tubeIcon from '../assets/tube.svg';
 import walletIcon from '../assets/wallet.svg';
 import '@fontsource/source-sans-pro';
+import { Link } from 'react-router-dom';
+
+const FEATURED_ZAPPS = {
+    'social.point': 'Social',
+    'email.point': 'Email',
+    'drive.point': 'Drive',
+    'tube.point': 'Tube',
+};
+
+const FEATURED_ICONS = {
+    'social.point': socialIcon,
+    'email.point': emailIcon,
+    'drive.point': driveIcon,
+    'tube.point': tubeIcon,
+};
 
 export default function Home() {
-    const { walletIdentity } = useAppContext();
     const [zapps, setZapps] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isLoadingMD, setIsLoadingMD] = useState(true);
-    const [markdown, setMarkdown] = useState('');
-
-    const featuredZapps = {
-        'social.point': 'Social',
-        'email.point': 'Email',
-        'drive.point': 'Drive',
-        'tube.point': 'Tube',
-    };
-
-    const featuredIcons = {
-        'social.point': socialIcon,
-        'email.point': emailIcon,
-        'drive.point': driveIcon,
-        'tube.point': tubeIcon,
-    };
 
     useEffect(() => {
         fetchZappsDeployed();
-        fetchMarkdown();
     }, []);
-
-    const fetchMarkdown = async () => {
-        setIsLoadingMD(true);
-        try {
-            const id = await window.point.contract.call({
-                contract: 'Identity',
-                method: 'ikvGet',
-                params: ['explorer', 'markdown/index'],
-            });
-            const markdownData = await window.point.storage.getString({
-                id: id.data,
-                encoding: 'utf-8',
-            });
-            setMarkdown(markdownData.data);
-        } catch (e) {
-            setMarkdown('');
-        }
-        setIsLoadingMD(false);
-    };
 
     const fetchZappsDeployed = async () => {
         setIsLoading(true);
         const zappsDeployed = [];
-        for (const k in featuredZapps) {
+        for (const k in FEATURED_ZAPPS) {
             const zappRoutes = await window.point.contract.call({
                 contract: 'Identity',
                 method: 'ikvGet',
@@ -87,7 +64,7 @@ export default function Home() {
                     <img
                         alt={k}
                         className="zapp-icon"
-                        src={featuredIcons[k]}
+                        src={FEATURED_ICONS[k]}
                         onError={({ currentTarget }) => {
                             currentTarget.src = appLogo;
                         }}
@@ -95,50 +72,75 @@ export default function Home() {
                 </div>
 
                 <div className="zapp-information-container">
-                    <h4>{featuredZapps[k]}</h4>
+                    <h4>{FEATURED_ZAPPS[k]}</h4>
                     <span>https://{k}</span>
                 </div>
             </a>
         );
     };
 
-    const renderWalletEntry = (
-        <a
-            href={'https://point/wallet'}
-            target="_blank"
-            rel="noreferrer"
-            className="zapp"
-        >
-            <div className="zapp-icon-container">
-                <img
-                    alt="wallet"
-                    className="zapp-icon"
-                    src={walletIcon}
-                    onError={({ currentTarget }) => {
-                        currentTarget.src = appLogo;
-                    }}
-                />
-            </div>
+    const internalEntries = (
+        <>
+            <a
+                href={'https://point/wallet'}
+                target="_blank"
+                rel="noreferrer"
+                className="zapp"
+            >
+                <div className="zapp-icon-container">
+                    <img
+                        alt="wallet"
+                        className="zapp-icon"
+                        src={walletIcon}
+                        onError={({ currentTarget }) => {
+                            currentTarget.src = appLogo;
+                        }}
+                    />
+                </div>
 
-            <div className="zapp-information-container">
-                <h4>Wallet</h4>
-                <span>https://point/wallet</span>
-            </div>
-        </a>
+                <div className="zapp-information-container">
+                    <h4>Wallet</h4>
+                    <span>https://point/wallet</span>
+                </div>
+            </a>
+            <Link
+                to="/deploy_blog"
+                target="_blank"
+                rel="noreferrer"
+                className="zapp"
+            >
+                <div className="zapp-icon-container">
+                    <img
+                        alt="deploy_blog"
+                        className="zapp-icon"
+                        src={blogIcon}
+                        onError={({ currentTarget }) => {
+                            currentTarget.src = appLogo;
+                        }}
+                    />
+                </div>
+
+                <div className="zapp-information-container">
+                    <h4>Make your blog</h4>
+                </div>
+            </Link>
+        </>
     );
 
-    let zappsList = <div className="zapps">{renderWalletEntry}</div>;
+    let zappsList = <div className="zapps">{internalEntries}</div>;
 
     if (zapps.length > 0) {
         zappsList = (
             <div className="zapps">
-                {[renderWalletEntry, zapps.map((k) => renderZappEntry(k))]}
+                {[internalEntries, zapps.map((k) => renderZappEntry(k))]}
             </div>
         );
     }
 
     return (
         <Container className="home-container">
+            {/* <LinkPointToSol /> */}
+
             <h1 className="home-header">
                 Welcome to <span>Web 3.0</span>
             </h1>

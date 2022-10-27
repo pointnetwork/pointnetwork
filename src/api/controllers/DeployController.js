@@ -1,4 +1,4 @@
-const Deployer = require('../../client/zweb/deployer_old');
+const Deployer = require('../../client/zweb/deployer');
 const logger = require('../../core/log');
 const log = logger.child({module: 'DeployController'});
 

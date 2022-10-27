@@ -25,7 +25,7 @@ geth
 .env.local
 .env.zappdev
 
-config/*local*
+config/local-*
 
 hardhat/resources
 hardhat/build
@@ -34,9 +34,9 @@ hardhat/cache
 hardhat/tests
 hardhat/typechain
 resources/liveprofile/
-.openzeppelin
 typechain-types
 
+tests/resources/datadir
 junit.xml
 
 /example

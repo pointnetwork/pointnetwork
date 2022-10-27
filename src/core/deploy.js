@@ -35,7 +35,7 @@ const deploy = async ({
     const result = await axios.post(
         `http://localhost:${PORT}/v1/api/deploy`,
         {
-            deploy_path,
+            deploy_path: path.resolve(deploy_path),
             deploy_contracts,
             dev,
             force_deploy_proxy

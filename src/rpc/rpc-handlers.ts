@@ -3,7 +3,8 @@ import pendingTxs from '../permissions/PendingTxs';
 import ethereum from '../network/providers/ethereum';
 import config from 'config';
 import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
-import {decodeTxInputData} from './decode';
+import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode';
+import {getNetworkPublicKey} from '../wallet/keystore';
 import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
@@ -42,6 +43,9 @@ const storeTransaction: HandlerFunc = async data => {
     }
 
     const decodedTxData = await decodeTxInputData(target, contract, params);
+    if (decodedTxData) {
+        await addMetadata(decodedTxData, network);
+    }
 
     // Store request for future processing,
     // and send `reqId` to client so it can ask user approval.
@@ -84,6 +88,9 @@ const confirmTransaction: HandlerFunc = async data => {
                         ...(tx.params[0] as SolanaSendFundsParams),
                         network
                     });
+                } else if ((tx.params[0] as {domain: string}).domain) {
+                    const data = tx.params[0] as {domain: string};
+                    result = await solana.setPointReference(data.domain, network);
                 } else {
                     result = await solana.signAndSendTransaction(
                         id,
@@ -111,6 +118,38 @@ const confirmTransaction: HandlerFunc = async data => {
     }
 };
 
+const snsWriteRequest: HandlerFunc = async data => {
+    const params = data.params as Array<{domain: string}>;
+    if (params.length === 0 || !params[0].domain) {
+        const statusCode = 400;
+        return {
+            status: statusCode,
+            result: {
+                message: 'Missing params, expected object with `domain` key.',
+                code: statusCode
+            }
+        };
+    }
+
+    const network = 'solana'; // SNS integration only works with mainnet
+    const txData = {domain: params[0].domain, publicKey: getNetworkPublicKey()};
+    const reqId = pendingTxs.add([txData], network);
+
+    const decodedTxData: DecodedTxInput = {
+        name: 'SetPOINTRecord',
+        params: [
+            {name: 'SOLDomain', value: txData.domain, type: 'string'},
+            {name: 'POINTPublicKey', value: txData.publicKey, type: 'byte64'} // NB: actually it is hex
+        ],
+        gas: {
+            currency: 'SOL',
+            value: '0.00005'
+        }
+    };
+
+    return {status: 200, result: {reqId, network, decodedTxData}};
+};
+
 // Handlers for non-standard methods, or methods with custom logic.
 const specialHandlers: Record<string, HandlerFunc> = {
     // Ethereum
@@ -129,6 +168,7 @@ const specialHandlers: Record<string, HandlerFunc> = {
     // Solana
     solana_sendTransaction: storeTransaction,
     solana_confirmTransaction: confirmTransaction,
+    solana_snsWriteRequest: snsWriteRequest,
     solana_requestAccount: async ({id}) => {
         try {
             const result = await solana.requestAccount(id, 'solana_devnet');

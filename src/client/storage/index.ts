@@ -10,7 +10,7 @@ import {
     isValidStorageId,
     isZeroStorageId
 } from '../../util';
-import {promises as fs} from 'fs';
+import {existsSync, promises as fs} from 'fs';
 import path from 'path';
 import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, CONCURRENT_DOWNLOAD_DELAY, FILES_DIR, log} from './config';
 import {uploadChunk, getChunk} from './chunk';
@@ -234,7 +234,10 @@ export const getFile = async (
     const file = await File.findByIdOrCreate(id);
     if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {
         log.trace({fileId: file.id}, 'Returning file from cache');
-        return await fs.readFile(filePath, {encoding});
+        if (existsSync(filePath)) {
+            return await fs.readFile(filePath, {encoding});
+        }
+        log.warn({fileId: file.id}, 'File marked as downloaded, but is missing on the disk');
     }
     if (file.dl_status === FILE_DOWNLOAD_STATUS.IN_PROGRESS) {
         log.trace({fileId: file.id}, 'File download already in progress, waiting');
@@ -342,4 +345,13 @@ export const getFileIdByPath = async (dirId: string, filePath: string): Promise<
     } else {
         return getFileIdByPath(nextFileOrDir.id, path.join(...segments.slice(1)));
     }
+};
+
+export const isFileCached = async (fileId: string): Promise<boolean> => {
+    const id = (fileId.startsWith('0x') ? fileId.replace('0x', '') : fileId).toLowerCase();
+    const filePath = path.join(FILES_DIR, `file_${id}`);
+    return fs
+        .access(filePath)
+        .then(() => true)
+        .catch(() => false);
 };

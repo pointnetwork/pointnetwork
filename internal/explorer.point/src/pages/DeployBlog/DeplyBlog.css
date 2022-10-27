@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: Inter;
+    src: url('../../assets/fonts/Inter.ttf');
+}
+
+.deploy-container {
+    font-family: Inter, Courier, monospace;
+    max-width: 1100px;
+    margin: auto;
+}
+
+.clipped-bg {
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 25% 50%);
+    margin-left: 52px;
+    z-index: -1;
+}

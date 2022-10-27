@@ -1,10 +1,15 @@
-import Container from 'react-bootstrap/Container';
 import { useEffect, useState } from 'react';
+import Container from 'react-bootstrap/Container';
+import Table from 'react-bootstrap/Table';
+import Tab from 'react-bootstrap/Tab';
+import Tabs from 'react-bootstrap/Tabs';
 import Loading from '../components/Loading';
 import ReceiveModal from '../components/wallet/ReceiveModal';
 import SendModal from '../components/wallet/SendModal';
-import Swal from 'sweetalert2';
 import ErrorBlock from '../components/ErrorBlock';
+import WalletRow from '../components/wallet/WalletRow';
+import TokenRow from '../components/wallet/TokenRow';
+import '@fontsource/source-sans-pro';
 
 window.openTelegram = async () => {
     fetch('/v1/api/web2/open', {
@@ -19,88 +24,6 @@ window.openTelegram = async () => {
             _csrf: localStorage.getItem('csrf_token'),
         }),
     });
-};
-
-const WalletRow = ({
-    wallet,
-    openReceiveModal,
-    openSendModal,
-    walletHistory,
-}) => {
-    return (
-        <tr key={wallet.currency_code}>
-            <td>
-                <strong>{wallet.currency_name}</strong> ({wallet.currency_code})
-            </td>
-            <td className="mono">{wallet.alias || wallet.address}</td>
-            <td style={{ textAlign: 'right' }}>
-                {isNaN(Number(wallet.balance))
-                    ? wallet.balance
-                    : wallet.balance.toFixed(8)}{' '}
-                {wallet.currency_code}
-            </td>
-            <td style={{ textAlign: 'right' }}>
-                <a
-                    href="#"
-                    className="btn btn-sm btn-warning"
-                    onClick={() =>
-                        openSendModal({
-                            networkType: wallet.type,
-                            network: wallet.network,
-                        })
-                    }
-                >
-                    Send
-                </a>
-                &nbsp;
-                <a
-                    href="#"
-                    className="btn btn-sm btn-success"
-                    onClick={() =>
-                        openReceiveModal(wallet.currency_code, wallet.address)
-                    }
-                >
-                    Receive
-                </a>
-                &nbsp;
-                <a
-                    href="#"
-                    className="btn btn-sm btn-info"
-                    onClick={() => walletHistory(wallet.currency_code)}
-                >
-                    History
-                </a>
-            </td>
-        </tr>
-    );
-};
-
-const TokenRow = ({ token, network, openSendModal }) => {
-    return (
-        <tr key={token.address}>
-            <td>
-                <strong>{token.name}</strong>
-            </td>
-            <td className="mono">{token.address}</td>
-            <td style={{ textAlign: 'right' }}>{token.balance}</td>
-            <td style={{ textAlign: 'right' }}>
-                <a
-                    href="#"
-                    className="btn btn-sm btn-warning"
-                    onClick={() =>
-                        openSendModal({
-                            networkType: 'eth',
-                            tokenAddress: token.address,
-                            network,
-                            decimals: token.decimals,
-                        })
-                    }
-                >
-                    Send
-                </a>
-            </td>
-        </tr>
-    );
 };
 
 export default function Wallet() {
@@ -169,18 +92,6 @@ export default function Wallet() {
         void fetchData();
     }, []);
 
-    // TODO: remove this once we add real point network
-    const openPlaceholderWindow = () => {
-        void Swal.fire({
-            icon: 'info',
-            title: "POINT token doesn't exist yet!",
-            html: `Feel free to join <a 
-                style="color: #0a58ca; cursor: pointer;" 
-                onclick="window.openTelegram()">
-                our Telegram group</a> to stay updated about the launch details in the future`,
-        });
-    };
-
     const send = async ({ to, value }) => {
         if (!sendModalData) return;
         if (sendModalData.tokenAddress) {
@@ -231,7 +142,7 @@ export default function Wallet() {
                 fund Point Wallet with large amount of assets, only for
                 experiments.
             </div>
-            <Container className="p-3">
+            <Container className="p-3 wallet-container">
                 {isLoading ? (
                     <Loading />
                 ) : error ? (
@@ -257,19 +168,21 @@ export default function Wallet() {
                             />
                         )}
                         <br />
-                        <h1>Wallet</h1>
-                        <table className="table table-bordered table-striped table-hover table-responsive table-primary">
-                            <tbody>
+                        <h1 className="wallet-header">Wallet</h1>
+                        <Table responsive>
+                            <thead>
                                 <tr>
                                     <th>Currency</th>
                                     <th>Address</th>
                                     <th style={{ textAlign: 'right' }}>
                                         Balance
                                     </th>
-                                    <th style={{ textAlign: 'right' }}>
+                                    <th style={{ textAlign: 'right', paddingRight: '15px' }}>
                                         Actions
                                     </th>
                                 </tr>
+                            </thead>
+                            <tbody>
                                 {wallets.map((wallet, index) => (
                                     <WalletRow
                                         key={index}
@@ -280,58 +193,45 @@ export default function Wallet() {
                                     />
                                 ))}
                             </tbody>
-                        </table>
+                        </Table>
                         <br />
-                        <h1>ERC20 Tokens</h1>
-                        {Object.keys(tokens).map((network) => (
-                            <>
-                                <h2>{network}</h2>
-                                <table className="table table-bordered table-striped table-hover table-responsive table-primary">
-                                    <tbody>
-                                        {tokens[network]?.length > 0 ? (
-                                            <>
+                        <h1 className="wallet-header">ERC20 Tokens</h1>
+                        <Tabs className="wallet-tabs">
+                            {Object.keys(tokens).map((network, index) => (
+                                <Tab key={index} eventKey={network} title={network}>
+                                    {tokens[network]?.length > 0 ? (
+                                        <Table responsive>
+                                            <thead>
                                                 <tr>
                                                     <th>Token Name</th>
                                                     <th>Token Address</th>
-                                                    <th
-                                                        style={{
-                                                            textAlign: 'right',
-                                                        }}
-                                                    >
+                                                    <th style={{ textAlign: 'right' }}>
                                                         Balance
                                                     </th>
-                                                    <th
-                                                        style={{
-                                                            textAlign: 'right',
-                                                        }}
-                                                    >
+                                                    <th style={{ textAlign: 'right', paddingRight: '15px' }}>
                                                         Actions
                                                     </th>
                                                 </tr>
-                                                {tokens[network]?.map(
-                                                    (token, index) => (
-                                                        <TokenRow
-                                                            token={token}
-                                                            key={index}
-                                                            openSendModal={
-                                                                openSendModal
-                                                            }
-                                                            network={network}
-                                                        />
-                                                    ),
-                                                )}
-                                            </>
-                                        ) : (
-                                            <tr>
-                                                <td>
-                                                    No tokens for this network
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </>
-                        ))}
+                                            </thead>
+                                            <tbody>
+                                                {tokens[network]?.map((token, index) => (
+                                                    <TokenRow
+                                                        token={token}
+                                                        key={index}
+                                                        openSendModal={
+                                                            openSendModal
+                                                        }
+                                                        network={network}
+                                                    />
+                                                ))}
+                                            </tbody>
+                                        </Table>
+                                    ) : (
+                                        <p className="wallet-no-tokens">No tokens for this network</p>
+                                    )}
+                                </Tab>
+                            ))}
+                        </Tabs>
                     </>
                 )}
             </Container>
