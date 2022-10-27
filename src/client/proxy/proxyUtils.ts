@@ -14,9 +14,9 @@ export const matchRouteAndParams = (routes: Record<string, string>, path: string
     }
 
     let newPath = path;
-    if (templateFilename !== null && templateFilename.startsWith('rewrite:')){
+    if (templateFilename !== null && templateFilename.startsWith('rewrite:')) {
         newPath = templateFilename.replace('rewrite:', '');
-        for (const param in routeParams){
+        for (const param in routeParams) {
             newPath = newPath.replace(':' + param, routeParams[param]);
         }
         templateFilename = null;
@@ -48,15 +48,15 @@ export const isDirectoryJson = (text: string) => {
 export const setAsAttachment = (
     urlPathname: string,
     contentType: string,
-    acceptHeaders: string) => {
-    const isAttachment = urlPathname.startsWith('/_storage/') && // request directly from storage
-    !contentType.startsWith('image') && // not an image
-    !contentType.startsWith('video') && // not a video
-    (
-        acceptHeaders.includes('text/html') ||
-        acceptHeaders.includes('application/xhtml+xml') ||
-        acceptHeaders.includes('application/xml') ||
-        acceptHeaders.includes('*/*')
-    );
+    acceptHeaders: string
+) => {
+    const isAttachment =
+        urlPathname.startsWith('/_storage/') && // request directly from storage
+        !contentType.startsWith('image') && // not an image
+        !contentType.startsWith('video') && // not a video
+        (acceptHeaders.includes('text/html') ||
+            acceptHeaders.includes('application/xhtml+xml') ||
+            acceptHeaders.includes('application/xml') ||
+            acceptHeaders.includes('*/*'));
     return isAttachment;
 };

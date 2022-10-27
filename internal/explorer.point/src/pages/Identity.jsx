@@ -9,6 +9,11 @@ import PointAddressRow from '../components/PointAddressRow';
 import PublicKeyRow from '../components/PublicKeyRow';
 import getDomainSpace from '../utils/getDomainSpace';
 
+/**
+ * Render the identity page
+ * 
+ * @returns {JSX.Element} identity page
+ */
 export default function Identity() {
     const { handle } = useParams();
     const navigate = useNavigate();
@@ -22,8 +27,12 @@ export default function Identity() {
         identityNetwork,
     } = useAppContext();
 
+    //check if is point identity
     const isPointIdentity = !['ethereum', 'solana'].includes(identityNetwork);
 
+    /**
+     * fetchs the owner data
+     */
     const fetchOwner = async () => {
         setIsLoadingOwner(true);
         const result = await window.point.identity.identityToOwner({

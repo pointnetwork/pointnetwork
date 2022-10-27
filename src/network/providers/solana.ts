@@ -26,6 +26,9 @@ const log = logger.child({module: 'SolanaProvider'});
 // Address of the `.sol` TLD
 const SOL_TLD_AUTHORITY = new web3.PublicKey(config.get('name_services.sol_tld_authority'));
 
+const SNS_ENABLED = config.get('name_services.sns.enabled');
+const SNS_GET_ALL_DOMAINS = config.get('name_services.sns.get_all_domains');
+
 const cacheExpiration = 2 * 60 * 1_000; // 2 minutes
 const solDomainCache = new CacheFactory<string, DomainRegistry>(cacheExpiration);
 
@@ -56,6 +59,11 @@ interface TransactionInstructionJSON {
 }
 
 const createSolanaConnection = (blockchainUrl: string, protocol = 'https') => {
+    // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
+    // modify this confition
+    if (config.get('mode') === 'test') {
+        throw new Error('This function should not be called during tests');
+    }
     const url = `${protocol}://${blockchainUrl}`;
     const connection = new web3.Connection(url, 'confirmed');
     log.debug({blockchainUrl}, 'Created solana instance');
@@ -71,7 +79,10 @@ const providers: Record<string, {connection: web3.Connection; wallet: web3.Keypa
         (acc, cur) => ({
             ...acc,
             [cur]: {
-                connection: createSolanaConnection(networks[cur].http_address),
+                connection:
+                    config.get('mode') === 'test'
+                        ? null
+                        : createSolanaConnection(networks[cur].http_address),
                 wallet: getSolanaKeyPair()
             }
         }),
@@ -245,6 +256,11 @@ const solana = {
      * (implements a cache to avoid querying Solana too often)
      */
     resolveDomain: async (domainName: string, network = 'solana'): Promise<DomainRegistry> => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return {owner: '', content: null};
+        }
+
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network "${network}".`);
@@ -281,6 +297,11 @@ const solana = {
      * Otherwise, all domains owned by `owner` are retrieved and the first one is returned.
      */
     getDomain: async (owner: web3.PublicKey, network = 'solana'): Promise<string | null> => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return null;
+        }
+
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network "${network}".`);
@@ -292,24 +313,28 @@ const solana = {
             log.debug({owner: owner.toBase58(), domain: reverse}, 'Favourite domain found.');
             return `${reverse}.sol`;
         } catch (err) {
-            // There's no favourite domain, retrieve them all and pick the first one.
-            // TODO: if there is more than 1 domain, ask the user to pick one.
-            try {
-                const domains = await getAllDomains(provider.connection, owner);
-                if (domains.length > 0) {
-                    const domainName = await performReverseLookup(provider.connection, domains[0]);
-                    log.debug(
-                        {
-                            owner: owner.toBase58(),
-                            numDomains: domains.length,
-                            firstDomain: domainName
-                        },
-                        'Domains found.'
-                    );
-                    return `${domainName}.sol`;
+            if (SNS_GET_ALL_DOMAINS) {
+                // There's no favourite domain, retrieve them all and pick the first one.
+                try {
+                    const domains = await getAllDomains(provider.connection, owner);
+                    if (domains.length > 0) {
+                        const domainName = await performReverseLookup(
+                            provider.connection,
+                            domains[0]
+                        );
+                        log.debug(
+                            {
+                                owner: owner.toBase58(),
+                                numDomains: domains.length,
+                                firstDomain: domainName
+                            },
+                            'Domains found.'
+                        );
+                        return `${domainName}.sol`;
+                    }
+                } catch (err) {
+                    log.debug(err, `Error trying to get all domains of ${owner}`);
                 }
-            } catch (err) {
-                log.debug(err, `Error trying to get all domains of ${owner}`);
             }
 
             log.debug({owner: owner.toBase58()}, 'No domains found.');
@@ -317,6 +342,11 @@ const solana = {
         }
     },
     setDomainContent: async (domainName: string, data: string, network = 'solana') => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return '';
+        }
+
         const provider = providers[network];
         if (!provider) {
             throw new Error(`Unknown network "${network}".`);
@@ -381,6 +411,11 @@ const solana = {
         return txId;
     },
     setPointReference: async (solDomain: string, network = 'solana') => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return '';
+        }
+
         // Check ownership of .sol domain
         const id = Date.now();
         const [{result}, domainRegistry] = await Promise.all([

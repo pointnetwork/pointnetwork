@@ -25,6 +25,8 @@ zproxy:
   host: ZPROXY_HOST
 network:
   default_network: DEFAULT_NETWORK
-  identity_contract_address: IDENTITY_CONTRACT_ADDRESS
+  web3:
+    local:
+      identity_contract_address: IDENTITY_CONTRACT_ADDRESS
 wallet:
   keystore_path: POINT_KEYSTORE

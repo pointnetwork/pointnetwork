@@ -1,6 +1,6 @@
 # This workflow will run a lint check
 
-name: Lint Checks
+name: 🤓 Run lint check
 
 on:
   pull_request:

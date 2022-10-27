@@ -17,7 +17,7 @@ cd ../point-contracts
 rm -rf cache
 rm -rf typechain
 rm -rf build
-npx hardhat compile
+npm run build
 export MODE=zappdev
 npm start
 cp resources/Identity-address.json ../pointnetwork/hardhat/resources/ 

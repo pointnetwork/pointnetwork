@@ -1,4 +1,4 @@
-name: Point-Network-Node-Docker-Image-Builder-And-Publisher
+name: 🐋 Build and push docker image
 on:
   push:
     tags:

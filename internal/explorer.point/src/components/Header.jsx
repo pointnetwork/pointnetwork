@@ -19,7 +19,7 @@ const Header = ({ isRegistered }) => {
                     <Navbar.Toggle aria-controls="responsive-navbar-nav" />
 
                     <Navbar.Collapse id="responsive-navbar-nav">
-                        <Nav className="me-auto">
+                        <Nav className="me-auto" activeKey="">
                             {isRegistered ? (
                                 <>
                                     <LinkContainer to="/wallet">

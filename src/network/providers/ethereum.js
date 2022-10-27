@@ -7,7 +7,7 @@ const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
 const namehash = require('@ensdomains/eth-ens-namehash');
-const {getFile, getJSON} = require('../../client/storage');
+const {getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
@@ -45,8 +45,18 @@ const CONTRACT_BUILD_DIR = path.resolve(
     resolveHome(config.get('datadir')),
     config.get('network.contracts_path')
 );
+const IDENTITY_CONTRACT_ID = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_id`);
+const IDENTITY_CONTRACT_ADDRESS = config.get(
+    `network.web3.${DEFAULT_NETWORK}.identity_contract_address`
+);
+const ENS_ENABLED = config.get('name_services.ens.enabled');
 
 function createWeb3Instance({protocol, network}) {
+    // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
+    // modify this condition
+    if (config.get('mode') === 'test') {
+        throw new Error('This function should not be called during tests');
+    }
     const blockchainUrl = networks[network][protocol === 'ws' ? 'ws_address' : 'http_address'];
     const tls = networks[network].tls;
     const privateKey = '0x' + getNetworkPrivateKey();
@@ -55,6 +65,18 @@ function createWeb3Instance({protocol, network}) {
 
     if (protocol === 'ws') {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
+        process.addListener('exit', () => {
+            try {
+                log.info(`Closing web3 provider websocket connection to ${url}...`);
+                provider.disconnect();
+                log.info(`Successfully closed web3 provider websocket connection to ${url}...`);
+            } catch (error) {
+                log.error(
+                    {error: error.toString()},
+                    `Closing web3 provider websocket connection to ${url} failed`
+                );
+            }
+        });
     }
 
     const hdWalletProvider = new HDWalletProvider({
@@ -81,12 +103,14 @@ const abisByContractName = {};
 
 // web3.js providers
 const providers = {
-    [DEFAULT_NETWORK]: {
-        http: createWeb3Instance({
-            protocol: 'http',
-            network: DEFAULT_NETWORK
-        })
-    }
+    ...(config.get('mode') === 'test' ? {} : {
+        [DEFAULT_NETWORK]: {
+            http: createWeb3Instance({
+                protocol: 'http',
+                network: DEFAULT_NETWORK
+            })
+        }
+    })
 };
 
 const getWeb3 = ({chain = DEFAULT_NETWORK, protocol = 'http'} = {}) => {
@@ -96,6 +120,9 @@ const getWeb3 = ({chain = DEFAULT_NETWORK, protocol = 'http'} = {}) => {
             .includes(chain)
     ) {
         throw new Error(`No Eth provider for network ${chain}`);
+    }
+    if (config.get('mode') === 'test') {
+        return new Web3();
     }
     if (!providers[chain]) {
         providers[chain] = {};
@@ -129,30 +156,29 @@ const getEthers = (chain = DEFAULT_NETWORK) => {
 
 const isIdentityAbiRelevant = async () => {
     const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
-    const abiFileHash = config.get('identity_contract_id');
 
     try {
-        const abiAndMetadata = JSON.parse(await fs.readFile(abiPath));
+        const abiAndMetadata = JSON.parse(await fs.readFile(abiPath, 'utf8'));
         const {updatedAt} = abiAndMetadata;
 
         log.debug(
             {
                 abiPath,
-                abiFileHash,
+                abiFileHash: IDENTITY_CONTRACT_ID,
                 preservedAbiFileHash: abiAndMetadata.abiFileHash || null,
                 updatedAt: (isFinite(updatedAt) && new Date(updatedAt).toISOString()) || null
             },
             'Checking identity abi relevance'
         );
 
-        return abiAndMetadata.abiFileHash === abiFileHash;
+        return abiAndMetadata.abiFileHash === IDENTITY_CONTRACT_ID;
     } catch (e) {
         log.error(
             {
                 error: e.message,
                 stack: e.stack,
                 abiPath,
-                abiFileHash
+                abiFileHash: IDENTITY_CONTRACT_ID
             },
             'Failed to check identity abi relevance'
         );
@@ -162,29 +188,28 @@ const isIdentityAbiRelevant = async () => {
 };
 
 const fetchAndSaveIdentityAbiFromStorage = async () => {
-    const abiFileHash = config.get('identity_contract_id');
     const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
 
-    log.debug({abiFileHash}, 'Fetching Identity contract from storage');
+    log.debug({abiFileHash: IDENTITY_CONTRACT_ID}, 'Fetching Identity contract from storage');
 
     try {
-        const abiFile = await getFile(abiFileHash);
-        const abiAndMetadata = JSON.parse(abiFile);
+        const abiAndMetadata = await getJSON(IDENTITY_CONTRACT_ID);
 
-        abiAndMetadata.abiFileHash = abiFileHash;
+        abiAndMetadata.abiFileHash = IDENTITY_CONTRACT_ID;
         abiAndMetadata.updatedAt = Date.now();
 
         await fs.writeFile(abiPath, JSON.stringify(abiAndMetadata));
 
         log.debug('Successfully fetched identity contract abi from storage');
 
-        return (abisByContractName['Identity'] = abiAndMetadata);
+        abisByContractName['Identity'] = abiAndMetadata;
+        return abisByContractName['Identity'];
     } catch (e) {
         log.error(
             {
                 error: e.message,
                 stack: e.stack,
-                abiFileHash,
+                abiFileHash: IDENTITY_CONTRACT_ID,
                 localAbiPath: abiPath
             },
             'Failed to fetch identity abi from storage'
@@ -238,10 +263,9 @@ ethereum.loadIdentityContract = async () => {
         }
     }
 
-    const address = config.get('network.identity_contract_address');
-    log.debug({address}, 'Identity contract address');
+    log.debug({address: IDENTITY_CONTRACT_ADDRESS}, 'Identity contract address');
 
-    return await ethereum.loadPointContract('Identity', address);
+    return await ethereum.loadPointContract('Identity', IDENTITY_CONTRACT_ADDRESS);
 };
 
 ethereum.loadWebsiteContract = async (
@@ -1237,9 +1261,10 @@ ethereum.getGasPrice = async (network = DEFAULT_NETWORK) => {
     return gasPrice;
 };
 
-ethereum.getContractFromAbi = abi => {
+ethereum.getContractFromAbi = (abi, address) => {
     const web3 = getWeb3();
-    return new web3.eth.Contract(abi);
+    const args = address ? [abi, address] : [abi];
+    return new web3.eth.Contract(...args);
 };
 
 ethereum.deployContract = async (contract, artifacts, contractName) => {
@@ -1289,6 +1314,11 @@ ethereum.send = ({method, params = [], id, network}) =>
  * (implements a cache to avoid querying Ethereum too often)
  */
 ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return {owner: '', content: null};
+    }
+
     const cacheKey = `${network}:${domainName}`;
     const cachedDomainRegistry = ensDomainCache.get(cacheKey);
     if (cachedDomainRegistry) {
@@ -1319,6 +1349,11 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
  * they are not automatically set up.
  */
 ethereum.getDomain = async (address, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return null;
+    }
+
     const provider = getEthers(network);
     const domain = await provider.lookupAddress(address);
     const msg = domain ? 'Domain found.' : 'Domain not found.';
@@ -1327,6 +1362,11 @@ ethereum.getDomain = async (address, network = 'rinkeby') => {
 };
 
 ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return '';
+    }
+
     if (!networks[network] || !networks[network].eth_tld_resolver) {
         throw new Error(`Missing TLD public resolver contract address for network "${network}"`);
     }
@@ -1350,5 +1390,11 @@ ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
 };
 
 ethereum.isAddress = address => ethers.utils.isAddress(address);
+
+ethereum.getTransactionReceipt = async (txHash, network = DEFAULT_NETWORK) => {
+    const provider = getEthers(network);
+    const receipt = await provider.getTransactionReceipt(txHash);
+    return receipt;
+};
 
 module.exports = ethereum;

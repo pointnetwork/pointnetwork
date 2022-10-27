@@ -1,4 +1,4 @@
-name: Point-Network-e2e-Tests
+name: 🔬 Run unit tests
 on:
   pull_request:
     branches: [ develop ]
