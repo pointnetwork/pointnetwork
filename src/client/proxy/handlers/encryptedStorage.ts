@@ -47,12 +47,12 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
                 pks.push(publicKey);
             }
 
-            let dataArray: any = [];
+            let dataArray: (string | Buffer)[] = [];
             const fileBuf = await file.toBuffer();
             dataArray.push(fileBuf);
 
             const metadata = req.headers['metadata']?.toString();
-            dataArray = dataArray.concat(metadata?.split(','));
+            dataArray = dataArray.concat((metadata ?? '').split(','));
 
             const {host} = req.headers;
 

@@ -4,12 +4,12 @@ import isHash from '../../utils/isHash';
 
 /**
  * Compoment that renders an IKV entry for display and edit it.
- * 
- * @param {object} props 
+ *
+ * @param {object} props
  * @param {string} props.handle - the handle which the entry will be edited
  * @param {object} props.item - the item to be displayed and edited with key, value and version props
- * @param {function} props.onUpdated - callback called when the update 
- * @param {boolean} props.showEdit - if the edition is enabled 
+ * @param {function} props.onUpdated - callback called when the update
+ * @param {boolean} props.showEdit - if the edition is enabled
  * @returns {JSX.Element} an IKV Entry
  */
 const IkvEntry = ({ handle, item, onUpdated, showEdit }) => {

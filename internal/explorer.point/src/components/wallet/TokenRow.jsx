@@ -4,19 +4,20 @@ import usdtIcon from '../../assets/usdt.svg';
 import daiIcon from '../../assets/dai.svg';
 
 const TOKEN_ICONS = {
-    'USDC': usdcIcon,
-    'USDT': usdtIcon,
-    'DAI': daiIcon,
+    USDC: usdcIcon,
+    USDT: usdtIcon,
+    DAI: daiIcon,
 };
 
 const TOKEN_NAMES = {
-    'USDC': "USD Coin",
-    'USDT': "Tether",
-    'DAI': "Dai",
+    USDC: 'USD Coin',
+    USDT: 'Tether',
+    DAI: 'Dai',
 };
 
 export default function TokenRow({ token, network, openSendModal }) {
-    const decimals = token.decimals || token.decimals === 0 ? token.decimals : 18;
+    const decimals =
+        token.decimals || token.decimals === 0 ? token.decimals : 18;
 
     return (
         <tr key={token.address} className="wallet-row">
@@ -37,7 +38,9 @@ export default function TokenRow({ token, network, openSendModal }) {
             </td>
 
             <td className="wallet-address align-middle">{token.address}</td>
-            <td className="align-middle" style={{ textAlign: 'right' }}>{token.balance}</td>
+            <td className="align-middle" style={{ textAlign: 'right' }}>
+                {token.balance}
+            </td>
             <td className="wallet-actions align-middle">
                 <a
                     href="#"
@@ -56,4 +59,4 @@ export default function TokenRow({ token, network, openSendModal }) {
             </td>
         </tr>
     );
-};
+}

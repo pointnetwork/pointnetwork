@@ -45,10 +45,15 @@ async function getUpgrader(
 
     if (isEmptySlot(adminAddress) || adminBytecode === '0x') {
         // No admin contract: use TransparentUpgradeableProxyFactory to get proxiable interface
-        const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(hre, signer);
+        const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(
+            hre,
+            signer
+        );
         const proxy = TransparentUpgradeableProxyFactory.attach(proxyAddress);
 
-        return (nextImpl, call) => (call ? proxy.upgradeToAndCall(nextImpl, call) : proxy.upgradeTo(nextImpl));
+        return (nextImpl, call) => call
+            ? proxy.upgradeToAndCall(nextImpl, call)
+            : proxy.upgradeTo(nextImpl);
     } else {
         // Admin contract: redirect upgrade call through it
         const manifest = await Manifest.forNetwork(provider);

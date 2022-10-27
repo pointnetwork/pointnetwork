@@ -17,8 +17,17 @@ export const CHUNK_UPLOAD_STATUS = {
     FAILED: 'FAILED'
 };
 
-class Chunk extends Model {
-    constructor(...args) {
+class Chunk extends Model<{
+    id: string;
+    size: number;
+    dl_status: string;
+    ul_status: string;
+    retry_count: number;
+    validation_retry_count: number;
+    txid: string;
+    expires: number;
+}> {
+    constructor(...args: unknown[]) {
         super(...args);
     }
 }

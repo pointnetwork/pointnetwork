@@ -50,7 +50,13 @@ export async function deployProxyImpl(
 ): Promise<DeployedProxyImpl> {
     const deployData = await getDeployData(hre, ImplFactory, opts);
 
-    await processProxyKind(deployData.provider, proxyAddress, opts, deployData.validations, deployData.version);
+    await processProxyKind(
+        deployData.provider,
+        proxyAddress,
+        opts,
+        deployData.validations,
+        deployData.version
+    );
 
     let currentImplAddress: string | undefined;
     if (proxyAddress !== undefined) {
@@ -81,7 +87,7 @@ async function deployImpl(
     ImplFactory: ContractFactory,
     opts: UpgradeProxyOptions,
     currentImplAddress?: string
-): Promise<any> {
+): Promise<DeployedProxyImpl> {
     assertUpgradeSafe(deployData.validations, deployData.version, deployData.fullOpts);
 
     const layout = deployData.layout;
@@ -104,11 +110,14 @@ async function deployImpl(
         deployData.provider,
         async () => {
             const abi = ImplFactory.interface.format(FormatTypes.minimal) as string[];
-            const deployment = Object.assign({abi}, await deploy(ImplFactory, ...deployData.fullOpts.constructorArgs));
+            const deployment = Object.assign(
+                {abi},
+                await deploy(ImplFactory, ...deployData.fullOpts.constructorArgs)
+            );
             return {...deployment, layout};
         },
         opts
     );
 
-    return {impl, kind: opts.kind};
+    return {impl, kind: opts.kind as 'uups'};
 }

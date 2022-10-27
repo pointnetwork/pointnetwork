@@ -2,7 +2,7 @@ import ScanIdentityContractJob from './scan_identity_contract';
 import BackgroundJob from './background_job';
 
 class BackgroundJobScheduler {
-    jobs: any[] = [];
+    jobs: {cls: typeof ScanIdentityContractJob, interval: number}[] = [];
     isRunning: Record<string, boolean> = {};
 
     constructor() {

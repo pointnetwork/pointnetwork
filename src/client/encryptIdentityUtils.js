@@ -29,7 +29,7 @@ const eccrypto = require('eccrypto');
  * and then will be encrypted for each public key passed. 
  * 
  * @param {string} host - the host for the data to be encrypted
- * @param {string[]} dataArray - an array of data to be encrypted. Each data will be encrypted with a different symmetric key.
+ * @param {(string | Buffer)[]} dataArray - an array of data to be encrypted. Each data will be encrypted with a different symmetric key.
  * @param {string[]} publicKeys - an array of public keys for encrypting data.
  * 
  * @returns {MultipleEncryptionReturn} - The messages encrypted and the corresponding encrypted symmetric objects
