@@ -3,6 +3,8 @@ import { isAddress } from '@ethersproject/address';
 import { parseUnits } from 'ethers/lib/utils';
 import Swal from 'sweetalert2';
 
+const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
     const [address, setAddress] = useState('');
     const [addressValidation, setAddressValidation] = useState(false);
@@ -21,11 +23,33 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
     };
 
     const handleSubmit = async () => {
-        const _addressValidation = address
+        let to = address;
+
+        // Support using identities instead of addresses.
+        if (address.startsWith('@')) {
+            try {
+                const { data } = await window.point.identity.identityToOwner({
+                    identity: address.substring(1),
+                });
+                if (data?.pointAddress !== EMPTY_ADDRESS) {
+                    to = data.pointAddress;
+                } else {
+                    setAddressValidation('Identity not found');
+                    return;
+                }
+            } catch {
+                setAddressValidation(
+                    'Error retrieving address for this identity',
+                );
+                return;
+            }
+        }
+
+        const _addressValidation = to
             ? networkType === 'eth'
-                ? isAddress(address)
+                ? isAddress(to)
                     ? null
-                    : 'Not a valid address'
+                    : 'Not a valid address (if you are using a handle, make sure it starts with @)'
                 : null // TODO: solana address validation
             : 'Address is required';
 
@@ -44,7 +68,7 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
         setProcessing(true);
         try {
             await onSubmit({
-                to: address,
+                to,
                 value:
                     networkType === 'eth'
                         ? parseUnits(value, decimals).toHexString() // eth
@@ -88,7 +112,7 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
                             onChange={handleAddressChange}
                             type="text"
                             className="form-control recipient"
-                            placeholder="Recipient's address"
+                            placeholder="Recipient's address or @handle"
                             style={
                                 addressValidation
                                     ? { borderColor: 'indianred' }
