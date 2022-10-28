@@ -177,7 +177,12 @@ export default function Wallet() {
                                     <th style={{ textAlign: 'right' }}>
                                         Balance
                                     </th>
-                                    <th style={{ textAlign: 'right', paddingRight: '15px' }}>
+                                    <th
+                                        style={{
+                                            textAlign: 'right',
+                                            paddingRight: '15px',
+                                        }}
+                                    >
                                         Actions
                                     </th>
                                 </tr>
@@ -198,36 +203,54 @@ export default function Wallet() {
                         <h1 className="wallet-header">ERC20 Tokens</h1>
                         <Tabs className="wallet-tabs">
                             {Object.keys(tokens).map((network, index) => (
-                                <Tab key={index} eventKey={network} title={network}>
+                                <Tab
+                                    key={index}
+                                    eventKey={network}
+                                    title={network}
+                                >
                                     {tokens[network]?.length > 0 ? (
                                         <Table responsive>
                                             <thead>
                                                 <tr>
                                                     <th>Token Name</th>
                                                     <th>Token Address</th>
-                                                    <th style={{ textAlign: 'right' }}>
+                                                    <th
+                                                        style={{
+                                                            textAlign: 'right',
+                                                        }}
+                                                    >
                                                         Balance
                                                     </th>
-                                                    <th style={{ textAlign: 'right', paddingRight: '15px' }}>
+                                                    <th
+                                                        style={{
+                                                            textAlign: 'right',
+                                                            paddingRight:
+                                                                '15px',
+                                                        }}
+                                                    >
                                                         Actions
                                                     </th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {tokens[network]?.map((token, index) => (
-                                                    <TokenRow
-                                                        token={token}
-                                                        key={index}
-                                                        openSendModal={
-                                                            openSendModal
-                                                        }
-                                                        network={network}
-                                                    />
-                                                ))}
+                                                {tokens[network]?.map(
+                                                    (token, index) => (
+                                                        <TokenRow
+                                                            token={token}
+                                                            key={index}
+                                                            openSendModal={
+                                                                openSendModal
+                                                            }
+                                                            network={network}
+                                                        />
+                                                    ),
+                                                )}
                                             </tbody>
                                         </Table>
                                     ) : (
-                                        <p className="wallet-no-tokens">No tokens for this network</p>
+                                        <p className="wallet-no-tokens">
+                                            No tokens for this network
+                                        </p>
                                     )}
                                 </Tab>
                             ))}

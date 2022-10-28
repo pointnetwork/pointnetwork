@@ -3,9 +3,9 @@ import solanaIcon from '../../assets/solana.svg';
 import rinkebyIcon from '../../assets/rinkeby.svg';
 
 const NETWORK_ICONS = {
-    'local': pointLogo,
-    'solana': solanaIcon,
-    'rinkeby': rinkebyIcon,
+    local: pointLogo,
+    solana: solanaIcon,
+    rinkeby: rinkebyIcon,
 };
 
 export default function WalletRow({
@@ -31,7 +31,9 @@ export default function WalletRow({
                     <span>{wallet.currency_code}</span>
                 </div>
             </td>
-            <td className="wallet-address align-middle">{wallet.alias || wallet.address}</td>
+            <td className="wallet-address align-middle">
+                {wallet.alias || wallet.address}
+            </td>
             <td className="align-middle" style={{ textAlign: 'right' }}>
                 {isNaN(Number(wallet.balance))
                     ? wallet.balance

@@ -319,7 +319,7 @@ export const getFile = async (
     }
 };
 
-// @eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getJSON = async <T = any>(id: string, useCache = true): Promise<T> => {
     log.trace({id}, 'Getting JSON');
     const file = await getFile(id, 'utf8', useCache);

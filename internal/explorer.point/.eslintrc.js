@@ -50,7 +50,7 @@ module.exports = {
         'no-inner-declarations': 0,
         'no-constant-condition': 0,
         'no-empty-function': 0,
-        'max-len': [1, 120, 4],
+        'max-len': [1, 120, {ignoreStrings: true, ignoreTemplateLiterals: true}],
         'react/prefer-es6-class': 1,
         'react/react-in-jsx-scope': 0,
         'react/prop-types': 0,

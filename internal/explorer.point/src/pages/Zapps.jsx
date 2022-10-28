@@ -6,7 +6,7 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 
 /**
  * Renders ZApps page
- * 
+ *
  * @returns {JSX.Element} - ZApps page
  */
 const PAGE_SIZE = 100;
@@ -22,8 +22,8 @@ export default function Zapps() {
      * Fetchs the zapps
      */
     const fetchZapps = async () => {
-        //didn't fetched yet, so the first time start loading. 
-        //After that, infinite scroll handle showing the spinner.
+        // didn't fetched yet, so the first time start loading.
+        // After that, infinite scroll handle showing the spinner.
         if (dappsLength === 0) {
             setIsLoading(true);
         }
@@ -36,17 +36,17 @@ export default function Zapps() {
         // set the zapps length
         setDappsLength(dappsLengthFetched.data);
 
-        //fetch the data
+        // fetch the data
         const dappsFetched = await window.point.contract.call({
             contract: 'Identity',
             method: 'getPaginatedDapps',
             params: [cursor, PAGE_SIZE],
         });
 
-        //set the position of the cursor for infinite scroll
+        // set the position of the cursor for infinite scroll
         setCursor(cursor + dappsFetched.data.length);
 
-        //checks if has more data to fetch
+        // checks if has more data to fetch
         if (
             zapps.length + dappsFetched.data.length >=
             dappsLengthFetched.data
@@ -54,7 +54,7 @@ export default function Zapps() {
             setHasMore(false);
         }
 
-        //set the identities state variable variable 
+        // set the identities state variable variable
         setZapps(
             zapps.concat(
                 dappsFetched.data.map((e) => {
@@ -63,25 +63,24 @@ export default function Zapps() {
             ),
         );
 
-        //If is the first time fetching data stops loading.
-        //After that, infinite scroll handle showing the spinner.
+        // If is the first time fetching data stops loading.
+        // After that, infinite scroll handle showing the spinner.
         if (dappsLength === 0) {
             setIsLoading(false);
         }
     };
 
-    
     useEffect(() => {
         fetchZapps();
     }, []);
 
     /**
-     * Renders one zapp entry 
-     * 
+     * Renders one zapp entry
+     *
      * @param {object} id - an identity object
      * @param {string} id.handle - the identity handle
      * @param {address} id.owner - the address of the owner of the identity
-     * 
+     *
      * @returns {JSX.Element} - the dapp row
      */
     const renderZappEntry = (id) => {

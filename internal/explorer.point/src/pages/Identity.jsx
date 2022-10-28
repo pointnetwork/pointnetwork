@@ -11,7 +11,7 @@ import getDomainSpace from '../utils/getDomainSpace';
 
 /**
  * Render the identity page
- * 
+ *
  * @returns {JSX.Element} identity page
  */
 export default function Identity() {
@@ -27,7 +27,7 @@ export default function Identity() {
         identityNetwork,
     } = useAppContext();
 
-    //check if is point identity
+    // check if is point identity
     const isPointIdentity = !['ethereum', 'solana'].includes(identityNetwork);
 
     /**
