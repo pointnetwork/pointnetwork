@@ -2,6 +2,4 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 npm exec lint-staged
-# this is failing - will be re-enabled after merging my react refactoring PR
-#cd internal/explorer.point && npm run fix
 npm exec tsc
