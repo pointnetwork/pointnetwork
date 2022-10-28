@@ -8,12 +8,7 @@ const NETWORK_ICONS = {
     rinkeby: rinkebyIcon,
 };
 
-export default function WalletRow({
-    wallet,
-    openReceiveModal,
-    openSendModal,
-    walletHistory,
-}) {
+export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
     return (
         <tr key={wallet.currency_code} className="wallet-row">
             <td className="wallet-information">
@@ -62,14 +57,6 @@ export default function WalletRow({
                     }
                 >
                     Receive
-                </a>
-                &nbsp;
-                <a
-                    href="#"
-                    className="btn btn-sm btn-history"
-                    onClick={() => walletHistory(wallet.currency_code)}
-                >
-                    History
                 </a>
             </td>
         </tr>

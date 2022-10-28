@@ -131,10 +131,6 @@ export default function Wallet() {
         setReceiveModalData(null);
     };
 
-    function walletHistory() {
-        alert('TODO');
-    }
-
     return (
         <>
             <div className="warning-banner">
@@ -194,7 +190,6 @@ export default function Wallet() {
                                         wallet={wallet}
                                         openReceiveModal={openReceiveModal}
                                         openSendModal={openSendModal}
-                                        walletHistory={walletHistory}
                                     />
                                 ))}
                             </tbody>
