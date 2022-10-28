@@ -48,6 +48,11 @@ const Deployers = ({ isOwner, isPointIdentity }) => {
         }
     };
 
+    /**
+     * Revoke the deployer permission from one address in the seletect identity
+     *
+     * @param {address} deployer - address of the deployer to be revoked
+     */
     const revokeDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);
@@ -72,6 +77,12 @@ const Deployers = ({ isOwner, isPointIdentity }) => {
         }
     };
 
+    /**
+     * Grant the deployer permission from one address in the seletect identity
+     *
+     * @param {address} deployer - the address for the deployer permission be granted
+     * @returns {boolean} if the operation succeed.
+     */
     const activateDeployer = async (deployer) => {
         try {
             setIsLoadingDeployers(true);

@@ -143,7 +143,7 @@ if (program.new) {
     const create = require('./core/new');
     create({website: program.new})
         .then(() => process.exit())
-        .catch((e: any) => { log.error('Error: ' + e.message); process.exit(); });
+        .catch((e: Error) => { log.error('Error: ' + e.message); process.exit(); });
     // @ts-ignore
     return;
 }

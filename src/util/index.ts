@@ -17,3 +17,4 @@ export * from './calculateDirSize';
 export * from './cacheFactory';
 export * from './splitAndTakeLastPart';
 export * from './getSecretToken';
+export * from './sanitizeSVG';

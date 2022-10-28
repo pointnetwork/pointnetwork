@@ -1,5 +1,5 @@
 # Thiw workflow publishes the latest draft release
-name: Publish Release
+name: 📢 Publish the latest draft release
 
 on:
   push:

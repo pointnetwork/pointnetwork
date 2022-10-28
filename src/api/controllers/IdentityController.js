@@ -17,6 +17,7 @@ const {addToCache} = require('../../name_service/identity-cache');
 const {parseDomainRegistry} = require('../../name_service/registry');
 
 const EMPTY_REFERRAL_CODE = '000000000000';
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 const IKV_PUT_INTERFACE = {
     inputs: [
@@ -140,6 +141,16 @@ class IdentityController extends PointSDKController {
         });
     }
 
+    async identityRegistered() {
+        const identity = this.req.query.identity;
+        if (!identity) {
+            return this.res.status(400).send('Missing query param: identity');
+        }
+
+        const owner = await ethereum.ownerByIdentity(identity);
+        this.rep.status(200).send({identityRegistered: owner && owner !== ADDRESS_ZERO});
+    }
+
     async identityToOwner() {
         const identity = this.req.params.identity;
         let owner = '';
@@ -214,6 +225,7 @@ class IdentityController extends PointSDKController {
 
     async openLink() {
         const {url, _csrf} = this.req.body;
+        //checks the CSFR to open a link.
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
@@ -249,6 +261,7 @@ class IdentityController extends PointSDKController {
         if (host !== 'point') {
             return this.rep.status(403).send('Forbidden');
         }
+        //checks the csrf to register an identity
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }
@@ -364,6 +377,8 @@ class IdentityController extends PointSDKController {
         if (host !== 'point') {
             return this.rep.status(403).send('Forbidden');
         }
+
+        //check the csrf token to register an subidentity
         if (_csrf !== csrfTokens.point) {
             return this.rep.status(403).send('CSRF token invalid');
         }

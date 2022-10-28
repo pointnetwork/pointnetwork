@@ -10,6 +10,7 @@ const log = logger.child({module: 'Renderer'});
 const blockchain = require('../../../network/providers/ethereum');
 const {readFileByPath, getSecretToken} = require('../../../util');
 const keyValue = require('../../../network/keyvalue');
+//get the object that stores the csrf tokens.
 const {default: csrfTokens} = require('./csrfTokens');
 const {sign} = require('jsonwebtoken');
 
@@ -166,7 +167,7 @@ class Renderer {
                 version = 'latest'
             ) {
                 return await blockchain.sendToContract(
-                    host.replace('.point', ''),
+                    host.replace(/\.point$/, ''),
                     contractName,
                     methodName,
                     params,
@@ -179,7 +180,7 @@ class Renderer {
                 if (filter.hasOwnProperty('_keys')) delete filter['_keys'];
                 const options = {filter: filter, fromBlock: 0, toBlock: 'latest'};
                 const events = await blockchain.getPastEvents(
-                    host.replace('.point', ''),
+                    host.replace(/\.point$/, ''),
                     contractName,
                     event,
                     options
@@ -247,7 +248,7 @@ class Renderer {
                 if (!owner || owner === '0x0000000000000000000000000000000000000000') return true;
                 return false;
             },
-
+            //generate the csrf token
             csrf_value: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (!csrfTokens[this.host]) {
@@ -257,6 +258,7 @@ class Renderer {
                 }
                 return csrfTokens[this.host];
             },
+            //create the field with csrf token.
             csrf_field: async function() {
                 // todo: regenerate per session, or maybe store more permanently?
                 if (!csrfTokens[this.host]) {
@@ -266,15 +268,19 @@ class Renderer {
                 }
                 return `<input name="_csrf" value="${csrfTokens[this.host]}" />`;
             },
+            //check the csrf token.
             csrf_guard: async function(submitted_token) {
+                //no token
                 if (!csrfTokens) {
                     throw new Error(
                         'No csrf token generated for this host (rather, no tokens at all)'
                     );
                 }
+                //no token for the host
                 if (!csrfTokens[this.host]) {
                     throw new Error('No csrf token generated for this host');
                 }
+                //invalid token
                 const real_token = csrfTokens[this.host];
                 if (real_token !== submitted_token) {
                     throw new Error('Invalid csrf token submitted');

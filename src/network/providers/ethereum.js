@@ -7,7 +7,7 @@ const _ = require('lodash');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const NonceTrackerSubprovider = require('web3-provider-engine/subproviders/nonce-tracker');
 const namehash = require('@ensdomains/eth-ens-namehash');
-const {getFile, getJSON} = require('../../client/storage');
+const {getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
@@ -46,11 +46,14 @@ const CONTRACT_BUILD_DIR = path.resolve(
     config.get('network.contracts_path')
 );
 const IDENTITY_CONTRACT_ID = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_id`);
-const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
+const IDENTITY_CONTRACT_ADDRESS = config.get(
+    `network.web3.${DEFAULT_NETWORK}.identity_contract_address`
+);
+const ENS_ENABLED = config.get('name_services.ens.enabled');
 
 function createWeb3Instance({protocol, network}) {
     // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
-    // modify this confition
+    // modify this condition
     if (config.get('mode') === 'test') {
         throw new Error('This function should not be called during tests');
     }
@@ -62,6 +65,18 @@ function createWeb3Instance({protocol, network}) {
 
     if (protocol === 'ws') {
         HDWalletProvider.prototype.on = provider.on.bind(provider);
+        process.addListener('exit', () => {
+            try {
+                log.info(`Closing web3 provider websocket connection to ${url}...`);
+                provider.disconnect();
+                log.info(`Successfully closed web3 provider websocket connection to ${url}...`);
+            } catch (error) {
+                log.error(
+                    {error: error.toString()},
+                    `Closing web3 provider websocket connection to ${url} failed`
+                );
+            }
+        });
     }
 
     const hdWalletProvider = new HDWalletProvider({
@@ -143,7 +158,7 @@ const isIdentityAbiRelevant = async () => {
     const abiPath = path.resolve(CONTRACT_BUILD_DIR, 'Identity.json');
 
     try {
-        const abiAndMetadata = JSON.parse(await fs.readFile(abiPath));
+        const abiAndMetadata = JSON.parse(await fs.readFile(abiPath, 'utf8'));
         const {updatedAt} = abiAndMetadata;
 
         log.debug(
@@ -178,8 +193,7 @@ const fetchAndSaveIdentityAbiFromStorage = async () => {
     log.debug({abiFileHash: IDENTITY_CONTRACT_ID}, 'Fetching Identity contract from storage');
 
     try {
-        const abiFile = await getFile(IDENTITY_CONTRACT_ID);
-        const abiAndMetadata = JSON.parse(abiFile);
+        const abiAndMetadata = await getJSON(IDENTITY_CONTRACT_ID);
 
         abiAndMetadata.abiFileHash = IDENTITY_CONTRACT_ID;
         abiAndMetadata.updatedAt = Date.now();
@@ -188,7 +202,8 @@ const fetchAndSaveIdentityAbiFromStorage = async () => {
 
         log.debug('Successfully fetched identity contract abi from storage');
 
-        return (abisByContractName['Identity'] = abiAndMetadata);
+        abisByContractName['Identity'] = abiAndMetadata;
+        return abisByContractName['Identity'];
     } catch (e) {
         log.error(
             {
@@ -815,7 +830,7 @@ ethereum.isIdentityDeployer = async (identity, address) => {
 const zRecordCache = createCache();
 
 ethereum.getZRecord = async (domain, version = 'latest') => {
-    domain = domain.replace('.point', ''); // todo: rtrim instead
+    domain = domain.replace(/\.point$/, '');
     return zRecordCache.get(`${domain}-${ZDNS_ROUTES_KEY}-${version}`, async () => {
         const result = await ethereum.getKeyValue(domain, ZDNS_ROUTES_KEY, version, 'exact', true);
         return result?.substr(0, 2) === '0x' ? result.substr(2) : result;
@@ -823,7 +838,7 @@ ethereum.getZRecord = async (domain, version = 'latest') => {
 };
 
 ethereum.putZRecord = async (domain, routesFile, version) => {
-    domain = domain.replace('.point', ''); // todo: rtrim instead
+    domain = domain.replace(/\.point$/, '');
     return await ethereum.putKeyValue(domain, ZDNS_ROUTES_KEY, routesFile, version);
 };
 
@@ -944,7 +959,7 @@ ethereum.getKeyValue = async (
             throw Error('blockchain.getKeyValue(): version must be a string');
         }
 
-        identity = identity.replace('.point', ''); // todo: rtrim instead
+        identity = identity.replace(/\.point$/, '');
         const baseKey = `${identity}-${key}`;
         if (version === 'latest') {
             return keyValueCache.get(baseKey, async () => {
@@ -986,7 +1001,7 @@ ethereum.getKeyValue = async (
 ethereum.putKeyValue = async (identity, key, value, version) => {
     try {
         // todo: only send transaction if it's different. if it's already the same value, no need
-        identity = identity.replace('.point', ''); // todo: rtrim instead
+        identity = identity.replace(/\.point$/, '');
         const contract = await ethereum.loadIdentityContract();
         const method = contract.methods.ikvPut(identity, key, value, version);
         log.debug({identity, key, value, version}, 'Ready to put key value');
@@ -1008,7 +1023,7 @@ ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessa
         }
         // todo: validate identity and address
 
-        identity = identity.replace('.point', ''); // todo: rtrim instead
+        identity = identity.replace(/\.point$/, '');
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
 
@@ -1055,7 +1070,7 @@ ethereum.registerIdentity = async (identity, address, commPublicKey) => {
         }
         // todo: validate identity and address
 
-        identity = identity.replace('.point', ''); // todo: rtrim instead
+        identity = identity.replace(/\.point$/, '');
         const contract = await ethereum.loadIdentityContract();
         log.debug({address: contract.options.address}, 'Loaded "identity contract" successfully');
 
@@ -1246,9 +1261,10 @@ ethereum.getGasPrice = async (network = DEFAULT_NETWORK) => {
     return gasPrice;
 };
 
-ethereum.getContractFromAbi = abi => {
+ethereum.getContractFromAbi = (abi, address) => {
     const web3 = getWeb3();
-    return new web3.eth.Contract(abi);
+    const args = address ? [abi, address] : [abi];
+    return new web3.eth.Contract(...args);
 };
 
 ethereum.deployContract = async (contract, artifacts, contractName) => {
@@ -1298,6 +1314,11 @@ ethereum.send = ({method, params = [], id, network}) =>
  * (implements a cache to avoid querying Ethereum too often)
  */
 ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return {owner: '', content: null};
+    }
+
     const cacheKey = `${network}:${domainName}`;
     const cachedDomainRegistry = ensDomainCache.get(cacheKey);
     if (cachedDomainRegistry) {
@@ -1328,6 +1349,11 @@ ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
  * they are not automatically set up.
  */
 ethereum.getDomain = async (address, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return null;
+    }
+
     const provider = getEthers(network);
     const domain = await provider.lookupAddress(address);
     const msg = domain ? 'Domain found.' : 'Domain not found.';
@@ -1336,6 +1362,11 @@ ethereum.getDomain = async (address, network = 'rinkeby') => {
 };
 
 ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
+    if (!ENS_ENABLED) {
+        log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
+        return '';
+    }
+
     if (!networks[network] || !networks[network].eth_tld_resolver) {
         throw new Error(`Missing TLD public resolver contract address for network "${network}"`);
     }
@@ -1359,5 +1390,11 @@ ethereum.setDomainContent = async (domainName, data, network = 'rinkeby') => {
 };
 
 ethereum.isAddress = address => ethers.utils.isAddress(address);
+
+ethereum.getTransactionReceipt = async (txHash, network = DEFAULT_NETWORK) => {
+    const provider = getEthers(network);
+    const receipt = await provider.getTransactionReceipt(txHash);
+    return receipt;
+};
 
 module.exports = ethereum;

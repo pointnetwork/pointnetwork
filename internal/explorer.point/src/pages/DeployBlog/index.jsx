@@ -45,21 +45,51 @@ const DeployBlog = () => {
 
     const deploy = async (subidentity) => {
         try {
-            // 1. deploy subidentity
-            setLoading('Registering subidentity...');
-            await axios.post(
-                '/v1/api/identity/sub/register',
-                {
-                    subidentity,
-                    parentIdentity: walletIdentity,
-                    _csrf: window.localStorage.getItem('csrf_token'),
-                },
+            // 1. checking if subidentity is already registered
+            setLoading('Checking subidentity...');
+            const {
+                data: { identityRegistered },
+            } = await axios.get(
+                `/v1/api/identity/identityRegistered?identity=${subidentity}.${walletIdentity.toLowerCase()}`,
                 {
                     headers: {
                         'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
                     },
                 },
             );
+            if (identityRegistered) {
+                // checking if there's a website already on this identity
+                const ikvset = await window.point.contract.call({
+                    contract: 'Identity',
+                    method: 'getIkvList',
+                    params: [`${subidentity}.${walletIdentity.toLowerCase()}`],
+                });
+                if (ikvset.data) {
+                    if (ikvset.data.find((el) => el[1] === 'zdns/routes')) {
+                        setError(
+                            'A website is already deployed on this address. Please, choose another subidentity',
+                        );
+                        setLoading(null);
+                        return;
+                    }
+                }
+            } else {
+                // deploy subidentity
+                setLoading('Registering subidentity...');
+                await axios.post(
+                    '/v1/api/identity/sub/register',
+                    {
+                        subidentity,
+                        parentIdentity: walletIdentity,
+                        _csrf: window.localStorage.getItem('csrf_token'),
+                    },
+                    {
+                        headers: {
+                            'X-Point-Token': `Bearer ${await window.point.point.get_auth_token()}`,
+                        },
+                    },
+                );
+            }
 
             // 2. Download contract
             setLoading('Downloading blog contract...');
@@ -161,9 +191,15 @@ const DeployBlog = () => {
                 <Alert variant="danger">
                     <Alert.Heading>Deployment Failed!</Alert.Heading>
                     <p>
-                        Failed to deploy blog at:
-                        {` https://${subhandle}.${walletIdentity}.point. `}
-                        Please try again.
+                        {typeof error === 'string' ? (
+                            error
+                        ) : (
+                            <>
+                                Failed to deploy blog at:
+                                {` https://${subhandle}.${walletIdentity}.point. `}
+                                Please try again.
+                            </>
+                        )}
                     </p>
                 </Alert>
             ) : null}

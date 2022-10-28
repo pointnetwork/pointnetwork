@@ -1,0 +1,35 @@
+{
+    "categories": [{
+        "title": "## 🚀 Features",
+        "labels": ["feature"]
+    },{
+        "title": "## 🪲 Bug Fixes",
+        "labels": ["fix"]
+    },{
+        "title": "## 🧪 Tests",
+        "labels": ["test"]
+    },{
+        "title": "## ✨ Improvements",
+        "labels": ["improvement"]
+    },{
+        "title": "## 📖 Documentation",
+        "labels": ["documentation"]
+    },{
+        "title": "## 🔐 Security",
+        "labels": ["security"]
+    }],
+    "ignore_labels": [
+        "refactor",
+        "codestyle",
+        "infrastructure",
+        "configuration"
+    ],
+    "template": "${{CHANGELOG}}",
+    "pr_template": "- #${{NUMBER}} ${{TITLE}}",
+    "empty_template": "🔎 No Changes",
+    "max_tags_to_fetch": 24,
+    "base_branches": [
+        "develop",
+        "main"
+    ]
+}

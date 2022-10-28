@@ -4,6 +4,7 @@ import path from 'path';
 import config from 'config';
 import fs from 'fs';
 import {JWKInterface} from 'arweave/node/lib/wallet';
+import {resolveHome} from '../../../util';
 
 const arweave = Arweave.init({
     port: PORT,
@@ -12,7 +13,7 @@ const arweave = Arweave.init({
 });
 
 // load the arweave key for arlocal
-const keystorePath: string = config.get('wallet.keystore_path');
+const keystorePath: string = resolveHome(config.get('wallet.keystore_path'));
 const arweaveKeyPath = path.join(keystorePath, 'arweave.json');
 let arweaveKey: JWKInterface | undefined = undefined;
 try {
