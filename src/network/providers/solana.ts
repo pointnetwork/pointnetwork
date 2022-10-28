@@ -341,6 +341,40 @@ const solana = {
             return null;
         }
     },
+    createPointRecord: async (domain: string, network: string) => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return '';
+        }
+
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network "${network}".`);
+        }
+
+        const {connection, wallet} = provider;
+        const space = 2_000;
+        const lamports = await connection.getMinimumBalanceForRentExemption(
+            space + NameRegistryState.HEADER_LEN
+        );
+
+        const {pubkey: domainKey} = await getDomainKey(domain);
+
+        const createIx = await createNameRegistry(
+            connection,
+            Buffer.from([1]).toString() + SNSRecord.POINT,
+            space,
+            wallet.publicKey,
+            wallet.publicKey,
+            lamports,
+            undefined,
+            domainKey
+        );
+
+        const txId = await sendInstructions(connection, [wallet], [createIx]);
+        log.debug({domain, txId}, 'POINT record created');
+        return txId;
+    },
     setDomainContent: async (domainName: string, data: string, network = 'solana') => {
         if (!SNS_ENABLED) {
             log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
@@ -354,30 +388,13 @@ const solana = {
 
         const {connection, wallet} = provider;
         const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
-        const ixs: web3.TransactionInstruction[] = [];
         const record = SNSRecord.POINT;
         const {pubkey: recordKey} = await getDomainKey(`${record}.${domain}`, true);
-        const {pubkey: domainKey} = await getDomainKey(domain);
         const recordInfo = await connection.getAccountInfo(recordKey);
 
         if (!recordInfo?.data) {
             log.debug({domain: domainName}, 'POINT record does not exist, creating it...');
-            const space = 2_000;
-            const lamports = await connection.getMinimumBalanceForRentExemption(
-                space + NameRegistryState.HEADER_LEN
-            );
-
-            const createIx = await createNameRegistry(
-                connection,
-                Buffer.from([1]).toString() + record,
-                space,
-                wallet.publicKey,
-                wallet.publicKey,
-                lamports,
-                undefined,
-                domainKey
-            );
-            ixs.push(createIx);
+            await solana.createPointRecord(domain, network);
         }
 
         const dataBuf = Buffer.from(data);
@@ -398,9 +415,8 @@ const solana = {
             dataToWrite,
             wallet.publicKey
         );
-        ixs.push(updateIx);
 
-        const txId = await sendInstructions(connection, [wallet], ixs);
+        const txId = await sendInstructions(connection, [wallet], [updateIx]);
 
         // Remove cached entry (if any) so the updated content is fetched on the next request.
         const cacheKey = `${network}:${domainName}`;
