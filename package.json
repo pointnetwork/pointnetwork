@@ -115,6 +115,7 @@
     "jest": "^28.1.2",
     "jest-circus": "^28.1.2",
     "jest-junit": "^14.0.0",
+    "lint-staged": "^13.0.3",
     "nodemon": "^2.0.12",
     "pkg": "^5.7.0",
     "sequelize-cli": "^6.2.0",
@@ -232,5 +233,9 @@
         "require('stream').web"
       ]
     }
+  },
+  "lint-staged": {
+    "*.js": "eslint --fix",
+    "*.ts": "eslint --fix"
   }
 }
