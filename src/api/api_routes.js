@@ -64,7 +64,12 @@ module.exports = [
     ['GET', '/v1/api/status/ping', 'PingController@ping'],
     ['GET', '/v1/api/status/meta', 'StatusController@meta'],
     ['POST', '/v1/api/deploy', 'DeployController@deploy', {gatewayDisabled: true}], // TODO: not protecting for now, but should
-    ['GET', '/v1/api/migrate', 'MigrateController@migrate', {protected: true, gatewayDisabled: true}],
+    [
+        'GET',
+        '/v1/api/migrate',
+        'MigrateController@migrate',
+        {protected: true, gatewayDisabled: true}
+    ],
     ['GET', '/v1/api/storage/files/:id', 'StorageController@fileById', {protected: true}],
     ['GET', '/v1/api/storage/getString/:id', 'StorageController@getString', {protected: true}],
     [
@@ -136,5 +141,6 @@ module.exports = [
     ],
     ['GET', '/v1/api/blockchain/networks', 'BlockchainController@networks', {protected: true}],
     ['POST', '/v1/api/contract/encodeFunctionCall', 'ContractController@encodeFunctionCall'],
-    ['POST', '/v1/api/contract/decodeParameters', 'ContractController@decodeParameters']
+    ['POST', '/v1/api/contract/decodeParameters', 'ContractController@decodeParameters'],
+    ['GET', '/v1/api/contract/listEvents/:identity', 'ContractController@listEvents']
 ];
