@@ -72,10 +72,7 @@ class Deployer {
 
         if (!this.isVersionFormated(baseVersion)) {
             log.error(
-                {
-                    deployConfigFilePath: deployConfigFilePath,
-                    version: baseVersion
-                },
+                {version: baseVersion},
                 'Incorrect format of Version number. Should be MAJOR.MINOR.'
             );
             throw new Error(
@@ -103,15 +100,23 @@ class Deployer {
      * @returns {object} - Version splited on a object with the properties major, minor and path.
      */
     getVersionParts(version) {
-        const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
-        const found = version.match(regex);
-        if (found) {
+        const regexWithPatch = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
+        const versionWithPatch = version.match(regexWithPatch);
+        if (versionWithPatch) {
             return {
-                major: found.groups.major,
-                minor: found.groups.minor,
-                patch: found.groups.patch
+                major: versionWithPatch.groups.major,
+                minor: versionWithPatch.groups.minor,
+                patch: versionWithPatch.groups.patch
             };
         } else {
+            const regexWithoutPatch = /(?<major>\d+)\.(?<minor>\d+)/;
+            const versionWithoutPatch = version.match(regexWithoutPatch);
+            if (versionWithoutPatch) {
+                return {
+                    major: versionWithoutPatch.groups.major,
+                    minor: versionWithoutPatch.groups.minor
+                };
+            }
             throw new Error('Version in wrong format ');
         }
     }
@@ -121,7 +126,7 @@ class Deployer {
      * 
      * @param {string} oldVersion - old base version.
      * @param {string} newBaseVersion - new base version.
-     * @returns {boolean} - If the new base versio is higher than the old one.
+     * @returns {boolean} - If the new base version is higher than the old one.
      */
     isNewBaseVersionValid(oldVersion, newBaseVersion) {
         if (oldVersion === null || oldVersion === undefined || oldVersion === '') {
@@ -740,7 +745,7 @@ class Deployer {
         );
         
         //get the version for the deploy
-        const version = await this.getVersion(
+        const version = this.getVersion(
             deployConfig.version,
             identity,
             isPointTarget,
