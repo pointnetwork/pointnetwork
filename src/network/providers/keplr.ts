@@ -17,3 +17,22 @@ export const keplr = new Keplr(
     'extension',
     requester
 );
+
+export const send = async (data: {
+    method: string;
+    network: string;
+    params?: unknown[];
+    id?: number;
+}) => {
+    const {method, params} = data;
+    const methodName = method.split('_')[1];
+
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    const keplrMethod = keplr[methodName as keyof Keplr] as Function;
+    if (typeof keplrMethod !== 'function') {
+        throw new Error('Not valid method');
+    }
+
+    const result = (await keplrMethod.apply(keplr, params)) || {};
+    return result;
+};
