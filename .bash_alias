@@ -13,6 +13,7 @@ alias point-dev-use-oracle="NODE_CONFIG_ENV=devlocal MODE=zappdev USE_ORACLE=tru
 alias point-visit-use-oracle="NODE_CONFIG_ENV=visitlocal MODE=zappdev USE_ORACLE=true npm run watch"
 
 alias point-deploy="NODE_CONFIG_ENV=devlocal MODE=zappdev ./point deploy "
+alias point-upload="NODE_CONFIG_ENV=devlocal MODE=zappdev ./point upload "
 
 alias point-dev-install="./scripts/create-local-env.sh"
 alias point-dev-start="./scripts/start-local.sh"
