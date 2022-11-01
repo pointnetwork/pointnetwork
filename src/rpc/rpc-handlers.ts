@@ -6,8 +6,7 @@ import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/provide
 import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode';
 import {getNetworkPublicKey} from '../wallet/keystore';
 import logger from '../core/log';
-import {keplr} from '../network/providers/keplr';
-import {Keplr} from '@keplr-wallet/provider';
+import {send as keplrSend} from '../network/providers/keplr';
 
 const log = logger.child({module: 'RPC'});
 
@@ -102,6 +101,9 @@ const confirmTransaction: HandlerFunc = async data => {
                     );
                 }
                 break;
+            case 'cosmos':
+                result = await keplrSend({method: 'keplr_sendTx', ...tx});
+                break;
             default:
                 return {
                     status: 400,
@@ -181,30 +183,9 @@ const specialHandlers: Record<string, HandlerFunc> = {
             return {status: statusCode, result: {code: statusCode, message: err.message}};
         }
     },
-    keplr: async (data) => {
-        const {method, params} = data;
-        const methodName = method.split('_')[1];
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        const keplrMethod = keplr[methodName as keyof Keplr] as Function;
-        if (typeof keplrMethod === 'function') {
-            try {
-                const result = await keplrMethod.apply(keplr, params) || {};
-                return {status: 200, result};
-            } catch (error) {
-                return {
-                    status: 400, result: {
-                        __error: {
-                            message: error.message,
-                            module: error.module,
-                            code: error.code
-                        }
-                    }
-                };
-            }
-
-        }
-        return {status: 500, result: 'Not valid method'};
-    }
+    // Keplr
+    keplr_sendTx: storeTransaction,
+    keplr_confirmTx: confirmTransaction
 };
 
 // Handlers for methods related to permissions.
@@ -276,10 +257,6 @@ const handleRPC: HandlerFunc = async data => {
             const res = await permissionHandler({id, method, params, origin, network});
             return res;
         }
-        if (method.startsWith('keplr_')) {
-            const specialHandler = specialHandlers['keplr'];
-            return specialHandler({id, method, params, network, target, contract});
-        }
         // Check for special/custom methods.
         const specialHandler = specialHandlers[method];
         if (specialHandler) {
@@ -297,6 +274,9 @@ const handleRPC: HandlerFunc = async data => {
                 break;
             case 'solana':
                 result = await solana.send({method, params, id, network});
+                break;
+            case 'cosmos':
+                result = await keplrSend({method, params, id, network});
                 break;
             default:
                 return {
