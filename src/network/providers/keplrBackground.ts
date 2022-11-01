@@ -1,7 +1,7 @@
 import {BACKGROUND_PORT, JSONUint8Array, Message} from '@keplr-wallet/router';
 import {MockRouter} from '@keplr-wallet/router-mock/build/router';
 import {MemoryKVStore} from '@keplr-wallet/common';
-import {CreateMnemonicKeyMsg, init, RestoreKeyRingMsg, ScryptParams} from '@keplr-wallet/background';
+import {ApproveInteractionMsg, CreateMnemonicKeyMsg, init, RestoreKeyRingMsg, ScryptParams} from '@keplr-wallet/background';
 import scrypt from 'scrypt-js';
 import {Buffer} from 'buffer/';
 import {EmbedChainInfos, PrivilegedOrigins} from '../config';
@@ -22,7 +22,27 @@ const router = new MockRouter(ExtensionEnv.produceEnv);
 global.browser = {
     idle: {onStateChanged: {addListener: noop}},
     notifications: {create: noop},
-    runtime: {getURL: () => pointUrl, id: extensionId},
+    runtime: {
+        getURL: () => pointUrl,
+        id: extensionId,
+        getBackgroundPage: () => null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sendMessage: async (info: any) => {
+            if (info.type === 'push-interaction-data') {
+                try {
+                    console.log({dataaa: info.msg.data.data.signDoc});
+                    const a = await sendKeplrMessage(
+                        BACKGROUND_PORT,
+                        new ApproveInteractionMsg(info.msg.data.id, info.msg.data.data.signDoc)
+                    );
+                    console.log({a});
+                } catch (eee) {
+                    console.log({eee});
+                }
+
+            }
+        }
+    },
     windows: {
         create: async () => ({id: extensionId}),
         get: async () => ({tabs: [{id: extensionId}]}),
@@ -30,8 +50,10 @@ global.browser = {
     },
     tabs: {
         get: async () => ({status: 'complete'}),
-        sendMessage: async () => (JSONUint8Array.wrap({status: 'complete'}))
-    }
+        sendMessage: async () => (JSONUint8Array.wrap({status: 'complete'})),
+        query: async () => []
+    },
+    extension: {getViews: () => []}
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
