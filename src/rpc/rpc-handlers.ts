@@ -262,20 +262,20 @@ const handleRPC: HandlerFunc = async data => {
         if (specialHandler) {
             return specialHandler({id, method, params, network, target, contract});
         }
-
+        const networkPrefix = method.split('_')[0];
         // `method` is a standard RPC method (EIP-1474).
-        if (!networks[network]) {
+        if (!networks[network] && networkPrefix !== 'keplr') {
             return {status: 400, result: {message: `Unknown network ${network}`, id, network}};
         }
         let result;
-        switch (networks[network].type) {
+        switch (networks[network]?.type || networkPrefix) {
             case 'eth':
                 result = await ethereum.send({method, params, id, network});
                 break;
             case 'solana':
                 result = await solana.send({method, params, id, network});
                 break;
-            case 'cosmos':
+            case 'keplr':
                 result = await keplrSend({method, params, id, network});
                 break;
             default:

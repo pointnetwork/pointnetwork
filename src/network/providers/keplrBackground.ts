@@ -7,6 +7,7 @@ import {Buffer} from 'buffer/';
 import {EmbedChainInfos, PrivilegedOrigins} from '../config';
 import {ContentScriptMessageRequester, ExtensionEnv} from '@keplr-wallet/router-extension';
 import {getMnemonic} from '../../wallet/keystore';
+import {StdSignDoc} from '@cosmjs/amino';
 const crypto = require('crypto').webcrypto;
 const noop = () => { /* noop */ };
 
@@ -16,9 +17,6 @@ export const extensionId = 'keplrBackground';
 const passphrase = '12345678'; //  where to get this?
 const router = new MockRouter(ExtensionEnv.produceEnv);
 
-// router.addGuard(ExtensionGuards.checkOriginIsValid);
-// router.addGuard(ExtensionGuards.checkMessageIsInternal);
-
 global.browser = {
     idle: {onStateChanged: {addListener: noop}},
     notifications: {create: noop},
@@ -26,20 +24,14 @@ global.browser = {
         getURL: () => pointUrl,
         id: extensionId,
         getBackgroundPage: () => null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        sendMessage: async (info: any) => {
+        sendMessage: async (
+            info: { type: string, msg: { data: { id: string, data: { signDoc: StdSignDoc } } } }
+        ) => {
             if (info.type === 'push-interaction-data') {
-                try {
-                    console.log({dataaa: info.msg.data.data.signDoc});
-                    const a = await sendKeplrMessage(
-                        BACKGROUND_PORT,
-                        new ApproveInteractionMsg(info.msg.data.id, info.msg.data.data.signDoc)
-                    );
-                    console.log({a});
-                } catch (eee) {
-                    console.log({eee});
-                }
-
+                return sendKeplrMessage(
+                    BACKGROUND_PORT,
+                    new ApproveInteractionMsg(info.msg.data.id, info.msg.data.data.signDoc)
+                );
             }
         }
     },
