@@ -1,6 +1,7 @@
 datadir: ~/.point
 mode: ""
 sdk_file: ""
+ping_pub_identity: point_ping_pub
 api:
   address: 127.0.0.1
   port: 2468
@@ -64,6 +65,7 @@ network:
   contracts_path: contracts
   web3_call_retry_limit: 4
   event_block_page_size: 10000
+  cosmos_node_api_url: rpc-mainnet-1.point.space:1317
 name_services:
   sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
   ens:

@@ -26,6 +26,8 @@ const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 const log = logger.child({module: 'ZProxy'});
 
 const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
+const BLOCKCHAIN_NODE_API_URL = config.get<string>('network.cosmos_node_api_url');
+const PING_PUB_IDENTITY = config.get<string>('ping_pub_identity');
 
 interface DomainInfoPointers {
     host: string;
@@ -183,6 +185,13 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 remoteRootDirId: rootDirId,
                 rewriteHost: identity
             });
+        } else if (host === BLOCKCHAIN_NODE_API_URL) {
+            // Allow requests from ping-pub to point's blockchain node.
+            const url = `https://${host}${req.url}`;
+            const {data} = await axios.get(url);
+            res.header('Access-Control-Allow-Origin', `https://${PING_PUB_IDENTITY}.point`);
+            res.header('content-type', 'application/json');
+            return data;
         } else {
             // Web2?
             let urlMirrorUrl;
