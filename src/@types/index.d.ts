@@ -1,6 +1,11 @@
 import {Dialect, ModelOptions, Transaction} from 'sequelize';
 
 declare global {
+    // eslint-disable-next-line no-var, @typescript-eslint/no-explicit-any
+  var browser: any;
+  // eslint-disable-next-line no-var, @typescript-eslint/no-explicit-any
+  var window: any;
+
     type DatabaseConfig = {
         storage: string,
         database: string,

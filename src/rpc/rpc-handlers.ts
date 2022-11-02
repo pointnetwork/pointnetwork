@@ -6,6 +6,8 @@ import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/provide
 import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode';
 import {getNetworkPublicKey} from '../wallet/keystore';
 import logger from '../core/log';
+import {send as keplrSend} from '../network/providers/keplr';
+
 const log = logger.child({module: 'RPC'});
 
 const DEFAULT_NETWORK = config.get('network.default_network');
@@ -99,6 +101,9 @@ const confirmTransaction: HandlerFunc = async data => {
                     );
                 }
                 break;
+            case 'cosmos':
+                result = await keplrSend({method: 'keplr_sendTx', ...tx});
+                break;
             default:
                 return {
                     status: 400,
@@ -177,7 +182,10 @@ const specialHandlers: Record<string, HandlerFunc> = {
             const statusCode = err.code === -32603 ? 500 : 400;
             return {status: statusCode, result: {code: statusCode, message: err.message}};
         }
-    }
+    },
+    // Keplr
+    keplr_sendTx: storeTransaction,
+    keplr_confirmTx: confirmTransaction
 };
 
 // Handlers for methods related to permissions.
@@ -243,32 +251,32 @@ const handleRPC: HandlerFunc = async data => {
         const network = data.network ?? DEFAULT_NETWORK;
         const id = data.id ?? new Date().getTime();
         const {method, params, origin, target, contract} = data;
-
         // Check for methods related to permissions.
         const permissionHandler = permissionHandlers[method];
         if (permissionHandler) {
             const res = await permissionHandler({id, method, params, origin, network});
             return res;
         }
-
         // Check for special/custom methods.
         const specialHandler = specialHandlers[method];
         if (specialHandler) {
-            const res = await specialHandler({id, method, params, network, target, contract});
-            return res;
+            return specialHandler({id, method, params, network, target, contract});
         }
-
+        const networkPrefix = method.split('_')[0];
         // `method` is a standard RPC method (EIP-1474).
-        if (!networks[network]) {
+        if (!networks[network] && networkPrefix !== 'keplr') {
             return {status: 400, result: {message: `Unknown network ${network}`, id, network}};
         }
         let result;
-        switch (networks[network].type) {
+        switch (networks[network]?.type || networkPrefix) {
             case 'eth':
                 result = await ethereum.send({method, params, id, network});
                 break;
             case 'solana':
                 result = await solana.send({method, params, id, network});
+                break;
+            case 'keplr':
+                result = await keplrSend({method, params, id, network});
                 break;
             default:
                 return {
@@ -280,7 +288,6 @@ const handleRPC: HandlerFunc = async data => {
                     }
                 };
         }
-
         return {status: 200, result};
     } catch (err) {
         log.error({message: err.message, stack: err.stack}, 'Error handling RPC');

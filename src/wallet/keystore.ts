@@ -8,7 +8,7 @@ import * as bip39 from 'bip39';
 import {mnemonicToSeedSync} from 'bip39';
 import {Keypair} from '@solana/web3.js';
 import {derivePath} from 'ed25519-hd-key';
-
+import {DirectSecp256k1HdWallet, OfflineSigner} from '@cosmjs/proto-signing';
 const keystorePath: string = resolveHome(config.get('wallet.keystore_path'));
 
 // The one used by Phantom Wallet.
@@ -17,16 +17,16 @@ const SOLANA_HDWALLET_DERIVATION_PATH = `m/44'/501'/0'/0'`;
 
 function getWalletFactory() {
     let wallet: Wallet | undefined;
-    let secretPhrase: string;
-    return (): {wallet: Wallet; secretPhrase: string} => {
+    let mnemonic: string;
+    return (): {wallet: Wallet; mnemonic: string} => {
         if (!wallet) {
-            secretPhrase = JSON.parse(
+            mnemonic = JSON.parse(
                 fs.readFileSync(path.join(keystorePath, 'key.json')).toString()
             ).phrase;
-            const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(secretPhrase));
+            const hdwallet = hdkey.fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic));
             wallet = hdwallet.getWallet();
         }
-        return {wallet, secretPhrase};
+        return {wallet, mnemonic};
     };
 }
 
@@ -50,18 +50,22 @@ export function getNetworkPrivateKey() {
         .toString('hex');
 }
 
-export function getSecretPhrase() {
-    return getWallet().secretPhrase;
+export function getMnemonic() {
+    return getWallet().mnemonic;
 }
 
 export const getSolanaKeyPair = () => {
-    const phrase = getSecretPhrase();
-    const seed = mnemonicToSeedSync(phrase);
+    const mnemonic = getMnemonic();
+    const seed = mnemonicToSeedSync(mnemonic);
     const keypair = Keypair.fromSeed(
         derivePath(SOLANA_HDWALLET_DERIVATION_PATH, seed.toString('hex')).key
     );
     return keypair;
 };
+
+export function getCosmosWallet(): Promise<OfflineSigner> {
+    return DirectSecp256k1HdWallet.fromMnemonic(getMnemonic());
+}
 
 // TODO: restore if needed
 // function getArweaveKeyFactory() {
