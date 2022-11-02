@@ -153,4 +153,9 @@ export const EVMOS_RPC_CONFIG: AxiosRequestConfig | undefined = undefined;
 export const EVMOS_REST_ENDPOINT = '';
 export const EVMOS_REST_CONFIG: AxiosRequestConfig | undefined = undefined;
 
+export const POINT_RPC_ENDPOINT = 'https://rpc-mainnet-1.point.space:26657';
+export const POINT_RPC_CONFIG: AxiosRequestConfig | undefined = undefined;
+export const POINT_REST_ENDPOINT = 'https://rpc-mainnet-1.point.space:1317';
+export const POINT_REST_CONFIG: AxiosRequestConfig | undefined = undefined;
+
 export const PRIVILEGED_ORIGINS: string[] = [];
