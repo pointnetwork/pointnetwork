@@ -8,6 +8,12 @@ import {getNetworkPublicKey} from '../wallet/keystore';
 import logger from '../core/log';
 import {send as keplrSend} from '../network/providers/keplr';
 
+// eslint-disable-next-line
+// @ts-ignore
+Uint8Array.prototype.toJSON = function() {
+    return Array.from(this);
+};
+
 const log = logger.child({module: 'RPC'});
 
 const DEFAULT_NETWORK = config.get('network.default_network');
@@ -185,7 +191,7 @@ const specialHandlers: Record<string, HandlerFunc> = {
     },
     // Keplr
     keplr_signAmino: async data => {
-        console.log(data);
+        log.debug(data, 'keplr_signAmino');
         return {status: 200, result: {msg: 'WIP'}};
     }
 };
@@ -279,7 +285,6 @@ const handleRPC: HandlerFunc = async data => {
                 break;
             case 'cosmos':
             case 'keplr':
-                console.log({method, params});
                 result = await keplrSend({method, params, id, network});
                 break;
             default:
