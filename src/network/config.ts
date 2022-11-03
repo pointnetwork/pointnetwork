@@ -106,7 +106,11 @@ import {
     EVMOS_RPC_ENDPOINT,
     EVMOS_RPC_CONFIG,
     EVMOS_REST_ENDPOINT,
-    EVMOS_REST_CONFIG
+    EVMOS_REST_CONFIG,
+    POINT_RPC_ENDPOINT,
+    POINT_RPC_CONFIG,
+    POINT_REST_ENDPOINT,
+    POINT_REST_CONFIG
 } from './config.var';
 
 export const EmbedChainInfos: ChainInfo[] = [
@@ -1995,6 +1999,59 @@ export const EmbedChainInfos: ChainInfo[] = [
         ],
         features: ['ibc-transfer', 'ibc-go', 'eth-address-gen', 'eth-key-sign'],
         beta: true
+    },
+    {
+        rpc: POINT_RPC_ENDPOINT,
+        rpcConfig: POINT_RPC_CONFIG,
+        rest: POINT_REST_ENDPOINT,
+        restConfig: POINT_REST_CONFIG,
+        chainId: 'point_10687-1',
+        chainName: 'Point',
+        stakeCurrency: {
+            coinDenom: 'POINT',
+            coinMinimalDenom: 'apoint',
+            coinDecimals: 18,
+            coinGeckoId: 'point-network'
+        },
+        walletUrl:
+      process.env.NODE_ENV === 'production'
+          ? 'https://wallet.keplr.app/chains/point'
+          : 'http://localhost:8080/chains/point',
+        walletUrlForStaking:
+      process.env.NODE_ENV === 'production'
+          ? 'https://wallet.keplr.app/chains/point'
+          : 'http://localhost:8080/chains/point',
+        bip44: {coinType: 60},
+        bech32Config: {
+            bech32PrefixAccAddr: "point",
+            bech32PrefixAccPub: "pointpub",
+            bech32PrefixValAddr: "pointvaloper",
+            bech32PrefixValPub: "pointvaloperpub",
+            bech32PrefixConsAddr: "pointvalcons",
+            bech32PrefixConsPub: "pointvalconspub"
+        },
+        currencies: [
+            {
+                coinDenom: 'POINT',
+                coinMinimalDenom: 'apoint',
+                coinDecimals: 18,
+                coinGeckoId: 'point-network'
+            }
+        ],
+        feeCurrencies: [
+            {
+                coinDenom: 'POINT',
+                coinMinimalDenom: 'apoint',
+                coinDecimals: 18,
+                coinGeckoId: 'point-network',
+                gasPriceStep: {
+                    low: 5000000000,
+                    average: 25000000000,
+                    high: 40000000000
+                }
+            }
+        ],
+        features: ['ibc-transfer', 'ibc-go', 'eth-address-gen', 'eth-key-sign']
     }
 ];
 
