@@ -3,7 +3,7 @@ import Container from 'react-bootstrap/Container';
 import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png';
 import blogIcon from '../assets/blog.svg';
-import forumIcon from '../assets/froum.svg';
+import forumIcon from '../assets/forum.svg';
 import emailIcon from '../assets/email.svg';
 import socialIcon from '../assets/social.svg';
 import driveIcon from '../assets/drive.svg';
