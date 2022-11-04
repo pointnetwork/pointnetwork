@@ -3,6 +3,7 @@ import Container from 'react-bootstrap/Container';
 import Loading from '../components/Loading';
 import appLogo from '../assets/pointlogo.png';
 import blogIcon from '../assets/blog.svg';
+import forumIcon from '../assets/froum.svg';
 import emailIcon from '../assets/email.svg';
 import socialIcon from '../assets/social.svg';
 import driveIcon from '../assets/drive.svg';
@@ -131,9 +132,9 @@ export default function Home() {
             >
                 <div className="zapp-icon-container">
                     <img
-                        alt="deploy_blog"
+                        alt="deploy_forum"
                         className="zapp-icon"
-                        src={blogIcon}
+                        src={forumIcon}
                         onError={({ currentTarget }) => {
                             currentTarget.src = appLogo;
                         }}
@@ -141,7 +142,7 @@ export default function Home() {
                 </div>
 
                 <div className="zapp-information-container">
-                    <h4>Make your forum</h4>
+                    <h4>Make your forum`</h4>
                 </div>
             </Link>
         </>
