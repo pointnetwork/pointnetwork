@@ -193,7 +193,30 @@ const specialHandlers: Record<string, HandlerFunc> = {
     keplr_signAmino: async data => {
         log.debug(data, 'keplr_signAmino');
         return {status: 200, result: {msg: 'WIP'}};
-    }
+    },
+    keplr_signDirect: async data => {
+        if (!data.params || data.params.length < 2) {
+            return {status: 400, result: {code: 400, message: 'Missing parameters.'}};
+        }
+
+        const signDoc = data.params[1] as {
+            bodyBytes: Record<string, number>;
+            authInfoBytes: Record<string, number>;
+        };
+        const parsedBodyBytes = Uint8Array.from(Object.values(signDoc.bodyBytes));
+        const parsedAuthInfoBytes = Uint8Array.from(Object.values(signDoc.authInfoBytes));
+
+        (data.params[1] as Record<string, Uint8Array>).bodyBytes = parsedBodyBytes;
+        (data.params[1] as Record<string, Uint8Array>).authInfoBytes = parsedAuthInfoBytes;
+
+        // FIXME: instead of sending the tx, we should store it and trigger confirmation window.
+        const result = await keplrSend(data);
+        return {status: 200, result};
+    },
+    keplr_signArbitrary: async () => ({
+        status: 4200,
+        result: {message: 'Unsupported method `keplr_signArbitrary`'}
+    })
 };
 
 // Handlers for methods related to permissions.
@@ -285,6 +308,7 @@ const handleRPC: HandlerFunc = async data => {
                 break;
             case 'cosmos':
             case 'keplr':
+                log.debug({method, params}, 'keplr default handler');
                 result = await keplrSend({method, params, id, network});
                 break;
             default:
