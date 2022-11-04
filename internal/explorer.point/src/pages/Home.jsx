@@ -123,6 +123,27 @@ export default function Home() {
                     <h4>Make your blog</h4>
                 </div>
             </Link>
+            <Link
+                to="/deploy_forum"
+                target="_blank"
+                rel="noreferrer"
+                className="zapp"
+            >
+                <div className="zapp-icon-container">
+                    <img
+                        alt="deploy_blog"
+                        className="zapp-icon"
+                        src={blogIcon}
+                        onError={({ currentTarget }) => {
+                            currentTarget.src = appLogo;
+                        }}
+                    />
+                </div>
+
+                <div className="zapp-information-container">
+                    <h4>Make your forum</h4>
+                </div>
+            </Link>
         </>
     );
 
