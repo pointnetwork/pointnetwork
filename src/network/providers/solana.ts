@@ -58,6 +58,15 @@ interface TransactionInstructionJSON {
     data: number[];
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/** Convert lamports to SOL and optionally add transaction fee */
+const toSOL = ({lamports, addFeeForNTxs}: {lamports: number, addFeeForNTxs: number}): number => {
+    const fee = addFeeForNTxs > 0 ? 0.000005 * addFeeForNTxs : 0;
+    const sol = lamports / web3.LAMPORTS_PER_SOL + fee;
+    return Math.ceil(sol * 10e8) / 10e8;
+};
+
 const createSolanaConnection = (blockchainUrl: string, protocol = 'https') => {
     // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
     // modify this confition
@@ -371,9 +380,16 @@ const solana = {
             domainKey
         );
 
-        const txId = await sendInstructions(connection, [wallet], [createIx]);
-        log.debug({domain, txId}, 'POINT record created');
-        return txId;
+        try {
+            log.debug({domain, lamports}, 'Creating POINT record');
+            const txId = await sendInstructions(connection, [wallet], [createIx]);
+            log.debug({domain, txId}, 'POINT record created');
+            return txId;
+        } catch (err) {
+            log.error(err, 'Error creating POINT record');
+            const min = toSOL({lamports, addFeeForNTxs: 2});
+            throw new Error(`Error creating POINT record, please make sure to have at least ${min} SOL in your account.`);
+        }
     },
     setDomainContent: async (domainName: string, data: string, network = 'solana') => {
         if (!SNS_ENABLED) {
@@ -395,6 +411,8 @@ const solana = {
         if (!recordInfo?.data) {
             log.debug({domain: domainName}, 'POINT record does not exist, creating it...');
             await solana.createPointRecord(domain, network);
+            // Sleep for a few seconds, to make sure the record is created before we try to write to it.
+            await sleep(5_000);
         }
 
         const dataBuf = Buffer.from(data);
@@ -416,15 +434,20 @@ const solana = {
             wallet.publicKey
         );
 
-        const txId = await sendInstructions(connection, [wallet], [updateIx]);
+        try {
+            const txId = await sendInstructions(connection, [wallet], [updateIx]);
 
-        // Remove cached entry (if any) so the updated content is fetched on the next request.
-        const cacheKey = `${network}:${domainName}`;
-        if (solDomainCache.has(cacheKey)) {
-            solDomainCache.rm(cacheKey);
+            // Remove cached entry (if any) so the updated content is fetched on the next request.
+            const cacheKey = `${network}:${domainName}`;
+            if (solDomainCache.has(cacheKey)) {
+                solDomainCache.rm(cacheKey);
+            }
+
+            return txId;
+        } catch (err) {
+            log.error(err, 'Error setting content of POINT record');
+            throw new Error(`Setting content of POINT record failed. Please try again and if the problem persists contact support.`);
         }
-
-        return txId;
     },
     setPointReference: async (solDomain: string, network = 'solana') => {
         if (!SNS_ENABLED) {
