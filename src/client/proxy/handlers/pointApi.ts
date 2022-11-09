@@ -61,11 +61,13 @@ const attachPointApiHandler = (server: FastifyInstance) => {
             }
 
             const files = [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const fields: Record<string, any> = {};
             for await (const part of req.parts()) {
                 if (part.file) {
                     files.push(await part.toBuffer());
                 } else {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     fields[part.fieldname] = (part as any).value;
                 }
             }

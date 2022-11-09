@@ -5,7 +5,6 @@ import Swal from 'sweetalert2';
 import Loading from '../Loading';
 import { useParams } from 'react-router-dom';
 
-
 const Deployers = ({ isOwner, isPointIdentity }) => {
     const { handle } = useParams();
     const [addAddress, setAddAddress] = useState('');
@@ -50,8 +49,8 @@ const Deployers = ({ isOwner, isPointIdentity }) => {
     };
 
     /**
-     * Revoke the deployer permission from one address in the seletect identity 
-     * 
+     * Revoke the deployer permission from one address in the seletect identity
+     *
      * @param {address} deployer - address of the deployer to be revoked
      */
     const revokeDeployer = async (deployer) => {
@@ -79,8 +78,8 @@ const Deployers = ({ isOwner, isPointIdentity }) => {
     };
 
     /**
-     * Grant the deployer permission from one address in the seletect identity 
-     * 
+     * Grant the deployer permission from one address in the seletect identity
+     *
      * @param {address} deployer - the address for the deployer permission be granted
      * @returns {boolean} if the operation succeed.
      */

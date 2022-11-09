@@ -72,10 +72,7 @@ class Deployer {
 
         if (!this.isVersionFormated(baseVersion)) {
             log.error(
-                {
-                    deployConfigFilePath: deployConfigFilePath,
-                    version: baseVersion
-                },
+                {version: baseVersion},
                 'Incorrect format of Version number. Should be MAJOR.MINOR.'
             );
             throw new Error(
@@ -103,15 +100,23 @@ class Deployer {
      * @returns {object} - Version splited on a object with the properties major, minor and path.
      */
     getVersionParts(version) {
-        const regex = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
-        const found = version.match(regex);
-        if (found) {
+        const regexWithPatch = /(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/;
+        const versionWithPatch = version.match(regexWithPatch);
+        if (versionWithPatch) {
             return {
-                major: found.groups.major,
-                minor: found.groups.minor,
-                patch: found.groups.patch
+                major: versionWithPatch.groups.major,
+                minor: versionWithPatch.groups.minor,
+                patch: versionWithPatch.groups.patch
             };
         } else {
+            const regexWithoutPatch = /(?<major>\d+)\.(?<minor>\d+)/;
+            const versionWithoutPatch = version.match(regexWithoutPatch);
+            if (versionWithoutPatch) {
+                return {
+                    major: versionWithoutPatch.groups.major,
+                    minor: versionWithoutPatch.groups.minor
+                };
+            }
             throw new Error('Version in wrong format ');
         }
     }
@@ -121,7 +126,7 @@ class Deployer {
      * 
      * @param {string} oldVersion - old base version.
      * @param {string} newBaseVersion - new base version.
-     * @returns {boolean} - If the new base versio is higher than the old one.
+     * @returns {boolean} - If the new base version is higher than the old one.
      */
     isNewBaseVersionValid(oldVersion, newBaseVersion) {
         if (oldVersion === null || oldVersion === undefined || oldVersion === '') {
@@ -240,7 +245,7 @@ class Deployer {
             identity = isAlias ? config.alias.replace(/\.point$/, '') : config.target;
         } else {
             // target is a .point domain
-            target = dev ? `${config.target.replace('.point', 'dev')}.point` : config.target;
+            target = dev ? `${config.target.replace(/\.point$/, 'dev')}.point` : config.target;
             isPointTarget = true;
             isAlias = false;
             identity = target.replace(/\.point$/, '');
@@ -314,7 +319,7 @@ class Deployer {
             prev[name] = (isOldFormat) ? {upgradable: (config.hasOwnProperty('upgradable') && config.upgradable)} : cur;
             return prev;
         }, {});
-        const identity = target.replace('.point', '');
+        const identity = target.replace(/\.point$/, '');
 
         //checks if the contracts of the dapp are upgradable and compile upgradable contracts
         //this step is necessary to hardhat upgradable plugin to work.
@@ -740,7 +745,7 @@ class Deployer {
         );
         
         //get the version for the deploy
-        const version = await this.getVersion(
+        const version = this.getVersion(
             deployConfig.version,
             identity,
             isPointTarget,
@@ -932,7 +937,7 @@ class Deployer {
                 .pop()
                 .split('/')
                 .pop();
-            const _contractName = fileName.replace('.sol', '');
+            const _contractName = fileName.replace(/\.sol$/, '');
             if (contractName === _contractName) {
                 artifacts = compiledSources.contracts[contractFileName][_contractName];
             }
@@ -987,7 +992,7 @@ class Deployer {
      * @param {string} version - the version of the entry 
      */
     async updateZDNS(host, id, version) {
-        const target = host.replace('.point', '');
+        const target = host.replace(/\.point$/, '');
         log.info({target, id}, 'Updating ZDNS');
         await blockchain.putZRecord(target, '0x' + id, version);
     }
@@ -1000,7 +1005,7 @@ class Deployer {
      * @param {*} version - the version of the entry
      */
     async updateProxyMetadata(host, id, version) {
-        const target = host.replace('.point', '');
+        const target = host.replace(/\.point$/, '');
         log.info({target, id}, 'Updating Proxy Metatada');
         await blockchain.putKeyValue(target, PROXY_METADATA_KEY, id, version);
     }
@@ -1014,7 +1019,7 @@ class Deployer {
      * @param {string} version - the version of the entry
      */
     async updateCommitSha(host, deployPath, version) {
-        const target = host.replace('.point', '');
+        const target = host.replace(/\.point$/, '');
 
         const uncommittedChanges = this.execCommand(`cd ${deployPath} && git status --porcelain`);
         if (uncommittedChanges) {
@@ -1042,7 +1047,7 @@ class Deployer {
      * @param {string} version - the version of the dapp
      */
     async updatePointVersionTag(host, key, value, version) {
-        const target = host.replace('.point', '');
+        const target = host.replace(/\.point$/, '');
         log.info({target, key}, 'Updating Point Version Tag');
         await blockchain.putKeyValue(target, key, value, version);
     }

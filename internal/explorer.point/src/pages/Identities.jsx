@@ -8,7 +8,7 @@ const PAGE_SIZE = 100;
 
 /**
  * Render the identities page.
- * 
+ *
  * @returns {JSX.Element} - the identity page.
  */
 export default function Identities() {
@@ -23,11 +23,11 @@ export default function Identities() {
     }, []);
 
     /**
-     * Fetch a page of identities 
+     * Fetch a page of identities
      */
     const fetchIdentities = async () => {
-        //didn't fetched yet, so the first time start loading. 
-        //After that, infinite scroll handle showing the spinner.
+        // didn't fetched yet, so the first time start loading.
+        // After that, infinite scroll handle showing the spinner.
         if (identitiesLength === 0) {
             setIsLoading(true);
         }
@@ -41,17 +41,17 @@ export default function Identities() {
         // set the identities length
         setIdentitiesLength(identitiesLengthFetched.data);
 
-        //fetch the data
+        // fetch the data
         const ids = await window.point.contract.call({
             contract: 'Identity',
             method: 'getPaginatedIdentities',
             params: [cursor, PAGE_SIZE],
         });
 
-        //set the position of the cursor for infinite scroll
+        // set the position of the cursor for infinite scroll
         setCursor(cursor + ids.data.length);
 
-        //checks if has more data to fetch
+        // checks if has more data to fetch
         if (
             identities.length + ids.data.length >=
             identitiesLengthFetched.data
@@ -59,7 +59,7 @@ export default function Identities() {
             setHasMore(false);
         }
 
-        //set the identities state variable variable 
+        // set the identities state variable variable
         setIdentities(
             identities.concat(
                 ids.data.map((e) => {
@@ -67,9 +67,9 @@ export default function Identities() {
                 }),
             ),
         );
-        
-        //If is the first time fetching data stops loading.
-        //After that, infinite scroll handle showing the spinner.
+
+        // If is the first time fetching data stops loading.
+        // After that, infinite scroll handle showing the spinner.
         if (identitiesLength === 0) {
             setIsLoading(false);
         }
@@ -77,12 +77,12 @@ export default function Identities() {
 
     /**
      * Renders one identity entry
-     * 
+     *
      * @param {object} id - an identity object
      * @param {string} id.handle - the identity handle
      * @param {address} id.owner - the address of the owner of the identity
      * @param {boolean} id.hasDomain - if an identity is a dapp
-     * 
+     *
      * @returns {JSX.Element} - the identity row
      */
     const renderIdentityEntry = (id) => {

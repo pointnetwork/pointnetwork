@@ -22,8 +22,7 @@ const uploadChunk = async (data: Buffer) => {
     let uploaded = false;
 
     const check = async () => {
-        // TODO: any
-        const updatedChunk: any = await Chunk.find(chunkId);
+        const updatedChunk = await Chunk.find(chunkId);
         if (!updatedChunk) {
             throw new Error(`Unexpected upload result: chunk ${chunkId} does not exist`);
         }

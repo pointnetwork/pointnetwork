@@ -3,6 +3,7 @@ const config = require('config');
 const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
 const ethereum = require('../../network/providers/ethereum');
+const {getJSON} = require('../../client/storage');
 
 class ContractController extends PointSDKController {
     constructor(req, reply) {
@@ -65,7 +66,7 @@ class ContractController extends PointSDKController {
     async handleEvents({host, contract, event, addTimestamp, filter, fromBlock, toBlock}) {
         const options = {filter, fromBlock, toBlock};
         const events = await ethereum.getPastEvents(
-            host.replace('.point', ''),
+            host.replace(/\.point&/, ''),
             contract,
             event,
             options
@@ -83,7 +84,7 @@ class ContractController extends PointSDKController {
         const from = cursor - PAGE_SIZE <= 1 ? 0 : cursor - PAGE_SIZE;
 
         const events = await ethereum.getPaginatedPastEvents(
-            host.replace('.point', ''),
+            host.replace(/\.point$/, ''),
             contract,
             event,
             {filter, fromBlock: from, toBlock: cursor}
@@ -160,6 +161,36 @@ class ContractController extends PointSDKController {
 
         const web3 = new Web3();
         return this._response(web3.eth.abi.decodeParameters(typesArray, hexString));
+    }
+
+    async listEvents() {
+        try {
+            const host = this.req.params.identity;
+            const identityContract = await ethereum.loadIdentityContract();
+            const data = await identityContract.methods.getIkvList(host).call();
+
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                return this._response([]);
+            }
+
+            const contractEvents = [];
+            for (const ikvEntry of data) {
+                if (ikvEntry.length > 2 && ikvEntry[1].startsWith('zweb/contracts/abi')) {
+                    const abiStorageId = ikvEntry[2];
+                    const jsonInterface = await getJSON(abiStorageId);
+                    const {contractName, abi} = jsonInterface;
+                    const events = abi.filter(i => i.type === 'event').map(e => e.name);
+                    if (events.length > 0) {
+                        contractEvents.push({contractName, events});
+                    }
+                }
+            }
+
+            return this._response(contractEvents);
+        } catch (err) {
+            this.reply.status(500);
+            this._status(500)._response(err ?? 'Unable to find contract events');
+        }
     }
 }
 

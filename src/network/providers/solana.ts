@@ -58,6 +58,15 @@ interface TransactionInstructionJSON {
     data: number[];
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/** Convert lamports to SOL and optionally add transaction fee */
+const toSOL = ({lamports, addFeeForNTxs}: {lamports: number, addFeeForNTxs: number}): number => {
+    const fee = addFeeForNTxs > 0 ? 0.000005 * addFeeForNTxs : 0;
+    const sol = lamports / web3.LAMPORTS_PER_SOL + fee;
+    return Math.ceil(sol * 10e8) / 10e8;
+};
+
 const createSolanaConnection = (blockchainUrl: string, protocol = 'https') => {
     // TODO: this is actual for unit tests. If we want to add e2e tests, we may want to
     // modify this confition
@@ -371,8 +380,57 @@ const solana = {
             domainKey
         );
 
-        const txId = await sendInstructions(connection, [wallet], [createIx]);
-        log.debug({domain, txId}, 'POINT record created');
+        try {
+            log.debug({domain, lamports}, 'Creating POINT record');
+            const txId = await sendInstructions(connection, [wallet], [createIx]);
+            log.debug({domain, txId}, 'POINT record created');
+            return txId;
+        } catch (err) {
+            log.error(err, 'Error creating POINT record');
+            const min = toSOL({lamports, addFeeForNTxs: 2});
+            throw new Error(`Error creating POINT record, please make sure to have at least ${min} SOL in your account.`);
+        }
+    },
+    updatePointRecord: async (domainName: string, data: string, network: string) => {
+        if (!SNS_ENABLED) {
+            log.trace({SNS_ENABLED}, 'SNS has been disabled in config');
+            return '';
+        }
+
+        const provider = providers[network];
+        if (!provider) {
+            throw new Error(`Unknown network "${network}".`);
+        }
+
+        const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
+        const dataBuf = Buffer.from(data);
+        if (dataBuf.length > 1_000) {
+            log.error({domain, dataSize: dataBuf.length}, 'Data too large');
+            throw new Error(
+                `Data to be writen to POINT record is too large: ${dataBuf.length}, max allowed is 1000 bytes.`
+            );
+        }
+
+        const dataToWrite = Buffer.concat([dataBuf, Buffer.alloc(1_000 - dataBuf.length)]);
+        const {connection, wallet} = provider;
+        const offset = new Numberu32(0);
+        const record = SNSRecord.POINT;
+        const {pubkey: recordKey} = await getDomainKey(`${record}.${domain}`, true);
+
+        const updateIx = updateInstruction(
+            NAME_PROGRAM_ID,
+            recordKey,
+            offset,
+            dataToWrite,
+            wallet.publicKey
+        );
+
+        const txId = await sendInstructions(connection, [wallet], [updateIx]);
+        // Remove cached entry (if any) so the updated content is fetched on the next request.
+        const cacheKey = `${network}:${domainName}`;
+        if (solDomainCache.has(cacheKey)) {
+            solDomainCache.rm(cacheKey);
+        }
         return txId;
     },
     setDomainContent: async (domainName: string, data: string, network = 'solana') => {
@@ -386,45 +444,33 @@ const solana = {
             throw new Error(`Unknown network "${network}".`);
         }
 
-        const {connection, wallet} = provider;
+        const {connection} = provider;
         const domain = domainName.endsWith('.sol') ? domainName.replace(/.sol$/, '') : domainName;
         const record = SNSRecord.POINT;
         const {pubkey: recordKey} = await getDomainKey(`${record}.${domain}`, true);
         const recordInfo = await connection.getAccountInfo(recordKey);
 
         if (!recordInfo?.data) {
-            log.debug({domain: domainName}, 'POINT record does not exist, creating it...');
+            log.info({domain: domainName}, 'POINT record does not exist, creating it...');
             await solana.createPointRecord(domain, network);
+            // Sleep for a few seconds, to make sure the record is created before we try to write to it.
+            await sleep(5_000);
         }
 
-        const dataBuf = Buffer.from(data);
-        if (dataBuf.length > 1_000) {
-            log.error({domain: domainName, dataSize: dataBuf.length}, 'Data too large');
-            throw new Error(
-                `Data to be writen to POINT record is too large: ${dataBuf.length}, max allowed is 1000 bytes.`
-            );
+        try {
+            const txId = await solana.updatePointRecord(domainName, data, network);
+            return txId;
+        } catch (err) {
+            log.warn(err, `Error setting content of POINT record. Retrying...`);
+            try {
+                await sleep(5_000);
+                const txId = await solana.updatePointRecord(domainName, data, network);
+                return txId;
+            } catch (err) {
+                log.error(err, `Error setting content of POINT record.`);
+                throw new Error(`Setting content of POINT record failed. Please try again and if the problem persists contact support.`);
+            }
         }
-
-        const dataToWrite = Buffer.concat([dataBuf, Buffer.alloc(1_000 - dataBuf.length)]);
-        const offset = new Numberu32(0);
-
-        const updateIx = updateInstruction(
-            NAME_PROGRAM_ID,
-            recordKey,
-            offset,
-            dataToWrite,
-            wallet.publicKey
-        );
-
-        const txId = await sendInstructions(connection, [wallet], [updateIx]);
-
-        // Remove cached entry (if any) so the updated content is fetched on the next request.
-        const cacheKey = `${network}:${domainName}`;
-        if (solDomainCache.has(cacheKey)) {
-            solDomainCache.rm(cacheKey);
-        }
-
-        return txId;
     },
     setPointReference: async (solDomain: string, network = 'solana') => {
         if (!SNS_ENABLED) {

@@ -23,7 +23,7 @@ module.exports = {
         'node_modules',
         '*.min.js',
         '**/public/**/*',
-        'src/db/migrations'
+        'dist'
     ],
     rules: {
         'curly': ['error', 'multi-line'],

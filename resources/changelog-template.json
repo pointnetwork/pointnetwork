@@ -29,6 +29,7 @@
     "empty_template": "🔎 No Changes",
     "max_tags_to_fetch": 24,
     "base_branches": [
-        "develop"
+        "develop",
+        "main"
     ]
 }

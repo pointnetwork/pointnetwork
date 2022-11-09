@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "0.4.24",
+  "version": "0.4.25",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
@@ -101,8 +101,8 @@
     "@types/tar-fs": "^2.0.1",
     "@types/umzug": "^2.3.3",
     "@types/ws": "^8.5.3",
-    "@typescript-eslint/eslint-plugin": "^5.12.0",
-    "@typescript-eslint/parser": "^5.12.0",
+    "@typescript-eslint/eslint-plugin": "^5.41.0",
+    "@typescript-eslint/parser": "^5.41.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.9.0",
     "eslint-plugin-filenames": "^1.3.2",
@@ -111,9 +111,11 @@
     "hardhat": "^2.8.4",
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.0",
+    "husky": "^8.0.1",
     "jest": "^28.1.2",
     "jest-circus": "^28.1.2",
     "jest-junit": "^14.0.0",
+    "lint-staged": "^13.0.3",
     "nodemon": "^2.0.12",
     "pkg": "^5.7.0",
     "sequelize-cli": "^6.2.0",
@@ -138,7 +140,7 @@
     "build:explorer": "npm run --prefix ./internal/explorer.point build",
     "build:explorer:dev": "npm run --prefix ./internal/explorer.point --ignore-scripts build",
     "patch": "perl -i -pe\"s|timeout: 20000|timeout: 60000|\" node_modules/@trufflesuite/web3-provider-engine/subproviders/rpc.js",
-    "postinstall": "echo '\\nPatching modules...' && npm run patch && echo '...done\\n'",
+    "postinstall": "echo '\\nPatching modules...' && npm run patch && echo '...done\\n' && husky install",
     "pkg": "pkg .",
     "prepkg:win": "npm run build:explorer",
     "prepkg:linux": "npm run build:explorer",
@@ -231,5 +233,9 @@
         "require('stream').web"
       ]
     }
+  },
+  "lint-staged": {
+    "*.js": "eslint --fix",
+    "*.ts": "eslint --fix"
   }
 }

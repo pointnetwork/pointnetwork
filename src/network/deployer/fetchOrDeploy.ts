@@ -33,7 +33,9 @@ export async function fetchOrDeploy(
     opts?: DeployOpts,
     merge?: boolean
 ): Promise<string> {
-    return (await fetchOrDeployGeneric(implLens(version.linkedWithoutMetadata), provider, deploy, opts, merge)).address;
+    return (await fetchOrDeployGeneric(
+        implLens(version.linkedWithoutMetadata), provider, deploy, opts, merge
+    )).address;
 }
 
 async function fetchOrDeployGeneric<T extends Deployment, U extends T = T>(
@@ -57,7 +59,15 @@ async function fetchOrDeployGeneric<T extends Deployment, U extends T = T>(
             }
 
             const stored = deployment.get();
-            const updated = await resumeOrDeploy(provider, stored, deploy, lens.type, opts, deployment, merge);
+            const updated = await resumeOrDeploy(
+                provider,
+                stored,
+                deploy,
+                lens.type,
+                opts,
+                deployment,
+                merge
+            );
             if (updated !== stored) {
                 if (merge && deployment.merge) {
                     // only check primary addresses for clashes, since the address could already exist in an allAddresses field
@@ -111,7 +121,11 @@ const implLens = (versionWithoutMetadata: string) =>
         }
     }));
 
-function lens<T>(description: string, type: string, fn: (data: ManifestData) => ManifestField<T>): ManifestLens<T> {
+function lens<T>(
+    description: string,
+    type: string,
+    fn: (data: ManifestData) => ManifestField<T>
+): ManifestLens<T> {
     return Object.assign(fn, {description, type});
 }
 
@@ -160,7 +174,10 @@ function lookupDeployment(
     for (const versionWithoutMetadata in data.impls) {
         if (
             data.impls[versionWithoutMetadata]?.address === address ||
-            (checkAllAddresses && data.impls[versionWithoutMetadata]?.allAddresses?.includes(address))
+            (
+                checkAllAddresses &&
+                data.impls[versionWithoutMetadata]?.allAddresses?.includes(address)
+            )
         ) {
             return implLens(versionWithoutMetadata)(data);
         }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" style="enable-background:new 0 0 1000 1000;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:url(#SVGID_00000029741857239115996760000004080178046222881207_);}
+</style>
+<path id="SVGID_1_" d="M500,0c276.1,0,500,223.9,500,500s-223.9,500-500,500S0,776.1,0,500S223.9,0,500,0L500,0z"/>
+<linearGradient id="SVGID_00000093856291434867655520000002651352533271339440_" gradientUnits="userSpaceOnUse" x1="242.5198" y1="847.3303" x2="755.6802" y2="334.1697" gradientTransform="matrix(1 0 0 1 0 -80)">
+	<stop  offset="0" style="stop-color:#CB4EE8"/>
+	<stop  offset="1" style="stop-color:#10F4B1"/>
+</linearGradient>
+<path style="fill-rule:evenodd;clip-rule:evenodd;fill:url(#SVGID_00000093856291434867655520000002651352533271339440_);" d="M231.2,452.3h462.7c5.8,0,11.3,2.3,15.3,6.4l73.2,73.7c13.5,13.6,3.9,36.8-15.3,36.8H304.4c-5.8,0-11.3-2.3-15.3-6.4l-73.2-73.7 C202.3,475.5,212,452.3,231.2,452.3z M215.9,354.6l73.2-73.7c4.1-4.1,9.6-6.4,15.3-6.4H767c19.2,0,28.9,23.2,15.3,36.8L709.2,385 c-4.1,4.1-9.6,6.4-15.3,6.4H231.2C212,391.4,202.3,368.2,215.9,354.6z M782.3,666.9l-73.2,73.7c-4.1,4.1-9.6,6.4-15.3,6.4H231.2 c-19.2,0-28.9-23.2-15.3-36.8l73.2-73.7c4.1-4.1,9.6-6.4,15.3-6.4H767C786.2,630.1,795.9,653.3,782.3,666.9z"/>
+</svg>

@@ -12,7 +12,12 @@ export async function simulateDeployImpl(
     opts: UpgradeOptions,
     implAddress: string
 ) {
-    const {deployData, simulateDeploy} = await getSimulatedData(hre, ImplFactory, opts, implAddress);
+    const {deployData, simulateDeploy} = await getSimulatedData(
+        hre,
+        ImplFactory,
+        opts,
+        implAddress
+    );
     await fetchOrDeploy(deployData.version, deployData.provider, simulateDeploy, opts, true);
 }
 
@@ -37,8 +42,17 @@ export async function simulateDeployAdmin(
     opts: UpgradeOptions,
     adminAddress: string
 ) {
-    const {deployData, simulateDeploy} = await getSimulatedData(hre, ProxyAdminFactory, opts, adminAddress);
-    const manifestAdminAddress = await fetchOrDeployAdmin(deployData.provider, simulateDeploy, opts);
+    const {deployData, simulateDeploy} = await getSimulatedData(
+        hre,
+        ProxyAdminFactory,
+        opts,
+        adminAddress
+    );
+    const manifestAdminAddress = await fetchOrDeployAdmin(
+        deployData.provider,
+        simulateDeploy,
+        opts
+    );
     if (adminAddress !== manifestAdminAddress) {
         logWarning(
             `Imported proxy with admin at '${adminAddress}' which differs from previously deployed admin '${manifestAdminAddress}'`,
