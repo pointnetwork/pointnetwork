@@ -35,6 +35,12 @@ module.exports = [
         'IdentityController@identityRegistered',
         {protected: true}
     ],
+    [
+        'GET',
+        '/v1/api/identity/ikvList/:identity',
+        'IdentityController@IKVList',
+        {protected: true}
+    ],
     ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'], // TODO: why POST?
     ['POST', '/v1/api/identity/open', 'IdentityController@openLink', {protected: true}],
     [

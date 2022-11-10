@@ -199,6 +199,14 @@ class IdentityController extends PointSDKController {
         return this._response({identity});
     }
 
+    async IKVList() {
+        const identity = this.req.params.identity;
+        const identityContract = await ethereum.loadIdentityContract();
+        const data = await identityContract.methods.getIkvList(identity).call();
+    
+        this.rep.status(200).send(data);
+    }
+
     async publicKeyByIdentity() {
         const identity = this.req.params.identity;
 
