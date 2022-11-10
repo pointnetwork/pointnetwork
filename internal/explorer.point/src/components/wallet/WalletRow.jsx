@@ -3,8 +3,11 @@ import solanaIcon from '../../assets/solana.svg';
 import rinkebyIcon from '../../assets/rinkeby.svg';
 
 const NETWORK_ICONS = {
+    mainnet: pointLogo,
     local: pointLogo,
+    xnet: pointLogo,
     solana: solanaIcon,
+    solana_devnet: solanaIcon,
     rinkeby: rinkebyIcon,
 };
 
