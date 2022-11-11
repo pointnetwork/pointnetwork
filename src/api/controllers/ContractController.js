@@ -42,8 +42,10 @@ class ContractController extends PointSDKController {
 
     async load() {
         const contractName = this.req.params.contract;
+        // Need this to be able to load the Identity contract ABI from dapps
+        const identity = contractName === 'Identity' ? '@' : this.req.identity;
 
-        const contract = await ethereum.loadWebsiteContract(this.req.identity, contractName);
+        const contract = await ethereum.loadWebsiteContract(identity, contractName);
 
         const data = {
             address: contract._address,
