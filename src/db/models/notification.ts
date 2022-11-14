@@ -1,18 +1,21 @@
 import Model from './base';
 import Sequelize from 'sequelize';
 
-const {INTEGER, STRING, JSON, BOOLEAN} = Sequelize.DataTypes;
+const {INTEGER, STRING, JSON, DATE, BOOLEAN} = Sequelize.DataTypes;
 
 class Notification extends Model {}
 
 Notification.init({
     id: {type: INTEGER, unique: true, primaryKey: true},
     block_number: {type: STRING, allowNull: false},
-    timestamp: {type: INTEGER, allowNull: false},
+    timestamp: {type: DATE, allowNull: false},
     identity: {type: STRING, allowNull: true},
     address: {type: STRING, allowNull: false},
     contract: {type: STRING, allowNull: true},
     event: {type: STRING, allowNull: true},
+    title: {type: STRING, allowNull: true},
+    text: {type: STRING, allowNull: true},
+    link: {type: STRING, allowNull: true},
     arguments: {type: JSON, allowNull: true},
     viewed: {type: BOOLEAN, allowNull: false, default: false},
     log: {type: JSON, allowNull: false}

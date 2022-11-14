@@ -179,7 +179,7 @@
                 "timestamp": {
                     "allowNull": false,
                     "field": "timestamp",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.DATE"
                 },
                 "identity": {
                     "allowNull": true,
@@ -199,6 +199,21 @@
                 "event": {
                     "allowNull": true,
                     "field": "event",
+                    "seqType": "Sequelize.STRING"
+                },
+                "title": {
+                    "allowNull": true,
+                    "field": "title",
+                    "seqType": "Sequelize.STRING"
+                },
+                "text": {
+                    "allowNull": true,
+                    "field": "text",
+                    "seqType": "Sequelize.STRING"
+                },
+                "link": {
+                    "allowNull": true,
+                    "field": "link",
                     "seqType": "Sequelize.STRING"
                 },
                 "arguments": {

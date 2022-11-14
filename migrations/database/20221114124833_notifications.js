@@ -21,7 +21,7 @@ const Sequelize = require("sequelize");
 const info = {
   revision: 7,
   name: "notifications",
-  created: "2022-11-14T10:38:23.890Z",
+  created: "2022-11-14T12:48:33.171Z",
   comment: "",
 };
 
@@ -52,7 +52,7 @@ const migrationCommands = (transaction) => [
           allowNull: false,
         },
         timestamp: {
-          type: Sequelize.INTEGER,
+          type: Sequelize.DATE,
           field: "timestamp",
           allowNull: false,
         },
@@ -68,6 +68,9 @@ const migrationCommands = (transaction) => [
           allowNull: true,
         },
         event: { type: Sequelize.STRING, field: "event", allowNull: true },
+        title: { type: Sequelize.STRING, field: "title", allowNull: true },
+        text: { type: Sequelize.STRING, field: "text", allowNull: true },
+        link: { type: Sequelize.STRING, field: "link", allowNull: true },
         arguments: {
           type: Sequelize.JSON,
           field: "arguments",
