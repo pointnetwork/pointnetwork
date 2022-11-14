@@ -21,6 +21,7 @@ module.exports = {
     ],
     ignorePatterns: [
         'node_modules',
+        'migrations',
         '*.min.js',
         '**/public/**/*',
         'dist'
