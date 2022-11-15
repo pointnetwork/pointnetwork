@@ -30,13 +30,6 @@ const NPM_DEPS_URLS: Record<string, string> = {
     '@openzeppelin/contracts-upgradeable': 'https://registry.npmjs.org/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.7.3.tgz'
 };
 
-export async function getManyKeys(target: string, keys: string[]) {
-    return Promise.all(keys.map((key) => ethereum.getKeyValue(
-        target,
-        key
-    )));
-}
-
 export const downloadNpmDependency = (dependency: string) => new Promise<void>(
     async (resolve, reject) => {
         try {
@@ -182,7 +175,7 @@ export async function deployContracts(
     const identity = target.replace(/.point$/, '');
     await Promise.all(contracts.map(async contract => {
         const contractAddressKey = `${CONTRACT_ADDRESS_PREFIX}/${contract.name}`;
-        const [proxyAddress, proxyDescriptionFileId] = await getManyKeys(
+        const [proxyAddress, proxyDescriptionFileId] = await ethereum.getManyKeys(
             target, [contractAddressKey, PROXY_METADATA_KEY]
         );
         let proxy;

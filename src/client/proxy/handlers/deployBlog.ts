@@ -1,9 +1,18 @@
-import {CONTRACT_PREFIX, deployUpgradableContracts, getManyKeys, ROOT_DIR_KEY, ZDNS_ROUTES_KEY} from '../../../network/deployer';
+import {
+    CONTRACT_PREFIX, deployUpgradableContracts,
+    ROOT_DIR_KEY, ZDNS_ROUTES_KEY
+} from '../../../network/deployer';
 import ethereum from '../../../network/providers/ethereum';
 import {getNetworkAddress, getNetworkPublicKey} from '../../../wallet/keystore';
 import {getFile} from '../../storage';
 
-const KNOWN_BLOG_ABI_HASHES = ['abcde']; // here we need to put known abi hashes
+export const KNOWN_BLOG_ROOT_DIR_HASHES = [ // here we need to put known abi hashes
+    '00f4b6c161016d0adf1bd89ebd43c670ad69288bb3cf3d9407db018dde3c69df',
+    '6ce5c3f525128f4173cd4931870b28d05280d66bd206826be1f23242d05c94bb',
+    'c4226811df9ef1f97080b6b9d1af107a9795389d8e71beb18717b3b5d6edc1d9',
+    '10c0366c3bb407a0448f8d1f3c88b4f6f4865e2827c0611e871f3348a8848a6c'
+];
+
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
 const BLOG_DEPENDENCIES = ['@openzeppelin/contracts', '@openzeppelin/contracts-upgradeable'];
 const VERSION = '0.1';
@@ -70,39 +79,36 @@ export async function setRoutes(subidentity: string, address: string) {
     );
 }
 
-export async function isUpgreadableBlog(subidentity: string, abiAddress: string) {
-    const [zdnsRoutes, blogContractAddress] = await getManyKeys(subidentity, [
+export async function isUpgreadableBlog(subidentity: string, rootDirAddr: string) {
+    const [zdnsRoutes, blogContractAddress] = await ethereum.getManyKeys(subidentity, [
         'zdns/routes',
         `${CONTRACT_PREFIX}/address/Blog`
     ]);
     if (zdnsRoutes) {
         const routes = await getFile(zdnsRoutes);
         routes.includes(`"/blog": "index.html"`);
-        if (blogContractAddress && await verifyBlogABI(abiAddress)) {
+        if (blogContractAddress && await verifyRootDirHashes(rootDirAddr)) {
             return true;
         } else {
-            throw 'A website is already deployed on this address. Please, choose another subidentity';
+            throw new Error('A website is already deployed on this address. Please, choose another subidentity');
         }
     }
 }
 
-export function needsToUpdateContract(abiAddress: string) {
-    return abiAddress !== CURRENT_ABI_ID;
-}
 export async function deployBlog(subidentity: string) {
     const isNewIdentity = await ensureSubidentity(subidentity);
-    const [abiAddress] = await getManyKeys(subidentity, [`${CONTRACT_PREFIX}/abi/Blog`]);
-    if (!isNewIdentity && !await isUpgreadableBlog(subidentity, abiAddress)) {
-        throw 'Is not an upgreadable blog';
-    }
-    const [rootDir, routes] = await getManyKeys(
+    const [rootDir, routes, abiAddress] = await ethereum.getManyKeys(
         subidentity, [
             ROOT_DIR_KEY,
-            ZDNS_ROUTES_KEY
+            ZDNS_ROUTES_KEY,
+            `${CONTRACT_PREFIX}/abi/Blog`
         ]
     );
+    if (!isNewIdentity && !await isUpgreadableBlog(subidentity, rootDir)) {
+        throw 'Is not an upgreadable blog';
+    }
     const blogContract = await getBlogContractCode();
-    if (needsToUpdateContract(abiAddress)) {
+    if (abiAddress !== CURRENT_ABI_ID) {
         await deployUpgradableContracts({
             contracts: [{file: Buffer.from(blogContract), name: 'Blog'}],
             version: VERSION,
@@ -112,55 +118,23 @@ export async function deployBlog(subidentity: string) {
         });
     }
     if (rootDir !== ROOT_DIR_ID) {
-        await setRootDir(subidentity, ROOT_DIR_ID);
+        return ethereum.putKeyValue(
+            subidentity,
+            ROOT_DIR_KEY,
+            ROOT_DIR_ID,
+            VERSION
+        );
     }
     if (routes !== ROUTES_FILE_ID) {
-        await setRoutes(subidentity, ROUTES_FILE_ID);
+        await ethereum.putKeyValue(
+            subidentity,
+            ZDNS_ROUTES_KEY,
+            ROUTES_FILE_ID,
+            VERSION
+        );
     }
 }
 
-export async function getRootDir(identity: string) {
-    return ethereum.getKeyValue(
-        identity,
-        '::rootDir'
-    );
-}
-
-export async function getRoutes(identity: string) {
-    return ethereum.getKeyValue(
-        identity,
-        'zdns/routes'
-    );
-}
-
-export async function getBlogAddress(identity: string) {
-    return ethereum.getKeyValue(
-        identity
-
-    );
-}
-
-export async function getBlogABI(identity: string) {
-    return ethereum.getKeyValue(
-        identity,
-        'zweb/contracts/abi/Blog'
-    );
-}
-
-export async function getBlogMetadata(identity: string) {
-    return ethereum.getKeyValue(
-        identity,
-        'zweb/contracts/proxy/metadata'
-    );
-}
-
-export async function verifyBlogABI(abiAddress: string) {
-    if (KNOWN_BLOG_ABI_HASHES.includes(abiAddress)) {
-        return true;
-    }
-    const file = await getFile(abiAddress);
-    if (file.includes(`"contractName":"Blog"`)) {
-        return true;
-    }
-    return false;
+export async function verifyRootDirHashes(abiAddress: string) {
+    return KNOWN_BLOG_ROOT_DIR_HASHES.includes(abiAddress);
 }
