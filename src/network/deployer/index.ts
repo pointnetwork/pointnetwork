@@ -18,7 +18,11 @@ import {upgradeProxy} from './upgradeProxy';
 import {forceImport} from './forceImport';
 const log = logger.child({module: 'Deployer_new'});
 
-const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
+export const CONTRACT_PREFIX = 'zweb/contracts';
+export const PROXY_METADATA_KEY = `${CONTRACT_PREFIX}/proxy/metadata`;
+export const CONTRACT_ADDRESS_PREFIX = `${CONTRACT_PREFIX}/address`;
+export const ROOT_DIR_KEY = '::rootDir';
+export const ZDNS_ROUTES_KEY = 'zdns/routes';
 
 // TODO: this is a temporary solution, supporting only limited number of dependencies
 const NPM_DEPS_URLS: Record<string, string> = {
@@ -26,46 +30,47 @@ const NPM_DEPS_URLS: Record<string, string> = {
     '@openzeppelin/contracts-upgradeable': 'https://registry.npmjs.org/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.7.3.tgz'
 };
 
-const downloadNpmDependency = (dependency: string) => new Promise<void>(async (resolve, reject) => {
-    try {
-        log.debug({dependency}, 'Downloading npm dependency');
-        const depsPath = path.join(resolveHome(config.get('datadir')), 'hardhat', 'node_modules');
-        
-        if (fs.existsSync(path.join(depsPath, dependency))) {
-            log.debug({dependency}, 'NPM dependency already exists, skipping');
-            resolve();
-        }
+export const downloadNpmDependency = (dependency: string) => new Promise<void>(
+    async (resolve, reject) => {
+        try {
+            log.debug({dependency}, 'Downloading npm dependency');
+            const depsPath = path.join(resolveHome(config.get('datadir')), 'hardhat', 'node_modules');
 
-        const res = await axios.get(NPM_DEPS_URLS[dependency], {responseType: 'stream'});
-
-        const stream = res.data
-            .pipe(gunzip())
-            .pipe(tar.extract(path.join(depsPath, `${dependency}_tmp`)));
-
-        stream.on('finish', async () => {
-            try {
-                if (dependency.split('/').length > 1) {
-                    await fs.mkdirp(path.join(depsPath, ...dependency.split('/').slice(0, -1)));
-                }
-                await fs.rename(
-                    path.join(depsPath, `${dependency}_tmp`, 'package'),
-                    path.join(depsPath, dependency)
-                );
-                await fs.rm(path.join(depsPath, `${dependency}_tmp`), {recursive: true, force: true});
-                log.debug({dependency}, 'Downloaded npm dependency successfully');
+            if (fs.existsSync(path.join(depsPath, dependency))) {
+                log.debug({dependency}, 'NPM dependency already exists, skipping');
                 resolve();
-            } catch (e) {
-                reject(e);
             }
-        });
 
-        stream.on('error', (e: Error) => {
+            const res = await axios.get(NPM_DEPS_URLS[dependency], {responseType: 'stream'});
+
+            const stream = res.data
+                .pipe(gunzip())
+                .pipe(tar.extract(path.join(depsPath, `${dependency}_tmp`)));
+
+            stream.on('finish', async () => {
+                try {
+                    if (dependency.split('/').length > 1) {
+                        await fs.mkdirp(path.join(depsPath, ...dependency.split('/').slice(0, -1)));
+                    }
+                    await fs.rename(
+                        path.join(depsPath, `${dependency}_tmp`, 'package'),
+                        path.join(depsPath, dependency)
+                    );
+                    await fs.rm(path.join(depsPath, `${dependency}_tmp`), {recursive: true, force: true});
+                    log.debug({dependency}, 'Downloaded npm dependency successfully');
+                    resolve();
+                } catch (e) {
+                    reject(e);
+                }
+            });
+
+            stream.on('error', (e: Error) => {
+                reject(e);
+            });
+        } catch (e) {
             reject(e);
-        });
-    } catch (e) {
-        reject(e);
-    }
-});
+        }
+    });
 
 const storeContractArtifacts = async ({
     artifacts,
@@ -83,7 +88,6 @@ const storeContractArtifacts = async ({
     const artifactsJSON = JSON.stringify(artifacts);
 
     const artifactsStorageId = await uploadFile(artifactsJSON);
-
     await ethereum.putKeyValue(
         target,
         'zweb/contracts/address/' + contractName,
@@ -123,24 +127,8 @@ export const getProxyMetadataFilePath = async () => {
     );
 };
 
-export const deployUpgradableContracts = async ({
-    contracts,
-    version,
-    target,
-    forceDeployProxy = false,
-    dependencies = []
-}: {
-    contracts: {
-        file: Buffer
-        name: string
-    }[],
-    version: string,
-    target: string,
-    forceDeployProxy?: boolean,
-    dependencies?: string[]
-}) => {
+export async function initializeFolders() {
     const proxyMetadataFilePath = await getProxyMetadataFilePath();
-    const identity = target.replace(/.point$/, '');
     const hardhatContractsDir = path.join(
         resolveHome(config.get('datadir')),
         'hardhat',
@@ -151,39 +139,45 @@ export const deployUpgradableContracts = async ({
         'hardhat',
         'node_modules'
     );
-
     await Promise.all([
         fs.mkdirp(hardhatContractsDir),
         fs.mkdirp(hardhatDependenciesDir)
     ]);
+    return {hardhatContractsDir, hardhatDependenciesDir, proxyMetadataFilePath};
+}
 
-    await Promise.all(contracts.map(async contract => {
+export async function cleanFolders(folders: string[]) {
+    await Promise.all(folders.map((folder) => fs.remove(folder)));
+}
+
+export async function writeContractsToFile(
+    hardhatContractsDir: string, contracts: { file: Buffer, name: string }[]
+) {
+    return Promise.all(contracts.map(async contract => {
         await fs.writeFile(
             path.join(hardhatContractsDir, `${contract.name}.sol`),
             contract.file
         );
     }));
+}
 
-    await Promise.all(dependencies.map(async dep => {await downloadNpmDependency(dep);}));
+export async function downloadDependencies(dependencies: string[]|undefined) {
+    return Promise.all((dependencies || [])
+        .map(async dep => { await downloadNpmDependency(dep); }));
+}
 
-    await hre.run('compile');
-
-    await Promise.all([
-        fs.remove(hardhatContractsDir),
-        fs.remove(hardhatDependenciesDir)
-    ]);
-
+export async function deployContracts(
+    contracts: { file: Buffer, name: string }[],
+    target: string,
+    proxyMetadataFilePath: string,
+    version: string,
+    forceDeployProxy: boolean) {
+    const identity = target.replace(/.point$/, '');
     await Promise.all(contracts.map(async contract => {
-        const proxyAddress = await ethereum.getKeyValue(
-            target,
-            'zweb/contracts/address/' + contract.name
+        const contractAddressKey = `${CONTRACT_ADDRESS_PREFIX}/${contract.name}`;
+        const [proxyAddress, proxyDescriptionFileId] = await ethereum.getManyKeys(
+            target, [contractAddressKey, PROXY_METADATA_KEY]
         );
-
-        const proxyDescriptionFileId = await ethereum.getKeyValue(
-            target,
-            PROXY_METADATA_KEY
-        );
-
         let proxy;
         const contractF = await hre.ethers.getContractFactory(contract.name);
         if (!proxyAddress || !proxyDescriptionFileId || forceDeployProxy) {
@@ -215,9 +209,10 @@ export const deployUpgradableContracts = async ({
             }
         } else {
             log.debug('upgradeProxy call');
+            const metadataContent = await getFile(proxyDescriptionFileId);
             await fs.writeFile(
                 proxyMetadataFilePath,
-                await getFile(proxyDescriptionFileId)
+                metadataContent
             );
 
             try {
@@ -250,10 +245,39 @@ export const deployUpgradableContracts = async ({
         );
     }));
 
+}
+
+export const deployUpgradableContracts = async ({
+    contracts,
+    version,
+    target,
+    forceDeployProxy = false,
+    dependencies = []
+}: {
+    contracts: {
+      file: Buffer;
+      name: string;
+    }[],
+    version: string,
+    target: string,
+    forceDeployProxy?: boolean,
+    dependencies?: string[]
+  }) => {
+
+    const {
+        hardhatContractsDir,
+        hardhatDependenciesDir,
+        proxyMetadataFilePath
+    } = await initializeFolders();
+
+    await writeContractsToFile(hardhatContractsDir, contracts);
+    await downloadDependencies(dependencies);
+    await hre.run('compile');
+    await cleanFolders([hardhatContractsDir, hardhatDependenciesDir]);
+    await deployContracts(contracts, target, proxyMetadataFilePath, version, forceDeployProxy);
     const proxyMetadataFile = await fs.readFile(proxyMetadataFilePath, 'utf-8');
     const proxyMetadata = JSON.parse(proxyMetadataFile);
-
-    log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
+    log.debug('Uploading proxy metadata file...');
     const proxyMetadataFileUploadedId = await uploadFile(JSON.stringify(proxyMetadata));
     log.debug({target, proxyMetadataFileUploadedId}, 'Updating Proxy Metadata');
     await ethereum.putKeyValue(

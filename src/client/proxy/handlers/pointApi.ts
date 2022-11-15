@@ -3,7 +3,7 @@ import DeployController from '../../../api/controllers/DeployController';
 import WalletController from '../../../api/controllers/WalletController';
 import {checkAuthToken} from '../middleware/auth';
 import {deployUpgradableContracts} from '../../../network/deployer';
-
+import {deployBlog} from './deployBlog';
 const attachPointApiHandler = (server: FastifyInstance) => {
     server.route({
         method: ['GET', 'POST'],
@@ -29,11 +29,11 @@ const attachPointApiHandler = (server: FastifyInstance) => {
             if (host !== 'point') {
                 res.status(403).send('Forbidden');
             }
-    
+
             const controller = new DeployController(req);
-    
+
             const {status, error} = await controller.deploy();
-    
+
             res.status(status === 'success'
                 ? 200
                 : error === 'deploy path not specified'
@@ -87,7 +87,6 @@ const attachPointApiHandler = (server: FastifyInstance) => {
             if (!(contractNames && version && target)) {
                 return res.status(400).send('No required fields in the body');
             }
-
             await deployUpgradableContracts({
                 contracts: files.map((file, index) => ({
                     file,
@@ -100,6 +99,20 @@ const attachPointApiHandler = (server: FastifyInstance) => {
             });
 
             res.status(200).send('Success');
+        }
+    });
+
+    server.route({
+        method: ['POST'],
+        url: '/point_api/deploy_blog',
+        handler: async (req, res) => {
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await deployBlog((req.body as any).subidentity);
+                return res.status(200).send('Success');
+            } catch (error) {
+                return res.status(500).send(error);
+            }
         }
     });
 };

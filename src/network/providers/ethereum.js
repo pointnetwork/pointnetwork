@@ -1397,4 +1397,9 @@ ethereum.getTransactionReceipt = async (txHash, network = DEFAULT_NETWORK) => {
     return receipt;
 };
 
+ethereum.getManyKeys = async(target, keys) => Promise.all(keys.map((key) => ethereum.getKeyValue(
+    target,
+    key
+)));
+
 module.exports = ethereum;
