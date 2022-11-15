@@ -4,6 +4,7 @@ const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
 const ethereum = require('../../network/providers/ethereum');
 const {getJSON} = require('../../client/storage');
+const {default: notificationsController} = require('../../notifications/NotificationsController');
 
 class ContractController extends PointSDKController {
     constructor(req, reply) {
@@ -190,6 +191,16 @@ class ContractController extends PointSDKController {
         } catch (err) {
             this.reply.status(500);
             this._status(500)._response(err ?? 'Unable to find contract events');
+        }
+    }
+
+    async getEventLogs() {
+        try {
+            const logs = await notificationsController.loadUserSubscriptionsAndGetLogs(); 
+            return this._status(200)._response(logs);
+        } catch (err) {
+            this.reply.status(500);
+            return this._status(500)._response(err.message ?? 'Unable to get event logs');
         }
     }
 }
