@@ -4,7 +4,7 @@ const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
 const ethereum = require('../../network/providers/ethereum');
 const {getJSON} = require('../../client/storage');
-const {default: notificationsController} = require('../../notifications/NotificationsController');
+const {default: notificationsController} = require('../../notifications/notifications');
 
 class ContractController extends PointSDKController {
     constructor(req, reply) {

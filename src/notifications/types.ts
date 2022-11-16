@@ -38,5 +38,6 @@ export type NotificationSubscription = {
   contractName: string;
   contractAddress: string;
   eventName: string;
+  blockAtTimeOfSubscription: number;
   filters?: Array<string | null>;
 }
