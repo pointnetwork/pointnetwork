@@ -1285,7 +1285,7 @@ ethereum.toHex = n => getWeb3().utils.toHex(n);
 
 ethereum.send = ({method, params = [], id, network}) =>
     new Promise((resolve, reject) => {
-        if (params.length > 0 && config.has(`network.web3.${network}.gas_price_wei`)) {
+        if (typeof params[0] === Object && params.length > 0 && config.has(`network.web3.${network}.gas_price_wei`)) {
             const decimal = Number(config.get(`network.web3.${network}.gas_price_wei`));
             params[0].gasPrice = `0x${decimal.toString(16)}`;
         }
