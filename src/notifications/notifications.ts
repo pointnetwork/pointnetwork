@@ -154,7 +154,15 @@ class Notifications {
             eventName: 'StateChange',
             // TODO: use this as the starting point (fromBlock),
             // user should not be notified about events prior to the subscription.
-            blockAtTimeOfSubscription: 0
+            blockAtTimeOfSubscription: 0,
+            filters: [
+                null,
+                // Filter by creators
+                [
+                    this.padTo64('0x6479c4f0926f73e5509b9f24c85915d140e9382b'),
+                    this.padTo64('0x5D8F10BbC99665c47d28C9181EBaa7b78be606D1')
+                ]
+            ]
         };
         const emailSubscription: NotificationSubscription = {
             contractIdentity: 'email.point',
