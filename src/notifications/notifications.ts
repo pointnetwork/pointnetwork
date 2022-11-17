@@ -3,6 +3,7 @@ import {BigNumber} from 'ethers';
 import {keccak256, Interface, parseBytes32String} from 'ethers/lib/utils';
 import {CacheFactory} from '../util';
 import ethereum from '../network/providers/ethereum';
+import {getNetworkAddress} from '../wallet/keystore';
 import type {AbiItem, AbiItemInput, Log, EventLog, NotificationSubscription} from './types';
 
 class Notifications {
@@ -138,6 +139,12 @@ class Notifications {
         return events;
     }
 
+    private padTo64(addr: string): string {
+        // 66 instead of 64 to account for the leading `0x`.
+        const padding = new Array(66 - addr.length).fill('0');
+        return `0x${padding.join('')}${addr.slice(2)}`;
+    }
+
     private async loadUserSubscriptions(): Promise<NotificationSubscription[]> {
         // TODO: get from database
         const socialSubscription: NotificationSubscription = {
@@ -155,8 +162,7 @@ class Notifications {
             contractAddress: '0x64E6F6fBd7a9B84de5fD580d23cEDb2CA4b2b63b',
             eventName: 'RecipientAdded',
             blockAtTimeOfSubscription: 0,
-            // recipient address
-            filters: ['0x0000000000000000000000000de48ef1442de28b0b060f7ffba3cbbbd8a7fcfb']
+            filters: [this.padTo64(getNetworkAddress())] // address of the current user
         };
         return [socialSubscription, emailSubscription];
     }
