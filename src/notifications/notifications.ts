@@ -3,7 +3,11 @@ import {keccak256, Interface, parseBytes32String} from 'ethers/lib/utils';
 import {CacheFactory} from '../util';
 import ethereum from '../network/providers/ethereum';
 import {getNetworkAddress} from '../wallet/keystore';
-import type {AbiItem, AbiItemInput, Log, EventLog, NotificationSubscription} from './types';
+import type {AbiItem, AbiItemInput, Log, NotificationSubscription} from './types';
+import Notification from '../db/models/notification';
+import logger from '../core/log';
+
+const log = logger.child({module: 'Notifications'});
 
 class Notifications {
     private abis: CacheFactory<string, AbiItem[]>;
@@ -185,11 +189,14 @@ class Notifications {
         return null;
     }
 
-    private async parseLogs(subs: NotificationSubscription, logs: Log[]): Promise<EventLog[]> {
-        const parsedLogs: EventLog[] = [];
+    private async parseAndSaveLogs(
+        s: NotificationSubscription,
+        logs: Log[]
+    ): Promise<Notification[]> {
+        const parsedLogs: Notification[] = [];
         for (const l of logs) {
             if (!l.removed) {
-                const {contractIdentity, contractName, eventName} = subs;
+                const {contractIdentity, contractName, contractAddress, eventName} = s;
                 const def = await this.getEventDefinition(
                     contractIdentity,
                     contractName,
@@ -202,14 +209,23 @@ class Notifications {
                     contractName,
                     l.data
                 );
-                parsedLogs.push({
-                    contractIdentity: subs.contractIdentity,
-                    contractName,
-                    eventName,
-                    blockNumber: this.fromHex(l.blockNumber),
-                    data: parsedTopicsAndData,
-                    timestamp: this.getTimestamp(parsedTopicsAndData)
-                });
+
+                try {
+                    const notification = await new Notification({
+                        identity: contractIdentity,
+                        contract: contractName,
+                        address: contractAddress,
+                        event: eventName,
+                        block_number: this.fromHex(l.blockNumber),
+                        arguments: parsedTopicsAndData,
+                        timestamp: this.getTimestamp(parsedTopicsAndData),
+                        viewed: false,
+                        log: l
+                    }).save();
+                    parsedLogs.push(notification);
+                } catch (err) {
+                    log.error(err, 'Error saving notificaiton to database');
+                }
             }
         }
         return parsedLogs;
@@ -219,7 +235,7 @@ class Notifications {
         s: NotificationSubscription,
         from: number,
         to: number
-    ): Promise<EventLog[]> {
+    ): Promise<Notification[]> {
         const eventSignature = await this.getEventSignature(
             s.contractIdentity,
             s.contractName,
@@ -227,18 +243,17 @@ class Notifications {
         );
         const topics = s.filters ? [eventSignature, ...s.filters] : [eventSignature];
         const logs = await this.getPastLogs(from, to, [s.contractAddress], topics);
-        const parsedLogs = await this.parseLogs(s, logs);
+        const parsedLogs = await this.parseAndSaveLogs(s, logs);
         return parsedLogs;
     }
 
-    public async loadUserSubscriptionsAndGetLogs(): Promise<EventLog[]> {
+    public async loadUserSubscriptionsAndGetLogs(): Promise<Notification[]> {
         // TODO: get latest block and make paginated requests.
         const from = 4_047_400;
         const to = 4_047_650;
         const subscriptions = await this.loadUserSubscriptions();
         const promises = subscriptions.map(s => this.getLogsForSubscription(s, from, to));
         const results = await Promise.all(promises);
-        // TODO: save logs to database.
         // TODO: make subscription to receive future events.
         return results.flat(1);
     }

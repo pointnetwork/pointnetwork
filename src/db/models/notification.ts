@@ -6,7 +6,7 @@ const {INTEGER, STRING, JSON, BOOLEAN} = Sequelize.DataTypes;
 class Notification extends Model {}
 
 Notification.init({
-    id: {type: INTEGER, unique: true, primaryKey: true},
+    id: {type: INTEGER, autoIncrement: true, primaryKey: true},
     block_number: {type: STRING, allowNull: false},
     timestamp: {type: INTEGER, allowNull: false},
     identity: {type: STRING, allowNull: true},

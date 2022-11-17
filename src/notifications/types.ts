@@ -10,15 +10,6 @@ export type Log = {
     removed: boolean
 }
 
-export type EventLog = {
-    contractIdentity: string;
-    contractName: string;
-    eventName: string;
-    blockNumber: number;
-    timestamp: number | null;
-    data: Record<string, unknown>;
-}
-
 export type AbiItemInput = {
     indexed?: boolean
     internalType: string
