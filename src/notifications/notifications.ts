@@ -215,31 +215,32 @@ class Notifications {
         return parsedLogs;
     }
 
+    private async getLogsForSubscription(
+        s: NotificationSubscription,
+        from: number,
+        to: number
+    ): Promise<EventLog[]> {
+        const eventSignature = await this.getEventSignature(
+            s.contractIdentity,
+            s.contractName,
+            s.eventName
+        );
+        const topics = s.filters ? [eventSignature, ...s.filters] : [eventSignature];
+        const logs = await this.getPastLogs(from, to, [s.contractAddress], topics);
+        const parsedLogs = await this.parseLogs(s, logs);
+        return parsedLogs;
+    }
+
     public async loadUserSubscriptionsAndGetLogs(): Promise<EventLog[]> {
         // TODO: get latest block and make paginated requests.
         const from = 4_047_400;
         const to = 4_047_650;
-
-        const result: EventLog[] = [];
         const subscriptions = await this.loadUserSubscriptions();
-
-        // TODO: parallelize
-        for (const s of subscriptions) {
-            const eventSignature = await this.getEventSignature(
-                s.contractIdentity,
-                s.contractName,
-                s.eventName
-            );
-            const topics = s.filters ? [eventSignature, ...s.filters] : [eventSignature];
-            const logs = await this.getPastLogs(from, to, [s.contractAddress], topics);
-            const parsedLogs = await this.parseLogs(s, logs);
-            result.push(...parsedLogs);
-        }
-
+        const promises = subscriptions.map(s => this.getLogsForSubscription(s, from, to));
+        const results = await Promise.all(promises);
         // TODO: save logs to database.
         // TODO: make subscription to receive future events.
-
-        return result;
+        return results.flat(1);
     }
 }
 
