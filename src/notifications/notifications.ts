@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {BigNumber} from 'ethers';
 import {keccak256, Interface, parseBytes32String} from 'ethers/lib/utils';
 import {CacheFactory} from '../util';
@@ -7,13 +6,11 @@ import {getNetworkAddress} from '../wallet/keystore';
 import type {AbiItem, AbiItemInput, Log, EventLog, NotificationSubscription} from './types';
 
 class Notifications {
-    private ETH_PROVIDER_URL: string;
     private abis: CacheFactory<string, AbiItem[]>;
     private eventSignatures: CacheFactory<string, {contractName: string, eventName: string}>;
     private filters: CacheFactory<string, string>;
 
     constructor(expirationSecs: number) {
-        this.ETH_PROVIDER_URL = 'https://rpc-mainnet-1.point.space'; // TODO: get from config
         this.abis = new CacheFactory<string, AbiItem[]>(expirationSecs * 1_000);
         this.filters = new CacheFactory<string, string>(expirationSecs * 1_000);
         this.eventSignatures = new CacheFactory<
@@ -90,27 +87,13 @@ class Notifications {
             return this.filters.get(key)!;
         }
 
-        // TODO: interaction with blockchain should be through src/network/providers/ethereum.js
-        // Create filter
-        const {data} = await axios.post(this.ETH_PROVIDER_URL, {
-            jsonrpc: '2.0',
-            id: Date.now(),
-            method: 'eth_newFilter',
-            params: [
-                {
-                    fromBlock: this.toHex(from),
-                    toBlock: this.toHex(to),
-                    address: addresses,
-                    topics
-                }
-            ]
-        });
+        const filterId = await ethereum.forward('eth_newFilter', [{
+            fromBlock: this.toHex(from),
+            toBlock: this.toHex(to),
+            address: addresses,
+            topics
+        }]);
 
-        if (data.error || !data.result) {
-            throw new Error(data.error ? JSON.stringify(data.error) : 'No filter ID returned.');
-        }
-
-        const filterId = data.result;
         this.filters.add(key, filterId);
         return filterId;
     }
@@ -122,20 +105,7 @@ class Notifications {
         topics: Array<string | null | string[]>
     ): Promise<Log[]> {
         const filterId = await this.getFilter(from, to, addresses, topics);
-
-        // TODO: interaction with blockchain should be through src/network/providers/ethereum.js
-        const {data} = await axios.post(this.ETH_PROVIDER_URL, {
-            jsonrpc: '2.0',
-            id: Date.now(),
-            method: 'eth_getFilterLogs',
-            params: [filterId]
-        });
-
-        if (data.error) {
-            throw new Error(JSON.stringify(data.error));
-        }
-
-        const events = data?.result ? data.result : [];
+        const events = await ethereum.forward('eth_getFilterLogs', [filterId]);
         return events;
     }
 
@@ -253,6 +223,7 @@ class Notifications {
         const result: EventLog[] = [];
         const subscriptions = await this.loadUserSubscriptions();
 
+        // TODO: parallelize
         for (const s of subscriptions) {
             const eventSignature = await this.getEventSignature(
                 s.contractIdentity,

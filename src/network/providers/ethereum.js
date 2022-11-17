@@ -1397,4 +1397,13 @@ ethereum.getTransactionReceipt = async (txHash, network = DEFAULT_NETWORK) => {
     return receipt;
 };
 
+/**
+ * Forward RPC calls directly to the blockchain node.
+ */
+ethereum.forward = async (method, params, network = DEFAULT_NETWORK) => {
+    const provider = getEthers(network);
+    const resp = await provider.send(method, params);
+    return resp;
+};
+
 module.exports = ethereum;
