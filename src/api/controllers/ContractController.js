@@ -4,7 +4,9 @@ const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
 const ethereum = require('../../network/providers/ethereum');
 const {getJSON} = require('../../client/storage');
-const {default: notificationsController} = require('../../notifications/notifications');
+const {default: notifications} = require('../../notifications/notifications');
+
+const GET_LOGS_BLOCK_RANGE = config.get('network.get_logs_block_range');
 
 class ContractController extends PointSDKController {
     constructor(req, reply) {
@@ -196,8 +198,36 @@ class ContractController extends PointSDKController {
 
     async getEventLogs() {
         try {
-            const logs = await notificationsController.loadUserSubscriptionsAndGetLogs(); 
-            return this._status(200)._response(logs);
+            let from;
+            let to;
+            let latest;
+
+            if (!Number.isNaN(Number(this.req.query.from))) {
+                from = Number(this.req.query.from);
+            }
+            if (!Number.isNaN(Number(this.req.query.to))) {
+                to = Number(this.req.query.to);
+            }
+            if (from && !to) {
+                to = from + GET_LOGS_BLOCK_RANGE;
+            }
+            if (!from) {
+                const blocks = await notifications.getBlockRange();
+                from = blocks.from;
+                to = blocks.to;
+            }
+
+            if (!Number.isNaN(Number(this.req.query.latest))) {
+                latest = Number(this.req.query.latest);
+            } else {
+                latest = await ethereum.getBlockNumber();
+            }
+            if (to > latest) {
+                to = latest;
+            }
+
+            const logs = await notifications.loadUserSubscriptionsAndGetLogs(from, to);
+            return this._status(200)._response({from, to, latest, logs});
         } catch (err) {
             this.reply.status(500);
             return this._status(500)._response(err.message ?? 'Unable to get event logs');

@@ -1,5 +1,6 @@
 import {BigNumber} from 'ethers';
 import {keccak256, Interface, parseBytes32String} from 'ethers/lib/utils';
+import config from 'config';
 import {CacheFactory} from '../util';
 import ethereum from '../network/providers/ethereum';
 import {getNetworkAddress} from '../wallet/keystore';
@@ -9,14 +10,14 @@ import logger from '../core/log';
 
 const log = logger.child({module: 'Notifications'});
 
+const GET_LOGS_BLOCK_RANGE = config.get('network.get_logs_block_range') as number;
+
 class Notifications {
     private abis: CacheFactory<string, AbiItem[]>;
     private eventSignatures: CacheFactory<string, {contractName: string, eventName: string}>;
-    private filters: CacheFactory<string, string>;
 
     constructor(expirationSecs: number) {
         this.abis = new CacheFactory<string, AbiItem[]>(expirationSecs * 1_000);
-        this.filters = new CacheFactory<string, string>(expirationSecs * 1_000);
         this.eventSignatures = new CacheFactory<
             string,
             {contractName: string, eventName: string}
@@ -86,19 +87,12 @@ class Notifications {
         addresses: string[],
         topics: Array<string | null | string[]>
     ): Promise<string> {
-        const key = addresses.join(':');
-        if (this.filters.has(key)) {
-            return this.filters.get(key)!;
-        }
-
         const filterId = await ethereum.forward('eth_newFilter', [{
             fromBlock: this.toHex(from),
             toBlock: this.toHex(to),
             address: addresses,
             topics
         }]);
-
-        this.filters.add(key, filterId);
         return filterId;
     }
 
@@ -126,9 +120,7 @@ class Notifications {
             contractName: 'PointSocial',
             contractAddress: '0xF750B8F0988e4FA1c674C7CF9cEda27EBAc621C8',
             eventName: 'StateChange',
-            // TODO: use this as the starting point (fromBlock),
-            // user should not be notified about events prior to the subscription.
-            blockAtTimeOfSubscription: 0,
+            blockAtTimeOfSubscription: 4_000_000,
             filters: [
                 null,
                 // Filter by creators
@@ -143,7 +135,7 @@ class Notifications {
             contractName: 'PointEmail',
             contractAddress: '0x64E6F6fBd7a9B84de5fD580d23cEDb2CA4b2b63b',
             eventName: 'RecipientAdded',
-            blockAtTimeOfSubscription: 0,
+            blockAtTimeOfSubscription: 4_100_000,
             filters: [this.padTo64(getNetworkAddress())] // address of the current user
         };
         return [socialSubscription, emailSubscription];
@@ -247,10 +239,34 @@ class Notifications {
         return parsedLogs;
     }
 
-    public async loadUserSubscriptionsAndGetLogs(): Promise<Notification[]> {
-        // TODO: get latest block and make paginated requests.
-        const from = 4_047_400;
-        const to = 4_047_650;
+    public async getBlockRange(): Promise<{from: number, to: number}> {
+        // TODO: optimize this becaues we will load subscriptions again in `loadUserSubscriptionsAndGetLogs`.
+        const subscriptions = await this.loadUserSubscriptions();
+
+        let from: number;
+        const lastEntry = await Notification.findOne({order: [['timestamp', 'DESC']]});
+        if (lastEntry) {
+            // If there's a notification in the database, we'll start scanning from the next block.
+            from = Number(lastEntry.get('block_number')) + 1;
+        } else {
+            // For now, we will use the earliest block for all subscriptions,
+            // but we should refine this so that each subscription uses it's own `fromBlock`.
+            subscriptions.forEach(s => {
+                if (from === undefined || s.blockAtTimeOfSubscription < from) {
+                    from = s.blockAtTimeOfSubscription;
+                }
+            });
+        }
+
+        const to = from! + GET_LOGS_BLOCK_RANGE;
+        return {from: from!, to};
+    }
+
+    public async loadUserSubscriptionsAndGetLogs(
+        from: number,
+        to: number
+    ): Promise<Notification[]> {
+        to = to <= from + GET_LOGS_BLOCK_RANGE ? to : from + GET_LOGS_BLOCK_RANGE;
         const subscriptions = await this.loadUserSubscriptions();
         const promises = subscriptions.map(s => this.getLogsForSubscription(s, from, to));
         const results = await Promise.all(promises);

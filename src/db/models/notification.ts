@@ -1,9 +1,24 @@
-import Model from './base';
 import Sequelize from 'sequelize';
+const Model = require('./base');
 
 const {INTEGER, STRING, JSON, BOOLEAN} = Sequelize.DataTypes;
 
-class Notification extends Model {}
+class Notification extends Model<{
+    id: number;
+    block_number: string;
+    timestamp: number;
+    identity: string;
+    address: string;
+    contract: string;
+    event: string;
+    arguments: Record<string, unknown>;
+    viewed: boolean;
+    log: Record<string, unknown>;
+}> {
+    constructor(...args: unknown[]) {
+        super(...args);
+    }
+}
 
 Notification.init({
     id: {type: INTEGER, autoIncrement: true, primaryKey: true},
