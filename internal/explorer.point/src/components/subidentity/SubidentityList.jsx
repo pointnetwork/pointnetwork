@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import UpgradePointBlogButton from '../UpgradePointBlogButton';
 
 export default function SubidentityList({ subidentities, loading, owner }) {
     if ((!subidentities || subidentities.length === 0) && !loading) {
@@ -22,7 +23,8 @@ export default function SubidentityList({ subidentities, loading, owner }) {
                             <td>
                                 <Link to={`/identities/${s}`} target="_blank">
                                     @{s}
-                                </Link>
+                                </Link>{' '}
+                                <UpgradePointBlogButton subidentity={s} />
                             </td>
                             <td className="mono">{owner.toLowerCase()}</td>
                         </tr>
