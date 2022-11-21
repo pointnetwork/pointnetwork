@@ -196,7 +196,17 @@ class ContractController extends PointSDKController {
         }
     }
 
-    async getEventLogs() {
+    async getUnreadNotifications() {
+        try {
+            const unread = await notifications.loadUnread();
+            return this._status(200)._response(unread);
+        } catch (err) {
+            this.reply.status(500);
+            return this._status(500)._response(err.message ?? 'Unable to get unread notifications from database');
+        }
+    }
+
+    async scanEventLogs() {
         try {
             let from;
             let to;

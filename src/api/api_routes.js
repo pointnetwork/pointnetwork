@@ -143,5 +143,6 @@ module.exports = [
     ['POST', '/v1/api/contract/encodeFunctionCall', 'ContractController@encodeFunctionCall'],
     ['POST', '/v1/api/contract/decodeParameters', 'ContractController@decodeParameters'],
     ['GET', '/v1/api/contract/listEvents/:identity', 'ContractController@listEvents'],
-    ['GET', '/v1/api/notifications', 'ContractController@getEventLogs']
+    ['GET', '/v1/api/notifications/scan', 'ContractController@scanEventLogs'],
+    ['GET', '/v1/api/notifications/unread', 'ContractController@getUnreadNotifications']
 ];

@@ -120,7 +120,7 @@ class Notifications {
             contractName: 'PointSocial',
             contractAddress: '0xF750B8F0988e4FA1c674C7CF9cEda27EBAc621C8',
             eventName: 'StateChange',
-            blockAtTimeOfSubscription: 4_000_000,
+            blockAtTimeOfSubscription: 4_043_000,
             filters: [
                 null,
                 // Filter by creators
@@ -239,14 +239,28 @@ class Notifications {
         return parsedLogs;
     }
 
+    /**
+     * Returns all unread notifications from local database.
+     */
+    public loadUnread(): Promise<Notification[]> {
+        return Notification.findAll({
+            where: {viewed: false},
+            order: [['block_number', 'DESC']]
+        });
+    }
+
+    /**
+     * Returns a block range to be used in paginated requests to fetch notifications.
+     */
     public async getBlockRange(): Promise<{from: number, to: number}> {
         // TODO: optimize this becaues we will load subscriptions again in `loadUserSubscriptionsAndGetLogs`.
         const subscriptions = await this.loadUserSubscriptions();
 
         let from: number;
-        const lastEntry = await Notification.findOne({order: [['timestamp', 'DESC']]});
+        const lastEntry = await Notification.findOne({order: [['block_number', 'DESC']]});
         if (lastEntry) {
             // If there's a notification in the database, we'll start scanning from the next block.
+            // TODO: optimize by storing and using the latest scanned block, not the latest block with events.
             from = Number(lastEntry.get('block_number')) + 1;
         } else {
             // For now, we will use the earliest block for all subscriptions,
@@ -262,16 +276,22 @@ class Notifications {
         return {from: from!, to};
     }
 
+    /**
+     * Fetches new notifications from blockchain, stores them in local database and returns them.
+     * It uses pagination, more than 1 request may be needed to scan all corresponding blocks.
+     *
+     * TODO: make subscription to receive future events.
+     */
     public async loadUserSubscriptionsAndGetLogs(
         from: number,
         to: number
     ): Promise<Notification[]> {
+        // Ensure block range stays within the allowed limit.
         to = to <= from + GET_LOGS_BLOCK_RANGE ? to : from + GET_LOGS_BLOCK_RANGE;
         const subscriptions = await this.loadUserSubscriptions();
         const promises = subscriptions.map(s => this.getLogsForSubscription(s, from, to));
-        const results = await Promise.all(promises);
-        // TODO: make subscription to receive future events.
-        return results.flat(1);
+        const result = await Promise.all(promises);
+        return result.flat(1);
     }
 }
 
