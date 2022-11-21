@@ -143,7 +143,7 @@ module.exports = [
     ['POST', '/v1/api/contract/encodeFunctionCall', 'ContractController@encodeFunctionCall'],
     ['POST', '/v1/api/contract/decodeParameters', 'ContractController@decodeParameters'],
     ['GET', '/v1/api/contract/listEvents/:identity', 'ContractController@listEvents'],
-    ['GET', '/v1/api/notifications/scan', 'ContractController@scanEventLogs'],
-    ['GET', '/v1/api/notifications/unread', 'ContractController@getUnreadNotifications'],
-    ['PUT', '/v1/api/notifications/read/:id', 'ContractController@markRead']
+    ['GET', '/v1/api/notifications/scan', 'NotificationController@scanEventLogs'],
+    ['GET', '/v1/api/notifications/unread', 'NotificationController@getUnreadNotifications'],
+    ['PUT', '/v1/api/notifications/read/:id', 'NotificationController@markRead']
 ];
