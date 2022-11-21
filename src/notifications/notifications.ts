@@ -293,6 +293,14 @@ class Notifications {
         const result = await Promise.all(promises);
         return result.flat(1);
     }
+
+    /**
+     * Marks a notification as _read_ in the database.
+     */
+    public async markRead(id: number): Promise<number> {
+        const [affected] = await Notification.update({viewed: true}, {where: {id}});
+        return affected;
+    }
 }
 
 const EXPIRATION_SECS = 2 * 60;

@@ -243,6 +243,25 @@ class ContractController extends PointSDKController {
             return this._status(500)._response(err.message ?? 'Unable to get event logs');
         }
     }
+
+    async markRead() {
+        try {
+            const {id} = this.req.params;
+            if (!id || Number.isNaN(Number(id))) {
+                this.reply.status(400);
+                return this._status(400)._response(`Invalid notificaiton id "${id}"`);
+            }
+            const affected = await notifications.markRead(id);
+            if (affected === 0) {
+                this.reply.status(404);
+                return this._status(404)._response(`Notificaiton #"${id}" not found`);
+            }
+            return this._status(200)._response(`Marked notification #${id} as read`);
+        } catch (err) {
+            this.reply.status(500);
+            return this._status(500)._response(err.message ?? 'Error marking notification as read');
+        }
+    }
 }
 
 module.exports = ContractController;
