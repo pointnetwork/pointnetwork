@@ -145,5 +145,5 @@ module.exports = [
     ['GET', '/v1/api/contract/listEvents/:identity', 'ContractController@listEvents'],
     ['GET', '/v1/api/notifications/scan', 'NotificationController@scanEventLogs'],
     ['GET', '/v1/api/notifications/unread', 'NotificationController@getUnreadNotifications'],
-    ['PUT', '/v1/api/notifications/read/:id', 'NotificationController@markRead']
+    ['GET', '/v1/api/notifications/read/:id', 'NotificationController@markRead']
 ];
