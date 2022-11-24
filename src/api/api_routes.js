@@ -13,12 +13,6 @@ module.exports = [
     ],
     [
         'GET',
-        '/v1/api/identity/ikvList/:identity',
-        'IdentityController@IKVList',
-        {protected: true}
-    ],
-    [
-        'GET',
         '/v1/api/identity/ownerToIdentity/:owner',
         'IdentityController@ownerToIdentity',
         {protected: true}
