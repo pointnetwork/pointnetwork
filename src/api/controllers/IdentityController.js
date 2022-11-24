@@ -371,17 +371,17 @@ class IdentityController extends PointSDKController {
     }
 
     async registerSubIdentity() {
-        const {subidentity, parentIdentity, _csrf} = this.req.body;
-        const {host} = this.req.headers;
+        const {subidentity, parentIdentity} = this.req.body;
+        // const {host} = this.req.headers;
 
-        if (host !== 'point') {
-            return this.rep.status(403).send('Forbidden');
-        }
+        // if (host !== 'point') {
+        //     return this.rep.status(403).send('Forbidden');
+        // }
 
         //check the csrf token to register an subidentity
-        if (_csrf !== csrfTokens.point) {
-            return this.rep.status(403).send('CSRF token invalid');
-        }
+        // if (_csrf !== csrfTokens.point) {
+        //     return this.rep.status(403).send('CSRF token invalid');
+        // }
 
         const publicKey = getNetworkPublicKey();
         const owner = getNetworkAddress();

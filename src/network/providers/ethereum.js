@@ -276,7 +276,8 @@ ethereum.loadWebsiteContract = async (
 ) => {
     // todo: make it nicer, extend to all potential contracts, and add to docs
     // @ means internal contract for Point Network (truffle/contracts)
-    if ((target === '@' || target === 'point') && contractName === 'Identity') {
+    // adding blog.point to the whitelist since this needs to load Identity for the wizard
+    if ((target === '@' || target === 'point' || target === 'blog.point') && contractName === 'Identity') {
         return ethereum.loadIdentityContract();
     }
 
