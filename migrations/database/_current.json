@@ -166,7 +166,7 @@
             "schema": {
                 "id": {
                     "allowNull": false,
-                    "unique": true,
+                    "autoIncrement": true,
                     "primaryKey": true,
                     "field": "id",
                     "seqType": "Sequelize.INTEGER"
@@ -341,8 +341,8 @@
             }
         }
     },
-    "path": "/Users/denisvoropaev/Developer/pointnetwork/pointnetwork/migrations/database/_current.json",
-    "backupPath": "/Users/denisvoropaev/Developer/pointnetwork/pointnetwork/migrations/database/_current_bak.json",
+    "path": "/home/german/Documents/pointlabs/code/pointnetwork/migrations/database/_current.json",
+    "backupPath": "/home/german/Documents/pointlabs/code/pointnetwork/migrations/database/_current_bak.json",
     "exists": true,
-    "revision": 7
+    "revision": 8
 }
