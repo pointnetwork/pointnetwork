@@ -160,10 +160,174 @@
                     }
                 }
             }
+        },
+        "notifications": {
+            "tableName": "notifications",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "unique": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "block_number": {
+                    "allowNull": false,
+                    "field": "block_number",
+                    "seqType": "Sequelize.STRING"
+                },
+                "timestamp": {
+                    "allowNull": false,
+                    "field": "timestamp",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "identity": {
+                    "allowNull": true,
+                    "field": "identity",
+                    "seqType": "Sequelize.STRING"
+                },
+                "address": {
+                    "allowNull": false,
+                    "field": "address",
+                    "seqType": "Sequelize.STRING"
+                },
+                "contract": {
+                    "allowNull": true,
+                    "field": "contract",
+                    "seqType": "Sequelize.STRING"
+                },
+                "event": {
+                    "allowNull": true,
+                    "field": "event",
+                    "seqType": "Sequelize.STRING"
+                },
+                "arguments": {
+                    "allowNull": true,
+                    "field": "arguments",
+                    "seqType": "Sequelize.JSON"
+                },
+                "viewed": {
+                    "allowNull": false,
+                    "default": false,
+                    "field": "viewed",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "log": {
+                    "allowNull": false,
+                    "field": "log",
+                    "seqType": "Sequelize.JSON"
+                },
+                "created_at": {
+                    "allowNull": false,
+                    "field": "created_at",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updated_at": {
+                    "allowNull": false,
+                    "field": "updated_at",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": {
+                "9acab48a2cb7ddf44f67023f661a4333141243b7": {
+                    "fields": [
+                        "id"
+                    ],
+                    "name": "notifications_id",
+                    "options": {
+                        "indexName": "notifications_id",
+                        "name": "notifications_id"
+                    }
+                },
+                "0f059bf212f69499435f522bdb22b97f9f033af7": {
+                    "fields": [
+                        "viewed"
+                    ],
+                    "name": "notifications_viewed",
+                    "options": {
+                        "indexName": "notifications_viewed",
+                        "name": "notifications_viewed"
+                    }
+                },
+                "59718b031b8e11d6de4d0f4d1ef57e06310a4c24": {
+                    "fields": [
+                        "address"
+                    ],
+                    "name": "notifications_address",
+                    "options": {
+                        "indexName": "notifications_address",
+                        "name": "notifications_address"
+                    }
+                },
+                "6da8801af141bfddab225498cea81e28d7bd9f6c": {
+                    "fields": [
+                        "address",
+                        "event"
+                    ],
+                    "name": "notifications_address_event",
+                    "options": {
+                        "indexName": "notifications_address_event",
+                        "name": "notifications_address_event"
+                    }
+                },
+                "cc9e538da39a1d85104fa21523151eba6fbac608": {
+                    "fields": [
+                        "identity"
+                    ],
+                    "name": "notifications_identity",
+                    "options": {
+                        "indexName": "notifications_identity",
+                        "name": "notifications_identity"
+                    }
+                },
+                "06d98eaa3bb65bebace8473d1eb4a32ac7024cfa": {
+                    "fields": [
+                        "identity",
+                        "contract"
+                    ],
+                    "name": "notifications_identity_contract",
+                    "options": {
+                        "indexName": "notifications_identity_contract",
+                        "name": "notifications_identity_contract"
+                    }
+                },
+                "1c82d4da20e630ba95cb162284285d22d52bf6ba": {
+                    "fields": [
+                        "identity",
+                        "contract",
+                        "event"
+                    ],
+                    "name": "notifications_identity_contract_event",
+                    "options": {
+                        "indexName": "notifications_identity_contract_event",
+                        "name": "notifications_identity_contract_event"
+                    }
+                },
+                "946135a211ba02c21d8dea5ad2c849b04a22566e": {
+                    "fields": [
+                        "block_number"
+                    ],
+                    "name": "notifications_block_number",
+                    "options": {
+                        "indexName": "notifications_block_number",
+                        "name": "notifications_block_number"
+                    }
+                },
+                "07a970f20377993b515836219fd52cfc29424a02": {
+                    "fields": [
+                        "timestamp"
+                    ],
+                    "name": "notifications_timestamp",
+                    "options": {
+                        "indexName": "notifications_timestamp",
+                        "name": "notifications_timestamp"
+                    }
+                }
+            }
         }
     },
-    "path": "/home/vmubnt/pointnet/src/pointnetwork/migrations/database/_current.json",
-    "backupPath": "/home/vmubnt/pointnet/src/pointnetwork/migrations/database/_current_bak.json",
+    "path": "/Users/denisvoropaev/Developer/pointnetwork/pointnetwork/migrations/database/_current.json",
+    "backupPath": "/Users/denisvoropaev/Developer/pointnetwork/pointnetwork/migrations/database/_current_bak.json",
     "exists": true,
-    "revision": 5
+    "revision": 7
 }
