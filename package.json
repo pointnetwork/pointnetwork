@@ -54,7 +54,7 @@
     "is-svg": "^4.3.2",
     "js-yaml": "^4.1.0",
     "jsdom": "^20.0.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.32",
     "node-cache": "^5.1.2",
