@@ -223,6 +223,7 @@ const ethereum = {};
 ethereum.loadPointContract = async (
     contractName,
     at,
+
     basepath = path.resolve(__dirname, '..', '..')
 ) => {
     if (!(contractName in abisByContractName)) {

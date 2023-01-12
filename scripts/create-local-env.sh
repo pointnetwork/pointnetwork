@@ -82,6 +82,10 @@ echo 'Creating token in ~/workspace/pn/devlocal/keystore/token.txt'
 echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/devlocal/keystore/token.txt
 echo "cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json"
 cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json
+echo "cp ../point-contracts/build/contracts/Subscription.sol/Subscription.json ~/workspace/pn/devlocal/contracts/Subscription.json"
+cp ../point-contracts/build/contracts/Subscription.sol/Subscription.json ~/workspace/pn/devlocal/contracts/Subscription.json
+echo "cp ../point-contracts/build/contracts/WPOINT.sol/WPOINT.json ~/workspace/pn/devlocal/contracts/WPOINT.json"
+cp ../point-contracts/build/contracts/WPOINT.sol/WPOINT.json ~/workspace/pn/devlocal/contracts/WPOINT.json
 
 echo "mkdir -p ~/workspace/pn/visitlocal/keystore"
 mkdir -p ~/workspace/pn/visitlocal/keystore
@@ -96,6 +100,10 @@ echo 'Creating token in ~/workspace/pn/visitlocal/keystore/token.txt'
 echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/visitlocal/keystore/token.txt
 echo "cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json"
 cp ../point-contracts/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json
+echo "cp ../point-contracts/build/contracts/Subscription.sol/Subscription.json ~/workspace/pn/visitlocal/contracts/Subscription.json"
+cp ../point-contracts/build/contracts/Subscription.sol/Subscription.json ~/workspace/pn/visitlocal/contracts/Subscription.json
+echo "cp ../point-contracts/build/contracts/WPOINT.sol/WPOINT.json ~/workspace/pn/visitlocal/contracts/WPOINT.json"
+cp ../point-contracts/build/contracts/WPOINT.sol/WPOINT.json ~/workspace/pn/visitlocal/contracts/WPOINT.json
 
 #installing local node
 echo "installing local node"

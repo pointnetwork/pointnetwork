@@ -117,11 +117,24 @@ if (program.datadir) {
 
 if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
     const identityContractAddress = getContractAddress('Identity');
+    const subscriptionContractAddress = getContractAddress('Subscription');
+    const wpointContractAddress = getContractAddress('WPOINT');
 
     if (!identityContractAddress) {
         throw new Error('Could not get Identity contract address');
     }
+
+    if (!subscriptionContractAddress) {
+        throw new Error('Could not get Subscription contract address');
+    }
+
+    if (!wpointContractAddress) {
+        throw new Error('Could not get WPOINT contract address');
+    }
+
     process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
+    process.env.SUBSCRIPTION_CONTRACT_ADDRESS = subscriptionContractAddress;
+    process.env.WPOINT_CONTRACT_ADDRESS = wpointContractAddress;
 }
 
 // ------------------- Init Logger ----------------- //
@@ -254,7 +267,7 @@ if (program.compile) {
     }
 
     const contractPath = path.resolve(__dirname, '..', 'hardhat', 'contracts');
-    const contracts = ['Identity'];
+    const contracts = ['Identity', 'Subscription', 'WPOINT'];
 
     Promise.all(
         contracts.map(name =>

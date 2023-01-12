@@ -28,5 +28,6 @@ network:
   web3:
     local:
       identity_contract_address: IDENTITY_CONTRACT_ADDRESS
+      subscription_contract_address: SUBSCRIPTION_CONTRACT_ADDRESS
 wallet:
   keystore_path: POINT_KEYSTORE
