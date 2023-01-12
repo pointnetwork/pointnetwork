@@ -142,5 +142,10 @@ module.exports = [
     ['GET', '/v1/api/blockchain/networks', 'BlockchainController@networks', {protected: true}],
     ['POST', '/v1/api/contract/encodeFunctionCall', 'ContractController@encodeFunctionCall'],
     ['POST', '/v1/api/contract/decodeParameters', 'ContractController@decodeParameters'],
-    ['GET', '/v1/api/contract/listEvents/:identity', 'ContractController@listEvents']
+    ['GET', '/v1/api/contract/listEvents/:identity', 'ContractController@listEvents'],
+    ['POST',
+        '/v1/api/subscription/subscribe',
+        'SubscriptionController@subscribe'
+        // {protected: true, gatewayDisabled: true}
+    ]
 ];

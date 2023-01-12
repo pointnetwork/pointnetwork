@@ -26,6 +26,10 @@ if [ -d ../point-contracts ]; then
     rm -rf .openzeppelin
     echo "rm resources/Identity-address.json"
     rm -f resources/Identity-address.json
+    echo "rm resources/Subscription-address.json"
+    rm -f resources/Subscription-address.json
+    echo "rm resources/WPOINT-address.json"
+    rm -f resources/WPOINT-address.json
     echo "rm resources/unknown-1337.json"
     rm -f resources/unknown-1337.json
     cd ../pointnetwork
@@ -48,6 +52,10 @@ echo 'Creating token in ~/workspace/pn/devlocal/keystore/token.txt'
 echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/devlocal/keystore/token.txt
 echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json"
 cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/devlocal/contracts/Identity.json
+echo "cp hardhat/build/contracts/Subscription.sol/Subscription.json ~/workspace/pn/devlocal/contracts/Subscription.json"
+cp hardhat/build/contracts/Subscription.sol/Subscription.json ~/workspace/pn/devlocal/contracts/Subscription.json
+echo "cp hardhat/build/contracts/WPOINT.sol/WPOINT.json ~/workspace/pn/devlocal/contracts/WPOINT.json"
+cp hardhat/build/contracts/WPOINT.sol/WPOINT.json ~/workspace/pn/devlocal/contracts/WPOINT.json
 
 echo "mkdir -p ~/workspace/pn/visitlocal/keystore"
 mkdir -p ~/workspace/pn/visitlocal/keystore
@@ -60,3 +68,7 @@ echo 'Creating token in ~/workspace/pn/visitlocal/keystore/token.txt'
 echo 'xGrqHMNXLhjEubp1soD0hHN6nXIBsUwA' > ~/workspace/pn/visitlocal/keystore/token.txt
 echo "cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json"
 cp hardhat/build/contracts/Identity.sol/Identity.json ~/workspace/pn/visitlocal/contracts/Identity.json
+echo "cp hardhat/build/contracts/Subscription.sol/Subscription.json ~/workspace/pn/visitlocal/contracts/Subscription.json"
+cp hardhat/build/contracts/Subscription.sol/Subscription.json ~/workspace/pn/visitlocal/contracts/Subscription.json
+echo "cp hardhat/build/contracts/WPOINT.sol/WPOINT.json ~/workspace/pn/visitlocal/contracts/WPOINT.json"
+cp hardhat/build/contracts/WPOINT.sol/WPOINT.json ~/workspace/pn/visitlocal/contracts/WPOINT.json

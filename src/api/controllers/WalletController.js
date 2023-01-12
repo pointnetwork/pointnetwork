@@ -1,5 +1,5 @@
 const PointSDKController = require('./PointSDKController');
-const ethereumjs = require('ethereumjs-util');
+const {ethereumjs} = require('ethereumjs-util');
 const ethereum = require('../../network/providers/ethereum');
 const {getNetworkPublicKey, getNetworkPrivateKey} = require('../../wallet/keystore');
 const {
