@@ -14,7 +14,7 @@ const Header = ({ isRegistered }) => {
                 <Container>
                     <img src={logo} className="imgLogo" alt="Point Network" />
                     <LinkContainer to="/">
-                        <Navbar.Brand href="/point">Point Network</Navbar.Brand>
+                        <Navbar.Brand href="/point">Point Home</Navbar.Brand>
                     </LinkContainer>
                     <Navbar.Toggle aria-controls="responsive-navbar-nav" />
 

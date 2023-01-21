@@ -194,7 +194,8 @@ a.nav-link:not(.active):hover {
 }
 
 .warning-banner {
-    background: linear-gradient(90deg, rgba(71,53,17,1) 0%, rgba(223,180,0,1) 35%, rgba(237,208,12,1) 100%);
+    /*background: linear-gradient(90deg, rgba(71,53,17,1) 0%, rgba(223,180,0,1) 35%, rgba(237,208,12,1) 100%);*/
+    background: linear-gradient(90deg, #000046 0%, #1cb5e0 100%);
     color: rgb(255, 255, 255);
     font-family: "Source Sans Pro", sans-serif;
     font-size: 1.1rem;
