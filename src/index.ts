@@ -104,9 +104,6 @@ program
         program.upload = path;
     });
 
-// program.option('--shutdown', 'sends the shutdown signal to the daemon'); // todo
-// program.option('--daemon', 'sends the daemon to the background'); // todo
-// program.option('--rpc <method> [params]', 'send a command to the daemon'); // todo
 program.parse(process.argv);
 
 // ------------------ Patch Config ------------ //
