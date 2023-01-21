@@ -1,7 +1,6 @@
 const path = require('path');
 const fs = require('fs-extra');
-const logger = require('../../../core/log');
-const log = logger.child({module: 'Deployer'});
+const log = require('../../../core/log').child({module: 'Deployer'});
 const {
     compileContract,
     getImportsFactory,
@@ -27,6 +26,11 @@ const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
 const POINT_SDK_VERSION = 'zweb/point/sdk/version';
 const POINT_NODE_VERSION = 'zweb/point/node/version';
 const DATADIR = resolveHome(config.get('datadir'));
+
+const err = (obj, errMsg) => {
+    log.error(obj, errMsg);
+    throw new Error(errMsg);
+};
 
 /**
  * Class responsible to deploy DApps in Point Network.
@@ -186,13 +190,7 @@ class Deployer {
         if (this.isNewBaseVersionValid(lastVersion, baseVersion)) {
             return this.getNewPatchedVersion(lastVersion, baseVersion);
         } else {
-            log.error(
-                {baseVersion, lastVersion},
-                'Base version should be greater or equal to MAJOR.MINOR of lastVersion.'
-            );
-            throw new Error(
-                `'Base version ${baseVersion} should be greater or equal to MAJOR.MINOR of lastVersion ${lastVersion}.'`
-            );
+            err({baseVersion, lastVersion}, `'Base version ${baseVersion} should be greater or equal to MAJOR.MINOR of lastVersion ${lastVersion}.'`);
         }
     }
 
@@ -214,7 +212,7 @@ class Deployer {
      * @param {boolean} dev - If the dev flag is set
      * @returns {object} - {target - string target to deploy, isPointTarget - boolean - if is .point domain, identity - string, isAlias - if it is an alias}
      */
-    getTargetAndIdentity(config, contracts, dev) {
+    _getTargetAndIdentity(config, contracts, dev) {
         let identity;
         let target;
         let isPointTarget;
@@ -224,18 +222,14 @@ class Deployer {
         if (config.target.endsWith('.sol') || config.target.endsWith('.eth')) {
             // For now, we don't support SNS nor ENS in devnets.
             if (dev) {
-                const errMsg = `"dev" deployments are only supported for .point domains at the moment (trying to deploy ${config.target})`;
-                log.error({target: config.target, dev}, errMsg);
-                throw new Error(errMsg);
+                err({target: config.target, dev}, `"dev" deployments are only supported for .point domains at the moment (trying to deploy ${config.target})`);
             }
 
             // Deployment of sites with contracts is only supported for .point domains as we need to store
             // several things in the Identity contract.
             // If the target is not .point and it includes contracts, it has to be an alias to a .point domain.
             if (!config.alias && contracts) {
-                const errMsg = `Contracts is an advanced Point functionality only supported by .point domains at the moment. You need to specify a Point identity in the "alias" key in your deployment config`;
-                log.error({target: config.target, alias: config.alias, contracts}, errMsg);
-                throw new Error(errMsg);
+                err({target: config.target, alias: config.alias, contracts}, `Contracts is an advanced Point functionality only supported by .point domains at the moment. You need to specify a Point identity in the "alias" key in your deployment config`);
             }
 
             target = config.target;
@@ -262,13 +256,10 @@ class Deployer {
      * 
      * @throws Error if the address is not authorized as a deployer of the identity
      */
-    async ensureIsDeployer(identity, owner) {
+    async ensureIsDeployerOrFail(identity, owner) {
         const isDeployer = await blockchain.isIdentityDeployer(identity, owner);
         if (!isDeployer) {
-            log.error({identity, owner}, 'The address is not allowed to deploy this identity');
-            throw new Error(
-                `The address ${owner} is not allowed to deploy on ${identity} identity`
-            );
+            err({identity, owner}, `The address ${owner} is not allowed to deploy on ${identity} identity`);
         }
     }
 
@@ -596,7 +587,7 @@ class Deployer {
     }
 
     /**
-     * Get the chain id from the connected blochain using hardhat and ethers default provider.
+     * Get the chain id from the connected blockchain using hardhat and ethers default provider.
      * 
      * @returns {number} chain id.
      */
@@ -637,9 +628,7 @@ class Deployer {
             const {owner: domainOwner, content} = await solana.resolveDomain(target, network);
 
             if (solanaAddress !== domainOwner) {
-                const errMsg = `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${solanaAddress}). Also, please make sure you have some SOL in your Point Wallet to cover transaction fees.`;
-                log.error({solanaAddress, target, domainOwner}, errMsg);
-                throw new Error(errMsg);
+                err({solanaAddress, target, domainOwner}, `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${solanaAddress}). Also, please make sure you have some SOL in your Point Wallet to cover transaction fees.`);
             }
 
             return {domainOwner, content};
@@ -664,9 +653,7 @@ class Deployer {
             const domainOwner = typeof owner === 'string' && owner.toLowerCase();
 
             if (ethereumAddress !== domainOwner) {
-                const errMsg = `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${ethereumAddress}). Also, please make sure you have some ETH in your Point Wallet to cover transaction fees.`;
-                log.error({ethereumAddress, target, domainOwner}, errMsg);
-                throw new Error(errMsg);
+                err({ethereumAddress, target, domainOwner}, `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${ethereumAddress}). Also, please make sure you have some ETH in your Point Wallet to cover transaction fees.`);
             }
 
             return {domainOwner, content};
@@ -708,6 +695,25 @@ class Deployer {
      * @param {boolean} forceDeployProxy - Flag that indicate if will force to deploy a new proxy or not (only for upgradable contracts)
      * @param {object} config - Configuration object loaded from deployment description of the Dapp (point.deploy.json)
      */
+
+    async _loadDeployConfig() {
+        const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
+        const deployConfigFile = await fs.readFile(deployConfigFilePath, 'utf-8');
+        return JSON.parse(deployConfigFile);
+    }
+
+    async _validateDeployConfigOrFail(deployConfig) {
+        //check if all entries needed in point.deploy.json are present in the parameters
+        if (
+            !deployConfig.hasOwnProperty('version') ||
+            !deployConfig.hasOwnProperty('target') ||
+            !deployConfig.hasOwnProperty('keyvalue') ||
+            !deployConfig.hasOwnProperty('contracts')
+        ) {
+            err({}, 'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.');
+        }
+    }
+
     async deploy({
         deployPath,
         deployContracts = false,
@@ -715,30 +721,12 @@ class Deployer {
         forceDeployProxy = false,
         config
     }) {
-        //loads the config file
-        let deployConfig = config;
-        if (!deployConfig) {
-            // todo: error handling, as usual
-            const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
-            const deployConfigFile = await fs.readFile(deployConfigFilePath, 'utf-8');
-            deployConfig = JSON.parse(deployConfigFile);
-        }
-
-        //check if all entries needed in point.deploy.json are present in the parameter
-        if (
-            !deployConfig.hasOwnProperty('version') ||
-            !deployConfig.hasOwnProperty('target') ||
-            !deployConfig.hasOwnProperty('keyvalue') ||
-            !deployConfig.hasOwnProperty('contracts')
-        ) {
-            const errMsg =
-                'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.';
-            log.error(errMsg);
-            throw new Error(errMsg);
-        }
+        //load and validate the config file
+        const deployConfig = config || await this._loadDeployConfig();
+        this._validateDeployConfigOrFail(deployConfig);
 
         //load targed and identity data
-        const {target, isPointTarget, identity, isAlias} = this.getTargetAndIdentity(
+        const {target, isPointTarget, identity, isAlias} = this._getTargetAndIdentity(
             deployConfig,
             deployContracts,
             dev
@@ -781,7 +769,7 @@ class Deployer {
 
             //if is registered checks if the owner has access to deploy to this identity
             if (identityIsRegistered) {
-                await this.ensureIsDeployer(identity, owner);
+                await this.ensureIsDeployerOrFail(identity, owner);
             } else {
                 //In zappdev env is possible to deploy to a not registered yet identity.
                 //This makes easy the development because you just deploy the DApp
