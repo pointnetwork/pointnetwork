@@ -904,6 +904,16 @@ ethereum.getKeyValue = async (
     versionSearchStrategy = 'exact',
     followCopyFromIkv = false
 ) => {
+    if (identity.endsWith('.local')) {
+        return await ethereum.getKeyValue(
+            identity.replace('.local', '.point'),
+            key,
+            version,
+            versionSearchStrategy,
+            false
+        );
+    }
+
     // Process @@copy_from_ikv instruction if followCopyFromIkv is set to true
     if (followCopyFromIkv) {
         // self invoke to get the value first but without redirection
