@@ -1,3 +1,5 @@
+import { toFixedFloor } from '../../helpers';
+
 export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
     return (
         <tr key={wallet.currency_code} className="wallet-row">
@@ -19,7 +21,7 @@ export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
             <td className="align-middle" style={{ textAlign: 'right' }}>
                 {isNaN(Number(wallet.balance))
                     ? wallet.balance
-                    : wallet.balance.toFixed(8)}{' '}
+                    : toFixedFloor(wallet.balance, 8)}{' '}
                 {wallet.currency_code}
             </td>
             <td className="wallet-actions align-middle">

@@ -1,3 +1,5 @@
+import { toFixedFloor } from '../../helpers';
+
 export default function TokenRow({ token, network, openSendModal }) {
     const decimals =
         token.decimals || token.decimals === 0 ? token.decimals : 18;
@@ -21,7 +23,9 @@ export default function TokenRow({ token, network, openSendModal }) {
 
             <td className="wallet-address align-middle">{token.address}</td>
             <td className="align-middle" style={{ textAlign: 'right' }}>
-                {token.balance}
+                {isNaN(Number(token.balance))
+                    ? token.balance
+                    : toFixedFloor(Number(token.balance), 8)}{' '}
             </td>
             <td className="wallet-actions align-middle">
                 <a
