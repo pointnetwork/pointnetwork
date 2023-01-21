@@ -1,16 +1,3 @@
-import pointLogo from '../../assets/pointlogo.png';
-import solanaIcon from '../../assets/solana.svg';
-import rinkebyIcon from '../../assets/rinkeby.svg';
-
-const NETWORK_ICONS = {
-    mainnet: pointLogo,
-    local: pointLogo,
-    xnet: pointLogo,
-    solana: solanaIcon,
-    solana_devnet: solanaIcon,
-    rinkeby: rinkebyIcon,
-};
-
 export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
     return (
         <tr key={wallet.currency_code} className="wallet-row">
@@ -18,10 +5,7 @@ export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
                 <div className="icon">
                     <img
                         alt={wallet.network}
-                        src={NETWORK_ICONS[wallet.network]}
-                        onError={({ currentTarget }) => {
-                            currentTarget.src = pointLogo;
-                        }}
+                        src={'../../assets/coins/' + wallet.icon + '.png'}
                     />
                 </div>
                 <div className="data">

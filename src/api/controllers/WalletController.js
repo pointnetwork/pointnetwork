@@ -90,7 +90,7 @@ class WalletController extends PointSDKController {
                                         );
                                         alias = snsData.identity ?? '';
                                         break;
-                                    case 'rinkeby':
+                                    case 'goerli':
                                         const ensData = await timeout(
                                             getIdentity({targets: ['ethereum']}),
                                             5000,
@@ -107,11 +107,14 @@ class WalletController extends PointSDKController {
                         })()
                     ]);
 
+                    const info = networks[network];
+
                     return {
                         network,
-                        type: networks[network].type,
-                        currency_name: networks[network].currency_name,
-                        currency_code: networks[network].currency_code,
+                        type: info.type,
+                        currency_name: info.currency_name,
+                        currency_code: info.currency_code,
+                        icon: info.icon || null,
                         // TODO: improve this condition as we will have multiple point networks
                         address:
                             network === DEFAULT_NETWORK

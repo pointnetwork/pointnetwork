@@ -1,23 +1,8 @@
-import pointLogo from '../../assets/pointlogo.png';
-import usdcIcon from '../../assets/usdc.svg';
-import usdtIcon from '../../assets/usdt.svg';
-import daiIcon from '../../assets/dai.svg';
-
-const TOKEN_ICONS = {
-    USDC: usdcIcon,
-    USDT: usdtIcon,
-    DAI: daiIcon,
-};
-
-const TOKEN_NAMES = {
-    USDC: 'USD Coin',
-    USDT: 'Tether',
-    DAI: 'Dai',
-};
-
 export default function TokenRow({ token, network, openSendModal }) {
     const decimals =
         token.decimals || token.decimals === 0 ? token.decimals : 18;
+
+    const iconFileName = token.name.toLowerCase() + '.png';
 
     return (
         <tr key={token.address} className="wallet-row">
@@ -25,14 +10,11 @@ export default function TokenRow({ token, network, openSendModal }) {
                 <div className="icon">
                     <img
                         alt={token.name}
-                        src={TOKEN_ICONS[token.name]}
-                        onError={({ currentTarget }) => {
-                            currentTarget.src = pointLogo;
-                        }}
+                        src={'../../assets/coins/' + iconFileName}
                     />
                 </div>
                 <div className="data">
-                    <strong>{TOKEN_NAMES[token.name]}</strong>
+                    <strong>{token.name}</strong>
                     <span>{token.name}</span>
                 </div>
             </td>
