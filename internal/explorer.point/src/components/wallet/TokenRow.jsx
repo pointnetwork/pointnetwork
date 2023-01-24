@@ -6,6 +6,12 @@ export default function TokenRow({ token, network, openSendModal }) {
 
     const iconFileName = token.name.toLowerCase() + '.png';
 
+    const balance = isNaN(Number(token.balance))
+        ? token.balance
+        : toFixedFloor(Number(token.balance), 8);
+    const integerPart = balance.split('.')[0];
+    const decimalPart = balance.split('.')[1];
+
     return (
         <tr key={token.address} className="wallet-row">
             <td className="wallet-information">
@@ -23,9 +29,11 @@ export default function TokenRow({ token, network, openSendModal }) {
 
             <td className="wallet-address align-middle">{token.address}</td>
             <td className="align-middle" style={{ textAlign: 'right' }}>
-                {isNaN(Number(token.balance))
-                    ? token.balance
-                    : toFixedFloor(Number(token.balance), 8)}{' '}
+                <span>{integerPart}</span>
+                <span className={'text-muted'}>.{decimalPart}</span>{' '}
+            </td>
+            <td className="align-middle" style={{ textAlign: 'left' }}>
+                {token.name}{' '}
             </td>
             <td className="wallet-actions align-middle">
                 <a

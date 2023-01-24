@@ -16,10 +16,6 @@
     border: none;
 }
 
-.mono {
-    font-family: "Lucida Console", Courier, monospace;
-}
-
 a {
     color: #438fa6;
 }
@@ -370,4 +366,38 @@ a.nav-link:not(.active):hover {
     .wallet-row td {
         white-space: nowrap;
     }
+}
+
+/* noto-sans-mono-regular - latin */
+@font-face {
+    font-family: 'Noto Sans Mono';
+    font-style: normal;
+    font-weight: 400;
+    src: url('/assets/fonts/noto-sans-mono-v21-latin-regular.eot'); /* IE9 Compat Modes */
+    src: local(''),
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.woff') format('woff'), /* Modern Browsers */
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.svg#NotoSansMono') format('svg'); /* Legacy iOS */
+}
+/* noto-sans-mono-700 - latin */
+@font-face {
+    font-family: 'Noto Sans Mono';
+    font-style: normal;
+    font-weight: 700;
+    src: url('/assets/fonts/noto-sans-mono-v21-latin-700.eot'); /* IE9 Compat Modes */
+    src: local(''),
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.woff') format('woff'), /* Modern Browsers */
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.svg#NotoSansMono') format('svg'); /* Legacy iOS */
+}
+
+td, .mono, input {
+    /* todo: scope <td> more narrowly, to not affect every table ever in Point Home! */
+
+    /* monospace */
+    font-family: 'Noto Sans Mono', 'Courier', 'Courier New', monospace;
 }
