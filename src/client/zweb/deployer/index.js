@@ -696,7 +696,7 @@ class Deployer {
      * @param {object} config - Configuration object loaded from deployment description of the Dapp (point.deploy.json)
      */
 
-    async _loadDeployConfig() {
+    async _loadDeployConfig(deployPath) {
         const deployConfigFilePath = path.join(deployPath, 'point.deploy.json');
         const deployConfigFile = await fs.readFile(deployConfigFilePath, 'utf-8');
         return JSON.parse(deployConfigFile);
@@ -722,7 +722,7 @@ class Deployer {
         config
     }) {
         //load and validate the config file
-        const deployConfig = config || await this._loadDeployConfig();
+        const deployConfig = config || await this._loadDeployConfig(deployPath);
         this._validateDeployConfigOrFail(deployConfig);
 
         //load targed and identity data
