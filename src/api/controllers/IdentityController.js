@@ -488,7 +488,7 @@ class IdentityController extends PointSDKController {
         } catch (e) {
             log.error('IKV Put error');
             log.error(e);
-            this.rep.status(500).send('Internal server error');
+            this.rep.status(500).send('Internal engine error');
         }
     }
 }
