@@ -135,7 +135,7 @@
     "start:zappdev": "cross-env NODE_CONFIG_ENV=zappdev MODE=zappdev npm run watch",
     "start:dev": "cross-env npm run watch",
     "start:e2e": "cross-env NODE_CONFIG_ENV=e2e MODE=e2e npm run watch",
-    "watch": "npm run build:explorer:dev && nodemon",
+    "watch": "nodemon",
     "build": "tsc",
     "build:explorer": "npm run --prefix ./internal/explorer.point build",
     "build:explorer:dev": "npm run --prefix ./internal/explorer.point --ignore-scripts build",
