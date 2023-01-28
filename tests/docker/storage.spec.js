@@ -1,4 +1,4 @@
-import {uploadFile, getFile} from '../../src/client/storage';
+import {uploadData, getFile} from '../../src/client/storage';
 import {delay} from '../../src/util';
 import {get, post} from 'axios';
 import {TIMEOUTS} from '../timeouts';
@@ -10,7 +10,7 @@ describe('Storage upload/download', () => {
         async () => {
             expect.assertions(1);
 
-            id = await uploadFile('Test string');
+            id = await uploadData('Test string');
             expect(id).toBeTruthy();
         },
         TIMEOUTS.LG

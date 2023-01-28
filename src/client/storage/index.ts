@@ -33,7 +33,7 @@ export const FILE_TYPE = {
     dirptr: 'dirptr' // Directory
 } as const;
 
-export const uploadFile = async (data: Buffer | string): Promise<string> => {
+export const uploadData = async (data: Buffer | string): Promise<string> => {
     const buf = Buffer.isBuffer(data) ? data : Buffer.from(data);
     const totalChunks = Math.ceil(buf.length / CHUNK_SIZE);
 
@@ -50,7 +50,7 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
         if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
             log.trace({fileId}, 'File  upload already in progress, waiting');
             await delay(CONCURRENT_DOWNLOAD_DELAY);
-            return uploadFile(data);
+            return uploadData(data);
         }
 
         log.trace({fileId}, 'Starting file upload');
@@ -116,7 +116,7 @@ export const uploadFile = async (data: Buffer | string): Promise<string> => {
     if (file.ul_status === FILE_UPLOAD_STATUS.IN_PROGRESS) {
         log.trace({fileId}, 'File upload already in progress, waiting');
         await delay(CONCURRENT_DOWNLOAD_DELAY);
-        return uploadFile(data);
+        return uploadData(data);
     }
 
     log.trace({fileId}, 'Uploading file');
@@ -195,7 +195,7 @@ export const uploadDir = async (dirPath: string) => {
                 });
             } else {
                 const file = await fs.readFile(filePath);
-                const fileId = await uploadFile(file);
+                const fileId = await uploadData(file);
                 dirInfo.files.push({
                     type: FILE_TYPE.fileptr,
                     name: fileName,
@@ -206,7 +206,7 @@ export const uploadDir = async (dirPath: string) => {
         })
     );
 
-    const id = await uploadFile(JSON.stringify(dirInfo));
+    const id = await uploadData(JSON.stringify(dirInfo));
 
     log.trace({dirPath: escapeString(dirPath)}, 'Successfully uploaded directory');
 

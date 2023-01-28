@@ -184,7 +184,7 @@ if (program.attach) {
 // -------------------- Uploader --------------------- //
 
 if (program.upload) {
-    const {uploadFile, uploadDir} = require('./client/storage');
+    const {uploadData, uploadDir} = require('./client/storage');
     const init = require('./client/storage/init');
 
     const main = async () => {
@@ -199,7 +199,7 @@ if (program.upload) {
             return uploadDir(filePath);
         } else {
             const file = await fs.readFile(filePath);
-            return uploadFile(file);
+            return uploadData(file);
         }
     };
 

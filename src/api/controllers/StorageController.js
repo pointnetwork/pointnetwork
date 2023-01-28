@@ -1,7 +1,7 @@
 const PointSDKController = require('./PointSDKController');
 const File = require('../../db/models/file').default;
 const DEFAULT_ENCODING = 'utf-8';
-const {getFile, uploadFile} = require('../../client/storage');
+const {getFile, uploadData} = require('../../client/storage');
 const config = require('config');
 const detectContentType = require('detect-content-type');
 
@@ -27,7 +27,7 @@ class StorageController extends PointSDKController {
     async putString() {
         const data = this.payload.data;
         if (data) {
-            const id = await uploadFile(data);
+            const id = await uploadData(data);
             return this._response(id);
         } else {
             return this._response(null);

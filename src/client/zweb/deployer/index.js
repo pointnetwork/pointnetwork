@@ -14,7 +14,7 @@ const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
 const {execSync} = require('child_process');
-const {uploadDir, uploadFile, getFile} = require('../../storage');
+const {uploadDir, uploadData, getFile} = require('../../storage');
 const config = require('config');
 const {deployProxy} = require('../../../network/deployer/deployProxy');
 const {getProxyMetadataFilePath} = require('../../../network/deployer');
@@ -539,7 +539,7 @@ class Deployer {
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
                 log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
                 //upload the file
-                const proxyMetadataFileUploadedId = await uploadFile(JSON.stringify(proxyMetadata));
+                const proxyMetadataFileUploadedId = await uploadData(JSON.stringify(proxyMetadata));
                 //update the IKV from metadata file
                 await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
                 log.debug('Proxy metadata updated');
@@ -583,7 +583,7 @@ class Deployer {
         const routes = JSON.parse(routesFile);
 
         log.debug({routes}, 'Uploading route file...');
-        return uploadFile(JSON.stringify(routes));
+        return uploadData(JSON.stringify(routes));
     }
 
     /**
@@ -951,7 +951,7 @@ class Deployer {
         const artifactsJSON = JSON.stringify(artifacts);
 
         //upload the abi string.
-        const artifactsStorageId = await uploadFile(artifactsJSON);
+        const artifactsStorageId = await uploadData(artifactsJSON);
 
         //register the contract address in the IKV system
         await blockchain.putKeyValue(
@@ -1061,7 +1061,7 @@ class Deployer {
                     key = key.replace(/.*storage\[([^\]]+)\].*/, '$1');
 
                     if ('blob' in value) {
-                        const uploaded = await uploadFile(String(value.blob));
+                        const uploaded = await uploadData(String(value.blob));
 
                         value = uploaded;
                     } else if ('file' in value) {
@@ -1073,7 +1073,7 @@ class Deployer {
 
                         const ext = value.file.replace(/.*\.([a-zA-Z0-9]+)$/, '$1');
                         const file = await fs.readFile(filePath);
-                        const cid = await uploadFile(file);
+                        const cid = await uploadData(file);
 
                         value = '/_storage/' + cid + '.' + ext;
                     } else {
@@ -1107,7 +1107,7 @@ class Deployer {
                     const paramNames = paramsTogether.split(',');
                     const params = [];
                     if (value.metadata) {
-                        const metadataHash = await uploadFile(JSON.stringify(value.metadata));
+                        const metadataHash = await uploadData(JSON.stringify(value.metadata));
                         value.metadata['metadataHash'] = metadataHash;
                         for (const paramName of paramNames) {
                             params.push(value.metadata[paramName]);

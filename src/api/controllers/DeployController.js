@@ -31,7 +31,7 @@ class DeployController {
             });
             return {status: 'success'};
         } catch (e) {
-            log.error(e, 'DeployController.deploy error');
+            log.error({e}, 'DeployController.deploy error');
             return {status: 'error', error: e.toString()};
         }
     }
