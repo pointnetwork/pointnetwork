@@ -252,9 +252,13 @@ ethereum.loadPointContract = async (
     return new web3.eth.Contract(abisByContractName[contractName].abi, at);
 };
 
+let _identityContract = null;
 ethereum.loadIdentityContract = async () => {
     const mode = config.get('mode');
 
+    if (_identityContract) return _identityContract;
+
+    // todo: check it from time to time
     if (mode !== 'e2e' && mode !== 'zappdev') {
         const isAbiRelevant = await isIdentityAbiRelevant();
 
@@ -265,7 +269,11 @@ ethereum.loadIdentityContract = async () => {
 
     log.debug({address: IDENTITY_CONTRACT_ADDRESS}, 'Identity contract address');
 
-    return await ethereum.loadPointContract('Identity', IDENTITY_CONTRACT_ADDRESS);
+    _identityContract = await ethereum.loadPointContract('Identity', IDENTITY_CONTRACT_ADDRESS);
+
+    if (!_identityContract) throw new Error('Couldnt load Identity contract');
+
+    return _identityContract;
 };
 
 ethereum.loadWebsiteContract = async (
