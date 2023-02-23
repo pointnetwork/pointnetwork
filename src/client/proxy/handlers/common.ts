@@ -297,9 +297,11 @@ const tryFulfillZhtmlRequest = async (
         ...((req.body as Record<string, unknown>) ?? {})
     });
     const contentType = detectContentType(Buffer.from(rendered));
-    if (!contentType.match('text/html')) {
-        throw new Error(`Not a valid HTML: ${templateFilename}`);
-    }
+    // Why this is commented out: because sometimes it is text/css too (we need this for gfonts for instance)
+    // if (!contentType.match('text/html')) {
+    //     console.trace(rendered);
+    //     throw new Error(`Not a valid HTML: ${templateFilename}`);
+    // }
     res.header('Content-Type', contentType);
     return rendered;
 };
