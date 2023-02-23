@@ -2,22 +2,22 @@
 import Chunk, {CHUNK_DOWNLOAD_STATUS} from '../../../db/models/chunk';
 import path from 'path';
 import {existsSync, promises as fs} from 'fs';
-import {delay, hashFn} from '../../../util';
+import {hashFn} from '../../../util';
 import {downloadChunk as downloadChunkFromBundler} from '../bundler';
 import getDownloadQuery from '../query';
 import {request} from 'graphql-request';
 import {storage} from '../client/client';
 import {
     BUNDLER_DOWNLOAD_URL,
-    CONCURRENT_DOWNLOAD_DELAY,
     DOWNLOAD_CACHE_PATH,
     GATEWAY_URL,
     log
 } from '../config';
+import {EventTypes, waitForEvent} from '../callbacks';
 
 const getChunk = async (
     chunkId: string,
-    encoding: BufferEncoding = 'utf8',
+    encoding: BufferEncoding|null = 'utf8',
     useCache = true
 ): Promise<Buffer | string> => {
     log.debug({chunkId}, 'Getting chunk');
@@ -33,19 +33,29 @@ const getChunk = async (
     }
     if (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.IN_PROGRESS) {
         log.trace({chunkId}, 'Chunk download already in progress, waiting');
-        await delay(CONCURRENT_DOWNLOAD_DELAY);
-        return getChunk(chunkId, encoding); // use cache should be true in this case
+        return await waitForEvent(
+            EventTypes.CHUNK_DOWNLOAD_STATUS_CHANGED,
+            chunk.id,
+            getChunk.bind(null, chunkId, encoding)
+        );
     }
 
     chunk.dl_status = CHUNK_DOWNLOAD_STATUS.IN_PROGRESS;
     await chunk.save();
 
-    // TODO: refactor before mainnet!!!
+    // TODO: seems to work, but refactor this!!!
     // Due to issues with Arweave, we first try to retrieve
     // chunks from the bundler's backup (S3).
     try {
         log.debug({chunkId}, 'Downloading chunk from bundler backup');
         const buf = await downloadChunkFromBundler(BUNDLER_DOWNLOAD_URL, chunkId);
+
+        const hash = hashFn(buf).toString('hex');
+        if (hash !== chunk.id) {
+            log.warn({chunkId, hash}, 'Chunk id and data do not match');
+            throw new Error('Chunk id and data do not match');
+        }
+
         await fs.writeFile(chunkPath, buf);
         chunk.size = buf.length;
         chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
@@ -54,7 +64,7 @@ const getChunk = async (
     } catch (err) {
         log.warn(
             {chunkId, message: err.message, stack: err.stack},
-            'Chunk not found in bundler backup'
+            'Chunk not found in bundler backup or hash doesn\'t match'
         );
     }
     const query = getDownloadQuery(chunkId);
@@ -109,6 +119,14 @@ const getChunk = async (
     chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
     await chunk.save();
     throw new Error('Chunk not found');
+};
+
+export const getChunkBinary = async (chunkId: string): Promise<Buffer> => {
+    const buf = await getChunk(chunkId, null);
+    if (!Buffer.isBuffer(buf)) {
+        throw new Error('Expected buffer, this should never happen');
+    }
+    return buf;
 };
 
 export default getChunk;

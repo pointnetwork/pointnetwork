@@ -18,3 +18,5 @@ export * from './cacheFactory';
 export * from './splitAndTakeLastPart';
 export * from './getSecretToken';
 export * from './sanitizeSVG';
+export * from './queue';
+export * from './internet';

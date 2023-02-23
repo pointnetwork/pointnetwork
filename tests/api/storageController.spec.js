@@ -6,7 +6,7 @@ jest.mock('../../src/client/storage', () => ({
     // mocked functions cannot reference external modules, so we can't return something
     // like fs.readFile
     getFile: jest.fn(async () => 'some plain text file'),
-    uploadFile: jest.fn(async () => 'mock_id')
+    uploadData: jest.fn(async () => 'mock_id')
 }));
 
 describe('Storage controller', () => {

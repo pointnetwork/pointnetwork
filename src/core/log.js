@@ -19,7 +19,6 @@ const noop = () => {};
 let sendMetric = noop;
 let identifier;
 let isNewIdentifier;
-let logger;
 
 try {
     [identifier, isNewIdentifier] = getIdentifier();
@@ -59,11 +58,11 @@ streams.push({
     stream: pino({prettyPrint: {colorize: true}})[pino.symbols.streamSym]
 }, {
     level: options.level,
-    stream: createWriteStream(path.resolve(path.join(resolveHome(datadir), 'point.log')))
+    stream: createWriteStream(path.resolve(path.join(resolveHome(datadir), 'point.log')), {flags: 'a'})
 });
 
-logger = pino(options, multistream(streams));
-logger = logger.child(tags);
+const logger = pino(options, multistream(streams));
+// logger = logger.child(tags);
 
 const close = () => {
     for (const {stream} of streams) {

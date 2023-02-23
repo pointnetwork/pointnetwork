@@ -1,155 +1,120 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Chunk, {CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
-import FormData from 'form-data';
-import axios from 'axios';
-import {promises as fs} from 'fs';
-import path from 'path';
+import Chunk, {CHUNK_UPLOAD_STATUS, CHUNK_DOWNLOAD_STATUS} from '../../db/models/chunk';
 import logger from '../../core/log';
-import {storage} from './client/client';
-import {eachLimit} from 'async';
-import {downloadChunk} from './bundler';
-import {
-    BUNDLER_DOWNLOAD_URL,
-    BUNDLER_URL,
-    CONCURRENT_UPLOAD_LIMIT,
-    CONCURRENT_VALIDATION_LIMIT,
-    REQUEST_TIMEOUT,
-    UPLOAD_CACHE_PATH,
-    UPLOAD_EXPIRE,
-    UPLOAD_LOOP_INTERVAL,
-    VERSION_MAJOR,
-    VERSION_MINOR
-} from './config';
+import {tryGettingAvailableUploadWorker} from './uploadWorkers';
+import {UPLOAD_EXPIRE} from './config';
+import Sequelize from 'sequelize';
+import {areWeOnline, setSoon} from '../../util';
 
 const log = logger.child({module: 'StorageUploader'});
 
-const chunksBeingUploaded: Record<string, boolean> = {};
+let isUploadLoopActive = false;
+let retryUploadLoop = false;
 
-export const startChunkUpload = async (chunkId: string) => {
-    const chunk: any = await Chunk.find(chunkId); // TODO: any
-    if (!chunk) {
-        throw new Error(`Chunk ${chunkId} upload failed: not found`);
+export const uploadLoop = async () => {
+    if (isUploadLoopActive) {
+        retryUploadLoop = true;
+        return;
     }
 
-    // Mark chunk as IN_PROGRESS so it is not picked up again
-    chunk.ul_status = CHUNK_UPLOAD_STATUS.IN_PROGRESS;
-    await chunk.save();
+    isUploadLoopActive = true;
 
-    const chunkPath = path.join(UPLOAD_CACHE_PATH, `chunk_${chunkId}`);
+    // Note: to avoid race conditions, there must be one only uploadLoop executing at any time
     try {
-        log.debug({chunkId}, 'Starting chunk upload');
-        const data = await fs.readFile(chunkPath);
+        const allAwaitingChunks: Chunk[] = await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.ENQUEUED);
 
-        // check if chunk already exists in arweave
-        try {
-            const buf = await downloadChunk(BUNDLER_DOWNLOAD_URL, chunkId);
-            log.debug({chunkId}, 'The chunk is already in the Bundler cache, skipping');
-            chunk.size = buf.length;
-            chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
-            await chunk.save();
-            delete chunksBeingUploaded[chunkId];
+        const allStaleChunks: Chunk[] = (await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.IN_PROGRESS)).filter((chunk: Chunk) => chunk.isExpired());
+
+        const chunksToUpload = [...allAwaitingChunks, ...allStaleChunks];
+
+        if (chunksToUpload.length === 0) {
+            isUploadLoopActive = false;
             return;
-        } catch (e) {
-            // do nothing
         }
 
-        chunk.ul_status = CHUNK_UPLOAD_STATUS.IN_PROGRESS;
-        chunk.expires = new Date().getTime() + UPLOAD_EXPIRE;
-        await chunk.save();
+        for (const chunkToUpload of chunksToUpload) {
+            const worker = tryGettingAvailableUploadWorker();
 
-        const formData = new FormData();
-        formData.append('file', data, chunkId);
-        formData.append('__pn_integration_version_major', VERSION_MAJOR);
-        formData.append('__pn_integration_version_minor', VERSION_MINOR);
-        formData.append('__pn_chunk_id', chunkId);
-        formData.append(`__pn_chunk_${VERSION_MAJOR}.${VERSION_MINOR}_id`, chunkId);
+            if (worker === false) {
+                isUploadLoopActive = false;
+                return;
+            } // no available slots for now
 
-        const response = await axios.post(`${BUNDLER_URL}/signPOST`, formData, {
-            headers: {
-                ...formData.getHeaders(),
-                chunkid: chunkId
-            },
-            timeout: REQUEST_TIMEOUT
-        });
-        
-        // NB: bundler no longer does return the txid
-        // if (response.data.status !== 'ok' || !response.data.txid) {
-        if (response.data.status !== 'ok') {
-            throw new Error(
-                `Chunk ${chunkId} uploading failed: arweave endpoint error: ${
-                    JSON.stringify(response.data, null, 2)
-                }`
-            );
+            // slot is available, but before we start, check if we are even online
+            if (! areWeOnline()) {
+                isUploadLoopActive = false;
+                setTimeout(uploadLoop, 1000);
+            }
+
+            const chunk = await Chunk.findOrFail(chunkToUpload.id);
+
+            // Mark chunk as IN_PROGRESS, so it is not picked up again
+            if (chunk.ul_status === CHUNK_UPLOAD_STATUS.ENQUEUED ||
+                (chunk.ul_status === CHUNK_UPLOAD_STATUS.IN_PROGRESS && chunk.isExpired())) {
+                const expires = new Date().getTime() + UPLOAD_EXPIRE;
+                await Chunk.update({ul_status: CHUNK_UPLOAD_STATUS.IN_PROGRESS, expires}, {
+                    where: {
+                        id: chunk.id,
+                        ul_status: {[Sequelize.Op.notIn]: [CHUNK_UPLOAD_STATUS.FAILED, CHUNK_UPLOAD_STATUS.COMPLETED]}
+                    }
+                });
+            } else {
+                // wrong status
+                log.trace('startUploadChunk silently exiting, wrong status: ' + chunk.id + ' ' + chunk.ul_status);
+                worker.isFree = true;
+                continue;
+            }
+
+            worker.startChunkUpload(chunk); // no need for await
         }
 
-        const txid = response.data.txid;
+        isUploadLoopActive = false;
 
-        if (txid) {
-            chunk.txid = txid;
+        if (retryUploadLoop) {
+            retryUploadLoop = false;
+            setSoon(uploadLoop);
         }
-
-        // TODO: do not skip the VALIDATING status!
-        // chunk.ul_status = CHUNK_UPLOAD_STATUS.VALIDATING;
-        chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
-        chunk.size = data.length;
-        await chunk.save();
-
-        log.debug({chunkId, txid}, 'Chunk successfully uploaded');
-
-        delete chunksBeingUploaded[chunkId];
     } catch (e) {
-        log.error({chunkId, message: e.message, stack: e.stack}, 'Chunk upload failed');
-        chunk.ul_status = CHUNK_UPLOAD_STATUS.FAILED;
-        chunk.retry_count = chunk.retry_count + 1;
-        await chunk.save();
-        delete chunksBeingUploaded[chunkId];
+        isUploadLoopActive = false;
         throw e;
     }
 };
 
-export const uploadLoop = async () => {
-    const allAwaitingChunks: any[] = await Chunk.allBy(
-        'ul_status',
-        CHUNK_UPLOAD_STATUS.ENQUEUED,
-        false
+// todo
+// export const chunkValidatorLoop = async () =>
+//     await sequelize.transaction(async (t) => {
+//         const allCompletedChunks: Chunk[] = await Chunk.allBy(
+//             'ul_status',
+//             CHUNK_UPLOAD_STATUS.VALIDATING,
+//             false,
+//             {transaction: t, lock: t.LOCK.SHARE}
+//         );
+//         await eachLimit(allCompletedChunks, CONCURRENT_VALIDATION_LIMIT, async chunk => {
+//             try {
+//                 if (! chunk.txid) throw new Error('chunk.txid is empty at chunk ' + chunk.id);
+//                 await storage.getDataByTxId(chunk.txid);
+//                 chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
+//             } catch (error) {
+//                 log.error(
+//                     {txid: chunk.txid, message: error.message, stack: error.stack},
+//                     'Storage validation failed'
+//                 );
+//                 chunk.ul_status = CHUNK_UPLOAD_STATUS.FAILED;
+//                 chunk.validation_retry_count = chunk.validation_retry_count + 1;
+//             }
+//             await chunk.save({transaction: t});
+//         });
+//
+//         setTimeout(chunkValidatorLoop, UPLOAD_LOOP_INTERVAL);
+//     });
+
+export const restartUploadsDownloads = async () => {
+    // Restart chunk uploads
+    await Chunk.update({ul_status: CHUNK_UPLOAD_STATUS.ENQUEUED},
+        {where: {ul_status: CHUNK_UPLOAD_STATUS.IN_PROGRESS}}
     );
 
-    const allStaleChunks: any[] = (
-        await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.IN_PROGRESS, false)
-    ).filter((chunk: any) => chunk.expires !== null && chunk.expires < new Date().getTime());
-
-    await eachLimit(
-        [...allAwaitingChunks, ...allStaleChunks],
-        CONCURRENT_UPLOAD_LIMIT,
-        async chunk => {
-            chunksBeingUploaded[chunk.id] = true;
-            startChunkUpload(chunk.id);
-        }
+    await Chunk.update({ul_status: CHUNK_DOWNLOAD_STATUS.ENQUEUED},
+        {where: {ul_status: CHUNK_DOWNLOAD_STATUS.IN_PROGRESS}}
     );
-
-    setTimeout(uploadLoop, UPLOAD_LOOP_INTERVAL);
-};
-
-export const chunkValidatorLoop = async () => {
-    const allCompletedChunks: any[] = await Chunk.allBy(
-        'ul_status',
-        CHUNK_UPLOAD_STATUS.VALIDATING,
-        false
-    );
-    await eachLimit(allCompletedChunks, CONCURRENT_VALIDATION_LIMIT, async chunk => {
-        try {
-            await storage.getDataByTxId(chunk.txid);
-            chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED;
-        } catch (error) {
-            log.error(
-                {txid: chunk.txid, message: error.message, stack: error.stack},
-                'Storage validation failed'
-            );
-            chunk.ul_status = CHUNK_UPLOAD_STATUS.FAILED;
-            chunk.validation_retry_count = chunk.validation_retry_count + 1;
-        }
-        await chunk.save();
-    });
-
-    setTimeout(chunkValidatorLoop, UPLOAD_LOOP_INTERVAL);
 };

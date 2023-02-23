@@ -70,6 +70,7 @@ module.exports = [
         'MigrateController@migrate',
         {protected: true, gatewayDisabled: true}
     ],
+    ['GET', '/v1/api/deploy/progress', 'DeployController@deployProgress', {gatewayDisabled: true}], // TODO: not protecting for now, but should
     ['GET', '/v1/api/storage/files/:id', 'StorageController@fileById', {protected: true}],
     ['GET', '/v1/api/storage/getString/:id', 'StorageController@getString', {protected: true}],
     [

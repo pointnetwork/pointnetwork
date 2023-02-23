@@ -1,7 +1,11 @@
-import {uploadLoop} from '../uploader';
+import {restartUploadsDownloads, uploadLoop} from '../uploader';
 
 const init = () => {
-    uploadLoop();
+    (async() => {
+        await restartUploadsDownloads();
+        uploadLoop();
+        // downloadLoop();
+    })();
     // TODO: re-enable this validation!
     // chunkValidatorLoop();
 };

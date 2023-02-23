@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
-import {promises as fs, existsSync, lstatSync} from 'fs';
+import fs from 'fs';
 import {parse, ParsedQuery} from 'query-string';
 import axios from 'axios';
-import {readFileByPath, splitAndTakeLastPart, sanitizeSVG} from '../../../util';
+import {readFileByPath, splitAndTakeLastPart, getFullPathFromLocalRoot} from '../../../util';
 import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import ZProxySocketController from '../../../api/sockets/ZProxySocketController';
 import {SocketStream} from 'fastify-websocket';
@@ -20,7 +20,7 @@ import {parseDomainRegistry} from '../../../name_service/registry';
 import {HttpForbiddenError, HttpNotFoundError} from '../../../core/exceptions';
 import csrfTokens from '../../zweb/renderer/csrfTokens';
 import {randomBytes} from 'crypto';
-const {getJSON, getFileIdByPath, getFile} = require('../../storage');
+const {getJSON, getFileIdByPath, getFile, getFileAsReadStream} = require('../../storage');
 const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
 const log = logger.child({module: 'ZProxy'});
@@ -79,10 +79,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 path: urlPath,
                 localRootDirPath: publicPath
             });
-        } else if (
-            host.endsWith('.local') ||
-            (config.get('mode') === 'zappdev' && host.endsWith('.point'))
-        ) {
+        } else if (host.endsWith('.local') || (config.get('mode') === 'zappdev' && host.endsWith('.point'))) {
             // First try route file (and check if this domain even exists)
             const routesId = await blockchain.getZRecord(host, versionRequested);
             if (!routesId && !host.endsWith('.local')) {
@@ -106,23 +103,23 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             }
 
             const deployJsonPath = path.resolve(zappDir, 'point.deploy.json');
-            const deployConfig = JSON.parse(await fs.readFile(deployJsonPath, 'utf8'));
+            const deployConfig = JSON.parse(await fs.promises.readFile(deployJsonPath, 'utf8'));
             let rootDirPath = 'public';
             if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== '') {
                 rootDirPath = deployConfig.rootDir;
             }
 
             const publicPath = path.resolve(zappDir, rootDirPath);
-            if (!existsSync(publicPath)) {
+            if (!fs.existsSync(publicPath)) {
                 throw new Error(`Public path ${publicPath} doesn't exist`);
             }
 
             const routesJsonPath = path.resolve(zappDir, 'routes.json');
-            if (!existsSync(routesJsonPath)) {
+            if (!fs.existsSync(routesJsonPath)) {
                 throw new Error(`Routes file ${routesJsonPath} doesn't exist`);
             }
 
-            const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
+            const routes = JSON.parse(await fs.promises.readFile(routesJsonPath, 'utf8'));
 
             return await fulfillRequest({
                 req,
@@ -312,40 +309,36 @@ const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: s
 
     let file;
     if (cfg.isLocal) {
-        // This is a static asset
+        // This is a static asset located locally
+
         if (!cfg.localRootDirPath) {
             throw new Error('localRootDirPath cannot be empty');
         }
 
         const filePath = path.join(cfg.localRootDirPath, urlPath);
-        if (!existsSync(filePath)) {
+        if (!fs.existsSync(filePath)) {
             throw new HttpNotFoundError('Not Found');
         }
 
-        if (!lstatSync(filePath).isFile()) {
+        if (!fs.lstatSync(filePath).isFile()) {
             throw new HttpForbiddenError('Directory listing not allowed');
         }
 
-        file = await fs.readFile(filePath);
+        const fullPath = getFullPathFromLocalRoot(cfg.localRootDirPath, urlPath);
+        file = fs.createReadStream(fullPath);
+
     } else {
         const fileId = await getFileIdByPath(cfg.remoteRootDirId, urlPath);
         if (!fileId) {
             throw new HttpNotFoundError('File not found by this path');
         }
 
-        file = await getFile(fileId, null);
+        const range = req.headers.range;
+        file = await getFileAsReadStream(req, res, fileId, null, range);
     }
 
-    let contentType = detectContentType(file);
-    if (contentType.match('text/(plain|xml)') && ext) {
-        contentType = getContentTypeFromExt(ext);
-    }
+    const contentType = ((ext) ? getContentTypeFromExt(ext) : false) || 'application/octet-stream';
     res.header('Content-Type', contentType);
-
-    if (contentType.match(/image\/svg\+xml/)) {
-        // Sanitize SVG to prevent XSS.
-        file = sanitizeSVG(file);
-    }
 
     return file;
 };

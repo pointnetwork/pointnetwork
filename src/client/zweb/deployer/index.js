@@ -1,6 +1,5 @@
 const path = require('path');
 const fs = require('fs-extra');
-const log = require('../../../core/log').child({module: 'Deployer'});
 const {
     compileContract,
     getImportsFactory,
@@ -14,12 +13,13 @@ const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
 const {execSync} = require('child_process');
-const {uploadDir, uploadData, getFile} = require('../../storage');
+const {uploadDir, getUploadDirProgress, uploadData, getFile, waitForDirToUpload} = require('../../storage');
 const config = require('config');
 const {deployProxy} = require('../../../network/deployer/deployProxy');
 const {getProxyMetadataFilePath} = require('../../../network/deployer');
 const {upgradeProxy} = require('../../../network/deployer/upgradeProxy');
 const {forceImport} = require('../../../network/deployer/forceImport');
+const {FILE_DIR_UPLOAD_STATUS} = require('../../../db/models/file');
 
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
@@ -27,10 +27,7 @@ const POINT_SDK_VERSION = 'zweb/point/sdk/version';
 const POINT_NODE_VERSION = 'zweb/point/node/version';
 const DATADIR = resolveHome(config.get('datadir'));
 
-const err = (obj, errMsg) => {
-    log.error(obj, errMsg);
-    throw new Error(errMsg);
-};
+const _log = require('../../../core/log').child({module: 'Deployer'});
 
 /**
  * Class responsible to deploy DApps in Point Network.
@@ -41,6 +38,42 @@ class Deployer {
      */
     constructor() {
         this.cache_uploaded = {}; // todo: unused? either remove or use
+
+        this.progressObj = {};
+        this.progressMsg = '';
+        this.progressCb = null;
+        this.progressLines = [];
+
+        this.log = {};
+        this.log._message = (level, ...args) => {
+            this.progressCb = (typeof args[0] === 'function') ? args.shift() : null;
+
+            if (typeof args[0] === 'string') {
+                this.progressObj = null;
+                this.progressMsg = args[0];
+            } else {
+                this.progressObj = args[0];
+                this.progressMsg = args[1];
+            }
+
+            this.progressMsg = `[${level.toUpperCase()}] ${this.progressMsg}`;
+
+            this.progressLines.push({msg: this.progressMsg, obj: this.progressObj, cb: this.progressCb});
+
+            _log[level](...args);
+        };
+        this.log.debug = this.log._message.bind(this, 'debug');
+        this.log.info = this.log._message.bind(this, 'info');
+        this.log.error = this.log._message.bind(this, 'error');
+        this.log.trace = this.log._message.bind(this, 'trace');
+        this.log.warn = this.log._message.bind(this, 'warn');
+        this.log.fatal = this.log._message.bind(this, 'fatal');
+        this.log.sendMetric = (...args) => _log.sendMetric(...args);
+
+        this.err = (obj, errMsg) => {
+            this.log.error(obj, errMsg);
+            throw new Error(errMsg);
+        };
     }
 
     /**
@@ -75,7 +108,7 @@ class Deployer {
         }
 
         if (!this.isVersionFormated(baseVersion)) {
-            log.error(
+            this.log.error(
                 {version: baseVersion},
                 'Incorrect format of Version number. Should be MAJOR.MINOR.'
             );
@@ -190,7 +223,7 @@ class Deployer {
         if (this.isNewBaseVersionValid(lastVersion, baseVersion)) {
             return this.getNewPatchedVersion(lastVersion, baseVersion);
         } else {
-            err({baseVersion, lastVersion}, `'Base version ${baseVersion} should be greater or equal to MAJOR.MINOR of lastVersion ${lastVersion}.'`);
+            this.err({baseVersion, lastVersion}, `'Base version ${baseVersion} should be greater or equal to MAJOR.MINOR of lastVersion ${lastVersion}.'`);
         }
     }
 
@@ -222,14 +255,14 @@ class Deployer {
         if (config.target.endsWith('.sol') || config.target.endsWith('.eth')) {
             // For now, we don't support SNS nor ENS in devnets.
             if (dev) {
-                err({target: config.target, dev}, `"dev" deployments are only supported for .point domains at the moment (trying to deploy ${config.target})`);
+                this.err({target: config.target, dev}, `"dev" deployments are only supported for .point domains at the moment (trying to deploy ${config.target})`);
             }
 
             // Deployment of sites with contracts is only supported for .point domains as we need to store
             // several things in the Identity contract.
             // If the target is not .point and it includes contracts, it has to be an alias to a .point domain.
             if (!config.alias && contracts) {
-                err({target: config.target, alias: config.alias, contracts}, `Contracts is an advanced Point functionality only supported by .point domains at the moment. You need to specify a Point identity in the "alias" key in your deployment config`);
+                this.err({target: config.target, alias: config.alias, contracts}, `Contracts is an advanced Point functionality only supported by .point domains at the moment. You need to specify a Point identity in the "alias" key in your deployment config`);
             }
 
             target = config.target;
@@ -259,7 +292,7 @@ class Deployer {
     async ensureIsDeployerOrFail(identity, owner) {
         const isDeployer = await blockchain.isIdentityDeployer(identity, owner);
         if (!isDeployer) {
-            err({identity, owner}, `The address ${owner} is not allowed to deploy on ${identity} identity`);
+            this.err({identity, owner}, `The address ${owner} is not allowed to deploy on ${identity} identity`);
         }
     }
 
@@ -271,7 +304,7 @@ class Deployer {
      */
     async registerNewIdentity(identity, owner) {
         const publicKey = getNetworkPublicKey();
-        log.info(
+        this.log.info(
             {
                 identity,
                 owner,
@@ -283,8 +316,8 @@ class Deployer {
         );
 
         await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
-        log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
-        log.info(
+        this.log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
+        this.log.info(
             {identity, owner, publicKey: publicKey.toString('hex')},
             'Successfully registered new identity'
         );
@@ -418,11 +451,11 @@ class Deployer {
                                 force_deploy_proxy 
                             ) {
                                 //deploy a new proxy
-                                log.debug('deployProxy call');
+                                this.log.debug('deployProxy call');
                                 //loads the identity contract
                                 const idContract = await blockchain.loadIdentityContract();
                                 try {
-                                    log.debug(
+                                    this.log.debug(
                                         {IdContractAddress: idContract.options.address, identity},
                                         'deploying proxy binded with identity contract and identity'
                                     );
@@ -442,10 +475,10 @@ class Deployer {
                                     // without parameters. In this way, the deployers feature
                                     // will not work and only the owner of the proxy will be able
                                     // to upgrade the proxy.
-                                    log.warn(
+                                    this.log.warn(
                                         'Deploying proxy binded with id contract and identity failed.'
                                     );
-                                    log.debug(
+                                    this.log.debug(
                                         {IdContractAddress: idContract.options.address, identity},
                                         'deployProxy call without parameters. Only the owner will be able to upgrade the proxy.'
                                     );
@@ -453,7 +486,7 @@ class Deployer {
                                 }
                             } else {
                                 //will upgrade the proxy
-                                log.debug('upgradeProxy call');
+                                this.log.debug('upgradeProxy call');
 
                                 //write the file for the path that the plugin needs to validate the
                                 //upgradable contract.
@@ -469,17 +502,17 @@ class Deployer {
                                     proxy = await upgradeProxy(hre, proxyAddress, contractF);
                                 } catch (e) {
                                     //fallback for solve a common problem for upgrade the proxy
-                                    log.debug('upgradeProxy call failed');
+                                    this.log.debug('upgradeProxy call failed');
 
                                     //Proxy metadata file can be corrupted or not updated. Then:
                                     //Delete the metadata file.
-                                    log.debug('deleting proxy metadata file');
+                                    this.log.debug('deleting proxy metadata file');
                                     await fs.remove(proxyMetadataFilePath);
                                     //Restore the file from the blockchain.
-                                    log.debug('calling forceImport');
+                                    this.log.debug('calling forceImport');
                                     await forceImport(hre, proxyAddress, contractF, {kind: 'uups'});
                                     //try to deploy again with the new metadata file.
-                                    log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
+                                    this.log.debug({proxyAddress}, 'upgradeProxy call after forceImport');
                                     proxy = await upgradeProxy(hre, proxyAddress, contractF);
                                 }
                             }
@@ -521,11 +554,11 @@ class Deployer {
                         target
                     );
 
-                    log.debug(
+                    this.log.debug(
                         `Contract ${contractName} with Artifacts Storage ID ${artifactsStorageId} is deployed to ${address}`
                     );
                 } catch (e) {
-                    log.error(e, 'Zapp contract deployment error');
+                    this.log.error(e, 'Zapp contract deployment error');
                     throw e;
                 }
             }
@@ -537,22 +570,22 @@ class Deployer {
                 // Upload proxy metadata
                 const proxyMetadataFile = await fs.readFile(proxyMetadataFilePath, 'utf-8');
                 const proxyMetadata = JSON.parse(proxyMetadataFile);
-                log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
+                this.log.debug({proxyMetadata}, 'Uploading proxy metadata file...');
                 //upload the file
                 const proxyMetadataFileUploadedId = await uploadData(JSON.stringify(proxyMetadata));
                 //update the IKV from metadata file
                 await this.updateProxyMetadata(target, proxyMetadataFileUploadedId, version);
-                log.debug('Proxy metadata updated');
+                this.log.debug('Proxy metadata updated');
 
-                log.debug('Removing artifacts and cache');
+                this.log.debug('Removing artifacts and cache');
                 await Promise.all([
                     fs.emptyDir(path.join(DATADIR, 'hardhat', 'build')),
                     fs.emptyDir(path.join(DATADIR, 'hardhat', 'cache')),
                     fs.emptyDir(path.join(DATADIR, '.openzeppelin'))
                 ]);
-                log.debug('Removed artifacts and cache');
+                this.log.debug('Removed artifacts and cache');
             } catch (e) {
-                log.error(e, 'Zapp contract deployment error');
+                this.log.error(e, 'Zapp contract deployment error');
                 throw e;
             }
         }
@@ -566,8 +599,18 @@ class Deployer {
      * @returns {string} the id of the directory tht was uploaded. 
      */
     async uploadRootDir(deployPath, rootDir = 'public') {
-        log.debug('Uploading root directory...');
-        const publicDirId = await uploadDir(path.join(deployPath, rootDir));
+        this.log.debug('Preparing to upload root directory...');
+
+        const publicDirId = await uploadDir(path.join(deployPath, rootDir), false);
+
+        const liveProgress = async() => await getUploadDirProgress(publicDirId);
+        this.log.debug(liveProgress, `Uploading root directory ${publicDirId}...`);
+
+        const dir_ul_status = await waitForDirToUpload(publicDirId);
+        if (dir_ul_status !== FILE_DIR_UPLOAD_STATUS.COMPLETED) {
+            throw new Error('Root dir upload status: ' + dir_ul_status);
+        }
+
         return publicDirId;
     }
 
@@ -582,7 +625,7 @@ class Deployer {
         const routesFile = await fs.readFile(routesFilePath, 'utf-8');
         const routes = JSON.parse(routesFile);
 
-        log.debug({routes}, 'Uploading route file...');
+        this.log.debug('Uploading route file...');
         return uploadData(JSON.stringify(routes));
     }
 
@@ -628,7 +671,7 @@ class Deployer {
             const {owner: domainOwner, content} = await solana.resolveDomain(target, network);
 
             if (solanaAddress !== domainOwner) {
-                err({solanaAddress, target, domainOwner}, `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${solanaAddress}). Also, please make sure you have some SOL in your Point Wallet to cover transaction fees.`);
+                this.err({solanaAddress, target, domainOwner}, `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${solanaAddress}). Also, please make sure you have some SOL in your Point Wallet to cover transaction fees.`);
             }
 
             return {domainOwner, content};
@@ -653,7 +696,7 @@ class Deployer {
             const domainOwner = typeof owner === 'string' && owner.toLowerCase();
 
             if (ethereumAddress !== domainOwner) {
-                err({ethereumAddress, target, domainOwner}, `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${ethereumAddress}). Also, please make sure you have some ETH in your Point Wallet to cover transaction fees.`);
+                this.err({ethereumAddress, target, domainOwner}, `"${target}" is owned by ${domainOwner}, you need to transfer it to your Point Wallet (${ethereumAddress}). Also, please make sure you have some ETH in your Point Wallet to cover transaction fees.`);
             }
 
             return {domainOwner, content};
@@ -669,7 +712,7 @@ class Deployer {
      */
     async editDomainRegistry(domain, data, preExistingData) {
         const service = this.getNameService(domain);
-        log.info({domain, data, service}, 'Saving data to domain registry.');
+        this.log.info({domain, data, service}, 'Saving data to domain registry.');
 
         if (service === 'SNS') {
             const dataStr = encodeCookieString(mergeAndResolveConflicts(preExistingData, data));
@@ -683,7 +726,7 @@ class Deployer {
             throw new Error(`Unsupported Name Service ${service}`);
         }
 
-        log.info({domain, data, service}, 'Successfully updated domain registry.');
+        this.log.info({domain, data, service}, 'Successfully updated domain registry.');
     }
 
     /**
@@ -710,7 +753,7 @@ class Deployer {
             !deployConfig.hasOwnProperty('keyvalue') ||
             !deployConfig.hasOwnProperty('contracts')
         ) {
-            err({}, 'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.');
+            this.err({}, 'Missing entry in point.deploy.json file. The following properties must be present in the file: version, target, keyvalue and contracts. Fill them with empty values if needed.');
         }
     }
 
@@ -761,7 +804,7 @@ class Deployer {
 
             //get the owner address for the target identity
             const registeredOwner = await blockchain.ownerByIdentity(identity);
-            log.info({target, identity, owner, registeredOwner}, 'Owner information');
+            this.log.info({target, identity, owner, registeredOwner}, 'Owner information');
 
             //checks if the identity is already registered
             const identityIsRegistered =
@@ -795,10 +838,8 @@ class Deployer {
         }
 
         //upload static files and routes.json
-        const [publicDirId, routeFileUploadedId] = await Promise.all([
-            this.uploadRootDir(deployPath, deployConfig.rootDir),
-            this.uploadRoutes(deployPath)
-        ]);
+        const routeFileUploadedId = await this.uploadRoutes(deployPath);
+        const publicDirId = await this.uploadRootDir(deployPath, deployConfig.rootDir);
 
         //if is a .point domain or alias
         if (isPointTarget || isAlias) {
@@ -816,7 +857,7 @@ class Deployer {
                 );
             }
 
-            log.info(
+            this.log.info(
                 {publicDirId, routeFileUploadedId, target, identity},
                 'Saving routes and root dir IDs to Point Identity contract...'
             );
@@ -875,10 +916,10 @@ class Deployer {
                 : {pn_routes: routeFileUploadedId, pn_root: publicDirId};
 
             await this.editDomainRegistry(target, domainRegistryData, preExistingDomainContent);
-            log.info({target, ...domainRegistryData}, 'Wrote Point data to domain registry');
+            this.log.info({target, ...domainRegistryData}, 'Wrote Point data to domain registry');
         }
 
-        log.info('Deploy finished');
+        this.log.info('Deploy finished');
     }
 
     /**
@@ -906,7 +947,7 @@ class Deployer {
             let msg = '';
             for (const e of compiledSources.errors) {
                 if (e.severity === 'warning') {
-                    log.warn(e, 'Contract compilation warning');
+                    this.log.warn(e, 'Contract compilation warning');
                     continue;
                 }
                 found = true;
@@ -981,7 +1022,7 @@ class Deployer {
      */
     async updateZDNS(host, id, version) {
         const target = host.replace(/\.point$/, '');
-        log.info({target, id}, 'Updating ZDNS');
+        this.log.info({target, id}, 'Updating ZDNS');
         await blockchain.putZRecord(target, '0x' + id, version);
     }
 
@@ -994,7 +1035,7 @@ class Deployer {
      */
     async updateProxyMetadata(host, id, version) {
         const target = host.replace(/\.point$/, '');
-        log.info({target, id}, 'Updating Proxy Metatada');
+        this.log.info({target, id}, 'Updating Proxy Metatada');
         await blockchain.putKeyValue(target, PROXY_METADATA_KEY, id, version);
     }
 
@@ -1011,7 +1052,7 @@ class Deployer {
 
         const uncommittedChanges = this.execCommand(`cd ${deployPath} && git status --porcelain`);
         if (uncommittedChanges) {
-            log.warn(
+            this.log.warn(
                 {target, uncommittedChanges},
                 'Uncommitted changes detected, the commit SHA could not correspond the version of DApp deployed'
             );
@@ -1019,10 +1060,10 @@ class Deployer {
 
         const lastCommitSha = this.execCommand(`cd ${deployPath} && git rev-parse HEAD`);
         if (lastCommitSha) {
-            log.info({target, lastCommitSha}, 'Updating Commit SHA');
+            this.log.info({target, lastCommitSha}, 'Updating Commit SHA');
             await blockchain.putKeyValue(target, COMMIT_SHA_KEY, lastCommitSha, version);
         } else {
-            log.info({target}, 'Commit SHA not found');
+            this.log.info({target}, 'Commit SHA not found');
         }
     }
 
@@ -1036,7 +1077,7 @@ class Deployer {
      */
     async updatePointVersionTag(host, key, value, version) {
         const target = host.replace(/\.point$/, '');
-        log.info({target, key}, 'Updating Point Version Tag');
+        this.log.info({target, key}, 'Updating Point Version Tag');
         await blockchain.putKeyValue(target, key, value, version);
     }
 

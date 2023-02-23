@@ -105,7 +105,7 @@ describe('Register identity and deploy site', () => {
             const newRoute = `/${publicDirStorageId}`;
             routesObj[newRoute] = 'index.html';
             const routesFileAsBuffer = Buffer.from(JSON.stringify(routesObj, null, 2));
-            routesStorageId = await storage.uploadFile(routesFileAsBuffer);
+            routesStorageId = await storage.uploadData(routesFileAsBuffer);
             expect(routesStorageId).toMatch(hexRegExp);
         },
         TIMEOUTS.XL
@@ -143,7 +143,7 @@ describe('Register identity and deploy site', () => {
             const contract = blockchain.getContractFromAbi(artifacts.abi);
             const address = await blockchain.deployContract(contract, artifacts, 'Why');
 
-            const artifactsStorageId = await storage.uploadFile(JSON.stringify(artifacts));
+            const artifactsStorageId = await storage.uploadData(JSON.stringify(artifacts));
 
             const {target} = testData.deployConfig;
             await blockchain.putKeyValue(target, 'zweb/contracts/address/Why', address, 'latest');

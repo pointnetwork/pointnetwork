@@ -16,7 +16,7 @@ import getDownloadQuery from '../query';
 
 const getChunk = async (
     chunkId: string,
-    encoding: BufferEncoding = 'utf8',
+    encoding: BufferEncoding|null = 'utf8',
     useCache = true
 ): Promise<Buffer | string> => {
     const chunk = await Chunk.findByIdOrCreate(chunkId);
@@ -86,6 +86,14 @@ const getChunk = async (
         await chunk.save();
         throw e;
     }
+};
+
+export const getChunkBinary = async (chunkId: string): Promise<Buffer> => {
+    const buf = await getChunk(chunkId, null);
+    if (!Buffer.isBuffer(buf)) {
+        throw new Error('Expected buffer, this should never happen');
+    }
+    return buf;
 };
 
 export default getChunk;

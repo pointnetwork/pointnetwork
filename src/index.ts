@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import path from 'path';
-import {existsSync, mkdirSync, promises as fs} from 'fs';
+import fs from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 import disclaimer from './disclaimer';
@@ -74,6 +74,14 @@ program
     .description('destroys everything in datadir: database and files. dangerous!')
     .action(() => void (program.debug_destroy_everything = true));
 program
+    .command('hashfn [path]')
+    .description('calculates hash of a file')
+    .action((path) => void (program.hashfn = path));
+program
+    .command('tinker')
+    .description('activates dev js command line mode')
+    .action((path) => void (program.tinker = path));
+program
     .command('deploy')
     .description('deploy a website')
     .argument('[path]', '(optional) path to the website; if empty, tries the current working directory', null)
@@ -134,6 +142,29 @@ const die = (err: Error) => {
     exit(1);
 };
 
+// ----------------- Simple Commands ---------------- //
+if (program.hashfn) {
+    const {hashFn} = require('./util');
+    
+    const path = program.hashfn;
+    if (!fs.existsSync(path)) throw new Error('File not found: ' + path);
+
+    // read file
+    const buf = fs.readFileSync(path, null);
+
+    // hash
+    const hash = hashFn(buf).toString('hex');
+
+    // print
+    log.info(hash);
+    process.exit();
+}
+
+if (program.tinker) {
+    const repl = require('repl');
+    repl.start({prompt: '>> '});
+}
+
 // ----------------------- New ------------------------ //
 
 if (program.new) {
@@ -181,43 +212,6 @@ if (program.attach) {
     return;
 }
 
-// -------------------- Uploader --------------------- //
-
-if (program.upload) {
-    const {uploadData, uploadDir} = require('./client/storage');
-    const init = require('./client/storage/init');
-
-    const main = async () => {
-        await init.default();
-
-        const filePath = path.isAbsolute(program.upload!)
-            ? program.upload!
-            : path.resolve(__dirname, '..', program.upload!);
-
-        const stat = await statAsync(filePath);
-        if (stat.isDirectory()) {
-            return uploadDir(filePath);
-        } else {
-            const file = await fs.readFile(filePath);
-            return uploadData(file);
-        }
-    };
-
-    main()
-        .then(id => {
-            log.info({id}, 'Upload finished successfully');
-            process.exit(0);
-        })
-        .catch(e => {
-            log.error('Upload failed');
-            log.error(e);
-            process.exit(1);
-        });
-
-    // @ts-ignore
-    return;
-}
-
 // ---------------- Migration Modes ---------------- //
 
 if (program.makemigration) {
@@ -240,14 +234,63 @@ if (program.makemigration) {
     return;
 }
 
+if (program.migrate) {
+    (async() => {
+        log.info('Starting migration...');
+        migrate();
+        log.info('Migration ended.');
+        exit(0); // TODO: use `point-errors-code` once available.
+    })();
+
+    // @ts-ignore
+    return;
+}
+
+// -------------------- Uploader --------------------- //
+
+if (program.upload) {
+    const {uploadData, uploadDir} = require('./client/storage');
+    const init = require('./client/storage/init');
+
+    const main = async () => {
+        await init.default();
+
+        const filePath = path.isAbsolute(program.upload!)
+            ? program.upload!
+            : path.resolve(__dirname, '..', program.upload!);
+
+        const stat = await statAsync(filePath);
+        if (stat.isDirectory()) {
+            return uploadDir(filePath);
+        } else {
+            const file = await fs.promises.readFile(filePath);
+            return uploadData(file);
+        }
+    };
+
+    main()
+        .then(id => {
+            log.info({id}, 'Upload finished successfully');
+            process.exit(0);
+        })
+        .catch(e => {
+            log.error('Upload failed');
+            log.error(e);
+            process.exit(1);
+        });
+
+    // @ts-ignore
+    return;
+}
+
 // ------------------ Compile Contracts ------------ //
 
 if (program.compile) {
     log.info('Compiling contracts...');
 
     const buildDirPath = path.resolve(__dirname, '..', 'hardhat', 'build');
-    if (!existsSync(buildDirPath)) {
-        mkdirSync(buildDirPath);
+    if (!fs.existsSync(buildDirPath)) {
+        fs.mkdirSync(buildDirPath);
     }
 
     const contractPath = path.resolve(__dirname, '..', 'hardhat', 'contracts');
@@ -309,7 +352,7 @@ process.on('uncaughtException', err => {
 });
 
 process.on('unhandledRejection', (err: Error) => {
-    log.error(err, 'Error: unhandled rejection');
+    log.error({err, msg: err.message, name: err.name}, 'Error: unhandled rejection');
 });
 
 // ------------------- Start Point ------------------- //
@@ -327,8 +370,8 @@ const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
     }
 
     try {
-        if (!existsSync(lockfilePath)) {
-            await fs.writeFile(lockfilePath, 'point');
+        if (!fs.existsSync(lockfilePath)) {
+            await fs.promises.writeFile(lockfilePath, 'point');
         }
         await lockfile.lock(lockfilePath, {stale: 5000});
     } catch (err) {
