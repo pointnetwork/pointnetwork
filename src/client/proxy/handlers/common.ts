@@ -223,6 +223,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 if (!csrfTokens.point) {
                     csrfTokens.point = randomBytes(64).toString('hex');
                 }
+                res.status(421); // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/421
                 return templateManager.render(Template.WEB2LINK, {
                     url: sanitizeUrl('http://' + host + (req.url ?? '')),
                     csrfToken: csrfTokens.point,
@@ -446,6 +447,8 @@ const renderPointHomeWeb2RedirectPage = async (req: FastifyRequest, res: Fastify
     }
 
     res.header('Content-Type', 'text/html');
+
+    res.status(421); // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/421
 
     //if there is no csrf token creates it.
     if (!csrfTokens.point) {
