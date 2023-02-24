@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@bonfida/spl-name-service": "^0.1.43",
-    "@braintree/sanitize-url": "^6.0.0",
+    "@braintree/sanitize-url": "^6.0.1",
     "@elastic/ecs-pino-format": "^1.3.0",
     "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@fastify/formbody": "^6.0.0",
