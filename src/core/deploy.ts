@@ -41,19 +41,19 @@ const deploy = async ({
     const pollProgress = async() => {
         try {
 
-            const result = await axios.get(
-                `http://localhost:${PORT}/v1/api/deploy/progress`,
-                {
-                    params: {
-                        deploy_path: path.resolve(deploy_path),
-                        deploy_contracts,
-                        dev,
-                        force_deploy_proxy,
+            const result = await axios({
+                method: 'get',
+                url: `http://localhost:${PORT}/v1/api/deploy/progress`,
+                params: {
+                    deploy_path: path.resolve(deploy_path),
+                    deploy_contracts,
+                    dev,
+                    force_deploy_proxy,
 
-                        lastLineIdx
-                    }
-                }
-            );
+                    lastLineIdx
+                },
+                timeout: 60000
+            });
 
             if (result.data.status === 'success') {
                 for (const line of result.data.lines) {
@@ -104,15 +104,17 @@ const deploy = async ({
     setTimeout(pollProgress, POLL_PROGRESS_INTERVAL);
 
     const start = Date.now();
-    const result = await axios.post(
-        `http://localhost:${PORT}/v1/api/deploy`,
-        {
+    const result = await axios({
+        url: `http://localhost:${PORT}/v1/api/deploy`,
+        method: 'post',
+        data: {
             deploy_path: path.resolve(deploy_path),
             deploy_contracts,
             dev,
             force_deploy_proxy
-        }
-    );
+        },
+        timeout: 60000
+    });
 
     if (progressBar) progressBar.stop();
 

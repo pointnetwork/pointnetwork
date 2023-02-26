@@ -148,17 +148,17 @@ export const uploadData = async (
         fileId = hashFn(chunkInfoChunk).toString('hex');
     }
 
-    // Creating the entry
+    // Creating the file entry. Has to be before enqueueChunksForUpload, otherwise filemap creation will fail
     await File.findByIdOrCreate(fileId);
-    // Mark as IN_PROGRESS
-    log.trace({fileId}, 'Successfully chunkified file, marking as IN_PROGRESS');
-    await markFileAsBeingUploaded(fileId, buf.byteLength);
+
+    log.trace({fileId}, 'Calling enqueueChunksForUpload');
+    if (chunkInfoChunk !== null) chunks[-1] = chunkInfoChunk;
+    await enqueueChunksForUpload(chunks, fileId);
 
     try {
-        log.trace({fileId}, 'Calling enqueueChunksForUpload');
-
-        if (chunkInfoChunk !== null) chunks[-1] = chunkInfoChunk;
-        await enqueueChunksForUpload(chunks, fileId);
+        // Mark as IN_PROGRESS, has to be after chunks are written to disk in enqueueChunksForUpload
+        log.trace({fileId}, 'Successfully chunkified file, marking as IN_PROGRESS');
+        await markFileAsBeingUploaded(fileId, buf.byteLength);
 
         log.trace({fileId}, 'Waiting for file chunks to be uploaded');
         if (waitForUpload) await waitForFileToUpload(fileId);
@@ -172,7 +172,7 @@ export const uploadData = async (
     }
 };
 
-export const getUploadDirProgress = async(dirId: string): Promise<Record<string, string|number>> => 
+export const getUploadDirProgress = async(dirId: string): Promise<Record<string, string|number>> =>
     await getDirProgress(dirId);
     // const file = await File.find(dirId);
     //
@@ -267,26 +267,32 @@ export const uploadDir = async (dirPath: string, waitForUpload = true) => {
     return id;
 };
 
-const markFileAsCompletedDownload = async(file_id: string) => await File.update({dl_status: FILE_DOWNLOAD_STATUS.COMPLETED}, {
-    where: {
-        id: file_id,
-        dl_status: {[Sequelize.Op.notIn]: [FILE_DOWNLOAD_STATUS.COMPLETED]}
-    }
-});
+const markFileAsCompletedDownload = async(file_id: string) => {
+    await File.update({dl_status: FILE_DOWNLOAD_STATUS.COMPLETED}, {
+        where: {
+            id: file_id,
+            dl_status: {[Sequelize.Op.notIn]: [FILE_DOWNLOAD_STATUS.COMPLETED]}
+        }
+    });
+};
 
-const markFileAsFailedDownload = async(file_id: string) => await File.update({dl_status: FILE_DOWNLOAD_STATUS.FAILED}, {
-    where: {
-        id: file_id,
-        dl_status: {[Sequelize.Op.notIn]: [FILE_DOWNLOAD_STATUS.COMPLETED]}
-    }
-});
+const markFileAsFailedDownload = async(file_id: string) => {
+    await File.update({dl_status: FILE_DOWNLOAD_STATUS.FAILED}, {
+        where: {
+            id: file_id,
+            dl_status: {[Sequelize.Op.notIn]: [FILE_DOWNLOAD_STATUS.COMPLETED]}
+        }
+    });
+};
 
-const markFileAsInProgressDownload = async(file_id: string) => await File.update({dl_status: FILE_DOWNLOAD_STATUS.IN_PROGRESS}, {
-    where: {
-        id: file_id,
-        dl_status: {[Sequelize.Op.notIn]: [FILE_DOWNLOAD_STATUS.COMPLETED]}
-    }
-});
+const markFileAsInProgressDownload = async(file_id: string) => {
+    await File.update({dl_status: FILE_DOWNLOAD_STATUS.IN_PROGRESS}, {
+        where: {
+            id: file_id,
+            dl_status: {[Sequelize.Op.notIn]: [FILE_DOWNLOAD_STATUS.COMPLETED]}
+        }
+    });
+};
 
 const validateStorageId = (id: string): void => {
     // ID validation
@@ -377,7 +383,7 @@ const parseChunkInfo = (chunkInfo: Buffer): ParsedChunkInfo => {
 
 export const getFileAsReadStream = async (
     req: FastifyRequest,
-    res: FastifyReply, 
+    res: FastifyReply,
     rawId: string,
     encoding: BufferEncoding|null = 'utf8',
     range?: string
@@ -427,13 +433,13 @@ export const getFileAsReadStream = async (
         let start = 0;
         let end = 0;
         if (!range) {
-            // not a range request, just send the whole thing    
+            // not a range request, just send the whole thing
             res.header('Content-Length', totalSize);
         } else {
             // range request, send partial content
             start = Number((range || '').replace(/bytes=/, '').split('-')[0]);
             end = Math.max(start, Math.min(start + 1024 * 1024, totalSize - 1)); // Limit to 1MB max
-    
+
             res.header('Content-Range', `bytes ${start}-${end}/${totalSize}`);
             res.header('Accept-Ranges', 'bytes');
             res.header('Content-Length', end - start + 1);
@@ -475,11 +481,11 @@ export const getFileAsReadStream = async (
                     readable.push(null);
                     return;
                 }
-    
+
                 const chunkId = chunkIds[chunkIdx];
                 const buf = await getChunkBinary(chunkId);
                 pushChunk(chunkIdx, buf);
-    
+
                 // Download the next chunk
                 if (downloading) {
                     downloadChunk(chunkIdx + 1);
@@ -497,7 +503,7 @@ export const getFileAsReadStream = async (
         //         downloadChunk(lastChunkIdx + 1);
         //     }
         // });
-        
+
         return readable;
     };
 
@@ -582,7 +588,7 @@ export const getFile = async (
         await markFileAsCompletedDownload(file.id);
 
         return encoding === null ? fileBuffer : fileBuffer.toString(encoding);
-    } catch (e) {        
+    } catch (e) {
         log.error({fileId: file.id, message: e.message, stack: e.stack}, 'File download failed');
 
         await markFileAsFailedDownload(file.id);

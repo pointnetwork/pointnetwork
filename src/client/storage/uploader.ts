@@ -2,14 +2,16 @@
 import Chunk, {CHUNK_UPLOAD_STATUS, CHUNK_DOWNLOAD_STATUS} from '../../db/models/chunk';
 import logger from '../../core/log';
 import {tryGettingAvailableUploadWorker} from './uploadWorkers';
-import {UPLOAD_EXPIRE} from './config';
-import Sequelize from 'sequelize';
+import {CONCURRENT_UPLOAD_LIMIT, UPLOAD_EXPIRE} from './config';
+import Sequelize, {Op} from 'sequelize';
 import {areWeOnline, setSoon} from '../../util';
 
 const log = logger.child({module: 'StorageUploader'});
 
 let isUploadLoopActive = false;
 let retryUploadLoop = false;
+
+let lastOnlineCheck = 0;
 
 export const uploadLoop = async () => {
     if (isUploadLoopActive) {
@@ -21,9 +23,25 @@ export const uploadLoop = async () => {
 
     // Note: to avoid race conditions, there must be one only uploadLoop executing at any time
     try {
-        const allAwaitingChunks: Chunk[] = await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.ENQUEUED);
+        const max_rows_to_pull = CONCURRENT_UPLOAD_LIMIT;
 
-        const allStaleChunks: Chunk[] = (await Chunk.allBy('ul_status', CHUNK_UPLOAD_STATUS.IN_PROGRESS)).filter((chunk: Chunk) => chunk.isExpired());
+        const allAwaitingChunks: Chunk[] = await Chunk.findAll({
+            where: {ul_status: CHUNK_UPLOAD_STATUS.ENQUEUED},
+            limit: max_rows_to_pull
+        });
+
+        const allStaleChunks: Chunk[] = await Chunk.findAll({
+            where: {
+                ul_status: CHUNK_UPLOAD_STATUS.IN_PROGRESS,
+                expires: {
+                    [Op.and]: {
+                        [Op.not]: null,
+                        [Op.lt]: new Date().getTime()
+                    }
+                }
+            },
+            limit: max_rows_to_pull
+        });
 
         const chunksToUpload = [...allAwaitingChunks, ...allStaleChunks];
 
@@ -41,9 +59,15 @@ export const uploadLoop = async () => {
             } // no available slots for now
 
             // slot is available, but before we start, check if we are even online
-            if (! areWeOnline()) {
-                isUploadLoopActive = false;
-                setTimeout(uploadLoop, 1000);
+            const timeToCheckWeAreOnline = lastOnlineCheck < (new Date).getTime() - 5 * 1000;
+            if (timeToCheckWeAreOnline) {
+                if (! areWeOnline()) {
+                    isUploadLoopActive = false;
+                    setTimeout(uploadLoop, 100);
+                    return;
+                } else {
+                    lastOnlineCheck = (new Date).getTime();
+                }
             }
 
             const chunk = await Chunk.findOrFail(chunkToUpload.id);
@@ -65,7 +89,7 @@ export const uploadLoop = async () => {
                 continue;
             }
 
-            worker.startChunkUpload(chunk); // no need for await
+            setSoon(worker.startChunkUpload.bind(worker, chunk)); // no need for await
         }
 
         isUploadLoopActive = false;
