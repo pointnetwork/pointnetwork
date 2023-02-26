@@ -11,8 +11,8 @@ import Renderer from '../../zweb/renderer';
 import logger from '../../../core/log';
 import blockchain from '../../../network/providers/ethereum';
 import {getContentTypeFromExt, matchRouteAndParams} from '../proxyUtils';
-// @ts-expect-error no types for package
-import detectContentType from 'detect-content-type';
+//// @ts-expect-error no types for package
+// import detectContentType from 'detect-content-type';
 import config from 'config';
 import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
@@ -260,7 +260,7 @@ const tryFulfillZhtmlRequest = async (
     host: string
 ) => {
     const {req, res} = cfg;
-    const {queryParams} = await parseRequestForProxy(req);
+    const {queryParams, ext} = await parseRequestForProxy(req);
 
     // This is a ZHTML file
     let templateFileContents, templateId;
@@ -296,13 +296,20 @@ const tryFulfillZhtmlRequest = async (
         ...queryParams,
         ...((req.body as Record<string, unknown>) ?? {})
     });
-    const contentType = detectContentType(Buffer.from(rendered));
+
+    // const contentType = detectContentType(Buffer.from(rendered));
     // Why this is commented out: because sometimes it is text/css too (we need this for gfonts for instance)
     // if (!contentType.match('text/html')) {
     //     console.trace(rendered);
     //     throw new Error(`Not a valid HTML: ${templateFilename}`);
     // }
+
+    let contentType = 'text/html'; //default // todo: better, more secure ways to do this
+    if (ext === 'css') contentType = 'text/css';
+    if (ext === 'js') contentType = 'text/javascript';
+
     res.header('Content-Type', contentType);
+
     return rendered;
 };
 
