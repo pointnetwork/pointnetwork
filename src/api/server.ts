@@ -15,8 +15,8 @@ const IS_GATEWAY = config.get('mode') === 'gateway';
 let secretToken = '';
 const apiServer = fastify({
     logger: logger.child({module: 'Api Fastify server'}, {level: 'warn'}),
-    pluginTimeout: 20000,
-    connectionTimeout: 10000 // after 10 seconds of client inactivity, server auto-closes the connection
+    pluginTimeout: 20000
+    // Don't add connectionTimeout or add it smartly: it would kill deployer waiting for response during heavy upload
     // todo: more configuration?
 });
 
