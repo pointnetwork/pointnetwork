@@ -10,7 +10,14 @@ const Header = ({ isRegistered }) => {
 
     return (
         <>
-            <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
+            <Navbar
+                collapseOnSelect
+                expand="lg"
+                bg="dark"
+                variant="dark"
+                fixed="top"
+                style={{ opacity: '0.9' }}
+            >
                 <Container>
                     <img src={logo} className="imgLogo" alt="Point Network" />
                     <LinkContainer to="/">
@@ -41,6 +48,7 @@ const Header = ({ isRegistered }) => {
                                         </Nav.Link>
                                     </LinkContainer>
                                     <LinkContainer
+                                        className="ml-auto"
                                         to={'/identities/' + walletIdentity}
                                     >
                                         <Nav.Link

@@ -1,3 +1,15 @@
+body {
+    /*background: radial-gradient(65% 100% at 50% 0%, #00FF94 0%, rgba(0, 255, 148, 0.25) 100%), linear-gradient(230deg, #000000 25%, #170059 100%), linear-gradient(215deg, #FFEBB9 10%, #19004E 80%), radial-gradient(100% 245% at 100% 100%, #FFFFFF 0%, #000353 100%), linear-gradient(125deg, #1400FF 0%, #3A0000 100%), linear-gradient(225deg, #00F0FF 30%, #000B6F 45%, #00EBFC 45%, #001676 65%, #00E1F6 65%, #001676 85%, #00ECFD 85%, #001676 100%), linear-gradient(135deg, #00F0FF 0%, #000B6F 15%, #00EBFC 15%, #001676 35%, #00E1F6 35%, #001676 55%, #00ECFD 55%, #001676 100%);*/
+    /*background-blend-mode: soft-light, screen, overlay, overlay, difference, overlay, normal;*/
+    /*background-size: 100% 100%;*/
+
+    background: url(/assets/own-pattern@3000x2000px.svg);
+    background-attachment: fixed;
+    background-size: 150% 240%;
+
+    padding-top: 60px; /* for .fixed-top navbar */
+}
+
 .navbar {
     background: linear-gradient(to bottom, #1E2022 0%, rgb(0, 0, 0) 100%);
     font-family: "Source Sans Pro", sans-serif;
@@ -17,7 +29,11 @@
 }
 
 a {
-    color: #438fa6;
+    /*color: #438fa6;*/
+    color: #69f6fd;
+}
+a:hover {
+    color: white;
 }
 
 a.nav-link {
@@ -47,12 +63,14 @@ a.nav-link:not(.active):hover {
 }
 
 .home-header {
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
     font-family: "Source Sans Pro", sans-serif;
     font-size: 4rem;
     font-weight: 700;
     margin-top: 100px;
     text-align: center;
+
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.27);
 }
 
 .home-header span {
@@ -85,7 +103,7 @@ a.nav-link:not(.active):hover {
 
 .zapp {
     border-radius: 20px;
-    box-shadow: 0px 7px 15px 0 rgba(0, 0, 0, .15);
+    box-shadow: 0px 7px 15px 0 rgba(138, 138, 138, 0.07);
     margin: 10px;
     padding: 16px;
     position: relative;
@@ -93,6 +111,7 @@ a.nav-link:not(.active):hover {
     top: 0;
     transition: .2s top ease-in-out;
     width: fit-content;
+    background-color: rgba(28, 54, 87, 0.33);
 }
 
 .zapp:hover {
@@ -338,8 +357,8 @@ a.nav-link:not(.active):hover {
 }
 
 .wallet-tabs.nav-tabs .nav-link.active {
-    border-bottom: 2px solid rgb(33, 37, 41);
-    color: rgb(33, 37, 41);
+    border-bottom: 2px solid rgb(122, 179, 236);
+    color: rgb(122, 179, 236);
 }
 
 .wallet-no-tokens {

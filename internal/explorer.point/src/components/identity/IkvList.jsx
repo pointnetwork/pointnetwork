@@ -118,7 +118,7 @@ const IkvList = ({ isPointIdentity, owner }) => {
             ) : (
                 <>
                     {ikvset.length > 0 ? (
-                        <table className="table table-bordered table-primary table-striped table-hover table-responsive">
+                        <table className="table table-bordered table-dark table-striped table-hover table-responsive">
                             <thead>
                                 <tr>
                                     <th>Key</th>

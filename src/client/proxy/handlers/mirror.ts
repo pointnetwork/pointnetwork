@@ -42,8 +42,8 @@ export async function getMirrorWeb2Page(req: FastifyRequest) {
         const redirectedHost = FULL_DOMAIN_REDIRECTS[ host.toLowerCase() ];
         let url = req.raw.url ?? '';
         if (host === 'fonts.googleapis.com') {
-            url = url.replace('/css', '/css.css');
-            url = url.replace('/css2', '/css2.css');
+            url = url.replace('/css2?', '/css2.css?');
+            url = url.replace('/css?', '/css.css?');
         }
         return 'https://' + redirectedHost + (!url.startsWith('/') ? '/' : '') + url;
     }

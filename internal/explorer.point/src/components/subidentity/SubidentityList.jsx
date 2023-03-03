@@ -11,7 +11,7 @@ export default function SubidentityList({ subidentities, loading, owner }) {
 
     if (subidentities && subidentities.length > 0) {
         return (
-            <table className="table table-bordered table-striped table-hover table-responsive table-primary mb-4">
+            <table className="table table-bordered table-striped table-hover table-responsive table-dark mb-4">
                 <tbody>
                     <tr>
                         <th>Handle</th>

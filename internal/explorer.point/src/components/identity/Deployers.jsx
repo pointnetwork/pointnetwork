@@ -141,7 +141,7 @@ const Deployers = ({ isOwner, isPointIdentity }) => {
                     <em>No records found</em>
                 </div>
             ) : (
-                <table className="table table-bordered table-primary table-striped table-hover table-responsive">
+                <table className="table table-bordered table-dark table-striped table-hover table-responsive">
                     <tbody>
                         {deployers.map((deployer) => (
                             <tr key={deployer.deployer}>

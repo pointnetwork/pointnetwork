@@ -225,7 +225,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 }
                 res.status(421); // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/421
                 return templateManager.render(Template.WEB2LINK, {
-                    url: sanitizeUrl('http://' + host + (req.url ?? '')),
+                    url: sanitizeUrl('https://' + host + (req.url ?? '')),
                     csrfToken: csrfTokens.point,
                     host: refererHost
                 });

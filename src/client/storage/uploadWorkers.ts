@@ -71,11 +71,33 @@ const doChunkUpload = async (chunk: Chunk) => {
             formData.append('__pn_chunk_id', chunkId);
             formData.append(`__pn_chunk_${VERSION_MAJOR}.${VERSION_MINOR}_id`, chunkId);
 
+            const headers = {
+                ...formData.getHeaders(),
+                'chunkid': chunkId,
+
+                'Content-Length': false,
+                'Transfer-Encoding': 'chunked'
+            };
+            /***
+             * Here's why we force the Content-Length to false in the above headers:
+             *
+             * I had run the identical uploader script, and it failed in one case, and succeeded in the other.
+             * Narrowed down the difference to axios version: 0.27.2 always worked, 1.3.4 always failed.
+             *
+             * If I hadn't investigated, we would have been stuck with the old version.
+             * The only difference was that axios 1.3.4 was sending the Content-Length header,
+             * and the bundler was rejecting the request with "Missing required key 'Key' in params"
+             * And axios 0.27.2 was not sending the Content-Length header at all.
+             *
+             * So when I force the Content-Length to false here, it suddenly works on both versions.
+             *
+             * It might be due to the fact that Transfer-Encoding is set to chunked (which I make sure to set again,
+             * because 0.27.2 will not set it if Content-Length is present in any way), in which case
+             * Content-Length must be omitted. If you figure out more details, let me know. ~ Serge Var
+             */
+
             const response = await axios.post(`${BUNDLER_URL}/signPOST`, formData, {
-                headers: {
-                    ...formData.getHeaders(),
-                    chunkid: chunkId
-                },
+                headers,
                 timeout: REQUEST_TIMEOUT
             });
 

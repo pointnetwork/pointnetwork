@@ -1,5 +1,5 @@
 // TODO: add better error handling with custom errors and keeping error messages in DB
-import Chunk, {CHUNK_DOWNLOAD_STATUS} from '../../../db/models/chunk';
+import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk';
 import path from 'path';
 import {existsSync, promises as fs} from 'fs';
 import {hashFn} from '../../../util';
@@ -14,6 +14,79 @@ import {
     log
 } from '../config';
 import {EventTypes, waitForEvent} from '../callbacks';
+
+const sourceBundlerBackup = async (chunkId: string): Promise<Buffer> =>
+    await downloadChunkFromBundler(BUNDLER_DOWNLOAD_URL, chunkId);
+
+const getTxIdsByChunkIdFromGraphQL = async (chunkId: string): Promise<string[]> => {
+    const query = getDownloadQuery(chunkId);
+    const queryResult = await request(GATEWAY_URL, query);
+    const transactions = queryResult.transactions.edges;
+    log.debug({chunkId, numberOfTxs: transactions.length}, 'Graphql request success');
+
+    const txids = [];
+    for (const edge of transactions) {
+        const txid = edge.node.id;
+        txids.push(txid);
+    }
+
+    return txids;
+};
+
+const sourceArweaveGateway = async (chunkId: string): Promise<Buffer> => {
+    const txids = await getTxIdsByChunkIdFromGraphQL(chunkId);
+
+    //for (const edge of transactions) {
+    for (const txid of txids) {
+        try {
+            log.debug({chunkId}, 'Downloading chunk from Arweave gateway');
+            const {data} = await storage.getTxFromCache(txid);
+
+            log.debug({chunkId, txid}, 'Successfully downloaded chunk from Arweave gateway, verifying');
+            const buf = Buffer.from(data);
+            const hash = hashFn(buf).toString('hex');
+            if (hash !== chunkId) {
+                log.warn({chunkId, hash}, 'Chunk id and data do not match');
+                continue;
+            }
+
+            // Success!
+            return buf;
+
+        } catch (e) {
+            // continue to next tx
+        }
+    }
+
+    throw new Error('No transactions for this chunk found in Arweave gateway');
+};
+
+const sourceArweaveNetwork = async (chunkId: string): Promise<Buffer> => {
+    const txids = await getTxIdsByChunkIdFromGraphQL(chunkId);
+
+    for (const txid of txids) {
+        try {
+            log.debug({chunkId, txid}, 'Downloading chunk from Arweave node');
+            const data = await storage.getDataByTxId(txid);
+
+            log.warn({chunkId, txid}, 'Successfully downloaded chunk from Arweave node, verifying');
+            const buf = Buffer.from(data);
+            const hash = hashFn(buf).toString('hex');
+            if (hash !== chunkId) {
+                log.warn({chunkId, hash}, 'Chunk id and data do not match');
+                continue;
+            }
+
+            // Success!
+            return buf;
+
+        } catch (err) {
+            // Continue to the next tx
+        }
+    }
+
+    throw new Error('No transactions for this chunk found in Arweave node');
+};
 
 const getChunk = async (
     chunkId: string,
@@ -43,79 +116,44 @@ const getChunk = async (
     chunk.dl_status = CHUNK_DOWNLOAD_STATUS.IN_PROGRESS;
     await chunk.save();
 
-    // TODO: seems to work, but refactor this!!!
-    // Due to issues with Arweave, we first try to retrieve
-    // chunks from the bundler's backup (S3).
-    try {
-        log.debug({chunkId}, 'Downloading chunk from bundler backup');
-        const buf = await downloadChunkFromBundler(BUNDLER_DOWNLOAD_URL, chunkId);
+    const sources = [
+        sourceBundlerBackup,
+        sourceArweaveGateway,
+        sourceArweaveNetwork
+    ];
 
-        const hash = hashFn(buf).toString('hex');
-        if (hash !== chunk.id) {
-            log.warn({chunkId, hash}, 'Chunk id and data do not match');
-            throw new Error('Chunk id and data do not match');
-        }
-
-        await fs.writeFile(chunkPath, buf);
-        chunk.size = buf.length;
-        chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
-        await chunk.save();
-        return buf;
-    } catch (err) {
-        log.warn(
-            {chunkId, message: err.message, stack: err.stack},
-            'Chunk not found in bundler backup or hash doesn\'t match'
-        );
-    }
-    const query = getDownloadQuery(chunkId);
-    const queryResult = await request(GATEWAY_URL, query);
-    const transactions = queryResult.transactions.edges;
-    log.debug({chunkId, numberOfTxs: transactions.length}, 'Graphql request success');
-
-    for (const edge of transactions) {
-        const txid = edge.node.id;
+    for (const source of sources) {
+        log.debug({chunkId}, 'Downloading chunk from source: ' + source.name);
 
         try {
-            log.debug({chunkId}, 'Downloading chunk from Arweave cache');
-            const {data} = await storage.getTxFromCache(txid);
-            log.debug({chunkId, txid}, 'Successfully downloaded chunk from Arweave cache');
-            const buf = Buffer.from(data);
+            // attempt download
+            const buf = await source(chunkId);
+
+            // verify hash
             const hash = hashFn(buf).toString('hex');
             if (hash !== chunk.id) {
                 log.warn({chunkId, hash}, 'Chunk id and data do not match');
-                continue;
-            }
-            await fs.writeFile(chunkPath, buf);
-            chunk.size = buf.length;
-            chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
-            await chunk.save();
-            return buf;
-        } catch (err) {
-            log.warn({chunkId, txid, err}, 'Error fetching transaction data from Arweave cache');
-        }
-
-        try {
-            log.debug({chunkId, txid}, 'Downloading chunk from Arweave node');
-            const data = await storage.getDataByTxId(txid);
-            log.warn({chunkId, txid}, 'Successfully downloaded chunk from Arweave node');
-            const buf = Buffer.from(data);
-            const hash = hashFn(buf).toString('hex');
-            if (hash !== chunk.id) {
-                log.warn({chunkId, hash}, 'Chunk id and data do not match');
-                continue;
+                throw new Error('Chunk id and data do not match');
             }
 
+            // save to disk
             await fs.writeFile(chunkPath, buf);
-            chunk.size = buf.length;
+
+            // update chunk
+            chunk.size = buf.byteLength;
             chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;
+            chunk.ul_status = CHUNK_UPLOAD_STATUS.COMPLETED; // if we could fetch it, it's on the network
             await chunk.save();
+
             return buf;
+
         } catch (err) {
-            log.warn({chunkId, err}, 'Error fetching transaction data from Arweave node');
+            // Continue to the next source
         }
     }
 
-    log.error({chunkId}, 'Chunk not found in backup, nor Arweave cache, nor Arweave node');
+    // If we're here, we failed to download the chunk
+    log.error({chunkId}, 'Chunk not found in backup, nor Arweave gateway, nor Arweave node');
     chunk.dl_status = CHUNK_DOWNLOAD_STATUS.FAILED;
     await chunk.save();
     throw new Error('Chunk not found');

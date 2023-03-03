@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#000000" />
         <title>Point Explorer</title>
         <script defer src="/index.js"></script>
+        <link rel="stylesheet" href="/bootstrap-5.3.0-alpha1.min.css">
         <link rel="stylesheet" href="/index.css">
         <link rel="stylesheet" href="/custom.css">
     </head>
