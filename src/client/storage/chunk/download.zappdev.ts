@@ -71,7 +71,18 @@ const getChunk = async (
                 continue;
             }
 
-            await fs.writeFile(chunkPath, buf);
+            // -- write to disk --
+
+            // tmp name
+            const tmpPath = path.join(DOWNLOAD_CACHE_PATH, `chunk_${chunkId}_tmp_${Date.now()}`);
+
+            // write to disk
+            await fs.writeFile(tmpPath, data);
+
+            // rename to final name
+            await fs.rename(tmpPath, chunkPath);
+
+            // --
 
             chunk.size = buf.length;
             chunk.dl_status = CHUNK_DOWNLOAD_STATUS.COMPLETED;

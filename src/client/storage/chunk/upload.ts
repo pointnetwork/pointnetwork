@@ -19,8 +19,14 @@ export const enqueueChunksForUpload = async (chunks: Buffer[], fileId: string): 
         const data = chunks[cIdx];
         const chunkPath = path.join(UPLOAD_CACHE_PATH, `chunk_${chunkId}`);
         if (!existsSync(chunkPath)) {
+            // tmp name
+            const tmpPath = path.join(UPLOAD_CACHE_PATH, `chunk_${chunkId}_tmp_${Date.now()}`);
+
             // write to disk
-            await fs.writeFile(chunkPath, data);
+            await fs.writeFile(tmpPath, data);
+
+            // rename to final name
+            await fs.rename(tmpPath, chunkPath);
         }
     }
 
