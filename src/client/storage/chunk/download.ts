@@ -8,15 +8,20 @@ import getDownloadQuery from '../query';
 import {request} from 'graphql-request';
 import {storage} from '../client/client';
 import {
-    BUNDLER_DOWNLOAD_URL,
+    ARWEAVE_BUNDLERS_READ,
     DOWNLOAD_CACHE_PATH,
     GATEWAY_URL,
     log
 } from '../config';
 import {EventTypes, waitForEvent} from '../callbacks';
 
-const sourceBundlerBackup = async (chunkId: string): Promise<Buffer> =>
-    await downloadChunkFromBundler(BUNDLER_DOWNLOAD_URL, chunkId);
+const validateIntegrity = (chunkId: string, data: Buffer): boolean => {
+    const hash = hashFn(data).toString('hex');
+    return hash === chunkId;
+};
+
+const sourceBundlerBackup = async (bundler_url: string, chunkId: string): Promise<Buffer> =>
+    await downloadChunkFromBundler(bundler_url, chunkId);
 
 const getTxIdsByChunkIdFromGraphQL = async (chunkId: string): Promise<string[]> => {
     const query = getDownloadQuery(chunkId);
@@ -44,9 +49,7 @@ const sourceArweaveGateway = async (chunkId: string): Promise<Buffer> => {
 
             log.debug({chunkId, txid}, 'Successfully downloaded chunk from Arweave gateway, verifying');
             const buf = Buffer.from(data);
-            const hash = hashFn(buf).toString('hex');
-            if (hash !== chunkId) {
-                log.warn({chunkId, hash}, 'Chunk id and data do not match');
+            if (!validateIntegrity(chunkId, buf)) {
                 continue;
             }
 
@@ -71,9 +74,7 @@ const sourceArweaveNetwork = async (chunkId: string): Promise<Buffer> => {
 
             log.warn({chunkId, txid}, 'Successfully downloaded chunk from Arweave node, verifying');
             const buf = Buffer.from(data);
-            const hash = hashFn(buf).toString('hex');
-            if (hash !== chunkId) {
-                log.warn({chunkId, hash}, 'Chunk id and data do not match');
+            if (!validateIntegrity(chunkId, buf)) {
                 continue;
             }
 
@@ -117,7 +118,7 @@ const getChunk = async (
     await chunk.save();
 
     const sources = [
-        sourceBundlerBackup,
+        ...ARWEAVE_BUNDLERS_READ.map((bundler_url: string) => sourceBundlerBackup.bind(null, bundler_url)),
         sourceArweaveGateway,
         sourceArweaveNetwork
     ];
@@ -130,9 +131,8 @@ const getChunk = async (
             const buf = await source(chunkId);
 
             // verify hash
-            const hash = hashFn(buf).toString('hex');
-            if (hash !== chunk.id) {
-                log.warn({chunkId, hash}, 'Chunk id and data do not match');
+            if (!validateIntegrity(chunkId, buf)) {
+                log.warn({chunkId, hash: hashFn(buf).toString('hex')}, 'Chunk hash does not match');
                 throw new Error('Chunk id and data do not match');
             }
 

@@ -131,7 +131,7 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 
 // ------------------- Init Logger ----------------- //
 
-import logger from './core/log';
+const logger = require('./core/log');
 const log = logger.child({module: 'point'});
 const exit = (code: number) => {
     log.close();
@@ -145,7 +145,7 @@ const die = (err: Error) => {
 // ----------------- Simple Commands ---------------- //
 if (program.hashfn) {
     const {hashFn} = require('./util');
-    
+
     const path = program.hashfn;
     if (!fs.existsSync(path)) throw new Error('File not found: ' + path);
 
@@ -177,7 +177,7 @@ if (program.new) {
 }
 
 // --------------------- Config --------------------- //
-import config from 'config';
+const config = require('config');
 
 // -------------------- Deployer --------------------- //
 

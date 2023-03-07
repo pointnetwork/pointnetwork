@@ -41,6 +41,10 @@ storage:
   files_path: files
   arweave_experiment_version_major: 1
   arweave_experiment_version_minor: 8
+  arweave_bundlers_read:
+    - https://a.read.bundler.point.space/download/
+    - https://arweave-bundler.point.space/download/
+    - https://test-arweave-bundler.herokuapp.com/download/
   arweave_bundler_url: https://test-arweave-bundler.herokuapp.com
   arweave_bundler_url_fallback: https://arweave-bundler.point.space
   arweave_gateway_url: https://arweave.net/graphql
@@ -67,7 +71,7 @@ network:
 name_services:
   sol_tld_authority: "58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx"
   ens:
-    enabled: false
+    enabled: true
   sns:
     enabled: true
     get_all_domains: true

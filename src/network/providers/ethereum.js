@@ -1331,33 +1331,41 @@ ethereum.send = ({method, params = [], id, network}) =>
  *
  * (implements a cache to avoid querying Ethereum too often)
  */
-ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
+ethereum.resolveDomain = async (domainName, network = 'ethereum') => {
     if (!ENS_ENABLED) {
         log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
-        return {owner: '', content: null};
+        throw new Error(`ENS has been disabled in config`);
     }
 
-    const cacheKey = `${network}:${domainName}`;
-    const cachedDomainRegistry = ensDomainCache.get(cacheKey);
-    if (cachedDomainRegistry) {
-        return cachedDomainRegistry;
+    try {
+        const cacheKey = `${network}:${domainName}`;
+        const cachedDomainRegistry = ensDomainCache.get(cacheKey);
+        if (cachedDomainRegistry) {
+            return cachedDomainRegistry;
+        }
+
+        const provider = getEthers(network);
+        const resolver = await provider.getResolver(domainName);
+
+        if (!resolver) {
+            throw new Error(`Domain ${domainName} not found in Ethereum's ${network}.`);
+        }
+
+        const [owner, _content, _contentHash] = await Promise.all([
+            provider.resolveName(domainName),
+            resolver.getText(POINT_ENS_TEXT_RECORD_KEY),
+            resolver.getContentHash()
+        ]);
+
+        const content = (!_content) ? _contentHash : _content;
+
+        const domainRegistry = {owner, content};
+        ensDomainCache.add(cacheKey, domainRegistry);
+        return domainRegistry;
+    } catch (e) {
+        throw e;
     }
 
-    const provider = getEthers(network);
-    const resolver = await provider.getResolver(domainName);
-
-    if (!resolver) {
-        throw new Error(`Domain ${domainName} not found in Ethereum's ${network}.`);
-    }
-
-    const [owner, content] = await Promise.all([
-        provider.resolveName(domainName),
-        resolver.getText(POINT_ENS_TEXT_RECORD_KEY)
-    ]);
-
-    const domainRegistry = {owner, content};
-    ensDomainCache.add(cacheKey, domainRegistry);
-    return domainRegistry;
 };
 
 /**

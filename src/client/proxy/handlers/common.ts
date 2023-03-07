@@ -20,6 +20,7 @@ import {parseDomainRegistry} from '../../../name_service/registry';
 import {HttpForbiddenError, HttpNotFoundError} from '../../../core/exceptions';
 import csrfTokens from '../../zweb/renderer/csrfTokens';
 import {randomBytes} from 'crypto';
+import {getIPFSFileAsStream, getIPFSPeers, getIPFSPubsubPeers} from '../../storage/ipfs';
 const {getJSON, getFileIdByPath, getFile, getFileAsReadStream} = require('../../storage');
 const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
@@ -168,7 +169,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             const {routesId, rootDirId, identity} = await queryExtDomain(host, queryParams);
 
             // Fetch routes file
-            const routes = await getJSON(routesId);
+            const routes = (routesId === 'ipfs://ignore') ? {'/': 'index.html'} : await getJSON(routesId);
             if (!routes) throw new HttpNotFoundError(`Cannot parse json of zrouteId ${routesId}`);
 
             return await fulfillRequest({
@@ -177,9 +178,17 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 isLocal: false,
                 routes,
                 path: urlPath,
-                remoteRootDirId: rootDirId,
+                remoteRootDirId: rootDirId?.replace(/\/$/, ''), // remove trailing slash
                 rewriteHost: identity
             });
+        } else if (host === 'ipfs') {
+            if (req.url === '/peers') {
+                return await getIPFSPeers();
+            } else if (req.url.startsWith('/pubsub/peers')) {
+                return await getIPFSPubsubPeers(res, req.url.replace('/pubsub/peers', ''));
+            } else {
+                return await getIPFSFileAsStream(req.url);
+            }
         } else {
             // Web2?
             let urlMirrorUrl;
@@ -277,10 +286,21 @@ const tryFulfillZhtmlRequest = async (
         );
     } else {
         // Remote
-        templateId = await getFileIdByPath(cfg.remoteRootDirId, templateFilename);
-        if (!templateId) throw new HttpNotFoundError(`Cannot getFileIdByPath: ${templateFilename}`);
+        if (cfg.remoteRootDirId?.startsWith('ipfs://')) {
+            const templateFileStream = await getIPFSFileAsStream(cfg.remoteRootDirId + '/' + templateFilename);
+            // it's a Readable stream, so get the contents
 
-        templateFileContents = await getFile(templateId);
+            // lets have a ReadableStream as a stream variable
+            const chunks = [];
+            for await (const chunk of templateFileStream) chunks.push(Buffer.from(chunk));
+            templateFileContents = Buffer.concat(chunks).toString('utf-8');
+
+        } else {
+            templateId = await getFileIdByPath(cfg.remoteRootDirId, templateFilename);
+            if (!templateId) throw new HttpNotFoundError(`Cannot getFileIdByPath: ${templateFilename}`);
+
+            templateFileContents = await getFile(templateId);
+        }
     }
 
     let renderer;
@@ -336,6 +356,9 @@ const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: s
 
         const fullPath = getFullPathFromLocalRoot(cfg.localRootDirPath, urlPath);
         file = fs.createReadStream(fullPath);
+
+    } else if (cfg.remoteRootDirId?.startsWith('ipfs://')) {
+        file = await getIPFSFileAsStream(cfg.remoteRootDirId + urlPath);
 
     } else {
         const fileId = await getFileIdByPath(cfg.remoteRootDirId, urlPath);
@@ -394,6 +417,7 @@ const queryExtDomain = async (
     let rootDirId: string | undefined;
     let isAlias = false;
 
+    log.debug({host}, `Resolving ${service} domain`);
     const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
     if (!resp.data.data?.content?.trim()) {
         throw new HttpNotFoundError(`No Point data found in the domain registry for "${host}".`);
