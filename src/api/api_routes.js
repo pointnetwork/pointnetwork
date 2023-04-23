@@ -72,6 +72,10 @@ module.exports = [
     ],
     ['GET', '/v1/api/deploy/progress', 'DeployController@deployProgress', {gatewayDisabled: true}], // TODO: not protecting for now, but should
     ['GET', '/v1/api/storage/files/:id', 'StorageController@fileById', {protected: true}],
+    ['POST', '/v1/api/storage/pubsub/publish/:topic', 'StorageController@pubsubPublish', {protected: true}],
+    ['POST', '/v1/api/storage/pubsub/publishForIdentity', 'StorageController@pubsubPublishForIdentity', {protected: true}],
+    ['POST', '/v1/api/storage/pubsub/subscribe/:topic', 'StorageController@pubsubSubscribe', {protected: true}],
+    ['POST', '/v1/api/storage/pubsub/unsubscribe/:topic', 'StorageController@pubsubUnsubscribe', {protected: true}],
     ['GET', '/v1/api/storage/getString/:id', 'StorageController@getString', {protected: true}],
     [
         'POST',
@@ -79,6 +83,17 @@ module.exports = [
         'StorageController@putString',
         {protected: true, gatewayDisabled: true}
     ],
+
+    ['GET', '/v1/api/storage/host/get', 'StorageController@hostStorageGet', {protected: true}],
+    ['GET', '/v1/api/storage/host/len', 'StorageController@hostStorageLen', {protected: true}],
+    ['GET', '/v1/api/storage/host/dir', 'StorageController@hostStorageDir', {protected: true}],
+    ['POST', '/v1/api/storage/host/set', 'StorageController@hostStorageSet', {protected: true}],
+    ['POST', '/v1/api/storage/host/unset', 'StorageController@hostStorageUnset', {protected: true}],
+    ['POST', '/v1/api/storage/host/append', 'StorageController@hostStorageAppend', {protected: true}],
+    ['POST', '/v1/api/storage/host/removeAt', 'StorageController@hostStorageRemoveAt', {protected: true}],
+    ['POST', '/v1/api/storage/host/replaceAt', 'StorageController@hostStorageReplaceAt', {protected: true}],
+    ['POST', '/v1/api/storage/host/insertAt', 'StorageController@hostStorageInsertAt', {protected: true}],
+
     // TODO: was not working, restore if needed
     // ['GET', '/v1/api/wallet/generate', 'WalletController@generate'],
     [

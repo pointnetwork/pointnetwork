@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { SUFFIXES, PREFIXES } from './identityModifiers';
 
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong';
 export const MAX_TWEET_SIZE = 280;
@@ -23,6 +24,11 @@ const useFinal = () => {
     const [tweetContentError, setTweetContentError] = useState('');
 
     const [openingTwitter, setOpeningTwitter] = useState(false);
+
+    const [suggestions, setSuggestions] = useState([]);
+    const [suggestionsAvailability, setSuggestionsAvailability] = useState([]);
+
+    const identityTextboxRef = useRef();
 
     function validateIdentity(identity) {
         if (identity === '') {
@@ -88,10 +94,10 @@ const useFinal = () => {
         clearTimeout(debounced.current);
         const identity = event.target.value;
         cleanForm();
+        setIdentity(identity);
         if (!validateIdentity(identity)) {
             return;
         }
-        setIdentity(identity);
         debounced.current = setTimeout(async () => {
             setError('');
             setLoading(true);
@@ -191,9 +197,81 @@ const useFinal = () => {
         }
     };
 
+    const getAvailableNamesSuggestions = (identity) => {
+        const NUM = 20;
+        const suggestions = [];
+        for (let i = 0; i < NUM; i++) {
+            // suffix or prefix?
+            const suffixMode = Math.random() > 0.5;
+
+            // extract only a-zA-Z
+            const identityClean = identity.replace(/[^a-zA-Z]/g, '');
+
+            if (suffixMode) {
+                // choose suffix
+                const suffix =
+                    SUFFIXES[Math.floor(Math.random() * SUFFIXES.length)];
+                suggestions.push((identityClean + suffix).toLowerCase());
+            } else {
+                // choose prefix
+                const prefix =
+                    PREFIXES[Math.floor(Math.random() * PREFIXES.length)];
+                suggestions.push((prefix + identityClean).toLowerCase());
+            }
+        }
+        return suggestions;
+    };
+
+    const checkAvailabilityOfSuggestions = async () => {
+        setSuggestionsAvailability({});
+        const authToken = await window.point.point.get_auth_token();
+
+        for (let i = 0; i < suggestions.length; i++) {
+            setTimeout(async () => {
+                const suggestion = suggestions[i];
+                const response = await axios.get(
+                    `/v1/api/identity/isIdentityEligible/${suggestion}`,
+                    {
+                        headers: {
+                            'X-Point-Token': `Bearer ${authToken}`,
+                        },
+                    },
+                );
+                const { eligibility } = response.data.data;
+                setSuggestionsAvailability((prev) => ({
+                    ...prev,
+                    [suggestion]: eligibility,
+                }));
+            }, 0);
+        }
+
+        setSuggestionsAvailability(suggestionsAvailability);
+    };
+
+    useEffect(() => {
+        if (activationCode) {
+            setSuggestions(getAvailableNamesSuggestions(identity));
+        } else {
+            setSuggestions([]);
+        }
+    }, [activationCode, identity]);
+
+    useEffect(() => {
+        if (suggestions && suggestions.length > 0) {
+            checkAvailabilityOfSuggestions(suggestions);
+        }
+    }, [suggestions]);
+
+    const getDefaultTweetContent = (code, identity) => {
+        return `Activating my Point Network handle! @pointnetwork https://pointnetwork.io/activation?i=0x${code}&handle=${identity} #pointnetwork #activation`;
+    };
+
+    const isTweetContentUnchanged = (code, identity) => {
+        return tweetContent === getDefaultTweetContent(code, identity);
+    };
+
     const resetTweetContent = (code, identity) => {
-        const defaultTweetContent = `Activating my Point Network handle! @pointnetwork https://pointnetwork.io/activation?i=0x${code}&handle=${identity} #pointnetwork #activation`;
-        setTweetContent(defaultTweetContent);
+        setTweetContent(getDefaultTweetContent(code, identity));
         setTweetContentError('');
     };
 
@@ -206,11 +284,16 @@ const useFinal = () => {
             });
 
             if (!isConfirmed) {
-                return;
+                return false;
             }
 
-            setRegistering(true);
-            setError('');
+            if (activationCode && tweetUrl) {
+                setRegistering(true);
+                // setError('');
+            } else {
+                setRegistering(true);
+                setError('');
+            }
 
             const csrf_token = window.localStorage.getItem('csrf_token');
 
@@ -241,20 +324,32 @@ const useFinal = () => {
             }
 
             if (!success) {
-                Swal.fire({
-                    icon: 'error',
-                    text: reason || DEFAULT_ERROR_MESSAGE,
-                });
-                return;
+                // Swal.fire({
+                //     icon: 'error',
+                //     text: reason || DEFAULT_ERROR_MESSAGE,
+                // });
+                if (activationCode && tweetUrl) {
+                    setTweetContentError(reason || DEFAULT_ERROR_MESSAGE);
+                } else {
+                    setError(reason || DEFAULT_ERROR_MESSAGE);
+                }
+                return false;
             }
             window.location = '/';
         } catch (error) {
             setRegistering(false);
-            Swal.fire({
-                title: DEFAULT_ERROR_MESSAGE,
-                text: 'Error: ' + error.message,
-            });
+            // Swal.fire({
+            //     title: DEFAULT_ERROR_MESSAGE,
+            //     text: 'Error: ' + error.message,
+            // });
+            if (activationCode && tweetUrl) {
+                setTweetContentError(reason || DEFAULT_ERROR_MESSAGE);
+            } else {
+                setError(reason || DEFAULT_ERROR_MESSAGE);
+            }
         }
+
+        return false;
     };
 
     async function openTwitterWithMessage() {
@@ -277,6 +372,8 @@ const useFinal = () => {
         } catch (error) {
             setOpeningTwitter(false);
         }
+
+        return false;
     }
 
     const identityAvailable = eligibility === 'free' || eligibility === 'tweet';
@@ -287,6 +384,7 @@ const useFinal = () => {
 
     return {
         identity,
+        identityTextboxRef,
         error,
         loading,
         registering,
@@ -304,8 +402,13 @@ const useFinal = () => {
         onChangeUrlHandler,
         onChangeTweetContentHandler,
         resetTweetContent,
+        getDefaultTweetContent,
+        isTweetContentUnchanged,
         registerHandler,
+        suggestions,
+        suggestionsAvailability,
         openTwitterWithMessage,
+        setIdentity,
     };
 };
 

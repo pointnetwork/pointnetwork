@@ -19,4 +19,5 @@ export * from './splitAndTakeLastPart';
 export * from './getSecretToken';
 export * from './sanitizeSVG';
 export * from './queue';
+export * from './gzip';
 export * from './internet';

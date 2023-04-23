@@ -7,6 +7,7 @@ import csrfTokens from '../client/zweb/renderer/csrfTokens';
 import config from 'config';
 import {verify} from 'jsonwebtoken';
 import {getSecretToken} from '../util';
+import {DisplayableError} from '../core/exceptions';
 const ws_routes = require('./ws_routes');
 const api_routes = require('./api_routes');
 
@@ -101,10 +102,13 @@ apiServer.setErrorHandler(function(error, request, reply) {
     request.log.error(error, 'ApiServer error handler');
 
     const statusCode = error.statusCode ?? 500;
+
+    const displayError = error instanceof DisplayableError || statusCode < 500;
+
     reply
         .code(statusCode)
         .type('text/plain')
-        .send(statusCode >= 500 ? 'Internal engine error' : error.message);
+        .send(displayError ? error.message : 'Internal engine error');
 });
 
 apiServer.addHook('preValidation', (request, reply, next) => {

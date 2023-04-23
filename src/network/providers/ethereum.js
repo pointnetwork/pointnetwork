@@ -817,8 +817,10 @@ ethereum.commPublicKeyByIdentity = async identity => {
         const identityContract = await ethereum.loadIdentityContract();
         const method = identityContract.methods.getCommPublicKeyByIdentity(identity);
         const parts = await method.call();
+        // todo: in the future, don't add 0x, but that might break some existing usages
+        // todo:  better yet, return Buffer
         return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
-        // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
+        // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake. throw error. again, might break current usages.
     } catch (e) {
         log.error('Error: commPublicKeyByIdentity', {identity});
     }

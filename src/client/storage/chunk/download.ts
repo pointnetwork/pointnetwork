@@ -98,7 +98,7 @@ const getChunk = async (
     const chunk = await Chunk.findByIdOrCreate(chunkId);
     const chunkPath = path.join(DOWNLOAD_CACHE_PATH, `chunk_${chunkId}`);
 
-    if (useCache && chunk.dl_status === CHUNK_DOWNLOAD_STATUS.COMPLETED) {
+    if (useCache && (chunk.dl_status === CHUNK_DOWNLOAD_STATUS.COMPLETED)) {
         log.debug({chunkId}, 'Returning chunk from cache');
         if (existsSync(chunkPath)) {
             return await fs.readFile(chunkPath, {encoding});

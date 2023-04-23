@@ -318,7 +318,7 @@ const serveReadableStreamWithFullData = (
 
         const readable = new Readable();
         readable._read = () => {}; // _read is required but you can noop it
-        readable.push(encoding === null ? data : data.toString(encoding));
+        readable.push((encoding === null || encoding === 'binary') ? data : data.toString(encoding));
         readable.push(null);
         return readable;
 
@@ -335,7 +335,7 @@ const serveReadableStreamWithFullData = (
         const readable = new Readable();
         readable._read = () => {}; // _read is required but you can noop it
         const slice = data.slice(start, end + 1);
-        readable.push(encoding === null ? slice : slice.toString(encoding));
+        readable.push((encoding === null || encoding === 'binary') ? slice : slice.toString(encoding));
         readable.push(null);
         return readable;
     }
@@ -415,7 +415,9 @@ export const getFileAsReadStream = async (
 
     // Now here I should get all the chunks and serve them one by one
 
-    const createReadableStream = async (req: FastifyRequest, res: FastifyReply, chunkIds: string[], totalSize: number) => {
+    const createReadableStream = async (
+        req: FastifyRequest, res: FastifyReply, chunkIds: string[], totalSize: number
+    ) => {
         const readable = new Readable({
             read() {
                 // Resume downloading when we see buffer is not full anymore
@@ -463,8 +465,12 @@ export const getFileAsReadStream = async (
 
         // Push the chunk into the readable stream
         function pushChunk(chunkIdx: number, chunk: Buffer) {
-            const dataToPush = range ? chunk.slice(start - chunkIdx * CHUNK_SIZE, end - chunkIdx * CHUNK_SIZE + 1) : chunk;
-            const data = encoding === null ? dataToPush : dataToPush.toString(encoding);
+            const dataToPush = range ?
+                chunk.slice(start - chunkIdx * CHUNK_SIZE, end - chunkIdx * CHUNK_SIZE + 1)
+                :
+                chunk;
+
+            const data = (encoding === null || encoding === 'binary') ? dataToPush : dataToPush.toString(encoding);
             const pushResult = readable.push(data);
             if (pushResult) {
                 // Buffer is getting full, next push will fail! Pause downloading
@@ -512,7 +518,7 @@ export const getFileAsReadStream = async (
 
 export const getFile = async (
     rawId: string,
-    encoding: BufferEncoding = 'utf8',
+    encoding: BufferEncoding|null = 'utf8',
     useCache = true
 ): Promise<string | Buffer> => {
     log.trace({fileId: rawId}, 'Getting file');
@@ -525,7 +531,7 @@ export const getFile = async (
     if (useCache && file.dl_status === FILE_DOWNLOAD_STATUS.COMPLETED) {
         log.trace({fileId: file.id}, 'Returning file from cache');
         if (fs.existsSync(filePath)) {
-            return await fs.promises.readFile(filePath, {encoding});
+            return await fs.promises.readFile(filePath, {encoding: (encoding === 'binary' ? null : encoding)});
         }
         log.warn({fileId: file.id}, 'File marked as downloaded, but is missing on the disk');
     }
@@ -556,7 +562,7 @@ export const getFile = async (
             file.size = chunkInfo.length;
             await markFileAsCompletedDownload(file.id);
 
-            return encoding === null ? chunkInfo : chunkInfo.toString(encoding);
+            return (encoding === null || encoding === 'binary') ? chunkInfo : chunkInfo.toString(encoding);
         }
 
         log.trace({fileId: file.id}, 'Processing chunk info');
@@ -587,7 +593,7 @@ export const getFile = async (
 
         await markFileAsCompletedDownload(file.id);
 
-        return encoding === null ? fileBuffer : fileBuffer.toString(encoding);
+        return (encoding === null || encoding === 'binary') ? fileBuffer : fileBuffer.toString(encoding);
     } catch (e) {
         log.error({fileId: file.id, message: e.message, stack: e.stack}, 'File download failed');
 
@@ -623,6 +629,14 @@ export const getFileIdByPath = async (dirId: string, filePath: string): Promise<
     } else {
         return getFileIdByPath(nextFileOrDir.id, path.join(...segments.slice(1)));
     }
+};
+
+export const getFileBinary = async (fileId: string, useCache = true): Promise<Buffer> => {
+    const buf = await getFile(fileId, null, useCache);
+    if (!Buffer.isBuffer(buf)) {
+        throw new Error('Expected buffer, this should never happen');
+    }
+    return buf;
 };
 
 export const isFileCached = async (fileId: string): Promise<boolean> => {

@@ -1,5 +1,5 @@
 import {hashFn} from '../../../util';
-import Chunk, {CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk';
+import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk';
 import path from 'path';
 import {promises as fs, existsSync} from 'fs';
 import {UPLOAD_CACHE_PATH} from '../config';
@@ -33,13 +33,16 @@ export const enqueueChunksForUpload = async (chunks: Buffer[], fileId: string): 
     // Bulk create chunk entries
     const chunkEntries = [];
     for (const chunkId of Object.values(chunkIds)) { // don't use .map, it will skip -1 index
-        chunkEntries.push({id: chunkId, ul_status: CHUNK_UPLOAD_STATUS.ENQUEUED});
+        chunkEntries.push({
+            id: chunkId,
+            ul_status: CHUNK_UPLOAD_STATUS.ENQUEUED, dl_status: CHUNK_DOWNLOAD_STATUS.COMPLETED
+        });
     }
     await Chunk.bulkCreate(chunkEntries, {ignoreDuplicates: true});
 
     // Fix statuses of existing entries
     await Chunk.update(
-        {ul_status: CHUNK_UPLOAD_STATUS.ENQUEUED},
+        {ul_status: CHUNK_UPLOAD_STATUS.ENQUEUED, dl_status: CHUNK_DOWNLOAD_STATUS.COMPLETED},
         {
             include:
             [{model: FileMap, where: {file_id: fileId}}],

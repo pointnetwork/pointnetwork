@@ -80,7 +80,7 @@ program
 program
     .command('tinker')
     .description('activates dev js command line mode')
-    .action((path) => void (program.tinker = path));
+    .action(() => void (program.tinker = true));
 program
     .command('deploy')
     .description('deploy a website')

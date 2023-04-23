@@ -1,0 +1,87 @@
+datadir: ~/.pointgpt
+zproxy:
+  port: 8667
+api:
+  address: 127.0.0.1
+  port: 2469
+db:
+  env: production
+network:
+  default_network: mainnet
+  web3:
+    mainnet:
+      type: "eth"
+      name: "mainnet"
+      icon: "ether"
+      http_address: "rpc-mainnet-1.point.space"
+      ws_address: "rpc-mainnet-1.point.space/ws"
+      currency_name: "Point"
+      currency_code: "POINT"
+      tls: true
+      gas_price_wei: 7
+      tokens: [ ]
+      identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3ccd40328
+      identity_contract_address: "0x47204DA8c773Aec5E2947055a081fC312A5C82cf"
+#    xnet:
+#      type: "eth"
+#      name: "Xnet"
+#      http_address: "xnet-uranus-1.point.space"
+#      ws_address: "xnet-uranus-1.point.space/ws"
+#      currency_name: "xPoint"
+#      currency_code: "xPOINT"
+#      tls: true
+#      gas_price_wei: 1
+#      tokens: [ ]
+#      identity_contract_id: b27d202f7c2479bb615ef5fd64fab86faea46457c2cc7d7246ee11f3ccd40328 # TODO: is version correct?
+#      identity_contract_address: "0x8E34Fc67034b8A593E87d5f2644D098A3dBd2Fe7"
+    ethereum:
+      type: "eth"
+      name: "Ethereum"
+      icon: "ether"
+      http_address: "mainnet.infura.io/v3/92d3c071a2194ca9b332caa34731c6e0" # TODO: project ID
+      ws_address: "mainnet.infura.io/v3/92d3c071a2194ca9b332caa34731c6e0" # TODO: project ID
+      currency_name: "Ether"
+      currency_code: "ETH"
+      eth_tld_resolver: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
+      tls: true
+      tokens:
+        - name: "USDC"
+          address: "0x7ea2be2df7ba6e54b1a9c70676f668455e329d29"
+        - name: "USDT"
+          address: "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        - name: "DAI"
+          address: "0x6b175474e89094c44da98b954eedeac495271d0f"
+    goerli:
+      type: "eth"
+      name: "Goerli"
+      icon: "ether"
+      http_address: "goerli.infura.io/v3/92d3c071a2194ca9b332caa34731c6e0" # TODO: project ID
+      ws_address: "goerli.infura.io/v3/92d3c071a2194ca9b332caa34731c6e0" # TODO: project ID
+      currency_name: "goerliEth"
+      currency_code: "goerliETH"
+      eth_tld_resolver: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
+      tls: true
+      tokens:
+        []
+#        - name: "USDC"
+#          address: "0x87284d4150b0FADe12255A7d208AD46526C519ee"
+#        - name: "USDT"
+#          address: "0xd92e713d051c37ebb2561803a3b5fbabc4962431"
+#        - name: "DAI"
+#          address: "0x95b58a6Bff3D14B7DB2f5cb5F0Ad413DC2940658"
+    solana_devnet:
+      type: "solana"
+      name: "Solana Devnet"
+      icon: "solana"
+      http_address: "api.devnet.solana.com"
+      currency_name: "devSol"
+      currency_code: "devSOL"
+      tls: true
+    solana:
+      type: "solana"
+      name: "Solana"
+      icon: "solana"
+      http_address: "api.mainnet-beta.solana.com"
+      currency_name: "Solana"
+      currency_code: "SOL"
+      tls: true
