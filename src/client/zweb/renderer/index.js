@@ -2,7 +2,7 @@ const TwigLib = require('twig');
 const _ = require('lodash');
 const {promises: fs} = require('fs');
 const {encryptData, decryptData} = require('../../encryptIdentityUtils');
-const {getFile, getJSON, getFileIdByPath, uploadFile} = require('../../storage');
+const {getFile, getJSON, getFileIdByPath, uploadData} = require('../../storage');
 const config = require('config');
 const logger = require('../../../core/log');
 const {getNetworkPrivateKey, getNetworkAddress} = require('../../../wallet/keystore');
@@ -116,7 +116,7 @@ class Renderer {
                 return await getJSON(key);
             },
             storage_put: async function(content) {
-                return uploadFile(content);
+                return uploadData(content);
             },
             encrypt_data: async function(publicKey, data) {
                 const host = this.host;

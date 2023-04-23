@@ -7,6 +7,8 @@ const {getJSON, getFileIdByPath} = require('../../storage');
 const CACHE_EXPIRATION =
     parseInt(config.get('storage.mirror_cache_expiration'), 10) || 1000 * 60 * 5;
 
+let LAST_SCAN = 0;
+
 type MirrorEntry = {
     id: string;
     src: string;
@@ -16,15 +18,13 @@ type MirrorEntry = {
 
 let web2mirror: MirrorEntry[] | null;
 async function getWeb2MirrorContent() {
-    if (web2mirror) {
+    if (web2mirror && LAST_SCAN + CACHE_EXPIRATION > Date.now()) {
         return web2mirror;
     }
+    LAST_SCAN = Date.now();
     const rootDirId = await blockchain.getKeyValue('mirror.point', '::rootDir', 'latest');
     const mirrorFileId = await getFileIdByPath(rootDirId, 'mirrors.json');
     web2mirror = await getJSON(mirrorFileId);
-    setTimeout(() => {
-        web2mirror = null;
-    }, CACHE_EXPIRATION);
     return web2mirror;
 }
 
@@ -42,8 +42,8 @@ export async function getMirrorWeb2Page(req: FastifyRequest) {
         const redirectedHost = FULL_DOMAIN_REDIRECTS[ host.toLowerCase() ];
         let url = req.raw.url ?? '';
         if (host === 'fonts.googleapis.com') {
-            url = url.replace('/css', '/css.css');
-            url = url.replace('/css2', '/css2.css');
+            url = url.replace('/css2?', '/css2.css?');
+            url = url.replace('/css?', '/css.css?');
         }
         return 'https://' + redirectedHost + (!url.startsWith('/') ? '/' : '') + url;
     }

@@ -4,6 +4,9 @@ import path from 'path';
 import {isChineseTimezone, resolveHome} from '../../util';
 
 export const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
+export const HOST_PREFIXED_PUBSUB_PROLOGUE = 'PN^PS_HOST|';
+export const HOST_PREFIXED_PUBSUB_ENCSIGN_PROLOGUE = 'PN^PS_ES|';
+
 export const CONCURRENT_DOWNLOAD_DELAY = Number(config.get('storage.concurrent_download_delay'));
 export const UPLOAD_LOOP_INTERVAL = Number(config.get('storage.upload_loop_interval'));
 export const UPLOAD_RETRY_LIMIT = Number(config.get('storage.upload_retry_limit'));
@@ -18,6 +21,9 @@ export const TIMEOUT = Number(config.get('storage.request_timeout'));
 export const DOWNLOAD_CACHE_PATH: string = path.join(
     resolveHome(config.get('datadir')),
     config.get('storage.download_cache_path')
+);
+export const DATADIR: string = path.join(
+    resolveHome(config.get('datadir'))
 );
 export const UPLOAD_CACHE_PATH = path.join(
     resolveHome(config.get('datadir')),
@@ -37,6 +43,7 @@ export const BUNDLER_URL = isChineseTimezone()
     ? config.get('storage.arweave_bundler_url_fallback')
     : config.get('storage.arweave_bundler_url');
 
+export const ARWEAVE_BUNDLERS_READ = config.get('storage.arweave_bundlers_read') as string[];
 export const BUNDLER_DOWNLOAD_URL = `${BUNDLER_URL}/download`;
 
 export const log = logger.child({module: 'Storage'});

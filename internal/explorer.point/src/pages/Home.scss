@@ -1,0 +1,346 @@
+.space-outer-container {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    min-height: 100%;
+    background: linear-gradient(to bottom, #120C1A 50%, #030512 50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+.space-outer-container {
+
+    .space-container {
+        /*width: 800px;*/
+        /*height: 400px;*/
+        /*width: 100%;*/
+        /*height: 100%;*/
+        /*aspect-ratio: 16/9;*/
+        /*min-width: 100vw; !* Set minimum width to 100% of viewport width *!*/
+        width: 100vw;
+        height: 100vh; /* Set minimum height to 100% of viewport height */
+        /*max-width: calc(100vw * 1124 / 1434); !* Set maximum width based on the maximum height and the desired aspect ratio *!*/
+        max-height: calc(100vw * 1124 / 1434); /* Set maximum height based on the maximum width and the desired aspect ratio */
+        position: relative;
+        overflow: hidden;
+    }
+
+    .container-landscape {
+        background: url(../assets/space/space-landscape.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center bottom;
+        /*width: 100%;*/
+        height: 64%;
+        position: absolute;
+        top: 5%;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 0;
+
+        /*animation: shift-background 100s ease-in-out infinite;*/
+        animation: sideupscroll 140s linear infinite both;
+        /*z-index: 600;*/
+    }
+
+    @keyframes sideupscroll {
+        0% {
+            transform: translateX(0%);
+        }
+        25% {
+            transform: translateX(10vh);
+        }
+        50% {
+            transform: translateX(0%);
+        }
+        75% {
+            transform: translateX(-10vh);
+        }
+        100% {
+            transform: translateX(0%);
+        }
+    }
+
+    .container-fill {
+        background: url(../assets/space/space-fill.png);
+        background-size: 100% 100%;
+        background-repeat: repeat-x;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        position: relative;
+    }
+
+    .space {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        z-index: 1;
+    }
+
+    .space-left {
+        left: 0;
+    }
+
+    .space-right {
+        right: 0;
+    }
+
+    .space-fill {
+        width: 100%;
+        height: 100%;
+        z-index: -100;
+    }
+
+    @keyframes shift-background {
+        0% {
+            background-position-x: 0;
+        }
+        50% {
+            background-position-x: 100%;
+        }
+        100% {
+            background-position-x: 0;
+        }
+    }
+
+    h1.welcome {
+        /*position: absolute;*/
+        width: 100%;
+        margin: 0 auto;
+        margin-top: 15vh;
+        /*left: 50%;*/
+        /*transform: translate(-50%, -50%);*/
+        font-size: 3em;
+        color: white;
+        z-index: 2;
+        font-weight: bold;
+    }
+    h1.welcome div {
+        font-weight: bold;
+    }
+
+    .home-header {
+        color: rgb(255, 255, 255);
+        font-size: 4rem;
+        font-weight: 700;
+        margin-top: 100px;
+        text-align: center;
+
+        /*text-shadow: 1px 1px 2px rgba(0,0,0,0.27);*/
+
+        /* neon effect via shadow */
+        /*text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #9245ff, 0 0 70px #9245ff, 0 0 80px #9245ff, 0 0 100px #9245ff, 0 0 150px #9245ff;*/
+
+        /* different one: */
+        /*text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #228dff, 0 0 70px #228dff, 0 0 80px #228dff, 0 0 100px #228dff, 0 0 150px #228dff;*/
+
+        /* not ruining background-clip text: */
+        /*text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #228dff, 0 0 70px #228dff, 0 0 80px #228dff, 0 0 100px #228dff, 0 0 150px #228dff, 0 0 200px #228dff, 0 0 300px #228dff, 0 0 400px #228dff, 0 0 500px #228dff, 0 0 600px #228dff, 0 0 700px #228dff, 0 0 800px #228dff, 0 0 900px #228dff, 0 0 1000px #228dff, 0 0 1100px #228dff, 0 0 1200px #228dff, 0 0 1300px #228dff, 0 0 1400px #228dff, 0 0 1500px #228dff, 0 0 1600px #228dff, 0 0 1700px #228dff, 0 0 1800px #228dff, 0 0 1900px #228dff, 0 0 2000px #228dff, 0 0 2100px #228dff, 0 0 2200px #228dff, 0 0 2300px #228dff, 0 0 2400px #228dff, 0 0 2500px #228dff, 0 0 2600px #228dff, 0 0 2700px #228dff, 0 0 2800px #228dff, 0 0 2900px #228dff, 0 0 3000px #228dff, 0 0 3100px #228dff, 0 0 3200px #228dff, 0 0 3300px #228dff, 0 0 3400px #228dff, 0 0 3500px #228dff, 0 0 3600px;*/
+    }
+
+    .home-header span {
+        background-clip: text;
+        background: linear-gradient(90deg, #9245ff 0, #228dff 50%, #5fecff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    h1 {
+        position: relative;
+        /*font-size: 100px;*/
+        text-align: center;
+
+        //-webkit-text-stroke: 1px #ccc;
+        background-color: #aac;
+
+        /*background-image: linear-gradient(#787878, #484848);*/
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        /*-webkit-filter: drop-shadow(2px 2px #333);*/
+
+
+        /*text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #9245ff, 0 0 70px #9245ff, 0 0 80px #9245ff, 0 0 100px #9245ff, 0 0 150px #9245ff;*/
+
+        filter: drop-shadow(0 0 0.2rem #fff) drop-shadow(0 0 0.5rem #fff) drop-shadow(0 0 1rem #fff) drop-shadow(0 0 2rem #9245ff) drop-shadow(0 0 4rem #9245ff) drop-shadow(0 0 6rem #9245ff) drop-shadow(0 0 8rem #9245ff) drop-shadow(0 0 10rem #9245ff);
+    }
+
+    /*h1 div {*/
+    /*    background-image: linear-gradient(teal, black);*/
+    /*    -webkit-background-clip: text;*/
+    /*    -webkit-text-fill-color: transparent;*/
+    /*    position: absolute;*/
+    /*    width: 100%;*/
+    /*}*/
+    /*h1:after {*/
+    /*    text-shadow: 2px 2px 2px #000000;*/
+    /*    color: transparent;*/
+    /*}*/
+
+    /*.gradient-shadow:after {*/
+    /*    content: attr(title); !* Pulls the text from the 'title' attribute to make the shadow *!*/
+    /*}*/
+    main {
+        z-index: 40;
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: white;
+        width: 100%;
+        height: 100%;
+    }
+
+    main h4 {
+        background: linear-gradient(to right, white, transparent);
+        padding: 10px;
+        font-size: 1.2em;
+        position: relative;
+        color: rgba(0, 0, 40, 0.5);
+    }
+
+    main h4::after {
+        position: absolute;
+        bottom: -5px;
+        padding-bottom: 5px;
+        left: 0;
+        right: 0;
+        height: 0px;
+        content: " ";
+        background: linear-gradient(to right, #9c06d9, transparent);
+    }
+
+    main .featured-dapps {
+        //background: linear-gradient(to right, rgba(0, 0, 0, 0.0) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.0) 100%);
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        padding-bottom: 2em;
+    }
+
+    main .featured-dapps .item {
+        list-style: none;
+        padding: 10px;
+        font-size: 1.2em;
+        color: white;
+        width: 120px;
+        height: 120px;
+        /*background-color: yellow;*/
+        margin: 10px;
+
+        background: rgba(127, 127, 127, 0.4);
+        border-radius: 10%;
+        font-size: 0.6em;
+        text-align: center;
+
+        border: 1px solid white;
+        cursor: pointer;
+
+        position: relative;
+
+        backdrop-filter: blur(5px);
+
+        text-decoration: none;
+    }
+
+    main .featured-dapps .item::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        box-shadow: 0 0 1px #fff, 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #9245ff, 0 0 7px #9245ff, 0 0 8px #9245ff, 0 0 10px #9245ff, 0 0 15px #9245ff;
+        border-radius: 10%;
+        opacity: 1;
+    }
+
+    main .featured-dapps .item::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #9245ff, 0 0 70px #9245ff, 0 0 80px #9245ff, 0 0 100px #9245ff, 0 0 150px #9245ff;
+        border-radius: 10%;
+        opacity: 0;
+    }
+
+    main .featured-dapps .item:hover::after {
+        opacity: 1;
+    }
+
+    main .featured-dapps .item:hover::before {
+        opacity: 0;
+    }
+
+    main .featured-dapps .item {
+        text-decoration: none;
+        font-weight: bold;
+        color: white;
+        //font-size: 1.5em;
+    }
+
+    main .featured-dapps .item span {
+        display: block;
+        font-weight: bold;
+        font-size: 0.8em;
+        //margin-top: -30px;
+        //margin-bottom: -11px;
+        color: rgba(255, 255, 255, 0.9);
+        /*text-shadow: 0 0 3px rgba(0,0,40,0.5);*/
+    }
+
+    main .featured-dapps .zapp-information-container {
+        position: absolute;
+        bottom: 10px;
+        left: 0;
+        right: 0;
+        width: 100%;
+    }
+
+    main .featured-dapps .item strong {
+        display: block;
+        font-weight: bold;
+        //font-size: 6em;
+        //margin-top: -30px;
+        //margin-bottom: -11px;
+        color: rgba(255, 255, 255, 0.9);
+        /*text-shadow: 0 0 3px rgba(0,0,40,0.5);*/
+        font-size: 1.5em;
+        //margin-top: 15px;
+    }
+
+    .featured {
+        /*width: 100%;*/
+        margin: 0 5vw;
+        margin-top: 15vh;
+    }
+
+    .featured h4 {
+        margin-bottom: 0;
+        margin: 0 20vw;
+    }
+
+    .featured-dapps {
+        margin-top: 0;
+        padding-top: 2em;
+    }
+}

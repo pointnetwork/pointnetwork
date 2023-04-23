@@ -15,7 +15,7 @@ export default function MyIdentities({ owner }) {
             <br />
             <h1>My Identities</h1>
             <hr />
-            <table className="table table-bordered table-striped table-hover table-responsive table-primary mb-4">
+            <table className="table table-bordered table-striped table-hover table-responsive table-dark mb-4">
                 <tbody>
                     <tr>
                         <th>Handle</th>

@@ -55,7 +55,7 @@ export default function Identity() {
             <br />
             <h1>Identity @{handle}</h1>
 
-            <table className="table table-bordered table-primary table-striped table-hover table-responsive">
+            <table className="table table-bordered table-dark table-striped table-hover table-responsive">
                 <tbody>
                     <tr>
                         <th className="vertical-center">Handle:</th>

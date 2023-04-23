@@ -1,7 +1,40 @@
 import File from './file';
 import Identity from './identity';
 import Chunk from './chunk';
+import FileMap from './file_map';
+import DirMap from './dir_map';
 import {Database} from '../index';
 const sequelize = Database.client;
 
-export {File, Identity, Chunk, Database, sequelize};
+// todo: remove completely
+// const oldSequelizeTx = sequelize.transaction;
+// let activeTxCount = 0;
+// sequelize.transaction = async function(...args) {
+//     const rnd = Math.floor(Math.random() * 1000);
+//     const fn = args[0].toString().replace(/\n/g, '').substr(0, 200);
+//     activeTxCount++;
+//     console.log('transaction '+rnd+' started', {activeTxCount}, fn);
+//     // const bind = oldSequelizeTx.bind(sequelize, ...args);
+//     // const result = await bind();
+//
+//     const result = args[0]({uuid: null, LOCK: {
+//         UPDATE: 'UPDATE',
+//         SHARE: 'SHARE',
+//         KEY_SHARE: 'KEY SHARE',
+//         NO_KEY_UPDATE: 'NO KEY UPDATE',
+//     }});
+//
+//     activeTxCount--;
+//     console.log('transaction '+rnd+' ended', {activeTxCount}, fn);
+//     return result;
+// }
+
+// Dependencies
+File.belongsToMany(Chunk, {through: FileMap});
+Chunk.belongsToMany(File, {through: FileMap});
+FileMap.belongsTo(Chunk);
+FileMap.belongsTo(File);
+File.hasMany(FileMap);
+Chunk.hasMany(FileMap);
+
+export {File, Identity, Chunk, Database, FileMap, DirMap, sequelize};

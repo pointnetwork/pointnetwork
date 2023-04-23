@@ -1,7 +1,6 @@
 db:
   env: development
 log:
-  sendLogs: false
   level: debug
 network:
   default_network: xnet

@@ -1,5 +1,5 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-const {uploadFile, getFile, FILE_TYPE} = require('../../storage');
+const {uploadData, getFile, FILE_TYPE} = require('../../storage');
 // @ts-expect-error no types for package
 import detectContentType from 'detect-content-type';
 import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
@@ -66,7 +66,7 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
             const dataToUpload = Buffer.from(encryptedData.encryptedMessages[0], 'hex');
 
             //upload the file
-            const uploadedId = await uploadFile(dataToUpload);
+            const uploadedId = await uploadData(dataToUpload);
 
             //return the encrypted data and the encrypted symmetric keys
             return {

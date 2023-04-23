@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import path from 'path';
-import {promises as fs, existsSync, lstatSync} from 'fs';
+import fs from 'fs';
 import {parse, ParsedQuery} from 'query-string';
 import axios from 'axios';
-import {readFileByPath, splitAndTakeLastPart, sanitizeSVG} from '../../../util';
+import {readFileByPath, splitAndTakeLastPart, getFullPathFromLocalRoot} from '../../../util';
 import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import ZProxySocketController from '../../../api/sockets/ZProxySocketController';
 import {SocketStream} from 'fastify-websocket';
@@ -11,8 +11,8 @@ import Renderer from '../../zweb/renderer';
 import logger from '../../../core/log';
 import blockchain from '../../../network/providers/ethereum';
 import {getContentTypeFromExt, matchRouteAndParams} from '../proxyUtils';
-// @ts-expect-error no types for package
-import detectContentType from 'detect-content-type';
+//// @ts-expect-error no types for package
+// import detectContentType from 'detect-content-type';
 import config from 'config';
 import {Template, templateManager} from '../templateManager';
 import {getMirrorWeb2Page} from './mirror';
@@ -20,7 +20,8 @@ import {parseDomainRegistry} from '../../../name_service/registry';
 import {HttpForbiddenError, HttpNotFoundError} from '../../../core/exceptions';
 import csrfTokens from '../../zweb/renderer/csrfTokens';
 import {randomBytes} from 'crypto';
-const {getJSON, getFileIdByPath, getFile} = require('../../storage');
+import {getIPFSFileAsStream, getIPFSPeers, getIPFSPubsubPeers} from '../../storage/ipfs';
+const {getJSON, getFileIdByPath, getFile, getFileAsReadStream} = require('../../storage');
 const sanitizeUrl = require('@braintree/sanitize-url').sanitizeUrl;
 
 const log = logger.child({module: 'ZProxy'});
@@ -79,10 +80,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 path: urlPath,
                 localRootDirPath: publicPath
             });
-        } else if (
-            host.endsWith('.local') ||
-            (config.get('mode') === 'zappdev' && host.endsWith('.point'))
-        ) {
+        } else if (host.endsWith('.local') || (config.get('mode') === 'zappdev' && host.endsWith('.point'))) {
             // First try route file (and check if this domain even exists)
             const routesId = await blockchain.getZRecord(host, versionRequested);
             if (!routesId && !host.endsWith('.local')) {
@@ -106,23 +104,23 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             }
 
             const deployJsonPath = path.resolve(zappDir, 'point.deploy.json');
-            const deployConfig = JSON.parse(await fs.readFile(deployJsonPath, 'utf8'));
+            const deployConfig = JSON.parse(await fs.promises.readFile(deployJsonPath, 'utf8'));
             let rootDirPath = 'public';
             if (deployConfig.hasOwnProperty('rootDir') && deployConfig.rootDir !== '') {
                 rootDirPath = deployConfig.rootDir;
             }
 
             const publicPath = path.resolve(zappDir, rootDirPath);
-            if (!existsSync(publicPath)) {
+            if (!fs.existsSync(publicPath)) {
                 throw new Error(`Public path ${publicPath} doesn't exist`);
             }
 
             const routesJsonPath = path.resolve(zappDir, 'routes.json');
-            if (!existsSync(routesJsonPath)) {
+            if (!fs.existsSync(routesJsonPath)) {
                 throw new Error(`Routes file ${routesJsonPath} doesn't exist`);
             }
 
-            const routes = JSON.parse(await fs.readFile(routesJsonPath, 'utf8'));
+            const routes = JSON.parse(await fs.promises.readFile(routesJsonPath, 'utf8'));
 
             return await fulfillRequest({
                 req,
@@ -171,7 +169,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
             const {routesId, rootDirId, identity} = await queryExtDomain(host, queryParams);
 
             // Fetch routes file
-            const routes = await getJSON(routesId);
+            const routes = (routesId === 'ipfs://ignore') ? {'/': 'index.html'} : await getJSON(routesId);
             if (!routes) throw new HttpNotFoundError(`Cannot parse json of zrouteId ${routesId}`);
 
             return await fulfillRequest({
@@ -180,9 +178,17 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 isLocal: false,
                 routes,
                 path: urlPath,
-                remoteRootDirId: rootDirId,
+                remoteRootDirId: rootDirId?.replace(/\/$/, ''), // remove trailing slash
                 rewriteHost: identity
             });
+        } else if (host === 'ipfs') {
+            if (req.url === '/peers') {
+                return await getIPFSPeers();
+            } else if (req.url.startsWith('/pubsub/peers')) {
+                return await getIPFSPubsubPeers(res, req.url.replace('/pubsub/peers', ''));
+            } else {
+                return await getIPFSFileAsStream(req.url);
+            }
         } else {
             // Web2?
             let urlMirrorUrl;
@@ -226,8 +232,9 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
                 if (!csrfTokens.point) {
                     csrfTokens.point = randomBytes(64).toString('hex');
                 }
+                res.status(421); // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/421
                 return templateManager.render(Template.WEB2LINK, {
-                    url: sanitizeUrl('http://' + host + (req.url ?? '')),
+                    url: sanitizeUrl('https://' + host + (req.url ?? '')),
                     csrfToken: csrfTokens.point,
                     host: refererHost
                 });
@@ -262,7 +269,7 @@ const tryFulfillZhtmlRequest = async (
     host: string
 ) => {
     const {req, res} = cfg;
-    const {queryParams} = await parseRequestForProxy(req);
+    const {queryParams, ext} = await parseRequestForProxy(req);
 
     // This is a ZHTML file
     let templateFileContents, templateId;
@@ -279,10 +286,21 @@ const tryFulfillZhtmlRequest = async (
         );
     } else {
         // Remote
-        templateId = await getFileIdByPath(cfg.remoteRootDirId, templateFilename);
-        if (!templateId) throw new HttpNotFoundError(`Cannot getFileIdByPath: ${templateFilename}`);
+        if (cfg.remoteRootDirId?.startsWith('ipfs://')) {
+            const templateFileStream = await getIPFSFileAsStream(cfg.remoteRootDirId + '/' + templateFilename);
+            // it's a Readable stream, so get the contents
 
-        templateFileContents = await getFile(templateId);
+            // lets have a ReadableStream as a stream variable
+            const chunks = [];
+            for await (const chunk of templateFileStream) chunks.push(Buffer.from(chunk));
+            templateFileContents = Buffer.concat(chunks).toString('utf-8');
+
+        } else {
+            templateId = await getFileIdByPath(cfg.remoteRootDirId, templateFilename);
+            if (!templateId) throw new HttpNotFoundError(`Cannot getFileIdByPath: ${templateFilename}`);
+
+            templateFileContents = await getFile(templateId);
+        }
     }
 
     let renderer;
@@ -298,11 +316,20 @@ const tryFulfillZhtmlRequest = async (
         ...queryParams,
         ...((req.body as Record<string, unknown>) ?? {})
     });
-    const contentType = detectContentType(Buffer.from(rendered));
-    if (!contentType.match('text/html')) {
-        throw new Error(`Not a valid HTML: ${templateFilename}`);
-    }
+
+    // const contentType = detectContentType(Buffer.from(rendered));
+    // Why this is commented out: because sometimes it is text/css too (we need this for gfonts for instance)
+    // if (!contentType.match('text/html')) {
+    //     console.trace(rendered);
+    //     throw new Error(`Not a valid HTML: ${templateFilename}`);
+    // }
+
+    let contentType = 'text/html'; //default // todo: better, more secure ways to do this
+    if (ext === 'css') contentType = 'text/css';
+    if (ext === 'js') contentType = 'text/javascript';
+
     res.header('Content-Type', contentType);
+
     return rendered;
 };
 
@@ -312,40 +339,39 @@ const tryFulfillStaticRequest = async (cfg: RequestFulfillmentConfig, urlPath: s
 
     let file;
     if (cfg.isLocal) {
-        // This is a static asset
+        // This is a static asset located locally
+
         if (!cfg.localRootDirPath) {
             throw new Error('localRootDirPath cannot be empty');
         }
 
         const filePath = path.join(cfg.localRootDirPath, urlPath);
-        if (!existsSync(filePath)) {
+        if (!fs.existsSync(filePath)) {
             throw new HttpNotFoundError('Not Found');
         }
 
-        if (!lstatSync(filePath).isFile()) {
+        if (!fs.lstatSync(filePath).isFile()) {
             throw new HttpForbiddenError('Directory listing not allowed');
         }
 
-        file = await fs.readFile(filePath);
+        const fullPath = getFullPathFromLocalRoot(cfg.localRootDirPath, urlPath);
+        file = fs.createReadStream(fullPath);
+
+    } else if (cfg.remoteRootDirId?.startsWith('ipfs://')) {
+        file = await getIPFSFileAsStream(cfg.remoteRootDirId + urlPath);
+
     } else {
         const fileId = await getFileIdByPath(cfg.remoteRootDirId, urlPath);
         if (!fileId) {
             throw new HttpNotFoundError('File not found by this path');
         }
 
-        file = await getFile(fileId, null);
+        const range = req.headers.range;
+        file = await getFileAsReadStream(req, res, fileId, null, range);
     }
 
-    let contentType = detectContentType(file);
-    if (contentType.match('text/(plain|xml)') && ext) {
-        contentType = getContentTypeFromExt(ext);
-    }
+    const contentType = ((ext) ? getContentTypeFromExt(ext) : false) || 'application/octet-stream';
     res.header('Content-Type', contentType);
-
-    if (contentType.match(/image\/svg\+xml/)) {
-        // Sanitize SVG to prevent XSS.
-        file = sanitizeSVG(file);
-    }
 
     return file;
 };
@@ -391,6 +417,7 @@ const queryExtDomain = async (
     let rootDirId: string | undefined;
     let isAlias = false;
 
+    log.debug({host}, `Resolving ${service} domain`);
     const resp = await axios.get(`${API_URL}/v1/api/identity/resolve/${host}`);
     if (!resp.data.data?.content?.trim()) {
         throw new HttpNotFoundError(`No Point data found in the domain registry for "${host}".`);
@@ -453,6 +480,8 @@ const renderPointHomeWeb2RedirectPage = async (req: FastifyRequest, res: Fastify
     }
 
     res.header('Content-Type', 'text/html');
+
+    res.status(421); // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/421
 
     //if there is no csrf token creates it.
     if (!csrfTokens.point) {

@@ -173,6 +173,7 @@ export default function Wallet() {
                                     <th style={{ textAlign: 'right' }}>
                                         Balance
                                     </th>
+                                    <th>&nbsp;</th>
                                     <th
                                         style={{
                                             textAlign: 'right',
@@ -216,6 +217,7 @@ export default function Wallet() {
                                                     >
                                                         Balance
                                                     </th>
+                                                    <th>&nbsp;</th>
                                                     <th
                                                         style={{
                                                             textAlign: 'right',

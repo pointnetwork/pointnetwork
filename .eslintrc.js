@@ -43,7 +43,7 @@ module.exports = {
         'no-console': 'error',
         'no-debugger': 'error',
         'max-len': ['warn', {
-            code: 100,
+            code: 120,
             ignoreStrings: true,
             ignoreRegExpLiterals: true,
             ignoreTemplateLiterals: true,
