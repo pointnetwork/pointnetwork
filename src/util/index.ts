@@ -11,7 +11,6 @@ export * from './merkle';
 export * from './hashFn';
 export * from './storageIdValidation';
 export * from './escapeString';
-export * from './getReferralCode';
 export * from './cookieString';
 export * from './calculateDirSize';
 export * from './cacheFactory';

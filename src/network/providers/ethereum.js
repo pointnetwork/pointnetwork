@@ -1061,13 +1061,6 @@ ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessa
         log.debug({identity, address}, 'Registering identity');
         const result = await ethereum.web3send(method);
         log.info(result, 'Identity registration result');
-        log.sendMetric({
-            identityRegistration: {
-                identity,
-                address,
-                commPublicKey
-            }
-        });
 
         return result;
     } catch (e) {
@@ -1104,13 +1097,6 @@ ethereum.registerIdentity = async (identity, address, commPublicKey) => {
         log.debug({identity, address}, 'Registering identity');
         const result = await ethereum.web3send(method);
         log.info(result, 'Identity registration result');
-        log.sendMetric({
-            identityRegistration: {
-                identity,
-                address,
-                commPublicKey
-            }
-        });
 
         return result;
     } catch (e) {
@@ -1150,13 +1136,6 @@ ethereum.registerSubIdentity = async (subidentity, parentIdentity, address, comm
         const result = await ethereum.web3send(method);
 
         log.info(result, 'Subidentity registration result');
-        log.sendMetric({
-            subidentityRegistration: {
-                subidentity: `${subidentity}.${parentIdentity}`,
-                address,
-                commPublicKey
-            }
-        });
 
         return result;
     } catch (e) {

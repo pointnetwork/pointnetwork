@@ -4,7 +4,6 @@ wallet:
 db:
   env: development
 log:
-  sendLogs: false
   level: debug
 api:
   address: 0.0.0.0

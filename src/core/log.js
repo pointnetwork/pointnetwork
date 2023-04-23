@@ -7,51 +7,10 @@ const ecsFormat = require('@elastic/ecs-pino-format');
 const config = require('config');
 // TODO: for some reason just ../util doesn't work
 const {resolveHome} = require('../util/resolveHome');
-const {getIdentifier} = require('../util/getIdentifier');
-const {getNetworkAddress} = require('../wallet/keystore');
-const {createUdpStream} = require('../util/createUdpStream');
-const account = getNetworkAddress().toLowerCase();
 const datadir = config.get('datadir');
-const {level, enabled, sendLogs, sendLogsTo} = config.get('log');
+const {level, enabled} = config.get('log');
 const options = {enabled, formatters: ecsFormat(), level: pino.levels.values[level]};
 const streams = [];
-const noop = () => {};
-let sendMetric = noop;
-let identifier;
-let isNewIdentifier;
-
-try {
-    [identifier, isNewIdentifier] = getIdentifier();
-} catch (e) {
-    // TODO: if we get here, the logger is not defined and we get another breaking error
-    // eslint-disable-next-line no-console
-    console.error('Couldn\'t get network address for logging');
-}
-
-const tags = {
-    identifier,
-    account,
-    process: 'point-engine',
-    processVersion: process.env.POINT_ENGINE_VERSION
-};
-
-if (sendLogs && sendLogsTo) {
-    const [address, port] = sendLogsTo.split('://').pop().split(':');
-    const udpTransport = createUdpStream({address, port});
-    streams.push(udpTransport);
-    sendMetric = function (obj)  {
-        let originalChilds;
-        try {
-            const chindings = `{${this?.[pino.symbols.chindingsSym]?.slice(1) || ''}}`;
-            originalChilds = JSON.parse(chindings);
-        } catch  {
-            // do nothing
-        }
-        udpTransport
-            .write(Buffer.from(JSON.stringify({...(originalChilds || tags), ...obj})), noop);
-    };
-    sendMetric({isNewIdentifier});
-}
 
 streams.push({
     level: options.level,
@@ -72,10 +31,7 @@ const close = () => {
     }
 };
 
-module.exports = Object.assign(logger, {
-    close,
-    sendMetric
-});
+module.exports = Object.assign(logger, {close});
 
 logger.info(`platform: ${os.platform()}, version: ${os.version()} arch: ${os.arch()}, release: ${os.release()},
   totalMem: ${os.totalmem()}, freeMem: ${os.freemem()}`);

@@ -68,7 +68,6 @@ class Deployer {
         this.log.trace = this.log._message.bind(this, 'trace');
         this.log.warn = this.log._message.bind(this, 'warn');
         this.log.fatal = this.log._message.bind(this, 'fatal');
-        this.log.sendMetric = (...args) => _log.sendMetric(...args);
 
         this.err = (obj, errMsg) => {
             this.log.error(obj, errMsg);
@@ -85,7 +84,7 @@ class Deployer {
 
     /**
      * Gets the cache dir from the config
-     * 
+     *
      * @returns cache dir
      */
     getCacheDir() {
@@ -95,7 +94,7 @@ class Deployer {
 
     /**
      * Get the version number and format it as Major.Minor.
-     * 
+     *
      * @param {string|number} version - Version as stated in point.deploy.json
      * @returns {string} - Base version formated as Major.Minor
      */
@@ -122,7 +121,7 @@ class Deployer {
 
     /**
      * Checks if the version passed is in the format Major.Minor
-     * 
+     *
      * @param {string} baseVersion - Version string
      * @returns {boolean} if the version is in the format Major.Minor
      */
@@ -132,8 +131,8 @@ class Deployer {
 
     /**
      * Split the version string in Major.Minor.Path
-     * 
-     * @param {string} version - Version string  
+     *
+     * @param {string} version - Version string
      * @returns {object} - Version splited on a object with the properties major, minor and path.
      */
     getVersionParts(version) {
@@ -160,7 +159,7 @@ class Deployer {
 
     /**
      * Checks if the new base version (Major.minor) is higher that the old one.
-     * 
+     *
      * @param {string} oldVersion - old base version.
      * @param {string} newBaseVersion - new base version.
      * @returns {boolean} - If the new base version is higher than the old one.
@@ -181,10 +180,10 @@ class Deployer {
 
     /**
      * Get a new base patched version incremented by one (format Major.minor.patch)
-     * if the base version is not changed from old one, or with .0 
+     * if the base version is not changed from old one, or with .0
      * if the base version is different from the previous one.
-     * 
-     * @param {string} oldVersion - Old base version string 
+     *
+     * @param {string} oldVersion - Old base version string
      * @param {string} newBaseVersion - New base version string
      * @returns {string} - new patched version
      */
@@ -205,13 +204,13 @@ class Deployer {
     /**
      * Get the version which the DApp will be deployed considering the version
      * stated in the point.deploy.json and the latest version of the DApp deployed in the blockchain.
-     * 
+     *
      * @param {string} cfgVersion - Version stated in the point.deploy.json.
      * @param {string} identity - Identity to search the latest version deployed in the blockchain.
      * @param {boolean} isPointTarget - If the target is a .point domain.
      * @param {boolean} isAlias - If the target is an alias.
      * @returns {string} - New valid version to deploy the DApp.
-     * 
+     *
      * @throws - Error if the version passed in the cfgVersion parameter is invalid for the identity.
      */
     async getVersion(cfgVersion, identity, isPointTarget, isAlias) {
@@ -229,8 +228,8 @@ class Deployer {
 
     /**
      * Get domain name service used in a domain.
-     * 
-     * @param {string} domain - The fill name of the domain 
+     *
+     * @param {string} domain - The fill name of the domain
      * @returns SNS or ENS dependind of the domain name passed.
      */
     getNameService(domain) {
@@ -239,9 +238,9 @@ class Deployer {
 
     /**
      * Get the target and identity to deploy the DApp
-     * 
-     * @param {object} config - The configuration object of the deploy 
-     * @param {boolean} contracts - If the contracts flag is set 
+     *
+     * @param {object} config - The configuration object of the deploy
+     * @param {boolean} contracts - If the contracts flag is set
      * @param {boolean} dev - If the dev flag is set
      * @returns {object} - {target - string target to deploy, isPointTarget - boolean - if is .point domain, identity - string, isAlias - if it is an alias}
      */
@@ -283,10 +282,10 @@ class Deployer {
 
     /**
      * Verify if the owner address parameter is authorized as deployer for this identity
-     * 
+     *
      * @param {string} identity - identity
      * @param {address} owner - address which wants to deploy for this identity
-     * 
+     *
      * @throws Error if the address is not authorized as a deployer of the identity
      */
     async ensureIsDeployerOrFail(identity, owner) {
@@ -298,7 +297,7 @@ class Deployer {
 
     /**
      * Register a new identity for the specified owner
-     * 
+     *
      * @param {string} identity - identity name
      * @param {address} owner - address of the owner
      */
@@ -316,7 +315,6 @@ class Deployer {
         );
 
         await blockchain.registerIdentity(identity, owner, Buffer.from(publicKey, 'hex'));
-        this.log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
         this.log.info(
             {identity, owner, publicKey: publicKey.toString('hex')},
             'Successfully registered new identity'
@@ -325,10 +323,10 @@ class Deployer {
 
     /**
      * Deploy a set of contracts specified in point.deploy.json of the DApp.
-     * 
+     *
      * @param {object} config - point.deploy config object.
      * @param {string} deployPath - Path to the DApp.
-     * @param {string} version - Version specified to deploy. 
+     * @param {string} version - Version specified to deploy.
      * @param {string} target - the target name which will the contracts be deployed
      * @param {boolean} force_deploy_proxy - flag to force deploy a new proxy for upgradable contracts
      */
@@ -380,7 +378,7 @@ class Deployer {
         for (const contractName of contractNames) {
 
             if (!(contractMap[contractName].hasOwnProperty('exclude') && contractMap[contractName].exclude === true)) {
-            
+
                 //resolve the file name
                 const fileName = path.join(deployPath, 'contracts', contractName + '.sol');
 
@@ -424,20 +422,20 @@ class Deployer {
                         // for point.
 
                         if (config.hasOwnProperty('upgradable') && config.upgradable === true && contractMap[contractName].upgradable) {
-                            //if the contracts are upgradable 
+                            //if the contracts are upgradable
 
                             //get the address of the proxy
                             const proxyAddress = await blockchain.getKeyValue(
                                 target,
                                 'zweb/contracts/address/' + contractName
                             );
-                            
+
                             //get proxy metadata file from the IKV registry
                             const proxyDescriptionFileId = await blockchain.getKeyValue(
                                 target,
                                 PROXY_METADATA_KEY
                             );
-                            
+
                             //using openzeppelin upgradable hardhat plugin:
                             let proxy;
                             //loads the contract factory
@@ -448,7 +446,7 @@ class Deployer {
                             if (
                                 !proxyAddress ||
                                 !proxyDescriptionFileId ||
-                                force_deploy_proxy 
+                                force_deploy_proxy
                             ) {
                                 //deploy a new proxy
                                 this.log.debug('deployProxy call');
@@ -460,7 +458,7 @@ class Deployer {
                                         'deploying proxy binded with identity contract and identity'
                                     );
                                     // Uses the address of identity contract and identity name as
-                                    // parameters for deploying a new proxy using openzeppelin 
+                                    // parameters for deploying a new proxy using openzeppelin
                                     // hardhat upgradable plugin. Those parameters should be declared
                                     // in the initializer of the upgradable contract.
                                     proxy = await deployProxy(
@@ -470,7 +468,7 @@ class Deployer {
                                     );
                                 } catch (e) {
                                     // Fallback in case of fail the deployment of the proxy.
-                                    // Some cases the upgradable contrac may not have parameters in the initializers of 
+                                    // Some cases the upgradable contrac may not have parameters in the initializers of
                                     // the upgradable contract. In this case, the deployment is performed
                                     // without parameters. In this way, the deployers feature
                                     // will not work and only the owner of the proxy will be able
@@ -593,10 +591,10 @@ class Deployer {
 
     /**
      * Upload the static compiled Js files to arweave.
-     * 
+     *
      * @param {string} deployPath - The path to the DApp.
      * @param {string} rootDir - The name of the folder of the DApp which contain js compiled static files.
-     * @returns {string} the id of the directory tht was uploaded. 
+     * @returns {string} the id of the directory tht was uploaded.
      */
     async uploadRootDir(deployPath, rootDir = 'public') {
         this.log.debug('Preparing to upload root directory...');
@@ -616,9 +614,9 @@ class Deployer {
 
     /**
      * Upload the routes.json file to arweave
-     * 
+     *
      * @param {string} deployPath - Path to the DApp root folder which must contain routes.json.
-     * @returns {string} id of the file uploaded 
+     * @returns {string} id of the file uploaded
      */
     async uploadRoutes(deployPath) {
         const routesFilePath = path.join(deployPath, 'routes.json');
@@ -631,7 +629,7 @@ class Deployer {
 
     /**
      * Get the chain id from the connected blockchain using hardhat and ethers default provider.
-     * 
+     *
      * @returns {number} chain id.
      */
     async getChainId() {
@@ -641,8 +639,8 @@ class Deployer {
 
     /**
      * Executes a command in the shell.
-     * Used to run git commands during the deployment. 
-     * 
+     * Used to run git commands during the deployment.
+     *
      * @param {string} command - command string
      * @returns {string} the result of the command
      */
@@ -656,7 +654,7 @@ class Deployer {
 
     /**
      * Verify if the domain name is owned by the connected account.
-     * 
+     *
      * @param {string} target - the target domain (SNS or ENS)
      * @returns {object} - {domainOwner - address of the owner, content - from the name record}
      */
@@ -705,9 +703,9 @@ class Deployer {
 
     /**
      * Edits the domain registry of a domain (ENS or SNS).
-     * 
+     *
      * @param {string} domain - Name of the domain (ENS or SNS)
-     * @param {string} data - The data to be registered 
+     * @param {string} data - The data to be registered
      * @param {string} preExistingData - Previous data to be merged with the new one.
      */
     async editDomainRegistry(domain, data, preExistingData) {
@@ -731,7 +729,7 @@ class Deployer {
 
     /**
      * Deploy a DApp to Point Network
-     * 
+     *
      * @param {string} deployPath - Path to the dapp folder which will be deployed
      * @param {boolean} deployContracts - Flag that indicate if will deploy contracts or not.
      * @param {boolean} dev - Flag that indicate if it is in dev mode or not
@@ -774,7 +772,7 @@ class Deployer {
             deployContracts,
             dev
         );
-        
+
         //get the version for the deploy
         const version = this.getVersion(
             deployConfig.version,
@@ -788,7 +786,7 @@ class Deployer {
 
         if (isPointTarget) {
             //if is a .point domain
-            
+
             //get the default address connected
             const owner = blockchain.getOwner();
 
@@ -816,7 +814,7 @@ class Deployer {
             } else {
                 //In zappdev env is possible to deploy to a not registered yet identity.
                 //This makes easy the development because you just deploy the DApp
-                //and the identity is created and registered on the fly. 
+                //and the identity is created and registered on the fly.
                 if (process.env.MODE === 'zappdev') {
                     await this.registerNewIdentity(identity, owner);
                 } else {
@@ -847,7 +845,7 @@ class Deployer {
             // Deploy contracts (if required) and store routes and root dir IDs in Point Identity contract.
             const pointIdentity = isAlias ? identity : target;
             if (deployContracts) {
-                //deploy contracts if needed.  
+                //deploy contracts if needed.
                 await this.deployContracts(
                     deployConfig,
                     deployPath,
@@ -861,7 +859,7 @@ class Deployer {
                 {publicDirId, routeFileUploadedId, target, identity},
                 'Saving routes and root dir IDs to Point Identity contract...'
             );
-            
+
             //update rootDir entry in IKV system
             await this.updateKeyValue(
                 pointIdentity,
@@ -882,11 +880,11 @@ class Deployer {
                 deployContracts,
                 version
             );
-            
+
             //store the commit sha from root directory of the DApp in the IKV system
             //for version control of the code deployed.
             await this.updateCommitSha(pointIdentity, deployPath, version);
-            
+
             //store the point sdk version needed to run this dapp if is set in point.deploy.json
             if (deployConfig.hasOwnProperty('pointSDKVersion')) {
                 await this.updatePointVersionTag(
@@ -924,7 +922,7 @@ class Deployer {
 
     /**
      * Compiles a contract using SOLC and Web3.js.
-     * 
+     *
      * @param {string} contractName - The name of the contrac
      * @param {string} deployPath - The pathe from where the contract is placed (dapp folder).
      * @returns {object} - {contract - Web3.js instance of the contract, artifacts - the artifacts from the contracts inside the file complied}
@@ -978,13 +976,13 @@ class Deployer {
 
     /**
      * Store the contract and artifacts in arweave and IKV system.
-     * 
+     *
      * @param {object} artifacts - the artifacts of the contract (abi)
      * @param {string} contractName - the name of the contract
      * @param {string} version - the version of the contract
      * @param {address} address - the address from where the contract was deployed
-     * @param {string} target - the target domain 
-     * 
+     * @param {string} target - the target domain
+     *
      * @returns the id of the file from artifacts stored
      */
     async storeContractArtifacts(artifacts, fileName, contractName, version, address, target) {
@@ -1001,7 +999,7 @@ class Deployer {
             address,
             version
         );
-        
+
         //register the abi in the IKV system
         await blockchain.putKeyValue(
             target,
@@ -1015,10 +1013,10 @@ class Deployer {
 
     /**
      * Update the ZDNS entry in IKV system
-     * 
+     *
      * @param {string} host - the host/domain to update the record.
      * @param {string} id - the id of the file uploaded to arweave
-     * @param {string} version - the version of the entry 
+     * @param {string} version - the version of the entry
      */
     async updateZDNS(host, id, version) {
         const target = host.replace(/\.point$/, '');
@@ -1028,9 +1026,9 @@ class Deployer {
 
     /**
      * Update the metadata record in IKV system
-     * 
+     *
      * @param {*} host - the host/target to update
-     * @param {*} id - the id of the file uploaded to arweave 
+     * @param {*} id - the id of the file uploaded to arweave
      * @param {*} version - the version of the entry
      */
     async updateProxyMetadata(host, id, version) {
@@ -1042,9 +1040,9 @@ class Deployer {
     /**
      * Get the last commit sha from the root directory of the DApp and update the
      * IKV system with it for source code version control.
-     * 
-     * @param {string} host - the host/target involved 
-     * @param {string} deployPath - the path to the DApp 
+     *
+     * @param {string} host - the host/target involved
+     * @param {string} deployPath - the path to the DApp
      * @param {string} version - the version of the entry
      */
     async updateCommitSha(host, deployPath, version) {
@@ -1069,7 +1067,7 @@ class Deployer {
 
     /**
      * Updates a entry for point engine version or point SDK required for running a DApp.
-     * 
+     *
      * @param {string} host - the host/target involved
      * @param {string} key - key for the update POINT_SDK_VERSION or POINT_NODE_VERSION
      * @param {string} value - the value for storing
@@ -1084,12 +1082,12 @@ class Deployer {
     /**
      * Update the IKV system inserting the values passed and calling contract methods passed as values.
      * This method also upload files to arweave if they are passed in the keyvalue entry.
-     * 
+     *
      * To better understand this method please see keyvalue entry in this file: https://github.com/pointnetwork/template.point/blob/main/point.deploy.json.
-     * 
+     *
      * @param {string} target - the host involved
-     * @param {object} values - values to be stored in the IKV system. Can include contract_send and storage[content] also. 
-     * @param {string} deployPath - the path to the DApp 
+     * @param {object} values - values to be stored in the IKV system. Can include contract_send and storage[content] also.
+     * @param {string} deployPath - the path to the DApp
      * @param {boolean} deployContracts - flag which indicate if contract_send methods will be called.
      * @param {string} version - the version of the DApp.
      */

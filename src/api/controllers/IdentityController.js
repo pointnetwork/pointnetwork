@@ -7,7 +7,7 @@ const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
-const {getReferralCode, isChineseTimezone} = require('../../util');
+const {isChineseTimezone} = require('../../util');
 const open = require('open');
 const {default: csrfTokens} = require('../../client/zweb/renderer/csrfTokens');
 const {getIdentity} = require('../../name_service/identity');
@@ -16,7 +16,6 @@ const Web3 = require('web3');
 const {addToCache} = require('../../name_service/identity-cache');
 const {parseDomainRegistry} = require('../../name_service/registry');
 
-const EMPTY_REFERRAL_CODE = '000000000000';
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 const IKV_PUT_INTERFACE = {
@@ -34,20 +33,6 @@ const IKV_PUT_INTERFACE = {
 
 const DEFAULT_NETWORK = config.get('network.default_network');
 const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
-
-async function registerBountyReferral(address, type) {
-    const referralCode = await getReferralCode();
-
-    let event = 'free_reg';
-    if (type === 'tweet' || type === 'taken') {
-        event = 'twitter_reg';
-    }
-
-    const url = `https://bounty.pointnetwork.io/ref_success?event=${event}&ref=${referralCode ||
-        EMPTY_REFERRAL_CODE}&addr=${address}`;
-
-    return await axios.get(url);
-}
 
 const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
 const twitterOracleDomainFallback = 'https://twitter-oracle.point.space';
@@ -300,24 +285,6 @@ class IdentityController extends PointSDKController {
 
             // Add to cache so that users don't have to wait until expiration to see the updates.
             addToCache({address: owner, identity, publicKey, network: 'point'});
-
-            log.info(
-                {identity, owner, publicKey: publicKey.toString('hex')},
-                'Successfully registered new identity'
-            );
-
-            log.sendMetric({identity, owner, publicKey: publicKey.toString('hex')});
-
-            try {
-                if (
-                    !['e2e', 'zappdev', 'test'].includes(process.env.MODE) ||
-                    process.env.USE_ORACLE === 'true'
-                ) {
-                    await registerBountyReferral(owner, type);
-                }
-            } catch (error) {
-                log.error(error);
-            }
         }
 
         // verify that the identity was validated on twitter
@@ -412,12 +379,6 @@ class IdentityController extends PointSDKController {
             },
             'Successfully registered new subidentity'
         );
-
-        log.sendMetric({
-            subidentity: `${subidentity}.${parentIdentity}`,
-            owner,
-            publicKey: publicKey.toString('hex')
-        });
 
         this.rep.status(200);
         return this._status(200)._response({message: 'subidentity registered.'});
