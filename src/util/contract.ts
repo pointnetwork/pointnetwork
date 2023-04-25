@@ -72,7 +72,7 @@ export function compileContract({
     const solc = require(`solc${version
         .split('.')
         .slice(0, 2)
-        .join('_')}`);
+        .join('_')}`); // todo: this imports solc0_8 dynamically, not a good idea
 
     const compilerProps = {
         language: 'Solidity',

@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "1.99.2",
+  "version": "1.99.3",
   "description": "Point Network;",
   "main": "point",
   "bin": "dist/index.js",
