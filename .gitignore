@@ -40,3 +40,6 @@ tests/resources/datadir
 junit.xml
 
 /example
+
+#remove later
+/pointlive2023.point

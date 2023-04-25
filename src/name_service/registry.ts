@@ -16,7 +16,12 @@ export const getAddressFromPublicKey = (key: Buffer | string): Buffer => (
  * Point related information associated to said domain.
  */
 export function parseDomainRegistry(registry: DomainRegistry): PointDomainData {
-    const values = parseCookieString(registry.content ?? '');
+    let values;
+    if (registry.content?.startsWith('ipfs://')) {
+        values = {pn_alias: null, pn_routes: 'ipfs://ignore', pn_root: registry.content, pn_key: ''};
+    } else {
+        values = parseCookieString(registry.content ?? '');
+    }
     const {pn_key: pointPublicKey = ''} = values || {};
     const pointAddress = isValidPublicKeyString(pointPublicKey)
         ? toChecksumAddress(`0x${getAddressFromPublicKey(pointPublicKey).toString('hex')}`)

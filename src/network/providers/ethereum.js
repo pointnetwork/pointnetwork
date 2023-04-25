@@ -252,9 +252,13 @@ ethereum.loadPointContract = async (
     return new web3.eth.Contract(abisByContractName[contractName].abi, at);
 };
 
+let _identityContract = null;
 ethereum.loadIdentityContract = async () => {
     const mode = config.get('mode');
 
+    if (_identityContract) return _identityContract;
+
+    // todo: check it from time to time
     if (mode !== 'e2e' && mode !== 'zappdev') {
         const isAbiRelevant = await isIdentityAbiRelevant();
 
@@ -265,7 +269,11 @@ ethereum.loadIdentityContract = async () => {
 
     log.debug({address: IDENTITY_CONTRACT_ADDRESS}, 'Identity contract address');
 
-    return await ethereum.loadPointContract('Identity', IDENTITY_CONTRACT_ADDRESS);
+    _identityContract = await ethereum.loadPointContract('Identity', IDENTITY_CONTRACT_ADDRESS);
+
+    if (!_identityContract) throw new Error('Couldnt load Identity contract');
+
+    return _identityContract;
 };
 
 ethereum.loadWebsiteContract = async (
@@ -809,8 +817,10 @@ ethereum.commPublicKeyByIdentity = async identity => {
         const identityContract = await ethereum.loadIdentityContract();
         const method = identityContract.methods.getCommPublicKeyByIdentity(identity);
         const parts = await method.call();
+        // todo: in the future, don't add 0x, but that might break some existing usages
+        // todo:  better yet, return Buffer
         return '0x' + parts.part1.replace('0x', '') + parts.part2.replace('0x', '');
-        // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake
+        // todo: make damn sure it didn't return something silly like 0x0 or 0x by mistake. throw error. again, might break current usages.
     } catch (e) {
         log.error('Error: commPublicKeyByIdentity', {identity});
     }
@@ -904,6 +914,16 @@ ethereum.getKeyValue = async (
     versionSearchStrategy = 'exact',
     followCopyFromIkv = false
 ) => {
+    if (identity.endsWith('.local')) {
+        return await ethereum.getKeyValue(
+            identity.replace('.local', '.point'),
+            key,
+            version,
+            versionSearchStrategy,
+            false
+        );
+    }
+
     // Process @@copy_from_ikv instruction if followCopyFromIkv is set to true
     if (followCopyFromIkv) {
         // self invoke to get the value first but without redirection
@@ -1041,13 +1061,6 @@ ethereum.registerVerified = async (identity, address, commPublicKey, hashedMessa
         log.debug({identity, address}, 'Registering identity');
         const result = await ethereum.web3send(method);
         log.info(result, 'Identity registration result');
-        log.sendMetric({
-            identityRegistration: {
-                identity,
-                address,
-                commPublicKey
-            }
-        });
 
         return result;
     } catch (e) {
@@ -1084,13 +1097,6 @@ ethereum.registerIdentity = async (identity, address, commPublicKey) => {
         log.debug({identity, address}, 'Registering identity');
         const result = await ethereum.web3send(method);
         log.info(result, 'Identity registration result');
-        log.sendMetric({
-            identityRegistration: {
-                identity,
-                address,
-                commPublicKey
-            }
-        });
 
         return result;
     } catch (e) {
@@ -1130,13 +1136,6 @@ ethereum.registerSubIdentity = async (subidentity, parentIdentity, address, comm
         const result = await ethereum.web3send(method);
 
         log.info(result, 'Subidentity registration result');
-        log.sendMetric({
-            subidentityRegistration: {
-                subidentity: `${subidentity}.${parentIdentity}`,
-                address,
-                commPublicKey
-            }
-        });
 
         return result;
     } catch (e) {
@@ -1313,33 +1312,41 @@ ethereum.send = ({method, params = [], id, network}) =>
  *
  * (implements a cache to avoid querying Ethereum too often)
  */
-ethereum.resolveDomain = async (domainName, network = 'rinkeby') => {
+ethereum.resolveDomain = async (domainName, network = 'ethereum') => {
     if (!ENS_ENABLED) {
         log.trace({ENS_ENABLED}, 'ENS has been disabled in config');
-        return {owner: '', content: null};
+        throw new Error(`ENS has been disabled in config`);
     }
 
-    const cacheKey = `${network}:${domainName}`;
-    const cachedDomainRegistry = ensDomainCache.get(cacheKey);
-    if (cachedDomainRegistry) {
-        return cachedDomainRegistry;
+    try {
+        const cacheKey = `${network}:${domainName}`;
+        const cachedDomainRegistry = ensDomainCache.get(cacheKey);
+        if (cachedDomainRegistry) {
+            return cachedDomainRegistry;
+        }
+
+        const provider = getEthers(network);
+        const resolver = await provider.getResolver(domainName);
+
+        if (!resolver) {
+            throw new Error(`Domain ${domainName} not found in Ethereum's ${network}.`);
+        }
+
+        const [owner, _content, _contentHash] = await Promise.all([
+            provider.resolveName(domainName),
+            resolver.getText(POINT_ENS_TEXT_RECORD_KEY),
+            resolver.getContentHash()
+        ]);
+
+        const content = (!_content) ? _contentHash : _content;
+
+        const domainRegistry = {owner, content};
+        ensDomainCache.add(cacheKey, domainRegistry);
+        return domainRegistry;
+    } catch (e) {
+        throw e;
     }
 
-    const provider = getEthers(network);
-    const resolver = await provider.getResolver(domainName);
-
-    if (!resolver) {
-        throw new Error(`Domain ${domainName} not found in Ethereum's ${network}.`);
-    }
-
-    const [owner, content] = await Promise.all([
-        provider.resolveName(domainName),
-        resolver.getText(POINT_ENS_TEXT_RECORD_KEY)
-    ]);
-
-    const domainRegistry = {owner, content};
-    ensDomainCache.add(cacheKey, domainRegistry);
-    return domainRegistry;
 };
 
 /**

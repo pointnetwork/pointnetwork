@@ -9,8 +9,6 @@ db:
   env: DB_ENV
 log:
   level: LOG_LEVEL
-  sendLogs: SEND_LOGS
-  sendLogsTo: SEND_LOGS_TO
 deployer:
   cache_path: DEPLOYER_CACHE_PATH
 storage:

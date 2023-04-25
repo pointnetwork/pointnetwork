@@ -1,5 +1,112 @@
 {
     "tables": {
+        "dir_maps": {
+            "tableName": "dir_maps",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "autoIncrement": true,
+                    "unique": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "dir_id": {
+                    "allowNull": false,
+                    "field": "dir_id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "file_id": {
+                    "allowNull": false,
+                    "field": "file_id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "offset": {
+                    "allowNull": false,
+                    "field": "offset",
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "dir_size": {
+                    "allowNull": false,
+                    "field": "dir_size",
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "is_dir": {
+                    "allowNull": false,
+                    "field": "is_dir",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "created_at": {
+                    "allowNull": false,
+                    "field": "created_at",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updated_at": {
+                    "allowNull": false,
+                    "field": "updated_at",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": {
+                "1866cf8d645e68ce73c0c758883f8f7e7013232f": {
+                    "fields": [
+                        "file_id"
+                    ],
+                    "name": "dir_maps_file_id",
+                    "options": {
+                        "indexName": "dir_maps_file_id",
+                        "name": "dir_maps_file_id"
+                    }
+                },
+                "138b5c9bfe88faf8dd92fd311b39d86c874b4682": {
+                    "fields": [
+                        "dir_id"
+                    ],
+                    "name": "dir_maps_dir_id",
+                    "options": {
+                        "indexName": "dir_maps_dir_id",
+                        "name": "dir_maps_dir_id"
+                    }
+                },
+                "6024be9d08d7d8dbaf24c64729b4b39ad41065b5": {
+                    "fields": [
+                        "dir_id",
+                        "file_id"
+                    ],
+                    "name": "dir_maps_dir_id_file_id",
+                    "options": {
+                        "indexName": "dir_maps_dir_id_file_id",
+                        "name": "dir_maps_dir_id_file_id"
+                    }
+                },
+                "dc79a958a3c8e8507d9fd20d3feda321e8d05be6": {
+                    "fields": [
+                        "dir_id",
+                        "offset"
+                    ],
+                    "name": "dir_maps_dir_id_offset",
+                    "options": {
+                        "indexName": "dir_maps_dir_id_offset",
+                        "name": "dir_maps_dir_id_offset"
+                    }
+                },
+                "09af714e21fd7985c9c5a707749ed7cc069bd4c0": {
+                    "fields": [
+                        "dir_id",
+                        "file_id",
+                        "offset"
+                    ],
+                    "unique": true,
+                    "name": "dir_maps_dir_id_file_id_offset",
+                    "options": {
+                        "indexName": "dir_maps_dir_id_file_id_offset",
+                        "name": "dir_maps_dir_id_file_id_offset",
+                        "indicesType": "UNIQUE",
+                        "type": "UNIQUE"
+                    }
+                }
+            }
+        },
         "files": {
             "tableName": "files",
             "schema": {
@@ -13,7 +120,12 @@
                 "size": {
                     "allowNull": true,
                     "field": "size",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "chunk_ids": {
+                    "allowNull": true,
+                    "field": "chunk_ids",
+                    "seqType": "Sequelize.JSON"
                 },
                 "dl_status": {
                     "allowNull": false,
@@ -31,10 +143,47 @@
                     "field": "ul_status",
                     "seqType": "Sequelize.STRING"
                 },
+                "dl_progress": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": 0
+                    },
+                    "field": "dl_progress",
+                    "seqType": "Sequelize.FLOAT"
+                },
+                "ul_progress": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": 0
+                    },
+                    "field": "ul_progress",
+                    "seqType": "Sequelize.FLOAT"
+                },
                 "expires": {
                     "allowNull": true,
                     "field": "expires",
                     "seqType": "Sequelize.BIGINT"
+                },
+                "dir_size": {
+                    "allowNull": true,
+                    "field": "dir_size",
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "dir_ul_progress": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": 0
+                    },
+                    "field": "dir_ul_progress",
+                    "seqType": "Sequelize.FLOAT"
+                },
+                "dir_ul_status": {
+                    "allowNull": false,
+                    "defaultValue": {
+                        "value": "NOT_STARTED"
+                    },
+                    "field": "dir_ul_status",
+                    "seqType": "Sequelize.STRING"
                 },
                 "created_at": {
                     "allowNull": false,
@@ -66,6 +215,16 @@
                     "options": {
                         "indexName": "files_dl_status",
                         "name": "files_dl_status"
+                    }
+                },
+                "4f4b4d149d8557575c371ba8ca8f8de91bf78df5": {
+                    "fields": [
+                        "dir_ul_status"
+                    ],
+                    "name": "files_dir_ul_status",
+                    "options": {
+                        "indexName": "files_dir_ul_status",
+                        "name": "files_dir_ul_status"
                     }
                 }
             }
@@ -157,6 +316,125 @@
                     "options": {
                         "indexName": "chunks_dl_status",
                         "name": "chunks_dl_status"
+                    }
+                }
+            }
+        },
+        "file_maps": {
+            "tableName": "file_maps",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "autoIncrement": true,
+                    "unique": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "file_id": {
+                    "allowNull": false,
+                    "field": "file_id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "chunk_id": {
+                    "allowNull": false,
+                    "field": "chunk_id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "offset": {
+                    "allowNull": false,
+                    "field": "offset",
+                    "seqType": "Sequelize.BIGINT"
+                },
+                "created_at": {
+                    "allowNull": false,
+                    "field": "created_at",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updated_at": {
+                    "allowNull": false,
+                    "field": "updated_at",
+                    "seqType": "Sequelize.DATE"
+                },
+                "ChunkId": {
+                    "allowNull": true,
+                    "references": {
+                        "model": "chunks",
+                        "key": "id"
+                    },
+                    "onDelete": "SET NULL",
+                    "onUpdate": "CASCADE",
+                    "field": "chunk_id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "FileId": {
+                    "allowNull": true,
+                    "references": {
+                        "model": "files",
+                        "key": "id"
+                    },
+                    "onDelete": "SET NULL",
+                    "onUpdate": "CASCADE",
+                    "field": "file_id",
+                    "seqType": "Sequelize.STRING"
+                }
+            },
+            "indexes": {
+                "33628cd9eeff98042332fd3947ebf75eadecd16a": {
+                    "fields": [
+                        "chunk_id"
+                    ],
+                    "name": "file_maps_chunk_id",
+                    "options": {
+                        "indexName": "file_maps_chunk_id",
+                        "name": "file_maps_chunk_id"
+                    }
+                },
+                "43a0c5a2904c65f6e56e13046a7d1ad0dca62a54": {
+                    "fields": [
+                        "file_id"
+                    ],
+                    "name": "file_maps_file_id",
+                    "options": {
+                        "indexName": "file_maps_file_id",
+                        "name": "file_maps_file_id"
+                    }
+                },
+                "9dc196277e0a72459f8905d9343b7e628b5f7a7a": {
+                    "fields": [
+                        "file_id",
+                        "chunk_id"
+                    ],
+                    "name": "file_maps_file_id_chunk_id",
+                    "options": {
+                        "indexName": "file_maps_file_id_chunk_id",
+                        "name": "file_maps_file_id_chunk_id"
+                    }
+                },
+                "dc226793ea95c8db6cf1db4de0a72e1724fd6250": {
+                    "fields": [
+                        "file_id",
+                        "offset"
+                    ],
+                    "name": "file_maps_file_id_offset",
+                    "options": {
+                        "indexName": "file_maps_file_id_offset",
+                        "name": "file_maps_file_id_offset"
+                    }
+                },
+                "10b905efa92d6e9a3258733a13ecaad559744eb9": {
+                    "fields": [
+                        "file_id",
+                        "chunk_id",
+                        "offset"
+                    ],
+                    "unique": true,
+                    "name": "file_maps_file_id_chunk_id_offset",
+                    "options": {
+                        "indexName": "file_maps_file_id_chunk_id_offset",
+                        "name": "file_maps_file_id_chunk_id_offset",
+                        "indicesType": "UNIQUE",
+                        "type": "UNIQUE"
                     }
                 }
             }
@@ -490,5 +768,5 @@
             }
         }
     },
-    "revision": 6
+    "revision": 1
 }

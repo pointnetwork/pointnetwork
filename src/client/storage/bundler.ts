@@ -12,6 +12,7 @@ export const downloadChunk = async (url: string, chunkId: string) => {
             url: `${url}/${chunkId}`,
             responseType: 'arraybuffer'
         });
+        
         log.trace({chunkId}, 'Successfully downloaded chunk from Bundler cache');
         return buf;
     } catch (err) {

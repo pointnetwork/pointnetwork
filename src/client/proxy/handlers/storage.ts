@@ -1,5 +1,5 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-const {uploadFile, getFile, FILE_TYPE} = require('../../storage');
+const {uploadData, getFile, FILE_TYPE} = require('../../storage');
 // @ts-expect-error no types for package
 import detectContentType from 'detect-content-type';
 import isSVG from 'is-svg';
@@ -25,7 +25,7 @@ const attachStorageHandlers = (server: FastifyInstance) => {
             }
 
             const fileBuf = await file.toBuffer();
-            const uploadedId = await uploadFile(fileBuf);
+            const uploadedId = await uploadData(fileBuf);
             return {data: uploadedId};
         });
     });

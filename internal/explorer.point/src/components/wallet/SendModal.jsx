@@ -95,6 +95,8 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
             className="modal fade show"
             style={{ display: 'block' }}
             tabIndex="-1"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
         >
             <div className="modal-dialog">
                 <div className="modal-content">
@@ -107,37 +109,60 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
                         />
                     </div>
                     <div className="modal-body">
-                        <input
-                            value={address}
-                            onChange={handleAddressChange}
-                            type="text"
-                            className="form-control recipient"
-                            placeholder="Recipient's address or @handle"
-                            style={
-                                addressValidation
-                                    ? { borderColor: 'indianred' }
-                                    : {}
-                            }
-                        />
-                        <span style={{ color: 'indianred', display: 'block' }}>
-                            {addressValidation}
-                        </span>
-                        <input
-                            value={value}
-                            onChange={handleValueChange}
-                            type="number"
-                            className="form-control number amount"
-                            placeholder="Amount"
-                            style={{
-                                marginTop: '20px',
-                                ...(valueValidation
-                                    ? { borderColor: 'indianred' }
-                                    : {}),
-                            }}
-                        />
-                        <span style={{ color: 'indianred', display: 'block' }}>
-                            {valueValidation}
-                        </span>
+                        <form>
+                            <div
+                                className="form-group"
+                                style={{ marginBottom: '20px' }}
+                            >
+                                <label className="">
+                                    Recipient address or @handle
+                                </label>
+                                <input
+                                    value={address}
+                                    onChange={handleAddressChange}
+                                    type="text"
+                                    className="form-control recipient"
+                                    placeholder=""
+                                    style={
+                                        addressValidation
+                                            ? { borderColor: 'indianred' }
+                                            : {}
+                                    }
+                                />
+                                <span
+                                    style={{
+                                        color: 'indianred',
+                                        display: 'block',
+                                    }}
+                                >
+                                    {addressValidation}
+                                </span>
+                            </div>
+                            <div className="form-group">
+                                <label className="">Amount</label>
+                                <input
+                                    value={value}
+                                    onChange={handleValueChange}
+                                    type="number"
+                                    className="form-control number amount"
+                                    placeholder=""
+                                    style={{
+                                        // marginTop: '20px',
+                                        ...(valueValidation
+                                            ? { borderColor: 'indianred' }
+                                            : {}),
+                                    }}
+                                />
+                                <span
+                                    style={{
+                                        color: 'indianred',
+                                        display: 'block',
+                                    }}
+                                >
+                                    {valueValidation}
+                                </span>
+                            </div>
+                        </form>
                     </div>
                     <div className="modal-footer">
                         <button

@@ -24,6 +24,8 @@ declare global {
         migrate_undo?: boolean,
         compile?: boolean,
         debug_destroy_everything?: boolean,
+        hashfn?: path,
+        tinker?: boolean,
         new?: string,
         deploy?: boolean,
         deploy_path?: string,

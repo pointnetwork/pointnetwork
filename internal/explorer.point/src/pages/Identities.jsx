@@ -129,7 +129,7 @@ export default function Identities() {
                     loader={<Loading />}
                     style={{ height: 'inherit', overflow: 'inherit' }}
                 >
-                    <table className="table table-bordered table-striped table-hover table-responsive table-primary">
+                    <table className="table table-bordered table-striped table-hover table-responsive table-dark">
                         <tbody>
                             <tr>
                                 <th>Handle</th>

@@ -1,3 +1,20 @@
+body {
+    /*background: radial-gradient(65% 100% at 50% 0%, #00FF94 0%, rgba(0, 255, 148, 0.25) 100%), linear-gradient(230deg, #000000 25%, #170059 100%), linear-gradient(215deg, #FFEBB9 10%, #19004E 80%), radial-gradient(100% 245% at 100% 100%, #FFFFFF 0%, #000353 100%), linear-gradient(125deg, #1400FF 0%, #3A0000 100%), linear-gradient(225deg, #00F0FF 30%, #000B6F 45%, #00EBFC 45%, #001676 65%, #00E1F6 65%, #001676 85%, #00ECFD 85%, #001676 100%), linear-gradient(135deg, #00F0FF 0%, #000B6F 15%, #00EBFC 15%, #001676 35%, #00E1F6 35%, #001676 55%, #00ECFD 55%, #001676 100%);*/
+    /*background-blend-mode: soft-light, screen, overlay, overlay, difference, overlay, normal;*/
+    /*background-size: 100% 100%;*/
+
+    background: url(/assets/own-pattern@3000x2000px.svg);
+    background-attachment: fixed;
+    background-size: 150% 240%;
+
+    padding-top: 60px; /* for .fixed-top navbar */
+
+    color: white;
+}
+div {
+    color: white;
+}
+
 .navbar {
     background: linear-gradient(to bottom, #1E2022 0%, rgb(0, 0, 0) 100%);
     font-family: "Source Sans Pro", sans-serif;
@@ -16,12 +33,12 @@
     border: none;
 }
 
-.mono {
-    font-family: "Lucida Console", Courier, monospace;
-}
-
 a {
-    color: #438fa6;
+    /*color: #438fa6;*/
+    color: #69f6fd;
+}
+a:hover {
+    color: white;
 }
 
 a.nav-link {
@@ -51,12 +68,14 @@ a.nav-link:not(.active):hover {
 }
 
 .home-header {
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
     font-family: "Source Sans Pro", sans-serif;
     font-size: 4rem;
     font-weight: 700;
     margin-top: 100px;
     text-align: center;
+
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.27);
 }
 
 .home-header span {
@@ -89,7 +108,7 @@ a.nav-link:not(.active):hover {
 
 .zapp {
     border-radius: 20px;
-    box-shadow: 0px 7px 15px 0 rgba(0, 0, 0, .15);
+    box-shadow: 0px 7px 15px 0 rgba(138, 138, 138, 0.07);
     margin: 10px;
     padding: 16px;
     position: relative;
@@ -97,6 +116,7 @@ a.nav-link:not(.active):hover {
     top: 0;
     transition: .2s top ease-in-out;
     width: fit-content;
+    background-color: rgba(28, 54, 87, 0.33);
 }
 
 .zapp:hover {
@@ -105,6 +125,7 @@ a.nav-link:not(.active):hover {
 
 .zapp-icon {
   width: 45%;
+    margin: 0 auto;
 }
 
 .zapp-icon-container {
@@ -193,56 +214,9 @@ a.nav-link:not(.active):hover {
     border-color: red;
 }
 
-.bounty-banner {
-    position: fixed;
-    background: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);
-    border-radius: 6px;
-    cursor: pointer;
-    padding: 3px;
-    width: 80vw;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.bounty-banner:hover {
-    background: linear-gradient(90deg, #fee563 0%, #fec455 80%, #86692e 100%);
-}
-
-.bounty-banner-inner {
-    align-items: center;
-    background: linear-gradient(90deg, #fffdf5 0%, #fffbf5 50%, #fcfbf7 100%);
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    padding: 25px;
-}
-
-.bounty-banner-header {
-    align-items: center;
-    display: flex;
-}
-
-.bounty-banner-header img {
-    height: 50px;
-}
-
-.bounty-banner-header h2 {
-    font-family: 'Karla', sans-serif;
-    font-weight: 600;
-    margin: 0 0 0 20px;
-}
-
-.bounty-banner-header h2 span {
-    background-image: linear-gradient(90deg, #fee563 0%, #fec455 50%, #86692e 100%);;
-    color: #333;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
 .warning-banner {
-    background: linear-gradient(90deg, rgba(71,53,17,1) 0%, rgba(223,180,0,1) 35%, rgba(237,208,12,1) 100%);
-    background: rgb(71,53,17);
+    /*background: linear-gradient(90deg, rgba(71,53,17,1) 0%, rgba(223,180,0,1) 35%, rgba(237,208,12,1) 100%);*/
+    background: linear-gradient(90deg, #000046 0%, #1cb5e0 100%);
     color: rgb(255, 255, 255);
     font-family: "Source Sans Pro", sans-serif;
     font-size: 1.1rem;
@@ -389,8 +363,8 @@ a.nav-link:not(.active):hover {
 }
 
 .wallet-tabs.nav-tabs .nav-link.active {
-    border-bottom: 2px solid rgb(33, 37, 41);
-    color: rgb(33, 37, 41);
+    border-bottom: 2px solid rgb(122, 179, 236);
+    color: rgb(122, 179, 236);
 }
 
 .wallet-no-tokens {
@@ -410,20 +384,6 @@ a.nav-link:not(.active):hover {
     a.nav-link {
         text-align: center;
     }
-
-    .bounty-banner-inner {
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .bounty-banner-header {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .bounty-banner-header h2 {
-        margin: 10px 0;
-    }
 }
 
 
@@ -431,4 +391,245 @@ a.nav-link:not(.active):hover {
     .wallet-row td {
         white-space: nowrap;
     }
+}
+
+/* noto-sans-mono-regular - latin */
+@font-face {
+    font-family: 'Noto Sans Mono';
+    font-style: normal;
+    font-weight: 400;
+    src: url('/assets/fonts/noto-sans-mono-v21-latin-regular.eot'); /* IE9 Compat Modes */
+    src: local(''),
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.woff') format('woff'), /* Modern Browsers */
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+    url('/assets/fonts/noto-sans-mono-v21-latin-regular.svg#NotoSansMono') format('svg'); /* Legacy iOS */
+}
+/* noto-sans-mono-700 - latin */
+@font-face {
+    font-family: 'Noto Sans Mono';
+    font-style: normal;
+    font-weight: 700;
+    src: url('/assets/fonts/noto-sans-mono-v21-latin-700.eot'); /* IE9 Compat Modes */
+    src: local(''),
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.woff') format('woff'), /* Modern Browsers */
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
+    url('/assets/fonts/noto-sans-mono-v21-latin-700.svg#NotoSansMono') format('svg'); /* Legacy iOS */
+}
+
+td, .mono, input {
+    /* todo: scope <td> more narrowly, to not affect every table ever in Point Home! */
+
+    /* monospace */
+    font-family: 'Noto Sans Mono', 'Courier', 'Courier New', monospace;
+}
+
+
+.name-block {
+    margin: 10px 0;
+}
+input[name=name] {
+    text-align: center;
+}
+form.introduce-yourself-form {
+    display: block;
+    width: 500px;
+    margin: 0 auto;
+    padding: 4px;
+    /*padding: 30px;*/
+    margin-top: 50px;
+    box-sizing: border-box;
+
+    position: relative;
+
+    /*box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5), 0 0 40px #FF00FF, 0 0 70px #FF00FF, 0 0 80px #FF00FF, 0 0 100px #FF00FF;*/
+    /*box-shadow: 0 0 20px rgba(0, 0, 0, 0.5),*/
+    /*0 0 10px rgba(0, 0, 0, 0.5),*/
+    /*inset 0 0 10px rgba(255, 255, 255, 0.5);*/
+
+    background: linear-gradient(to bottom, #75E8F9 0%, #69C9FB 25%, #7295F7 50%, #6A00F9 100%);
+
+    border-radius: 10px;
+
+    box-shadow: 0 0 1px rgba(255,255,255,0.5), 0 0 2px rgba(255,255,255,0.5), 0 0 3px rgba(255,255,255,0.5);
+}
+form.introduce-yourself-form::before {
+    content: " ";
+    width: 100%;
+    height: 60%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-shadow: 0 0 1px rgba(255,255,255,0.5), 0 0 2px rgba(255,255,255,0.5), 0 0 3px rgba(255,255,255,0.5), 0 0 40px #3768B7, 0 0 70px #3768B7, 0 0 80px #3768B7, 0 0 100px #3768B7;
+    border-radius: 10px;
+    z-index: -1;
+}
+form.introduce-yourself-form::after {
+    content: " ";
+    width: 100%;
+    height: 60%;
+    position: absolute;
+    top: 40%;
+    left: 0;
+    box-shadow: 0 0 1px rgba(255,255,255,0.5), 0 0 2px rgba(255,255,255,0.5), 0 0 3px rgba(255,255,255,0.5), 0 0 40px #4C0ABE, 0 0 70px #4C0ABE, 0 0 80px #4C0ABE, 0 0 100px #4C0ABE;
+    border-radius: 10px;
+    z-index: -2;
+}
+
+.introduce-yourself-form-inside {
+    background: radial-gradient(circle at 25% 5%, rgba(104, 47, 191, 0.54) 20%, transparent 60%),
+    radial-gradient(circle at 100% 5%, rgba(88, 119, 243, 0.49) 16%, rgba(34, 44, 156, 0.54) 10%, transparent 60%),
+    radial-gradient(circle at 100% 5%, black 0%, black 18%, transparent 18%, transparent 100%),
+    radial-gradient(circle at 100% 5%, rgba(88, 119, 243, 0.49) 20%, rgba(34, 44, 156, 0.54) 10%, transparent 60%),
+    radial-gradient(circle at 100% 5%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 10%, rgba(0,0,0,1) 60%),
+    radial-gradient(circle at 100% 5%, rgba(88, 119, 243, 0.49) 16%, rgba(34, 44, 156, 0.54) 10%, transparent 60%),
+    linear-gradient(to bottom, #5D60F6, #15111A);
+    padding: 20px;
+    /*margin: 30px 3px;*/
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid #616161;
+
+}
+
+form.introduce-yourself-form-below, form.introduce-yourself-form-below p, form.introduce-yourself-form-below h5 {
+    color: #ccc;
+}
+form.introduce-yourself-form-below h5 {
+    margin-top: 10px;
+    color: #3ed5d5;
+}
+
+form.introduce-yourself-form-below .introduce-yourself-form-inside {
+    background: black;
+}
+/*.introduce-yourself-form-inside {*/
+/*    background: radial-gradient(circle at 25% 5%, rgba(104, 47, 191, 0.54) 20%, transparent 60%),*/
+/*    radial-gradient(circle at 100% 5%, rgba(88, 119, 243, 0.49) 20%, rgba(34, 44, 156, 0.54) 10%, transparent 60%),*/
+/*    radial-gradient(circle at 100% 5%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 10%, rgba(0,0,0,1) 60%),*/
+/*    radial-gradient(circle at 100% 5%, rgba(88, 119, 243, 0.49) 16%, rgba(34, 44, 156, 0.54) 10%, transparent 60%),*/
+/*    linear-gradient(to bottom, #5D60F6, #15111A);*/
+/*    !*padding: 10px;*!*/
+/*    !*margin: 30px 3px;*!*/
+/*    box-sizing: border-box;*/
+/*    border-radius: 5px;*/
+/*    border: 1px solid #616161;*/
+/*}*/
+
+form.introduce-yourself-form h2 {
+    font-size: 28px;
+    color: #ffe;
+    text-align: center;
+    text-shadow: 0 0 10px blue, 0 0 20px blueviolet, 0 0 30px blue;
+    padding: 0;
+    margin: 0;
+
+    margin: 20px;
+}
+
+form.introduce-yourself-form input[type="text"], form.introduce-yourself-form input[type="email"], form.introduce-yourself-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: rgba(255,255,255,0.1);
+    border-bottom: 2px solid #ccc;
+    box-sizing: border-box;
+    color: #ffe;
+    font-size: 16px;
+    margin-bottom: 20px;
+    /*text-shadow: 0 0 10px #FF00FF, 0 0 20px #FF00FF, 0 0 30px #FF00FF;*/
+
+    color: #6effff;
+    color: white;
+}
+
+form.introduce-yourself-form input[type="text"]:focus, form.introduce-yourself-form input[type="email"]:focus, form.introduce-yourself-form textarea:focus {
+    outline: none;
+    border-color: white;
+}
+
+form.introduce-yourself-form-below {
+    box-shadow: none;
+}
+form.introduce-yourself-form-below::before {
+    box-shadow: none;
+}
+form.introduce-yourself-form-below::after {
+    box-shadow: none;
+}
+
+.twitter-handle-yesno {
+    width: 100px;
+    background-color: rgba(255,255,255,0.1);
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 5px;
+    font-weight: bold;
+    margin: 0 auto;
+    font-size: 0.9em;
+    margin-top: 29px;
+    margin-bottom: 0;
+}
+.twitter-handle-yes {
+    color: #5acc5a;
+    background-color: rgba(0, 128, 0, 0.13);
+    border-color: #5acc5a;
+}
+.twitter-handle-no {
+    color: #e16161;
+    background-color: rgba(255, 0, 0, 0.15);
+    border-color: #e16161;
+}
+.twitter-handle-subheading-yes {
+    color: #5acc5a;
+    text-align: center;
+    display: block;
+}
+.twitter-handle-subheading-no {
+    color: #e16161;
+    text-align: center;
+    display: block;
+}
+.introduce-yourself-form .accordion-header {
+    margin: 0;
+}
+.tweet-textarea {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+.tweet-bullet {
+    background-color: rgba(29, 118, 138, 0.4);
+    border-radius: 50%;
+    width: 1.56em;
+    height: 1.56em;
+    text-align: center;
+    display: inline-block;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-right: 10px;
+    position: relative;
+    top: 2px;
+    color: aqua;
+}
+
+.btn-send-tweet, .btn-check-tweet-or-register {
+    text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5), 0 0 40px aqua, 0 0 70px aqua, 0 0 80px aqua, 0 0 100px aqua;
+    cursor: pointer;
+}
+.btn-send-tweet:hover, .btn-check-tweet-or-register:hover {
+    text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5), 0 0 30px aqua, 0 0 50px aqua, 0 0 60px aqua, 0 0 80px aqua;
+}
+.btn-register-identity {
+    text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5), 0 0 40px lime, 0 0 70px limegreen, 0 0 80px limegreen, 0 0 90px limegreen;
+}
+.btn-register-identity:hover {
+    text-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.5), 0 0 30px rgba(255,255,255,0.5), 0 0 30px lime, 0 0 50px limegreen, 0 0 60px limegreen, 0 0 80px limegreen;
 }

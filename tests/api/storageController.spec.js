@@ -1,12 +1,12 @@
 import apiServer from '../../src/api/server';
 // TODO: replace with import once we refactor it in src
-const {getFile, uploadFile} = require('../../src/client/storage');
+const {getFile, uploadData} = require('../../src/client/storage');
 
 jest.mock('../../src/client/storage', () => ({
     // mocked functions cannot reference external modules, so we can't return something
     // like fs.readFile
     getFile: jest.fn(async () => 'some plain text file'),
-    uploadFile: jest.fn(async () => 'mock_id')
+    uploadData: jest.fn(async () => 'mock_id')
 }));
 
 describe('Storage controller', () => {
@@ -49,7 +49,7 @@ describe('Storage controller', () => {
     //     });
     //
     //     expect(res.statusCode).toEqual(200);
-    //     expect(uploadFile).toHaveBeenCalledWith(expect.any(Buffer));
+    //     expect(uploadData).toHaveBeenCalledWith(expect.any(Buffer));
     //     expect(res.payload).toEqual(JSON.stringify({
     //         status: 200,
     //         data: 'mock_id',
@@ -71,7 +71,7 @@ describe('Storage controller', () => {
         });
 
         expect(res.statusCode).toEqual(200);
-        expect(uploadFile).toHaveBeenCalledWith('some plain text');
+        expect(uploadData).toHaveBeenCalledWith('some plain text');
         expect(res.payload).toEqual(JSON.stringify({
             status: 200,
             data: 'mock_id',

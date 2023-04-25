@@ -10,11 +10,18 @@ const Header = ({ isRegistered }) => {
 
     return (
         <>
-            <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
+            <Navbar
+                collapseOnSelect
+                expand="lg"
+                bg="dark"
+                variant="dark"
+                fixed="top"
+                style={{ opacity: '0.9' }}
+            >
                 <Container>
                     <img src={logo} className="imgLogo" alt="Point Network" />
                     <LinkContainer to="/">
-                        <Navbar.Brand href="/point">Point Network</Navbar.Brand>
+                        <Navbar.Brand href="/point">Point Home</Navbar.Brand>
                     </LinkContainer>
                     <Navbar.Toggle aria-controls="responsive-navbar-nav" />
 
@@ -41,6 +48,7 @@ const Header = ({ isRegistered }) => {
                                         </Nav.Link>
                                     </LinkContainer>
                                     <LinkContainer
+                                        className="ml-auto"
                                         to={'/identities/' + walletIdentity}
                                     >
                                         <Nav.Link

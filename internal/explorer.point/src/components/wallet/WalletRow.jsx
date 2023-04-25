@@ -1,24 +1,19 @@
-import pointLogo from '../../assets/pointlogo.png';
-import solanaIcon from '../../assets/solana.svg';
-import rinkebyIcon from '../../assets/rinkeby.svg';
-
-const NETWORK_ICONS = {
-    local: pointLogo,
-    solana: solanaIcon,
-    rinkeby: rinkebyIcon,
-};
+import { toFixedFloor } from '../../helpers';
 
 export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
+    const balance = isNaN(Number(wallet.balance))
+        ? wallet.balance
+        : toFixedFloor(wallet.balance, 8);
+    const integerPart = balance.split('.')[0];
+    const decimalPart = balance.split('.')[1];
+
     return (
         <tr key={wallet.currency_code} className="wallet-row">
             <td className="wallet-information">
                 <div className="icon">
                     <img
                         alt={wallet.network}
-                        src={NETWORK_ICONS[wallet.network]}
-                        onError={({ currentTarget }) => {
-                            currentTarget.src = pointLogo;
-                        }}
+                        src={'../../assets/coins/' + wallet.icon + '.png'}
                     />
                 </div>
                 <div className="data">
@@ -30,9 +25,10 @@ export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
                 {wallet.alias || wallet.address}
             </td>
             <td className="align-middle" style={{ textAlign: 'right' }}>
-                {isNaN(Number(wallet.balance))
-                    ? wallet.balance
-                    : wallet.balance.toFixed(8)}{' '}
+                <span>{integerPart}</span>
+                <span className={'text-muted'}>.{decimalPart}</span>
+            </td>
+            <td className="align-middle" style={{ textAlign: 'left' }}>
                 {wallet.currency_code}
             </td>
             <td className="wallet-actions align-middle">
