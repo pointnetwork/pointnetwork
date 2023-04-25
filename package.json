@@ -220,6 +220,7 @@
       "node_modules/sqlite3/**/*",
       "node_modules/eccrypto/**/*",
       "node_modules/bigint-buffer/**/*",
+      "node_modules/@truffle/hdwallet-provider/**/*",
       "src/client/proxy/views/*"
     ],
     "scripts": [
