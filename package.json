@@ -231,7 +231,8 @@
       "node_modules/bigint-buffer/**/*",
       "node_modules/@truffle/hdwallet-provider/**/*",
       "src/client/proxy/views/*",
-      "src/abi/**/*"
+      "src/abi/**/*",
+      "dist/abi/**/*"
     ],
     "scripts": [
       ".sequelizerc",
