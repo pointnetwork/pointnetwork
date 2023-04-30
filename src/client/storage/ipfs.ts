@@ -21,6 +21,19 @@ const topicCallbacks = new Map();
 
 const ipfsRepoPath = path.join(DATADIR, 'ipfs');
 
+// const IPFS = await(await Function('return import("ipfs-core")')() as Promise<typeof import('ipfs-core')>);
+import {create} from 'ipfs-core';
+// const gossipsub = await(await Function('return import("@chainsafe/libp2p-gossipsub")')()).gossipsub;
+import {gossipsub} from '@chainsafe/libp2p-gossipsub';
+// const GossipSub = gossipsub.GossipSub;
+// const mplex = await(await Function('return import("@libp2p/mplex")')()).mplex;
+import {mplex} from '@libp2p/mplex';
+// const noise = await(await Function('return import("@chainsafe/libp2p-noise")')()).noise;
+import {noise} from '@chainsafe/libp2p-noise';
+// const webRTCStar = await(await Function('return import("@libp2p/webrtc-star")')()).webRTCStar;
+import {webRTCStar} from '@libp2p/webrtc-star';
+// const WebRTCStar = webRTCStar.webRTCStar;
+
 // const startIPFSNode = async() => {
 //     const {spawn} = require('child_process');
 //
@@ -62,17 +75,13 @@ const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
             const repoLockDir = path.join(ipfsRepoPath, 'repo.lock');
             if (fs.existsSync(repoLockDir)) fs.rmSync(repoLockDir, {recursive: true});
 
-            const IPFS = await(await Function('return import("ipfs-core")')() as Promise<typeof import('ipfs-core')>);
+            // const IPFS = await(await Function('return import("ipfs-core")')() as Promise<typeof import('ipfs-core')>);
 
             // const createLibp2p = await(await Function('return import("libp2p")')()).createLibp2p;
-            const gossipsub = await(await Function('return import("@chainsafe/libp2p-gossipsub")')()).gossipsub;
             // const tcp = await(await Function('return import("@libp2p/tcp")')()).tcp;
-            const mplex = await(await Function('return import("@libp2p/mplex")')()).mplex;
-            const noise = await(await Function('return import("@chainsafe/libp2p-noise")')()).noise;
             // const pubsubPeerDiscovery = await(await Function('return import("@libp2p/pubsub-peer-discovery")')()).pubsubPeerDiscovery;
             // const KadDHT = await(await Function('return import("@libp2p/kad-dht")')()).KadDHT;
             // const MulticastDNS = await(await Function('return import("libp2p-mdns")')()).MulticastDNS;
-            const webRTCStar = await(await Function('return import("@libp2p/webrtc-star")')()).webRTCStar;
             // const wrtc = await(await Function('return import("wrtc")')()).default;
 
             const webRTC = webRTCStar({});
@@ -83,7 +92,7 @@ const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
             const portOffset = randomNumber(100, 500);
             const port = portStartRange + portOffset;
 
-            _node = await IPFS.create({
+            _node = await create({
                 repo: ipfsRepoPath,
                 config: {
                     Addresses: {
@@ -192,7 +201,7 @@ const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
                     streamMuxers: [mplex()],
                     connectionEncryption: [noise()],
                     // we add the Pubsub module we want
-                    pubsub: new gossipsub({
+                    pubsub: gossipsub({
                         allowPublishToZeroPeers: true,
                         fallbackToFloodsub: true,
                         emitSelf: true,

@@ -1,9 +1,9 @@
 {
   "name": "pointnetwork",
   "version": "1.99.3",
-  "description": "Point Network;",
+  "description": "Point Network",
   "main": "point",
-  "bin": "dist/index.js",
+  "bin": "dist_babel/index.js",
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=6.0.0"
@@ -94,6 +94,10 @@
     "web3-providers-http": "1.6.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.21.5",
+    "@babel/core": "^7.21.5",
+    "@babel/helper-compilation-targets": "^7.21.5",
+    "@babel/plugin-transform-modules-commonjs": "^7.21.5",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
     "@ethersproject/providers": "^5.6.4",
@@ -208,6 +212,11 @@
   },
   "pkg": {
     "outputPath": "bin",
+    "files": [
+      "**/*",
+      "!src/**/*",
+      "!dist/**/*"
+    ],
     "assets": [
       "package.json",
       "hardhat/**/*",

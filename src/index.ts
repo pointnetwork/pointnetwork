@@ -172,8 +172,8 @@ if (program.new) {
     create({website: program.new})
         .then(() => process.exit())
         .catch((e: Error) => { log.error('Error: ' + e.message); process.exit(); });
-    // @ts-ignore
-    return;
+
+    exit(0);
 }
 
 // --------------------- Config --------------------- //
@@ -191,8 +191,8 @@ if (program.deploy) {
     })
         .then(exit)
         .catch(die);
-    // @ts-ignore
-    return;
+
+    exit(0);
 }
 
 // --------------------- Start -------------------- //
@@ -208,8 +208,8 @@ if (program.attach) {
     const Console = require('./console');
     const console = new Console();
     console.start();
-    // @ts-ignore
-    return;
+
+    exit(0);
 }
 
 // ---------------- Migration Modes ---------------- //
@@ -230,8 +230,8 @@ if (program.makemigration) {
     Database.init();
 
     require('sequelize-auto-migrations/bin/makemigration.js');
-    // @ts-ignore
-    return;
+
+    exit(0);
 }
 
 if (program.migrate) {
@@ -242,8 +242,7 @@ if (program.migrate) {
         exit(0); // TODO: use `point-errors-code` once available.
     })();
 
-    // @ts-ignore
-    return;
+    exit(0);
 }
 
 // -------------------- Uploader --------------------- //
@@ -279,8 +278,7 @@ if (program.upload) {
             process.exit(1);
         });
 
-    // @ts-ignore
-    return;
+    exit(0);
 }
 
 // ------------------ Compile Contracts ------------ //
@@ -310,8 +308,7 @@ if (program.compile) {
         .then(() => exit(0))
         .catch(die);
 
-    // @ts-ignore
-    return;
+    exit(0);
 }
 
 // ------------------ Gracefully exit ---------------- //

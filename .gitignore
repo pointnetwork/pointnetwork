@@ -13,6 +13,8 @@ bin/
 .cache/
 .parcel-cache/
 dist
+dist_babel
+dist_babel/
 .vscode
 
 key.json
