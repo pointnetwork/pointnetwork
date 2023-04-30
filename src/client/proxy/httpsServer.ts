@@ -1,15 +1,15 @@
 import https from 'https';
 import Fastify from 'fastify';
-import {getCertificate} from './certificates';
+import {getCertificate} from './certificates.js';
 import tls from 'tls';
-import logger from '../../core/log';
+import logger from '../../core/log.js';
 import fastifyUrlData from '@fastify/url-data';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyFormBody from '@fastify/formbody';
 import fastifyWs from 'fastify-websocket';
-import {transformErrorResp} from '../../errors';
-import attachHandlers from './handlers';
-import {cors} from './middleware';
+import {transformErrorResp} from '../../errors/index.js';
+import attachHandlers from './handlers/index.js';
+import {cors} from './middleware/index.js';
 
 const log = logger.child({module: 'Proxy'});
 const httpsServer = Fastify({

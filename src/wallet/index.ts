@@ -1,7 +1,7 @@
 import config from 'config';
-import ethereum from '../network/providers/ethereum';
-import {getNetworkAddress, getSolanaKeyPair} from './keystore';
-import solana from '../network/providers/solana';
+const ethereum = require('../network/providers/ethereum.js');
+import {getNetworkAddress, getSolanaKeyPair} from './keystore.js';
+import solana from '../network/providers/solana.js';
 import {LAMPORTS_PER_SOL} from '@solana/web3.js';
 import {utils} from 'ethers';
 import pendingTxs from '../permissions/PendingTxs';

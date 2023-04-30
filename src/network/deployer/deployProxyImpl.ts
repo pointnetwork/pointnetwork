@@ -17,13 +17,13 @@ import {
     UpgradeOptions,
     UpgradeProxyOptions,
     withDefaults
-} from '@openzeppelin/hardhat-upgrades/dist/utils';
+} from '@openzeppelin/hardhat-upgrades/dist/utils/index.js';
 import type {ContractFactory} from 'ethers';
-import {FormatTypes} from 'ethers/lib/utils';
+import {FormatTypes} from 'ethers/lib/utils.js';
 import type {EthereumProvider, HardhatRuntimeEnvironment} from 'hardhat/types';
-import {Manifest} from './manifest';
-import {fetchOrDeploy} from './fetchOrDeploy';
-import {processProxyKind} from './processProxyKind';
+import {Manifest} from './manifest.js';
+import {fetchOrDeploy} from './fetchOrDeploy.js';
+import {processProxyKind} from './processProxyKind.js';
 
 // Copied from @openzeppeling/hardhat-upgrades and modified to add ability to change
 // the location of .openzeppelin folder

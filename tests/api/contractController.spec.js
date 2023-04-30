@@ -1,8 +1,8 @@
 import apiServer from '../../src/api/server';
 // TODO: replace with import once we refactor it in src
-const ethereum = require('../../src/network/providers/ethereum');
+const ethereum = require('../../src/network/providers/ethereum.js');
 
-jest.mock('../../src/network/providers/ethereum', () => ({
+jest.mock('../../src/network/providers/ethereum.js', () => ({
     loadWebsiteContract: jest.fn(async () => ({
         _address: '0xF6690149C78D0254EF65FDAA6B23EC6A342f6d8D',
         _jsonInterface: [{

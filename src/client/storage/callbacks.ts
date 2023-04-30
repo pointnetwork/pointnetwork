@@ -1,5 +1,5 @@
-import Queue from '../../util/queue';
-import logger from '../../core/log';
+import Queue from '../../util/queue.js';
+import logger from '../../core/log.js';
 const log = logger.child({module: 'callbacks'});
 
 const callbacks: Record<string, Queue<CallableFunction>> = {};

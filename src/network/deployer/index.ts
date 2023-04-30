@@ -2,20 +2,20 @@ import '@nomiclabs/hardhat-ethers';
 import '@openzeppelin/hardhat-upgrades';
 import path from 'path';
 import hre from 'hardhat';
-import ethereum from '../providers/ethereum';
-import {getFile, uploadData} from '../../client/storage';
-import logger from '../../core/log';
+const ethereum = require('../providers/ethereum.js');
+import {getFile, uploadData} from '../../client/storage/index.js';
+import logger from '../../core/log.js';
 import BN from 'bn.js';
 import {Artifact} from 'hardhat/types';
 import fs from 'fs-extra';
 import axios from 'axios';
 import tar from 'tar-fs';
 import gunzip from 'gunzip-maybe';
-import {deployProxy} from './deployProxy';
-import {resolveHome} from '../../util';
+import {deployProxy} from './deployProxy.js';
+import {resolveHome} from '../../util/index.js';
 import config from 'config';
-import {upgradeProxy} from './upgradeProxy';
-import {forceImport} from './forceImport';
+import {upgradeProxy} from './upgradeProxy.js';
+import {forceImport} from './forceImport.js';
 const log = logger.child({module: 'Deployer_new'});
 
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
@@ -30,7 +30,7 @@ const downloadNpmDependency = (dependency: string) => new Promise<void>(async (r
     try {
         log.debug({dependency}, 'Downloading npm dependency');
         const depsPath = path.join(resolveHome(config.get('datadir')), 'hardhat', 'node_modules');
-        
+
         if (fs.existsSync(path.join(depsPath, dependency))) {
             log.debug({dependency}, 'NPM dependency already exists, skipping');
             resolve();

@@ -1,19 +1,19 @@
 // TODO: add better error handling with custom errors and keeping error messages in DB
-import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk';
+import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk.js';
 import path from 'path';
 import {existsSync, promises as fs} from 'fs';
-import {hashFn} from '../../../util';
-import {downloadChunk as downloadChunkFromBundler} from '../bundler';
-import getDownloadQuery from '../query';
+import {hashFn} from '../../../util/index.js';
+import {downloadChunk as downloadChunkFromBundler} from '../bundler.js';
+import getDownloadQuery from '../query.js';
 import {request} from 'graphql-request';
-import {storage} from '../client/client';
+import {storage} from '../client/client.js';
 import {
     ARWEAVE_BUNDLERS_READ,
     DOWNLOAD_CACHE_PATH,
     GATEWAY_URL,
     log
-} from '../config';
-import {EventTypes, waitForEvent} from '../callbacks';
+} from '../config.js';
+import {EventTypes, waitForEvent} from '../callbacks.js';
 
 const validateIntegrity = (chunkId: string, data: Buffer): boolean => {
     const hash = hashFn(data).toString('hex');

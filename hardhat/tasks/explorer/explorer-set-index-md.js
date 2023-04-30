@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-const {task} = require('hardhat/config');
+const {task} = require('hardhat/config.js');
 const fs = require('fs');
 const fetch = require('node-fetch');
 const FormData = require('form-data');

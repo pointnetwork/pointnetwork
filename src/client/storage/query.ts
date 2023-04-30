@@ -1,5 +1,5 @@
 import {gql} from 'graphql-request';
-import {VERSION_MAJOR, VERSION_MINOR} from './config';
+import {VERSION_MAJOR, VERSION_MINOR} from './config.js';
 
 const getDownloadQuery = (chunkId: string): string =>
     gql`{

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const config = require('config');
-const logger = require('./log');
+import logger from './log';
 const log = logger.child({module: 'Deploy'});
 const colors = require('ansi-colors');
 import {Presets, SingleBar} from 'cli-progress';

@@ -1,5 +1,5 @@
-import debug from '@openzeppelin/hardhat-upgrades/dist/utils/debug';
-import {Manifest, ManifestData, ImplDeployment} from './manifest';
+import debug from '@openzeppelin/hardhat-upgrades/dist/utils/debug.js';
+import {Manifest, ManifestData, ImplDeployment} from './manifest.js';
 import {
     DeployOpts,
     Version,

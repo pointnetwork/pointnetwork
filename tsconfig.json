@@ -4,7 +4,7 @@
     "target": "esnext",
     "strict": true,
     "alwaysStrict": true,
-    "resolveJsonModule": true,
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "useUnknownInCatchVariables": false,
     "noEmit": false,

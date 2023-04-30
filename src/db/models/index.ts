@@ -1,9 +1,9 @@
-import File from './file';
-import Identity from './identity';
-import Chunk from './chunk';
-import FileMap from './file_map';
-import DirMap from './dir_map';
-import {Database} from '../index';
+import File from './file.js';
+const Identity = require('./identity.js');
+import Chunk from './chunk.js';
+import FileMap from './file_map.js';
+import DirMap from './dir_map.js';
+import {Database} from '../index.js';
 const sequelize = Database.client;
 
 // todo: remove completely

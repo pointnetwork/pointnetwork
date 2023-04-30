@@ -1,11 +1,11 @@
-import pendingTxs from '../permissions/PendingTxs';
+import pendingTxs from '../permissions/PendingTxs.js';
 // import permissionStore from '../permissions/PermissionStore';
-import ethereum from '../network/providers/ethereum';
+const ethereum = require('../network/providers/ethereum.js');
 import config from 'config';
-import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
-import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode';
-import {getNetworkPublicKey} from '../wallet/keystore';
-import logger from '../core/log';
+import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana.js';
+import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode.js';
+import {getNetworkPublicKey} from '../wallet/keystore.js';
+import logger from '../core/log.js';
 const log = logger.child({module: 'RPC'});
 
 const DEFAULT_NETWORK = config.get('network.default_network');

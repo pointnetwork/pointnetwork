@@ -3,7 +3,7 @@
   "version": "1.99.3",
   "description": "Point Network",
   "main": "point",
-  "bin": "dist_babel/index.js",
+  "bin": "dist/index.js",
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=6.0.0"
@@ -60,7 +60,7 @@
     "html-entities": "^2.3.2",
     "ipfs": "^0.66.0",
     "ipfs-core": "^0.18.0",
-    "ipfs-http-client": "^60.0.0",
+    "ipfs-http-client": "^50.1.2",
     "ipfs-pubsub-room": "^3.0.0",
     "is-svg": "^4.3.2",
     "js-yaml": "^4.1.0",

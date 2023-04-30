@@ -1,5 +1,5 @@
 import Arweave from 'arweave';
-import {HOST, PORT, PROTOCOL, TIMEOUT} from '../config';
+import {HOST, PORT, PROTOCOL, TIMEOUT} from '../config.js';
 import {ResponseWithData} from 'arweave/node/lib/api';
 
 const arweave = Arweave.init({

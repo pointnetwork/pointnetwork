@@ -1,4 +1,4 @@
-import {resolveHome, makeSurePathExists, makeSureKeyfileHasPhrase} from './util';
+import {resolveHome, makeSurePathExists, makeSureKeyfileHasPhrase} from './util/index.js';
 import path from 'path';
 import config from 'config';
 

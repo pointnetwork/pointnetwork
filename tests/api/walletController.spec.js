@@ -1,12 +1,12 @@
 import config from 'config';
 import apiServer from '../../src/api/server';
-import ethereum from '../../src/network/providers/ethereum';
-import solana from '../../src/network/providers/solana';
+const ethereum = require('../../src/network/providers/ethereum.js');
+import solana from '../../src/network/providers/solana.js';
 import httpsServer from '../../src/client/proxy/httpsServer';
 
-jest.mock('../../src/network/providers/ethereum', () => ({getBalance: jest.fn(async () => 1000000000000)}));
+jest.mock('../../src/network/providers/ethereum.js', () => ({getBalance: jest.fn(async () => 1000000000000)}));
 
-jest.mock('../../src/network/providers/solana', () => ({getBalance: jest.fn(async () => 1000000000)}));
+jest.mock('../../src/network/providers/solana.js', () => ({getBalance: jest.fn(async () => 1000000000)}));
 
 describe('Wallet controller', () => {
     it('Public key', async () => {

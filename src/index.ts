@@ -3,8 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
-import disclaimer from './disclaimer';
-import {getContractAddress, compileAndSaveContract} from './util/contract';
+const disclaimer = require('./disclaimer.js');
+import {getContractAddress, compileAndSaveContract} from './util/contract.js';
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
@@ -131,7 +131,7 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 
 // ------------------- Init Logger ----------------- //
 
-const logger = require('./core/log');
+import logger from './core/log.js';
 const log = logger.child({module: 'point'});
 const exit = (code: number) => {
     log.close();
@@ -144,7 +144,7 @@ const die = (err: Error) => {
 
 // ----------------- Simple Commands ---------------- //
 if (program.hashfn) {
-    const {hashFn} = require('./util');
+    const {hashFn} = require('./util/index.js');
 
     const path = program.hashfn;
     if (!fs.existsSync(path)) throw new Error('File not found: ' + path);
@@ -197,10 +197,10 @@ if (program.deploy) {
 
 // --------------------- Start -------------------- //
 
-import startPoint from './core/index';
-import migrate from './util/migrate';
-import initFolders from './initFolders';
-import {statAsync, resolveHome} from './util';
+import startPoint from './core/index.js';
+import migrate from './util/migrate.js';
+import initFolders from './initFolders.js';
+import {statAsync, resolveHome} from './util/index.js';
 
 // ----------------- Console Mode -------------------- //
 

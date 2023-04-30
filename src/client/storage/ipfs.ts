@@ -1,12 +1,12 @@
 import {Readable} from 'stream';
 import {FastifyReply} from 'fastify';
 
-import logger from '../../core/log';
+import logger from '../../core/log.js';
 import path from 'path';
-import {DATADIR, HOST_PREFIXED_PUBSUB_PROLOGUE, HOST_PREFIXED_PUBSUB_ENCSIGN_PROLOGUE} from './config';
-import {gunzipIfCompressed, hashFn, setSoon} from '../../util';
-import {HttpNotFoundError} from '../../core/exceptions';
-import {downloadVerifyDecryptFromIdentityForMe, VerifiedData} from '../encryption';
+import {DATADIR, HOST_PREFIXED_PUBSUB_PROLOGUE, HOST_PREFIXED_PUBSUB_ENCSIGN_PROLOGUE} from './config.js';
+import {gunzipIfCompressed, hashFn, setSoon} from '../../util/index.js';
+import {HttpNotFoundError} from '../../core/exceptions.js';
+import {downloadVerifyDecryptFromIdentityForMe, VerifiedData} from '../encryption.js';
 const log = logger.child({module: 'ipfs'});
 const fs = require('fs');
 // import {Message} from '@libp2p/interface-pubsub';
@@ -22,16 +22,15 @@ const topicCallbacks = new Map();
 const ipfsRepoPath = path.join(DATADIR, 'ipfs');
 
 // const IPFS = await(await Function('return import("ipfs-core")')() as Promise<typeof import('ipfs-core')>);
-import {create} from 'ipfs-core';
+// import {create} from 'ipfs-core';
 // const gossipsub = await(await Function('return import("@chainsafe/libp2p-gossipsub")')()).gossipsub;
-import {gossipsub} from '@chainsafe/libp2p-gossipsub';
 // const GossipSub = gossipsub.GossipSub;
 // const mplex = await(await Function('return import("@libp2p/mplex")')()).mplex;
-import {mplex} from '@libp2p/mplex';
+// import {mplex} from '@libp2p/mplex';
 // const noise = await(await Function('return import("@chainsafe/libp2p-noise")')()).noise;
-import {noise} from '@chainsafe/libp2p-noise';
+// import {noise} from '@chainsafe/libp2p-noise';
 // const webRTCStar = await(await Function('return import("@libp2p/webrtc-star")')()).webRTCStar;
-import {webRTCStar} from '@libp2p/webrtc-star';
+// import {webRTCStar} from '@libp2p/webrtc-star';
 // const WebRTCStar = webRTCStar.webRTCStar;
 
 // const startIPFSNode = async() => {
@@ -57,6 +56,14 @@ import {webRTCStar} from '@libp2p/webrtc-star';
 // };
 
 const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
+    // const {create} = await import('ipfs');
+    const ipfsClient = require('ipfs-http-client');
+    const create = ipfsClient.create;
+    // const {gossipsub} = await import('@chainsafe/libp2p-gossipsub');
+    // const {mplex} = await import ('@libp2p/mplex');
+    // const {noise} = await import('@chainsafe/libp2p-noise');
+    // const {webRTCStar} = await import('@libp2p/webrtc-star');
+
     if (!_node) {
         if (_creatingNode) {
             return new Promise((resolve, reject) => {
@@ -84,7 +91,7 @@ const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
             // const MulticastDNS = await(await Function('return import("libp2p-mdns")')()).MulticastDNS;
             // const wrtc = await(await Function('return import("wrtc")')()).default;
 
-            const webRTC = webRTCStar({});
+            // const webRTC = webRTCStar({});
 
             const randomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -146,11 +153,11 @@ const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
                     // },
                     // transports: [tcp()],
                     // peerDiscovery: [MulticastDNS],
-                    peerDiscovery: [
-                        // pubsubPeerDiscovery(), // !!! todo
-                        webRTC.discovery
-                        // MulticastDNS // !!! todo
-                    ],
+                    // peerDiscovery: [
+                    // pubsubPeerDiscovery(), // !!! todo
+                    // webRTC.discovery
+                    // MulticastDNS // !!! todo
+                    // ],
                     // dht: { // !!! todo
                     //     enabled: true,
                     //     randomWalk: {
@@ -198,16 +205,16 @@ const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
                     // pubsub: floodsub(),
 
                     // transports: [tcp()],
-                    streamMuxers: [mplex()],
-                    connectionEncryption: [noise()],
+                    // streamMuxers: [mplex()],
+                    // connectionEncryption: [noise()],
                     // we add the Pubsub module we want
-                    pubsub: gossipsub({
-                        allowPublishToZeroPeers: true,
-                        fallbackToFloodsub: true,
-                        emitSelf: true,
-                        maxInboundStreams: 64,
-                        maxOutboundStreams: 128
-                    }),
+                    // pubsub: gossipsub({
+                    //     allowPublishToZeroPeers: true,
+                    //     fallbackToFloodsub: true,
+                    //     emitSelf: true,
+                    //     maxInboundStreams: 64,
+                    //     maxOutboundStreams: 128
+                    // }),
 
                     // pubsub: new GossipSub({
                     //     allowPublishToZeroPeers: true,

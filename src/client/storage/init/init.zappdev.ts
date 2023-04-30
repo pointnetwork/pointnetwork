@@ -1,6 +1,6 @@
 import axios from 'axios';
-import {HOST, PORT, PROTOCOL, USE_ARLOCAL} from '../config';
-import arweave, {arweaveKey} from '../client/client_zappdev';
+import {HOST, PORT, PROTOCOL, USE_ARLOCAL} from '../config.js';
+import arweave, {arweaveKey} from '../client/client_zappdev.js';
 
 const init = async () => {
     // mint tokens on arlocal

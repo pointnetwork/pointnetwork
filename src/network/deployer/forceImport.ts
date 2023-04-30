@@ -3,7 +3,7 @@ import {
     getContractAddress,
     UpgradeOptions,
     getUpgradeableBeaconFactory
-} from '@openzeppelin/hardhat-upgrades/dist/utils';
+} from '@openzeppelin/hardhat-upgrades/dist/utils/index.js';
 import {
     getImplementationAddressFromProxy,
     logWarning,
@@ -17,9 +17,9 @@ import {
 } from '@openzeppelin/upgrades-core';
 import {ContractFactory} from 'ethers';
 import {EthereumProvider, HardhatRuntimeEnvironment} from 'hardhat/types';
-import {Manifest} from './manifest';
-import {simulateDeployAdmin, simulateDeployImpl} from './simulateDeploy';
-import {getDeployData} from './deployProxyImpl';
+import {Manifest} from './manifest.js';
+import {simulateDeployAdmin, simulateDeployImpl} from './simulateDeploy.js';
+import {getDeployData} from './deployProxyImpl.js';
 
 export async function forceImport(
     hre: HardhatRuntimeEnvironment,

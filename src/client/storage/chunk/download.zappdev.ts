@@ -1,7 +1,7 @@
-import Chunk, {CHUNK_DOWNLOAD_STATUS} from '../../../db/models/chunk';
+import Chunk, {CHUNK_DOWNLOAD_STATUS} from '../../../db/models/chunk.js';
 import path from 'path';
 import {promises as fs} from 'fs';
-import {delay, hashFn} from '../../../util';
+import {delay, hashFn} from '../../../util/index.js';
 import {request} from 'graphql-request';
 import axios from 'axios';
 import {
@@ -11,7 +11,7 @@ import {
     HOST,
     log,
     PORT
-} from '../config';
+} from '../config.js';
 import getDownloadQuery from '../query';
 
 const getChunk = async (

@@ -1,11 +1,11 @@
 import httpsServer from '../../src/client/proxy/httpsServer';
-import ethereum from '../../src/network/providers/ethereum';
+const ethereum = require('../../src/network/providers/ethereum.js');
 import axios from 'axios';
 import config from 'config';
 
 const API_URL = `http://${config.get('api.address')}:${config.get('api.port')}`;
 
-jest.mock('../../src/network/providers/ethereum', () => ({
+jest.mock('../../src/network/providers/ethereum.js', () => ({
     __esModule: true,
     default: {
         sendToContract: jest.fn(async () => 'test_send_to_contract_reply'),

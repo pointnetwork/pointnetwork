@@ -1,8 +1,8 @@
 import http, {RequestListener} from 'http';
 import config from 'config';
-import logger from '../../core/log';
+import logger from '../../core/log.js';
 import net from 'net';
-import httpsServer from './httpsServer';
+import httpsServer from './httpsServer.js';
 
 const log = logger.child({module: 'Proxy'});
 const PROXY_PORT = Number(config.get('zproxy.port'));

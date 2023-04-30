@@ -1,5 +1,5 @@
 const Deployer = require('../../client/zweb/deployer');
-const logger = require('../../core/log');
+import logger from '../../core/log.js';
 const log = logger.child({module: 'DeployController'});
 
 const deploys = {};

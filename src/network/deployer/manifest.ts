@@ -1,15 +1,15 @@
 import path from 'path';
 import {promises as fs} from 'fs';
-import {EthereumProvider, getChainId, networkNames} from '@openzeppelin/upgrades-core/dist/provider';
+import {EthereumProvider, getChainId, networkNames} from '@openzeppelin/upgrades-core/dist/provider.js';
 import lockfile from 'proper-lockfile';
 import {compare as compareVersions} from 'compare-versions';
 
 import type {Deployment} from '@openzeppelin/upgrades-core/dist/deployment';
 import type {StorageLayout} from '@openzeppelin/upgrades-core/dist/storage';
-import {pick} from '@openzeppelin/upgrades-core/dist/utils/pick';
-import {mapValues} from '@openzeppelin/upgrades-core/dist/utils/map-values';
-import {UpgradesError} from '@openzeppelin/upgrades-core/dist/error';
-import {resolveHome} from '../../util';
+import {pick} from '@openzeppelin/upgrades-core/dist/utils/pick.js';
+import {mapValues} from '@openzeppelin/upgrades-core/dist/utils/map-values.js';
+import {UpgradesError} from '@openzeppelin/upgrades-core/dist/error.js';
+import {resolveHome} from '../../util/index.js';
 import config from 'config';
 
 // Copied from @openzeppeling/hardhat-upgrades and changed the location of .openzeppelin folder

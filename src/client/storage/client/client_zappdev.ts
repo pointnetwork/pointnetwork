@@ -1,10 +1,10 @@
 import Arweave from 'arweave';
-import {HOST, log, MODE, PORT, PROTOCOL} from '../config';
+import {HOST, log, MODE, PORT, PROTOCOL} from '../config.js';
 import path from 'path';
 import config from 'config';
 import fs from 'fs';
 import {JWKInterface} from 'arweave/node/lib/wallet';
-import {resolveHome} from '../../../util';
+import {resolveHome} from '../../../util/index.js';
 
 const arweave = Arweave.init({
     port: PORT,

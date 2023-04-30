@@ -1,11 +1,11 @@
 const abiDecoder = require('abi-decoder');
 import {BigNumber} from 'ethers';
-import ethereum from '../network/providers/ethereum';
-import solana from '../network/providers/solana';
-import logger from '../core/log';
-import {CacheFactory, isValidStorageId, isZeroStorageId} from '../util';
-import {isFileCached} from '../client/storage';
-import {getIdentity} from '../name_service/identity';
+const ethereum = require('../network/providers/ethereum.js');
+import solana from '../network/providers/solana.js';
+import logger from '../core/log.js';
+import {CacheFactory, isValidStorageId, isZeroStorageId} from '../util/index.js';
+import {isFileCached} from '../client/storage/index.js';
+import {getIdentity} from '../name_service/identity.js';
 
 const log = logger.child({module: 'RPC'});
 

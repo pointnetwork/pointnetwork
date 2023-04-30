@@ -1,10 +1,10 @@
 /* eslint-disable quote-props */
 import apiServer from '../../src/api/server';
 // TODO: replace with import once we refactor it in src
-const ethereum = require('../../src/network/providers/ethereum');
-const solana = require('../../src/network/providers/solana');
+const ethereum = require('../../src/network/providers/ethereum.js');
+const solana = require('../../src/network/providers/solana.js');
 
-jest.mock('../../src/network/providers/ethereum', () => ({
+jest.mock('../../src/network/providers/ethereum.js', () => ({
     isCurrentIdentityRegistered: jest.fn(async () => true),
     ownerByIdentity: jest.fn(async identity => {
         if (identity === 'some_identity') {
@@ -27,7 +27,7 @@ jest.mock('../../src/network/providers/ethereum', () => ({
     isAddress: jest.fn(() => true)
 }));
 
-jest.mock('../../src/network/providers/solana', () => ({
+jest.mock('../../src/network/providers/solana.js', () => ({
     resolveDomain: jest.fn(async () => ({
         owner: 'vines1vzrYbzLMRdu58ou5XTby4qAqVRLmqo36NKPTg',
         content: 'some_content'

@@ -6,23 +6,23 @@ import {
     encryptDataSymmetric,
     EncryptedFile
 } from './encryption';
-import blockchain from '../network/providers/ethereum';
+const blockchain = require('../network/providers/ethereum.js');
 import {getIdentity} from '../name_service/identity';
 import {uploadData} from './storage';
 import path from 'path';
-import {DATADIR} from './storage/config';
+import {DATADIR} from './storage/config.js';
 
 const HOST_STORAGE_VERSION = '0.1';
 const HOST_STORAGE_IKV_KEY = `::hostStorage_v${HOST_STORAGE_VERSION}`;
 const HOST_STORAGE_ROOT_FILE_PATH = path.join(DATADIR, `hostStorageRoot_v${HOST_STORAGE_VERSION}.id`);
 const ROOT_ENC_KEY_PATH = 'hostStorage';
 
-import logger from '../core/log';
+import logger from '../core/log.js';
 const log = logger.child({module: 'hostStorage'});
 
-import {getNetworkPrivateSubKey} from '../wallet/keystore';
+import {getNetworkPrivateSubKey} from '../wallet/keystore.js';
 import fs from 'fs-extra';
-import {isValidStorageId} from '../util';
+import {isValidStorageId} from '../util/index.js';
 import Queue from '../util/queue';
 import {DisplayableError} from '../core/exceptions';
 

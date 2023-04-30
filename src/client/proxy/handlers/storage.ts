@@ -1,12 +1,12 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-const {uploadData, getFile, FILE_TYPE} = require('../../storage');
+const {uploadData, getFile, FILE_TYPE} = require('../../storage/index.js');
 // @ts-expect-error no types for package
 import detectContentType from 'detect-content-type';
 import isSVG from 'is-svg';
-import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
-import {Template, templateManager} from '../templateManager';
-import {checkAuthToken} from '../middleware/auth';
-import {sanitizeSVG} from '../../../util';
+import {isDirectoryJson, setAsAttachment} from '../proxyUtils.js';
+import {Template, templateManager} from '../templateManager.js';
+import {checkAuthToken} from '../middleware/auth.js';
+import {sanitizeSVG} from '../../../util/index.js';
 
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format

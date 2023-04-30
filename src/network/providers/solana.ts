@@ -14,13 +14,13 @@ import {
     NAME_PROGRAM_ID,
     Numberu32
 } from '@bonfida/spl-name-service';
-import {getSolanaKeyPair, getNetworkPublicKey} from '../../wallet/keystore';
+import {getSolanaKeyPair, getNetworkPublicKey} from '../../wallet/keystore.js';
 import config from 'config';
 import axios from 'axios';
 import {DomainRegistry} from '../../name_service/types';
-import {encodeCookieString, mergeAndResolveConflicts} from '../../util/cookieString';
-import {CacheFactory} from '../../util';
-const logger = require('../../core/log');
+import {encodeCookieString, mergeAndResolveConflicts} from '../../util/cookieString.js';
+import {CacheFactory} from '../../util/index.js';
+import logger from '../../core/log.js';
 const log = logger.child({module: 'SolanaProvider'});
 
 // Address of the `.sol` TLD
