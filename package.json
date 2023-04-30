@@ -230,7 +230,8 @@
       "node_modules/eccrypto/**/*",
       "node_modules/bigint-buffer/**/*",
       "node_modules/@truffle/hdwallet-provider/**/*",
-      "src/client/proxy/views/*"
+      "src/client/proxy/views/*",
+      "src/abi/**/*"
     ],
     "scripts": [
       ".sequelizerc",
