@@ -11,7 +11,7 @@ import {
     SUBSCRIPTION_REQUEST_TYPES
 } from '../api/sockets/ZProxySocketController';
 import Web3 from 'web3';
-const ERC20 = require('../abi/ERC20.json');
+const ERC20 = require('../../src/abi/ERC20.json');
 import {AbiItem} from 'web3-utils';
 
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');
