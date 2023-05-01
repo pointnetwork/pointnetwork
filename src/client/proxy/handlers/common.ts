@@ -213,7 +213,7 @@ const getHttpRequestHandler = () => async (req: FastifyRequest, res: FastifyRepl
 
             if (host.startsWith('www.google.com') || host.startsWith('google.com')) {
                 const q = queryParams?.q || '';
-                if (typeof q === 'string' && (q.endsWith('.sol') || q.endsWith('.point') || q.endsWith('.eth'))) {
+                if (typeof q === 'string' && (q.endsWith('.sol') || q.endsWith('.point'))) {
                     return res.redirect(`https://${q}`);
                 }
                 return res.redirect('https://search.point/search?q=' + q);
