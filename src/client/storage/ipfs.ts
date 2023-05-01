@@ -55,19 +55,14 @@ const ipfsRepoPath = path.join(DATADIR, 'ipfs');
 //     });
 // };
 
-const IPFS = require('ipfs-core');
-
 const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
-    // const {create} = require('ipfs-core');
-
-    // const ipfsClient = require('ipfs-http-client');
-    // const create = ipfsClient.create;
+    // const {create} = await import('ipfs');
+    const ipfsClient = require('ipfs-http-client');
+    const create = ipfsClient.create;
     // const {gossipsub} = await import('@chainsafe/libp2p-gossipsub');
     // const {mplex} = await import ('@libp2p/mplex');
     // const {noise} = await import('@chainsafe/libp2p-noise');
     // const {webRTCStar} = await import('@libp2p/webrtc-star');
-
-    const create = IPFS.create;
 
     if (!_node) {
         if (_creatingNode) {
@@ -131,10 +126,10 @@ const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
                     // Swarm: {
                     // EnableHolePunching: true, !!! todo
                     // EnableAutoRelay: true, !!! todo
-                    RelayClient: { // !!! todo
-                        Enabled: true
-                        // StaticRelays
-                    }, // !!! todo
+                    // RelayClient: { !!! todo
+                    //     Enabled: true,
+                    //     // StaticRelays
+                    // }, !!! todo
                     // RelayService: {
                     //     Enabled: false
                     // }
@@ -146,95 +141,95 @@ const getIPFSNodeInstance = async(): Promise<import('ipfs-core').IPFS> => {
                         },
                         webRTCStar: {Enabled: true}
                     }
+                },
+                libp2p: {
+                    // addresses: {
+                    //     listen: [
+                    //         '/ip4/0.0.0.0/tcp/' + port,
+                    //         '/ip6/::/tcp/' + port,
+                    //         '/ip4/0.0.0.0/tcp/' + (port+1),
+                    //         '/ip6/::/tcp/' + (port+1),
+                    //     ]
+                    // },
+                    // transports: [tcp()],
+                    // peerDiscovery: [MulticastDNS],
+                    // peerDiscovery: [
+                    // pubsubPeerDiscovery(), // !!! todo
+                    // webRTC.discovery
+                    // MulticastDNS // !!! todo
+                    // ],
+                    // dht: { // !!! todo
+                    //     enabled: true,
+                    //     randomWalk: {
+                    //         enabled: true
+                    //     }
+                    // },
+                    relay: {                   // Circuit Relay options
+                        enabled: true,           // Allows you to dial and accept relayed connections. Does not make you a relay.
+                        // hop: {
+                        //     enabled: true,         // Allows you to be a relay for other peers.
+                        //     timeout: 30 * 1000,    // Incoming hop requests must complete within this timeout
+                        //     applyConnectionLimits: true, // Apply data/duration limits to relayed connections (default: true)
+                        //     limit: {
+                        //         duration: 120 * 1000, // the maximum amount of ms a relayed connection can be open for
+                        //         data: BigInt(1 << 17), // the maximum amount of data that can be transferred over a relayed connection
+                        //     }
+                        // },
+                        // advertise: {
+                        //     enabled: true,         // Allows you to disable advertising the Hop service
+                        //     bootDelay: 15 * 60 * 1000, // Delay before HOP relay service is advertised on the network
+                        //     ttl: 30 * 60 * 1000    // Delay Between HOP relay service advertisements on the network
+                        // },
+                        // reservationManager: {    // the reservation manager creates reservations on discovered relays // !!! todo
+                        //     enabled: true,         // enable the reservation manager, default: false
+                        //     maxReservations: 5,     // the maximum number of relays to create reservations on
+                        //     maxListeners: 3,        // the maximum number of listeners to create per relay
+                        // },
+                        // active: true, // !!! todo
+                        autoRelay: {
+                            enabled: true
+                            // maxListeners: 3
+                        }
+                    },
+                    // dht: KadDHT,
+                    // streamMuxers: [mplex()],
+                    // connectionEncryption: [noise()],
+                    // we add the Pubsub module we want
+                    // pubsub: new gossipsub({
+                    //     allowPublishToZeroPeers: true,
+                    //     fallbackToFloodsub: true,
+                    //     emitSelf: true,
+                    //     maxInboundStreams: 64,
+                    //     maxOutboundStreams: 128
+                    // }),
+                    // pubsub: floodsub(),
+
+                    // transports: [tcp()],
+                    // streamMuxers: [mplex()],
+                    // connectionEncryption: [noise()],
+                    // we add the Pubsub module we want
+                    // pubsub: gossipsub({
+                    //     allowPublishToZeroPeers: true,
+                    //     fallbackToFloodsub: true,
+                    //     emitSelf: true,
+                    //     maxInboundStreams: 64,
+                    //     maxOutboundStreams: 128
+                    // }),
+
+                    // pubsub: new GossipSub({
+                    //     allowPublishToZeroPeers: true,
+                    //     fallbackToFloodsub: true,
+                    //     emitSelf: true,
+                    //     maxInboundStreams: 64,
+                    //     maxOutboundStreams: 128,
+                    // }),
+                    // connectionProtector: new PreSharedKeyConnectionProtector({
+                    //     psk: new Uint8Array(Buffer.from(swarmKey, 'base64')),
+                    // }),
+
+                    datastore: undefined,
+                    nat: {enabled: true}
                 }
-                // libp2p: {
-                // addresses: {
-                //     listen: [
-                //         '/ip4/0.0.0.0/tcp/' + port,
-                //         '/ip6/::/tcp/' + port,
-                //         '/ip4/0.0.0.0/tcp/' + (port+1),
-                //         '/ip6/::/tcp/' + (port+1),
-                //     ]
-                // },
-                // transports: [tcp()],
-                // peerDiscovery: [MulticastDNS],
-                // peerDiscovery: [
-                // pubsubPeerDiscovery(), // !!! todo
-                // webRTC.discovery
-                // MulticastDNS // !!! todo
-                // ],
-                // dht: { // !!! todo
-                //     enabled: true,
-                //     randomWalk: {
-                //         enabled: true
-                //     }
-                // },
-                // relay: {                   // Circuit Relay options
-                //     enabled: true,           // Allows you to dial and accept relayed connections. Does not make you a relay.
-                //     // hop: {
-                //     //     enabled: true,         // Allows you to be a relay for other peers.
-                //     //     timeout: 30 * 1000,    // Incoming hop requests must complete within this timeout
-                //     //     applyConnectionLimits: true, // Apply data/duration limits to relayed connections (default: true)
-                //     //     limit: {
-                //     //         duration: 120 * 1000, // the maximum amount of ms a relayed connection can be open for
-                //     //         data: BigInt(1 << 17), // the maximum amount of data that can be transferred over a relayed connection
-                //     //     }
-                //     // },
-                //     // advertise: {
-                //     //     enabled: true,         // Allows you to disable advertising the Hop service
-                //     //     bootDelay: 15 * 60 * 1000, // Delay before HOP relay service is advertised on the network
-                //     //     ttl: 30 * 60 * 1000    // Delay Between HOP relay service advertisements on the network
-                //     // },
-                //     // reservationManager: {    // the reservation manager creates reservations on discovered relays // !!! todo
-                //     //     enabled: true,         // enable the reservation manager, default: false
-                //     //     maxReservations: 5,     // the maximum number of relays to create reservations on
-                //     //     maxListeners: 3,        // the maximum number of listeners to create per relay
-                //     // },
-                //     // active: true, // !!! todo
-                //     autoRelay: {
-                //         enabled: true
-                //         // maxListeners: 3
-                //     }
-                // },
-                // dht: KadDHT,
-                // streamMuxers: [mplex()],
-                // connectionEncryption: [noise()],
-                // we add the Pubsub module we want
-                // pubsub: new gossipsub({
-                //     allowPublishToZeroPeers: true,
-                //     fallbackToFloodsub: true,
-                //     emitSelf: true,
-                //     maxInboundStreams: 64,
-                //     maxOutboundStreams: 128
-                // }),
-                // pubsub: floodsub(),
-
-                // transports: [tcp()],
-                // streamMuxers: [mplex()],
-                // connectionEncryption: [noise()],
-                // we add the Pubsub module we want
-                // pubsub: gossipsub({
-                //     allowPublishToZeroPeers: true,
-                //     fallbackToFloodsub: true,
-                //     emitSelf: true,
-                //     maxInboundStreams: 64,
-                //     maxOutboundStreams: 128
-                // }),
-
-                // pubsub: new GossipSub({
-                //     allowPublishToZeroPeers: true,
-                //     fallbackToFloodsub: true,
-                //     emitSelf: true,
-                //     maxInboundStreams: 64,
-                //     maxOutboundStreams: 128,
-                // }),
-                // connectionProtector: new PreSharedKeyConnectionProtector({
-                //     psk: new Uint8Array(Buffer.from(swarmKey, 'base64')),
-                // }),
-
-                // datastore: undefined,
-                // nat: {enabled: true}
-                // }
                 // libp2p: (options) => {
                 //     return createLibp2p({
                 //         ...options.libp2pOptions,
@@ -265,26 +260,14 @@ export const getIPFSPubsubPeers = async(res: FastifyReply, topic: string) => {
     return await node.pubsub.peers(topic);
 };
 
-// const tryGateway = (url: string) => {
-//     const gateway = 'https://ipfs.io';
-//     return `${gateway}${url}`;
-// };
-//
 export const getIPFSFileAsStream = async (url: string): Promise<Readable> => {
-    log.debug(`getIPFSFileAsStream: ${url}`);
-
     try {
         const node = await getIPFSNodeInstance();
 
         if (!url.startsWith('/ipfs/') && !url.startsWith('ipfs://')) {
             throw new HttpNotFoundError('Invalid IPFS URL');
         }
-
-        url = url.replace('ipfs://', '/ipfs/');
-        //
-        // const tryGatewayResult = tryGateway(url);
-
-        const catStream = await node.cat(url);
+        const catStream = await node.cat(url.replace('ipfs://', '/ipfs/'));
 
         const readable = new Readable();
         readable._read = () => {}; // _read is required but you can noop it
