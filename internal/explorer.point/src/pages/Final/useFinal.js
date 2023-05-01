@@ -227,22 +227,26 @@ const useFinal = () => {
         const authToken = await window.point.point.get_auth_token();
 
         for (let i = 0; i < suggestions.length; i++) {
-            setTimeout(async () => {
-                const suggestion = suggestions[i];
-                const response = await axios.get(
-                    `/v1/api/identity/isIdentityEligible/${suggestion}`,
-                    {
-                        headers: {
-                            'X-Point-Token': `Bearer ${authToken}`,
+            setTimeout(
+                async (i, suggestion) => {
+                    const response = await axios.get(
+                        `/v1/api/identity/isIdentityEligible/${suggestion}`,
+                        {
+                            headers: {
+                                'X-Point-Token': `Bearer ${authToken}`,
+                            },
                         },
-                    },
-                );
-                const { eligibility } = response.data.data;
-                setSuggestionsAvailability((prev) => ({
-                    ...prev,
-                    [suggestion]: eligibility,
-                }));
-            }, 0);
+                    );
+                    const { eligibility } = response.data.data;
+                    setSuggestionsAvailability((prev) => ({
+                        ...prev,
+                        [suggestion]: eligibility,
+                    }));
+                },
+                0,
+                i,
+                suggestions[i],
+            );
         }
 
         setSuggestionsAvailability(suggestionsAvailability);
