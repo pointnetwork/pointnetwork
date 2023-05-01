@@ -215,7 +215,14 @@
     "files": [
       "**/*",
       "!src/**/*",
-      "!dist/**/*"
+      "!dist/**/*",
+      "!example/**/*",
+      "!bin/**/*",
+      "!_local/**/*",
+      "!.parcel-cache/**/*",
+      "!here/**/*",
+      "!here-local/**/*",
+      "!dist_babel/**/*"
     ],
     "assets": [
       "package.json",

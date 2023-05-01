@@ -34,7 +34,7 @@ const program: ProgramType<typeof Command> = new Command();
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-const app = require(path.resolve(__dirname, '..', 'package.json'));
+const app = require('../package.json');
 
 process.env.POINT_ENGINE_VERSION = app.version;
 program.version(app.version || 'No version is specified');
