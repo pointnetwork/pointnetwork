@@ -1,13 +1,13 @@
 const PointSDKController = require('./PointSDKController');
-const ethereum = require('../../network/providers/ethereum');
-const solana = require('../../network/providers/solana');
-const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
-const logger = require('../../core/log');
+const ethereum = require('../../network/providers/ethereum.js');
+const solana = require('../../network/providers/solana.js');
+const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore.js');
+import logger from '../../core/log.js';
 const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
-const {isChineseTimezone} = require('../../util');
+const {isChineseTimezone} = require('../../util/index.js');
 const open = require('open');
 const {default: csrfTokens} = require('../../client/zweb/renderer/csrfTokens');
 const {getIdentity} = require('../../name_service/identity');

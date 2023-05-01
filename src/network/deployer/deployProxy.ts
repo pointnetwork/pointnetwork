@@ -5,9 +5,9 @@ import {
     deploy,
     getProxyFactory,
     getInitializerData
-} from '@openzeppelin/hardhat-upgrades/dist/utils';
-import {Manifest} from './manifest';
-import {deployProxyImpl} from './deployProxyImpl';
+} from '@openzeppelin/hardhat-upgrades/dist/utils/index.js';
+import {Manifest} from './manifest.js';
+import {deployProxyImpl} from './deployProxyImpl.js';
 
 // Copied from @openzeppeling/hardhat-upgrades and modified to add ability to change
 // the location of .openzeppelin folder

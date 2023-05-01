@@ -1,18 +1,18 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-const {uploadData, getFile, FILE_TYPE} = require('../../storage');
+const {uploadData, getFile, FILE_TYPE} = require('../../storage/index.js');
 // @ts-expect-error no types for package
 import detectContentType from 'detect-content-type';
-import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
-import {Template, templateManager} from '../templateManager';
-import blockchain from '../../../network/providers/ethereum';
-import {
+import {isDirectoryJson, setAsAttachment} from '../proxyUtils.js';
+import {Template, templateManager} from '../templateManager.js';
+const blockchain = require('../../../network/providers/ethereum.js');
+const {
     encryptMultipleData,
     decryptData,
     decryptDataWithDecryptedKey,
     getEncryptedSymetricObjFromJSON
-} from '../../../client/encryptIdentityUtils';
-import {getNetworkPrivateKey} from '../../../wallet/keystore';
-import {checkAuthToken} from '../middleware/auth';
+} = require('../../../client/encryptIdentityUtils.js');
+import {getNetworkPrivateKey} from '../../../wallet/keystore.js';
+import {checkAuthToken} from '../middleware/auth.js';
 
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format
@@ -30,13 +30,13 @@ const attachEncryptedStorageHandlers = (server: FastifyInstance) => {
                 return res.status(400).send('No files in the body');
             }
 
-            //get the identities that will be used for encyption 
+            //get the identities that will be used for encyption
             const identities = req.headers['identities']?.toString();
             if (identities === undefined || identities === ''){
                 return res.status(400).send('No identity passed');
             }
 
-            //get the pks that will be used for encyption 
+            //get the pks that will be used for encyption
             const pks: string[] = [];
             for (const id of identities.split(',')){
                 const publicKey = await blockchain.commPublicKeyByIdentity(id);

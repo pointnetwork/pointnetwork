@@ -1,6 +1,6 @@
 import config from 'config';
-import logger from '../core/log';
-import apiServer from './server';
+import logger from '../core/log.js';
+import apiServer from './server.js';
 const log = logger.child({module: 'ApiServer'});
 
 const apiConfig = config.get('api') as Record<string, string>;

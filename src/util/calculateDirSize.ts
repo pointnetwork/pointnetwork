@@ -1,4 +1,4 @@
-import {statAsync} from './statAsync';
+import {statAsync} from './statAsync.js';
 import {promises as fs} from 'fs';
 import path from 'path';
 

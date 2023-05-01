@@ -3,8 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
-import disclaimer from './disclaimer';
-import {getContractAddress, compileAndSaveContract} from './util/contract';
+const disclaimer = require('./disclaimer.js');
+import {getContractAddress, compileAndSaveContract} from './util/contract.js';
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
@@ -34,7 +34,7 @@ const program: ProgramType<typeof Command> = new Command();
 // TODO: Enabled this option for backward-compatibility support, but remove later to support newer syntax
 program.storeOptionsAsProperties();
 
-const app = require(path.resolve(__dirname, '..', 'package.json'));
+const app = require('../package.json');
 
 process.env.POINT_ENGINE_VERSION = app.version;
 program.version(app.version || 'No version is specified');
@@ -131,7 +131,7 @@ if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
 
 // ------------------- Init Logger ----------------- //
 
-const logger = require('./core/log');
+import logger from './core/log.js';
 const log = logger.child({module: 'point'});
 const exit = (code: number) => {
     log.close();
@@ -144,7 +144,7 @@ const die = (err: Error) => {
 
 // ----------------- Simple Commands ---------------- //
 if (program.hashfn) {
-    const {hashFn} = require('./util');
+    const {hashFn} = require('./util/index.js');
 
     const path = program.hashfn;
     if (!fs.existsSync(path)) throw new Error('File not found: ' + path);
@@ -172,8 +172,8 @@ if (program.new) {
     create({website: program.new})
         .then(() => process.exit())
         .catch((e: Error) => { log.error('Error: ' + e.message); process.exit(); });
-    // @ts-ignore
-    return;
+
+    exit(0);
 }
 
 // --------------------- Config --------------------- //
@@ -191,16 +191,16 @@ if (program.deploy) {
     })
         .then(exit)
         .catch(die);
-    // @ts-ignore
-    return;
+
+    exit(0);
 }
 
 // --------------------- Start -------------------- //
 
-import startPoint from './core/index';
-import migrate from './util/migrate';
-import initFolders from './initFolders';
-import {statAsync, resolveHome} from './util';
+import startPoint from './core/index.js';
+import migrate from './util/migrate.js';
+import initFolders from './initFolders.js';
+import {statAsync, resolveHome} from './util/index.js';
 
 // ----------------- Console Mode -------------------- //
 
@@ -208,8 +208,8 @@ if (program.attach) {
     const Console = require('./console');
     const console = new Console();
     console.start();
-    // @ts-ignore
-    return;
+
+    exit(0);
 }
 
 // ---------------- Migration Modes ---------------- //
@@ -230,8 +230,8 @@ if (program.makemigration) {
     Database.init();
 
     require('sequelize-auto-migrations/bin/makemigration.js');
-    // @ts-ignore
-    return;
+
+    exit(0);
 }
 
 if (program.migrate) {
@@ -242,8 +242,7 @@ if (program.migrate) {
         exit(0); // TODO: use `point-errors-code` once available.
     })();
 
-    // @ts-ignore
-    return;
+    exit(0);
 }
 
 // -------------------- Uploader --------------------- //
@@ -279,8 +278,7 @@ if (program.upload) {
             process.exit(1);
         });
 
-    // @ts-ignore
-    return;
+    exit(0);
 }
 
 // ------------------ Compile Contracts ------------ //
@@ -310,8 +308,7 @@ if (program.compile) {
         .then(() => exit(0))
         .catch(die);
 
-    // @ts-ignore
-    return;
+    exit(0);
 }
 
 // ------------------ Gracefully exit ---------------- //

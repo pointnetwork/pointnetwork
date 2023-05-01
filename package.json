@@ -1,7 +1,7 @@
 {
   "name": "pointnetwork",
-  "version": "1.99.3",
-  "description": "Point Network;",
+  "version": "1.99.11",
+  "description": "Point Network",
   "main": "point",
   "bin": "dist/index.js",
   "engines": {
@@ -60,7 +60,7 @@
     "html-entities": "^2.3.2",
     "ipfs": "^0.66.0",
     "ipfs-core": "^0.18.0",
-    "ipfs-http-client": "^60.0.0",
+    "ipfs-http-client": "^50.1.2",
     "ipfs-pubsub-room": "^3.0.0",
     "is-svg": "^4.3.2",
     "js-yaml": "^4.1.0",
@@ -94,6 +94,10 @@
     "web3-providers-http": "1.6.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.21.5",
+    "@babel/core": "^7.21.5",
+    "@babel/helper-compilation-targets": "^7.21.5",
+    "@babel/plugin-transform-modules-commonjs": "^7.21.5",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
     "@ethersproject/providers": "^5.6.4",
@@ -154,13 +158,13 @@
     "build:explorer:dev": "npm run --prefix ./internal/explorer.point --ignore-scripts build",
     "patch": "perl -i -pe\"s|timeout: 20000|timeout: 60000|\" node_modules/@trufflesuite/web3-provider-engine/subproviders/rpc.js",
     "postinstall": "echo '\\nPatching modules...' && npm run patch && echo '...done\\n' && husky install",
-    "pkg": "pkg --compress Brotli .",
+    "pkg": "pkg .",
     "prepkg:win": "npm run build:explorer",
     "prepkg:linux": "npm run build:explorer",
     "prepkg:macos": "npm run build:explorer",
-    "pkg:win": "pkg --targets node16-win-x64 --output bin/pointnetwork-win --compress Brotli .",
-    "pkg:linux": "pkg --targets node16-linux-x64 --output bin/pointnetwork-linux --compress Brotli .",
-    "pkg:macos": "pkg --targets node16-macos-x64 --output bin/pointnetwork-macos --compress Brotli .",
+    "pkg:win": "pkg --targets node16-win-x64 --output bin/pointnetwork-win .",
+    "pkg:linux": "pkg --targets node16-linux-x64 --output bin/pointnetwork-linux .",
+    "pkg:macos": "pkg --targets node16-macos-x64 --output bin/pointnetwork-macos .",
     "compile": "./point compile",
     "watch:site": "npx nodemon -w $SITE --config example/nodemon.json",
     "watch:sites": "ls -d example/*/ | xargs -I {} echo \"SITE={} npm run watch:site\" | sed \"s/.*/\\\\'&\\\\'/\" | xargs npx concurrently",
@@ -208,6 +212,18 @@
   },
   "pkg": {
     "outputPath": "bin",
+    "files": [
+      "**/*",
+      "!src/**/*",
+      "!dist/**/*",
+      "!example/**/*",
+      "!bin/**/*",
+      "!_local/**/*",
+      "!.parcel-cache/**/*",
+      "!here/**/*",
+      "!here-local/**/*",
+      "!dist_babel/**/*"
+    ],
     "assets": [
       "package.json",
       "hardhat/**/*",
@@ -221,13 +237,17 @@
       "node_modules/eccrypto/**/*",
       "node_modules/bigint-buffer/**/*",
       "node_modules/@truffle/hdwallet-provider/**/*",
-      "src/client/proxy/views/*"
+      "src/client/proxy/views/*",
+      "src/abi/**/*",
+      "dist/abi/**/*"
     ],
     "scripts": [
       ".sequelizerc",
       "node_modules/solc*/**/*.js",
       "dist/api/controllers/**/*.js",
-      "dist/api/sockets/*.js"
+      "dist/api/sockets/*.js",
+      "dist/abi/ERC20.json",
+      "src/abi/ERC20.json"
     ],
     "patches": {
       "./node_modules/undici/lib/fetch/body.js": [

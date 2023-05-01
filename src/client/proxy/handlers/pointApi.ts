@@ -1,8 +1,8 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-import DeployController from '../../../api/controllers/DeployController';
-import WalletController from '../../../api/controllers/WalletController';
-import {checkAuthToken} from '../middleware/auth';
-import {deployUpgradableContracts} from '../../../network/deployer';
+const DeployController = require('../../../api/controllers/DeployController.js');
+const WalletController = require('../../../api/controllers/WalletController.js');
+import {checkAuthToken} from '../middleware/auth.js';
+import {deployUpgradableContracts} from '../../../network/deployer/index.js';
 
 const attachPointApiHandler = (server: FastifyInstance) => {
     server.route({
@@ -29,11 +29,11 @@ const attachPointApiHandler = (server: FastifyInstance) => {
             if (host !== 'point') {
                 res.status(403).send('Forbidden');
             }
-    
+
             const controller = new DeployController(req);
-    
+
             const {status, error} = await controller.deploy();
-    
+
             res.status(status === 'success'
                 ? 200
                 : error === 'deploy path not specified'

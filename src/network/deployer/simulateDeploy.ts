@@ -1,9 +1,9 @@
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {ContractFactory} from 'ethers';
-import {UpgradeOptions} from '@openzeppelin/hardhat-upgrades/dist/utils';
-import {fetchOrDeploy, fetchOrDeployAdmin} from './fetchOrDeploy';
-import {getDeployData} from './deployProxyImpl';
-import {FormatTypes} from 'ethers/lib/utils';
+import {UpgradeOptions} from '@openzeppelin/hardhat-upgrades/dist/utils/index.js';
+import {fetchOrDeploy, fetchOrDeployAdmin} from './fetchOrDeploy.js';
+import {getDeployData} from './deployProxyImpl.js';
+import {FormatTypes} from 'ethers/lib/utils.js';
 import {logWarning} from '@openzeppelin/upgrades-core';
 
 export async function simulateDeployImpl(

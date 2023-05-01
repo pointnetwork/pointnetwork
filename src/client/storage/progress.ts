@@ -1,13 +1,13 @@
-import {CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
+import {CHUNK_UPLOAD_STATUS} from '../../db/models/chunk.js';
 import Sequelize from 'sequelize';
-import {FILE_DIR_UPLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file';
-import {setSoon} from '../../util';
-import Queue from '../../util/queue';
+import {FILE_DIR_UPLOAD_STATUS, FILE_UPLOAD_STATUS} from '../../db/models/file.js';
+import {setSoon} from '../../util/index.js';
+import Queue from '../../util/queue.js';
 import {DirMap, FileMap} from '../../db/models';
 
 /*** Cursed cursed codebase! But it works for now ***/
 
-const logger = require('../../core/log');
+import logger from '../../core/log.js';
 const log = logger.child({module: 'progress'});
 
 type FileUploadStructure = {
@@ -112,7 +112,7 @@ export const updateChunkProgressAsCompleted = async(chunk_id: string) => new Pro
 });
 
 const updateFileUlStatus = async(file_id: string, ul_status: string, ul_progress: number) => {
-    const File = require('../../db/models/file').default;
+    const File = require('../../db/models/file.js').default;
     let where = {id: file_id};
     if (ul_status === FILE_UPLOAD_STATUS.FAILED) {
         where = Object.assign({}, where, {ul_status: {[Sequelize.Op.notIn]: [FILE_UPLOAD_STATUS.COMPLETED]}});
@@ -120,7 +120,7 @@ const updateFileUlStatus = async(file_id: string, ul_status: string, ul_progress
     await File.update({ul_status, ul_progress}, {where});
 };
 const updateFileDirUlStatus = async(file_id: string, dir_ul_status: string, dir_ul_progress: number) => {
-    const File = require('../../db/models/file').default;
+    const File = require('../../db/models/file.js').default;
     let where = {id: file_id};
     if (dir_ul_status === FILE_DIR_UPLOAD_STATUS.FAILED) {
         where = Object.assign({}, where, {dir_ul_status: {[Sequelize.Op.notIn]: [FILE_DIR_UPLOAD_STATUS.COMPLETED]}});
@@ -153,9 +153,9 @@ export const updateFileProgress = async (file_id: string, updateParentsAfterward
 
     if (! file_id) throw new Error('Invalid file_id supplied to updateFileProgress');
 
-    const Chunk = require('../../db/models/chunk').default;
+    const Chunk = require('../../db/models/chunk.js').default;
     const FileMap = require('../../db/models/file_map').default;
-    const File = require('../../db/models/file').default;
+    const File = require('../../db/models/file.js').default;
 
     if (! fileUploadCache[file_id]) {
         // if no information, fill it

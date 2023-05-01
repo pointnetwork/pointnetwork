@@ -1,7 +1,7 @@
 import config from 'config';
-import ethereum from '../network/providers/ethereum';
-import {getNetworkAddress, getSolanaKeyPair} from './keystore';
-import solana from '../network/providers/solana';
+const ethereum = require('../network/providers/ethereum.js');
+import {getNetworkAddress, getSolanaKeyPair} from './keystore.js';
+import solana from '../network/providers/solana.js';
 import {LAMPORTS_PER_SOL} from '@solana/web3.js';
 import {utils} from 'ethers';
 import pendingTxs from '../permissions/PendingTxs';
@@ -11,7 +11,7 @@ import {
     SUBSCRIPTION_REQUEST_TYPES
 } from '../api/sockets/ZProxySocketController';
 import Web3 from 'web3';
-const ERC20 = require('../abi/ERC20.json');
+const ERC20 = require('../../src/abi/ERC20.json');
 import {AbiItem} from 'web3-utils';
 
 const networks: Record<string, {type: string; address: string}> = config.get('network.web3');

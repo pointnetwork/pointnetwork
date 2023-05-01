@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const logger = require('../log');
+import logger from '../log';
 const log = logger.child({module: 'new'});
 const copy = require('recursive-copy');
 

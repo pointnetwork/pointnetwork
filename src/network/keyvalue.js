@@ -1,5 +1,5 @@
-import blockchain from './providers/ethereum';
-import logger from '../core/log';
+const blockchain = require('./providers/ethereum.js');
+import logger from '../core/log.js';
 const log = logger.child({module: 'KeyValue'});
 
 class KeyValue {

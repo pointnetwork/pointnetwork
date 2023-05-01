@@ -1,6 +1,6 @@
 import {getIdentity} from './identity';
-import solana from '../network/providers/solana';
-const ethereum = require('..//network/providers/ethereum');
+import solana from '../network/providers/solana.js';
+const ethereum = require('..//network/providers/ethereum.js');
 
 const ETH_PUBL_KEY =
     '587136dce73d741c6fe8e121dc6176f6af0700942f1183a4f8993f6a799dd53712c54ae5b701d1af9be612675685a14a05074851e11bdf40bafaf074a446c5bd';
@@ -66,18 +66,18 @@ const users: Record<string, Record<string, string | null>> = {
     }
 };
 
-jest.mock('../wallet/keystore', () => ({
+jest.mock('../wallet/keystore.js', () => ({
     getNetworkPublicKey: jest.fn(() => ETH_PUBL_KEY),
     getNetworkAddress: jest.fn(() => ETH_ADDR),
     getSolanaKeyPair: jest.fn(() => SOL_ADDR)
 }));
 
-jest.mock('../network/providers/ethereum', () => ({
+jest.mock('../network/providers/ethereum.js', () => ({
     identityByOwner: jest.fn(async addr => (users[addr] ? users[addr].point : null)),
     getDomain: jest.fn(async addr => (users[addr] ? users[addr].ens : null))
 }));
 
-jest.mock('../network/providers/solana', () => ({
+jest.mock('../network/providers/solana.js', () => ({
     getDomain: jest.fn(async addr => (users[addr] ? users[addr].sns : null)),
     toPublicKey: jest.fn(addr => addr)
 }));

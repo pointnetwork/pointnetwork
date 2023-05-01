@@ -1,6 +1,6 @@
 import Arweave from 'arweave';
-import {AxiosResponse} from 'axios';
-import {HOST, PORT, PROTOCOL, TIMEOUT} from '../config';
+import {HOST, PORT, PROTOCOL, TIMEOUT} from '../config.js';
+import {ResponseWithData} from 'arweave/node/lib/api';
 
 const arweave = Arweave.init({
     port: PORT,
@@ -11,7 +11,7 @@ const arweave = Arweave.init({
 
 export const storage: {
     getDataByTxId(txId: string): Promise<string | Uint8Array>;
-    getTxFromCache(txId: string): Promise<AxiosResponse<Uint8Array>>;
+    getTxFromCache(txId: string): Promise<ResponseWithData<Uint8Array>>;
 } = {
     getDataByTxId(txId: string) {
         return arweave.transactions.getData(txId, {decode: true});

@@ -1,5 +1,5 @@
 const PointSDKController = require('./PointSDKController');
-const File = require('../../db/models/file').default;
+const File = require('../../db/models/file.js').default;
 const DEFAULT_ENCODING = 'utf-8';
 const {getFile, uploadData} = require('../../client/storage');
 const config = require('config');
@@ -12,9 +12,9 @@ const {
     hostStorageDir: _hostStorageDir,
     hostStorageModify, MODIFY_TYPE
 } = require('../../client/hostStorage');
-const {gzip} = require('../../util');
+const {gzip} = require('../../util/index.js');
 const {DisplayableError} = require('../../core/exceptions');
-import {HOST_PREFIXED_PUBSUB_PROLOGUE, HOST_PREFIXED_PUBSUB_ENCSIGN_PROLOGUE} from '../../client/storage/config';
+import {HOST_PREFIXED_PUBSUB_PROLOGUE, HOST_PREFIXED_PUBSUB_ENCSIGN_PROLOGUE} from '../../client/storage/config.js';
 
 class StorageController extends PointSDKController {
     constructor(req) {

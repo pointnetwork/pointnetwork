@@ -1,5 +1,5 @@
-import {delay, hashFn} from '../../../util';
-import Chunk, {CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk';
+import {delay, hashFn} from '../../../util/index.js';
+import Chunk, {CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk.js';
 import {promises as fs} from 'fs';
 import path from 'path';
 import arweave, {arweaveKey} from '../client/client_zappdev';
@@ -9,7 +9,7 @@ import {
     UPLOAD_CACHE_PATH,
     VERSION_MAJOR,
     VERSION_MINOR
-} from '../config';
+} from '../config.js';
 import Transaction from 'arweave/node/lib/transaction';
 
 const signTx = async (data: Buffer, tags: Record<string, string>) => {

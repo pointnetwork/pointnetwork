@@ -1,7 +1,7 @@
 import {DomainRegistry, PointDomainData} from './types';
-import {parseCookieString} from '../util';
+import {parseCookieString} from '../util/index.js';
 import {keccak256} from 'ethereumjs-util';
-import {toChecksumAddress} from '../network/providers/ethereum';
+const {toChecksumAddress} = require('../network/providers/ethereum.js');
 
 export const isValidPublicKeyString = (key: string): boolean => (
     typeof key === 'string' && /^(0x)?[a-fA-F0-9]{128}$/.test(key)

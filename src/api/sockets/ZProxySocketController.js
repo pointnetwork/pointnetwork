@@ -2,11 +2,11 @@
 The ZProxySocketController is for handling ZApp websocket connections via the ZProxy API port.
 See client/proxy/index.js for usage details of ZProxy and setup of the WebSocketServer instance.
 */
-import ethereum from '../../network/providers/ethereum';
-import handleRPC from '../../rpc/rpc-handlers';
-import logger from '../../core/log';
-import {verify} from 'jsonwebtoken';
-import {getSecretToken} from '../../util';
+const ethereum = require('../../network/providers/ethereum.js');
+import handleRPC from '../../rpc/rpc-handlers.js';
+import logger from '../../core/log.js';
+const {verify} = require('jsonwebtoken');
+import {getSecretToken} from '../../util/index.js';
 const log = logger.child({module: 'ZProxySocketController'});
 
 export const SUBSCRIPTION_EVENT_TYPES = {

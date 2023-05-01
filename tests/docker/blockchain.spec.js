@@ -30,8 +30,8 @@ beforeAll(async () => {
     process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
 
     // This hack with require is needed to patch env var before importing config
-    const {getNetworkPublicKey, getNetworkAddress} = require('../../src/wallet/keystore');
-    blockchain = require('../../src/network/providers/ethereum');
+    const {getNetworkPublicKey, getNetworkAddress} = require('../../src/wallet/keystore.js');
+    blockchain = require('../../src/network/providers/ethereum.js');
     storage = require('../../src/client/storage');
 
     testData.address = getNetworkAddress();

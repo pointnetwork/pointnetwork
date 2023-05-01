@@ -1,14 +1,16 @@
 import fs from 'fs';
 // TODO: for some reason, just ../util doesn't work
-import {resolveHome} from '../util/resolveHome';
+import {resolveHome} from '../util/resolveHome.js';
 import path from 'path';
 import config from 'config';
-import Wallet, {hdkey} from 'ethereumjs-wallet';
+// import Wallet, {hdkey} from 'ethereumjs-wallet';
+import Wallet from 'ethereumjs-wallet/dist/index.js';
+import hdkey from 'ethereumjs-wallet/dist/hdkey.js';
 import * as bip39 from 'bip39';
 import {mnemonicToSeedSync} from 'bip39';
 import {Keypair} from '@solana/web3.js';
 import {derivePath} from 'ed25519-hd-key';
-import {hashFn} from '../util/hashFn';
+import {hashFn} from '../util/hashFn.js';
 
 const keystorePath: string = resolveHome(config.get('wallet.keystore_path'));
 

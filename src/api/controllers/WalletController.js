@@ -1,7 +1,7 @@
 const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
-const ethereum = require('../../network/providers/ethereum');
-const {getNetworkPublicKey, getNetworkPrivateKey} = require('../../wallet/keystore');
+const ethereum = require('../../network/providers/ethereum.js');
+const {getNetworkPublicKey, getNetworkPrivateKey} = require('../../wallet/keystore.js');
 const {
     encryptData,
     decryptData,
@@ -12,7 +12,7 @@ const {
 const {getBalance, getWalletAddress, sendTransaction, sendToken} = require('../../wallet');
 const config = require('config');
 const Web3 = require('web3');
-const ERC20 = require('../../abi/ERC20.json');
+const ERC20 = require('../../../src/abi/ERC20.json');
 const {utils} = require('ethers');
 const {getIdentity} = require('../../name_service/identity');
 
@@ -250,7 +250,7 @@ class WalletController extends PointSDKController {
 
     async decryptDataWithDecryptedKey() {
         const {host} = this.req.headers;
-        
+
         const decryptedData = await decryptDataWithDecryptedKey(
             host,
             Buffer.from(this.payload.encryptedData, 'hex'),

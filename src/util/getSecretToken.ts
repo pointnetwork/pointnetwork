@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 import config from 'config';
-import {resolveHome} from '.';
+import {resolveHome} from './index.js';
 
 export const getSecretToken = async () => (await fs.readFile(
     path.join(resolveHome(config.get('wallet.keystore_path')), 'token.txt'), 'utf8'

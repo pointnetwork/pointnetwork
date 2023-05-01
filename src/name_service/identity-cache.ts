@@ -1,5 +1,5 @@
 import {IdentityData} from './types';
-import {CacheFactory} from '../util';
+import {CacheFactory} from '../util/index.js';
 
 const expiration = 5 * 60 * 1_000;
 

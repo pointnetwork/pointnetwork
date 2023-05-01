@@ -11,18 +11,18 @@ const {getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
-const logger = require('../../core/log');
+import logger from '../../core/log.js';
 const log = logger.child({module: 'EthereumProvider'});
-const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore');
-const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util');
+const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore.js');
+const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util/index.js');
 const {createCache} = require('../../util/cache');
 const {ETH_RESOLVER_ABI} = require('../../name_service/abis/resolver');
 const {POINT_ENS_TEXT_RECORD_KEY} = require('../../name_service/constants');
-const {hashFn} = require('../../util');
+const {hashFn} = require('../../util/index.js');
 const {Op} = require('sequelize');
 const Event = require('../../db/models/event').default;
 const EventScan = require('../../db/models/event_scan').default;
-const {CacheFactory} = require('../../util');
+const {CacheFactory} = require('../../util/index.js');
 
 const cacheExpiration = 2 * 60 * 1_000; // 2 minutes
 const ensDomainCache = new CacheFactory(cacheExpiration);
