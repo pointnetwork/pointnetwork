@@ -4,7 +4,7 @@ import fs from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 const disclaimer = require('./disclaimer.js');
-import {getContractAddress, compileAndSaveContract} from './util/contract.js';
+const {getContractAddress, compileAndSaveContract} = require('./util/contract.js');
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
@@ -114,251 +114,248 @@ program
 
 program.parse(process.argv);
 
-// ------------------ Patch Config ------------ //
-
-if (program.datadir) {
-    process.env.DATADIR = program.datadir;
-}
-
-if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
-    const identityContractAddress = getContractAddress('Identity');
-
-    if (!identityContractAddress) {
-        throw new Error('Could not get Identity contract address');
-    }
-    process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
-}
-
-// ------------------- Init Logger ----------------- //
-
 import logger from './core/log.js';
-const log = logger.child({module: 'point'});
-const exit = (code: number) => {
-    log.close();
-    process.exit(code);
-};
-const die = (err: Error) => {
-    log.fatal(err);
-    exit(1);
-};
-
-// ----------------- Simple Commands ---------------- //
-if (program.hashfn) {
-    const {hashFn} = require('./util/index.js');
-
-    const path = program.hashfn;
-    if (!fs.existsSync(path)) throw new Error('File not found: ' + path);
-
-    // read file
-    const buf = fs.readFileSync(path, null);
-
-    // hash
-    const hash = hashFn(buf).toString('hex');
-
-    // print
-    log.info(hash);
-    process.exit();
-}
-
-if (program.tinker) {
-    const repl = require('repl');
-    repl.start({prompt: '>> '});
-}
-
-// ----------------------- New ------------------------ //
-
-if (program.new) {
-    const create = require('./core/new');
-    create({website: program.new})
-        .then(() => process.exit())
-        .catch((e: Error) => { log.error('Error: ' + e.message); process.exit(); });
-
-    exit(0);
-}
-
-// --------------------- Config --------------------- //
-const config = require('config');
-
-// -------------------- Deployer --------------------- //
-
-if (program.deploy) {
-    const deploy = require('./core/deploy');
-    deploy({
-        deploy_path: program.deploy_path,
-        deploy_contracts: program.deploy_contracts,
-        dev: program.dev,
-        force_deploy_proxy: program.force_deploy_proxy
-    })
-        .then(exit)
-        .catch(die);
-
-    exit(0);
-}
-
-// --------------------- Start -------------------- //
 
 import startPoint from './core/index.js';
 import migrate from './util/migrate.js';
 import initFolders from './initFolders.js';
 import {statAsync, resolveHome} from './util/index.js';
 
-// ----------------- Console Mode -------------------- //
+(async() => {
+    // ------------------ Patch Config ------------ //
 
-if (program.attach) {
-    const Console = require('./console');
-    const console = new Console();
-    console.start();
-
-    exit(0);
-}
-
-// ---------------- Migration Modes ---------------- //
-
-if (program.makemigration) {
-    // A little hack: prepare sequelize-auto-migrations for reading from the current datadir config
-    process.argv = [
-        './point',
-        'makemigration',
-        '--models-path',
-        'dist/db/models',
-        '--migrations-path',
-        'migrations/database',
-        '--name',
-        'automigration'
-    ];
-    const {Database} = require('./db/models');
-    Database.init();
-
-    require('sequelize-auto-migrations/bin/makemigration.js');
-
-    exit(0);
-}
-
-if (program.migrate) {
-    (async() => {
-        log.info('Starting migration...');
-        migrate();
-        log.info('Migration ended.');
-        exit(0); // TODO: use `point-errors-code` once available.
-    })();
-
-    exit(0);
-}
-
-// -------------------- Uploader --------------------- //
-
-if (program.upload) {
-    const {uploadData, uploadDir} = require('./client/storage');
-    const init = require('./client/storage/init');
-
-    const main = async () => {
-        await init.default();
-
-        const filePath = path.isAbsolute(program.upload!)
-            ? program.upload!
-            : path.resolve(__dirname, '..', program.upload!);
-
-        const stat = await statAsync(filePath);
-        if (stat.isDirectory()) {
-            return uploadDir(filePath);
-        } else {
-            const file = await fs.promises.readFile(filePath);
-            return uploadData(file);
-        }
-    };
-
-    main()
-        .then(id => {
-            log.info({id}, 'Upload finished successfully');
-            process.exit(0);
-        })
-        .catch(e => {
-            log.error('Upload failed');
-            log.error(e);
-            process.exit(1);
-        });
-
-    exit(0);
-}
-
-// ------------------ Compile Contracts ------------ //
-
-if (program.compile) {
-    log.info('Compiling contracts...');
-
-    const buildDirPath = path.resolve(__dirname, '..', 'hardhat', 'build');
-    if (!fs.existsSync(buildDirPath)) {
-        fs.mkdirSync(buildDirPath);
+    if (program.datadir) {
+        process.env.DATADIR = program.datadir;
     }
 
-    const contractPath = path.resolve(__dirname, '..', 'hardhat', 'contracts');
-    const contracts = ['Identity'];
+    if (process.env.MODE === 'e2e' || process.env.MODE === 'zappdev') {
+        const identityContractAddress = getContractAddress('Identity');
 
-    Promise.all(
-        contracts.map(name =>
-            compileAndSaveContract({name, contractPath, buildDirPath}).then(compiled =>
-                log.debug(
-                    compiled
-                        ? `Contract ${name} successfully compiled`
-                        : `Contract ${name} is already compiled`
+        if (!identityContractAddress) {
+            throw new Error('Could not get Identity contract address');
+        }
+        process.env.IDENTITY_CONTRACT_ADDRESS = identityContractAddress;
+    }
+
+    // ------------------- Init Logger ----------------- //
+
+    const log = logger.child({module: 'point'});
+    const exit = (code: number) => {
+        log.close();
+        process.exit(code);
+    };
+    const die = (err: Error) => {
+        log.fatal(err);
+        exit(1);
+    };
+
+    // ----------------- Simple Commands ---------------- //
+    if (program.hashfn) {
+        const {hashFn} = require('./util/index.js');
+
+        const path = program.hashfn;
+        if (!fs.existsSync(path)) throw new Error('File not found: ' + path);
+
+        // read file
+        const buf = fs.readFileSync(path, null);
+
+        // hash
+        const hash = hashFn(buf).toString('hex');
+
+        // print
+        log.info(hash);
+        return;
+    }
+
+    if (program.tinker) {
+        const repl = require('repl');
+        repl.start({prompt: '>> '});
+    }
+
+    // ----------------------- New ------------------------ //
+
+    if (program.new) {
+        const create = require('./core/new');
+        create({website: program.new})
+            .then(() => process.exit())
+            .catch((e: Error) => { log.error('Error: ' + e.message); process.exit(); });
+
+        return;
+    }
+
+    // --------------------- Config --------------------- //
+    const config = require('config');
+
+    // -------------------- Deployer --------------------- //
+
+    if (program.deploy) {
+        const deploy = require('./core/deploy');
+        deploy({
+            deploy_path: program.deploy_path,
+            deploy_contracts: program.deploy_contracts,
+            dev: program.dev,
+            force_deploy_proxy: program.force_deploy_proxy
+        })
+            .then(exit)
+            .catch(die);
+
+        return;
+    }
+
+    // --------------------- Start -------------------- //
+
+    // ----------------- Console Mode -------------------- //
+
+    if (program.attach) {
+        const Console = require('./console');
+        const console = new Console();
+        console.start();
+
+        return;
+    }
+
+    // ---------------- Migration Modes ---------------- //
+
+    if (program.makemigration) {
+        // A little hack: prepare sequelize-auto-migrations for reading from the current datadir config
+        process.argv = [
+            './point',
+            'makemigration',
+            '--models-path',
+            'dist/db/models',
+            '--migrations-path',
+            'migrations/database',
+            '--name',
+            'automigration'
+        ];
+        const {Database} = require('./db/models');
+        Database.init();
+
+        require('sequelize-auto-migrations/bin/makemigration.js');
+
+        return;
+    }
+
+    if (program.migrate) {
+        log.info('Starting migration...');
+        await migrate();
+        log.info('Migration ended.');
+        return;
+    }
+
+    // -------------------- Uploader --------------------- //
+
+    if (program.upload) {
+        const {uploadData, uploadDir} = require('./client/storage');
+        const init = require('./client/storage/init');
+
+        const main = async () => {
+            await init.default();
+
+            const filePath = path.isAbsolute(program.upload!)
+                ? program.upload!
+                : path.resolve(__dirname, '..', program.upload!);
+
+            const stat = await statAsync(filePath);
+            if (stat.isDirectory()) {
+                return uploadDir(filePath);
+            } else {
+                const file = await fs.promises.readFile(filePath);
+                return uploadData(file);
+            }
+        };
+
+        main()
+            .then(id => {
+                log.info({id}, 'Upload finished successfully');
+                process.exit(0);
+            })
+            .catch(e => {
+                log.error('Upload failed');
+                log.error(e);
+                process.exit(1);
+            });
+
+        return;
+    }
+
+    // ------------------ Compile Contracts ------------ //
+
+    if (program.compile) {
+        log.info('Compiling contracts...');
+
+        const buildDirPath = path.resolve(__dirname, '..', 'hardhat', 'build');
+        if (!fs.existsSync(buildDirPath)) {
+            fs.mkdirSync(buildDirPath);
+        }
+
+        const contractPath = path.resolve(__dirname, '..', 'hardhat', 'contracts');
+        const contracts = ['Identity'];
+
+        Promise.all(
+            contracts.map(name =>
+                compileAndSaveContract({name, contractPath, buildDirPath}).then((compiled: undefined|boolean) =>
+                    log.debug(
+                        compiled
+                            ? `Contract ${name} successfully compiled`
+                            : `Contract ${name} is already compiled`
+                    )
                 )
             )
         )
-    )
-        .then(() => exit(0))
-        .catch(die);
+            .then(() => exit(0))
+            .catch(die);
 
-    exit(0);
-}
+        return;
+    }
 
-// ------------------ Gracefully exit ---------------- //
+    // ------------------ Gracefully exit ---------------- //
 
-let exiting = false;
-async function _exit(sig: typeof sigs[number]) {
-    if (exiting) return;
-    exiting = true;
+    let exiting = false;
+    async function _exit(sig: typeof sigs[number]) {
+        if (exiting) return;
+        exiting = true;
 
-    log.info('Received signal ' + sig + ', shutting down...');
-    process.exit(1);
+        log.info('Received signal ' + sig + ', shutting down...');
+        process.exit(1);
 
-    // todo: shut down everything else
-}
+        // todo: shut down everything else
+    }
 
-const sigs = [
-    'SIGHUP',
-    'SIGINT',
-    'SIGQUIT',
-    'SIGILL',
-    'SIGTRAP',
-    'SIGABRT',
-    'SIGBUS',
-    'SIGFPE',
-    'SIGUSR1',
-    'SIGSEGV',
-    'SIGUSR2',
-    'SIGTERM'
-] as const;
-sigs.forEach(function(sig) {
-    process.on(sig, function() {
-        _exit(sig);
+    const sigs = [
+        'SIGHUP',
+        'SIGINT',
+        'SIGQUIT',
+        'SIGILL',
+        'SIGTRAP',
+        'SIGABRT',
+        'SIGBUS',
+        'SIGFPE',
+        'SIGUSR1',
+        'SIGSEGV',
+        'SIGUSR2',
+        'SIGTERM'
+    ] as const;
+    sigs.forEach(function(sig) {
+        process.on(sig, function() {
+            _exit(sig);
+        });
     });
-});
 
-process.on('uncaughtException', err => {
-    log.error(err, 'Error: uncaught exception');
-});
+    process.on('uncaughtException', err => {
+        log.error(err, 'Error: uncaught exception');
+    });
 
-process.on('unhandledRejection', (err: Error) => {
-    log.error({err, msg: err.message, name: err.name}, 'Error: unhandled rejection');
-});
+    process.on('unhandledRejection', (err: Error) => {
+        log.error({err, msg: err.message, name: err.name}, 'Error: unhandled rejection');
+    });
 
-// ------------------- Start Point ------------------- //
+    // ------------------- Start Point ------------------- //
 
-// This is just a dummy file: proper-lockfile handles the lockfile creation,
-// but it's intended to lock some existing file
-const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
+    // This is just a dummy file: proper-lockfile handles the lockfile creation,
+    // but it's intended to lock some existing file
+    const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
 
-(async () => {
     try {
         await initFolders();
     } catch (err) {
@@ -390,4 +387,5 @@ const lockfilePath = path.join(resolveHome(config.get('datadir')), 'point');
         log.fatal(err, 'Failed to start Point Node');
         exit(1);
     }
+
 })();
