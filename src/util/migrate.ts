@@ -10,11 +10,14 @@ const migrate = async () => {
     log.info('Starting database migration');
 
     const sequelize = Database.init();
-    const migrations = path.resolve(__dirname, '..', '..', 'migrations', 'database', '*.js');
+    const migrationsGlob = path.join(__dirname, '../../migrations/database/*.js');
+
     const umzug = new Umzug({
         migrations: {
-            glob: migrations,
+            glob: migrationsGlob,
             resolve({name, path: migrationPath, context}) {
+                log.info({name, migrationPath}, 'Migrating');
+
                 // Adjust the migration from the new signature to the v2 signature, making easier to upgrade to v3
                 const migration = require(migrationPath as string);
                 return {
@@ -28,6 +31,8 @@ const migrate = async () => {
         storage: new SequelizeStorage({sequelize}),
         logger: log
     });
+
+    log.info({migrationsGlob}, 'Migrations glob');
 
     try {
         await umzug.up();
