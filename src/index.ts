@@ -116,11 +116,6 @@ program.parse(process.argv);
 
 import logger from './core/log.js';
 
-import startPoint from './core/index.js';
-import migrate from './util/migrate.js';
-import initFolders from './initFolders.js';
-import {statAsync, resolveHome} from './util/index.js';
-
 (async() => {
     // ------------------ Patch Config ------------ //
 
@@ -203,6 +198,15 @@ import {statAsync, resolveHome} from './util/index.js';
     }
 
     // --------------------- Start -------------------- //
+
+    // import startPoint from './core/index.js';
+    // import migrate from './util/migrate.js';
+    // import initFolders from './initFolders.js';
+    // import {statAsync, resolveHome} from './util/index.js';
+    const startPoint = require('./core/index.js').default;
+    const migrate = require('./util/migrate.js').default;
+    const initFolders = require('./initFolders.js').default;
+    const {statAsync, resolveHome} = require('./util/index.js');
 
     // ----------------- Console Mode -------------------- //
 
