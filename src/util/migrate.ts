@@ -11,10 +11,11 @@ const migrate = async () => {
 
     const sequelize = Database.init();
     const migrationsGlob = path.join(__dirname, '../../migrations/database/*.js');
+    const resolvedMigrationsGlob = path.resolve(migrationsGlob);
 
     const umzug = new Umzug({
         migrations: {
-            glob: migrationsGlob,
+            glob: resolvedMigrationsGlob,
             resolve({name, path: migrationPath, context}) {
                 log.info({name, migrationPath}, 'Migrating');
 
