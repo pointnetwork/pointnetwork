@@ -7,6 +7,8 @@ import {Database} from '../db/index.js';
 const log = logger.child({module: 'migrate'});
 
 const migrate = async () => {
+    log.info('Starting database migration');
+
     const sequelize = Database.init();
     const migrations = path.resolve(__dirname, '..', '..', 'migrations', 'database', '*.js');
     const umzug = new Umzug({
@@ -37,6 +39,8 @@ const migrate = async () => {
             throw e;
         }
     }
+
+    log.info('Database migration finished');
 };
 
 export default migrate;
