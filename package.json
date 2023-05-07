@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "1.99.15",
+  "version": "1.99.16",
   "description": "Point Network",
   "main": "point",
   "bin": "dist/index.js",
@@ -227,6 +227,7 @@
     "assets": [
       "package.json",
       "hardhat/**/*",
+      "hardhat/contracts/**/*",
       "config/*.yaml",
       "migrations/**/*",
       "internal/explorer.point/public/**/*",
@@ -239,15 +240,15 @@
       "node_modules/@truffle/hdwallet-provider/**/*",
       "src/client/proxy/views/*",
       "src/abi/**/*",
-      "dist/abi/**/*"
+      "dist/abi/**/*",
+      "dist/abi/ERC20.json",
+      "src/abi/ERC20.json"
     ],
     "scripts": [
       ".sequelizerc",
       "node_modules/solc*/**/*.js",
       "dist/api/controllers/**/*.js",
-      "dist/api/sockets/*.js",
-      "dist/abi/ERC20.json",
-      "src/abi/ERC20.json"
+      "dist/api/sockets/*.js"
     ],
     "patches": {
       "./node_modules/undici/lib/fetch/body.js": [
