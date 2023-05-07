@@ -115,6 +115,7 @@ program
 program.parse(process.argv);
 
 import logger from './core/log.js';
+// import config from "config";
 
 (async() => {
     // ------------------ Patch Config ------------ //
@@ -378,7 +379,9 @@ import logger from './core/log.js';
     }
 
     try {
+        log.info({env: config.util.getEnv('NODE_ENV')}, 'Calling migrate()');
         await migrate();
+        log.info({env: config.util.getEnv('NODE_ENV')}, 'migrate() ended.');
     } catch (err) {
         log.fatal(err, 'Failed to run database migrations');
         exit(13); // TODO: use `point-errors-code` once available.
