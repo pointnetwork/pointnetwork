@@ -1,6 +1,6 @@
 {
   "name": "pointnetwork",
-  "version": "1.99.21",
+  "version": "1.99.22",
   "description": "Point Network",
   "main": "point",
   "bin": "dist/index.js",
@@ -248,7 +248,8 @@
       ".sequelizerc",
       "node_modules/solc*/**/*.js",
       "dist/api/controllers/**/*.js",
-      "dist/api/sockets/*.js"
+      "dist/api/sockets/*.js",
+      "migrations/database/*.js"
     ],
     "patches": {
       "./node_modules/undici/lib/fetch/body.js": [
