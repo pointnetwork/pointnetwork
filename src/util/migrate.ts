@@ -10,7 +10,9 @@ const migrate = async () => {
     log.info('Starting database migration');
 
     const sequelize = Database.init();
-    const migrationsGlob = path.join(__dirname, '../../migrations/database/*.js');
+    const migrationsGlob = ('pkg' in process)
+        ? path.join(process.cwd(), '/migrations/database/*.js')
+        : path.join(__dirname, '../../migrations/database/*.js');
     const resolvedMigrationsGlob = path.resolve(migrationsGlob);
 
     const umzug = new Umzug({
