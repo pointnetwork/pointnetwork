@@ -2,7 +2,7 @@ import {resolveHome, makeSurePathExists, makeSureKeyfileHasPhrase} from './util/
 import path from 'path';
 import config from 'config';
 
-const initFolders = async () => {
+export default async () => {
     const datadir: string = resolveHome(config.get('datadir'));
     const keystore = resolveHome(config.get('wallet.keystore_path'));
     try {
@@ -44,5 +44,3 @@ const initFolders = async () => {
 
     await Promise.all(nestedFolders.map(f => makeSurePathExists(f, true)));
 };
-
-export default initFolders;
