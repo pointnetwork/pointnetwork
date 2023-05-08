@@ -13,6 +13,11 @@ const migrate = async () => {
     const migrationsGlob = path.join(__dirname, '../../migrations/database/*.js');
     const resolvedMigrationsGlob = path.resolve(migrationsGlob);
 
+    // List files and debug log them
+    const glob = require('glob');
+    const files = glob.sync(resolvedMigrationsGlob);
+    log.debug({files}, 'Migrations files');
+
     const umzug = new Umzug({
         migrations: {
             glob: resolvedMigrationsGlob,
