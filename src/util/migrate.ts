@@ -16,7 +16,7 @@ const migrate = async () => {
     // List files and debug log them
     const glob = require('glob');
     const files = glob.sync(resolvedMigrationsGlob);
-    log.debug({files}, 'Migrations files');
+    log.info({files}, 'Migrations files');
 
     const umzug = new Umzug({
         migrations: {
