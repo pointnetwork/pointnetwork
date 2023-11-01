@@ -55,10 +55,10 @@ const storeTransaction: HandlerFunc = async data => {
 
 const confirmTransaction: HandlerFunc = async data => {
     const {params, id} = data;
-    if (!params || !Array.isArray(params) || params.length !== 1 || !params[0].reqId) {
+    if (!params?.[0] || !(params[0] as { reqId?: any; }).reqId) {
         return {status: 400, result: {message: 'Missing `params[0].reqId` in request body.'}};
     }
-
+            
     const {reqId} = params[0] as {reqId: string};
     const tx = pendingTxs.find(reqId);
     if (!tx) {
