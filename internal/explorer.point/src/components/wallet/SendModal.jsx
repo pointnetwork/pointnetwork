@@ -5,7 +5,13 @@ import Swal from 'sweetalert2';
 
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
+const SendModal = ({
+    networkType,
+    onClose,
+    onSubmit,
+    balance,
+    decimals = 18,
+}) => {
     const [address, setAddress] = useState('');
     const [addressValidation, setAddressValidation] = useState(false);
     const [value, setValue] = useState('');
@@ -172,6 +178,21 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
                                 >
                                     {valueValidation}
                                 </span>
+
+                                {/* MAX button, on the right */}
+                                {!isNaN(Number(balance)) && balance > 0 && (
+                                    <div style={{ textAlign: 'right' }}>
+                                        <a
+                                            className="text-right"
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => {
+                                                setValue(balance);
+                                            }}
+                                        >
+                                            Max: {balance}
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         </form>
                     </div>

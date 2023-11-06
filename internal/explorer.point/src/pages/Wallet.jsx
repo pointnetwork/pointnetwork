@@ -285,8 +285,15 @@ export default function Wallet() {
         network,
         tokenAddress,
         decimals,
+        balance,
     }) => {
-        setSendModalData({ networkType, network, tokenAddress, decimals });
+        setSendModalData({
+            networkType,
+            network,
+            tokenAddress,
+            decimals,
+            balance,
+        });
     };
 
     const openBridgeModal = ({
@@ -383,6 +390,7 @@ export default function Wallet() {
                                 networkType={sendModalData.networkType}
                                 onSubmit={send}
                                 decimals={sendModalData.decimals}
+                                balance={sendModalData.balance}
                             />
                         )}
                         {bridgeModalData && (

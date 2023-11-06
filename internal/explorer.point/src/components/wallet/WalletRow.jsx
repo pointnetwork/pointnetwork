@@ -29,6 +29,7 @@ export default function WalletRow({
             openSendModal({
                 networkType: wallet.type,
                 network: networkName,
+                balance: balance,
             });
         } else if (wallet.type === 'token') {
             openSendModal({
@@ -38,6 +39,7 @@ export default function WalletRow({
                 symbol: wallet.token.symbol,
                 network: networkName,
                 decimals: wallet.token.decimals,
+                balance: balance,
             });
         } else {
             throw new Error('Invalid wallet type');
