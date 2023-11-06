@@ -11,7 +11,6 @@ import ErrorBlock from '../components/ErrorBlock';
 import WalletRow from '../components/wallet/WalletRow';
 import NetworkRow from '../components/wallet/NetworkRow';
 import SpacingRow from '../components/wallet/SpacingRow';
-import TokenRow from '../components/wallet/TokenRow';
 import '@fontsource/source-sans-pro';
 import { formatUnits } from 'ethers';
 
