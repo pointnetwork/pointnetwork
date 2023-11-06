@@ -18,8 +18,14 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
     };
 
     const handleValueChange = (e) => {
-        setValueValidation(false);
-        setValue(e.target.value);
+        const regex = /^[0-9]*[.]?[0-9]*$/;
+        const inputValue = e.target.value;
+
+        // Only update the value if it matches the regex or is empty (for backspace)
+        if (regex.test(inputValue) || inputValue === '') {
+            setValue(inputValue);
+            setValueValidation(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -148,7 +154,7 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
                                 <input
                                     value={value}
                                     onChange={handleValueChange}
-                                    type="number"
+                                    type="text"
                                     className="form-control number amount"
                                     placeholder=""
                                     style={{
