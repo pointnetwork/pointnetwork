@@ -43,6 +43,8 @@ export default function TokenRow({ token, network, openSendModal }) {
                         openSendModal({
                             networkType: 'eth',
                             tokenAddress: token.address,
+                            tokenName: token.name,
+                            symbol: token.symbol,
                             network,
                             decimals,
                         })

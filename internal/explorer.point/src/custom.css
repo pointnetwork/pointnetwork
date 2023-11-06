@@ -334,6 +334,15 @@ a.nav-link:not(.active):hover {
     color: #008F39;
 }
 
+.wallet-actions .btn-bridge {
+    background-color: rgba(34, 141, 255, .3);
+    color: #228dff;
+}
+
+.wallet-actions .btn-bridge:hover {
+    color: #0076F5;
+}
+
 .wallet-actions .btn-history {
     background-color: rgba(34, 141, 255, .3);
     color: #228dff;

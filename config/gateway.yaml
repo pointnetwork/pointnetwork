@@ -1,10 +1,10 @@
 mode: gateway
 network:
-  default_network: mainnet
+  default_network: point
   web3:
-    mainnet:
+    point:
       type: "eth"
-      name: "mainnet"
+      name: "Point Network"
       http_address: "rpc-mainnet-1.point.space"
       ws_address: "rpc-mainnet-1.point.space/ws"
       currency_name: "Point"

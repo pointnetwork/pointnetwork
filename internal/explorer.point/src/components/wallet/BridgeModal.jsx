@@ -1,16 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { isAddress } from '@ethersproject/address';
 import { parseUnits, hexlify, toUtf8Bytes, toBeHex } from 'ethers';
 import Swal from 'sweetalert2';
 
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
+const BridgeModal = ({
+    network,
+    networkName,
+    networkType,
+    onClose,
+    onSubmit,
+    decimals = 18,
+}) => {
     const [address, setAddress] = useState('');
     const [addressValidation, setAddressValidation] = useState(false);
     const [value, setValue] = useState('');
     const [valueValidation, setValueValidation] = useState(false);
     const [processing, setProcessing] = useState(false);
+
+    let fromNetwork = null;
+    let toNetwork = null;
+    let fromIcon = null;
+    let toIcon = null;
+    switch (networkName) {
+        case 'point':
+            fromNetwork = 'point';
+            toNetwork = 'bsc';
+            fromIcon = 'point-white';
+            toIcon = 'bsc';
+            portalAddress = '0xa085bB45c122eE7aCfEd13fd559117d8A8182Dd0';
+            portalTransactionType = 'native';
+            portalTokenAddress = null;
+            break;
+        case 'bsc':
+            fromNetwork = 'bsc';
+            toNetwork = 'point';
+            fromIcon = 'bsc';
+            toIcon = 'point-white';
+            portalAddress = '0x6543799B013148F27067d30bad9f60acdA5db926';
+            portalTransactionType = 'token';
+            portalTokenAddress = '0xEED8a651Cbed164797895415fCFF85d3B837f65B';
+            break;
+        default:
+            throw new Error('Invalid network name: ' + networkName);
+    }
+
+    useEffect(() => {
+        setAddress(portalAddress);
+    }, []);
 
     const handleAddressChange = (e) => {
         setAddressValidation(false);
@@ -23,52 +61,14 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
     };
 
     const handleSubmit = async () => {
-        let to = address;
-
-        // Support using identities instead of addresses.
-        if (address.startsWith('@')) {
-            try {
-                const { data } = await window.point.identity.identityToOwner({
-                    identity: address.substring(1),
-                });
-                if (data?.pointAddress !== EMPTY_ADDRESS) {
-                    to = data.pointAddress;
-                } else {
-                    setAddressValidation('Identity not found');
-                    return;
-                }
-            } catch {
-                setAddressValidation(
-                    'Error retrieving address for this identity',
-                );
-                return;
-            }
-        }
-
-        const _addressValidation = to
-            ? networkType === 'eth'
-                ? isAddress(to)
-                    ? null
-                    : 'Not a valid address (if you are using a handle, make sure it starts with @)'
-                : null // TODO: solana address validation
-            : 'Address is required';
-
-        const _valueValidation = value
-            ? isNaN(Number(value))
-                ? 'Please, enter a valid number'
-                : Number(value) > 0
-                ? null
-                : 'Value should be positive'
-            : 'Value is required';
-
-        setAddressValidation(_addressValidation);
-        setValueValidation(_valueValidation);
-        if (_addressValidation || _valueValidation) return;
-
         setProcessing(true);
         try {
             let valueToSend = value;
-            if (networkType === 'eth' || networkType === 'ethtoken') {
+            if (
+                networkType === 'eth' ||
+                networkType === 'ethtoken' ||
+                networkType === 'token'
+            ) {
                 valueToSend = toBeHex(parseUnits(value, decimals));
             } else if (networkType === 'solana') {
                 valueToSend = value * 1000000000;
@@ -77,7 +77,9 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
             }
 
             await onSubmit({
-                to,
+                portalAddress,
+                portalTransactionType,
+                portalTokenAddress,
                 value: valueToSend,
             });
             Swal.fire({
@@ -101,48 +103,52 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
             className="modal fade show"
             style={{ display: 'block', background: 'rgba(255,255,255,0.3)' }}
             tabIndex="-1"
+            data-bs-backdrop="static"
             data-bs-keyboard="false"
         >
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                     <div className="modal-header">
-                        <h5 className="modal-title">Send</h5>
+                        <h5 className="modal-title">
+                            Bridge POINT token from {fromNetwork.toUpperCase()}{' '}
+                            to {toNetwork.toUpperCase()}
+                        </h5>
                         <button
                             type="button"
                             className="btn-close"
                             onClick={onClose}
                         />
                     </div>
+
+                    <div
+                        style={{
+                            marginTop: '10px',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <img
+                            src={`../../assets/coins/${fromIcon}.png`}
+                            style={{ width: '100px', height: '100px' }}
+                        />
+                        <div style={{ fontSize: '5em' }}>
+                            &nbsp;&rarr;&nbsp;
+                        </div>
+                        <img
+                            src={`../../assets/coins/${toIcon}.png`}
+                            style={{ width: '100px', height: '100px' }}
+                        />
+                    </div>
+
                     <div className="modal-body">
                         <form>
-                            <div
-                                className="form-group"
-                                style={{ marginBottom: '20px' }}
-                            >
-                                <label className="">
-                                    Recipient address or @handle
-                                </label>
-                                <input
-                                    value={address}
-                                    onChange={handleAddressChange}
-                                    type="text"
-                                    className="form-control recipient"
-                                    placeholder=""
-                                    style={
-                                        addressValidation
-                                            ? { borderColor: 'indianred' }
-                                            : {}
-                                    }
-                                />
-                                <span
-                                    style={{
-                                        color: 'indianred',
-                                        display: 'block',
-                                    }}
-                                >
-                                    {addressValidation}
-                                </span>
+                            <div className="form-group">
+                                <label className="">Portal Address</label>
+                                <div className="mono">{portalAddress}</div>
                             </div>
+
                             <div className="form-group">
                                 <label className="">Amount</label>
                                 <input
@@ -192,4 +198,4 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
     );
 };
 
-export default SendModal;
+export default BridgeModal;

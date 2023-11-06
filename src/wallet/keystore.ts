@@ -37,9 +37,7 @@ function getWalletFactory() {
 const getWallet = getWalletFactory();
 
 export function getNetworkAddress() {
-    return `0x${getWallet()
-        .wallet.getAddress()
-        .toString('hex')}`;
+    return getWallet().wallet.getChecksumAddressString();
 }
 
 export function getNetworkPublicKey() {

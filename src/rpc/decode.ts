@@ -56,7 +56,8 @@ const abiTracker = new CacheFactory<string, ContractData>(expiration);
 export async function decodeTxInputData(
     target: string | undefined,
     contract: string | undefined,
-    params: unknown[]
+    params: unknown[],
+    network: string
 ): Promise<DecodedTxInput | null> {
     const txInputData =
         params && params.length > 0 && (params[0] as Record<string, string>).hasOwnProperty('data')
@@ -111,7 +112,7 @@ export async function decodeTxInputData(
         const args = decoded.params.map(p => p.value);
         const from = ethereum.getOwner();
         const gasAmount = await method(...args).estimateGas({from});
-        const gasPrice = await ethereum.getGasPrice();
+        const gasPrice = await ethereum.getGasPrice(network);
         gas.value = BigNumber.from(gasAmount)
             .mul(gasPrice)
             .toString();

@@ -20,3 +20,4 @@ export * from './sanitizeSVG.js';
 export * from './queue.js';
 export * from './gzip.js';
 export * from './internet.js';
+export * from './_timeout.js';

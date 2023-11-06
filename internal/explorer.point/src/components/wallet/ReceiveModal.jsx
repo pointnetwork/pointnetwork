@@ -13,7 +13,7 @@ const ReceiveModal = ({ currency, address, onClose }) => {
     return (
         <div
             className="modal fade show"
-            style={{ display: 'block' }}
+            style={{ display: 'block', background: 'rgba(255,255,255,0.3)' }}
             tabIndex="-1"
             data-bs-backdrop="static"
             data-bs-keyboard="false"

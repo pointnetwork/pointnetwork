@@ -9,23 +9,14 @@ const {
     decryptDataWithDecryptedKey,
     getEncryptedSymetricObjFromJSON
 } = require('../../client/encryptIdentityUtils');
-const {getBalance, getWalletAddress, sendTransaction, sendToken} = require('../../wallet');
+const {getBalance, getTokenBalanceAndDecimals, getWalletAddress, sendTransaction, sendToken} = require('../../wallet');
 const config = require('config');
-const Web3 = require('web3');
-const ERC20 = require('../../../src/abi/ERC20.json');
-const {utils} = require('ethers');
 const {getIdentity} = require('../../name_service/identity');
+const {_timeout} = require('../../util/_timeout.js');
 
 const networks = config.get('network.web3');
 const DEFAULT_NETWORK = config.get('network.default_network');
-
-const timeout = (prom, time, exception) => {
-    let timer;
-    return Promise.race([
-        prom,
-        new Promise((_r, rej) => (timer = setTimeout(rej, time, exception)))
-    ]).finally(() => clearTimeout(timer));
-};
+const DEFAULT_TIMEOUT = 20000;
 
 class WalletController extends PointSDKController {
     constructor(req, reply) {
@@ -46,8 +37,30 @@ class WalletController extends PointSDKController {
     }
 
     async balance() {
+        let network = this.req.query.network;
+
+        let token = null;
+        if (network.includes('.')) {
+            const [networkName, tokenAddress] = network.split('.');
+            network = networkName;
+            token = tokenAddress;
+    
+            // if this token is the native token of the network, then we don't need to go to token function
+            if (networks[network].currency_code.toLowerCase() === token.toLowerCase()) {
+                token = null;
+            }
+        }
+
+        if (!networks[network]) {
+            throw new Error(`Unknown network ${network}`);
+        }
+
+        if (token) {
+            return this._response(await getTokenBalanceAndDecimals(network, token));
+        }
+
         // return the wallet balance
-        return this._response({balance: await getBalance({network: this.req.query.network})});
+        return this._response({balance: await getBalance({network}), decimals: networks[network].decimals});
     }
 
     hash() {
@@ -58,161 +71,71 @@ class WalletController extends PointSDKController {
         return this._response({hash});
     }
 
-    async getWalletInfo() {
-        const identity = await ethereum.getCurrentIdentity();
-        const pointIdentity = identity ? `${identity}.point` : 'N/A';
-        const wallets = [
-            ...(await Promise.all(
-                Object.keys(networks).map(async network => {
-                    let balance;
-                    let alias = '';
+    async getBalances() {
+        const networkNames = Object.keys(networks);
+        const promises = networkNames.map(networkName => getBalance({network: networkName}));
+        const values = await Promise.all(promises);
+        
+        const result = networkNames.reduce((acc, key, index) => {
+            acc[key] = values[index];
+            return acc;
+        }, {});
 
-                    await Promise.all([
-                        (async () => {
-                            try {
-                                balance = await timeout(
-                                    getBalance({network, majorUnits: true}),
-                                    5000,
-                                    'Timeout'
-                                );
-                            } catch (e) {
-                                balance = 'Error';
-                            }
-                        })(),
-                        (async () => {
-                            try {
-                                switch (network) {
-                                    case 'solana':
-                                        const snsData = await timeout(
-                                            getIdentity({targets: ['solana']}),
-                                            5000,
-                                            'Timeout'
-                                        );
-                                        alias = snsData.identity ?? '';
-                                        break;
-                                    case 'goerli':
-                                        const ensData = await timeout(
-                                            getIdentity({targets: ['ethereum']}),
-                                            5000,
-                                            'Timeout'
-                                        );
-                                        alias = ensData.identity ?? '';
-                                        break;
-                                    default:
-                                        alias = '';
-                                }
-                            } catch (e) {
-                                alias = '';
-                            }
-                        })()
-                    ]);
-
-                    const info = networks[network];
-
-                    return {
-                        network,
-                        type: info.type,
-                        currency_name: info.currency_name,
-                        currency_code: info.currency_code,
-                        icon: info.icon || null,
-                        // TODO: improve this condition as we will have multiple point networks
-                        address:
-                            network === DEFAULT_NETWORK
-                                ? pointIdentity
-                                : getWalletAddress({network}),
-                        alias,
-                        balance: balance
-                    };
-                })
-            ))
-        ];
-
-        return this._response({wallets});
+        return {balances: result};
     }
 
-    async getTokenBalances() {
-        const tokens = Object.keys(networks)
-            .filter(key => networks[key].type === 'eth')
-            .reduce((acc, cur) => ({...acc, [cur]: networks[cur].tokens}), {});
+    async _getIdentityNameForNetwork(network) {
+        let alias = '';
+        try {
+            switch (network) {
+                case 'solana':
+                case 'ethereum':
+                    const nsData = await _timeout(
+                        getIdentity({targets: [network]}),
+                        DEFAULT_TIMEOUT,
+                        'Timeout'
+                    );
+                    alias = nsData.identity ?? '';
+                    break;
+                default:
+                    alias = null;
+            }
+        } catch (e) {
+            alias = null;
+        }
+        return alias;
+    }
 
-        const web3 = new Web3();
-        const decimalsCallData = web3.eth.abi.encodeFunctionCall(
-            ERC20.find(func => func.name === 'decimals'),
-            []
-        );
-        const balanceOfCallData = web3.eth.abi.encodeFunctionCall(
-            ERC20.find(func => func.name === 'balanceOf'),
-            [getWalletAddress({})]
-        );
+    async getIdentityNames() {
+        return [
+            ...(await Promise.all(
+                Object.keys(networks).map(async network => await this._getIdentityNameForNetwork(network))
+            ))
+        ];
+    }
 
-        await Promise.all(
-            Object.keys(tokens).map(async network => {
-                const balances = await Promise.all(
-                    tokens[network].map(async token => {
-                        try {
-                            const [balance, decimals] = await Promise.all([
-                                timeout(
-                                    ethereum.send({
-                                        method: 'eth_call',
-                                        params: [
-                                            {
-                                                from: getWalletAddress({}),
-                                                to: token.address,
-                                                data: balanceOfCallData
-                                            },
-                                            'latest'
-                                        ],
-                                        id: new Date().getTime(),
-                                        network
-                                    }),
-                                    5000,
-                                    'Timeout'
-                                ),
-                                timeout(
-                                    ethereum.send({
-                                        method: 'eth_call',
-                                        params: [
-                                            {
-                                                from: getWalletAddress({}),
-                                                to: token.address,
-                                                data: decimalsCallData
-                                            },
-                                            'latest'
-                                        ],
-                                        id:
-                                            new Date().getTime() +
-                                            Math.round(Math.random() * 100000),
-                                        network
-                                    }),
-                                    5000,
-                                    'Timeout'
-                                )
-                            ]);
-                            return {
-                                balance: utils.formatUnits(
-                                    balance.result.toString(),
-                                    decimals.result.toString()
-                                ),
-                                decimals: Number(decimals.result.toString())
-                            };
-                        } catch (e) {
-                            return {
-                                balance: e,
-                                decimals: ''
-                            };
-                        }
-                    })
-                );
+    async _getPointIdentity() {
+        const identity = await ethereum.getCurrentIdentity();
+        const pointIdentity = identity ? `${identity}.point` : 'N/A';
+        return pointIdentity;
+    }
 
-                tokens[network] = tokens[network].map((token, index) => ({
-                    ...token,
-                    balance: balances[index].balance,
-                    decimals: balances[index].decimals
-                }));
-            })
-        );
+    async _getAddressForNetwork(network) {
+        return (network === DEFAULT_NETWORK)
+            ? await this._getPointIdentity()
+            : getWalletAddress({network});
+    }
 
-        return this._response(tokens);
+    async getNetworks() {
+        return { networks };
+    }
+
+    async getAddresses() {
+        const addresses = {};
+        for (const network in networks) {
+            addresses[network] = await this._getAddressForNetwork(network);
+        }
+        return { addresses };
     }
 
     async send() {

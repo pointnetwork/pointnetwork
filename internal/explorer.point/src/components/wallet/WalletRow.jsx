@@ -1,11 +1,48 @@
 import { toFixedFloor } from '../../helpers';
 
-export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
-    const balance = isNaN(Number(wallet.balance))
-        ? wallet.balance
-        : toFixedFloor(wallet.balance, 8);
-    const integerPart = balance.split('.')[0];
-    const decimalPart = balance.split('.')[1];
+export default function WalletRow({
+    wallet,
+    networkName,
+    openReceiveModal,
+    openSendModal,
+    openBridgeModal,
+}) {
+    let balance = wallet.balance ? wallet.balance : null;
+    let integerPart = balance;
+    let decimalPart = '';
+    if (
+        !isNaN(Number(wallet.balance)) &&
+        wallet.balance !== null &&
+        typeof wallet.balance !== 'undefined'
+    ) {
+        balance = toFixedFloor(wallet.balance, 8);
+        integerPart = balance.split('.')[0];
+        decimalPart = balance.split('.')[1];
+    }
+
+    const canBridge =
+        (wallet.key1 === 'point' && wallet.key2 === 'POINT') ||
+        (wallet.key1 === 'bsc' && wallet.key2 === 'POINT');
+
+    const onClickHandler = (e) => {
+        if (wallet.type === 'eth') {
+            openSendModal({
+                networkType: wallet.type,
+                network: networkName,
+            });
+        } else if (wallet.type === 'token') {
+            openSendModal({
+                networkType: 'ethtoken',
+                tokenAddress: wallet.token.address,
+                tokenName: wallet.token.name,
+                symbol: wallet.token.symbol,
+                network: networkName,
+                decimals: wallet.token.decimals,
+            });
+        } else {
+            throw new Error('Invalid wallet type');
+        }
+    };
 
     return (
         <tr key={wallet.currency_code} className="wallet-row">
@@ -35,12 +72,10 @@ export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
                 <a
                     href="#"
                     className="btn btn-sm btn-send"
-                    onClick={() =>
-                        openSendModal({
-                            networkType: wallet.type,
-                            network: wallet.network,
-                        })
-                    }
+                    onClick={(e) => {
+                        e.preventDefault();
+                        onClickHandler();
+                    }}
                 >
                     Send
                 </a>
@@ -48,11 +83,28 @@ export default function WalletRow({ wallet, openReceiveModal, openSendModal }) {
                 <a
                     href="#"
                     className="btn btn-sm btn-receive"
-                    onClick={() =>
-                        openReceiveModal(wallet.currency_code, wallet.address)
-                    }
+                    onClick={(e) => {
+                        e.preventDefault();
+                        openReceiveModal(wallet.currency_code, wallet.address);
+                    }}
                 >
                     Receive
+                </a>
+                &nbsp;
+                <a
+                    href="#"
+                    className="btn btn-sm btn-bridge"
+                    style={{ visibility: canBridge ? 'visible' : 'hidden' }}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        openBridgeModal({
+                            networkType: wallet.type,
+                            networkName: networkName,
+                            network: wallet.network,
+                        });
+                    }}
+                >
+                    Bridge
                 </a>
             </td>
         </tr>

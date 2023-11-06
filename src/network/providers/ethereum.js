@@ -1256,7 +1256,7 @@ ethereum.getGasPrice = async (network = DEFAULT_NETWORK) => {
         return Number(config.get(`network.web3.${network}.gas_price_wei`));
     }
 
-    const gasPrice = await getWeb3().eth.getGasPrice();
+    const gasPrice = await getWeb3({chain: network}).eth.getGasPrice();
     return gasPrice;
 };
 

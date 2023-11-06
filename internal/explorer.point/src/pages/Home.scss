@@ -344,3 +344,18 @@
         padding-top: 2em;
     }
 }
+
+.wallet-container {
+    .network-row {
+        // display: flex;
+        // flex-direction: row;
+        // justify-content: center;
+        // align-items: center;
+        // margin-bottom: 1em;
+        margin-top: 1em;
+        th {
+            background-color: #5d5d5d80;
+            border-radius: 10px 10px 0 0;
+        }
+    }
+}

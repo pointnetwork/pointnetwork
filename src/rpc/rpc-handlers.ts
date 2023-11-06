@@ -42,7 +42,7 @@ const storeTransaction: HandlerFunc = async data => {
         };
     }
 
-    const decodedTxData = await decodeTxInputData(target, contract, params);
+    const decodedTxData = await decodeTxInputData(target, contract, params, network);
     if (decodedTxData) {
         await addMetadata(decodedTxData, network);
     }

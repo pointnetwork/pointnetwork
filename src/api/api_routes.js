@@ -108,17 +108,41 @@ module.exports = [
         'WalletController@balance',
         {protected: true, gatewayDisabled: true}
     ],
+    [
+        'GET',
+        '/v1/api/wallet/tokenBalance',
+        'WalletController@tokenBalance',
+        {protected: true, gatewayDisabled: true}
+    ],
     ['GET', '/v1/api/wallet/address', 'WalletController@address', {protected: true}],
     [
         'GET',
-        '/v1/api/wallet/getWalletInfo',
-        'WalletController@getWalletInfo',
+        '/v1/api/wallet/getNetworks',
+        'WalletController@getNetworks',
+        {protected: true, gatewayDisabled: true}
+    ],
+    [
+        'GET',
+        '/v1/api/wallet/getAddresses',
+        'WalletController@getAddresses',
+        {protected: true, gatewayDisabled: true}
+    ],
+    [
+        'GET',
+        '/v1/api/wallet/getBalances',
+        'WalletController@getBalances',
         {protected: true, gatewayDisabled: true}
     ],
     [
         'GET',
         '/v1/api/wallet/getTokenBalances',
         'WalletController@getTokenBalances',
+        {protected: true, gatewayDisabled: true}
+    ],
+    [
+        'GET',
+        '/v1/api/wallet/getIdentityNames',
+        'WalletController@getIdentityNames',
         {protected: true, gatewayDisabled: true}
     ],
     [
