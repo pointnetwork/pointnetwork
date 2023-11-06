@@ -12,6 +12,7 @@ const BridgeModal = ({
     onClose,
     onSubmit,
     decimals = 18,
+    balance,
 }) => {
     const [address, setAddress] = useState('');
     const [addressValidation, setAddressValidation] = useState(false);
@@ -50,14 +51,15 @@ const BridgeModal = ({
         setAddress(portalAddress);
     }, []);
 
-    const handleAddressChange = (e) => {
-        setAddressValidation(false);
-        setAddress(e.target.value);
-    };
-
     const handleValueChange = (e) => {
-        setValueValidation(false);
-        setValue(e.target.value);
+        const regex = /^[0-9]*[.]?[0-9]*$/;
+        const inputValue = e.target.value;
+
+        // Only update the value if it matches the regex or is empty (for backspace)
+        if (regex.test(inputValue) || inputValue === '') {
+            setValue(inputValue);
+            setValueValidation(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -154,7 +156,7 @@ const BridgeModal = ({
                                 <input
                                     value={value}
                                     onChange={handleValueChange}
-                                    type="number"
+                                    type="text"
                                     className="form-control number amount"
                                     placeholder=""
                                     style={{
@@ -172,6 +174,21 @@ const BridgeModal = ({
                                 >
                                     {valueValidation}
                                 </span>
+
+                                {/* MAX button, on the right */}
+                                {!isNaN(Number(balance)) && balance > 0 && (
+                                    <div style={{ textAlign: 'right' }}>
+                                        <a
+                                            className="text-right"
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => {
+                                                setValue(balance);
+                                            }}
+                                        >
+                                            Max: {balance}
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         </form>
                     </div>

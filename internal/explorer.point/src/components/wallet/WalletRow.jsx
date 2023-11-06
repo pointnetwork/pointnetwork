@@ -103,6 +103,7 @@ export default function WalletRow({
                             networkType: wallet.type,
                             networkName: networkName,
                             network: wallet.network,
+                            balance: balance,
                         });
                     }}
                 >
