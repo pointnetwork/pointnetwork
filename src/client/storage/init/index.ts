@@ -1,6 +1,6 @@
-import init_normal from './init.js';
-import init_zappdev from './init.zappdev.js';
-import {MODE} from '../config.js';
+import init_normal from './init';
+import init_zappdev from './init.zappdev';
+import {MODE} from '../config';
 
 const init = MODE === 'zappdev' ? init_zappdev : init_normal;
 

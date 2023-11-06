@@ -4,12 +4,12 @@ import {
     getProxyAdminFactory,
     getTransparentUpgradeableProxyFactory,
     UpgradeProxyOptions
-} from '@openzeppelin/hardhat-upgrades/dist/utils/index.js';
-import {deployProxyImpl} from './deployProxyImpl.js';
+} from '@openzeppelin/hardhat-upgrades/dist/utils/index';
+import {deployProxyImpl} from './deployProxyImpl';
 import type {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {ContractFactory, ethers, Signer} from 'ethers';
 import {getAdminAddress, getCode, isEmptySlot} from '@openzeppelin/upgrades-core';
-import {Manifest} from './manifest.js';
+import {Manifest} from './manifest';
 
 type Upgrader = (nextImpl: string, call?: string) => Promise<ethers.providers.TransactionResponse>;
 

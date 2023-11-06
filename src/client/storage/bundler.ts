@@ -1,5 +1,5 @@
 import axios from 'axios';
-import logger from '../../core/log.js';
+import logger from '../../core/log';
 
 const log = logger.child({module: 'Bundler'});
 

@@ -1,7 +1,7 @@
 import config from 'config';
-const ethereum = require('../network/providers/ethereum.js');
-import {getNetworkAddress, getSolanaKeyPair} from './keystore.js';
-import solana from '../network/providers/solana.js';
+const ethereum = require('../network/providers/ethereum');
+import {getNetworkAddress, getSolanaKeyPair} from './keystore';
+import solana from '../network/providers/solana';
 import {LAMPORTS_PER_SOL} from '@solana/web3.js';
 import {utils, BigNumber} from 'ethers';
 import pendingTxs from '../permissions/PendingTxs';
@@ -13,7 +13,7 @@ import {
 import Web3 from 'web3';
 const ERC20 = require('../../src/abi/ERC20.json');
 import {AbiItem} from 'web3-utils';
-import logger from '../core/log.js';
+import logger from '../core/log';
 const {_timeout} = require('../util');
 import {formatUnits} from 'ethers/lib/utils';
 

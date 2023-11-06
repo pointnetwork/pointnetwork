@@ -1,12 +1,12 @@
 import {Readable} from 'stream';
 import {FastifyReply} from 'fastify';
 
-import logger from '../../core/log.js';
+import logger from '../../core/log';
 import path from 'path';
-import {DATADIR, HOST_PREFIXED_PUBSUB_PROLOGUE, HOST_PREFIXED_PUBSUB_ENCSIGN_PROLOGUE} from './config.js';
-import {gunzipIfCompressed, hashFn, setSoon} from '../../util/index.js';
-import {HttpNotFoundError} from '../../core/exceptions.js';
-import {downloadVerifyDecryptFromIdentityForMe, VerifiedData} from '../encryption.js';
+import {DATADIR, HOST_PREFIXED_PUBSUB_PROLOGUE, HOST_PREFIXED_PUBSUB_ENCSIGN_PROLOGUE} from './config';
+import {gunzipIfCompressed, hashFn, setSoon} from '../../util/index';
+import {HttpNotFoundError} from '../../core/exceptions';
+import {downloadVerifyDecryptFromIdentityForMe, VerifiedData} from '../encryption';
 const log = logger.child({module: 'ipfs'});
 const fs = require('fs');
 // import {Message} from '@libp2p/interface-pubsub';

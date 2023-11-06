@@ -1,15 +1,15 @@
 import fastify, {FastifyRequest, HTTPMethods} from 'fastify';
-import logger from '../core/log.js';
+import logger from '../core/log';
 import fastifyWs from 'fastify-websocket';
-import {transformErrorResp} from '../errors/index.js';
-import identityMdw from './middleware/identity.js';
-import csrfTokens from '../client/zweb/renderer/csrfTokens.js';
+import {transformErrorResp} from '../errors/index';
+import identityMdw from './middleware/identity';
+import csrfTokens from '../client/zweb/renderer/csrfTokens';
 import config from 'config';
 const {verify} = require('jsonwebtoken');
-import {getSecretToken} from '../util/index.js';
-import {DisplayableError} from '../core/exceptions.js';
-const ws_routes = require('./ws_routes.js');
-const api_routes = require('./api_routes.js');
+import {getSecretToken} from '../util/index';
+import {DisplayableError} from '../core/exceptions';
+const ws_routes = require('./ws_routes');
+const api_routes = require('./api_routes');
 
 const IS_GATEWAY = config.get('mode') === 'gateway';
 

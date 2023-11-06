@@ -2,16 +2,16 @@ import {
     BUNDLER_DOWNLOAD_URL,
     BUNDLER_URL,
     CONCURRENT_UPLOAD_LIMIT, REQUEST_TIMEOUT, UPLOAD_CACHE_PATH, VERSION_MAJOR, VERSION_MINOR
-} from './config.js';
-import Chunk, {CHUNK_UPLOAD_STATUS} from '../../db/models/chunk.js';
+} from './config';
+import Chunk, {CHUNK_UPLOAD_STATUS} from '../../db/models/chunk';
 import path from 'path';
 import {promises as fs} from 'fs';
 import FormData from 'form-data';
 import axios from 'axios';
-import logger from '../../core/log.js';
-import {uploadLoop} from './uploader.js';
-import {updateChunkProgressAsCompleted} from './progress.js';
-import {setSoon} from '../../util/index.js';
+import logger from '../../core/log';
+import {uploadLoop} from './uploader';
+import {updateChunkProgressAsCompleted} from './progress';
+import {setSoon} from '../../util/index';
 
 const log = logger.child({module: 'UploadWorker'});
 

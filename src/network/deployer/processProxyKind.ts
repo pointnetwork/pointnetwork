@@ -8,7 +8,7 @@ import {
     BeaconProxyUnsupportedError,
     ProxyDeployment
 } from '@openzeppelin/upgrades-core';
-import {DeploymentNotFound, Manifest} from './manifest.js';
+import {DeploymentNotFound, Manifest} from './manifest';
 
 export async function processProxyKind(
     provider: EthereumProvider,

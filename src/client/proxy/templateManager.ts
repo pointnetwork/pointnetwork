@@ -1,7 +1,7 @@
 import {readFile} from 'fs/promises';
 import Handlebars from 'handlebars';
 import path from 'path';
-import logger from '../../core/log.js';
+import logger from '../../core/log';
 
 const log = logger.child({module: 'templateManager'});
 

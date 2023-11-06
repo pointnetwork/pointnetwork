@@ -1,10 +1,10 @@
 import {FastifyInstance} from 'fastify';
-import attachCommonHandler from './common.js';
-import attachStorageHandlers from './storage.js';
-import attachApiHandler from './api.js';
-import attachPointApiHandler from './pointApi.js';
+import attachCommonHandler from './common';
+import attachStorageHandlers from './storage';
+import attachApiHandler from './api';
+import attachPointApiHandler from './pointApi';
 import config from 'config';
-import attachEncryptedStorageHandlers from './encryptedStorage.js';
+import attachEncryptedStorageHandlers from './encryptedStorage';
 
 const IS_GATEWAY = config.get('mode') === 'gateway';
 

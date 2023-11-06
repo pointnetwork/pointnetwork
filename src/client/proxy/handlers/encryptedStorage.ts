@@ -1,18 +1,18 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-const {uploadData, getFile, FILE_TYPE} = require('../../storage/index.js');
+const {uploadData, getFile, FILE_TYPE} = require('../../storage/index');
 // @ts-expect-error no types for package
 import detectContentType from 'detect-content-type';
-import {isDirectoryJson, setAsAttachment} from '../proxyUtils.js';
-import {Template, templateManager} from '../templateManager.js';
-const blockchain = require('../../../network/providers/ethereum.js');
+import {isDirectoryJson, setAsAttachment} from '../proxyUtils';
+import {Template, templateManager} from '../templateManager';
+const blockchain = require('../../../network/providers/ethereum');
 const {
     encryptMultipleData,
     decryptData,
     decryptDataWithDecryptedKey,
     getEncryptedSymetricObjFromJSON
-} = require('../../../client/encryptIdentityUtils.js');
-import {getNetworkPrivateKey} from '../../../wallet/keystore.js';
-import {checkAuthToken} from '../middleware/auth.js';
+} = require('../../../client/encryptIdentityUtils');
+import {getNetworkPrivateKey} from '../../../wallet/keystore';
+import {checkAuthToken} from '../middleware/auth';
 
 // TODO: we don't handle multiple files upload. But if we want to,
 // we should change the response format

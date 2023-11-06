@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 const Console = require('../../console');
-import logger from '../../core/log.js';
+import logger from '../../core/log';
 const log = logger.child({module: 'NodeSocketController'});
 
 /*

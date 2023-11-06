@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Chunk, {CHUNK_UPLOAD_STATUS, CHUNK_DOWNLOAD_STATUS} from '../../db/models/chunk.js';
-import logger from '../../core/log.js';
-import {tryGettingAvailableUploadWorker} from './uploadWorkers.js';
-import {CONCURRENT_UPLOAD_LIMIT, UPLOAD_EXPIRE} from './config.js';
+import Chunk, {CHUNK_UPLOAD_STATUS, CHUNK_DOWNLOAD_STATUS} from '../../db/models/chunk';
+import logger from '../../core/log';
+import {tryGettingAvailableUploadWorker} from './uploadWorkers';
+import {CONCURRENT_UPLOAD_LIMIT, UPLOAD_EXPIRE} from './config';
 import Sequelize, {Op} from 'sequelize';
-import {areWeOnline, setSoon} from '../../util/index.js';
+import {areWeOnline, setSoon} from '../../util/index';
 
 const log = logger.child({module: 'StorageUploader'});
 

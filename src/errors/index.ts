@@ -1,1 +1,1 @@
-export * from './transformErrorResp.js';
+export * from './transformErrorResp';

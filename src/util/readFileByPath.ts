@@ -1,5 +1,5 @@
 import path from 'path';
-import {HttpNotFoundError} from '../core/exceptions.js';
+import {HttpNotFoundError} from '../core/exceptions';
 import fs from 'fs';
 
 export const readFileByPath = async (localRoot: string, filePath: string, encoding = 'utf-8') => fs.promises.readFile(getFullPathFromLocalRoot(localRoot, filePath), encoding as 'utf8');

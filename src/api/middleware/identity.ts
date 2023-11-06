@@ -1,7 +1,7 @@
 import {FastifyRequest} from 'fastify';
-const ethereum = require('../../network/providers/ethereum.js');
-import solana from '../../network/providers/solana.js';
-import {parseDomainRegistry} from '../../name_service/registry.js';
+const ethereum = require('../../network/providers/ethereum');
+import solana from '../../network/providers/solana';
+import {parseDomainRegistry} from '../../name_service/registry';
 
 type EnhancedFastifyRequest = FastifyRequest & {identity?: string};
 

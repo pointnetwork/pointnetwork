@@ -1,5 +1,5 @@
 import BackgroundJob from './background_job';
-const ethereum = require('../network/providers/ethereum.js');
+const ethereum = require('../network/providers/ethereum');
 
 class ScanIdentityContractJob extends BackgroundJob {
     constructor() {

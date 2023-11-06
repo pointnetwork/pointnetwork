@@ -1,8 +1,8 @@
 import {Sequelize, QueryInterface} from 'sequelize';
 import {Umzug, SequelizeStorage, MigrationError} from 'umzug';
 import path from 'path';
-import logger from '../core/log.js';
-import {Database} from '../db/index.js';
+import logger from '../core/log';
+import {Database} from '../db/index';
 
 const log = logger.child({module: 'migrate'});
 

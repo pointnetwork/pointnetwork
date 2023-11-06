@@ -6,10 +6,10 @@ const {
     encodeCookieString,
     mergeAndResolveConflicts,
     resolveHome
-} = require('../../../util/index.js');
-const {getNetworkPublicKey} = require('../../../wallet/keystore.js');
-const blockchain = require('../../../network/providers/ethereum.js');
-const solana = require('../../../network/providers/solana.js');
+} = require('../../../util/index');
+const {getNetworkPublicKey} = require('../../../wallet/keystore');
+const blockchain = require('../../../network/providers/ethereum');
+const solana = require('../../../network/providers/solana');
 const hre = require('hardhat');
 const BN = require('bn.js');
 const {execSync} = require('child_process');
@@ -19,7 +19,7 @@ const {deployProxy} = require('../../../network/deployer/deployProxy');
 const {getProxyMetadataFilePath} = require('../../../network/deployer');
 const {upgradeProxy} = require('../../../network/deployer/upgradeProxy');
 const {forceImport} = require('../../../network/deployer/forceImport');
-const {FILE_DIR_UPLOAD_STATUS} = require('../../../db/models/file.js');
+const {FILE_DIR_UPLOAD_STATUS} = require('../../../db/models/file');
 
 const PROXY_METADATA_KEY = 'zweb/contracts/proxy/metadata';
 const COMMIT_SHA_KEY = 'zweb/git/commit/sha';
@@ -27,7 +27,7 @@ const POINT_SDK_VERSION = 'zweb/point/sdk/version';
 const POINT_NODE_VERSION = 'zweb/point/node/version';
 const DATADIR = resolveHome(config.get('datadir'));
 
-const _log = require('../../../core/log.js').child({module: 'Deployer'});
+const _log = require('../../../core/log').child({module: 'Deployer'});
 
 /**
  * Class responsible to deploy DApps in Point Network.

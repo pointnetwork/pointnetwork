@@ -1,6 +1,6 @@
-import startApiServer from '../api/index.js';
-import startProxy from '../client/proxy/index.js';
-import initStorage from '../client/storage/init/index.js';
+import startApiServer from '../api/index';
+import startProxy from '../client/proxy/index';
+import initStorage from '../client/storage/init/index';
 
 const startPoint = async () => {
     await Promise.all([startApiServer(), startProxy(), initStorage()]);

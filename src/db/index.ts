@@ -3,9 +3,9 @@
 import path from 'path';
 import {Sequelize, Transaction} from 'sequelize';
 import config from 'config';
-// import logger from '../core/log.js';
-import logger from '../core/log.js';
-import {resolveHome} from '../util/index.js';
+// import logger from '../core/log';
+import logger from '../core/log';
+import {resolveHome} from '../util/index';
 
 const log = logger.child({module: 'Sequelize'});
 

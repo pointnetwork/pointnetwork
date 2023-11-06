@@ -1,7 +1,7 @@
 const PointSDKController = require('./PointSDKController');
 const ethereumjs = require('ethereumjs-util');
-const ethereum = require('../../network/providers/ethereum.js');
-const {getNetworkPublicKey, getNetworkPrivateKey} = require('../../wallet/keystore.js');
+const ethereum = require('../../network/providers/ethereum');
+const {getNetworkPublicKey, getNetworkPrivateKey} = require('../../wallet/keystore');
 const {
     encryptData,
     decryptData,
@@ -12,7 +12,7 @@ const {
 const {getBalance, getTokenBalanceAndDecimals, getWalletAddress, sendTransaction, sendToken} = require('../../wallet');
 const config = require('config');
 const {getIdentity} = require('../../name_service/identity');
-const {_timeout} = require('../../util/_timeout.js');
+const {_timeout} = require('../../util/_timeout');
 
 const networks = config.get('network.web3');
 const DEFAULT_NETWORK = config.get('network.default_network');

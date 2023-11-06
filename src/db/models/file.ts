@@ -1,6 +1,6 @@
 const Model = require('./base');
 const Sequelize = require('sequelize');
-import {processQueue, EventTypes} from '../../client/storage/callbacks.js';
+import {processQueue, EventTypes} from '../../client/storage/callbacks';
 
 export const FILE_DOWNLOAD_STATUS = {
     NOT_STARTED: 'NOT_STARTED',
