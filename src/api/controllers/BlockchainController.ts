@@ -24,6 +24,7 @@ class BlockchainController extends PointSDKController {
 
     async request() {
         const body = this.req.body as RPCRequest;
+
         const {status, result} = await handleRPC({...body, origin: this.req.headers.origin});
         this.reply.status(status);
         return result;

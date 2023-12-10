@@ -6,6 +6,7 @@ export default function WalletRow({
     openReceiveModal,
     openSendModal,
     openBridgeModal,
+    openBuySellModal,
 }) {
     let balance = wallet.balance ? wallet.balance : null;
     let integerPart = balance;
@@ -21,6 +22,10 @@ export default function WalletRow({
     }
 
     const canBridge =
+        (wallet.key1 === 'point' && wallet.key2 === 'POINT') ||
+        (wallet.key1 === 'bsc' && wallet.key2 === 'POINT');
+
+    const canBuySell =
         (wallet.key1 === 'point' && wallet.key2 === 'POINT') ||
         (wallet.key1 === 'bsc' && wallet.key2 === 'POINT');
 
@@ -109,6 +114,23 @@ export default function WalletRow({
                 >
                     Bridge
                 </a>
+                {/* &nbsp;
+                <a
+                    href="#"
+                    className="btn btn-sm btn-buy-sell"
+                    style={{ visibility: canBuySell ? 'visible' : 'hidden' }}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        openBuySellModal({
+                            networkType: wallet.type,
+                            networkName: networkName,
+                            network: wallet.network,
+                            balance: balance,
+                        });
+                    }}
+                >
+                    Buy/Sell
+                </a> */}
             </td>
         </tr>
     );

@@ -352,6 +352,15 @@ a.nav-link:not(.active):hover {
     color: #0076F5;
 }
 
+.wallet-actions .btn-buy-sell {
+    background-color: rgba(209, 175, 169, 0.3);
+    color: #D1AFA9;
+}
+
+.wallet-actions .btn-buy-sell:hover {
+    color: #B38F8A;
+}
+
 .wallet-tabs {
     border-bottom: 0;
     margin-bottom: 20px;

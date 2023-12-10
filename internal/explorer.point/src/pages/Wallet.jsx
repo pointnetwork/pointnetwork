@@ -12,7 +12,8 @@ import WalletRow from '../components/wallet/WalletRow';
 import NetworkRow from '../components/wallet/NetworkRow';
 import SpacingRow from '../components/wallet/SpacingRow';
 import '@fontsource/source-sans-pro';
-import { formatUnits } from 'ethers';
+import { formatUnits } from 'ethers/lib/utils';
+import BuySellModal from '../components/wallet/BuySellModal';
 
 window.openTelegram = async () => {
     fetch('/v1/api/web2/open', {
@@ -39,6 +40,7 @@ export default function Wallet() {
     const [receiveModalData, setReceiveModalData] = useState(null);
     const [sendModalData, setSendModalData] = useState(null);
     const [bridgeModalData, setBridgeModalData] = useState(null);
+    const [buySellModalData, setBuySellModalData] = useState(null);
     const [balancesStartedUpdating, setBalancesStartedUpdating] =
         useState(false);
 
@@ -280,6 +282,10 @@ export default function Wallet() {
         }
     };
 
+    const buySell = async ({ value, portalAddress, portalTokenAddress }) => {
+        alert('not implemented yet');
+    };
+
     const openSendModal = ({
         networkType,
         network,
@@ -314,12 +320,34 @@ export default function Wallet() {
         });
     };
 
+    const openBuySellModal = ({
+        networkType,
+        networkName,
+        network,
+        tokenAddress,
+        decimals,
+        balance,
+    }) => {
+        setBuySellModalData({
+            network,
+            networkName,
+            networkType,
+            tokenAddress,
+            decimals,
+            balance,
+        });
+    };
+
     const closeSendModal = () => {
         setSendModalData(null);
     };
 
     const closeBridgeModal = () => {
         setBridgeModalData(null);
+    };
+
+    const closeBuySellModal = () => {
+        setBuySellModalData(null);
     };
 
     const openReceiveModal = (currency, address) => {
@@ -356,6 +384,7 @@ export default function Wallet() {
                         openReceiveModal={openReceiveModal}
                         openSendModal={openSendModal}
                         openBridgeModal={openBridgeModal}
+                        openBuySellModal={openBuySellModal}
                     />,
                 );
             }
@@ -404,6 +433,17 @@ export default function Wallet() {
                                 onSubmit={bridge}
                                 decimals={bridgeModalData.decimals}
                                 balance={bridgeModalData.balance}
+                            />
+                        )}
+                        {buySellModalData && (
+                            <BuySellModal
+                                onClose={closeBuySellModal}
+                                network={buySellModalData.network}
+                                networkName={buySellModalData.networkName}
+                                networkType={buySellModalData.networkType}
+                                onSubmit={buySell}
+                                decimals={buySellModalData.decimals}
+                                balance={buySellModalData.balance}
                             />
                         )}
                         <br />
