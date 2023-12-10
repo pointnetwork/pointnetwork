@@ -35,7 +35,7 @@
     }
 
     .container-landscape {
-        // background: url(../assets/space/space-landscape.jpg);
+        background: url(../assets/space/space-landscape.jpg);
         background-repeat: no-repeat;
         background-size: cover;
         background-position: center bottom;
@@ -49,7 +49,9 @@
         z-index: 0;
 
         /*animation: shift-background 100s ease-in-out infinite;*/
-        animation: sideupscroll 140s linear infinite both;
+
+        /*animation too slow:*/
+        // animation: sideupscroll 140s linear infinite both;
         /*z-index: 600;*/
     }
 
@@ -72,7 +74,7 @@
     }
 
     .container-fill {
-        // background: url(../assets/space/space-fill.png);
+        background: url(../assets/space/space-fill.png);
         background-size: 100% 100%;
         background-repeat: repeat-x;
         width: 100%;

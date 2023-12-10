@@ -164,16 +164,16 @@ export default function Home() {
             <div className="space-container">
                 <div className="container-fill"></div>
                 <div className="container-landscape"></div>
-                {/* <img
-                    // src="/assets/space/space-left.png"
+                <img
+                    src="/assets/space/space-left.png"
                     className="space space-left"
                     alt="Space"
                 />
                 <img
-                    // src="/assets/space/space-right.png"
+                    src="/assets/space/space-right.png"
                     className="space space-right"
                     alt="Space"
-                /> */}
+                />
                 <main>
                     <h1 className="welcome home-header gradient-shadow">
                         <div>
