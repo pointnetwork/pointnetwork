@@ -34,7 +34,7 @@ const IKV_PUT_INTERFACE = {
 const DEFAULT_NETWORK = config.get('network.default_network');
 const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
 
-const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
+const twitterOracleDomain = 'https://twitter-oracle.point.space';
 const twitterOracleDomainFallback = 'https://twitter-oracle.point.space';
 const twitterOracleUrl = isChineseTimezone() ? twitterOracleDomainFallback : twitterOracleDomain;
 
