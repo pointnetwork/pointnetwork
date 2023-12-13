@@ -1,12 +1,12 @@
 import crypto from 'crypto';
-import {getFileBinary, uploadData} from './storage/index.js';
-import {hashFn} from '../util/index.js';
-import {getNetworkPrivateKey} from '../wallet/keystore.js';
-import {getIdentity} from '../name_service/identity.js';
-import {DisplayableError} from '../core/exceptions.js';
+import {getFileBinary, uploadData} from './storage/index';
+import {hashFn} from '../util/index';
+import {getNetworkPrivateKey} from '../wallet/keystore';
+import {getIdentity} from '../name_service/identity';
+import {DisplayableError} from '../core/exceptions';
 
 const eccrypto = require('eccrypto');
-const ethereum = require('../network/providers/ethereum.js');
+const ethereum = require('../network/providers/ethereum');
 
 const ALGO = 'aes-256-gcm';
 

@@ -4,11 +4,11 @@ const {promises: fs} = require('fs');
 const {encryptData, decryptData} = require('../../encryptIdentityUtils');
 const {getFile, getJSON, getFileIdByPath, uploadData} = require('../../storage');
 const config = require('config');
-import logger from '../../../core/log.js';
-const {getNetworkPrivateKey, getNetworkAddress} = require('../../../wallet/keystore.js');
+import logger from '../../../core/log';
+const {getNetworkPrivateKey, getNetworkAddress} = require('../../../wallet/keystore');
 const log = logger.child({module: 'Renderer'});
-const blockchain = require('../../../network/providers/ethereum.js');
-const {readFileByPath, getSecretToken} = require('../../../util/index.js');
+const blockchain = require('../../../network/providers/ethereum');
+const {readFileByPath, getSecretToken} = require('../../../util/index');
 const keyValue = require('../../../network/keyvalue');
 //get the object that stores the csrf tokens.
 const {default: csrfTokens} = require('./csrfTokens');

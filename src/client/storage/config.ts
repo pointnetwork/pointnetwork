@@ -1,7 +1,7 @@
 import config from 'config';
-import logger from '../../core/log.js';
+import logger from '../../core/log';
 import path from 'path';
-import {isChineseTimezone, resolveHome} from '../../util/index.js';
+import {isChineseTimezone, resolveHome} from '../../util/index';
 
 export const CHUNKINFO_PROLOGUE = 'PN^CHUNK\x05$\x06z\xf5*INFO';
 export const HOST_PREFIXED_PUBSUB_PROLOGUE = 'PN^PS_HOST|';

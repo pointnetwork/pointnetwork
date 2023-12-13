@@ -4,7 +4,7 @@ import fs from 'fs';
 import lockfile from 'proper-lockfile';
 import {Command} from 'commander';
 const disclaimer = require('./disclaimer.js');
-const {getContractAddress, compileAndSaveContract} = require('./util/contract.js');
+const {getContractAddress, compileAndSaveContract} = require('./util/contract');
 
 export const RUNNING_PKG_MODE = Boolean((process as typeof process & {pkg?: unknown}).pkg);
 
@@ -114,7 +114,7 @@ program
 
 program.parse(process.argv);
 
-import logger from './core/log.js';
+import logger from './core/log';
 // import config from "config";
 
 (async() => {
@@ -147,7 +147,7 @@ import logger from './core/log.js';
 
     // ----------------- Simple Commands ---------------- //
     if (program.hashfn) {
-        const {hashFn} = require('./util/index.js');
+        const {hashFn} = require('./util/index');
 
         const path = program.hashfn;
         if (!fs.existsSync(path)) throw new Error('File not found: ' + path);
@@ -200,14 +200,10 @@ import logger from './core/log.js';
 
     // --------------------- Start -------------------- //
 
-    // import startPoint from './core/index.js';
-    // import migrate from './util/migrate.js';
-    // import initFolders from './initFolders.js';
-    // import {statAsync, resolveHome} from './util/index.js';
-    const startPoint = require('./core/index.js').default;
-    const migrate = require('./util/migrate.js').default;
-    const initFolders = require('./initFolders.js').default;
-    const {statAsync, resolveHome} = require('./util/index.js');
+    const startPoint = require('./core/index').default;
+    const migrate = require('./util/migrate').default;
+    const initFolders = require('./initFolders').default;
+    const {statAsync, resolveHome} = require('./util/index');
 
     // ----------------- Console Mode -------------------- //
 

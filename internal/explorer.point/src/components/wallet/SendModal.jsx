@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import { isAddress } from '@ethersproject/address';
-import { parseUnits } from 'ethers/lib/utils';
+import { toUtf8Bytes, utils } from 'ethers';
 import Swal from 'sweetalert2';
 
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
+const SendModal = ({
+    networkType,
+    onClose,
+    onSubmit,
+    balance,
+    decimals = 18,
+}) => {
     const [address, setAddress] = useState('');
     const [addressValidation, setAddressValidation] = useState(false);
     const [value, setValue] = useState('');
@@ -18,8 +24,14 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
     };
 
     const handleValueChange = (e) => {
-        setValueValidation(false);
-        setValue(e.target.value);
+        const regex = /^[0-9]*[.]?[0-9]*$/;
+        const inputValue = e.target.value;
+
+        // Only update the value if it matches the regex or is empty (for backspace)
+        if (regex.test(inputValue) || inputValue === '') {
+            setValue(inputValue);
+            setValueValidation(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -67,12 +79,18 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
 
         setProcessing(true);
         try {
+            let valueToSend = value;
+            if (networkType === 'eth' || networkType === 'ethtoken') {
+                valueToSend = utils.hexlify(utils.parseUnits(value, decimals));
+            } else if (networkType === 'solana') {
+                valueToSend = value * 1000000000;
+            } else {
+                throw new Error('Invalid network type: ' + networkType);
+            }
+
             await onSubmit({
                 to,
-                value:
-                    networkType === 'eth'
-                        ? parseUnits(value, decimals).toHexString() // eth
-                        : value * 1000000000, // solana
+                value: valueToSend,
             });
             Swal.fire({
                 icon: 'success',
@@ -93,12 +111,11 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
     return (
         <div
             className="modal fade show"
-            style={{ display: 'block' }}
+            style={{ display: 'block', background: 'rgba(255,255,255,0.3)' }}
             tabIndex="-1"
-            data-bs-backdrop="static"
             data-bs-keyboard="false"
         >
-            <div className="modal-dialog">
+            <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                     <div className="modal-header">
                         <h5 className="modal-title">Send</h5>
@@ -143,7 +160,7 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
                                 <input
                                     value={value}
                                     onChange={handleValueChange}
-                                    type="number"
+                                    type="text"
                                     className="form-control number amount"
                                     placeholder=""
                                     style={{
@@ -161,6 +178,21 @@ const SendModal = ({ networkType, onClose, onSubmit, decimals = 18 }) => {
                                 >
                                     {valueValidation}
                                 </span>
+
+                                {/* MAX button, on the right */}
+                                {!isNaN(Number(balance)) && balance > 0 && (
+                                    <div style={{ textAlign: 'right' }}>
+                                        <a
+                                            className="text-right"
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => {
+                                                setValue(balance);
+                                            }}
+                                        >
+                                            Max: {balance}
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         </form>
                     </div>

@@ -1,11 +1,11 @@
-import pendingTxs from '../permissions/PendingTxs.js';
+import pendingTxs from '../permissions/PendingTxs';
 // import permissionStore from '../permissions/PermissionStore';
-const ethereum = require('../network/providers/ethereum.js');
+const ethereum = require('../network/providers/ethereum');
 import config from 'config';
-import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana.js';
-import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode.js';
-import {getNetworkPublicKey} from '../wallet/keystore.js';
-import logger from '../core/log.js';
+import solana, {SolanaSendFundsParams, TransactionJSON} from '../network/providers/solana';
+import {decodeTxInputData, DecodedTxInput, addMetadata} from './decode';
+import {getNetworkPublicKey} from '../wallet/keystore';
+import logger from '../core/log';
 const log = logger.child({module: 'RPC'});
 
 const DEFAULT_NETWORK = config.get('network.default_network');
@@ -42,7 +42,7 @@ const storeTransaction: HandlerFunc = async data => {
         };
     }
 
-    const decodedTxData = await decodeTxInputData(target, contract, params);
+    const decodedTxData = await decodeTxInputData(target, contract, params, network);
     if (decodedTxData) {
         await addMetadata(decodedTxData, network);
     }
@@ -55,10 +55,10 @@ const storeTransaction: HandlerFunc = async data => {
 
 const confirmTransaction: HandlerFunc = async data => {
     const {params, id} = data;
-    if (!params || !Array.isArray(params) || params.length !== 1 || !params[0].reqId) {
+    if (!params?.[0] || !(params[0] as { reqId?: any; }).reqId) {
         return {status: 400, result: {message: 'Missing `params[0].reqId` in request body.'}};
     }
-
+            
     const {reqId} = params[0] as {reqId: string};
     const tx = pendingTxs.find(reqId);
     if (!tx) {

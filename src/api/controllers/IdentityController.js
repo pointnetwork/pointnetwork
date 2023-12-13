@@ -1,13 +1,13 @@
 const PointSDKController = require('./PointSDKController');
-const ethereum = require('../../network/providers/ethereum.js');
-const solana = require('../../network/providers/solana.js');
-const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore.js');
-import logger from '../../core/log.js';
+const ethereum = require('../../network/providers/ethereum');
+const solana = require('../../network/providers/solana');
+const {getNetworkPublicKey, getNetworkAddress} = require('../../wallet/keystore');
+import logger from '../../core/log';
 const log = logger.child({Module: 'IdentityController'});
 const crypto = require('crypto');
 const axios = require('axios');
 const ethers = require('ethers');
-const {isChineseTimezone} = require('../../util/index.js');
+const {isChineseTimezone} = require('../../util/index');
 const open = require('open');
 const {default: csrfTokens} = require('../../client/zweb/renderer/csrfTokens');
 const {getIdentity} = require('../../name_service/identity');
@@ -34,7 +34,7 @@ const IKV_PUT_INTERFACE = {
 const DEFAULT_NETWORK = config.get('network.default_network');
 const IDENTITY_CONTRACT_ADDRESS = config.get(`network.web3.${DEFAULT_NETWORK}.identity_contract_address`);
 
-const twitterOracleDomain = 'https://twitter-oracle.herokuapp.com';
+const twitterOracleDomain = 'https://twitter-oracle.point.space';
 const twitterOracleDomainFallback = 'https://twitter-oracle.point.space';
 const twitterOracleUrl = isChineseTimezone() ? twitterOracleDomainFallback : twitterOracleDomain;
 

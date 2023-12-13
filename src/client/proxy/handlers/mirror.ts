@@ -1,6 +1,6 @@
 import {parse} from 'query-string';
 import {FastifyRequest} from 'fastify';
-const blockchain = require('../../../network/providers/ethereum.js');
+const blockchain = require('../../../network/providers/ethereum');
 import config from 'config';
 const {getJSON, getFileIdByPath} = require('../../storage');
 

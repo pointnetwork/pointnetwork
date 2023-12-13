@@ -54,7 +54,7 @@ jobs:
     - uses: actions/setup-node@master
       with:
         node-version: 16
-    - run: npm i -g npm
+    - run: npm i -g npm@8.19.4
     - run: npm i -g json
     - run: npm install
     - name: 🛠 Run build
@@ -88,7 +88,7 @@ jobs:
     - uses: actions/setup-node@master
       with:
         node-version: 16
-    - run: npm i -g npm
+    - run: npm i -g npm@8.19.4
     - run: npm i -g json
     - run: npm install
     - name: 🛠 Run build
@@ -121,7 +121,7 @@ jobs:
     - uses: actions/setup-node@master
       with:
         node-version: 16
-    - run: npm i -g npm
+    - run: npm i -g npm@8.19.4
     - run: npm i -g json
     - run: npm install
     - name: 🛠 Run build

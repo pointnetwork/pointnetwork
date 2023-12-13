@@ -1,6 +1,6 @@
 import {FastifyReply, FastifyRequest} from 'fastify';
 const {verify} = require('jsonwebtoken');
-import {getSecretToken} from '../../../util/index.js';
+import {getSecretToken} from '../../../util/index';
 
 let secretToken = '';
 

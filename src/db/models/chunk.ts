@@ -1,8 +1,8 @@
 const Model = require('./base');
 const Sequelize = require('sequelize');
-import {processQueue, EventTypes} from '../../client/storage/callbacks.js';
-import {UPLOAD_RETRY_LIMIT} from '../../client/storage/config.js';
-import {markChunkUlStatusInCache} from '../../client/storage/progress.js';
+import {processQueue, EventTypes} from '../../client/storage/callbacks';
+import {UPLOAD_RETRY_LIMIT} from '../../client/storage/config';
+import {markChunkUlStatusInCache} from '../../client/storage/progress';
 
 export const CHUNK_DOWNLOAD_STATUS = {
     NOT_STARTED: 'NOT_STARTED',

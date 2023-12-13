@@ -1,6 +1,6 @@
 import {FastifyReply, FastifyRequest} from 'fastify';
 import {RPCRequest} from '../../rpc/rpc-handlers';
-const blockchain = require('../../network/providers/ethereum.js');
+const blockchain = require('../../network/providers/ethereum');
 import permissionStore from '../../permissions/PermissionStore';
 
 const RESTRICTED_METHODS = [''];

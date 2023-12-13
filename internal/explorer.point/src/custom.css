@@ -334,6 +334,15 @@ a.nav-link:not(.active):hover {
     color: #008F39;
 }
 
+.wallet-actions .btn-bridge {
+    background-color: rgba(34, 141, 255, .3);
+    color: #228dff;
+}
+
+.wallet-actions .btn-bridge:hover {
+    color: #0076F5;
+}
+
 .wallet-actions .btn-history {
     background-color: rgba(34, 141, 255, .3);
     color: #228dff;
@@ -341,6 +350,15 @@ a.nav-link:not(.active):hover {
 
 .wallet-actions .btn-history:hover {
     color: #0076F5;
+}
+
+.wallet-actions .btn-buy-sell {
+    background-color: rgba(209, 175, 169, 0.3);
+    color: #D1AFA9;
+}
+
+.wallet-actions .btn-buy-sell:hover {
+    color: #B38F8A;
 }
 
 .wallet-tabs {

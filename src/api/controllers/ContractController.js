@@ -2,7 +2,7 @@ const Web3 = require('web3');
 const config = require('config');
 const PointSDKController = require('./PointSDKController');
 const _ = require('lodash');
-const ethereum = require('../../network/providers/ethereum.js');
+const ethereum = require('../../network/providers/ethereum');
 const {getJSON} = require('../../client/storage');
 
 class ContractController extends PointSDKController {

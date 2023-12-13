@@ -1,8 +1,8 @@
 import {FastifyInstance, FastifyRequest} from 'fastify';
-const DeployController = require('../../../api/controllers/DeployController.js');
-const WalletController = require('../../../api/controllers/WalletController.js');
-import {checkAuthToken} from '../middleware/auth.js';
-import {deployUpgradableContracts} from '../../../network/deployer/index.js';
+const DeployController = require('../../../api/controllers/DeployController');
+const WalletController = require('../../../api/controllers/WalletController');
+import {checkAuthToken} from '../middleware/auth';
+import {deployUpgradableContracts} from '../../../network/deployer/index';
 
 const attachPointApiHandler = (server: FastifyInstance) => {
     server.route({

@@ -42,8 +42,7 @@ storage:
   arweave_bundlers_read:
     - https://a.read.bundler.point.space/download/
     - https://arweave-bundler.point.space/download/
-    - https://test-arweave-bundler.herokuapp.com/download/
-  arweave_bundler_url: https://test-arweave-bundler.herokuapp.com
+  arweave_bundler_url: https://arweave-bundler.point.space
   arweave_bundler_url_fallback: https://arweave-bundler.point.space
   arweave_gateway_url: https://arweave.net/graphql
   concurrent_download_delay: 100

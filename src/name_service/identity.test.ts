@@ -1,6 +1,6 @@
 import {getIdentity} from './identity';
-import solana from '../network/providers/solana.js';
-const ethereum = require('..//network/providers/ethereum.js');
+import solana from '../network/providers/solana';
+const ethereum = require('..//network/providers/ethereum');
 
 const ETH_PUBL_KEY =
     '587136dce73d741c6fe8e121dc6176f6af0700942f1183a4f8993f6a799dd53712c54ae5b701d1af9be612675685a14a05074851e11bdf40bafaf074a446c5bd';

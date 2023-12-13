@@ -11,18 +11,18 @@ const {getJSON} = require('../../client/storage');
 const ZDNS_ROUTES_KEY = 'zdns/routes';
 const retryableErrors = {ESOCKETTIMEDOUT: 1};
 const config = require('config');
-import logger from '../../core/log.js';
+import logger from '../../core/log';
 const log = logger.child({module: 'EthereumProvider'});
-const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore.js');
-const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util/index.js');
+const {getNetworkPrivateKey, getNetworkAddress} = require('../../wallet/keystore');
+const {statAsync, resolveHome, compileAndSaveContract, escapeString} = require('../../util/index');
 const {createCache} = require('../../util/cache');
 const {ETH_RESOLVER_ABI} = require('../../name_service/abis/resolver');
 const {POINT_ENS_TEXT_RECORD_KEY} = require('../../name_service/constants');
-const {hashFn} = require('../../util/index.js');
+const {hashFn} = require('../../util/index');
 const {Op} = require('sequelize');
 const Event = require('../../db/models/event').default;
 const EventScan = require('../../db/models/event_scan').default;
-const {CacheFactory} = require('../../util/index.js');
+const {CacheFactory} = require('../../util/index');
 
 const cacheExpiration = 2 * 60 * 1_000; // 2 minutes
 const ensDomainCache = new CacheFactory(cacheExpiration);
@@ -1256,7 +1256,7 @@ ethereum.getGasPrice = async (network = DEFAULT_NETWORK) => {
         return Number(config.get(`network.web3.${network}.gas_price_wei`));
     }
 
-    const gasPrice = await getWeb3().eth.getGasPrice();
+    const gasPrice = await getWeb3({chain: network}).eth.getGasPrice();
     return gasPrice;
 };
 

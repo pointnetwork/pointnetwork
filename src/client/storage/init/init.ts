@@ -1,4 +1,4 @@
-import {restartUploadsDownloads, uploadLoop} from '../uploader.js';
+import {restartUploadsDownloads, uploadLoop} from '../uploader';
 
 const init = () => {
     (async() => {

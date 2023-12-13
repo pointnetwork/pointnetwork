@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import config from 'config';
 import {PendingTx} from './types';
-import {CacheFactory} from '../util/index.js';
+import {CacheFactory} from '../util/index';
 
 const DEFAULT_NETWORK: string = config.get('network.default_network');
 

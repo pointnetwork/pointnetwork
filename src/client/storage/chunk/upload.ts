@@ -1,12 +1,12 @@
-import {hashFn} from '../../../util/index.js';
-import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk.js';
+import {hashFn} from '../../../util/index';
+import Chunk, {CHUNK_DOWNLOAD_STATUS, CHUNK_UPLOAD_STATUS} from '../../../db/models/chunk';
 import path from 'path';
 import {promises as fs, existsSync} from 'fs';
-import {UPLOAD_CACHE_PATH} from '../config.js';
-import {FileMap} from '../../../db/models/index.js';
-import {uploadLoop} from '../uploader.js';
+import {UPLOAD_CACHE_PATH} from '../config';
+import {FileMap} from '../../../db/models/index';
+import {uploadLoop} from '../uploader';
 import Sequelize from 'sequelize';
-import {addFileAsChunkParent} from '../progress.js';
+import {addFileAsChunkParent} from '../progress';
 
 export const enqueueChunksForUpload = async (chunks: Buffer[], fileId: string): Promise<void> => {
     const chunkIds: Record<string, string> = {};

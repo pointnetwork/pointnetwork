@@ -1,9 +1,9 @@
-import {getNetworkPublicKey, getNetworkAddress, getSolanaKeyPair} from '../wallet/keystore.js';
-import solana from '../network/providers/solana.js';
-const ethereum = require('../network/providers/ethereum.js');
+import {getNetworkPublicKey, getNetworkAddress, getSolanaKeyPair} from '../wallet/keystore';
+import solana from '../network/providers/solana';
+const ethereum = require('../network/providers/ethereum');
 import {IdentityData, IdentityParams} from './types';
-import {identityCache} from './identity-cache.js';
-import logger from '../core/log.js';
+import {identityCache} from './identity-cache';
+import logger from '../core/log';
 const log = logger.child({module: 'getIdentity'});
 
 const defaultParams: IdentityParams = {

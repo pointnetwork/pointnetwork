@@ -1,4 +1,4 @@
-import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS, FILE_DIR_UPLOAD_STATUS} from '../../db/models/file.js';
+import File, {FILE_DOWNLOAD_STATUS, FILE_UPLOAD_STATUS, FILE_DIR_UPLOAD_STATUS} from '../../db/models/file';
 import {
     merkle,
     areScalarArraysEqual,
@@ -8,19 +8,19 @@ import {
     calculateDirSize,
     isValidStorageId,
     isZeroStorageId
-} from '../../util/index.js';
+} from '../../util/index';
 import fs from 'fs';
 import path from 'path';
-import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, FILES_DIR, log} from './config.js';
-import {HttpNotFoundError} from '../../core/exceptions.js';
-import {waitForEvent, EventTypes} from './callbacks.js';
-import {enqueueChunksForUpload} from './chunk/upload.js';
+import {CHUNK_SIZE, CHUNKINFO_PROLOGUE, FILES_DIR, log} from './config';
+import {HttpNotFoundError} from '../../core/exceptions';
+import {waitForEvent, EventTypes} from './callbacks';
+import {enqueueChunksForUpload} from './chunk/upload';
 import Sequelize from 'sequelize';
-import DirMap from '../../db/models/dir_map.js';
-import {addDirAsDirParent, addDirAsFileParent, getDirProgress} from './progress.js';
+import DirMap from '../../db/models/dir_map';
+import {addDirAsDirParent, addDirAsFileParent, getDirProgress} from './progress';
 import {Readable} from 'stream';
 import {FastifyReply, FastifyRequest} from 'fastify';
-import {getChunkBinary} from './chunk/download.js';
+import {getChunkBinary} from './chunk/download';
 
 type FileInfo = {
     type: keyof typeof FILE_TYPE;

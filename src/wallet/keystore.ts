@@ -1,16 +1,16 @@
 import fs from 'fs';
 // TODO: for some reason, just ../util doesn't work
-import {resolveHome} from '../util/resolveHome.js';
+import {resolveHome} from '../util/resolveHome';
 import path from 'path';
 import config from 'config';
 // import Wallet, {hdkey} from 'ethereumjs-wallet';
-import Wallet from 'ethereumjs-wallet/dist/index.js';
-import hdkey from 'ethereumjs-wallet/dist/hdkey.js';
+import Wallet from 'ethereumjs-wallet/dist/index';
+import hdkey from 'ethereumjs-wallet/dist/hdkey';
 import * as bip39 from 'bip39';
 import {mnemonicToSeedSync} from 'bip39';
 import {Keypair} from '@solana/web3.js';
 import {derivePath} from 'ed25519-hd-key';
-import {hashFn} from '../util/hashFn.js';
+import {hashFn} from '../util/hashFn';
 
 const keystorePath: string = resolveHome(config.get('wallet.keystore_path'));
 
@@ -37,9 +37,7 @@ function getWalletFactory() {
 const getWallet = getWalletFactory();
 
 export function getNetworkAddress() {
-    return `0x${getWallet()
-        .wallet.getAddress()
-        .toString('hex')}`;
+    return getWallet().wallet.getChecksumAddressString();
 }
 
 export function getNetworkPublicKey() {

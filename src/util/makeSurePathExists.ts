@@ -1,5 +1,5 @@
 import {promises as fs} from 'fs';
-import {statAsync} from './statAsync.js';
+import {statAsync} from './statAsync';
 
 export const makeSurePathExists = async (pathToCheck: string, createIfNotExists = false) => {
     try {

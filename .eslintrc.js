@@ -53,7 +53,6 @@ module.exports = {
         'comma-dangle': ['error', 'never'],
         'space-in-parens': ['error', 'never'],
         'comma-spacing': 'error',
-        'object-curly-spacing': ['error', 'never'],
         'object-curly-newline': ['error', {multiline: true}],
         'array-bracket-spacing': ['error', 'never'],
         'eqeqeq': ['error', 'always', {null: 'ignore'}],
@@ -89,7 +88,7 @@ module.exports = {
         '@typescript-eslint/no-this-alias': 'off', // TODO: fix all and enable
         '@typescript-eslint/no-empty-function': 'off', // TODO: fix all and enable
         'no-shadow': 'off',
-        '@typescript-eslint/no-unused-vars': 'error',
+        '@typescript-eslint/no-unused-vars': 'off',
         'no-unused-vars': 'off',
         '@typescript-eslint/keyword-spacing': ['error']
         // 'import/no-extraneous-dependencies': 'error',
