@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { isAddress } from '@ethersproject/address';
-import { parseUnits, hexlify, toUtf8Bytes, toBeHex, ethers } from 'ethers';
+import { toUtf8Bytes, ethers, utils } from 'ethers';
 import Swal from 'sweetalert2';
 
 const BuySellModal = ({
@@ -157,7 +157,7 @@ const BuySellModal = ({
                 networkType === 'ethtoken' ||
                 networkType === 'token'
             ) {
-                valueToSend = toBeHex(parseUnits(value, decimals));
+                valueToSend = utils.hexlify(utils.parseUnits(value, decimals));
             } else if (networkType === 'solana') {
                 valueToSend = value * 1000000000;
             } else {

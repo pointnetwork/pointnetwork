@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { isAddress } from '@ethersproject/address';
-import { parseUnits, hexlify, toUtf8Bytes, toBeHex } from 'ethers';
+import { toUtf8Bytes, utils } from 'ethers';
 import Swal from 'sweetalert2';
 
 const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -81,7 +81,7 @@ const SendModal = ({
         try {
             let valueToSend = value;
             if (networkType === 'eth' || networkType === 'ethtoken') {
-                valueToSend = toBeHex(parseUnits(value, decimals));
+                valueToSend = utils.hexlify(utils.parseUnits(value, decimals));
             } else if (networkType === 'solana') {
                 valueToSend = value * 1000000000;
             } else {
