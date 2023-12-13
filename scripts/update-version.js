@@ -8,6 +8,9 @@
 
 // todo: Currently, the image rebuilding action is triggered on *any* tag being pushed from any branch
 
+const fs = require('fs');
+const path = require('path');
+
 const version = process.argv[2];
 
 if (!/^\d+\.\d+\.\d+$/.test(version)) {
@@ -24,7 +27,12 @@ const {execSync} = require('child_process');
 
 try {
     execSync(`npm version ${version}`).toString();
-    execSync(`sed -i '' 's/${varName}=.*$/${varName}=v${version}/' ${envPath}`).toString();
+    //execSync(`sed -i '' 's/${varName}=.*$/${varName}=v${version}/' ${envPath}`).toString();
+    
+    let envFileContent = fs.readFileSync(envPath, 'utf-8');
+    const regex = new RegExp(`${varName}=.*$`, 'gm');
+    envFileContent = envFileContent.replace(regex, `${varName}=v${version}`);
+    fs.writeFileSync(envPath, envFileContent);
 
     if (execSync('git diff --name-only').toString().includes(envFile)) {
         execSync(`git add ${envPath}`).toString();
