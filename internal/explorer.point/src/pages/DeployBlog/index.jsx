@@ -19,11 +19,11 @@ import './DeplyBlog.css';
 // TODO: do something better than hard-coding
 const VERSION = '0.1';
 const ROOT_DIR_ID =
-    '6ce5c3f525128f4173cd4931870b28d05280d66bd206826be1f23242d05c94bb';
+    'ce1c2390b718a85396957ac9da91e67cf8bff65e8a195bdec9578bb5b1c98bbc';
 const ROUTES_FILE_ID =
-    '5f38f36718c426e74ded142347ecc4310e8eb4755c31ce06bcecd26cdbfe7b41';
+    '05c71d99f342cd84012d79a1b3e255841240bda7a12a144d0c48c1ac67b5698f';
 const CONTRACT_SOURCE_ID =
-    '042a2609875d2f5b628896adfc3affec2fd8aaf104f8824918cd94086872dc66';
+    '445d2fc2ddb9e79e2a56990b711685069460c26162eb5dbab69c1de828d79466';
 
 const BLOG_IMAGES = [
     { caption: 'Create blog posts', img: image1 },
