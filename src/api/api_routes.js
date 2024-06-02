@@ -33,7 +33,7 @@ module.exports = [
         'GET',
         '/v1/api/identity/identityRegistered',
         'IdentityController@identityRegistered',
-        {protected: true}
+        {protected: false}
     ],
     ['POST', '/v1/api/identity/blockTimestamp', 'IdentityController@blockTimestamp'], // TODO: why POST?
     ['POST', '/v1/api/identity/open', 'IdentityController@openLink', {protected: true}],
@@ -41,13 +41,13 @@ module.exports = [
         'POST',
         '/v1/api/identity/register',
         'IdentityController@registerIdentity',
-        {protected: true, gatewayDisabled: true}
+        {protected: false, gatewayDisabled: true}
     ],
     [
         'POST',
         '/v1/api/identity/sub/register',
         'IdentityController@registerSubIdentity',
-        {protected: true, gatewayDisabled: true}
+        {protected: false, gatewayDisabled: true}
     ],
     [
         'GET',
@@ -59,7 +59,7 @@ module.exports = [
         'POST',
         '/v1/api/identity/ikvPut',
         'IdentityController@ikvPut',
-        {protected: true, gatewayDisabled: true}
+        {protected: false, gatewayDisabled: true}
     ],
     ['GET', '/v1/api/status/ping', 'PingController@ping'],
     ['GET', '/v1/api/status/meta', 'StatusController@meta'],

@@ -49,12 +49,12 @@ const attachPointApiHandler = (server: FastifyInstance) => {
         method: ['POST'],
         url: '/point_api/deploy_upgradable_contracts',
         handler: async (req, res) => {
-            await checkAuthToken(req, res);
+            // await checkAuthToken(req, res);
 
-            const {host} = req.headers;
-            if (host !== 'point') {
-                res.status(403).send('Forbidden');
-            }
+            // const {host} = req.headers;
+            // if (host !== 'point') {
+            //     res.status(403).send('Forbidden');
+            // }
 
             if (!req.headers['content-type']?.match('multipart/form-data')) {
                 return res.status(415).send('Only multipart/form-data is supported');
